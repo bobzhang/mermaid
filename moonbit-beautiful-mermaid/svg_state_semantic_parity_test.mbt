@@ -1,0 +1,207 @@
+///|
+fn state_count_occurrences(haystack : String, needle : String) -> Int {
+  let parts = haystack.split(needle).to_array()
+  if parts.length() == 0 {
+    return 0
+  }
+  parts.length() - 1
+}
+
+///|
+fn state_option_or_zero(value : Int?) -> Int {
+  match value {
+    Some(found) => found
+    None => 0
+  }
+}
+
+///|
+struct StateEdgeLabelRect {
+  x : Int
+  y : Int
+  width : Int
+  height : Int
+}
+
+///|
+fn state_svg_attr_int(snippet : String, attr : String) -> Int? {
+  @test_support.svg_attr_int(snippet, attr)
+}
+
+///|
+fn state_collect_edge_label_rects(svg : String) -> Array[StateEdgeLabelRect] {
+  let rects : Array[StateEdgeLabelRect] = []
+  let marker = "<rect class=\"edge-label-bg\""
+  let mut offset = 0
+
+  while offset < svg.length() {
+    let remaining = (try! svg[offset:]).to_string()
+    match remaining.find(marker) {
+      Some(found) => {
+        let start = offset + found
+        let tail = (try! svg[start:]).to_string()
+        match tail.find("/>") {
+          Some(close_idx) => {
+            let snippet = (try! tail[:close_idx + 2]).to_string()
+            match
+              (
+                state_svg_attr_int(snippet, "x"),
+                state_svg_attr_int(snippet, "y"),
+                state_svg_attr_int(snippet, "width"),
+                state_svg_attr_int(snippet, "height"),
+              ) {
+              (Some(x), Some(y), Some(width), Some(height)) =>
+                rects.push(StateEdgeLabelRect::{ x, y, width, height })
+              _ => ()
+            }
+            offset = start + close_idx + 2
+          }
+          None => break
+        }
+      }
+      None => break
+    }
+  }
+
+  rects
+}
+
+///|
+fn state_rects_overlap(a : StateEdgeLabelRect, b : StateEdgeLabelRect) -> Bool {
+  let overlap_x = a.x < b.x + b.width && a.x + a.width > b.x
+  let overlap_y = a.y < b.y + b.height && a.y + a.height > b.y
+  overlap_x && overlap_y
+}
+
+///|
+test "SVG state diagram renders basic labels and transition text" {
+  let svg = try! @beautiful_mermaid.render_mermaid(
+    "stateDiagram-v2\n[*] --> Idle\nIdle --> Active : start\nActive --> Done",
+  )
+
+  assert_true(svg.contains("<svg"))
+  assert_true(svg.contains("</svg>"))
+  assert_true(svg.contains(">Idle</text>"))
+  assert_true(svg.contains(">Active</text>"))
+  assert_true(svg.contains(">Done</text>"))
+  assert_true(svg.contains(">start</text>"))
+}
+
+///|
+test "SVG state normal states render rounded corners" {
+  let svg = try! @beautiful_mermaid.render_mermaid(
+    "stateDiagram-v2\nIdle --> Active",
+  )
+
+  assert_true(svg.contains("rx=\"6\""))
+  assert_true(svg.contains(">Idle</text>"))
+  assert_true(svg.contains(">Active</text>"))
+}
+
+///|
+test "SVG state start pseudostate is a filled no-stroke circle" {
+  let svg = try! @beautiful_mermaid.render_mermaid(
+    "stateDiagram-v2\n[*] --> Ready",
+  )
+
+  assert_true(svg.contains("<circle"))
+  assert_true(svg.contains("class=\"state-start\""))
+  assert_true(svg.contains("stroke=\"none\""))
+}
+
+///|
+test "SVG state end pseudostate renders as a bullseye" {
+  let svg = try! @beautiful_mermaid.render_mermaid(
+    "stateDiagram-v2\nDone --> [*]",
+  )
+
+  assert_true(state_count_occurrences(svg, "<circle") >= 2)
+  assert_true(svg.contains("fill=\"none\""))
+  assert_true(svg.contains("stroke=\"none\""))
+}
+
+///|
+test "SVG state composite declarations avoid duplicate state labels" {
+  let svg = try! @beautiful_mermaid.render_mermaid(
+    "stateDiagram-v2\n[*] --> Idle\nIdle --> Processing : submit\nstate Processing {\n  parse --> validate\n  validate --> execute\n}\nProcessing --> Complete : done\nComplete --> [*]",
+  )
+
+  assert_true(svg.contains(">Idle</text>"))
+  assert_true(svg.contains(">Complete</text>"))
+  assert_true(svg.contains(">Processing</text>"))
+  assert_true(svg.contains(">parse</text>"))
+  assert_true(svg.contains(">validate</text>"))
+  assert_true(svg.contains(">execute</text>"))
+  assert_true(svg.contains(">submit</text>"))
+  assert_true(svg.contains(">done</text>"))
+  assert_eq(state_count_occurrences(svg, ">Processing</text>"), 1)
+}
+
+///|
+test "SVG state cycle renders edge label background pills" {
+  let svg = try! @beautiful_mermaid.render_mermaid(
+    "stateDiagram-v2\n[*] --> Ready\nReady --> Running : start\nRunning --> Paused : pause\nPaused --> Running : resume\nRunning --> Stopped : stop\nStopped --> [*]",
+  )
+
+  assert_true(state_count_occurrences(svg, "class=\"edge-label-bg\"") >= 3)
+  assert_true(svg.contains(">start</text>"))
+  assert_true(svg.contains(">pause</text>"))
+  assert_true(svg.contains(">resume</text>"))
+  assert_true(svg.contains(">stop</text>"))
+}
+
+///|
+test "SVG state cycle edge label pills do not overlap" {
+  let svg = try! @beautiful_mermaid.render_mermaid(
+    "stateDiagram-v2\n[*] --> Ready\nReady --> Running : start\nRunning --> Paused : pause\nPaused --> Running : resume\nRunning --> Stopped : stop\nStopped --> [*]",
+  )
+
+  let rects = state_collect_edge_label_rects(svg)
+  assert_true(rects.length() >= 3)
+
+  for i in 0..<rects.length() {
+    for j in (i + 1)..<rects.length() {
+      assert_true(!state_rects_overlap(rects[i], rects[j]))
+    }
+  }
+}
+
+///|
+test "SVG state supports nested composite declarations" {
+  let svg = try! @beautiful_mermaid.render_mermaid(
+    "stateDiagram-v2\n[*] --> Active\nstate Active {\n  state Processing {\n    state Validating {\n      check --> verify\n    }\n  }\n}\nActive --> [*]",
+  )
+
+  assert_true(svg.contains("<svg"))
+  assert_true(svg.contains(">Active</text>"))
+  assert_true(svg.contains(">Processing</text>"))
+  assert_true(svg.contains(">Validating</text>"))
+  assert_true(svg.contains(">check</text>"))
+  assert_true(svg.contains(">verify</text>"))
+}
+
+///|
+test "SVG state diagram direction override changes orientation" {
+  let lr_svg = try! @beautiful_mermaid.render_mermaid(
+    "stateDiagram-v2\ndirection LR\n[*] --> A\nA --> [*]",
+  )
+  let td_svg = try! @beautiful_mermaid.render_mermaid(
+    "stateDiagram-v2\n[*] --> A\nA --> [*]",
+  )
+
+  let lr_width = state_option_or_zero(
+    @test_support.svg_attr_int(lr_svg, "width"),
+  )
+  let td_width = state_option_or_zero(
+    @test_support.svg_attr_int(td_svg, "width"),
+  )
+  let lr_height = state_option_or_zero(
+    @test_support.svg_attr_int(lr_svg, "height"),
+  )
+  let td_height = state_option_or_zero(
+    @test_support.svg_attr_int(td_svg, "height"),
+  )
+
+  assert_true(lr_width > td_width)
+  assert_true(td_height > lr_height)
+}
