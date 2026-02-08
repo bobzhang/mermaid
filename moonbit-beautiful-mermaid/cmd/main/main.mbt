@@ -14,6 +14,7 @@ fn print_usage() -> Unit {
   println("  moon run cmd/main -- --border='#334155' \"graph TD\\nA --> B\"")
   println("  moon run cmd/main -- --padding=20 \"graph TD\\nA --> B\"")
   println("  moon run cmd/main -- --node-spacing=80 \"graph TD\\nA --> B\"")
+  println("  moon run cmd/main -- --layer-spacing=90 \"graph TD\\nA --> B\"")
   println("  moon run cmd/main -- --transparent \"graph TD\\nA --> B\"")
   println("  moon run cmd/main -- --list-themes")
   println("Flags:")
@@ -29,6 +30,7 @@ fn print_usage() -> Unit {
   println("  --border   SVG stroke color, e.g. #334155")
   println("  --padding  SVG/layout padding in px, e.g. 20")
   println("  --node-spacing  Horizontal node spacing in px, e.g. 80")
+  println("  --layer-spacing  Vertical layer spacing in px, e.g. 90")
   println("  --transparent  Omit SVG background fill")
   println("  --list-themes  Print built-in theme names")
   println("  --help     Show this help")
@@ -72,6 +74,7 @@ fn main {
   let mut border_color : String? = None
   let mut padding : Int? = None
   let mut node_spacing : Int? = None
+  let mut layer_spacing : Int? = None
   let mut transparent = false
   let mut diagram : String? = None
   let mut expect_theme_value = false
@@ -85,8 +88,27 @@ fn main {
   let mut expect_border_value = false
   let mut expect_padding_value = false
   let mut expect_node_spacing_value = false
+  let mut expect_layer_spacing_value = false
 
   for arg in args {
+    if expect_layer_spacing_value {
+      if arg.has_prefix("--") {
+        println("Error: --layer-spacing requires a value")
+        print_usage()
+        return
+      }
+      match parse_non_negative_int(arg) {
+        Some(value) => layer_spacing = Some(value)
+        None => {
+          println("Error: --layer-spacing requires a non-negative integer")
+          print_usage()
+          return
+        }
+      }
+      expect_layer_spacing_value = false
+      continue
+    }
+
     if expect_node_spacing_value {
       if arg.has_prefix("--") {
         println("Error: --node-spacing requires a value")
@@ -279,6 +301,10 @@ fn main {
       expect_node_spacing_value = true
       continue
     }
+    if arg == "--layer-spacing" {
+      expect_layer_spacing_value = true
+      continue
+    }
     if arg.has_prefix("--font=") {
       let font = (try! arg[7:]).to_string()
       if font == "" {
@@ -393,6 +419,23 @@ fn main {
       }
       continue
     }
+    if arg.has_prefix("--layer-spacing=") {
+      let raw_layer_spacing = (try! arg[16:]).to_string()
+      if raw_layer_spacing == "" {
+        println("Error: --layer-spacing requires a non-empty value")
+        print_usage()
+        return
+      }
+      match parse_non_negative_int(raw_layer_spacing) {
+        Some(value) => layer_spacing = Some(value)
+        None => {
+          println("Error: --layer-spacing requires a non-negative integer")
+          print_usage()
+          return
+        }
+      }
+      continue
+    }
     if arg == "--theme" {
       expect_theme_value = true
       continue
@@ -470,6 +513,11 @@ fn main {
     print_usage()
     return
   }
+  if expect_layer_spacing_value {
+    println("Error: --layer-spacing requires a value")
+    print_usage()
+    return
+  }
 
   let input = match diagram {
     Some(found) => found
@@ -506,7 +554,7 @@ fn main {
     font: font_name,
     padding,
     node_spacing,
-    layer_spacing: None,
+    layer_spacing,
     transparent: Some(transparent),
   }
 
