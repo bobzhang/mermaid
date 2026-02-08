@@ -12,6 +12,16 @@ fn graph_is_shape(graph : MermaidGraph, expected : NodeShape) -> Bool {
 }
 
 ///|
+fn graph_has_shape(graph : MermaidGraph, expected : NodeShape) -> Bool {
+  for _, node in graph.nodes {
+    if node.shape == expected {
+      return true
+    }
+  }
+  false
+}
+
+///|
 fn unicode_basic_operator(op : String) -> String {
   op
   .replace_all(old="=", new="═")
@@ -175,6 +185,19 @@ fn node_label_for_ascii(graph : MermaidGraph, node_id : String) -> String {
 }
 
 ///|
+fn flow_node_label(node : PositionedNode) -> String {
+  match node.shape {
+    NodeShape::StateStart | NodeShape::StateEnd => ""
+    _ =>
+      if node.label == "" {
+        node.id
+      } else {
+        node.label.replace_all(old="\n", new=" | ")
+      }
+  }
+}
+
+///|
 priv struct AsciiFlowNodeBox {
   label : String
   left : Int
@@ -265,6 +288,17 @@ fn flow_arrow_marker(dx : Int, dy : Int, use_ascii : Bool) -> String {
 }
 
 ///|
+fn unit_step(value : Int) -> Int {
+  if value > 0 {
+    1
+  } else if value < 0 {
+    -1
+  } else {
+    0
+  }
+}
+
+///|
 fn flow_draw_box(
   canvas : Array[Array[String]],
   left : Int,
@@ -296,6 +330,9 @@ fn flow_draw_box(
   for y in (top + 1)..<(top + height - 1) {
     put_canvas(canvas, left, y, v)
     put_canvas(canvas, left + width - 1, y, v)
+    for x in (left + 1)..<(left + width - 1) {
+      put_canvas(canvas, x, y, " ")
+    }
   }
 
   let text_x = left + ((width - label.length()) / 2).max(1)
@@ -523,8 +560,11 @@ fn render_ascii_flow_subgraphs(
   options : AsciiRenderOptions,
 ) -> String {
   let positioned = layout_graph(graph, RenderOptions::default())
-  let scale_x = flow_scale_x()
-  let scale_y = flow_scale_y()
+  let state_layout_mode =
+    graph_has_shape(graph, NodeShape::StateStart) ||
+    graph_has_shape(graph, NodeShape::StateEnd)
+  let scale_x = if state_layout_mode { 9 } else { flow_scale_x() }
+  let scale_y = if state_layout_mode { 10 } else { flow_scale_y() }
 
   let mapped_groups : Array[AsciiFlowGroupBox] = []
   for group in positioned.groups {
@@ -541,13 +581,20 @@ fn render_ascii_flow_subgraphs(
 
   let mapped_nodes : Array[AsciiFlowNodeBox] = []
   for node in positioned.nodes {
-    let label = if node.label == "" {
-      node.id
+    let label = flow_node_label(node)
+    let (min_width, min_height) = if state_layout_mode {
+      match node.shape {
+        NodeShape::StateStart | NodeShape::StateEnd => (12, 5)
+        _ => ((label.length() + 6).max(12), 5)
+      }
     } else {
-      node.label.replace_all(old="\n", new=" | ")
+      match node.shape {
+        NodeShape::StateStart | NodeShape::StateEnd => (10, 5)
+        _ => ((label.length() + 4).max(5), 3)
+      }
     }
-    let width = scale_size(node.width, scale_x, (label.length() + 4).max(5))
-    let height = scale_size(node.height, scale_y, 3).max(3)
+    let width = scale_size(node.width, scale_x, min_width)
+    let height = scale_size(node.height, scale_y, min_height).max(min_height)
     let cx = scale_coord(node.x, scale_x, options.padding_x)
     let cy = scale_coord(node.y, scale_y, options.padding_y)
     let box = AsciiFlowNodeBox::{
@@ -611,14 +658,12 @@ fn render_ascii_flow_subgraphs(
     let prev_x = scale_coord(prev.x, scale_x, options.padding_x)
     let prev_y = scale_coord(prev.y, scale_y, options.padding_y)
     if edge.has_arrow_end {
+      let dx = end_x - prev_x
+      let dy = end_y - prev_y
       arrow_overlays.push(AsciiArrowPlacement::{
-        x: end_x,
-        y: end_y,
-        marker: flow_arrow_marker(
-          end_x - prev_x,
-          end_y - prev_y,
-          options.use_ascii,
-        ),
+        x: end_x - unit_step(dx),
+        y: end_y - unit_step(dy),
+        marker: flow_arrow_marker(dx, dy, options.use_ascii),
       })
     }
     if edge.has_arrow_start {
@@ -628,14 +673,12 @@ fn render_ascii_flow_subgraphs(
       let first_y = scale_coord(first.y, scale_y, options.padding_y)
       let next_x = scale_coord(next.x, scale_x, options.padding_x)
       let next_y = scale_coord(next.y, scale_y, options.padding_y)
+      let dx = first_x - next_x
+      let dy = first_y - next_y
       arrow_overlays.push(AsciiArrowPlacement::{
-        x: first_x,
-        y: first_y,
-        marker: flow_arrow_marker(
-          first_x - next_x,
-          first_y - next_y,
-          options.use_ascii,
-        ),
+        x: first_x + unit_step(dx),
+        y: first_y + unit_step(dy),
+        marker: flow_arrow_marker(dx, dy, options.use_ascii),
       })
     }
   }
@@ -676,6 +719,12 @@ fn render_ascii(graph : MermaidGraph, options : AsciiRenderOptions) -> String {
   let er_mode = graph_is_shape(graph, NodeShape::ErEntity)
   if er_mode {
     return render_ascii_er(graph, options)
+  }
+  let state_mode =
+    graph_has_shape(graph, NodeShape::StateStart) ||
+    graph_has_shape(graph, NodeShape::StateEnd)
+  if state_mode {
+    return render_ascii_flow_subgraphs(graph, options)
   }
   if graph.subgraphs.length() > 0 {
     return render_ascii_flow_subgraphs(graph, options)

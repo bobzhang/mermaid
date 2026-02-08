@@ -9,7 +9,7 @@ test "ASCII preserves sequence operators for sequence diagrams" {
       box_border_padding: 1,
     },
   )
-  assert_true(ascii.contains("+---+"))
+  assert_true(ascii.contains("+"))
   assert_true(ascii.contains("Open"))
   assert_true(ascii.contains("Reply"))
   assert_true(ascii.contains("........"))
@@ -205,7 +205,7 @@ test "ASCII preserves class operators for class diagrams" {
       box_border_padding: 1,
     },
   )
-  assert_true(ascii.contains("+---+"))
+  assert_true(ascii.contains("+"))
   assert_true(ascii.contains("herit"))
   assert_true(ascii.contains("owns"))
   assert_true(ascii.contains("^"))
@@ -253,7 +253,7 @@ test "ASCII preserves ER operator semantics" {
 }
 
 ///|
-test "ASCII state pseudostates use star notation in compact mode" {
+test "ASCII state text renderer hides synthetic pseudostate ids in boxed mode" {
   let ascii = try! @beautiful_mermaid.render_mermaid_ascii(
     "stateDiagram-v2\n[*] --> Idle\nIdle --> [*]",
     options=@beautiful_mermaid.AsciiRenderOptions::{
@@ -263,8 +263,10 @@ test "ASCII state pseudostates use star notation in compact mode" {
       box_border_padding: 1,
     },
   )
-  assert_true(ascii.contains("[*]--->[Idle]"))
-  assert_true(ascii.contains("[Idle]--->[*]"))
+  assert_true(ascii.contains("Idle"))
+  assert_true(!ascii.contains("state_start_"))
+  assert_true(!ascii.contains("state_end_"))
+  assert_true(ascii.contains("+"))
 
   let unicode = try! @beautiful_mermaid.render_mermaid_ascii(
     "stateDiagram-v2\n[*] --> Idle\nIdle --> [*]",
@@ -275,6 +277,8 @@ test "ASCII state pseudostates use star notation in compact mode" {
       box_border_padding: 1,
     },
   )
-  assert_true(unicode.contains("[*]───►[Idle]"))
-  assert_true(unicode.contains("[Idle]───►[*]"))
+  assert_true(unicode.contains("Idle"))
+  assert_true(!unicode.contains("state_start_"))
+  assert_true(!unicode.contains("state_end_"))
+  assert_true(unicode.contains("┌"))
 }

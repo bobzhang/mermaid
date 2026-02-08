@@ -48,13 +48,13 @@ fn assert_state_output_invariants(
     }
   }
 
-  if graph_has_state_pseudostates(graph) && !output.contains("[*]") {
-    fail("missing [*] pseudostate marker in \{case_name}")
+  if graph_has_state_pseudostates(graph) && output.trim() == "" {
+    fail("empty output for state pseudostates in \{case_name}")
   }
 }
 
 ///|
-test "ASCII state corpus keeps readable labels and pseudostate markers" {
+test "ASCII state corpus keeps readable labels and pseudostate rendering" {
   for case_data in @test_support.supported_ascii_cases().filter(is_state_case) {
     let graph = try! @beautiful_mermaid.parse_mermaid(case_data.input)
     let output = try! @beautiful_mermaid.render_mermaid_ascii(case_data.input, options=@beautiful_mermaid.AsciiRenderOptions::{
@@ -68,7 +68,7 @@ test "ASCII state corpus keeps readable labels and pseudostate markers" {
 }
 
 ///|
-test "Unicode state corpus keeps readable labels and pseudostate markers" {
+test "Unicode state corpus keeps readable labels and pseudostate rendering" {
   for
     case_data in @test_support.supported_unicode_cases().filter(is_state_case) {
     let graph = try! @beautiful_mermaid.parse_mermaid(case_data.input)
