@@ -1,0 +1,37 @@
+///|
+test "Parser parity for all supported corpus cases" {
+  for case_data in @test_support.supported_cases() {
+    let graph = try! @beautiful_mermaid.parse_mermaid(case_data.input)
+    match case_data.direction {
+      Some(direction) =>
+        if graph.direction.to_string() != direction {
+          fail(
+            "direction mismatch for \{case_data.name}: got \{graph.direction.to_string()}, expected \{direction}",
+          )
+        }
+      None => fail("supported case missing direction: \{case_data.name}")
+    }
+
+    match case_data.expected_node_count {
+      Some(expected_nodes) =>
+        if graph.nodes.length() != expected_nodes {
+          fail(
+            "node count mismatch for \{case_data.name}: got \{graph.nodes.length()}, expected \{expected_nodes}",
+          )
+        }
+      None =>
+        fail("supported case missing expected node count: \{case_data.name}")
+    }
+
+    match case_data.expected_edge_count {
+      Some(expected_edges) =>
+        if graph.edges.length() != expected_edges {
+          fail(
+            "edge count mismatch for \{case_data.name}: got \{graph.edges.length()}, expected \{expected_edges}",
+          )
+        }
+      None =>
+        fail("supported case missing expected edge count: \{case_data.name}")
+    }
+  }
+}
