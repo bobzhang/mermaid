@@ -8,6 +8,8 @@ pub fn built_in_theme_colors() -> Map[String, DiagramColors]
 
 pub fn built_in_theme_slugs() -> Array[String]
 
+pub fn built_in_theme_slugs_csv() -> String
+
 pub fn built_in_themes() -> Array[ThemeName]
 
 pub fn canonical_theme_slug(String) -> String?

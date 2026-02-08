@@ -389,7 +389,7 @@ fn main {
       return
     }
     if arg == "--list-themes" {
-      let available = @beautiful_mermaid.built_in_theme_slugs().join(", ")
+      let available = @beautiful_mermaid.built_in_theme_slugs_csv()
       println(available)
       return
     }
@@ -826,7 +826,7 @@ fn main {
         )
         None => {
           println("Unknown theme: \{slug}")
-          let available = @beautiful_mermaid.built_in_theme_slugs().join(", ")
+          let available = @beautiful_mermaid.built_in_theme_slugs_csv()
           println("Available themes: \{available}")
           return
         }

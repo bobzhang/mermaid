@@ -406,6 +406,11 @@ pub fn built_in_theme_slugs() -> Array[String] {
 }
 
 ///|
+pub fn built_in_theme_slugs_csv() -> String {
+  built_in_theme_slugs().join(", ")
+}
+
+///|
 pub fn built_in_theme_colors() -> Map[String, DiagramColors] {
   let themes : Map[String, DiagramColors] = {}
   for theme in built_in_themes() {

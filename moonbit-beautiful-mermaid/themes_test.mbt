@@ -123,6 +123,9 @@ test "Built-in theme slugs are exported for CLI and config UX" {
     assert_true(!seen.contains(slug))
     seen[slug] = true
   }
+  let csv = built_in_theme_slugs_csv()
+  assert_true(csv.contains("tokyo-night"))
+  assert_true(csv.contains("github-dark"))
 }
 
 ///|
