@@ -4,10 +4,12 @@ fn print_usage() -> Unit {
   println("  moon run cmd/main -- \"graph TD\\nA --> B\"")
   println("  moon run cmd/main -- --ascii \"graph LR\\nA --> B\"")
   println("  moon run cmd/main -- --theme=tokyo-night \"graph TD\\nA --> B\"")
+  println("  moon run cmd/main -- --font='Roboto Mono' \"graph TD\\nA --> B\"")
   println("  moon run cmd/main -- --list-themes")
   println("Flags:")
   println("  --ascii    Render ASCII output")
   println("  --theme    SVG theme slug, e.g. tokyo-night, github-dark")
+  println("  --font     SVG font family, e.g. Inter, Roboto Mono")
   println("  --list-themes  Print built-in theme names")
   println("  --help     Show this help")
 }
@@ -31,10 +33,23 @@ fn main {
   let args = cli_args_without_program()
   let mut use_ascii = false
   let mut theme_slug : String? = None
+  let mut font_name : String? = None
   let mut diagram : String? = None
   let mut expect_theme_value = false
+  let mut expect_font_value = false
 
   for arg in args {
+    if expect_font_value {
+      if arg.has_prefix("--") {
+        println("Error: --font requires a value")
+        print_usage()
+        return
+      }
+      font_name = Some(arg)
+      expect_font_value = false
+      continue
+    }
+
     if expect_theme_value {
       if arg.has_prefix("--") {
         println("Error: --theme requires a value")
@@ -57,6 +72,20 @@ fn main {
     }
     if arg == "--ascii" {
       use_ascii = true
+      continue
+    }
+    if arg == "--font" {
+      expect_font_value = true
+      continue
+    }
+    if arg.has_prefix("--font=") {
+      let font = (try! arg[7:]).to_string()
+      if font == "" {
+        println("Error: --font requires a non-empty value")
+        print_usage()
+        return
+      }
+      font_name = Some(font)
       continue
     }
     if arg == "--theme" {
@@ -86,6 +115,11 @@ fn main {
     print_usage()
     return
   }
+  if expect_font_value {
+    println("Error: --font requires a value")
+    print_usage()
+    return
+  }
 
   let input = match diagram {
     Some(found) => found
@@ -111,11 +145,27 @@ fn main {
     return
   }
 
+  let svg_options = @beautiful_mermaid.RenderOptions::{
+    bg: None,
+    fg: None,
+    line: None,
+    accent: None,
+    muted: None,
+    surface: None,
+    border: None,
+    font: font_name,
+    padding: None,
+    node_spacing: None,
+    layer_spacing: None,
+    transparent: None,
+  }
+
   let rendered_svg = match theme_slug {
     Some(slug) => {
       let themed = try? @beautiful_mermaid.render_mermaid_with_theme_name(
         input,
         slug,
+        options=svg_options,
       )
       match themed {
         Err(@beautiful_mermaid.MermaidError::UnknownTheme(_)) => {
@@ -127,7 +177,7 @@ fn main {
         _ => themed
       }
     }
-    None => try? @beautiful_mermaid.render_mermaid(input)
+    None => try? @beautiful_mermaid.render_mermaid(input, options=svg_options)
   }
 
   match rendered_svg {
