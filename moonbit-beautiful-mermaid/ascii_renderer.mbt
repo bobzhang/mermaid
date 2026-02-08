@@ -1,0 +1,653 @@
+///|
+fn graph_is_shape(graph : MermaidGraph, expected : NodeShape) -> Bool {
+  if graph.nodes.length() == 0 {
+    return false
+  }
+  for _, node in graph.nodes {
+    if node.shape != expected {
+      return false
+    }
+  }
+  true
+}
+
+///|
+fn unicode_basic_operator(op : String) -> String {
+  op
+  .replace_all(old="=", new="═")
+  .replace_all(old="-", new="─")
+  .replace_all(old=".", new="┄")
+  .replace_all(old="<", new="◄")
+  .replace_all(old=">", new="►")
+}
+
+///|
+fn unicode_class_operator(op : String) -> String {
+  match op {
+    "<|--" => "△──"
+    "<|.." => "△┄┄"
+    "*--" => "◆──"
+    "--*" => "──◆"
+    "o--" => "◇──"
+    "--o" => "──◇"
+    "-->" => "──►"
+    "..>" => "┄┄►"
+    "..|>" => "┄┄△"
+    "--" => "───"
+    ".." => "┄┄┄"
+    _ => unicode_basic_operator(op)
+  }
+}
+
+///|
+fn unicode_sequence_operator(op : String) -> String {
+  match op {
+    "->>" => "──►"
+    "-->>" => "┄┄►"
+    "->" => "──▷"
+    "-->" => "┄┄▷"
+    "-)" => "──▷"
+    "--)" => "┄┄▷"
+    "-x" => "──✕"
+    "--x" => "┄┄✕"
+    _ => unicode_basic_operator(op)
+  }
+}
+
+///|
+fn unicode_er_token(token : String) -> String {
+  match token {
+    "||" => "║"
+    "o|" | "|o" => "o║"
+    "o{" | "{o" => "o╟"
+    "|{" | "}|" => "╟"
+    "|}" | "{|" => "╢"
+    _ => token
+  }
+}
+
+///|
+fn unicode_er_operator(op : String) -> String {
+  let dash_idx = op.find("-")
+  let dot_idx = op.find(".")
+  let start_sep = match (dash_idx, dot_idx) {
+    (Some(a), Some(b)) => Some(a.min(b))
+    (Some(a), None) => Some(a)
+    (None, Some(b)) => Some(b)
+    _ => None
+  }
+  let dash_last = op.rev_find("-")
+  let dot_last = op.rev_find(".")
+  let end_sep = match (dash_last, dot_last) {
+    (Some(a), Some(b)) => Some(a.max(b))
+    (Some(a), None) => Some(a)
+    (None, Some(b)) => Some(b)
+    _ => None
+  }
+
+  match (start_sep, end_sep) {
+    (Some(start), Some(end)) => {
+      let left = trim_owned((try! op[:start]).to_string())
+      let line = trim_owned((try! op[start:end + 1]).to_string())
+      let right = trim_owned((try! op[end + 1:]).to_string())
+      let line_symbol = if line.contains(".") {
+        "┄┄┄"
+      } else if line.contains("=") {
+        "═══"
+      } else {
+        "───"
+      }
+      "\{unicode_er_token(left)}\{line_symbol}\{unicode_er_token(right)}"
+    }
+    _ => unicode_basic_operator(op)
+  }
+}
+
+///|
+fn connector_for_edge(
+  style : EdgeStyle,
+  has_start : Bool,
+  has_end : Bool,
+  use_ascii : Bool,
+  relation_operator : String?,
+  class_mode : Bool,
+  er_mode : Bool,
+  sequence_mode : Bool,
+) -> String {
+  if class_mode || er_mode || sequence_mode {
+    match relation_operator {
+      Some(operator) =>
+        if use_ascii {
+          return operator
+        } else if class_mode {
+          return unicode_class_operator(operator)
+        } else if er_mode {
+          return unicode_er_operator(operator)
+        } else {
+          return unicode_sequence_operator(operator)
+        }
+      None => ()
+    }
+  }
+
+  if use_ascii {
+    let line = match style {
+      EdgeStyle::Solid => "-"
+      EdgeStyle::Dotted => "."
+      EdgeStyle::Thick => "="
+    }
+    match (has_start, has_end) {
+      (true, true) => "<\{line}\{line}\{line}>"
+      (true, false) => "<\{line}\{line}\{line}\{line}"
+      (false, true) => "\{line}\{line}\{line}>"
+      (false, false) => "\{line}\{line}\{line}\{line}"
+    }
+  } else {
+    let line = match style {
+      EdgeStyle::Solid => "─"
+      EdgeStyle::Dotted => "┄"
+      EdgeStyle::Thick => "═"
+    }
+    match (has_start, has_end) {
+      (true, true) => "◄\{line}\{line}\{line}►"
+      (true, false) => "◄\{line}\{line}\{line}\{line}"
+      (false, true) => "\{line}\{line}\{line}►"
+      (false, false) => "\{line}\{line}\{line}\{line}"
+    }
+  }
+}
+
+///|
+fn node_label_for_ascii(graph : MermaidGraph, node_id : String) -> String {
+  match graph.nodes.get(node_id) {
+    Some(node) =>
+      if node.label == "" {
+        node.id
+      } else {
+        node.label.replace_all(old="\n", new=" | ")
+      }
+    None => node_id
+  }
+}
+
+///|
+priv struct AsciiFlowNodeBox {
+  label : String
+  left : Int
+  top : Int
+  width : Int
+  height : Int
+}
+
+///|
+priv struct AsciiFlowGroupBox {
+  label : String
+  left : Int
+  top : Int
+  width : Int
+  height : Int
+  children : Array[AsciiFlowGroupBox]
+}
+
+///|
+priv struct AsciiArrowPlacement {
+  x : Int
+  y : Int
+  marker : String
+}
+
+///|
+fn flow_scale_x() -> Int {
+  10
+}
+
+///|
+fn flow_scale_y() -> Int {
+  8
+}
+
+///|
+fn scale_coord(value : Int, scale : Int, pad : Int) -> Int {
+  value / scale + pad
+}
+
+///|
+fn scale_size(value : Int, scale : Int, min_size : Int) -> Int {
+  ((value + scale - 1) / scale).max(min_size)
+}
+
+///|
+fn flow_line_chars(style : EdgeStyle, use_ascii : Bool) -> (String, String) {
+  if use_ascii {
+    match style {
+      EdgeStyle::Solid => ("-", "|")
+      EdgeStyle::Dotted => (".", ":")
+      EdgeStyle::Thick => ("=", "|")
+    }
+  } else {
+    match style {
+      EdgeStyle::Solid => ("─", "│")
+      EdgeStyle::Dotted => ("┄", "┊")
+      EdgeStyle::Thick => ("═", "║")
+    }
+  }
+}
+
+///|
+fn flow_arrow_marker(dx : Int, dy : Int, use_ascii : Bool) -> String {
+  if dx.abs() >= dy.abs() {
+    if dx >= 0 {
+      if use_ascii {
+        ">"
+      } else {
+        "►"
+      }
+    } else if use_ascii {
+      "<"
+    } else {
+      "◄"
+    }
+  } else if dy >= 0 {
+    if use_ascii {
+      "v"
+    } else {
+      "▼"
+    }
+  } else if use_ascii {
+    "^"
+  } else {
+    "▲"
+  }
+}
+
+///|
+fn flow_draw_box(
+  canvas : Array[Array[String]],
+  left : Int,
+  top : Int,
+  width : Int,
+  height : Int,
+  label : String,
+  use_ascii : Bool,
+) -> Unit {
+  let h = if use_ascii { "-" } else { "─" }
+  let v = if use_ascii { "|" } else { "│" }
+  let tl = if use_ascii { "+" } else { "┌" }
+  let tr = if use_ascii { "+" } else { "┐" }
+  let bl = if use_ascii { "+" } else { "└" }
+  let br = if use_ascii { "+" } else { "┘" }
+
+  put_canvas(canvas, left, top, tl)
+  for x in (left + 1)..<(left + width - 1) {
+    put_canvas(canvas, x, top, h)
+  }
+  put_canvas(canvas, left + width - 1, top, tr)
+
+  put_canvas(canvas, left, top + height - 1, bl)
+  for x in (left + 1)..<(left + width - 1) {
+    put_canvas(canvas, x, top + height - 1, h)
+  }
+  put_canvas(canvas, left + width - 1, top + height - 1, br)
+
+  for y in (top + 1)..<(top + height - 1) {
+    put_canvas(canvas, left, y, v)
+    put_canvas(canvas, left + width - 1, y, v)
+  }
+
+  let text_x = left + ((width - label.length()) / 2).max(1)
+  let text_y = top + height / 2
+  write_canvas_text(canvas, text_x, text_y, label)
+}
+
+///|
+fn flow_draw_frame(
+  canvas : Array[Array[String]],
+  left : Int,
+  top : Int,
+  width : Int,
+  height : Int,
+  use_ascii : Bool,
+) -> Unit {
+  let h = if use_ascii { "-" } else { "─" }
+  let v = if use_ascii { "|" } else { "│" }
+  let tl = if use_ascii { "+" } else { "┌" }
+  let tr = if use_ascii { "+" } else { "┐" }
+  let bl = if use_ascii { "+" } else { "└" }
+  let br = if use_ascii { "+" } else { "┘" }
+
+  put_canvas(canvas, left, top, tl)
+  for x in (left + 1)..<(left + width - 1) {
+    put_canvas(canvas, x, top, h)
+  }
+  put_canvas(canvas, left + width - 1, top, tr)
+
+  put_canvas(canvas, left, top + height - 1, bl)
+  for x in (left + 1)..<(left + width - 1) {
+    put_canvas(canvas, x, top + height - 1, h)
+  }
+  put_canvas(canvas, left + width - 1, top + height - 1, br)
+
+  for y in (top + 1)..<(top + height - 1) {
+    put_canvas(canvas, left, y, v)
+    put_canvas(canvas, left + width - 1, y, v)
+  }
+}
+
+///|
+fn flow_draw_hline(
+  canvas : Array[Array[String]],
+  x1 : Int,
+  x2 : Int,
+  y : Int,
+  ch : String,
+) -> Unit {
+  let start = x1.min(x2)
+  let ending = x1.max(x2)
+  for x in start..<=ending {
+    put_canvas(canvas, x, y, ch)
+  }
+}
+
+///|
+fn flow_draw_vline(
+  canvas : Array[Array[String]],
+  x : Int,
+  y1 : Int,
+  y2 : Int,
+  ch : String,
+) -> Unit {
+  let start = y1.min(y2)
+  let ending = y1.max(y2)
+  for y in start..<=ending {
+    put_canvas(canvas, x, y, ch)
+  }
+}
+
+///|
+fn flow_draw_segment(
+  canvas : Array[Array[String]],
+  x1 : Int,
+  y1 : Int,
+  x2 : Int,
+  y2 : Int,
+  h_char : String,
+  v_char : String,
+) -> Unit {
+  if x1 == x2 {
+    flow_draw_vline(canvas, x1, y1, y2, v_char)
+  } else if y1 == y2 {
+    flow_draw_hline(canvas, x1, x2, y1, h_char)
+  } else {
+    flow_draw_hline(canvas, x1, x2, y1, h_char)
+    flow_draw_vline(canvas, x2, y1, y2, v_char)
+  }
+}
+
+///|
+fn map_flow_group(
+  group : PositionedGroup,
+  scale_x : Int,
+  scale_y : Int,
+  pad_x : Int,
+  pad_y : Int,
+) -> AsciiFlowGroupBox {
+  let children : Array[AsciiFlowGroupBox] = []
+  for child in group.children {
+    children.push(map_flow_group(child, scale_x, scale_y, pad_x, pad_y))
+  }
+  let min_width = (group.label.length() + 4).max(7)
+  AsciiFlowGroupBox::{
+    label: group.label,
+    left: scale_coord(group.x, scale_x, pad_x),
+    top: scale_coord(group.y, scale_y, pad_y),
+    width: scale_size(group.width, scale_x, min_width),
+    height: scale_size(group.height, scale_y, 5),
+    children,
+  }
+}
+
+///|
+fn flow_group_max_x(group : AsciiFlowGroupBox) -> Int {
+  let mut max_x = group.left + group.width
+  for child in group.children {
+    max_x = max_x.max(flow_group_max_x(child))
+  }
+  max_x
+}
+
+///|
+fn flow_group_max_y(group : AsciiFlowGroupBox) -> Int {
+  let mut max_y = group.top + group.height
+  for child in group.children {
+    max_y = max_y.max(flow_group_max_y(child))
+  }
+  max_y
+}
+
+///|
+fn flow_draw_group(
+  canvas : Array[Array[String]],
+  group : AsciiFlowGroupBox,
+  use_ascii : Bool,
+) -> Unit {
+  flow_draw_frame(
+    canvas,
+    group.left,
+    group.top,
+    group.width,
+    group.height,
+    use_ascii,
+  )
+  for child in group.children {
+    flow_draw_group(canvas, child, use_ascii)
+  }
+}
+
+///|
+fn flow_draw_group_labels(
+  canvas : Array[Array[String]],
+  group : AsciiFlowGroupBox,
+) -> Unit {
+  let label_x = group.left + ((group.width - group.label.length()) / 2).max(1)
+  let label_y = group.top + 1
+  write_canvas_text(canvas, label_x, label_y, group.label)
+  for child in group.children {
+    flow_draw_group_labels(canvas, child)
+  }
+}
+
+///|
+fn render_ascii_flow_subgraphs(
+  graph : MermaidGraph,
+  options : AsciiRenderOptions,
+) -> String {
+  let positioned = layout_graph(graph, RenderOptions::default())
+  let scale_x = flow_scale_x()
+  let scale_y = flow_scale_y()
+
+  let mapped_groups : Array[AsciiFlowGroupBox] = []
+  for group in positioned.groups {
+    mapped_groups.push(
+      map_flow_group(
+        group,
+        scale_x,
+        scale_y,
+        options.padding_x,
+        options.padding_y,
+      ),
+    )
+  }
+
+  let mapped_nodes : Array[AsciiFlowNodeBox] = []
+  for node in positioned.nodes {
+    let label = if node.label == "" {
+      node.id
+    } else {
+      node.label.replace_all(old="\n", new=" | ")
+    }
+    let width = scale_size(node.width, scale_x, (label.length() + 4).max(5))
+    let height = scale_size(node.height, scale_y, 3).max(3)
+    let cx = scale_coord(node.x, scale_x, options.padding_x)
+    let cy = scale_coord(node.y, scale_y, options.padding_y)
+    let box = AsciiFlowNodeBox::{
+      label,
+      left: cx - width / 2,
+      top: cy - height / 2,
+      width,
+      height,
+    }
+    mapped_nodes.push(box)
+  }
+
+  let mut max_x = 0
+  let mut max_y = 0
+  for group in mapped_groups {
+    max_x = max_x.max(flow_group_max_x(group))
+    max_y = max_y.max(flow_group_max_y(group))
+  }
+  for node in mapped_nodes {
+    max_x = max_x.max(node.left + node.width)
+    max_y = max_y.max(node.top + node.height)
+  }
+  for edge in positioned.edges {
+    for point in edge.points {
+      let x = scale_coord(point.x, scale_x, options.padding_x)
+      let y = scale_coord(point.y, scale_y, options.padding_y)
+      max_x = max_x.max(x + 1)
+      max_y = max_y.max(y + 1)
+    }
+  }
+  let canvas = make_canvas(
+    max_x + options.padding_x + 2,
+    max_y + options.padding_y + 2,
+  )
+
+  for group in mapped_groups {
+    flow_draw_group(canvas, group, options.use_ascii)
+  }
+
+  let arrow_overlays : Array[AsciiArrowPlacement] = []
+  for edge in positioned.edges {
+    let (h_char, v_char) = flow_line_chars(edge.style, options.use_ascii)
+    let points = edge.points
+    if points.length() < 2 {
+      continue
+    }
+    for i in 1..<points.length() {
+      let p1 = points[i - 1]
+      let p2 = points[i]
+      let x1 = scale_coord(p1.x, scale_x, options.padding_x)
+      let y1 = scale_coord(p1.y, scale_y, options.padding_y)
+      let x2 = scale_coord(p2.x, scale_x, options.padding_x)
+      let y2 = scale_coord(p2.y, scale_y, options.padding_y)
+      flow_draw_segment(canvas, x1, y1, x2, y2, h_char, v_char)
+    }
+
+    let last = points[points.length() - 1]
+    let prev = points[points.length() - 2]
+    let end_x = scale_coord(last.x, scale_x, options.padding_x)
+    let end_y = scale_coord(last.y, scale_y, options.padding_y)
+    let prev_x = scale_coord(prev.x, scale_x, options.padding_x)
+    let prev_y = scale_coord(prev.y, scale_y, options.padding_y)
+    if edge.has_arrow_end {
+      arrow_overlays.push(AsciiArrowPlacement::{
+        x: end_x,
+        y: end_y,
+        marker: flow_arrow_marker(
+          end_x - prev_x,
+          end_y - prev_y,
+          options.use_ascii,
+        ),
+      })
+    }
+    if edge.has_arrow_start {
+      let first = points[0]
+      let next = points[1]
+      let first_x = scale_coord(first.x, scale_x, options.padding_x)
+      let first_y = scale_coord(first.y, scale_y, options.padding_y)
+      let next_x = scale_coord(next.x, scale_x, options.padding_x)
+      let next_y = scale_coord(next.y, scale_y, options.padding_y)
+      arrow_overlays.push(AsciiArrowPlacement::{
+        x: first_x,
+        y: first_y,
+        marker: flow_arrow_marker(
+          first_x - next_x,
+          first_y - next_y,
+          options.use_ascii,
+        ),
+      })
+    }
+  }
+
+  for node in mapped_nodes {
+    flow_draw_box(
+      canvas,
+      node.left,
+      node.top,
+      node.width,
+      node.height,
+      node.label,
+      options.use_ascii,
+    )
+  }
+
+  for arrow in arrow_overlays {
+    put_canvas(canvas, arrow.x, arrow.y, arrow.marker)
+  }
+  for group in mapped_groups {
+    flow_draw_group_labels(canvas, group)
+  }
+
+  canvas_to_output(canvas)
+}
+
+///|
+fn render_ascii(graph : MermaidGraph, options : AsciiRenderOptions) -> String {
+  let lines : Array[String] = []
+  let sequence_mode = graph_is_shape(graph, NodeShape::SequenceParticipant)
+  if sequence_mode {
+    return render_ascii_sequence(graph, options)
+  }
+  let class_mode = graph_is_shape(graph, NodeShape::ClassEntity)
+  if class_mode {
+    return render_ascii_class(graph, options)
+  }
+  let er_mode = graph_is_shape(graph, NodeShape::ErEntity)
+  if er_mode {
+    return render_ascii_er(graph, options)
+  }
+  if graph.subgraphs.length() > 0 {
+    return render_ascii_flow_subgraphs(graph, options)
+  }
+
+  if graph.edges.length() == 0 {
+    for _, node in graph.nodes {
+      let label = if node.label == "" { node.id } else { node.label }
+      lines.push("[\{label}]")
+    }
+    return lines.iter().join("\n")
+  }
+
+  for edge in graph.edges {
+    let source = node_label_for_ascii(graph, edge.source)
+    let target = node_label_for_ascii(graph, edge.target)
+    let connector = connector_for_edge(
+      edge.style,
+      edge.has_arrow_start,
+      edge.has_arrow_end,
+      options.use_ascii,
+      edge.relation_operator,
+      class_mode,
+      er_mode,
+      false,
+    )
+
+    let line = match edge.label {
+      Some(label) => "[\{source}]\{connector}(\{label})[\{target}]"
+      None => "[\{source}]\{connector}[\{target}]"
+    }
+    lines.push(line)
+  }
+
+  lines.iter().join("\n")
+}
