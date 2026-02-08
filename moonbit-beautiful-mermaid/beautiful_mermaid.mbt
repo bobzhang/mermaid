@@ -100,7 +100,7 @@ pub fn render_mermaid_with_theme_name(
 ) -> String raise MermaidError {
   match theme_by_name(theme_name) {
     Some(colors) => render_mermaid_with_colors(text, colors, options~)
-    None => raise MermaidError::ParseFailure("Unknown theme: \{theme_name}")
+    None => raise MermaidError::UnknownTheme(theme_name)
   }
 }
 

@@ -1,6 +1,7 @@
 ///|
 pub(all) suberror MermaidError {
   ParseFailure(String)
+  UnknownTheme(String)
 } derive(Eq, Show, ToJson)
 
 ///|

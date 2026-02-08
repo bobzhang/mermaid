@@ -129,6 +129,11 @@ test "render_mermaid_with_theme_name rejects unknown theme" {
   )
   match rendered {
     Ok(_) => fail("expected unknown theme to fail")
-    Err(err) => assert_true(err.to_string().contains("Unknown theme"))
+    Err(err) =>
+      match err {
+        @beautiful_mermaid.MermaidError::UnknownTheme(name) =>
+          assert_eq(name, "moonbit-neon")
+        _ => fail("expected UnknownTheme error")
+      }
   }
 }
