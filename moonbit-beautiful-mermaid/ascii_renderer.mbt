@@ -457,6 +457,63 @@ fn flow_draw_group_labels(
 }
 
 ///|
+fn leading_spaces(line : String) -> Int {
+  let mut idx = 0
+  while idx < line.length() {
+    let ch = (try! line[idx:idx + 1]).to_string()
+    if ch != " " {
+      break
+    }
+    idx = idx + 1
+  }
+  idx
+}
+
+///|
+fn trim_flow_canvas_output(output : String) -> String {
+  let raw_lines = output.split("\n").map(line => line.to_string()).to_array()
+  let mut start = 0
+  while start < raw_lines.length() && raw_lines[start].trim() == "" {
+    start = start + 1
+  }
+
+  let mut end = raw_lines.length()
+  while end > start && raw_lines[end - 1].trim() == "" {
+    end = end - 1
+  }
+
+  if start >= end {
+    return ""
+  }
+
+  let lines = raw_lines[start:end]
+  let mut min_leading = -1
+  for line in lines {
+    if line.trim() == "" {
+      continue
+    }
+    let count = leading_spaces(line)
+    if min_leading == -1 || count < min_leading {
+      min_leading = count
+    }
+  }
+
+  if min_leading <= 0 {
+    return lines.iter().join("\n")
+  }
+
+  let trimmed : Array[String] = []
+  for line in lines {
+    if line.length() <= min_leading {
+      trimmed.push("")
+    } else {
+      trimmed.push((try! line[min_leading:]).to_string())
+    }
+  }
+  trimmed.iter().join("\n")
+}
+
+///|
 fn render_ascii_flow_subgraphs(
   graph : MermaidGraph,
   options : AsciiRenderOptions,
@@ -598,7 +655,7 @@ fn render_ascii_flow_subgraphs(
     flow_draw_group_labels(canvas, group)
   }
 
-  canvas_to_output(canvas)
+  trim_flow_canvas_output(canvas_to_output(canvas))
 }
 
 ///|
