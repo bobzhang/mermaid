@@ -698,6 +698,127 @@ fn flow_connects_right(ch : String) -> Bool {
 }
 
 ///|
+fn flow_unicode_horizontal_line_for(existing : String) -> String {
+  if existing == "┄" {
+    "┄"
+  } else if existing == "═" {
+    "═"
+  } else {
+    "─"
+  }
+}
+
+///|
+fn flow_unicode_vertical_line_for(existing : String) -> String {
+  if existing == "┊" {
+    "┊"
+  } else if existing == "║" {
+    "║"
+  } else {
+    "│"
+  }
+}
+
+///|
+fn flow_unicode_char_for_connections(
+  existing : String,
+  has_left : Bool,
+  has_right : Bool,
+  has_up : Bool,
+  has_down : Bool,
+) -> String {
+  let connection_count = (if has_left { 1 } else { 0 }) +
+    (if has_right { 1 } else { 0 }) +
+    (if has_up { 1 } else { 0 }) +
+    (if has_down { 1 } else { 0 })
+
+  if connection_count == 4 {
+    return "┼"
+  }
+
+  if connection_count == 3 {
+    if !has_up {
+      return "┬"
+    }
+    if !has_down {
+      return "┴"
+    }
+    if !has_left {
+      return "├"
+    }
+    return "┤"
+  }
+
+  if connection_count == 2 {
+    if has_left && has_right {
+      return flow_unicode_horizontal_line_for(existing)
+    }
+    if has_up && has_down {
+      return flow_unicode_vertical_line_for(existing)
+    }
+    if has_right && has_down {
+      return "┌"
+    }
+    if has_left && has_down {
+      return "┐"
+    }
+    if has_right && has_up {
+      return "└"
+    }
+    if has_left && has_up {
+      return "┘"
+    }
+  }
+
+  existing
+}
+
+///|
+fn flow_normalize_unicode_junctions(
+  canvas : Array[Array[String]],
+) -> Unit {
+  if canvas.length() == 0 || canvas[0].length() == 0 {
+    return
+  }
+
+  let snapshot : Array[Array[String]] = []
+  for row in canvas {
+    let copied_row : Array[String] = []
+    for ch in row {
+      copied_row.push(ch)
+    }
+    snapshot.push(copied_row)
+  }
+
+  for y in 0..<snapshot.length() {
+    for x in 0..<snapshot[0].length() {
+      let existing = snapshot[y][x]
+      let has_line_char = flow_is_horizontal_line_char(existing) ||
+        flow_is_vertical_line_char(existing) ||
+        flow_is_corner_or_junction_char(existing)
+      if !has_line_char || existing == "+" {
+        continue
+      }
+
+      let has_left = x > 0 && flow_connects_right(snapshot[y][x - 1])
+      let has_right = x + 1 < snapshot[0].length() &&
+        flow_connects_left(snapshot[y][x + 1])
+      let has_up = y > 0 && flow_connects_down(snapshot[y - 1][x])
+      let has_down = y + 1 < snapshot.length() &&
+        flow_connects_up(snapshot[y + 1][x])
+
+      canvas[y][x] = flow_unicode_char_for_connections(
+        existing,
+        has_left,
+        has_right,
+        has_up,
+        has_down,
+      )
+    }
+  }
+}
+
+///|
 fn flow_put_line_canvas(
   canvas : Array[Array[String]],
   x : Int,
@@ -1319,6 +1440,10 @@ fn render_ascii_flow_subgraphs(
         marker: flow_arrow_marker(dx, dy, options.use_ascii),
       })
     }
+  }
+
+  if !options.use_ascii {
+    flow_normalize_unicode_junctions(canvas)
   }
 
   for node in mapped_nodes {

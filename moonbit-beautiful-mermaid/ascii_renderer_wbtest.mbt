@@ -121,3 +121,16 @@ test "unicode line merge uses left tee when vertical crosses rightward line" {
 
   assert_eq(canvas[2][2], "├")
 }
+
+///|
+test "unicode junction normalization keeps one-sided bends as corners" {
+  let canvas = make_canvas(6, 6)
+  flow_draw_hline(canvas, 1, 4, 2, "─")
+  flow_draw_vline(canvas, 4, 2, 5, "│")
+
+  assert_eq(canvas[2][4], "┤")
+
+  flow_normalize_unicode_junctions(canvas)
+
+  assert_eq(canvas[2][4], "┐")
+}
