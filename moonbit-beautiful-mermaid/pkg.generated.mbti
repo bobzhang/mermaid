@@ -20,6 +20,8 @@ pub fn render_mermaid_ascii(String, options? : AsciiRenderOptions) -> String rai
 
 pub fn render_mermaid_with_colors(String, DiagramColors, options? : RenderOptions) -> String raise MermaidError
 
+pub fn render_mermaid_with_theme_name(String, String, options? : RenderOptions) -> String raise MermaidError
+
 pub fn theme_by_name(String) -> DiagramColors?
 
 pub fn theme_colors(ThemeName) -> DiagramColors

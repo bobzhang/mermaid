@@ -110,3 +110,25 @@ test "render_mermaid_with_colors keeps explicit option overrides" {
   assert_true(svg.contains("--bg:#000000"))
   assert_true(svg.contains("--fg:#a9b1d6"))
 }
+
+///|
+test "render_mermaid_with_theme_name applies built-in theme" {
+  let svg = try! @beautiful_mermaid.render_mermaid_with_theme_name(
+    "graph TD\nA --> B",
+    "github-dark",
+  )
+  assert_true(svg.contains("--bg:#0d1117"))
+  assert_true(svg.contains("--accent:#4493f8"))
+}
+
+///|
+test "render_mermaid_with_theme_name rejects unknown theme" {
+  let rendered = try? @beautiful_mermaid.render_mermaid_with_theme_name(
+    "graph TD\nA --> B",
+    "moonbit-neon",
+  )
+  match rendered {
+    Ok(_) => fail("expected unknown theme to fail")
+    Err(err) => assert_true(err.to_string().contains("Unknown theme"))
+  }
+}
