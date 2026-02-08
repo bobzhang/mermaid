@@ -230,15 +230,88 @@ fn parse_node_and_class(raw_token : String) -> (MermaidNode, String?) {
 }
 
 ///|
+fn split_parallel_node_segments(segment : String) -> Array[String] {
+  let parts : Array[String] = []
+  let mut start = 0
+  let mut square_depth = 0
+  let mut round_depth = 0
+  let mut curly_depth = 0
+  let mut in_single_quote = false
+  let mut in_double_quote = false
+
+  for i in 0..<segment.length() {
+    let unit = segment[i]
+    if unit == '"' && !in_single_quote {
+      in_double_quote = !in_double_quote
+      continue
+    }
+    if unit == '\'' && !in_double_quote {
+      in_single_quote = !in_single_quote
+      continue
+    }
+    if in_single_quote || in_double_quote {
+      continue
+    }
+    if unit == '[' {
+      square_depth = square_depth + 1
+      continue
+    }
+    if unit == ']' {
+      if square_depth > 0 {
+        square_depth = square_depth - 1
+      }
+      continue
+    }
+    if unit == '(' {
+      round_depth = round_depth + 1
+      continue
+    }
+    if unit == ')' {
+      if round_depth > 0 {
+        round_depth = round_depth - 1
+      }
+      continue
+    }
+    if unit == '{' {
+      curly_depth = curly_depth + 1
+      continue
+    }
+    if unit == '}' {
+      if curly_depth > 0 {
+        curly_depth = curly_depth - 1
+      }
+      continue
+    }
+    if unit == '&' && square_depth == 0 && round_depth == 0 &&
+      curly_depth == 0 {
+      let part = trim_owned((try! segment[start:i]).to_string())
+      if part != "" {
+        parts.push(part)
+      }
+      start = i + 1
+    }
+  }
+
+  let tail = if start < segment.length() {
+    trim_owned((try! segment[start:]).to_string())
+  } else {
+    ""
+  }
+  if tail != "" {
+    parts.push(tail)
+  }
+  parts
+}
+
+///|
 fn split_parallel_nodes_with_classes(
   segment : String,
 ) -> Array[(MermaidNode, String?)] {
-  segment
-  .split("&")
-  .map(part => trim_owned(part.to_string()))
-  .filter(part => part != "")
-  .map(parse_node_and_class)
-  .to_array()
+  let entries : Array[(MermaidNode, String?)] = []
+  for part in split_parallel_node_segments(segment) {
+    entries.push(parse_node_and_class(part))
+  }
+  entries
 }
 
 ///|

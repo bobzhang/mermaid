@@ -115,6 +115,24 @@ test "Parser parses dotted bidirectional edge operator" {
 }
 
 ///|
+test "Parser keeps ampersand inside node labels while still expanding parallel links" {
+  let graph = try! @beautiful_mermaid.parse_mermaid(
+    "graph TD\nA[Input] & B[Config] --> C[Processor]\nB --> D[Fix & Retry]",
+  )
+
+  assert_eq(graph.nodes.length(), 4)
+  assert_eq(graph.edges.length(), 3)
+
+  match graph.nodes.get("D") {
+    Some(node) => {
+      assert_eq(node.id, "D")
+      assert_eq(node.label, "Fix & Retry")
+    }
+    None => fail("missing node D")
+  }
+}
+
+///|
 test "Parser handles extra whitespace and empty lines" {
   let graph = try! @beautiful_mermaid.parse_mermaid(
     "  graph   TD  \n\n  A   -->   B  \n\n  B -->   C  ",
