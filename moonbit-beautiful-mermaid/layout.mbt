@@ -1638,90 +1638,6 @@ fn is_state_graph(graph : MermaidGraph) -> Bool {
 }
 
 ///|
-priv struct FlatStateGridCoord {
-  x : Int
-  y : Int
-}
-
-///|
-fn collect_state_target_ids(graph : MermaidGraph) -> Map[String, Bool] {
-  let target_ids : Map[String, Bool] = {}
-  for edge in graph.edges {
-    target_ids[edge.target] = true
-  }
-  target_ids
-}
-
-///|
-fn collect_state_children_in_order(
-  graph : MermaidGraph,
-  node_id : String,
-) -> Array[String] {
-  let children : Array[String] = []
-  for edge in graph.edges {
-    if edge.source == node_id && !children.contains(edge.target) {
-      children.push(edge.target)
-    }
-  }
-  children
-}
-
-///|
-fn compute_flat_state_grid_positions(
-  graph : MermaidGraph,
-  nodes_in_order : Array[MermaidNode],
-) -> Map[String, FlatStateGridCoord] {
-  let positions : Map[String, FlatStateGridCoord] = {}
-  let highest_position_by_level : Map[Int, Int] = {}
-  let target_ids = collect_state_target_ids(graph)
-
-  for node in nodes_in_order {
-    if target_ids.contains(node.id) {
-      continue
-    }
-    let highest = option_int_or(highest_position_by_level.get(0), 0)
-    positions[node.id] = FlatStateGridCoord::{ x: highest, y: 0 }
-    highest_position_by_level[0] = highest + 4
-  }
-  if positions.length() == 0 && nodes_in_order.length() > 0 {
-    let first_id = nodes_in_order[0].id
-    positions[first_id] = FlatStateGridCoord::{ x: 0, y: 0 }
-    highest_position_by_level[0] = 4
-  }
-
-  for node in nodes_in_order {
-    match positions.get(node.id) {
-      Some(position) => {
-        let child_level = position.y + 4
-        let mut highest = option_int_or(highest_position_by_level.get(child_level), 0)
-        for child_id in collect_state_children_in_order(graph, node.id) {
-          if positions.contains(child_id) {
-            continue
-          }
-          positions[child_id] = FlatStateGridCoord::{ x: highest, y: child_level }
-          highest = highest + 4
-        }
-        highest_position_by_level[child_level] = highest
-      }
-      None => ()
-    }
-  }
-
-  let mut fallback_level = 0
-  for node in nodes_in_order {
-    if positions.contains(node.id) {
-      continue
-    }
-    let highest = option_int_or(highest_position_by_level.get(fallback_level), 0)
-    positions[node.id] = FlatStateGridCoord::{ x: highest, y: fallback_level }
-    highest_position_by_level[fallback_level] = highest + 4
-    fallback_level = fallback_level + 4
-  }
-
-  positions
-}
-
-///|
 fn find_positioned_group_index(
   groups : Array[PositionedGroup],
   group_id : String,
@@ -1905,23 +1821,23 @@ fn layout_graph_with_subgraph_redirects(
   let positioned_nodes : Array[PositionedNode] = []
   let positioned_by_id : Map[String, PositionedNode] = {}
   let state_lane_by_node_id : Map[String, Int] = {}
-  let state_row_index_by_node_id : Map[String, Int] = {}
   let state_label_y_offset_by_node_id : Map[String, Int] = {}
   if flat_state_graph {
-    let state_grid_positions = compute_flat_state_grid_positions(graph, nodes_in_order)
     let node_order_by_id : Map[String, Int] = {}
     let node_shape_by_id : Map[String, NodeShape] = {}
+    let lane_assigned : Map[String, Bool] = {}
     for i, node in nodes_in_order {
       node_order_by_id[node.id] = i
       node_shape_by_id[node.id] = node.shape
-      match state_grid_positions.get(node.id) {
-        Some(position) => {
-          state_lane_by_node_id[node.id] = position.x / 2
-          state_row_index_by_node_id[node.id] = position.y / 4
-        }
-        None => {
-          state_lane_by_node_id[node.id] = 0
-          state_row_index_by_node_id[node.id] = i
+      state_lane_by_node_id[node.id] = 0
+    }
+
+    for node in nodes_in_order {
+      match node.shape {
+        NodeShape::StateStart | NodeShape::StateEnd => ()
+        _ => {
+          lane_assigned[node.id] = true
+          break
         }
       }
     }
@@ -1961,6 +1877,51 @@ fn layout_graph_with_subgraph_redirects(
       cumulative_label_offset += step_count * label_row_units
       state_label_y_offset_by_node_id[node.id] = cumulative_label_offset
     }
+
+    let forward_targets_by_source : Map[String, Array[String]] = {}
+    for edge in graph.edges {
+      let source_order = option_int_or(node_order_by_id.get(edge.source), -1)
+      let target_order = option_int_or(node_order_by_id.get(edge.target), -1)
+      if source_order < 0 || target_order < 0 || target_order <= source_order {
+        continue
+      }
+
+      let target_is_pseudostate = match node_shape_by_id.get(edge.target) {
+        Some(shape) =>
+          match shape {
+            NodeShape::StateStart | NodeShape::StateEnd => true
+            _ => false
+          }
+        None => false
+      }
+      if target_is_pseudostate {
+        continue
+      }
+
+      if !forward_targets_by_source.contains(edge.source) {
+        forward_targets_by_source[edge.source] = []
+      }
+      let targets = forward_targets_by_source[edge.source]
+      if !targets.contains(edge.target) {
+        targets.push(edge.target)
+      }
+    }
+
+    for node in nodes_in_order {
+      let source_lane = option_int_or(state_lane_by_node_id.get(node.id), 0)
+      match forward_targets_by_source.get(node.id) {
+        Some(targets) => {
+          for i, target_id in targets {
+            if lane_assigned.contains(target_id) {
+              continue
+            }
+            state_lane_by_node_id[target_id] = source_lane + i * 2
+            lane_assigned[target_id] = true
+          }
+        }
+        None => ()
+      }
+    }
   }
 
   let mut max_right = padding
@@ -1970,10 +1931,6 @@ fn layout_graph_with_subgraph_redirects(
   let state_lane_step = (node_spacing / 3).max(26)
   for i, node in nodes_in_order {
     let order_index = if reverse { total_nodes - 1 - i } else { i }
-    let state_row_index = option_int_or(
-      state_row_index_by_node_id.get(node.id),
-      order_index,
-    )
     let (width, height) = node_dimensions(node)
     let x = if horizontal {
       padding + order_index * node_spacing + width / 2
@@ -1986,11 +1943,6 @@ fn layout_graph_with_subgraph_redirects(
     }
     let y = if horizontal {
       padding + 70
-    } else if flat_state_graph {
-      padding +
-      state_row_index * layer_spacing +
-      height / 2 +
-      option_int_or(state_label_y_offset_by_node_id.get(node.id), 0)
     } else {
       padding +
       order_index * layer_spacing +
