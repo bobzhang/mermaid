@@ -9,14 +9,6 @@ fn xml_escape(s : String) -> String {
 }
 
 ///|
-fn color_or(default_value : String, maybe : String?) -> String {
-  match maybe {
-    Some(value) => value
-    None => default_value
-  }
-}
-
-///|
 fn style_for_edge(style : EdgeStyle) -> String {
   match style {
     EdgeStyle::Solid => ""
@@ -396,6 +388,14 @@ fn marker_attr(name : String, marker_id : String?) -> String {
 }
 
 ///|
+fn css_var_attr(name : String, value : String?) -> String {
+  match value {
+    Some(found) => ";\{name}:\{found}"
+    None => ""
+  }
+}
+
+///|
 fn edge_label_bg_size(label : String) -> (Int, Int) {
   let width = (label.length() * 6 + 16).max(18)
   let height = 27
@@ -665,22 +665,24 @@ fn render_svg(
   font : String,
   transparent : Bool,
 ) -> String {
-  let line_color = color_or(colors.fg, colors.line)
-  let accent_color = color_or(line_color, colors.accent)
-  let muted_color = color_or(line_color, colors.muted)
-  let surface_color = color_or(colors.bg, colors.surface)
-  let border_color = color_or(line_color, colors.border)
   let sequence_mode = is_sequence_render(graph)
   let class_mode = is_class_render(graph)
   let er_mode = is_er_render(graph)
   let font_url = font_url_component(font)
+  let root_style = "--bg:\{colors.bg};--fg:\{colors.fg}" +
+    css_var_attr("--line", colors.line) +
+    css_var_attr("--accent", colors.accent) +
+    css_var_attr("--muted", colors.muted) +
+    css_var_attr("--surface", colors.surface) +
+    css_var_attr("--border", colors.border) +
+    (if transparent { "" } else { ";background:var(--bg)" })
 
   let sb = StringBuilder::new()
   sb.write_string(
-    "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"\{graph.width}\" height=\"\{graph.height}\" viewBox=\"0 0 \{graph.width} \{graph.height}\" style=\"--bg:\{colors.bg};--fg:\{colors.fg};--_text:\{colors.fg};--line:\{line_color};--accent:\{accent_color};--_arrow:\{accent_color};--muted:\{muted_color};--surface:\{surface_color};--border:\{border_color};--_line:var(--line);--_text-sec:var(--muted);--_text-muted:var(--muted);--_text-faint:var(--muted);--_node-fill:var(--surface);--_node-stroke:var(--border);--_group-fill:var(--bg);--_group-hdr:var(--surface);--_inner-stroke:var(--border);font-family:'\{xml_escape(font)}';background:var(--bg)\">",
+    "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"\{graph.width}\" height=\"\{graph.height}\" viewBox=\"0 0 \{graph.width} \{graph.height}\" style=\"\{root_style}\">",
   )
   sb.write_string(
-    "<style>@import url('https://fonts.googleapis.com/css2?family=\{font_url}:wght@400;500;600;700&display=swap');</style>",
+    "<style>@import url('https://fonts.googleapis.com/css2?family=\{font_url}:wght@400;500;600;700&display=swap');text{font-family:'\{xml_escape(font)}',system-ui,sans-serif}svg{--_text:var(--fg);--_text-sec:var(--muted,color-mix(in srgb,var(--fg) 60%,var(--bg)));--_text-muted:var(--muted,color-mix(in srgb,var(--fg) 40%,var(--bg)));--_text-faint:color-mix(in srgb,var(--fg) 25%,var(--bg));--_line:var(--line,color-mix(in srgb,var(--fg) 30%,var(--bg)));--_arrow:var(--accent,color-mix(in srgb,var(--fg) 50%,var(--bg)));--_node-fill:var(--surface,color-mix(in srgb,var(--fg) 3%,var(--bg)));--_node-stroke:var(--border,color-mix(in srgb,var(--fg) 20%,var(--bg)));--_group-fill:var(--bg);--_group-hdr:color-mix(in srgb,var(--fg) 5%,var(--bg));--_inner-stroke:color-mix(in srgb,var(--fg) 12%,var(--bg));--_key-badge:color-mix(in srgb,var(--fg) 10%,var(--bg));}</style>",
   )
   sb.write_string("<defs>")
   sb.write_string(

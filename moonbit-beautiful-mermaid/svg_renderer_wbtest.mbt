@@ -186,21 +186,46 @@ test "SVG renderer root includes viewBox dimensions" {
 }
 
 ///|
-test "SVG renderer root defines derived token aliases used by style classes" {
+test "SVG renderer root style defines derived tokens with color-mix fallbacks" {
   let svg = render_svg(
     make_svg_test_graph([]),
     DiagramColors::default(),
     "Inter",
     false,
   )
-  assert_true(svg.contains("--_line:var(--line)"))
-  assert_true(svg.contains("--_text-sec:var(--muted)"))
-  assert_true(svg.contains("--_text-muted:var(--muted)"))
-  assert_true(svg.contains("--_node-fill:var(--surface)"))
-  assert_true(svg.contains("--_node-stroke:var(--border)"))
+  assert_true(svg.contains("--_text:var(--fg)"))
+  assert_true(
+    svg.contains(
+      "--_line:var(--line,color-mix(in srgb,var(--fg) 30%,var(--bg)))",
+    ),
+  )
+  assert_true(
+    svg.contains(
+      "--_text-sec:var(--muted,color-mix(in srgb,var(--fg) 60%,var(--bg)))",
+    ),
+  )
+  assert_true(
+    svg.contains(
+      "--_text-muted:var(--muted,color-mix(in srgb,var(--fg) 40%,var(--bg)))",
+    ),
+  )
+  assert_true(
+    svg.contains(
+      "--_node-fill:var(--surface,color-mix(in srgb,var(--fg) 3%,var(--bg)))",
+    ),
+  )
+  assert_true(
+    svg.contains(
+      "--_node-stroke:var(--border,color-mix(in srgb,var(--fg) 20%,var(--bg)))",
+    ),
+  )
   assert_true(svg.contains("--_group-fill:var(--bg)"))
-  assert_true(svg.contains("--_group-hdr:var(--surface)"))
-  assert_true(svg.contains("--_inner-stroke:var(--border)"))
+  assert_true(
+    svg.contains("--_group-hdr:color-mix(in srgb,var(--fg) 5%,var(--bg))"),
+  )
+  assert_true(
+    svg.contains("--_inner-stroke:color-mix(in srgb,var(--fg) 12%,var(--bg))"),
+  )
 }
 
 ///|
@@ -212,6 +237,53 @@ test "SVG renderer root style sets background from CSS variable" {
     false,
   )
   assert_true(svg.contains("background:var(--bg)"))
+}
+
+///|
+test "SVG renderer transparent root style omits background" {
+  let svg = render_svg(
+    make_svg_test_graph([]),
+    DiagramColors::default(),
+    "Inter",
+    true,
+  )
+  assert_true(!svg.contains("background:var(--bg)"))
+}
+
+///|
+test "SVG renderer root style only sets required CSS vars by default" {
+  let svg = render_svg(
+    make_svg_test_graph([]),
+    DiagramColors::default(),
+    "Inter",
+    false,
+  )
+  assert_true(svg.contains("style=\"--bg:#FFFFFF;--fg:#27272A;background:var(--bg)\""))
+  assert_true(!svg.contains("--line:"))
+  assert_true(!svg.contains("--accent:"))
+  assert_true(!svg.contains("--muted:"))
+  assert_true(!svg.contains("--surface:"))
+  assert_true(!svg.contains("--border:"))
+}
+
+///|
+test "SVG renderer root style includes optional CSS vars when provided" {
+  let colors = DiagramColors::{
+    bg: "#111111",
+    fg: "#eeeeee",
+    line: Some("#123456"),
+    accent: Some("#234567"),
+    muted: Some("#345678"),
+    surface: Some("#456789"),
+    border: Some("#56789a"),
+  }
+  let svg = render_svg(make_svg_test_graph([]), colors, "Inter", false)
+
+  assert_true(svg.contains("--line:#123456"))
+  assert_true(svg.contains("--accent:#234567"))
+  assert_true(svg.contains("--muted:#345678"))
+  assert_true(svg.contains("--surface:#456789"))
+  assert_true(svg.contains("--border:#56789a"))
 }
 
 ///|
