@@ -552,7 +552,8 @@ fn flow_draw_box(
     }
   }
 
-  let text_x = left + ((width - label.length()) / 2).max(1)
+  let center_bias = if label.length() % 2 == 0 { 1 } else { 0 }
+  let text_x = left + ((width - label.length() + center_bias) / 2).max(1)
   let text_y = top + height / 2
   write_canvas_text(canvas, text_x, text_y, label)
 }

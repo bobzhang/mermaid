@@ -544,7 +544,7 @@ fn layout_state_is_back_edge(
 ) -> Bool {
   match (positions.get(source_id), positions.get(target_id)) {
     (Some(source), Some(target)) =>
-      source.y > target.y && source.x != target.x
+      source.y > target.y
     _ => false
   }
 }
