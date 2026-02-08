@@ -351,6 +351,11 @@ pub fn theme_by_name(name : String) -> DiagramColors? {
 }
 
 ///|
+pub fn theme_exists(name : String) -> Bool {
+  parse_theme_name(name) is Some(_)
+}
+
+///|
 pub fn built_in_themes() -> Array[ThemeName] {
   [
     ThemeName::ZincLight,

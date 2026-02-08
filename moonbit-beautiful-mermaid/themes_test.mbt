@@ -92,6 +92,13 @@ test "Theme lookup by name returns colors or none" {
 }
 
 ///|
+test "theme_exists reflects whether a theme name is supported" {
+  assert_eq(theme_exists("tokyo-night"), true)
+  assert_eq(theme_exists("TOKYO NIGHT"), true)
+  assert_eq(theme_exists("github-neon"), false)
+}
+
+///|
 test "Built-in theme slugs are exported for CLI and config UX" {
   let slugs = built_in_theme_slugs()
   assert_true(slugs.contains("zinc-light"))

@@ -63,6 +63,7 @@ test {
 
 Use built-in theme presets by name and pass the resulting colors through `RenderOptions`.
 Use `built_in_theme_colors()` if you want the full slug-to-colors map.
+Use `theme_exists(name)` to validate a user-provided theme name before rendering.
 Available slugs: `zinc-light`, `zinc-dark`, `tokyo-night`, `tokyo-night-storm`, `tokyo-night-light`, `catppuccin-mocha`, `catppuccin-latte`, `nord`, `nord-light`, `dracula`, `github-light`, `github-dark`, `solarized-light`, `solarized-dark`, `one-dark`.
 Theme names are case-insensitive and accept whitespace/underscores/hyphens.
 
