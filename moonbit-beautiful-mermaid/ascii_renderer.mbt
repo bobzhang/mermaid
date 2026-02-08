@@ -961,12 +961,18 @@ fn render_ascii_flow_subgraphs(
   let scale_x = if state_layout_mode { 9 } else { flow_scale_x() }
   let scale_y = if state_layout_mode { 10 } else { flow_scale_y() }
   let mut state_uniform_min_width : Int? = None
+  let mut state_flat_max_x : Int? = None
+  let mut state_flat_has_multiple_columns = false
   if state_flat_layout_mode {
     let mut max_state_text_len = 0
+    let x_columns : Map[Int, Bool] = {}
+    let mut max_node_x = 0
     for node in positioned.nodes {
       max_state_text_len = max_state_text_len.max(
         flow_node_label(node).length(),
       )
+      x_columns[node.x] = true
+      max_node_x = max_node_x.max(node.x)
     }
     for edge in positioned.edges {
       match edge.label {
@@ -974,6 +980,10 @@ fn render_ascii_flow_subgraphs(
           max_state_text_len = max_state_text_len.max(label.length())
         None => ()
       }
+    }
+    state_flat_has_multiple_columns = x_columns.length() > 1
+    if state_flat_has_multiple_columns {
+      state_flat_max_x = Some(max_node_x)
     }
     if max_state_text_len >= 12 {
       state_uniform_min_width = Some(max_state_text_len + 4)
@@ -999,7 +1009,23 @@ fn render_ascii_flow_subgraphs(
     let label = flow_node_label(node)
     let (min_width, min_height) = if state_layout_mode {
       match state_uniform_min_width {
-        Some(uniform_width) => (uniform_width, 5)
+        Some(uniform_width) => {
+          let narrowed_width = if state_flat_layout_mode &&
+            state_flat_has_multiple_columns {
+            match state_flat_max_x {
+              Some(max_x) =>
+                if node.x == max_x {
+                  (uniform_width - 1).max(12)
+                } else {
+                  uniform_width
+                }
+              None => uniform_width
+            }
+          } else {
+            uniform_width
+          }
+          (narrowed_width, 5)
+        }
         None =>
           match node.shape {
             NodeShape::StateStart | NodeShape::StateEnd =>
