@@ -142,3 +142,22 @@ test "from_shiki_theme maps token and editor colors to enrichment fields" {
   assert_eq(colors.surface, Some("#222222"))
   assert_eq(colors.border, Some("#444444"))
 }
+
+///|
+test "from_shiki_theme prefers focusBorder and falls back muted to line" {
+  let theme = ShikiTheme::{
+    theme_type: Some("dark"),
+    colors: Some({
+      "editor.background": "#111111",
+      "editor.foreground": "#eeeeee",
+      "editorLineNumber.foreground": "#666666",
+      "focusBorder": "#00ffcc",
+    }),
+    token_colors: Some([
+      ShikiTokenColor::{ scopes: ["keyword"], foreground: Some("#ff00ff") },
+    ]),
+  }
+  let colors = from_shiki_theme(theme)
+  assert_eq(colors.accent, Some("#00ffcc"))
+  assert_eq(colors.muted, Some("#666666"))
+}
