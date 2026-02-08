@@ -6,6 +6,7 @@ fn print_usage() -> Unit {
   println("  moon run cmd/main -- --theme=tokyo-night \"graph TD\\nA --> B\"")
   println("  moon run cmd/main -- --font='Roboto Mono' \"graph TD\\nA --> B\"")
   println("  moon run cmd/main -- --bg='#0f172a' \"graph TD\\nA --> B\"")
+  println("  moon run cmd/main -- --fg='#e2e8f0' \"graph TD\\nA --> B\"")
   println("  moon run cmd/main -- --transparent \"graph TD\\nA --> B\"")
   println("  moon run cmd/main -- --list-themes")
   println("Flags:")
@@ -13,6 +14,7 @@ fn print_usage() -> Unit {
   println("  --theme    SVG theme slug, e.g. tokyo-night, github-dark")
   println("  --font     SVG font family, e.g. Inter, Roboto Mono")
   println("  --bg       SVG background color, e.g. #0f172a")
+  println("  --fg       SVG foreground color, e.g. #e2e8f0")
   println("  --transparent  Omit SVG background fill")
   println("  --list-themes  Print built-in theme names")
   println("  --help     Show this help")
@@ -39,13 +41,26 @@ fn main {
   let mut theme_slug : String? = None
   let mut font_name : String? = None
   let mut bg_color : String? = None
+  let mut fg_color : String? = None
   let mut transparent = false
   let mut diagram : String? = None
   let mut expect_theme_value = false
   let mut expect_font_value = false
   let mut expect_bg_value = false
+  let mut expect_fg_value = false
 
   for arg in args {
+    if expect_fg_value {
+      if arg.has_prefix("--") {
+        println("Error: --fg requires a value")
+        print_usage()
+        return
+      }
+      fg_color = Some(arg)
+      expect_fg_value = false
+      continue
+    }
+
     if expect_bg_value {
       if arg.has_prefix("--") {
         println("Error: --bg requires a value")
@@ -104,6 +119,10 @@ fn main {
       expect_bg_value = true
       continue
     }
+    if arg == "--fg" {
+      expect_fg_value = true
+      continue
+    }
     if arg.has_prefix("--font=") {
       let font = (try! arg[7:]).to_string()
       if font == "" {
@@ -122,6 +141,16 @@ fn main {
         return
       }
       bg_color = Some(bg)
+      continue
+    }
+    if arg.has_prefix("--fg=") {
+      let fg = (try! arg[5:]).to_string()
+      if fg == "" {
+        println("Error: --fg requires a non-empty value")
+        print_usage()
+        return
+      }
+      fg_color = Some(fg)
       continue
     }
     if arg == "--theme" {
@@ -161,6 +190,11 @@ fn main {
     print_usage()
     return
   }
+  if expect_fg_value {
+    println("Error: --fg requires a value")
+    print_usage()
+    return
+  }
 
   let input = match diagram {
     Some(found) => found
@@ -188,7 +222,7 @@ fn main {
 
   let svg_options = @beautiful_mermaid.RenderOptions::{
     bg: bg_color,
-    fg: None,
+    fg: fg_color,
     line: None,
     accent: None,
     muted: None,
