@@ -9,6 +9,7 @@ fn print_usage() -> Unit {
   println("  moon run cmd/main -- --fg='#e2e8f0' \"graph TD\\nA --> B\"")
   println("  moon run cmd/main -- --line='#64748b' \"graph TD\\nA --> B\"")
   println("  moon run cmd/main -- --accent='#38bdf8' \"graph TD\\nA --> B\"")
+  println("  moon run cmd/main -- --muted='#94a3b8' \"graph TD\\nA --> B\"")
   println("  moon run cmd/main -- --transparent \"graph TD\\nA --> B\"")
   println("  moon run cmd/main -- --list-themes")
   println("Flags:")
@@ -19,6 +20,7 @@ fn print_usage() -> Unit {
   println("  --fg       SVG foreground color, e.g. #e2e8f0")
   println("  --line     SVG edge color, e.g. #64748b")
   println("  --accent   SVG accent color, e.g. #38bdf8")
+  println("  --muted    SVG muted text color, e.g. #94a3b8")
   println("  --transparent  Omit SVG background fill")
   println("  --list-themes  Print built-in theme names")
   println("  --help     Show this help")
@@ -48,6 +50,7 @@ fn main {
   let mut fg_color : String? = None
   let mut line_color : String? = None
   let mut accent_color : String? = None
+  let mut muted_color : String? = None
   let mut transparent = false
   let mut diagram : String? = None
   let mut expect_theme_value = false
@@ -56,8 +59,20 @@ fn main {
   let mut expect_fg_value = false
   let mut expect_line_value = false
   let mut expect_accent_value = false
+  let mut expect_muted_value = false
 
   for arg in args {
+    if expect_muted_value {
+      if arg.has_prefix("--") {
+        println("Error: --muted requires a value")
+        print_usage()
+        return
+      }
+      muted_color = Some(arg)
+      expect_muted_value = false
+      continue
+    }
+
     if expect_accent_value {
       if arg.has_prefix("--") {
         println("Error: --accent requires a value")
@@ -161,6 +176,10 @@ fn main {
       expect_accent_value = true
       continue
     }
+    if arg == "--muted" {
+      expect_muted_value = true
+      continue
+    }
     if arg.has_prefix("--font=") {
       let font = (try! arg[7:]).to_string()
       if font == "" {
@@ -209,6 +228,16 @@ fn main {
         return
       }
       accent_color = Some(accent)
+      continue
+    }
+    if arg.has_prefix("--muted=") {
+      let muted = (try! arg[8:]).to_string()
+      if muted == "" {
+        println("Error: --muted requires a non-empty value")
+        print_usage()
+        return
+      }
+      muted_color = Some(muted)
       continue
     }
     if arg == "--theme" {
@@ -263,6 +292,11 @@ fn main {
     print_usage()
     return
   }
+  if expect_muted_value {
+    println("Error: --muted requires a value")
+    print_usage()
+    return
+  }
 
   let input = match diagram {
     Some(found) => found
@@ -293,7 +327,7 @@ fn main {
     fg: fg_color,
     line: line_color,
     accent: accent_color,
-    muted: None,
+    muted: muted_color,
     surface: None,
     border: None,
     font: font_name,
