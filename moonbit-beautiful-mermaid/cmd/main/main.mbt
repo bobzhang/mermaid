@@ -62,7 +62,13 @@ fn cli_args_without_program() -> Array[String] {
 
 ///|
 fn parse_non_negative_int(raw : String) -> Int? {
-  let parsed : Result[Int, @strconv.StrConvError] = try? @strconv.parse_int(raw)
+  let normalized = raw.trim().to_string()
+  if normalized == "" {
+    return None
+  }
+  let parsed : Result[Int, @strconv.StrConvError] = try? @strconv.parse_int(
+    normalized,
+  )
   match parsed {
     Ok(value) => if value >= 0 { Some(value) } else { None }
     Err(_) => None

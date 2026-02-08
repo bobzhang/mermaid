@@ -3,6 +3,7 @@ test "parse_non_negative_int accepts zero and positive integers" {
   assert_eq(parse_non_negative_int("0"), Some(0))
   assert_eq(parse_non_negative_int("1"), Some(1))
   assert_eq(parse_non_negative_int("42"), Some(42))
+  assert_eq(parse_non_negative_int(" 7 "), Some(7))
 }
 
 ///|
