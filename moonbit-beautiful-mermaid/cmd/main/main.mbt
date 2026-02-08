@@ -106,6 +106,37 @@ fn text_mode_override(arg : String) -> Bool? {
 }
 
 ///|
+fn svg_options_overridden(
+  theme_slug : String?,
+  font_name : String?,
+  bg_color : String?,
+  fg_color : String?,
+  line_color : String?,
+  accent_color : String?,
+  muted_color : String?,
+  surface_color : String?,
+  border_color : String?,
+  padding : Int?,
+  node_spacing : Int?,
+  layer_spacing : Int?,
+  transparent : Bool,
+) -> Bool {
+  theme_slug is Some(_) ||
+  font_name is Some(_) ||
+  bg_color is Some(_) ||
+  fg_color is Some(_) ||
+  line_color is Some(_) ||
+  accent_color is Some(_) ||
+  muted_color is Some(_) ||
+  surface_color is Some(_) ||
+  border_color is Some(_) ||
+  padding is Some(_) ||
+  node_spacing is Some(_) ||
+  layer_spacing is Some(_) ||
+  transparent
+}
+
+///|
 fn main {
   let args = cli_args_without_program()
   let mut render_text = false
@@ -719,6 +750,28 @@ fn main {
   ) {
     println(
       "Error: ASCII spacing flags require --ascii or --unicode text output mode",
+    )
+    print_usage()
+    return
+  }
+  if render_text &&
+    svg_options_overridden(
+      theme_slug,
+      font_name,
+      bg_color,
+      fg_color,
+      line_color,
+      accent_color,
+      muted_color,
+      surface_color,
+      border_color,
+      padding,
+      node_spacing,
+      layer_spacing,
+      transparent,
+    ) {
+    println(
+      "Error: SVG flags require SVG output mode (omit --ascii/--unicode)",
     )
     print_usage()
     return
