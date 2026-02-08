@@ -384,6 +384,63 @@ fn flow_edge_anchor(
 }
 
 ///|
+fn label_overlaps_node_box(
+  x : Int,
+  y : Int,
+  label : String,
+  box : AsciiFlowNodeBox,
+) -> Bool {
+  let box_left = box.left
+  let box_right = box.left + box.width - 1
+  let box_top = box.top
+  let box_bottom = box.top + box.height - 1
+  if y < box_top || y > box_bottom {
+    return false
+  }
+  let label_left = x
+  let label_right = x + label.length() - 1
+  !(label_right < box_left || label_left > box_right)
+}
+
+///|
+fn label_overlaps_any_node_box(
+  x : Int,
+  y : Int,
+  label : String,
+  boxes : Array[AsciiFlowNodeBox],
+) -> Bool {
+  for box in boxes {
+    if label_overlaps_node_box(x, y, label, box) {
+      return true
+    }
+  }
+  false
+}
+
+///|
+fn adjust_label_y_for_state_boxes(
+  x : Int,
+  y : Int,
+  label : String,
+  boxes : Array[AsciiFlowNodeBox],
+) -> Int {
+  if !label_overlaps_any_node_box(x, y, label, boxes) {
+    return y
+  }
+  for offset in 1..<=6 {
+    let up = y - offset
+    if !label_overlaps_any_node_box(x, up, label, boxes) {
+      return up
+    }
+    let down = y + offset
+    if !label_overlaps_any_node_box(x, down, label, boxes) {
+      return down
+    }
+  }
+  y
+}
+
+///|
 fn flow_draw_box(
   canvas : Array[Array[String]],
   left : Int,
@@ -823,7 +880,18 @@ fn render_ascii_flow_subgraphs(
     }
     match edge.label {
       Some(label) => {
-        let (anchor_x, anchor_y) = if state_layout_mode {
+        let mut has_labeled_reverse = false
+        if state_layout_mode {
+          for candidate in positioned.edges {
+            if candidate.source == edge.target && candidate.target == edge.source {
+              if candidate.label is Some(_) {
+                has_labeled_reverse = true
+                break
+              }
+            }
+          }
+        }
+        let (anchor_x, anchor_y) = if state_layout_mode && has_labeled_reverse {
           (
             (source_anchor_x + target_anchor_x) / 2,
             (source_anchor_y + target_anchor_y) / 2,
@@ -842,7 +910,17 @@ fn render_ascii_flow_subgraphs(
         }
         edge_label_overlays.push(AsciiEdgeLabelPlacement::{
           x: anchor_x - label.length() / 2,
-          y: anchor_y,
+          y:
+            if state_layout_mode {
+              adjust_label_y_for_state_boxes(
+                anchor_x - label.length() / 2,
+                anchor_y,
+                label,
+                mapped_nodes,
+              )
+            } else {
+              anchor_y
+            },
           label,
         })
       }
