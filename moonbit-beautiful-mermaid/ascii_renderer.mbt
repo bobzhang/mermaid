@@ -584,7 +584,7 @@ fn flow_mark_blocked_cells_for_nodes(
 }
 
 ///|
-fn flow_draw_routed_diagonal_segment(
+fn flow_draw_routed_segment(
   canvas : Array[Array[String]],
   x1 : Int,
   y1 : Int,
@@ -909,9 +909,8 @@ fn render_ascii_flow_subgraphs(
       let y2 = scale_coord(p2.y, scale_y, options.padding_y)
       let routed =
         state_layout_mode &&
-        x1 != x2 &&
-        y1 != y2 &&
-        flow_draw_routed_diagonal_segment(
+        (x1 != x2 || y1 != y2) &&
+        flow_draw_routed_segment(
           canvas,
           x1,
           y1,
