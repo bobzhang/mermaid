@@ -5,6 +5,12 @@ struct AsciiGridCoord {
 } derive(Eq, Show)
 
 ///|
+priv struct AsciiGridFrontierEntry {
+  coord : AsciiGridCoord
+  priority : Int
+}
+
+///|
 fn ascii_grid_key(coord : AsciiGridCoord) -> String {
   "\{coord.x}:\{coord.y}"
 }
@@ -61,6 +67,17 @@ fn ascii_grid_reconstruct_path(
 }
 
 ///|
+fn ascii_grid_heuristic(a : AsciiGridCoord, b : AsciiGridCoord) -> Int {
+  let abs_x = (a.x - b.x).abs()
+  let abs_y = (a.y - b.y).abs()
+  if abs_x == 0 || abs_y == 0 {
+    abs_x + abs_y
+  } else {
+    abs_x + abs_y + 1
+  }
+}
+
+///|
 fn ascii_grid_pathfind(
   start : AsciiGridCoord,
   end : AsciiGridCoord,
@@ -80,15 +97,47 @@ fn ascii_grid_pathfind(
     return Some([start])
   }
 
-  let queue : Array[AsciiGridCoord] = [start]
-  let mut head = 0
-  let seen : Map[String, Bool] = {}
-  let came_from : Map[String, AsciiGridCoord] = {}
-  seen[ascii_grid_key(start)] = true
+  let frontier : Array[AsciiGridFrontierEntry] = [AsciiGridFrontierEntry::{
+    coord: start,
+    priority: 0,
+  }]
+  let mut frontier_head = 0
+  let frontier_best_priority_by_key : Map[String, Int] = {}
+  frontier_best_priority_by_key[ascii_grid_key(start)] = 0
 
-  while head < queue.length() {
-    let current = queue[head]
-    head = head + 1
+  let cost_so_far : Map[String, Int] = {}
+  cost_so_far[ascii_grid_key(start)] = 0
+  let came_from : Map[String, AsciiGridCoord] = {}
+  while frontier_head < frontier.length() {
+    let mut min_index = frontier_head
+    for i in (frontier_head + 1)..<frontier.length() {
+      if frontier[i].priority < frontier[min_index].priority {
+        min_index = i
+      }
+    }
+    if min_index != frontier_head {
+      let swap_value = frontier[min_index]
+      frontier[min_index] = frontier[frontier_head]
+      frontier[frontier_head] = swap_value
+    }
+
+    let entry = frontier[frontier_head]
+    frontier_head = frontier_head + 1
+    let current = entry.coord
+    let current_key = ascii_grid_key(current)
+    let best_priority = option_int_or(
+      frontier_best_priority_by_key.get(current_key),
+      entry.priority,
+    )
+    if entry.priority > best_priority {
+      continue
+    }
+
+    if current == end {
+      return ascii_grid_reconstruct_path(start, end, came_from)
+    }
+
+    let current_cost = option_int_or(cost_so_far.get(current_key), 0)
 
     for next in ascii_grid_neighbors(current) {
       if !ascii_grid_in_bounds(next, min_x, max_x, min_y, max_y) {
@@ -99,18 +148,50 @@ fn ascii_grid_pathfind(
       }
 
       let next_key = ascii_grid_key(next)
-      if seen.contains(next_key) {
-        continue
+      let new_cost = current_cost + 1
+      let is_better = match cost_so_far.get(next_key) {
+        Some(existing) => new_cost < existing
+        None => true
       }
-      seen[next_key] = true
-      came_from[next_key] = current
-
-      if next == end {
-        return ascii_grid_reconstruct_path(start, end, came_from)
+      if is_better {
+        cost_so_far[next_key] = new_cost
+        came_from[next_key] = current
+        let next_priority = new_cost + ascii_grid_heuristic(next, end)
+        frontier_best_priority_by_key[next_key] = next_priority
+        frontier.push(AsciiGridFrontierEntry::{
+          coord: next,
+          priority: next_priority,
+        })
       }
-      queue.push(next)
     }
   }
 
   None
+}
+
+///|
+fn ascii_grid_merge_path(path : Array[AsciiGridCoord]) -> Array[AsciiGridCoord] {
+  if path.length() <= 2 {
+    return path
+  }
+
+  let merged : Array[AsciiGridCoord] = []
+  merged.push(path[0])
+  let mut previous = path[0]
+  let mut current = path[1]
+
+  for i in 2..<path.length() {
+    let next = path[i]
+    let previous_dx = current.x - previous.x
+    let previous_dy = current.y - previous.y
+    let next_dx = next.x - current.x
+    let next_dy = next.y - current.y
+    if previous_dx != next_dx || previous_dy != next_dy {
+      merged.push(current)
+    }
+    previous = current
+    current = next
+  }
+  merged.push(path[path.length() - 1])
+  merged
 }

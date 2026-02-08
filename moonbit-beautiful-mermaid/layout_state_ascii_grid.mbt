@@ -282,25 +282,7 @@ fn layout_state_grid_coord_with_dir(
 
 ///|
 fn layout_state_merge_grid_path(path : Array[AsciiGridCoord]) -> Array[AsciiGridCoord] {
-  if path.length() <= 2 {
-    return path
-  }
-  let merged : Array[AsciiGridCoord] = [path[0]]
-  for i in 1..<(path.length() - 1) {
-    let previous = path[i - 1]
-    let current = path[i]
-    let next = path[i + 1]
-    let previous_dx = current.x - previous.x
-    let previous_dy = current.y - previous.y
-    let next_dx = next.x - current.x
-    let next_dy = next.y - current.y
-    if previous_dx == next_dx && previous_dy == next_dy {
-      continue
-    }
-    merged.push(current)
-  }
-  merged.push(path[path.length() - 1])
-  merged
+  ascii_grid_merge_path(path)
 }
 
 ///|

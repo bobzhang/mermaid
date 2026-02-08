@@ -76,3 +76,16 @@ test "ascii grid pathfinder returns None when unreachable" {
     None => ()
   }
 }
+
+///|
+test "ascii grid merge path removes interior straight points" {
+  let path = [
+    AsciiGridCoord::{ x: 0, y: 0 },
+    AsciiGridCoord::{ x: 1, y: 0 },
+    AsciiGridCoord::{ x: 2, y: 0 },
+    AsciiGridCoord::{ x: 2, y: 1 },
+    AsciiGridCoord::{ x: 2, y: 2 },
+  ]
+  let merged = ascii_grid_merge_path(path)
+  assert_eq(path_to_string(merged), "(0,0) -> (2,0) -> (2,2)")
+}

@@ -419,8 +419,10 @@ test "state edge path prototype matches key lifecycle routes" {
     "Reconnecting",
     "Closed",
   )
-  assert_true(reconnect_closed_path.has_prefix("(5,16)"))
-  assert_true(reconnect_closed_path.has_suffix("(2,5)"))
+  assert_eq(
+    reconnect_closed_path,
+    "(6,17) -> (7,17) -> (7,5) -> (2,5)",
+  )
   assert_eq(
     state_edge_path_text_td(positions, blocked, "Closed", "state_end_1"),
     "(2,5) -> (5,5) -> (5,8)",
