@@ -18,6 +18,7 @@ Regenerate the upstream sample smoke test after upstream `samples-data.ts` chang
 - `moon test upstream_samples_smoke_test.mbt --target native`
 - `moon test ascii_flowchart_corpus_test.mbt --target native`
 - `moon test ascii_state_corpus_test.mbt --target native`
+- `CATEGORY=State bun run moonbit-beautiful-mermaid/scripts/check_sample_text_parity.ts` (optional parity audit against upstream text output)
 
 ## Quick Start
 
