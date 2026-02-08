@@ -11,6 +11,7 @@ fn print_usage() -> Unit {
   println("  moon run cmd/main -- --accent='#38bdf8' \"graph TD\\nA --> B\"")
   println("  moon run cmd/main -- --muted='#94a3b8' \"graph TD\\nA --> B\"")
   println("  moon run cmd/main -- --surface='#0b1220' \"graph TD\\nA --> B\"")
+  println("  moon run cmd/main -- --border='#334155' \"graph TD\\nA --> B\"")
   println("  moon run cmd/main -- --transparent \"graph TD\\nA --> B\"")
   println("  moon run cmd/main -- --list-themes")
   println("Flags:")
@@ -23,6 +24,7 @@ fn print_usage() -> Unit {
   println("  --accent   SVG accent color, e.g. #38bdf8")
   println("  --muted    SVG muted text color, e.g. #94a3b8")
   println("  --surface  SVG node fill color, e.g. #0b1220")
+  println("  --border   SVG stroke color, e.g. #334155")
   println("  --transparent  Omit SVG background fill")
   println("  --list-themes  Print built-in theme names")
   println("  --help     Show this help")
@@ -54,6 +56,7 @@ fn main {
   let mut accent_color : String? = None
   let mut muted_color : String? = None
   let mut surface_color : String? = None
+  let mut border_color : String? = None
   let mut transparent = false
   let mut diagram : String? = None
   let mut expect_theme_value = false
@@ -64,8 +67,20 @@ fn main {
   let mut expect_accent_value = false
   let mut expect_muted_value = false
   let mut expect_surface_value = false
+  let mut expect_border_value = false
 
   for arg in args {
+    if expect_border_value {
+      if arg.has_prefix("--") {
+        println("Error: --border requires a value")
+        print_usage()
+        return
+      }
+      border_color = Some(arg)
+      expect_border_value = false
+      continue
+    }
+
     if expect_surface_value {
       if arg.has_prefix("--") {
         println("Error: --surface requires a value")
@@ -199,6 +214,10 @@ fn main {
       expect_surface_value = true
       continue
     }
+    if arg == "--border" {
+      expect_border_value = true
+      continue
+    }
     if arg.has_prefix("--font=") {
       let font = (try! arg[7:]).to_string()
       if font == "" {
@@ -269,6 +288,16 @@ fn main {
       surface_color = Some(surface)
       continue
     }
+    if arg.has_prefix("--border=") {
+      let border = (try! arg[9:]).to_string()
+      if border == "" {
+        println("Error: --border requires a non-empty value")
+        print_usage()
+        return
+      }
+      border_color = Some(border)
+      continue
+    }
     if arg == "--theme" {
       expect_theme_value = true
       continue
@@ -331,6 +360,11 @@ fn main {
     print_usage()
     return
   }
+  if expect_border_value {
+    println("Error: --border requires a value")
+    print_usage()
+    return
+  }
 
   let input = match diagram {
     Some(found) => found
@@ -363,7 +397,7 @@ fn main {
     accent: accent_color,
     muted: muted_color,
     surface: surface_color,
-    border: None,
+    border: border_color,
     font: font_name,
     padding: None,
     node_spacing: None,
