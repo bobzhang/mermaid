@@ -82,7 +82,7 @@ fn flow_scale_x() -> Int {
 
 ///|
 fn flow_scale_y() -> Int {
-  10
+  9
 }
 
 ///|
@@ -1749,7 +1749,7 @@ fn render_ascii_flow_subgraphs(
     let (min_width, min_height) = if state_layout_mode {
       (option_int_or(state_column_width_by_x.get(node.x), 12), 5)
     } else {
-      ((label.length() + 4).max(11), 5)
+      ((label.length() + 4).max(5), 5)
     }
     let width = if state_layout_mode {
       scale_size(node.width, scale_x, min_width)
@@ -1772,6 +1772,52 @@ fn render_ascii_flow_subgraphs(
       height,
     }
     mapped_nodes.push(box)
+  }
+
+  if !state_layout_mode {
+    let row_indexes_by_center_y : Map[Int, Array[Int]] = {}
+    for i, node in mapped_nodes {
+      let center_y = node.top + node.height / 2
+      if !row_indexes_by_center_y.contains(center_y) {
+        row_indexes_by_center_y[center_y] = []
+      }
+      row_indexes_by_center_y[center_y].push(i)
+    }
+
+    for _, row_indexes in row_indexes_by_center_y {
+      for i in 1..<row_indexes.length() {
+        let mut j = i
+        while j > 0 {
+          let left_curr = mapped_nodes[row_indexes[j]].left
+          let left_prev = mapped_nodes[row_indexes[j - 1]].left
+          if left_prev <= left_curr {
+            break
+          }
+          let temp = row_indexes[j - 1]
+          row_indexes[j - 1] = row_indexes[j]
+          row_indexes[j] = temp
+          j = j - 1
+        }
+      }
+
+      for i in 1..<row_indexes.length() {
+        let prev_idx = row_indexes[i - 1]
+        let curr_idx = row_indexes[i]
+        let prev_node = mapped_nodes[prev_idx]
+        let curr_node = mapped_nodes[curr_idx]
+        let desired_left = prev_node.left + prev_node.width + options.padding_x
+        if curr_node.left != desired_left {
+          mapped_nodes[curr_idx] = AsciiFlowNodeBox::{
+            id: curr_node.id,
+            label: curr_node.label,
+            left: desired_left,
+            top: curr_node.top,
+            width: curr_node.width,
+            height: curr_node.height,
+          }
+        }
+      }
+    }
   }
 
   let node_box_by_id : Map[String, AsciiFlowNodeBox] = {}
@@ -1834,41 +1880,122 @@ fn render_ascii_flow_subgraphs(
   }
   for edge in positioned.edges {
     let (h_char, v_char) = flow_line_chars(edge.style, options.use_ascii)
-    let points = edge.points
-    if points.length() < 2 {
-      continue
-    }
-    for i in 1..<points.length() {
-      let p1 = points[i - 1]
-      let p2 = points[i]
-      let x1 = scale_coord(p1.x, scale_x, options.padding_x)
-      let y1 = scale_coord(p1.y, scale_y, options.padding_y)
-      let x2 = scale_coord(p2.x, scale_x, options.padding_x)
-      let y2 = scale_coord(p2.y, scale_y, options.padding_y)
-      let routed = state_flat_layout_mode &&
-        (x1 != x2 || y1 != y2) &&
-        flow_draw_routed_segment(
-          canvas, x1, y1, x2, y2, h_char, v_char, blocked_cells,
-        )
-      if !routed {
-        flow_draw_segment(canvas, x1, y1, x2, y2, h_char, v_char)
+    let mut first_x = 0
+    let mut first_y = 0
+    let mut end_x = 0
+    let mut end_y = 0
+    let mut start_dx = 0
+    let mut start_dy = 0
+    let mut end_dx = 0
+    let mut end_dy = 0
+    let mut source_anchor_x = 0
+    let mut source_anchor_y = 0
+    let mut target_anchor_x = 0
+    let mut target_anchor_y = 0
+
+    if state_layout_mode {
+      let points = edge.points
+      if points.length() < 2 {
+        continue
+      }
+      for i in 1..<points.length() {
+        let p1 = points[i - 1]
+        let p2 = points[i]
+        let x1 = scale_coord(p1.x, scale_x, options.padding_x)
+        let y1 = scale_coord(p1.y, scale_y, options.padding_y)
+        let x2 = scale_coord(p2.x, scale_x, options.padding_x)
+        let y2 = scale_coord(p2.y, scale_y, options.padding_y)
+        let routed = state_flat_layout_mode &&
+          (x1 != x2 || y1 != y2) &&
+          flow_draw_routed_segment(
+            canvas, x1, y1, x2, y2, h_char, v_char, blocked_cells,
+          )
+        if !routed {
+          flow_draw_segment(canvas, x1, y1, x2, y2, h_char, v_char)
+        }
+      }
+
+      let first = points[0]
+      let next = points[1]
+      first_x = scale_coord(first.x, scale_x, options.padding_x)
+      first_y = scale_coord(first.y, scale_y, options.padding_y)
+      let next_x = scale_coord(next.x, scale_x, options.padding_x)
+      let next_y = scale_coord(next.y, scale_y, options.padding_y)
+      start_dx = next_x - first_x
+      start_dy = next_y - first_y
+      let source_anchor = match node_box_by_id.get(edge.source) {
+        Some(source_box) =>
+          flow_edge_anchor(source_box, start_dx, start_dy, false)
+        None => (first_x, first_y)
+      }
+      let (sx, sy) = source_anchor
+      source_anchor_x = sx
+      source_anchor_y = sy
+
+      let last = points[points.length() - 1]
+      let prev = points[points.length() - 2]
+      end_x = scale_coord(last.x, scale_x, options.padding_x)
+      end_y = scale_coord(last.y, scale_y, options.padding_y)
+      let prev_x = scale_coord(prev.x, scale_x, options.padding_x)
+      let prev_y = scale_coord(prev.y, scale_y, options.padding_y)
+      end_dx = end_x - prev_x
+      end_dy = end_y - prev_y
+      let target_anchor = match node_box_by_id.get(edge.target) {
+        Some(target_box) => flow_edge_anchor(target_box, end_dx, end_dy, true)
+        None => (end_x, end_y)
+      }
+      let (tx, ty) = target_anchor
+      target_anchor_x = tx
+      target_anchor_y = ty
+    } else {
+      match (node_box_by_id.get(edge.source), node_box_by_id.get(edge.target)) {
+        (Some(source_box), Some(target_box)) => {
+          let source_center_x = source_box.left + source_box.width / 2
+          let source_center_y = source_box.top + source_box.height / 2
+          let target_center_x = target_box.left + target_box.width / 2
+          let target_center_y = target_box.top + target_box.height / 2
+          start_dx = target_center_x - source_center_x
+          start_dy = target_center_y - source_center_y
+          end_dx = start_dx
+          end_dy = start_dy
+
+          let source_anchor = flow_edge_anchor(
+            source_box,
+            start_dx,
+            start_dy,
+            false,
+          )
+          let target_anchor = flow_edge_anchor(
+            target_box,
+            end_dx,
+            end_dy,
+            true,
+          )
+          let (sx, sy) = source_anchor
+          let (tx, ty) = target_anchor
+          source_anchor_x = sx
+          source_anchor_y = sy
+          target_anchor_x = tx
+          target_anchor_y = ty
+          first_x = source_anchor_x
+          first_y = source_anchor_y
+          end_x = target_anchor_x
+          end_y = target_anchor_y
+
+          flow_draw_segment(
+            canvas,
+            source_anchor_x,
+            source_anchor_y,
+            target_anchor_x,
+            target_anchor_y,
+            h_char,
+            v_char,
+          )
+        }
+        _ => continue
       }
     }
 
-    let first = points[0]
-    let next = points[1]
-    let first_x = scale_coord(first.x, scale_x, options.padding_x)
-    let first_y = scale_coord(first.y, scale_y, options.padding_y)
-    let next_x = scale_coord(next.x, scale_x, options.padding_x)
-    let next_y = scale_coord(next.y, scale_y, options.padding_y)
-    let start_dx = next_x - first_x
-    let start_dy = next_y - first_y
-    let (source_anchor_x, source_anchor_y) = match
-      node_box_by_id.get(edge.source) {
-      Some(source_box) =>
-        flow_edge_anchor(source_box, start_dx, start_dy, false)
-      None => (first_x, first_y)
-    }
     match border_join_marker(start_dx, start_dy, false, options.use_ascii) {
       Some(marker) =>
         border_overlays.push(AsciiArrowPlacement::{
@@ -1877,20 +2004,6 @@ fn render_ascii_flow_subgraphs(
           marker,
         })
       None => ()
-    }
-
-    let last = points[points.length() - 1]
-    let prev = points[points.length() - 2]
-    let end_x = scale_coord(last.x, scale_x, options.padding_x)
-    let end_y = scale_coord(last.y, scale_y, options.padding_y)
-    let prev_x = scale_coord(prev.x, scale_x, options.padding_x)
-    let prev_y = scale_coord(prev.y, scale_y, options.padding_y)
-    let end_dx = end_x - prev_x
-    let end_dy = end_y - prev_y
-    let (target_anchor_x, target_anchor_y) = match
-      node_box_by_id.get(edge.target) {
-      Some(target_box) => flow_edge_anchor(target_box, end_dx, end_dy, true)
-      None => (end_x, end_y)
     }
     match edge.label {
       Some(label) => {
@@ -1908,6 +2021,11 @@ fn render_ascii_flow_subgraphs(
           }
         }
         let (anchor_x, anchor_y) = if has_labeled_reverse_shared_path {
+          (
+            (source_anchor_x + target_anchor_x) / 2,
+            (source_anchor_y + target_anchor_y) / 2,
+          )
+        } else if !state_layout_mode {
           (
             (source_anchor_x + target_anchor_x) / 2,
             (source_anchor_y + target_anchor_y) / 2,
