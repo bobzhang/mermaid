@@ -1,0 +1,6 @@
+erDiagram
+  CUSTOMER ||--o{ ORDER : places
+---
++----------+places+-------+
+| CUSTOMER |||--o{| ORDER |
++----------+      +-------+
