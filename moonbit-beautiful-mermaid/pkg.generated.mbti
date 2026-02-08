@@ -8,6 +8,8 @@ pub fn built_in_theme_slugs() -> Array[String]
 
 pub fn built_in_themes() -> Array[ThemeName]
 
+pub fn default_colors() -> DiagramColors
+
 pub fn merge_options_with_colors(RenderOptions, DiagramColors) -> RenderOptions
 
 pub fn parse_mermaid(String) -> MermaidGraph raise MermaidError

@@ -18,6 +18,14 @@ test "Public API smoke test" {
 }
 
 ///|
+test "default_colors matches DiagramColors default" {
+  assert_eq(
+    @beautiful_mermaid.default_colors(),
+    @beautiful_mermaid.DiagramColors::default(),
+  )
+}
+
+///|
 test "render_mermaid_with_colors applies theme colors by default" {
   let colors = match @beautiful_mermaid.theme_by_name("tokyo-night") {
     Some(found) => found

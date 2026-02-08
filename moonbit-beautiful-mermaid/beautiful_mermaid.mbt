@@ -15,6 +15,11 @@ fn option_bool_or(value : Bool?, fallback : Bool) -> Bool {
 }
 
 ///|
+pub fn default_colors() -> DiagramColors {
+  DiagramColors::default()
+}
+
+///|
 fn option_color_or(value : String?, fallback : String?) -> String? {
   match value {
     Some(found) => Some(found)
