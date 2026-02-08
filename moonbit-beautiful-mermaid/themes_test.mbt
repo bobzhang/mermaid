@@ -216,6 +216,14 @@ test "from_shiki_theme falls back for missing editor colors" {
   })
   assert_eq(light.bg, "#ffffff")
   assert_eq(light.fg, "#333333")
+
+  let unspecified = from_shiki_theme(ShikiTheme::{
+    theme_type: None,
+    colors: None,
+    token_colors: None,
+  })
+  assert_eq(unspecified.bg, "#ffffff")
+  assert_eq(unspecified.fg, "#333333")
 }
 
 ///|
