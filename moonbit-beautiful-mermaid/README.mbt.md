@@ -152,5 +152,6 @@ Run the local CLI entrypoint from the module root:
 - `moon run cmd/main -- --font "Roboto Mono" "graph TD\nA --> B"`
 - `moon run cmd/main -- --bg "#0f172a" "graph TD\nA --> B"`
 - `moon run cmd/main -- --fg "#e2e8f0" "graph TD\nA --> B"`
+- `moon run cmd/main -- --line "#64748b" "graph TD\nA --> B"`
 - `moon run cmd/main -- --transparent "graph TD\nA --> B"`
 - `moon run cmd/main -- --list-themes`
