@@ -338,3 +338,12 @@ pub fn built_in_themes() -> Array[ThemeName] {
 pub fn built_in_theme_slugs() -> Array[String] {
   built_in_themes().map(theme_slug)
 }
+
+///|
+pub fn built_in_theme_colors() -> Map[String, DiagramColors] {
+  let themes : Map[String, DiagramColors] = {}
+  for theme in built_in_themes() {
+    themes[theme_slug(theme)] = theme_colors(theme)
+  }
+  themes
+}

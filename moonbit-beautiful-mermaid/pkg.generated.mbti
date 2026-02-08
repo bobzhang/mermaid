@@ -4,6 +4,8 @@ package "hongbozhang/beautiful_mermaid"
 // Values
 pub fn build_colors(RenderOptions) -> DiagramColors
 
+pub fn built_in_theme_colors() -> Map[String, DiagramColors]
+
 pub fn built_in_theme_slugs() -> Array[String]
 
 pub fn built_in_themes() -> Array[ThemeName]

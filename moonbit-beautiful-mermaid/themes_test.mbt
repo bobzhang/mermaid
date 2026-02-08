@@ -86,6 +86,21 @@ test "Built-in theme slugs are exported for CLI and config UX" {
 }
 
 ///|
+test "Built-in theme color map is exported by slug" {
+  let themes = built_in_theme_colors()
+  for theme in built_in_themes() {
+    assert_true(themes.get(theme_slug(theme)) is Some(_))
+  }
+
+  let tokyo_night = match themes.get("tokyo-night") {
+    Some(found) => found
+    None => fail("missing tokyo-night in built-in map")
+  }
+  assert_eq(tokyo_night.bg, "#1a1b26")
+  assert_eq(tokyo_night.accent, Some("#7aa2f7"))
+}
+
+///|
 test "from_shiki_theme extracts bg and fg from editor colors" {
   let theme = ShikiTheme::{
     theme_type: Some("dark"),
