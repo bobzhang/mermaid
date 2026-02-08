@@ -393,7 +393,79 @@ fn flow_non_state_label_anchor(
 }
 
 ///|
+fn flow_non_state_route_points(
+  source_x : Int,
+  source_y : Int,
+  target_x : Int,
+  target_y : Int,
+  horizontal_first : Bool,
+) -> Array[Point] {
+  let points : Array[Point] = [Point::{ x: source_x, y: source_y }]
+  if source_x != target_x && source_y != target_y {
+    if horizontal_first {
+      points.push(Point::{ x: target_x, y: source_y })
+    } else {
+      points.push(Point::{ x: source_x, y: target_y })
+    }
+  }
+  points.push(Point::{ x: target_x, y: target_y })
+  points
+}
+
+///|
+fn flow_non_state_edge_span(start : Point, ending : Point) -> Int {
+  (ending.x - start.x).abs() + (ending.y - start.y).abs()
+}
+
+///|
+fn flow_non_state_label_anchor_from_points(
+  points : Array[Point],
+  source_x : Int,
+  source_y : Int,
+  target_x : Int,
+  target_y : Int,
+  label_len : Int,
+) -> (Int, Int) {
+  if points.length() < 2 {
+    return flow_non_state_label_anchor(
+      source_x,
+      source_y,
+      target_x,
+      target_y,
+      label_len,
+    )
+  }
+
+  let mut best_start = points[0]
+  let mut best_end = points[1]
+  let mut best_span = flow_non_state_edge_span(best_start, best_end)
+  let mut found_label_fit = best_span >= label_len
+
+  for i in 1..<points.length() {
+    let start = points[i - 1]
+    let ending = points[i]
+    let span = flow_non_state_edge_span(start, ending)
+    if span >= label_len {
+      if !found_label_fit || span > best_span {
+        best_start = start
+        best_end = ending
+        best_span = span
+        found_label_fit = true
+      }
+    } else if !found_label_fit && span > best_span {
+      best_start = start
+      best_end = ending
+      best_span = span
+    }
+  }
+
+  let point = midpoint(best_start, best_end)
+  (point.x, point.y)
+}
+
+///|
 fn flow_non_state_edge_label_placement(
+  points : Array[Point],
   source_x : Int,
   source_y : Int,
   target_x : Int,
@@ -402,7 +474,8 @@ fn flow_non_state_edge_label_placement(
   boxes : Array[AsciiFlowNodeBox],
   existing_labels : Array[AsciiEdgeLabelPlacement],
 ) -> AsciiEdgeLabelPlacement {
-  let (anchor_x, anchor_y) = flow_non_state_label_anchor(
+  let (anchor_x, anchor_y) = flow_non_state_label_anchor_from_points(
+    points,
     source_x, source_y, target_x, target_y, label.length(),
   )
   let mut label_x = anchor_x - label.length() / 2
@@ -2015,6 +2088,16 @@ fn render_ascii_flow_subgraphs(
   if state_flat_layout_mode {
     flow_mark_blocked_cells_for_nodes(blocked_cells, mapped_nodes)
   }
+  let non_state_out_degree_by_source : Map[String, Int] = {}
+  if !state_layout_mode {
+    for edge in graph.edges {
+      let current = option_int_or(
+        non_state_out_degree_by_source.get(edge.source),
+        0,
+      )
+      non_state_out_degree_by_source[edge.source] = current + 1
+    }
+  }
   for edge in positioned.edges {
     let line_style = if state_layout_mode {
       edge.style
@@ -2111,15 +2194,35 @@ fn render_ascii_flow_subgraphs(
           source_anchor_y = sy
           target_anchor_x = tx
           target_anchor_y = ty
-          first_x = source_anchor_x
-          first_y = source_anchor_y
-          end_x = target_anchor_x
-          end_y = target_anchor_y
-
-          flow_draw_segment(
-            canvas, source_anchor_x, source_anchor_y, target_anchor_x, target_anchor_y,
-            h_char, v_char,
+          let source_out_degree = option_int_or(
+            non_state_out_degree_by_source.get(edge.source),
+            0,
           )
+          let horizontal_first = flow_direction_horizontal || source_out_degree > 1
+          let route_points = flow_non_state_route_points(
+            source_anchor_x,
+            source_anchor_y,
+            target_anchor_x,
+            target_anchor_y,
+            horizontal_first,
+          )
+          for i in 1..<route_points.length() {
+            let from = route_points[i - 1]
+            let to = route_points[i]
+            flow_draw_segment(canvas, from.x, from.y, to.x, to.y, h_char, v_char)
+          }
+          let first_point = route_points[0]
+          let next_point = route_points[1]
+          let last_point = route_points[route_points.length() - 1]
+          let prev_point = route_points[route_points.length() - 2]
+          first_x = first_point.x
+          first_y = first_point.y
+          end_x = last_point.x
+          end_y = last_point.y
+          start_dx = next_point.x - first_point.x
+          start_dy = next_point.y - first_point.y
+          end_dx = last_point.x - prev_point.x
+          end_dy = last_point.y - prev_point.y
         }
         _ => continue
       }
@@ -2180,8 +2283,21 @@ fn render_ascii_flow_subgraphs(
             label,
           })
         } else {
+          let source_out_degree = option_int_or(
+            non_state_out_degree_by_source.get(edge.source),
+            0,
+          )
+          let horizontal_first = flow_direction_horizontal || source_out_degree > 1
+          let route_points = flow_non_state_route_points(
+            source_anchor_x,
+            source_anchor_y,
+            target_anchor_x,
+            target_anchor_y,
+            horizontal_first,
+          )
           edge_label_overlays.push(
             flow_non_state_edge_label_placement(
+              route_points,
               source_anchor_x,
               source_anchor_y,
               target_anchor_x,
