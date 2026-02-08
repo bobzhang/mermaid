@@ -47,6 +47,15 @@ pub(all) struct ShikiTheme {
 } derive(Eq, Show, ToJson)
 
 ///|
+pub fn shiki_theme(
+  theme_type : String?,
+  colors : Map[String, String]?,
+  token_colors : Array[ShikiTokenColor]?,
+) -> ShikiTheme {
+  { theme_type, colors, token_colors }
+}
+
+///|
 fn shiki_theme_color(theme : ShikiTheme, key : String) -> String? {
   match theme.colors {
     Some(colors) => colors.get(key)

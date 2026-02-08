@@ -130,6 +130,25 @@ test "shiki_token_color_many preserves multiple scopes" {
 }
 
 ///|
+test "shiki_theme constructor preserves provided fields" {
+  let token = shiki_token_color("comment", Some("#888888"))
+  let theme = shiki_theme(
+    Some("dark"),
+    Some({ "editor.background": "#111111" }),
+    Some([token]),
+  )
+  assert_eq(theme.theme_type, Some("dark"))
+  match theme.colors {
+    Some(colors) => assert_eq(colors.get("editor.background"), Some("#111111"))
+    None => fail("missing colors")
+  }
+  match theme.token_colors {
+    Some(tokens) => assert_eq(tokens.length(), 1)
+    None => fail("missing token colors")
+  }
+}
+
+///|
 test "from_shiki_theme falls back for missing editor colors" {
   let dark = from_shiki_theme(ShikiTheme::{
     theme_type: Some("dark"),

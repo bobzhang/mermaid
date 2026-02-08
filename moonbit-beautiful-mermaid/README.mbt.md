@@ -124,18 +124,18 @@ Use `shiki_token_color` / `shiki_token_color_many` to build token entries.
 
 ```mbt check
 test {
-  let shiki_theme = ShikiTheme::{
-    theme_type: Some("dark"),
-    colors: Some({
+  let shiki_theme = shiki_theme(
+    Some("dark"),
+    Some({
       "editor.background": "#1a1b26",
       "editor.foreground": "#a9b1d6",
       "editorLineNumber.foreground": "#565f89",
       "focusBorder": "#7aa2f7",
     }),
-    token_colors: Some([
+    Some([
       shiki_token_color("comment", Some("#565f89")),
     ]),
-  }
+  )
   let colors = from_shiki_theme(shiki_theme)
   let svg = try! render_mermaid_with_colors("graph TD\nA --> B", colors)
   assert_true(svg.contains("--bg:#1a1b26"))
