@@ -1746,6 +1746,8 @@ fn layout_graph(
   let layer_spacing = resolve_layer_spacing(options)
   let horizontal = layout_direction_is_horizontal(graph.direction)
   let reverse = layout_direction_is_reverse(graph.direction)
+  let state_graph = is_state_graph(graph)
+  let flat_state_graph = state_graph && !horizontal && graph.subgraphs.length() == 0
 
   let subgraph_entry_by_id : Map[String, String] = {}
   let subgraph_exit_by_id : Map[String, String] = {}
@@ -1771,16 +1773,87 @@ fn layout_graph(
   }
   let positioned_nodes : Array[PositionedNode] = []
   let positioned_by_id : Map[String, PositionedNode] = {}
+  let state_lane_by_node_id : Map[String, Int] = {}
+  if flat_state_graph {
+    let node_order_by_id : Map[String, Int] = {}
+    let node_shape_by_id : Map[String, NodeShape] = {}
+    let lane_assigned : Map[String, Bool] = {}
+    for i, node in nodes_in_order {
+      node_order_by_id[node.id] = i
+      node_shape_by_id[node.id] = node.shape
+      state_lane_by_node_id[node.id] = 0
+    }
+
+    for node in nodes_in_order {
+      match node.shape {
+        NodeShape::StateStart | NodeShape::StateEnd => ()
+        _ => {
+          lane_assigned[node.id] = true
+          break
+        }
+      }
+    }
+
+    let forward_targets_by_source : Map[String, Array[String]] = {}
+    for edge in graph.edges {
+      let source_order = option_int_or(node_order_by_id.get(edge.source), -1)
+      let target_order = option_int_or(node_order_by_id.get(edge.target), -1)
+      if source_order < 0 || target_order < 0 || target_order <= source_order {
+        continue
+      }
+
+      let target_is_pseudostate = match node_shape_by_id.get(edge.target) {
+        Some(shape) =>
+          match shape {
+            NodeShape::StateStart | NodeShape::StateEnd => true
+            _ => false
+          }
+        None => false
+      }
+      if target_is_pseudostate {
+        continue
+      }
+
+      if !forward_targets_by_source.contains(edge.source) {
+        forward_targets_by_source[edge.source] = []
+      }
+      let targets = forward_targets_by_source[edge.source]
+      if !targets.contains(edge.target) {
+        targets.push(edge.target)
+      }
+    }
+
+    for node in nodes_in_order {
+      let source_lane = option_int_or(state_lane_by_node_id.get(node.id), 0)
+      match forward_targets_by_source.get(node.id) {
+        Some(targets) => {
+          for i, target_id in targets {
+            if lane_assigned.contains(target_id) {
+              continue
+            }
+            state_lane_by_node_id[target_id] = source_lane + i * 2
+            lane_assigned[target_id] = true
+          }
+        }
+        None => ()
+      }
+    }
+  }
 
   let mut max_right = padding
   let mut max_bottom = padding
 
   let total_nodes = nodes_in_order.length()
+  let state_lane_step = (node_spacing / 3).max(26)
   for i, node in nodes_in_order {
     let order_index = if reverse { total_nodes - 1 - i } else { i }
     let (width, height) = node_dimensions(node)
     let x = if horizontal {
       padding + order_index * node_spacing + width / 2
+    } else if flat_state_graph {
+      padding +
+      90 +
+      option_int_or(state_lane_by_node_id.get(node.id), 0) * state_lane_step
     } else {
       padding + 90
     }
@@ -1850,7 +1923,7 @@ fn layout_graph(
     }
   }
 
-  if is_state_graph(graph) {
+  if state_graph {
     shift_top_level_state_subgraphs_right(
       graph,
       node_spacing,
