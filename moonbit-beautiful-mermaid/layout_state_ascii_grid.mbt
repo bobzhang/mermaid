@@ -34,7 +34,9 @@ fn layout_state_children_in_order(
 }
 
 ///|
-fn layout_state_nodes_in_definition_order(graph : MermaidGraph) -> Array[MermaidNode] {
+fn layout_state_nodes_in_definition_order(
+  graph : MermaidGraph,
+) -> Array[MermaidNode] {
   let nodes : Array[MermaidNode] = []
   for _, node in graph.nodes {
     nodes.push(node)
@@ -69,12 +71,18 @@ fn layout_state_grid_positions(
     match positions.get(node.id) {
       Some(position) => {
         let child_level = position.y + 4
-        let mut highest = option_int_or(highest_position_by_level.get(child_level), 0)
+        let mut highest = option_int_or(
+          highest_position_by_level.get(child_level),
+          0,
+        )
         for child_id in layout_state_children_in_order(graph, node.id) {
           if positions.contains(child_id) {
             continue
           }
-          positions[child_id] = LayoutStateGridCoord::{ x: highest, y: child_level }
+          positions[child_id] = LayoutStateGridCoord::{
+            x: highest,
+            y: child_level,
+          }
           highest = highest + 4
         }
         highest_position_by_level[child_level] = highest
@@ -88,7 +96,10 @@ fn layout_state_grid_positions(
     if positions.contains(node.id) {
       continue
     }
-    let highest = option_int_or(highest_position_by_level.get(fallback_level), 0)
+    let highest = option_int_or(
+      highest_position_by_level.get(fallback_level),
+      0,
+    )
     positions[node.id] = LayoutStateGridCoord::{ x: highest, y: fallback_level }
     highest_position_by_level[fallback_level] = highest + 4
     fallback_level = fallback_level + 4
@@ -166,7 +177,9 @@ fn layout_state_dir_lower_left() -> LayoutStateEdgeDir {
 }
 
 ///|
-fn layout_state_dir_opposite(direction : LayoutStateEdgeDir) -> LayoutStateEdgeDir {
+fn layout_state_dir_opposite(
+  direction : LayoutStateEdgeDir,
+) -> LayoutStateEdgeDir {
   if direction == layout_state_dir_up() {
     return layout_state_dir_down()
   }
@@ -225,7 +238,12 @@ fn layout_state_determine_direction(
 fn layout_state_determine_start_end_dirs_td(
   from : LayoutStateGridCoord,
   to : LayoutStateGridCoord,
-) -> (LayoutStateEdgeDir, LayoutStateEdgeDir, LayoutStateEdgeDir, LayoutStateEdgeDir) {
+) -> (
+  LayoutStateEdgeDir,
+  LayoutStateEdgeDir,
+  LayoutStateEdgeDir,
+  LayoutStateEdgeDir,
+) {
   let direction = layout_state_determine_direction(from, to)
   let is_backwards = direction == layout_state_dir_up() ||
     direction == layout_state_dir_upper_left() ||
@@ -281,8 +299,68 @@ fn layout_state_grid_coord_with_dir(
 }
 
 ///|
-fn layout_state_merge_grid_path(path : Array[AsciiGridCoord]) -> Array[AsciiGridCoord] {
+fn layout_state_merge_grid_path(
+  path : Array[AsciiGridCoord],
+) -> Array[AsciiGridCoord] {
   ascii_grid_merge_path(path)
+}
+
+///|
+fn layout_state_clone_grid_path(
+  path : Array[AsciiGridCoord],
+) -> Array[AsciiGridCoord] {
+  let copied : Array[AsciiGridCoord] = []
+  for point in path {
+    copied.push(point)
+  }
+  copied
+}
+
+///|
+fn layout_state_edge_pair_key(source_id : String, target_id : String) -> String {
+  "\{source_id}->\{target_id}"
+}
+
+///|
+fn layout_state_paths_are_reverse(
+  path : Array[AsciiGridCoord],
+  reverse_path : Array[AsciiGridCoord],
+) -> Bool {
+  if path.length() != reverse_path.length() {
+    return false
+  }
+  let len = path.length()
+  for i in 0..<len {
+    if path[i] != reverse_path[len - 1 - i] {
+      return false
+    }
+  }
+  true
+}
+
+///|
+fn layout_state_is_diagonal_edge(
+  positions : Map[String, LayoutStateGridCoord],
+  source_id : String,
+  target_id : String,
+) -> Bool {
+  match (positions.get(source_id), positions.get(target_id)) {
+    (Some(source), Some(target)) => source.x != target.x && source.y != target.y
+    _ => false
+  }
+}
+
+///|
+fn layout_state_block_path_inner_cells(
+  blocked : Map[String, Bool],
+  path : Array[AsciiGridCoord],
+) -> Unit {
+  if path.length() <= 2 {
+    return
+  }
+  for i in 1..<(path.length() - 1) {
+    blocked[ascii_grid_key(path[i])] = true
+  }
 }
 
 ///|
@@ -329,33 +407,26 @@ fn layout_state_edge_grid_path_td(
   match (positions.get(source_id), positions.get(target_id)) {
     (Some(source_coord), Some(target_coord)) => {
       let (preferred, preferred_opp, alternative, alternative_opp) = layout_state_determine_start_end_dirs_td(
-        source_coord,
-        target_coord,
+        source_coord, target_coord,
       )
-      let preferred_start = layout_state_grid_coord_with_dir(source_coord, preferred)
-      let preferred_end = layout_state_grid_coord_with_dir(target_coord, preferred_opp)
+      let preferred_start = layout_state_grid_coord_with_dir(
+        source_coord, preferred,
+      )
+      let preferred_end = layout_state_grid_coord_with_dir(
+        target_coord, preferred_opp,
+      )
       let preferred_path = layout_state_preferred_path(
-        preferred_start,
-        preferred_end,
-        blocked,
-        max_x,
-        max_y,
+        preferred_start, preferred_end, blocked, max_x, max_y,
       )
 
       let alternative_start = layout_state_grid_coord_with_dir(
-        source_coord,
-        alternative,
+        source_coord, alternative,
       )
       let alternative_end = layout_state_grid_coord_with_dir(
-        target_coord,
-        alternative_opp,
+        target_coord, alternative_opp,
       )
       let alternative_path = layout_state_preferred_path(
-        alternative_start,
-        alternative_end,
-        blocked,
-        max_x,
-        max_y,
+        alternative_start, alternative_end, blocked, max_x, max_y,
       )
       layout_state_pick_shorter_path(preferred_path, alternative_path)
     }
@@ -385,13 +456,7 @@ fn layout_state_grid_path_to_points(
   let points : Array[Point] = []
   for coord in path {
     points.push(
-      layout_state_grid_to_point(
-        coord,
-        origin_x,
-        origin_y,
-        cell_x,
-        cell_y,
-      ),
+      layout_state_grid_to_point(coord, origin_x, origin_y, cell_x, cell_y),
     )
   }
   points
@@ -497,31 +562,70 @@ fn layout_flat_state_graph_for_ascii_grid(
   let blocked = layout_state_grid_blocked_cells(grid_positions)
   let (max_grid_x, max_grid_y) = layout_state_grid_bounds(grid_positions)
   let positioned_edges : Array[PositionedEdge] = []
+  let routed_paths_by_pair : Map[String, Array[AsciiGridCoord]] = {}
   let label_slots_by_anchor : Map[String, Int] = {}
   for edge in graph.edges {
-    match (positioned_by_id.get(edge.source), positioned_by_id.get(edge.target)) {
+    match
+      (positioned_by_id.get(edge.source), positioned_by_id.get(edge.target)) {
       (Some(source), Some(target)) => {
-        let points = match
-          layout_state_edge_grid_path_td(
-            grid_positions,
-            blocked,
-            max_grid_x,
-            max_grid_y,
-            edge.source,
-            edge.target,
-          ) {
-          Some(path) =>
+        let mut routed_grid_path = layout_state_edge_grid_path_td(
+          grid_positions,
+          blocked,
+          max_grid_x,
+          max_grid_y,
+          edge.source,
+          edge.target,
+        )
+
+        let reverse_key = layout_state_edge_pair_key(edge.target, edge.source)
+        match (routed_grid_path, routed_paths_by_pair.get(reverse_key)) {
+          (Some(path), Some(reverse_path)) =>
+            if layout_state_is_diagonal_edge(
+                grid_positions,
+                edge.source,
+                edge.target,
+              ) &&
+              layout_state_paths_are_reverse(path, reverse_path) {
+              let blocked_with_reverse : Map[String, Bool] = {}
+              for key, value in blocked {
+                blocked_with_reverse[key] = value
+              }
+              layout_state_block_path_inner_cells(
+                blocked_with_reverse, reverse_path,
+              )
+              match
+                layout_state_edge_grid_path_td(
+                  grid_positions,
+                  blocked_with_reverse,
+                  max_grid_x,
+                  max_grid_y,
+                  edge.source,
+                  edge.target,
+                ) {
+                Some(alternative_path) =>
+                  if !layout_state_paths_are_reverse(
+                      alternative_path, reverse_path,
+                    ) {
+                    routed_grid_path = Some(alternative_path)
+                  }
+                None => ()
+              }
+            }
+          _ => ()
+        }
+
+        let edge_key = layout_state_edge_pair_key(edge.source, edge.target)
+        let points = match routed_grid_path {
+          Some(path) => {
+            routed_paths_by_pair[edge_key] = layout_state_clone_grid_path(path)
             if path.length() >= 2 {
               layout_state_grid_path_to_points(
-                path,
-                origin_x,
-                origin_y,
-                cell_x,
-                cell_y,
+                path, origin_x, origin_y, cell_x, cell_y,
               )
             } else {
               edge_points_for(source, target, false)
             }
+          }
           None => edge_points_for(source, target, false)
         }
         let label_position = match edge.label {
@@ -591,7 +695,10 @@ fn layout_flat_state_graph_for_ascii_grid(
     for i, edge in positioned_edges {
       let shifted_points : Array[Point] = []
       for point in edge.points {
-        shifted_points.push(Point::{ x: point.x + shift_x, y: point.y + shift_y })
+        shifted_points.push(Point::{
+          x: point.x + shift_x,
+          y: point.y + shift_y,
+        })
       }
       let shifted_label = match edge.label_position {
         Some(position) =>

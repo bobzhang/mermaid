@@ -312,6 +312,22 @@ fn axis_is_horizontal(dx : Int, dy : Int) -> Bool {
 }
 
 ///|
+fn flow_paths_are_reverse(first : Array[Point], second : Array[Point]) -> Bool {
+  if first.length() != second.length() {
+    return false
+  }
+  let len = first.length()
+  for i in 0..<len {
+    let a = first[i]
+    let b = second[len - 1 - i]
+    if a.x != b.x || a.y != b.y {
+      return false
+    }
+  }
+  true
+}
+
+///|
 fn border_join_marker(
   dx : Int,
   dy : Int,
@@ -418,6 +434,38 @@ fn label_overlaps_any_node_box(
 }
 
 ///|
+fn label_overlaps_edge_label(
+  x : Int,
+  y : Int,
+  label : String,
+  existing : AsciiEdgeLabelPlacement,
+) -> Bool {
+  if y != existing.y {
+    return false
+  }
+  let label_left = x
+  let label_right = x + label.length() - 1
+  let existing_left = existing.x
+  let existing_right = existing.x + existing.label.length() - 1
+  !(label_right < existing_left || label_left > existing_right)
+}
+
+///|
+fn label_overlaps_any_edge_label(
+  x : Int,
+  y : Int,
+  label : String,
+  existing_labels : Array[AsciiEdgeLabelPlacement],
+) -> Bool {
+  for existing in existing_labels {
+    if label_overlaps_edge_label(x, y, label, existing) {
+      return true
+    }
+  }
+  false
+}
+
+///|
 fn adjust_label_y_for_state_boxes(
   x : Int,
   y : Int,
@@ -434,6 +482,33 @@ fn adjust_label_y_for_state_boxes(
     }
     let up = y - offset
     if !label_overlaps_any_node_box(x, up, label, boxes) {
+      return up
+    }
+  }
+  y
+}
+
+///|
+fn adjust_label_y_for_state_layout(
+  x : Int,
+  y : Int,
+  label : String,
+  boxes : Array[AsciiFlowNodeBox],
+  existing_labels : Array[AsciiEdgeLabelPlacement],
+) -> Int {
+  if !label_overlaps_any_node_box(x, y, label, boxes) &&
+    !label_overlaps_any_edge_label(x, y, label, existing_labels) {
+    return y
+  }
+  for offset in 1..<=8 {
+    let down = y + offset
+    if !label_overlaps_any_node_box(x, down, label, boxes) &&
+      !label_overlaps_any_edge_label(x, down, label, existing_labels) {
+      return down
+    }
+    let up = y - offset
+    if !label_overlaps_any_node_box(x, up, label, boxes) &&
+      !label_overlaps_any_edge_label(x, up, label, existing_labels) {
       return up
     }
   }
@@ -550,7 +625,12 @@ fn flow_draw_vline(
 
 ///|
 fn flow_is_horizontal_line_char(ch : String) -> Bool {
-  ch == "-" || ch == "." || ch == "=" || ch == "─" || ch == "┄" || ch == "═"
+  ch == "-" ||
+  ch == "." ||
+  ch == "=" ||
+  ch == "─" ||
+  ch == "┄" ||
+  ch == "═"
 }
 
 ///|
@@ -560,8 +640,16 @@ fn flow_is_vertical_line_char(ch : String) -> Bool {
 
 ///|
 fn flow_is_corner_or_junction_char(ch : String) -> Bool {
-  ch == "+" || ch == "┼" || ch == "┌" || ch == "┐" || ch == "└" || ch == "┘" ||
-  ch == "├" || ch == "┤" || ch == "┬" || ch == "┴"
+  ch == "+" ||
+  ch == "┼" ||
+  ch == "┌" ||
+  ch == "┐" ||
+  ch == "└" ||
+  ch == "┘" ||
+  ch == "├" ||
+  ch == "┤" ||
+  ch == "┬" ||
+  ch == "┴"
 }
 
 ///|
@@ -674,15 +762,7 @@ fn flow_draw_routed_segment(
       for i in 1..<path.length() {
         let from = path[i - 1]
         let to = path[i]
-        flow_draw_segment(
-          canvas,
-          from.x,
-          from.y,
-          to.x,
-          to.y,
-          h_char,
-          v_char,
-        )
+        flow_draw_segment(canvas, from.x, from.y, to.x, to.y, h_char, v_char)
       }
       true
     }
@@ -703,12 +783,7 @@ fn map_flow_group(
   for child in group.children {
     children.push(
       map_flow_group(
-        child,
-        scale_x,
-        scale_y,
-        pad_x,
-        pad_y,
-        state_composite_layout_mode,
+        child, scale_x, scale_y, pad_x, pad_y, state_composite_layout_mode,
       ),
     )
   }
@@ -820,10 +895,9 @@ fn trim_flow_canvas_output(output : String) -> String {
   }
 
   if min_leading <= 0 {
-    let max_width = lines.fold(
-      init=0,
-      fn(acc, line) { acc.max(line.trim_end().length()) },
-    )
+    let max_width = lines.fold(init=0, fn(acc, line) {
+      acc.max(line.trim_end().length())
+    })
     if max_width <= 0 {
       return lines.iter().join("\n")
     }
@@ -846,10 +920,9 @@ fn trim_flow_canvas_output(output : String) -> String {
       trimmed.push((try! line[min_leading:]).to_string())
     }
   }
-  let max_width = trimmed.fold(
-    init=0,
-    fn(acc, line) { acc.max(line.trim_end().length()) },
-  )
+  let max_width = trimmed.fold(init=0, fn(acc, line) {
+    acc.max(line.trim_end().length())
+  })
   if max_width <= 0 {
     return trimmed.iter().join("\n")
   }
@@ -880,10 +953,10 @@ fn render_ascii_flow_subgraphs(
   options : AsciiRenderOptions,
 ) -> String {
   let positioned = layout_graph_for_ascii(graph, RenderOptions::default())
-  let state_layout_mode =
-    graph_has_shape(graph, NodeShape::StateStart) ||
+  let state_layout_mode = graph_has_shape(graph, NodeShape::StateStart) ||
     graph_has_shape(graph, NodeShape::StateEnd)
-  let state_flat_layout_mode = state_layout_mode && graph.subgraphs.length() == 0
+  let state_flat_layout_mode = state_layout_mode &&
+    graph.subgraphs.length() == 0
   let state_composite_layout_mode = state_layout_mode && !state_flat_layout_mode
   let scale_x = if state_layout_mode { 9 } else { flow_scale_x() }
   let scale_y = if state_layout_mode { 10 } else { flow_scale_y() }
@@ -891,11 +964,14 @@ fn render_ascii_flow_subgraphs(
   if state_flat_layout_mode {
     let mut max_state_text_len = 0
     for node in positioned.nodes {
-      max_state_text_len = max_state_text_len.max(flow_node_label(node).length())
+      max_state_text_len = max_state_text_len.max(
+        flow_node_label(node).length(),
+      )
     }
     for edge in positioned.edges {
       match edge.label {
-        Some(label) => max_state_text_len = max_state_text_len.max(label.length())
+        Some(label) =>
+          max_state_text_len = max_state_text_len.max(label.length())
         None => ()
       }
     }
@@ -1007,18 +1083,10 @@ fn render_ascii_flow_subgraphs(
       let y1 = scale_coord(p1.y, scale_y, options.padding_y)
       let x2 = scale_coord(p2.x, scale_x, options.padding_x)
       let y2 = scale_coord(p2.y, scale_y, options.padding_y)
-      let routed =
-        state_flat_layout_mode &&
+      let routed = state_flat_layout_mode &&
         (x1 != x2 || y1 != y2) &&
         flow_draw_routed_segment(
-          canvas,
-          x1,
-          y1,
-          x2,
-          y2,
-          h_char,
-          v_char,
-          blocked_cells,
+          canvas, x1, y1, x2, y2, h_char, v_char, blocked_cells,
         )
       if !routed {
         flow_draw_segment(canvas, x1, y1, x2, y2, h_char, v_char)
@@ -1033,20 +1101,19 @@ fn render_ascii_flow_subgraphs(
     let next_y = scale_coord(next.y, scale_y, options.padding_y)
     let start_dx = next_x - first_x
     let start_dy = next_y - first_y
-    let (source_anchor_x, source_anchor_y) = match node_box_by_id.get(edge.source) {
+    let (source_anchor_x, source_anchor_y) = match
+      node_box_by_id.get(edge.source) {
       Some(source_box) =>
         flow_edge_anchor(source_box, start_dx, start_dy, false)
       None => (first_x, first_y)
     }
     match border_join_marker(start_dx, start_dy, false, options.use_ascii) {
       Some(marker) =>
-        border_overlays.push(
-          AsciiArrowPlacement::{
-            x: source_anchor_x,
-            y: source_anchor_y,
-            marker,
-          },
-        )
+        border_overlays.push(AsciiArrowPlacement::{
+          x: source_anchor_x,
+          y: source_anchor_y,
+          marker,
+        })
       None => ()
     }
 
@@ -1058,54 +1125,59 @@ fn render_ascii_flow_subgraphs(
     let prev_y = scale_coord(prev.y, scale_y, options.padding_y)
     let end_dx = end_x - prev_x
     let end_dy = end_y - prev_y
-    let (target_anchor_x, target_anchor_y) = match node_box_by_id.get(edge.target) {
-      Some(target_box) =>
-        flow_edge_anchor(target_box, end_dx, end_dy, true)
+    let (target_anchor_x, target_anchor_y) = match
+      node_box_by_id.get(edge.target) {
+      Some(target_box) => flow_edge_anchor(target_box, end_dx, end_dy, true)
       None => (end_x, end_y)
     }
     match edge.label {
       Some(label) => {
-        let mut has_labeled_reverse = false
+        let mut has_labeled_reverse_shared_path = false
         if state_layout_mode {
           for candidate in positioned.edges {
-            if candidate.source == edge.target && candidate.target == edge.source {
-              if candidate.label is Some(_) {
-                has_labeled_reverse = true
+            if candidate.source == edge.target &&
+              candidate.target == edge.source {
+              if candidate.label is Some(_) &&
+                flow_paths_are_reverse(edge.points, candidate.points) {
+                has_labeled_reverse_shared_path = true
                 break
               }
             }
           }
         }
-        let (anchor_x, anchor_y) = if state_layout_mode && has_labeled_reverse {
+        let (anchor_x, anchor_y) = if has_labeled_reverse_shared_path {
           (
             (source_anchor_x + target_anchor_x) / 2,
             (source_anchor_y + target_anchor_y) / 2,
           )
         } else {
           match edge.label_position {
-            Some(position) => (
-              scale_coord(position.x, scale_x, options.padding_x),
-              scale_coord(position.y, scale_y, options.padding_y),
-            )
-            None => (
-              (first_x + end_x) / 2,
-              (first_y + end_y) / 2,
-            )
+            Some(position) =>
+              (
+                scale_coord(position.x, scale_x, options.padding_x),
+                scale_coord(position.y, scale_y, options.padding_y),
+              )
+            None => ((first_x + end_x) / 2, (first_y + end_y) / 2)
           }
         }
+        let label_x = anchor_x - label.length() / 2
+        let label_y = if state_layout_mode {
+          let base_y = adjust_label_y_for_state_boxes(
+            label_x, anchor_y, label, mapped_nodes,
+          )
+          if has_labeled_reverse_shared_path {
+            base_y
+          } else {
+            adjust_label_y_for_state_layout(
+              label_x, base_y, label, mapped_nodes, edge_label_overlays,
+            )
+          }
+        } else {
+          anchor_y
+        }
         edge_label_overlays.push(AsciiEdgeLabelPlacement::{
-          x: anchor_x - label.length() / 2,
-          y:
-            if state_layout_mode {
-              adjust_label_y_for_state_boxes(
-                anchor_x - label.length() / 2,
-                anchor_y,
-                label,
-                mapped_nodes,
-              )
-            } else {
-              anchor_y
-            },
+          x: label_x,
+          y: label_y,
           label,
         })
       }
@@ -1176,8 +1248,7 @@ fn render_ascii(graph : MermaidGraph, options : AsciiRenderOptions) -> String {
   if er_mode {
     return render_ascii_er(graph, options)
   }
-  let state_mode =
-    graph_has_shape(graph, NodeShape::StateStart) ||
+  let state_mode = graph_has_shape(graph, NodeShape::StateStart) ||
     graph_has_shape(graph, NodeShape::StateEnd)
   if state_mode {
     return render_ascii_flow_subgraphs(graph, options)

@@ -54,7 +54,10 @@ fn state_grid_positions(
     match positions.get(node.id) {
       Some(position) => {
         let child_level = position.y + 4
-        let mut highest = option_int_or(highest_position_by_level.get(child_level), 0)
+        let mut highest = option_int_or(
+          highest_position_by_level.get(child_level),
+          0,
+        )
         for child_id in state_grid_children_in_order(graph, node.id) {
           if positions.contains(child_id) {
             continue
@@ -73,7 +76,10 @@ fn state_grid_positions(
     if positions.contains(node.id) {
       continue
     }
-    let highest = option_int_or(highest_position_by_level.get(fallback_level), 0)
+    let highest = option_int_or(
+      highest_position_by_level.get(fallback_level),
+      0,
+    )
     positions[node.id] = StateGridCoord::{ x: highest, y: fallback_level }
     highest_position_by_level[fallback_level] = highest + 4
     fallback_level = fallback_level + 4
@@ -92,17 +98,30 @@ fn state_nodes_in_definition_order(graph : MermaidGraph) -> Array[MermaidNode] {
   nodes
 }
 
+///|
 test "state_grid_positions matches lifecycle sample topology" {
   let source = "stateDiagram-v2\n  [*] --> Closed\n  Closed --> Connecting : connect\n  Connecting --> Connected : success\n  Connecting --> Closed : timeout\n  Connected --> Disconnecting : close\n  Connected --> Reconnecting : error\n  Reconnecting --> Connected : success\n  Reconnecting --> Closed : max_retries\n  Disconnecting --> Closed : done\n  Closed --> [*]"
   let graph = parse_mermaid(source)
-  let positions = state_grid_positions(graph, state_nodes_in_definition_order(graph))
+  let positions = state_grid_positions(
+    graph,
+    state_nodes_in_definition_order(graph),
+  )
 
-  assert_eq(positions.get("state_start_1"), Some(StateGridCoord::{ x: 0, y: 0 }))
+  assert_eq(
+    positions.get("state_start_1"),
+    Some(StateGridCoord::{ x: 0, y: 0 }),
+  )
   assert_eq(positions.get("Closed"), Some(StateGridCoord::{ x: 0, y: 4 }))
   assert_eq(positions.get("Connecting"), Some(StateGridCoord::{ x: 0, y: 8 }))
   assert_eq(positions.get("Connected"), Some(StateGridCoord::{ x: 0, y: 12 }))
-  assert_eq(positions.get("Disconnecting"), Some(StateGridCoord::{ x: 0, y: 16 }))
-  assert_eq(positions.get("Reconnecting"), Some(StateGridCoord::{ x: 4, y: 16 }))
+  assert_eq(
+    positions.get("Disconnecting"),
+    Some(StateGridCoord::{ x: 0, y: 16 }),
+  )
+  assert_eq(
+    positions.get("Reconnecting"),
+    Some(StateGridCoord::{ x: 4, y: 16 }),
+  )
   assert_eq(positions.get("state_end_1"), Some(StateGridCoord::{ x: 4, y: 8 }))
 }
 
@@ -110,9 +129,15 @@ test "state_grid_positions matches lifecycle sample topology" {
 test "state_grid_positions matches composite sample topology" {
   let source = "stateDiagram-v2\n  [*] --> Idle\n  Idle --> Processing : submit\n  state Processing {\n    parse --> validate\n    validate --> execute\n  }\n  Processing --> Complete : done\n  Processing --> Error : fail\n  Error --> Idle : retry\n  Complete --> [*]"
   let graph = parse_mermaid(source)
-  let positions = state_grid_positions(graph, state_nodes_in_definition_order(graph))
+  let positions = state_grid_positions(
+    graph,
+    state_nodes_in_definition_order(graph),
+  )
 
-  assert_eq(positions.get("state_start_1"), Some(StateGridCoord::{ x: 0, y: 0 }))
+  assert_eq(
+    positions.get("state_start_1"),
+    Some(StateGridCoord::{ x: 0, y: 0 }),
+  )
   assert_eq(positions.get("Idle"), Some(StateGridCoord::{ x: 0, y: 4 }))
   assert_eq(positions.get("Processing"), Some(StateGridCoord::{ x: 0, y: 8 }))
   assert_eq(positions.get("parse"), Some(StateGridCoord::{ x: 4, y: 0 }))
@@ -196,7 +221,10 @@ fn state_dir_opposite(direction : StateEdgeDir) -> StateEdgeDir {
 }
 
 ///|
-fn state_determine_direction(from : StateGridCoord, to : StateGridCoord) -> StateEdgeDir {
+fn state_determine_direction(
+  from : StateGridCoord,
+  to : StateGridCoord,
+) -> StateEdgeDir {
   if from.x == to.x {
     if from.y < to.y {
       state_dir_down()
@@ -233,40 +261,15 @@ fn state_determine_start_end_dirs_td(
     direction == state_dir_upper_right()
 
   if direction == state_dir_lower_right() {
-    (
-      state_dir_right(),
-      state_dir_up(),
-      state_dir_down(),
-      state_dir_left(),
-    )
+    (state_dir_right(), state_dir_up(), state_dir_down(), state_dir_left())
   } else if direction == state_dir_upper_right() {
-    (
-      state_dir_right(),
-      state_dir_down(),
-      state_dir_up(),
-      state_dir_left(),
-    )
+    (state_dir_right(), state_dir_down(), state_dir_up(), state_dir_left())
   } else if direction == state_dir_lower_left() {
-    (
-      state_dir_left(),
-      state_dir_up(),
-      state_dir_down(),
-      state_dir_right(),
-    )
+    (state_dir_left(), state_dir_up(), state_dir_down(), state_dir_right())
   } else if direction == state_dir_upper_left() {
-    (
-      state_dir_right(),
-      state_dir_right(),
-      state_dir_up(),
-      state_dir_right(),
-    )
+    (state_dir_right(), state_dir_right(), state_dir_up(), state_dir_right())
   } else if is_backwards && direction == state_dir_up() {
-    (
-      state_dir_right(),
-      state_dir_right(),
-      state_dir_up(),
-      state_dir_down(),
-    )
+    (state_dir_right(), state_dir_right(), state_dir_up(), state_dir_down())
   } else {
     let opposite = state_dir_opposite(direction)
     (direction, opposite, direction, opposite)
@@ -288,6 +291,23 @@ fn state_grid_path_to_text(path : Array[AsciiGridCoord]) -> String {
     parts.push("(\{point.x},\{point.y})")
   }
   parts.iter().join(" -> ")
+}
+
+///|
+fn state_points_are_reverse(
+  path : Array[Point],
+  reverse_path : Array[Point],
+) -> Bool {
+  if path.length() != reverse_path.length() {
+    return false
+  }
+  let len = path.length()
+  for i in 0..<len {
+    if path[i] != reverse_path[len - 1 - i] {
+      return false
+    }
+  }
+  true
 }
 
 ///|
@@ -350,37 +370,28 @@ fn state_edge_path_text_td(
   match (positions.get(source_id), positions.get(target_id)) {
     (Some(source_coord), Some(target_coord)) => {
       let (preferred, preferred_opp, alternative, alternative_opp) = state_determine_start_end_dirs_td(
-        source_coord,
-        target_coord,
+        source_coord, target_coord,
       )
 
       let preferred_start = state_grid_coord_with_dir(source_coord, preferred)
       let preferred_end = state_grid_coord_with_dir(target_coord, preferred_opp)
       let preferred_path = match
         ascii_grid_pathfind(
-          preferred_start,
-          preferred_end,
-          blocked,
-          0,
-          max_x,
-          0,
-          max_y,
+          preferred_start, preferred_end, blocked, 0, max_x, 0, max_y,
         ) {
         Some(path) => Some(merge_state_grid_path(path))
         None => None
       }
 
-      let alternative_start = state_grid_coord_with_dir(source_coord, alternative)
-      let alternative_end = state_grid_coord_with_dir(target_coord, alternative_opp)
+      let alternative_start = state_grid_coord_with_dir(
+        source_coord, alternative,
+      )
+      let alternative_end = state_grid_coord_with_dir(
+        target_coord, alternative_opp,
+      )
       let alternative_path = match
         ascii_grid_pathfind(
-          alternative_start,
-          alternative_end,
-          blocked,
-          0,
-          max_x,
-          0,
-          max_y,
+          alternative_start, alternative_end, blocked, 0, max_x, 0, max_y,
         ) {
         Some(path) => Some(merge_state_grid_path(path))
         None => None
@@ -393,8 +404,10 @@ fn state_edge_path_text_td(
           } else {
             state_grid_path_to_text(alternative_value)
           }
-        (Some(preferred_value), None) => state_grid_path_to_text(preferred_value)
-        (None, Some(alternative_value)) => state_grid_path_to_text(alternative_value)
+        (Some(preferred_value), None) =>
+          state_grid_path_to_text(preferred_value)
+        (None, Some(alternative_value)) =>
+          state_grid_path_to_text(alternative_value)
         (None, None) => "NONE"
       }
     }
@@ -406,7 +419,10 @@ fn state_edge_path_text_td(
 test "state edge path prototype matches key lifecycle routes" {
   let source = "stateDiagram-v2\n  [*] --> Closed\n  Closed --> Connecting : connect\n  Connecting --> Connected : success\n  Connecting --> Closed : timeout\n  Connected --> Disconnecting : close\n  Connected --> Reconnecting : error\n  Reconnecting --> Connected : success\n  Reconnecting --> Closed : max_retries\n  Disconnecting --> Closed : done\n  Closed --> [*]"
   let graph = parse_mermaid(source)
-  let positions = state_grid_positions(graph, state_nodes_in_definition_order(graph))
+  let positions = state_grid_positions(
+    graph,
+    state_nodes_in_definition_order(graph),
+  )
   let blocked = state_grid_blocked_cells(positions)
 
   assert_eq(
@@ -414,17 +430,38 @@ test "state edge path prototype matches key lifecycle routes" {
     "(2,13) -> (5,13) -> (5,16)",
   )
   let reconnect_closed_path = state_edge_path_text_td(
-    positions,
-    blocked,
-    "Reconnecting",
-    "Closed",
+    positions, blocked, "Reconnecting", "Closed",
   )
   assert_eq(
-    reconnect_closed_path,
-    "(5,16) -> (5,15) -> (4,15) -> (4,12) -> (3,12) -> (3,5) -> (2,5)",
+    reconnect_closed_path, "(5,16) -> (5,15) -> (4,15) -> (4,12) -> (3,12) -> (3,5) -> (2,5)",
   )
   assert_eq(
     state_edge_path_text_td(positions, blocked, "Closed", "state_end_1"),
     "(2,5) -> (5,5) -> (5,8)",
   )
+}
+
+///|
+test "state flat layout reroutes diagonal reverse edge pair" {
+  let source = "stateDiagram-v2\n  [*] --> Closed\n  Closed --> Connecting : connect\n  Connecting --> Connected : success\n  Connecting --> Closed : timeout\n  Connected --> Disconnecting : close\n  Connected --> Reconnecting : error\n  Reconnecting --> Connected : success\n  Reconnecting --> Closed : max_retries\n  Disconnecting --> Closed : done\n  Closed --> [*]"
+  let graph = parse_mermaid(source)
+  let positioned = layout_flat_state_graph_for_ascii_grid(
+    graph,
+    RenderOptions::default(),
+  )
+
+  let mut forward_points : Array[Point] = []
+  let mut reverse_points : Array[Point] = []
+  for edge in positioned.edges {
+    if edge.source == "Connected" && edge.target == "Reconnecting" {
+      forward_points = edge.points
+    }
+    if edge.source == "Reconnecting" && edge.target == "Connected" {
+      reverse_points = edge.points
+    }
+  }
+
+  assert_eq(forward_points.length() > 0, true)
+  assert_eq(reverse_points.length() > 0, true)
+  assert_eq(state_points_are_reverse(forward_points, reverse_points), false)
 }
