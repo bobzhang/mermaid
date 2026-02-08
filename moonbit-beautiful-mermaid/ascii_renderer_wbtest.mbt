@@ -17,32 +17,44 @@ test "trim_flow_canvas_output returns empty for blank canvas text" {
 }
 
 ///|
-test "node_label_for_ascii maps synthetic state pseudostates to star markers" {
-  let nodes : Map[String, MermaidNode] = {}
-  nodes["state_start_1"] = MermaidNode::{
+test "flow_node_label hides state pseudo-state labels" {
+  let start = PositionedNode::{
     id: "state_start_1",
     label: "",
     shape: NodeShape::StateStart,
+    x: 0,
+    y: 0,
+    width: 10,
+    height: 10,
+    inline_style: None,
   }
-  nodes["Idle"] = MermaidNode::{ id: "Idle", label: "Idle", shape: NodeShape::Rounded }
-
-  let graph = MermaidGraph::{
-    direction: Direction::TD,
-    nodes,
-    edges: [],
-    subgraphs: [],
-    class_defs: {},
-    class_assignments: {},
-    node_styles: {},
-    sequence_actor_order: [],
-    sequence_actor_kinds: {},
-    sequence_blocks: [],
-    sequence_notes: [],
-    sequence_activation_commands: [],
+  let regular = PositionedNode::{
+    id: "Idle",
+    label: "Idle",
+    shape: NodeShape::Rounded,
+    x: 0,
+    y: 0,
+    width: 10,
+    height: 10,
+    inline_style: None,
   }
 
-  assert_eq(node_label_for_ascii(graph, "state_start_1"), "*")
-  assert_eq(node_label_for_ascii(graph, "Idle"), "Idle")
+  assert_eq(flow_node_label(start), "")
+  assert_eq(flow_node_label(regular), "Idle")
+}
+
+///|
+test "plain flowchart edges render as boxed diagrams instead of inline edges" {
+  let graph = parse_mermaid("graph LR\nA --> B")
+  let output = render_ascii(graph, AsciiRenderOptions::{
+    use_ascii: true,
+    padding_x: 5,
+    padding_y: 5,
+    box_border_padding: 1,
+  })
+
+  assert_true(output.contains("+"))
+  assert_eq(output.contains("[A]--->[B]"), false)
 }
 
 ///|

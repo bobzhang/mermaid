@@ -22,169 +22,6 @@ fn graph_has_shape(graph : MermaidGraph, expected : NodeShape) -> Bool {
 }
 
 ///|
-fn unicode_basic_operator(op : String) -> String {
-  op
-  .replace_all(old="=", new="═")
-  .replace_all(old="-", new="─")
-  .replace_all(old=".", new="┄")
-  .replace_all(old="<", new="◄")
-  .replace_all(old=">", new="►")
-}
-
-///|
-fn unicode_class_operator(op : String) -> String {
-  match op {
-    "<|--" => "△──"
-    "<|.." => "△┄┄"
-    "*--" => "◆──"
-    "--*" => "──◆"
-    "o--" => "◇──"
-    "--o" => "──◇"
-    "-->" => "──►"
-    "..>" => "┄┄►"
-    "..|>" => "┄┄△"
-    "--" => "───"
-    ".." => "┄┄┄"
-    _ => unicode_basic_operator(op)
-  }
-}
-
-///|
-fn unicode_sequence_operator(op : String) -> String {
-  match op {
-    "->>" => "──►"
-    "-->>" => "┄┄►"
-    "->" => "──▷"
-    "-->" => "┄┄▷"
-    "-)" => "──▷"
-    "--)" => "┄┄▷"
-    "-x" => "──✕"
-    "--x" => "┄┄✕"
-    _ => unicode_basic_operator(op)
-  }
-}
-
-///|
-fn unicode_er_token(token : String) -> String {
-  match token {
-    "||" => "║"
-    "o|" | "|o" => "o║"
-    "o{" | "{o" => "o╟"
-    "|{" | "}|" => "╟"
-    "|}" | "{|" => "╢"
-    _ => token
-  }
-}
-
-///|
-fn unicode_er_operator(op : String) -> String {
-  let dash_idx = op.find("-")
-  let dot_idx = op.find(".")
-  let start_sep = match (dash_idx, dot_idx) {
-    (Some(a), Some(b)) => Some(a.min(b))
-    (Some(a), None) => Some(a)
-    (None, Some(b)) => Some(b)
-    _ => None
-  }
-  let dash_last = op.rev_find("-")
-  let dot_last = op.rev_find(".")
-  let end_sep = match (dash_last, dot_last) {
-    (Some(a), Some(b)) => Some(a.max(b))
-    (Some(a), None) => Some(a)
-    (None, Some(b)) => Some(b)
-    _ => None
-  }
-
-  match (start_sep, end_sep) {
-    (Some(start), Some(end)) => {
-      let left = trim_owned((try! op[:start]).to_string())
-      let line = trim_owned((try! op[start:end + 1]).to_string())
-      let right = trim_owned((try! op[end + 1:]).to_string())
-      let line_symbol = if line.contains(".") {
-        "┄┄┄"
-      } else if line.contains("=") {
-        "═══"
-      } else {
-        "───"
-      }
-      "\{unicode_er_token(left)}\{line_symbol}\{unicode_er_token(right)}"
-    }
-    _ => unicode_basic_operator(op)
-  }
-}
-
-///|
-fn connector_for_edge(
-  style : EdgeStyle,
-  has_start : Bool,
-  has_end : Bool,
-  use_ascii : Bool,
-  relation_operator : String?,
-  class_mode : Bool,
-  er_mode : Bool,
-  sequence_mode : Bool,
-) -> String {
-  if class_mode || er_mode || sequence_mode {
-    match relation_operator {
-      Some(operator) =>
-        if use_ascii {
-          return operator
-        } else if class_mode {
-          return unicode_class_operator(operator)
-        } else if er_mode {
-          return unicode_er_operator(operator)
-        } else {
-          return unicode_sequence_operator(operator)
-        }
-      None => ()
-    }
-  }
-
-  if use_ascii {
-    let line = match style {
-      EdgeStyle::Solid => "-"
-      EdgeStyle::Dotted => "."
-      EdgeStyle::Thick => "="
-    }
-    match (has_start, has_end) {
-      (true, true) => "<\{line}\{line}\{line}>"
-      (true, false) => "<\{line}\{line}\{line}\{line}"
-      (false, true) => "\{line}\{line}\{line}>"
-      (false, false) => "\{line}\{line}\{line}\{line}"
-    }
-  } else {
-    let line = match style {
-      EdgeStyle::Solid => "─"
-      EdgeStyle::Dotted => "┄"
-      EdgeStyle::Thick => "═"
-    }
-    match (has_start, has_end) {
-      (true, true) => "◄\{line}\{line}\{line}►"
-      (true, false) => "◄\{line}\{line}\{line}\{line}"
-      (false, true) => "\{line}\{line}\{line}►"
-      (false, false) => "\{line}\{line}\{line}\{line}"
-    }
-  }
-}
-
-///|
-fn node_label_for_ascii(graph : MermaidGraph, node_id : String) -> String {
-  match graph.nodes.get(node_id) {
-    Some(node) =>
-      match node.shape {
-        NodeShape::StateStart | NodeShape::StateEnd => "*"
-        _ =>
-          if node.label == "" {
-            node.id
-          } else {
-            node.label.replace_all(old="\n", new=" | ")
-          }
-      }
-    None => node_id
-  }
-}
-
-///|
 fn flow_node_label(node : PositionedNode) -> String {
   match node.shape {
     NodeShape::StateStart | NodeShape::StateEnd => ""
@@ -240,12 +77,12 @@ priv struct StateAsciiEdgeLayout {
 
 ///|
 fn flow_scale_x() -> Int {
-  10
+  7
 }
 
 ///|
 fn flow_scale_y() -> Int {
-  8
+  10
 }
 
 ///|
@@ -1291,7 +1128,7 @@ fn state_ascii_line_width(
   let start = start_x.min(end_x)
   let ending = start_x.max(end_x)
   let mut total = 0
-  for x in start..=ending {
+  for x in start..<=ending {
     total = total + option_int_or(column_width.get(x), 0)
   }
   total
@@ -1483,7 +1320,9 @@ fn render_ascii_state_flat_grid(
             let start = path[i - 1]
             let ending = path[i]
             let line_width = state_ascii_line_width(
-              column_width, start.x, ending.x,
+              column_width,
+              start.x,
+              ending.x,
             )
             if line_width >= label.length() {
               best_start = start
@@ -1516,11 +1355,10 @@ fn render_ascii_state_flat_grid(
   for node in nodes_in_order {
     match grid_positions.get(node.id) {
       Some(coord) => {
-        let (left, top) = state_ascii_grid_to_draw(
-          column_width,
-          row_height,
-          AsciiGridCoord::{ x: coord.x, y: coord.y },
-        )
+        let (left, top) = state_ascii_grid_to_draw(column_width, row_height, AsciiGridCoord::{
+          x: coord.x,
+          y: coord.y,
+        })
         let width = option_int_or(column_width.get(coord.x), 0) +
           option_int_or(column_width.get(coord.x + 1), 0) +
           1
@@ -1696,23 +1534,11 @@ fn render_ascii_state_flat_grid(
 
       if options.use_ascii {
         state_ascii_draw_segment_simple(
-          canvas,
-          start_x,
-          start_y,
-          end_x,
-          end_y,
-          h_char,
-          v_char,
+          canvas, start_x, start_y, end_x, end_y, h_char, v_char,
         )
       } else {
         flow_draw_segment(
-          canvas,
-          start_x,
-          start_y,
-          end_x,
-          end_y,
-          h_char,
-          v_char,
+          canvas, start_x, start_y, end_x, end_y, h_char, v_char,
         )
       }
       if first_drawn is None {
@@ -1849,7 +1675,9 @@ fn render_ascii_state_flat_grid(
       put_canvas(canvas, corner.x, corner.y, corner.marker)
       continue
     }
-    if corner.x < 0 || corner.y < 0 || corner.y >= canvas.length() ||
+    if corner.x < 0 ||
+      corner.y < 0 ||
+      corner.y >= canvas.length() ||
       corner.x >= canvas[corner.y].length() {
       continue
     }
@@ -1858,7 +1686,8 @@ fn render_ascii_state_flat_grid(
       flow_connects_right(canvas[corner.y][corner.x - 1])
     let has_right = corner.x + 1 < canvas[corner.y].length() &&
       flow_connects_left(canvas[corner.y][corner.x + 1])
-    let has_up = corner.y > 0 && flow_connects_down(canvas[corner.y - 1][corner.x])
+    let has_up = corner.y > 0 &&
+      flow_connects_down(canvas[corner.y - 1][corner.x])
     let has_down = corner.y + 1 < canvas.length() &&
       flow_connects_up(canvas[corner.y + 1][corner.x])
     put_canvas(
@@ -1866,11 +1695,7 @@ fn render_ascii_state_flat_grid(
       corner.x,
       corner.y,
       flow_unicode_char_for_connections(
-        existing,
-        has_left,
-        has_right,
-        has_up,
-        has_down,
+        existing, has_left, has_right, has_up, has_down,
       ),
     )
   }
@@ -1924,13 +1749,18 @@ fn render_ascii_flow_subgraphs(
     let (min_width, min_height) = if state_layout_mode {
       (option_int_or(state_column_width_by_x.get(node.x), 12), 5)
     } else {
-      match node.shape {
-        NodeShape::StateStart | NodeShape::StateEnd => (10, 5)
-        _ => ((label.length() + 4).max(5), 3)
-      }
+      ((label.length() + 4).max(11), 5)
     }
-    let width = scale_size(node.width, scale_x, min_width)
-    let height = scale_size(node.height, scale_y, min_height).max(min_height)
+    let width = if state_layout_mode {
+      scale_size(node.width, scale_x, min_width)
+    } else {
+      min_width
+    }
+    let height = if state_layout_mode {
+      scale_size(node.height, scale_y, min_height).max(min_height)
+    } else {
+      min_height
+    }
     let cx = scale_coord(node.x, scale_x, options.padding_x)
     let cy = scale_coord(node.y, scale_y, options.padding_y)
     let box = AsciiFlowNodeBox::{
@@ -2217,26 +2047,5 @@ fn render_ascii(graph : MermaidGraph, options : AsciiRenderOptions) -> String {
     return lines.iter().join("\n")
   }
 
-  for edge in graph.edges {
-    let source = node_label_for_ascii(graph, edge.source)
-    let target = node_label_for_ascii(graph, edge.target)
-    let connector = connector_for_edge(
-      edge.style,
-      edge.has_arrow_start,
-      edge.has_arrow_end,
-      options.use_ascii,
-      edge.relation_operator,
-      class_mode,
-      er_mode,
-      false,
-    )
-
-    let line = match edge.label {
-      Some(label) => "[\{source}]\{connector}(\{label})[\{target}]"
-      None => "[\{source}]\{connector}[\{target}]"
-    }
-    lines.push(line)
-  }
-
-  lines.iter().join("\n")
+  render_ascii_flow_subgraphs(graph, options)
 }
