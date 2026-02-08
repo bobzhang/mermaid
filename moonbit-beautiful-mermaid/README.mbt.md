@@ -10,6 +10,12 @@ Render Mermaid diagrams as SVG or ASCII/Unicode text in MoonBit.
 - Configurable layout and rendering options.
 - Smoke coverage against the upstream `beautiful-mermaid/samples-data.ts` corpus.
 
+## Maintainer Workflow
+
+Regenerate the upstream sample smoke test after upstream `samples-data.ts` changes:
+
+- `bun run moonbit-beautiful-mermaid/scripts/generate_upstream_samples_smoke.ts`
+
 ## Quick Start
 
 ### SVG rendering
