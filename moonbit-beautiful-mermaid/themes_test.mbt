@@ -116,6 +116,13 @@ test "from_shiki_theme extracts bg and fg from editor colors" {
 }
 
 ///|
+test "shiki_token_color builds a single-scope token entry" {
+  let token = shiki_token_color("comment", Some("#888888"))
+  assert_eq(token.scopes, ["comment"])
+  assert_eq(token.foreground, Some("#888888"))
+}
+
+///|
 test "from_shiki_theme falls back for missing editor colors" {
   let dark = from_shiki_theme(ShikiTheme::{
     theme_type: Some("dark"),

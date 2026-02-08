@@ -131,7 +131,7 @@ test {
       "focusBorder": "#7aa2f7",
     }),
     token_colors: Some([
-      ShikiTokenColor::{ scopes: ["comment"], foreground: Some("#565f89") },
+      shiki_token_color("comment", Some("#565f89")),
     ]),
   }
   let colors = from_shiki_theme(shiki_theme)

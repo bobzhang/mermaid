@@ -24,6 +24,14 @@ pub(all) struct ShikiTokenColor {
 } derive(Eq, Show, ToJson)
 
 ///|
+pub fn shiki_token_color(
+  scope : String,
+  foreground : String?,
+) -> ShikiTokenColor {
+  { scopes: [scope], foreground }
+}
+
+///|
 pub(all) struct ShikiTheme {
   theme_type : String?
   colors : Map[String, String]?
@@ -39,7 +47,7 @@ fn shiki_theme_color(theme : ShikiTheme, key : String) -> String? {
 }
 
 ///|
-fn shiki_token_color(theme : ShikiTheme, scope : String) -> String? {
+fn shiki_token_scope_color(theme : ShikiTheme, scope : String) -> String? {
   match theme.token_colors {
     Some(token_colors) => {
       let mut found : String? = None
@@ -76,9 +84,9 @@ pub fn from_shiki_theme(theme : ShikiTheme) -> DiagramColors {
   let line = shiki_theme_color(theme, "editorLineNumber.foreground")
   let accent = match shiki_theme_color(theme, "focusBorder") {
     Some(color) => Some(color)
-    None => shiki_token_color(theme, "keyword")
+    None => shiki_token_scope_color(theme, "keyword")
   }
-  let muted = match shiki_token_color(theme, "comment") {
+  let muted = match shiki_token_scope_color(theme, "comment") {
     Some(color) => Some(color)
     None => line
   }
