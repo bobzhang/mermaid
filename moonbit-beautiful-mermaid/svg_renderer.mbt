@@ -89,8 +89,55 @@ fn edge_midpoint(points : Array[Point]) -> Point? {
 }
 
 ///|
+fn is_uri_unreserved_char(ch : Char) -> Bool {
+  ch is ('A'..='Z') ||
+  ch is ('a'..='z') ||
+  ch is ('0'..='9') ||
+  ch == '-' ||
+  ch == '_' ||
+  ch == '.' ||
+  ch == '!' ||
+  ch == '~' ||
+  ch == '*' ||
+  ch == '(' ||
+  ch == ')'
+}
+
+///|
+fn percent_hex(byte_value : Int) -> String {
+  "%" + byte_value.to_byte().to_hex().to_upper()
+}
+
+///|
 fn font_url_component(font : String) -> String {
-  font.replace_all(old=" ", new="%20")
+  let sb = StringBuilder::new()
+  for ch in font {
+    if is_uri_unreserved_char(ch) {
+      sb.write_char(ch)
+      continue
+    }
+    let code = ch.to_int()
+    if code <= 0x7F {
+      sb.write_string(percent_hex(code))
+      continue
+    }
+    if code <= 0x7FF {
+      sb.write_string(percent_hex(0xC0 | (code >> 6)))
+      sb.write_string(percent_hex(0x80 | (code & 0x3F)))
+      continue
+    }
+    if code <= 0xFFFF {
+      sb.write_string(percent_hex(0xE0 | (code >> 12)))
+      sb.write_string(percent_hex(0x80 | ((code >> 6) & 0x3F)))
+      sb.write_string(percent_hex(0x80 | (code & 0x3F)))
+      continue
+    }
+    sb.write_string(percent_hex(0xF0 | (code >> 18)))
+    sb.write_string(percent_hex(0x80 | ((code >> 12) & 0x3F)))
+    sb.write_string(percent_hex(0x80 | ((code >> 6) & 0x3F)))
+    sb.write_string(percent_hex(0x80 | (code & 0x3F)))
+  }
+  sb.to_string()
 }
 
 ///|

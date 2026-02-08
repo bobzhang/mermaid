@@ -187,6 +187,30 @@ test "SVG renderer URL-encodes custom font name in import URL" {
 }
 
 ///|
+test "SVG renderer URL-encodes reserved characters in custom font name" {
+  let svg = render_svg(
+    make_svg_test_graph([]),
+    DiagramColors::default(),
+    "A+B/C",
+    false,
+  )
+
+  assert_true(svg.contains("family=A%2BB%2FC"))
+}
+
+///|
+test "SVG renderer URL-encodes non-ASCII font name in import URL" {
+  let svg = render_svg(
+    make_svg_test_graph([]),
+    DiagramColors::default(),
+    "Noto Sans 中文",
+    false,
+  )
+
+  assert_true(svg.contains("Noto%20Sans%20%E4%B8%AD%E6%96%87"))
+}
+
+///|
 test "SVG renderer root includes viewBox dimensions" {
   let graph = make_svg_test_graph([])
   let svg = render_svg(graph, DiagramColors::default(), "Inter", false)
