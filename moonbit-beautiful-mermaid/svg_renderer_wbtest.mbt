@@ -327,7 +327,7 @@ test "SVG renderer lifeline class uses 0.75 stroke width" {
   )
   assert_true(
     svg.contains(
-      ".lifeline{fill:none;stroke:var(--line);stroke-width:0.75;stroke-dasharray:6 4}",
+      ".lifeline{fill:none;stroke:var(--_line);stroke-width:0.75;stroke-dasharray:6 4}",
     ),
   )
 }
