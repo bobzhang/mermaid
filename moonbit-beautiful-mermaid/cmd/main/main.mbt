@@ -76,6 +76,15 @@ fn parse_non_negative_int(raw : String) -> Int? {
 }
 
 ///|
+fn ascii_spacing_overridden(
+  padding_x : Int,
+  padding_y : Int,
+  box_border_padding : Int,
+) -> Bool {
+  padding_x != 5 || padding_y != 5 || box_border_padding != 1
+}
+
+///|
 fn main {
   let args = cli_args_without_program()
   let mut render_text = false
@@ -684,8 +693,11 @@ fn main {
     return
   }
   if !render_text &&
-    (ascii_padding_x != 5 || ascii_padding_y != 5 ||
-    ascii_box_border_padding != 1) {
+    ascii_spacing_overridden(
+      ascii_padding_x,
+      ascii_padding_y,
+      ascii_box_border_padding,
+    ) {
     println(
       "Error: ASCII spacing flags require --ascii or --unicode text output mode",
     )

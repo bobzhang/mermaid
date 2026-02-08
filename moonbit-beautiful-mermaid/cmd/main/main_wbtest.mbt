@@ -12,3 +12,15 @@ test "parse_non_negative_int rejects negatives and invalid values" {
   assert_eq(parse_non_negative_int("abc"), None)
   assert_eq(parse_non_negative_int(""), None)
 }
+
+///|
+test "ascii_spacing_overridden is false for default spacing values" {
+  assert_eq(ascii_spacing_overridden(5, 5, 1), false)
+}
+
+///|
+test "ascii_spacing_overridden is true when any spacing differs" {
+  assert_eq(ascii_spacing_overridden(8, 5, 1), true)
+  assert_eq(ascii_spacing_overridden(5, 2, 1), true)
+  assert_eq(ascii_spacing_overridden(5, 5, 2), true)
+}
