@@ -920,7 +920,7 @@ fn flow_draw_group_labels(
   canvas : Array[Array[String]],
   group : AsciiFlowGroupBox,
 ) -> Unit {
-  let label_x = group.left + ((group.width - group.label.length()) / 2).max(1)
+  let label_x = (group.left + ((group.width - group.label.length()) / 2).max(1) - 1).max(group.left + 1)
   let label_y = group.top + 1
   write_canvas_text(canvas, label_x, label_y, group.label)
   for child in group.children {
