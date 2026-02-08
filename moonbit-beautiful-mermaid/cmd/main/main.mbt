@@ -3,8 +3,10 @@ fn print_usage() -> Unit {
   println("Usage:")
   println("  moon run cmd/main -- \"graph TD\\nA --> B\"")
   println("  moon run cmd/main -- --ascii \"graph LR\\nA --> B\"")
+  println("  moon run cmd/main -- --theme=tokyo-night \"graph TD\\nA --> B\"")
   println("Flags:")
   println("  --ascii    Render ASCII output")
+  println("  --theme    SVG theme slug, e.g. tokyo-night, github-dark")
   println("  --help     Show this help")
 }
 
@@ -26,6 +28,7 @@ fn cli_args_without_program() -> Array[String] {
 fn main {
   let args = cli_args_without_program()
   let mut use_ascii = false
+  let mut theme_slug : String? = None
   let mut diagram : String? = None
 
   for arg in args {
@@ -35,6 +38,13 @@ fn main {
     }
     if arg == "--ascii" {
       use_ascii = true
+      continue
+    }
+    if arg.has_prefix("--theme=") {
+      let theme = (try! arg[8:]).to_string()
+      if theme != "" {
+        theme_slug = Some(theme)
+      }
       continue
     }
     if !arg.has_prefix("--") {
@@ -66,7 +76,38 @@ fn main {
     return
   }
 
-  let rendered_svg = try? @beautiful_mermaid.render_mermaid(input)
+  let options = match theme_slug {
+    Some(slug) =>
+      match @beautiful_mermaid.theme_by_name(slug) {
+        Some(colors) =>
+          @beautiful_mermaid.RenderOptions::{
+            bg: Some(colors.bg),
+            fg: Some(colors.fg),
+            line: colors.line,
+            accent: colors.accent,
+            muted: colors.muted,
+            surface: colors.surface,
+            border: colors.border,
+            font: None,
+            padding: None,
+            node_spacing: None,
+            layer_spacing: None,
+            transparent: None,
+          }
+        None => {
+          println("Unknown theme: \{slug}")
+          let names = @beautiful_mermaid.built_in_themes().map(
+            @beautiful_mermaid.theme_slug,
+          )
+          let available = names.join(", ")
+          println("Available themes: \{available}")
+          return
+        }
+      }
+    None => @beautiful_mermaid.RenderOptions::default()
+  }
+
+  let rendered_svg = try? @beautiful_mermaid.render_mermaid(input, options~)
   match rendered_svg {
     Ok(output) => println(output)
     Err(err) => println("Error: \{err}")
