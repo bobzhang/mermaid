@@ -337,6 +337,11 @@ fn normalize_theme_name_input(name : String) -> String {
 }
 
 ///|
+pub fn normalize_theme_name(name : String) -> String {
+  normalize_theme_name_input(name)
+}
+
+///|
 pub fn parse_theme_name(name : String) -> ThemeName? {
   match normalize_theme_name_input(name) {
     "zinc-light" => Some(ThemeName::ZincLight)

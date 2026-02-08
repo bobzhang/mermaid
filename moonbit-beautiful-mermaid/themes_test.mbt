@@ -48,6 +48,9 @@ test "Theme slug and parser round-trip" {
 
 ///|
 test "Theme parser is case-insensitive and unknown-safe" {
+  assert_eq(normalize_theme_name("  TOKYO___NIGHT  "), "tokyo-night")
+  assert_eq(normalize_theme_name("github\n dark"), "github-dark")
+
   match parse_theme_name("TOKYO-NIGHT") {
     Some(parsed) => assert_eq(theme_slug(parsed), "tokyo-night")
     None => fail("TOKYO-NIGHT should parse")

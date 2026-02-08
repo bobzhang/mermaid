@@ -20,6 +20,8 @@ pub fn from_shiki_theme(ShikiTheme) -> DiagramColors
 
 pub fn merge_options_with_colors(RenderOptions, DiagramColors) -> RenderOptions
 
+pub fn normalize_theme_name(String) -> String
+
 pub fn parse_mermaid(String) -> MermaidGraph raise MermaidError
 
 pub fn parse_theme_name(String) -> ThemeName?
