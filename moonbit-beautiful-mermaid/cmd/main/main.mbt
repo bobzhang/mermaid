@@ -818,20 +818,17 @@ fn main {
 
   let rendered_svg = match theme_slug {
     Some(slug) => {
-      let themed = try? @beautiful_mermaid.render_mermaid_with_theme_name(
+      if !@beautiful_mermaid.theme_exists(slug) {
+        println("Unknown theme: \{slug}")
+        let available = @beautiful_mermaid.built_in_theme_slugs().join(", ")
+        println("Available themes: \{available}")
+        return
+      }
+      try? @beautiful_mermaid.render_mermaid_with_theme_name(
         input,
         slug,
         options=svg_options,
       )
-      match themed {
-        Err(@beautiful_mermaid.MermaidError::UnknownTheme(_)) => {
-          println("Unknown theme: \{slug}")
-          let available = @beautiful_mermaid.built_in_theme_slugs().join(", ")
-          println("Available themes: \{available}")
-          return
-        }
-        _ => themed
-      }
     }
     None => try? @beautiful_mermaid.render_mermaid(input, options=svg_options)
   }
