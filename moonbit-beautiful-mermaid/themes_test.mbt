@@ -68,6 +68,14 @@ test "Theme parser is case-insensitive and unknown-safe" {
     Some(parsed) => assert_eq(theme_slug(parsed), "github-dark")
     None => fail("github__dark should parse")
   }
+  match parse_theme_name("tokyo\t night") {
+    Some(parsed) => assert_eq(theme_slug(parsed), "tokyo-night")
+    None => fail("tokyo\\t night should parse")
+  }
+  match parse_theme_name("github\n dark") {
+    Some(parsed) => assert_eq(theme_slug(parsed), "github-dark")
+    None => fail("github\\n dark should parse")
+  }
   assert_eq(parse_theme_name("not-a-theme"), None)
 }
 

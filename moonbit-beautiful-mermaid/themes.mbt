@@ -310,6 +310,9 @@ fn normalize_theme_name_input(name : String) -> String {
   .to_lower()
   .replace_all(old="_", new="-")
   .replace_all(old=" ", new="-")
+  .replace_all(old="\t", new="-")
+  .replace_all(old="\n", new="-")
+  .replace_all(old="\r", new="-")
   let mut collapsed = normalized
   while collapsed.contains("--") {
     collapsed = collapsed.replace_all(old="--", new="-")
