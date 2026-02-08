@@ -10,6 +10,7 @@ fn print_usage() -> Unit {
     "  moon run cmd/main -- --ascii --ascii-box-border-padding=2 \"graph LR\\nA --> B\"",
   )
   println("  moon run cmd/main -- --theme=tokyo-night \"graph TD\\nA --> B\"")
+  println("  moon run cmd/main -- --theme=default \"graph TD\\nA --> B\"")
   println("  moon run cmd/main -- --font='Roboto Mono' \"graph TD\\nA --> B\"")
   println("  moon run cmd/main -- --bg='#0f172a' \"graph TD\\nA --> B\"")
   println("  moon run cmd/main -- --fg='#e2e8f0' \"graph TD\\nA --> B\"")
@@ -29,7 +30,7 @@ fn print_usage() -> Unit {
   println("  --ascii-padding-x  ASCII horizontal padding, e.g. 8")
   println("  --ascii-padding-y  ASCII vertical padding, e.g. 2")
   println("  --ascii-box-border-padding  ASCII box border padding, e.g. 2")
-  println("  --theme    SVG theme slug, e.g. tokyo-night, github-dark")
+  println("  --theme    SVG theme slug, e.g. tokyo-night, github-dark, default")
   println("  --font     SVG font family, e.g. Inter, Roboto Mono")
   println("  --bg       SVG background color, e.g. #0f172a")
   println("  --fg       SVG foreground color, e.g. #e2e8f0")

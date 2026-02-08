@@ -165,6 +165,7 @@ Run the local CLI entrypoint from the module root:
 - `--ascii-padding-x`, `--ascii-padding-y`, and `--ascii-box-border-padding` are valid only with `--ascii` or `--unicode`
 - SVG flags (`--theme`, `--font`, `--bg`, etc.) are valid only in SVG output mode (without `--ascii`/`--unicode`)
 - `moon run cmd/main -- --theme=tokyo-night "graph TD\nA --> B"`
+- `moon run cmd/main -- --theme=default "graph TD\nA --> B"`
 - `moon run cmd/main -- --theme tokyo-night "graph TD\nA --> B"`
 - `moon run cmd/main -- --theme "TOKYO   NIGHT" "graph TD\nA --> B"` (normalized automatically)
 - `moon run cmd/main -- --font "Roboto Mono" "graph TD\nA --> B"`
