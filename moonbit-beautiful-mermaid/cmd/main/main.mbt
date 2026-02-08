@@ -4,6 +4,7 @@ fn print_usage() -> Unit {
   println("  moon run cmd/main -- \"graph TD\\nA --> B\"")
   println("  moon run cmd/main -- --ascii \"graph LR\\nA --> B\"")
   println("  moon run cmd/main -- --ascii --ascii-padding-x=8 \"graph LR\\nA --> B\"")
+  println("  moon run cmd/main -- --ascii --ascii-padding-y=2 \"graph LR\\nA --> B\"")
   println("  moon run cmd/main -- --theme=tokyo-night \"graph TD\\nA --> B\"")
   println("  moon run cmd/main -- --font='Roboto Mono' \"graph TD\\nA --> B\"")
   println("  moon run cmd/main -- --bg='#0f172a' \"graph TD\\nA --> B\"")
@@ -21,6 +22,7 @@ fn print_usage() -> Unit {
   println("Flags:")
   println("  --ascii    Render ASCII output")
   println("  --ascii-padding-x  ASCII horizontal padding, e.g. 8")
+  println("  --ascii-padding-y  ASCII vertical padding, e.g. 2")
   println("  --theme    SVG theme slug, e.g. tokyo-night, github-dark")
   println("  --font     SVG font family, e.g. Inter, Roboto Mono")
   println("  --bg       SVG background color, e.g. #0f172a")
@@ -66,6 +68,7 @@ fn main {
   let args = cli_args_without_program()
   let mut use_ascii = false
   let mut ascii_padding_x = 5
+  let mut ascii_padding_y = 5
   let mut theme_slug : String? = None
   let mut font_name : String? = None
   let mut bg_color : String? = None
@@ -93,8 +96,27 @@ fn main {
   let mut expect_node_spacing_value = false
   let mut expect_layer_spacing_value = false
   let mut expect_ascii_padding_x_value = false
+  let mut expect_ascii_padding_y_value = false
 
   for arg in args {
+    if expect_ascii_padding_y_value {
+      if arg.has_prefix("--") {
+        println("Error: --ascii-padding-y requires a value")
+        print_usage()
+        return
+      }
+      match parse_non_negative_int(arg) {
+        Some(value) => ascii_padding_y = value
+        None => {
+          println("Error: --ascii-padding-y requires a non-negative integer")
+          print_usage()
+          return
+        }
+      }
+      expect_ascii_padding_y_value = false
+      continue
+    }
+
     if expect_ascii_padding_x_value {
       if arg.has_prefix("--") {
         println("Error: --ascii-padding-x requires a value")
@@ -281,6 +303,10 @@ fn main {
     }
     if arg == "--ascii-padding-x" {
       expect_ascii_padding_x_value = true
+      continue
+    }
+    if arg == "--ascii-padding-y" {
+      expect_ascii_padding_y_value = true
       continue
     }
     if arg == "--transparent" {
@@ -479,6 +505,23 @@ fn main {
       }
       continue
     }
+    if arg.has_prefix("--ascii-padding-y=") {
+      let raw_ascii_padding_y = (try! arg[18:]).to_string()
+      if raw_ascii_padding_y == "" {
+        println("Error: --ascii-padding-y requires a non-empty value")
+        print_usage()
+        return
+      }
+      match parse_non_negative_int(raw_ascii_padding_y) {
+        Some(value) => ascii_padding_y = value
+        None => {
+          println("Error: --ascii-padding-y requires a non-negative integer")
+          print_usage()
+          return
+        }
+      }
+      continue
+    }
     if arg == "--theme" {
       expect_theme_value = true
       continue
@@ -566,6 +609,11 @@ fn main {
     print_usage()
     return
   }
+  if expect_ascii_padding_y_value {
+    println("Error: --ascii-padding-y requires a value")
+    print_usage()
+    return
+  }
 
   let input = match diagram {
     Some(found) => found
@@ -577,7 +625,7 @@ fn main {
     let options = @beautiful_mermaid.AsciiRenderOptions::{
       use_ascii: true,
       padding_x: ascii_padding_x,
-      padding_y: 5,
+      padding_y: ascii_padding_y,
       box_border_padding: 1,
     }
     let rendered_ascii = try? @beautiful_mermaid.render_mermaid_ascii(
