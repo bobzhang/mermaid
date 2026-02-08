@@ -35,6 +35,7 @@ test {
 ## Styling Options
 
 `render_mermaid` accepts `RenderOptions` for colors, font, spacing, and transparency.
+Use `default_colors()` if you want to start from package defaults and override selectively.
 
 ```mbt check
 test {
