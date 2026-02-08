@@ -42,14 +42,20 @@ fn main {
     }
     if arg.has_prefix("--theme=") {
       let theme = (try! arg[8:]).to_string()
-      if theme != "" {
-        theme_slug = Some(theme)
+      if theme == "" {
+        println("Error: --theme requires a non-empty value")
+        print_usage()
+        return
       }
+      theme_slug = Some(theme)
       continue
     }
-    if !arg.has_prefix("--") {
-      diagram = Some(arg)
+    if arg.has_prefix("--") {
+      println("Error: unknown flag \{arg}")
+      print_usage()
+      return
     }
+    diagram = Some(arg)
   }
 
   let input = match diagram {
