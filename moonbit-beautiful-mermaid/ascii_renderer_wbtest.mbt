@@ -103,3 +103,21 @@ test "state lifecycle ascii keeps leftward back-edge arrow off closed border" {
   assert_true(output.contains("|     Closed    |  <"))
   assert_eq(output.contains("|     Closed    |<"), false)
 }
+
+///|
+test "unicode line merge uses top tee when crossing only continues downward" {
+  let canvas = make_canvas(5, 5)
+  flow_draw_vline(canvas, 2, 2, 4, "│")
+  flow_draw_hline(canvas, 1, 3, 2, "─")
+
+  assert_eq(canvas[2][2], "┬")
+}
+
+///|
+test "unicode line merge uses left tee when vertical crosses rightward line" {
+  let canvas = make_canvas(5, 5)
+  flow_draw_hline(canvas, 2, 4, 2, "─")
+  flow_draw_vline(canvas, 2, 1, 3, "│")
+
+  assert_eq(canvas[2][2], "├")
+}

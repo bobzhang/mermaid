@@ -654,6 +654,50 @@ fn flow_is_corner_or_junction_char(ch : String) -> Bool {
 }
 
 ///|
+fn flow_connects_up(ch : String) -> Bool {
+  flow_is_vertical_line_char(ch) ||
+  ch == "┼" ||
+  ch == "├" ||
+  ch == "┤" ||
+  ch == "┴" ||
+  ch == "└" ||
+  ch == "┘"
+}
+
+///|
+fn flow_connects_down(ch : String) -> Bool {
+  flow_is_vertical_line_char(ch) ||
+  ch == "┼" ||
+  ch == "├" ||
+  ch == "┤" ||
+  ch == "┬" ||
+  ch == "┌" ||
+  ch == "┐"
+}
+
+///|
+fn flow_connects_left(ch : String) -> Bool {
+  flow_is_horizontal_line_char(ch) ||
+  ch == "┼" ||
+  ch == "┤" ||
+  ch == "┬" ||
+  ch == "┴" ||
+  ch == "┐" ||
+  ch == "┘"
+}
+
+///|
+fn flow_connects_right(ch : String) -> Bool {
+  flow_is_horizontal_line_char(ch) ||
+  ch == "┼" ||
+  ch == "├" ||
+  ch == "┬" ||
+  ch == "┴" ||
+  ch == "┌" ||
+  ch == "└"
+}
+
+///|
 fn flow_put_line_canvas(
   canvas : Array[Array[String]],
   x : Int,
@@ -686,7 +730,38 @@ fn flow_put_line_canvas(
     flow_is_horizontal_line_char(existing)
   }
   if cross {
-    canvas[y][x] = if use_ascii { "+" } else { "┼" }
+    if use_ascii {
+      canvas[y][x] = "+"
+      return
+    }
+
+    if horizontal {
+      let has_up = y > 0 && flow_connects_down(canvas[y - 1][x])
+      let has_down = y + 1 < canvas.length() &&
+        flow_connects_up(canvas[y + 1][x])
+      canvas[y][x] = if has_up && has_down {
+        "┼"
+      } else if has_down {
+        "┬"
+      } else if has_up {
+        "┴"
+      } else {
+        "┼"
+      }
+    } else {
+      let has_left = x > 0 && flow_connects_right(canvas[y][x - 1])
+      let has_right = x + 1 < canvas[0].length() &&
+        flow_connects_left(canvas[y][x + 1])
+      canvas[y][x] = if has_left && has_right {
+        "┼"
+      } else if has_right {
+        "├"
+      } else if has_left {
+        "┤"
+      } else {
+        "┼"
+      }
+    }
     return
   }
 
