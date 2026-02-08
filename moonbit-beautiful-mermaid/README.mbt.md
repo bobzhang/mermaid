@@ -115,6 +115,31 @@ test {
 }
 ```
 
+### Theme Extraction from Editor-Like Theme Data
+
+Use `from_shiki_theme` to map editor/theme token data into `DiagramColors`.
+
+```mbt check
+test {
+  let shiki_theme = ShikiTheme::{
+    theme_type: Some("dark"),
+    colors: Some({
+      "editor.background": "#1a1b26",
+      "editor.foreground": "#a9b1d6",
+      "editorLineNumber.foreground": "#565f89",
+      "focusBorder": "#7aa2f7",
+    }),
+    token_colors: Some([
+      ShikiTokenColor::{ scopes: ["comment"], foreground: Some("#565f89") },
+    ]),
+  }
+  let colors = from_shiki_theme(shiki_theme)
+  let svg = try! render_mermaid_with_colors("graph TD\nA --> B", colors)
+  assert_true(svg.contains("--bg:#1a1b26"))
+  assert_true(svg.contains("--accent:#7aa2f7"))
+}
+```
+
 ## CLI
 
 Run the local CLI entrypoint from the module root:
