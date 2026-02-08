@@ -91,6 +91,11 @@ test "Built-in theme slugs are exported for CLI and config UX" {
   assert_true(slugs.contains("github-dark"))
   assert_true(slugs.contains("one-dark"))
   assert_eq(slugs.length(), built_in_themes().length())
+  let seen : Map[String, Bool] = {}
+  for slug in slugs {
+    assert_true(!seen.contains(slug))
+    seen[slug] = true
+  }
 }
 
 ///|
