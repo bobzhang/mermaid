@@ -198,6 +198,7 @@ test "SVG renderer root defines derived token aliases used by style classes" {
   assert_true(svg.contains("--_text-muted:var(--muted)"))
   assert_true(svg.contains("--_node-fill:var(--surface)"))
   assert_true(svg.contains("--_node-stroke:var(--border)"))
+  assert_true(svg.contains("--_group-fill:var(--bg)"))
   assert_true(svg.contains("--_group-hdr:var(--surface)"))
   assert_true(svg.contains("--_inner-stroke:var(--border)"))
 }
@@ -1109,6 +1110,45 @@ test "SVG renderer escapes special characters in group labels" {
   let svg = render_svg(graph, DiagramColors::default(), "Inter", false)
 
   assert_true(svg.contains("A &lt; B"))
+}
+
+///|
+test "SVG renderer group primitives use derived group tokens" {
+  let graph = PositionedGraph::{
+    width: 400,
+    height: 300,
+    nodes: [],
+    edges: [],
+    groups: [
+      PositionedGroup::{
+        id: "g1",
+        label: "Outer",
+        x: 20,
+        y: 20,
+        width: 120,
+        height: 80,
+        children: [],
+      },
+    ],
+    sequence_lifelines: [],
+    sequence_activations: [],
+    sequence_blocks: [],
+    sequence_notes: [],
+  }
+  let svg = render_svg(graph, DiagramColors::default(), "Inter", false)
+
+  assert_true(
+    svg.contains(
+      "class=\"group-outer\" x=\"20\" y=\"20\" width=\"120\" height=\"80\" rx=\"0\" ry=\"0\" fill=\"var(--_group-fill)\" stroke=\"var(--_node-stroke)\" stroke-width=\"1\"",
+    ),
+  )
+  assert_true(
+    svg.contains(
+      "class=\"group-header\" x=\"20\" y=\"20\" width=\"120\" height=\"24\" rx=\"0\" ry=\"0\" fill=\"var(--_group-hdr)\" stroke=\"var(--_node-stroke)\" stroke-width=\"1\"",
+    ),
+  )
+  assert_true(svg.contains("class=\"group-label\" x=\"28\" y=\"32\""))
+  assert_true(svg.contains("fill=\"var(--_text-sec)\">Outer</text>"))
 }
 
 ///|

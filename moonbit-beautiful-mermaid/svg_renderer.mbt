@@ -295,13 +295,13 @@ fn render_group(group : PositionedGroup) -> String {
   let header_height = subgraph_header_height()
   let sb = StringBuilder::new()
   sb.write_string(
-    "<rect class=\"group-outer\" x=\"\{group.x}\" y=\"\{group.y}\" width=\"\{group.width}\" height=\"\{group.height}\" rx=\"0\" ry=\"0\" fill=\"var(--bg)\" stroke=\"var(--border)\" stroke-width=\"1\" />",
+    "<rect class=\"group-outer\" x=\"\{group.x}\" y=\"\{group.y}\" width=\"\{group.width}\" height=\"\{group.height}\" rx=\"0\" ry=\"0\" fill=\"var(--_group-fill)\" stroke=\"var(--_node-stroke)\" stroke-width=\"1\" />",
   )
   sb.write_string(
-    "<rect class=\"group-header\" x=\"\{group.x}\" y=\"\{group.y}\" width=\"\{group.width}\" height=\"\{header_height}\" rx=\"0\" ry=\"0\" fill=\"var(--surface)\" stroke=\"var(--border)\" stroke-width=\"1\" />",
+    "<rect class=\"group-header\" x=\"\{group.x}\" y=\"\{group.y}\" width=\"\{group.width}\" height=\"\{header_height}\" rx=\"0\" ry=\"0\" fill=\"var(--_group-hdr)\" stroke=\"var(--_node-stroke)\" stroke-width=\"1\" />",
   )
   sb.write_string(
-    "<text class=\"group-label\" x=\"\{group.x + 8}\" y=\"\{group.y + header_height / 2}\" dominant-baseline=\"middle\" text-anchor=\"start\" fill=\"var(--muted)\">\{xml_escape(group.label)}</text>",
+    "<text class=\"group-label\" x=\"\{group.x + 8}\" y=\"\{group.y + header_height / 2}\" dominant-baseline=\"middle\" text-anchor=\"start\" fill=\"var(--_text-sec)\">\{xml_escape(group.label)}</text>",
   )
   for child in group.children {
     sb.write_string(render_group(child))
@@ -677,7 +677,7 @@ fn render_svg(
 
   let sb = StringBuilder::new()
   sb.write_string(
-    "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"\{graph.width}\" height=\"\{graph.height}\" viewBox=\"0 0 \{graph.width} \{graph.height}\" style=\"--bg:\{colors.bg};--fg:\{colors.fg};--_text:\{colors.fg};--line:\{line_color};--accent:\{accent_color};--_arrow:\{accent_color};--muted:\{muted_color};--surface:\{surface_color};--border:\{border_color};--_line:var(--line);--_text-sec:var(--muted);--_text-muted:var(--muted);--_text-faint:var(--muted);--_node-fill:var(--surface);--_node-stroke:var(--border);--_group-hdr:var(--surface);--_inner-stroke:var(--border);font-family:'\{xml_escape(font)}';background:var(--bg)\">",
+    "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"\{graph.width}\" height=\"\{graph.height}\" viewBox=\"0 0 \{graph.width} \{graph.height}\" style=\"--bg:\{colors.bg};--fg:\{colors.fg};--_text:\{colors.fg};--line:\{line_color};--accent:\{accent_color};--_arrow:\{accent_color};--muted:\{muted_color};--surface:\{surface_color};--border:\{border_color};--_line:var(--line);--_text-sec:var(--muted);--_text-muted:var(--muted);--_text-faint:var(--muted);--_node-fill:var(--surface);--_node-stroke:var(--border);--_group-fill:var(--bg);--_group-hdr:var(--surface);--_inner-stroke:var(--border);font-family:'\{xml_escape(font)}';background:var(--bg)\">",
   )
   sb.write_string(
     "<style>@import url('https://fonts.googleapis.com/css2?family=\{font_url}:wght@400;500;600;700&display=swap');</style>",
