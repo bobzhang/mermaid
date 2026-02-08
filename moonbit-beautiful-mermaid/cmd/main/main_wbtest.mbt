@@ -50,6 +50,13 @@ test "available_theme_list includes representative built-in slugs" {
 }
 
 ///|
+test "canonical_cli_theme_slug handles aliases and normalization" {
+  assert_eq(canonical_cli_theme_slug("default"), Some("zinc-light"))
+  assert_eq(canonical_cli_theme_slug("__github_dark__"), Some("github-dark"))
+  assert_eq(canonical_cli_theme_slug("moonbit-neon"), None)
+}
+
+///|
 test "svg_options_overridden tracks svg-only flags and spacing options" {
   assert_eq(
     svg_options_overridden(
