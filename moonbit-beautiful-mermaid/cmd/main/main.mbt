@@ -3,6 +3,7 @@ fn print_usage() -> Unit {
   println("Usage:")
   println("  moon run cmd/main -- \"graph TD\\nA --> B\"")
   println("  moon run cmd/main -- --ascii \"graph LR\\nA --> B\"")
+  println("  moon run cmd/main -- --unicode \"graph LR\\nA --> B\"")
   println("  moon run cmd/main -- --ascii --ascii-padding-x=8 \"graph LR\\nA --> B\"")
   println("  moon run cmd/main -- --ascii --ascii-padding-y=2 \"graph LR\\nA --> B\"")
   println(
@@ -24,6 +25,7 @@ fn print_usage() -> Unit {
   println("  moon run cmd/main -- --list-themes")
   println("Flags:")
   println("  --ascii    Render ASCII output")
+  println("  --unicode  Render Unicode text output")
   println("  --ascii-padding-x  ASCII horizontal padding, e.g. 8")
   println("  --ascii-padding-y  ASCII vertical padding, e.g. 2")
   println("  --ascii-box-border-padding  ASCII box border padding, e.g. 2")
@@ -70,7 +72,8 @@ fn parse_non_negative_int(raw : String) -> Int? {
 ///|
 fn main {
   let args = cli_args_without_program()
-  let mut use_ascii = false
+  let mut render_text = false
+  let mut use_ascii_chars = true
   let mut ascii_padding_x = 5
   let mut ascii_padding_y = 5
   let mut ascii_box_border_padding = 1
@@ -324,7 +327,13 @@ fn main {
       return
     }
     if arg == "--ascii" {
-      use_ascii = true
+      render_text = true
+      use_ascii_chars = true
+      continue
+    }
+    if arg == "--unicode" {
+      render_text = true
+      use_ascii_chars = false
       continue
     }
     if arg == "--ascii-padding-x" {
@@ -675,9 +684,9 @@ fn main {
       "graph TD\nA[Start] --> B{Decision}\nB -->|Yes| C[Done]\nB -->|No| D[Retry]"
   }
 
-  if use_ascii {
+  if render_text {
     let options = @beautiful_mermaid.AsciiRenderOptions::{
-      use_ascii: true,
+      use_ascii: use_ascii_chars,
       padding_x: ascii_padding_x,
       padding_y: ascii_padding_y,
       box_border_padding: ascii_box_border_padding,
