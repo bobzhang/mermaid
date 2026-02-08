@@ -201,3 +201,20 @@ test "from_shiki_theme prefers focusBorder and falls back muted to line" {
   assert_eq(colors.accent, Some("#00ffcc"))
   assert_eq(colors.muted, Some("#666666"))
 }
+
+///|
+test "from_shiki_theme ignores token entries without foreground" {
+  let theme = ShikiTheme::{
+    theme_type: Some("dark"),
+    colors: Some({
+      "editor.background": "#111111",
+      "editor.foreground": "#eeeeee",
+    }),
+    token_colors: Some([
+      ShikiTokenColor::{ scopes: ["keyword"], foreground: None },
+      ShikiTokenColor::{ scopes: ["keyword"], foreground: Some("#ff00ff") },
+    ]),
+  }
+  let colors = from_shiki_theme(theme)
+  assert_eq(colors.accent, Some("#ff00ff"))
+}
