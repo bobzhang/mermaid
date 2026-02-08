@@ -1014,24 +1014,18 @@ fn render_ascii_flow_subgraphs(
             )
           }
         }
-        let shift_state_vertical_label =
-          state_layout_mode &&
-          has_labeled_reverse &&
-          !axis_is_horizontal(end_dx, end_dy)
-        let label_anchor_y =
-          if shift_state_vertical_label { anchor_y + 1 } else { anchor_y }
         edge_label_overlays.push(AsciiEdgeLabelPlacement::{
           x: anchor_x - label.length() / 2,
           y:
             if state_layout_mode {
               adjust_label_y_for_state_boxes(
                 anchor_x - label.length() / 2,
-                label_anchor_y,
+                anchor_y,
                 label,
                 mapped_nodes,
               )
             } else {
-              label_anchor_y
+              anchor_y
             },
           label,
         })

@@ -1787,6 +1787,7 @@ fn layout_graph(
   let positioned_nodes : Array[PositionedNode] = []
   let positioned_by_id : Map[String, PositionedNode] = {}
   let state_lane_by_node_id : Map[String, Int] = {}
+  let state_label_y_offset_by_node_id : Map[String, Int] = {}
   if flat_state_graph {
     let node_order_by_id : Map[String, Int] = {}
     let node_shape_by_id : Map[String, NodeShape] = {}
@@ -1805,6 +1806,42 @@ fn layout_graph(
           break
         }
       }
+    }
+
+    let forward_extra_rows_by_order : Map[Int, Int] = {}
+    for edge in graph.edges {
+      let source_order = option_int_or(node_order_by_id.get(edge.source), -1)
+      let target_order = option_int_or(node_order_by_id.get(edge.target), -1)
+      if source_order < 0 || target_order < 0 || target_order <= source_order {
+        continue
+      }
+      let mut extra_rows = 0
+      if edge.label is Some(_) {
+        extra_rows += 1
+      }
+      let target_is_state_end = match node_shape_by_id.get(edge.target) {
+        Some(shape) =>
+          match shape {
+            NodeShape::StateEnd => true
+            _ => false
+          }
+        None => false
+      }
+      if target_is_state_end {
+        extra_rows += 2
+      }
+      if extra_rows <= 0 {
+        continue
+      }
+      let current = option_int_or(forward_extra_rows_by_order.get(target_order), 0)
+      forward_extra_rows_by_order[target_order] = current + extra_rows
+    }
+    let label_row_units = 10
+    let mut cumulative_label_offset = 0
+    for i, node in nodes_in_order {
+      let step_count = option_int_or(forward_extra_rows_by_order.get(i), 0)
+      cumulative_label_offset += step_count * label_row_units
+      state_label_y_offset_by_node_id[node.id] = cumulative_label_offset
     }
 
     let forward_targets_by_source : Map[String, Array[String]] = {}
@@ -1873,7 +1910,10 @@ fn layout_graph(
     let y = if horizontal {
       padding + 70
     } else {
-      padding + order_index * layer_spacing + height / 2
+      padding +
+      order_index * layer_spacing +
+      height / 2 +
+      option_int_or(state_label_y_offset_by_node_id.get(node.id), 0)
     }
     let positioned = PositionedNode::{
       id: node.id,
