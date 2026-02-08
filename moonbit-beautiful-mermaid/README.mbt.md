@@ -152,6 +152,7 @@ Run the local CLI entrypoint from the module root:
 - `moon run cmd/main -- --ascii --ascii-padding-y 2 "graph LR\nA --> B"`
 - `moon run cmd/main -- --ascii --ascii-box-border-padding 2 "graph LR\nA --> B"`
 - `moon run cmd/main -- --unicode "graph LR\nA --> B"`
+- `--ascii-padding-x`, `--ascii-padding-y`, and `--ascii-box-border-padding` are valid only with `--ascii` or `--unicode`
 - `moon run cmd/main -- --theme=tokyo-night "graph TD\nA --> B"`
 - `moon run cmd/main -- --theme tokyo-night "graph TD\nA --> B"`
 - `moon run cmd/main -- --font "Roboto Mono" "graph TD\nA --> B"`
