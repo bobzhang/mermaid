@@ -199,6 +199,19 @@ test "SVG renderer URL-encodes reserved characters in custom font name" {
 }
 
 ///|
+test "SVG renderer URL encoding keeps apostrophe unescaped like encodeURIComponent" {
+  let svg = render_svg(
+    make_svg_test_graph([]),
+    DiagramColors::default(),
+    "Rock'n Roll",
+    false,
+  )
+
+  assert_true(svg.contains("family=Rock'n%20Roll"))
+  assert_true(!svg.contains("Rock%27n%20Roll"))
+}
+
+///|
 test "SVG renderer URL-encodes non-ASCII font name in import URL" {
   let svg = render_svg(
     make_svg_test_graph([]),

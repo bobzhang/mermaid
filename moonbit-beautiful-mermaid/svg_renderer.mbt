@@ -99,6 +99,7 @@ fn is_uri_unreserved_char(ch : Char) -> Bool {
   ch == '!' ||
   ch == '~' ||
   ch == '*' ||
+  ch.to_int() == 0x27 ||
   ch == '(' ||
   ch == ')'
 }
