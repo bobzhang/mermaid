@@ -17,7 +17,7 @@ test "trim_flow_canvas_output returns empty for blank canvas text" {
 }
 
 ///|
-test "node_label_for_ascii hides synthetic state pseudostate ids" {
+test "node_label_for_ascii maps synthetic state pseudostates to star markers" {
   let nodes : Map[String, MermaidNode] = {}
   nodes["state_start_1"] = MermaidNode::{
     id: "state_start_1",
@@ -41,6 +41,6 @@ test "node_label_for_ascii hides synthetic state pseudostate ids" {
     sequence_activation_commands: [],
   }
 
-  assert_eq(node_label_for_ascii(graph, "state_start_1"), "")
+  assert_eq(node_label_for_ascii(graph, "state_start_1"), "*")
   assert_eq(node_label_for_ascii(graph, "Idle"), "Idle")
 }

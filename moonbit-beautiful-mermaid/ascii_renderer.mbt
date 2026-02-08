@@ -162,7 +162,7 @@ fn node_label_for_ascii(graph : MermaidGraph, node_id : String) -> String {
   match graph.nodes.get(node_id) {
     Some(node) =>
       match node.shape {
-        NodeShape::StateStart | NodeShape::StateEnd => ""
+        NodeShape::StateStart | NodeShape::StateEnd => "*"
         _ =>
           if node.label == "" {
             node.id

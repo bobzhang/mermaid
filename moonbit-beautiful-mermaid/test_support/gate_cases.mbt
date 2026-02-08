@@ -108,8 +108,8 @@ pub fn gate_cases() -> Array[GateCase] {
       expected_edge_count: 3,
       padding_x: 5,
       padding_y: 5,
-      expected_ascii: "[]--->[Idle]\n[Idle]--->(start)[Processing]\n[Processing]--->[]",
-      expected_unicode: "[]───►[Idle]\n[Idle]───►(start)[Processing]\n[Processing]───►[]",
+      expected_ascii: "[*]--->[Idle]\n[Idle]--->(start)[Processing]\n[Processing]--->[*]",
+      expected_unicode: "[*]───►[Idle]\n[Idle]───►(start)[Processing]\n[Processing]───►[*]",
       expected_svg_fragments: [
         "<svg", "class=\"state-start\"", ">Idle</text>", ">Processing</text>",
       ],
@@ -122,8 +122,8 @@ pub fn gate_cases() -> Array[GateCase] {
       expected_edge_count: 2,
       padding_x: 5,
       padding_y: 5,
-      expected_ascii: "[]--->[A]\n[A]--->[]",
-      expected_unicode: "[]───►[A]\n[A]───►[]",
+      expected_ascii: "[*]--->[A]\n[A]--->[*]",
+      expected_unicode: "[*]───►[A]\n[A]───►[*]",
       expected_svg_fragments: ["<svg", "class=\"state-start\"", ">A</text>"],
     },
   ]

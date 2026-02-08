@@ -251,3 +251,30 @@ test "ASCII preserves ER operator semantics" {
   )
   assert_true(unicode.contains("║───o╟"))
 }
+
+///|
+test "ASCII state pseudostates use star notation in compact mode" {
+  let ascii = try! @beautiful_mermaid.render_mermaid_ascii(
+    "stateDiagram-v2\n[*] --> Idle\nIdle --> [*]",
+    options=@beautiful_mermaid.AsciiRenderOptions::{
+      use_ascii: true,
+      padding_x: 5,
+      padding_y: 5,
+      box_border_padding: 1,
+    },
+  )
+  assert_true(ascii.contains("[*]--->[Idle]"))
+  assert_true(ascii.contains("[Idle]--->[*]"))
+
+  let unicode = try! @beautiful_mermaid.render_mermaid_ascii(
+    "stateDiagram-v2\n[*] --> Idle\nIdle --> [*]",
+    options=@beautiful_mermaid.AsciiRenderOptions::{
+      use_ascii: false,
+      padding_x: 5,
+      padding_y: 5,
+      box_border_padding: 1,
+    },
+  )
+  assert_true(unicode.contains("[*]───►[Idle]"))
+  assert_true(unicode.contains("[Idle]───►[*]"))
+}
