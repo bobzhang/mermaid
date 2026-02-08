@@ -428,13 +428,13 @@ fn adjust_label_y_for_state_boxes(
     return y
   }
   for offset in 1..<=6 {
-    let up = y - offset
-    if !label_overlaps_any_node_box(x, up, label, boxes) {
-      return up
-    }
     let down = y + offset
     if !label_overlaps_any_node_box(x, down, label, boxes) {
       return down
+    }
+    let up = y - offset
+    if !label_overlaps_any_node_box(x, up, label, boxes) {
+      return up
     }
   }
   y
@@ -908,18 +908,24 @@ fn render_ascii_flow_subgraphs(
             )
           }
         }
+        let shift_state_vertical_label =
+          state_layout_mode &&
+          has_labeled_reverse &&
+          !axis_is_horizontal(end_dx, end_dy)
+        let label_anchor_y =
+          if shift_state_vertical_label { anchor_y + 1 } else { anchor_y }
         edge_label_overlays.push(AsciiEdgeLabelPlacement::{
           x: anchor_x - label.length() / 2,
           y:
             if state_layout_mode {
               adjust_label_y_for_state_boxes(
                 anchor_x - label.length() / 2,
-                anchor_y,
+                label_anchor_y,
                 label,
                 mapped_nodes,
               )
             } else {
-              anchor_y
+              label_anchor_y
             },
           label,
         })
