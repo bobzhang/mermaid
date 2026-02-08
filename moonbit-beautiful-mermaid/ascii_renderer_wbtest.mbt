@@ -58,6 +58,38 @@ test "plain flowchart edges render as boxed diagrams instead of inline edges" {
 }
 
 ///|
+test "non-state vertical flow normalizes column width to widest label" {
+  let graph = parse_mermaid(
+    "graph TD\nA[Normal] --> B[Highlighted] --> C[Error]",
+  )
+  let output = render_ascii(graph, AsciiRenderOptions::{
+    use_ascii: true,
+    padding_x: 5,
+    padding_y: 5,
+    box_border_padding: 1,
+  })
+
+  assert_true(output.contains("+-------------+"))
+  assert_true(output.contains("| Highlighted |"))
+  assert_true(output.contains("|    Normal   |"))
+  assert_true(output.contains("|    Error    |"))
+}
+
+///|
+test "non-state bidirectional flow suppresses start arrowheads" {
+  let graph = parse_mermaid("graph LR\nA[Client] <-->|sync| B[Server]")
+  let output = render_ascii(graph, AsciiRenderOptions::{
+    use_ascii: true,
+    padding_x: 5,
+    padding_y: 5,
+    box_border_padding: 1,
+  })
+
+  assert_true(output.contains("| Client |---->| Server |"))
+  assert_eq(output.contains("<"), false)
+}
+
+///|
 test "state lifecycle ascii keeps compact right lane width" {
   let source = "stateDiagram-v2\n  [*] --> Closed\n  Closed --> Connecting : connect\n  Connecting --> Connected : success\n  Connecting --> Closed : timeout\n  Connected --> Disconnecting : close\n  Connected --> Reconnecting : error\n  Reconnecting --> Connected : success\n  Reconnecting --> Closed : max_retries\n  Disconnecting --> Closed : done\n  Closed --> [*]"
   let graph = parse_mermaid(source)

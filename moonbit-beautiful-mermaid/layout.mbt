@@ -71,6 +71,71 @@ fn layout_direction_is_reverse(direction : Direction) -> Bool {
 }
 
 ///|
+fn collect_non_state_flow_ranks(
+  nodes_in_order : Array[MermaidNode],
+  edges : Array[MermaidEdge],
+) -> (Map[String, Int], Int) {
+  let node_order_by_id : Map[String, Int] = {}
+  let rank_by_id : Map[String, Int] = {}
+
+  for i, node in nodes_in_order {
+    node_order_by_id[node.id] = i
+    rank_by_id[node.id] = 0
+  }
+
+  if nodes_in_order.length() == 0 {
+    return (rank_by_id, 0)
+  }
+
+  for _ in 0..<nodes_in_order.length() {
+    let mut changed = false
+    for edge in edges {
+      match
+        (node_order_by_id.get(edge.source), node_order_by_id.get(edge.target)) {
+        (Some(source_order), Some(target_order)) =>
+          if target_order > source_order {
+            let source_rank = option_int_or(rank_by_id.get(edge.source), 0)
+            let target_rank = option_int_or(rank_by_id.get(edge.target), 0)
+            let candidate_rank = source_rank + 1
+            if candidate_rank > target_rank {
+              rank_by_id[edge.target] = candidate_rank
+              changed = true
+            }
+          }
+        _ => ()
+      }
+    }
+    if !changed {
+      break
+    }
+  }
+
+  let mut max_rank = 0
+  for _, rank in rank_by_id {
+    max_rank = max_rank.max(rank)
+  }
+  (rank_by_id, max_rank)
+}
+
+///|
+fn collect_non_state_flow_lanes(
+  nodes_in_order : Array[MermaidNode],
+  rank_by_id : Map[String, Int],
+) -> Map[String, Int] {
+  let lane_by_id : Map[String, Int] = {}
+  let next_lane_by_rank : Map[Int, Int] = {}
+
+  for node in nodes_in_order {
+    let rank = option_int_or(rank_by_id.get(node.id), 0)
+    let lane = option_int_or(next_lane_by_rank.get(rank), 0)
+    lane_by_id[node.id] = lane
+    next_lane_by_rank[rank] = lane + 1
+  }
+
+  lane_by_id
+}
+
+///|
 fn resolve_subgraph_layout_direction(
   subgraph_direction : Direction?,
   inherited_horizontal : Bool,
@@ -1670,10 +1735,7 @@ fn shift_top_level_state_subgraphs_right(
     let seen_node_ids : Map[String, Bool] = {}
     let indexes : Array[Int] = []
     collect_subgraph_node_indexes(
-      subgraph,
-      positioned_index_by_id,
-      seen_node_ids,
-      indexes,
+      subgraph, positioned_index_by_id, seen_node_ids, indexes,
     )
     for index in indexes {
       subgraph_node_ids[positioned_nodes[index].id] = true
@@ -1692,15 +1754,13 @@ fn shift_top_level_state_subgraphs_right(
   }
 
   let (has_outside, _, _, outside_right, _) = member_indexes_bounds(
-    outside_indexes,
-    positioned_nodes,
+    outside_indexes, positioned_nodes,
   )
   if !has_outside {
     return
   }
   let (_, _, outside_top, _, _) = member_indexes_bounds(
-    outside_indexes,
-    positioned_nodes,
+    outside_indexes, positioned_nodes,
   )
 
   let min_gap = (node_spacing / 3).max(24)
@@ -1712,7 +1772,8 @@ fn shift_top_level_state_subgraphs_right(
       continue
     }
 
-    let group_index = match find_positioned_group_index(positioned_groups, subgraph.id) {
+    let group_index = match
+      find_positioned_group_index(positioned_groups, subgraph.id) {
       Some(index) => index
       None => continue
     }
@@ -1721,7 +1782,11 @@ fn shift_top_level_state_subgraphs_right(
     let dy = target_top - group.y
     if dx > 0 || dy != 0 {
       shift_member_indexes(member_indexes, dx.max(0), dy, positioned_nodes)
-      positioned_groups[group_index] = shift_positioned_group(group, dx.max(0), dy)
+      positioned_groups[group_index] = shift_positioned_group(
+        group,
+        dx.max(0),
+        dy,
+      )
       for index in member_indexes {
         let node = positioned_nodes[index]
         positioned_by_id[node.id] = node
@@ -1771,16 +1836,12 @@ fn layout_graph_for_ascii(
   let state_graph = is_state_graph(graph)
   let horizontal = layout_direction_is_horizontal(graph.direction)
   let reverse = layout_direction_is_reverse(graph.direction)
-  let state_flat_ascii_grid_mode =
-    state_graph &&
-    !horizontal &&
-    !reverse
+  let state_flat_ascii_grid_mode = state_graph && !horizontal && !reverse
   if state_flat_ascii_grid_mode {
     return layout_flat_state_graph_for_ascii_grid(graph, options)
   }
 
-  let state_composite_ascii_mode =
-    state_graph && graph.subgraphs.length() > 0
+  let state_composite_ascii_mode = state_graph && graph.subgraphs.length() > 0
   layout_graph_with_subgraph_redirects(
     graph,
     options,
@@ -1804,7 +1865,9 @@ fn layout_graph_with_subgraph_redirects(
   let horizontal = layout_direction_is_horizontal(graph.direction)
   let reverse = layout_direction_is_reverse(graph.direction)
   let state_graph = is_state_graph(graph)
-  let flat_state_graph = state_graph && !horizontal && graph.subgraphs.length() == 0
+  let flat_state_graph = state_graph &&
+    !horizontal &&
+    graph.subgraphs.length() == 0
 
   let subgraph_entry_by_id : Map[String, String] = {}
   let subgraph_exit_by_id : Map[String, String] = {}
@@ -1836,6 +1899,26 @@ fn layout_graph_with_subgraph_redirects(
   let positioned_by_id : Map[String, PositionedNode] = {}
   let state_lane_by_node_id : Map[String, Int] = {}
   let state_label_y_offset_by_node_id : Map[String, Int] = {}
+  let flow_rank_by_node_id : Map[String, Int] = {}
+  let flow_lane_by_node_id : Map[String, Int] = {}
+  let mut flow_max_rank = 0
+  if !state_graph {
+    let (rank_by_id, max_rank) = collect_non_state_flow_ranks(
+      nodes_in_order,
+      graph.edges,
+    )
+    flow_max_rank = max_rank
+    for node_id, rank in rank_by_id {
+      flow_rank_by_node_id[node_id] = rank
+    }
+    let lane_by_id = collect_non_state_flow_lanes(
+      nodes_in_order, flow_rank_by_node_id,
+    )
+    for node_id, lane in lane_by_id {
+      flow_lane_by_node_id[node_id] = lane
+    }
+  }
+
   if flat_state_graph {
     let node_order_by_id : Map[String, Int] = {}
     let node_shape_by_id : Map[String, NodeShape] = {}
@@ -1881,7 +1964,10 @@ fn layout_graph_with_subgraph_redirects(
       if extra_rows <= 0 {
         continue
       }
-      let current = option_int_or(forward_extra_rows_by_order.get(target_order), 0)
+      let current = option_int_or(
+        forward_extra_rows_by_order.get(target_order),
+        0,
+      )
       forward_extra_rows_by_order[target_order] = current + extra_rows
     }
     let label_row_units = 10
@@ -1924,7 +2010,7 @@ fn layout_graph_with_subgraph_redirects(
     for node in nodes_in_order {
       let source_lane = option_int_or(state_lane_by_node_id.get(node.id), 0)
       match forward_targets_by_source.get(node.id) {
-        Some(targets) => {
+        Some(targets) =>
           for i, target_id in targets {
             if lane_assigned.contains(target_id) {
               continue
@@ -1932,7 +2018,6 @@ fn layout_graph_with_subgraph_redirects(
             state_lane_by_node_id[target_id] = source_lane + i * 2
             lane_assigned[target_id] = true
           }
-        }
         None => ()
       }
     }
@@ -1946,22 +2031,41 @@ fn layout_graph_with_subgraph_redirects(
   for i, node in nodes_in_order {
     let order_index = if reverse { total_nodes - 1 - i } else { i }
     let (width, height) = node_dimensions(node)
+    let flow_rank = option_int_or(flow_rank_by_node_id.get(node.id), 0)
+    let flow_lane = option_int_or(flow_lane_by_node_id.get(node.id), 0)
+    let flow_rank_index = if reverse {
+      flow_max_rank - flow_rank
+    } else {
+      flow_rank
+    }
     let x = if horizontal {
-      padding + order_index * node_spacing + width / 2
+      if state_graph {
+        padding + order_index * node_spacing + width / 2
+      } else {
+        padding + flow_rank_index * node_spacing + width / 2
+      }
     } else if flat_state_graph {
       padding +
       90 +
       option_int_or(state_lane_by_node_id.get(node.id), 0) * state_lane_step
-    } else {
+    } else if state_graph {
       padding + 90
+    } else {
+      padding + 90 + flow_lane * node_spacing
     }
     let y = if horizontal {
-      padding + 70
-    } else {
+      if state_graph {
+        padding + 70
+      } else {
+        padding + 70 + flow_lane * layer_spacing
+      }
+    } else if state_graph {
       padding +
       order_index * layer_spacing +
       height / 2 +
       option_int_or(state_label_y_offset_by_node_id.get(node.id), 0)
+    } else {
+      padding + flow_rank_index * layer_spacing + height / 2
     }
     let positioned = PositionedNode::{
       id: node.id,
@@ -2026,12 +2130,7 @@ fn layout_graph_with_subgraph_redirects(
 
   if state_graph {
     shift_top_level_state_subgraphs_right(
-      graph,
-      node_spacing,
-      layer_spacing,
-      positioned_nodes,
-      positioned_groups,
-      positioned_index_by_id,
+      graph, node_spacing, layer_spacing, positioned_nodes, positioned_groups, positioned_index_by_id,
       positioned_by_id,
     )
   }

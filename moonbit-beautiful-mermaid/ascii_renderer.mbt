@@ -1726,20 +1726,25 @@ fn render_ascii_flow_subgraphs(
   let state_flat_layout_mode = state_layout_mode &&
     graph.subgraphs.length() == 0
   let state_composite_layout_mode = state_layout_mode && !state_flat_layout_mode
-  let flow_direction_horizontal = graph.direction is (Direction::LR | Direction::RL)
+  let flow_direction_horizontal = graph.direction
+    is (Direction::LR | Direction::RL)
   let scale_x = if state_layout_mode { 9 } else { flow_scale_x() }
   let scale_y = if state_layout_mode { 10 } else { flow_scale_y() }
-  let state_column_width_by_x : Map[Int, Int] = {}
-  if state_layout_mode {
+  let column_width_by_x : Map[Int, Int] = {}
+  if state_layout_mode || !flow_direction_horizontal {
     for node in positioned.nodes {
       let label = flow_node_label(node)
-      let base_width = match node.shape {
-        NodeShape::StateStart | NodeShape::StateEnd => 12
-        _ => (label.length() + 4).max(12)
+      let base_width = if state_layout_mode {
+        match node.shape {
+          NodeShape::StateStart | NodeShape::StateEnd => 12
+          _ => (label.length() + 4).max(12)
+        }
+      } else {
+        (label.length() + 4).max(11)
       }
-      let current = option_int_or(state_column_width_by_x.get(node.x), 0)
+      let current = option_int_or(column_width_by_x.get(node.x), 0)
       if base_width > current {
-        state_column_width_by_x[node.x] = base_width
+        column_width_by_x[node.x] = base_width
       }
     }
   }
@@ -1748,13 +1753,16 @@ fn render_ascii_flow_subgraphs(
   for node in positioned.nodes {
     let label = flow_node_label(node)
     let (min_width, min_height) = if state_layout_mode {
-      (option_int_or(state_column_width_by_x.get(node.x), 12), 5)
+      (option_int_or(column_width_by_x.get(node.x), 12), 5)
     } else {
       (
         if flow_direction_horizontal {
           (label.length() + 4).max(5)
         } else {
-          (label.length() + 4).max(11)
+          option_int_or(
+            column_width_by_x.get(node.x),
+            (label.length() + 4).max(11),
+          )
         },
         5,
       )
@@ -1973,17 +1981,9 @@ fn render_ascii_flow_subgraphs(
           end_dy = start_dy
 
           let source_anchor = flow_edge_anchor(
-            source_box,
-            start_dx,
-            start_dy,
-            false,
+            source_box, start_dx, start_dy, false,
           )
-          let target_anchor = flow_edge_anchor(
-            target_box,
-            end_dx,
-            end_dy,
-            true,
-          )
+          let target_anchor = flow_edge_anchor(target_box, end_dx, end_dy, true)
           let (sx, sy) = source_anchor
           let (tx, ty) = target_anchor
           source_anchor_x = sx
@@ -1996,13 +1996,8 @@ fn render_ascii_flow_subgraphs(
           end_y = target_anchor_y
 
           flow_draw_segment(
-            canvas,
-            source_anchor_x,
-            source_anchor_y,
-            target_anchor_x,
-            target_anchor_y,
-            h_char,
-            v_char,
+            canvas, source_anchor_x, source_anchor_y, target_anchor_x, target_anchor_y,
+            h_char, v_char,
           )
         }
         _ => continue
@@ -2038,11 +2033,6 @@ fn render_ascii_flow_subgraphs(
             (source_anchor_x + target_anchor_x) / 2,
             (source_anchor_y + target_anchor_y) / 2,
           )
-        } else if !state_layout_mode {
-          (
-            (source_anchor_x + target_anchor_x) / 2,
-            (source_anchor_y + target_anchor_y) / 2,
-          )
         } else {
           match edge.label_position {
             Some(position) =>
@@ -2054,19 +2044,15 @@ fn render_ascii_flow_subgraphs(
           }
         }
         let label_x = anchor_x - label.length() / 2
-        let label_y = if state_layout_mode {
-          let base_y = adjust_label_y_for_state_boxes(
-            label_x, anchor_y, label, mapped_nodes,
-          )
-          if has_labeled_reverse_shared_path {
-            base_y
-          } else {
-            adjust_label_y_for_state_layout(
-              label_x, base_y, label, mapped_nodes, edge_label_overlays,
-            )
-          }
+        let base_y = adjust_label_y_for_state_boxes(
+          label_x, anchor_y, label, mapped_nodes,
+        )
+        let label_y = if has_labeled_reverse_shared_path {
+          base_y
         } else {
-          anchor_y
+          adjust_label_y_for_state_layout(
+            label_x, base_y, label, mapped_nodes, edge_label_overlays,
+          )
         }
         edge_label_overlays.push(AsciiEdgeLabelPlacement::{
           x: label_x,
@@ -2099,7 +2085,7 @@ fn render_ascii_flow_subgraphs(
         marker: flow_arrow_marker(dx, dy, options.use_ascii),
       })
     }
-    if edge.has_arrow_start {
+    if state_layout_mode && edge.has_arrow_start {
       let dx = -start_dx
       let dy = -start_dy
       arrow_overlays.push(AsciiArrowPlacement::{
