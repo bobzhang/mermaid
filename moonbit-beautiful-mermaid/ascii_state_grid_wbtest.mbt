@@ -421,7 +421,7 @@ test "state edge path prototype matches key lifecycle routes" {
   )
   assert_eq(
     reconnect_closed_path,
-    "(6,17) -> (7,17) -> (7,5) -> (2,5)",
+    "(5,16) -> (5,15) -> (4,15) -> (4,12) -> (3,12) -> (3,5) -> (2,5)",
   )
   assert_eq(
     state_edge_path_text_td(positions, blocked, "Closed", "state_end_1"),

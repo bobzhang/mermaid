@@ -78,6 +78,70 @@ fn ascii_grid_heuristic(a : AsciiGridCoord, b : AsciiGridCoord) -> Int {
 }
 
 ///|
+fn ascii_grid_heap_push(
+  heap : Array[AsciiGridFrontierEntry],
+  entry : AsciiGridFrontierEntry,
+) -> Unit {
+  heap.push(entry)
+  let mut index = heap.length() - 1
+  while index > 0 {
+    let parent = (index - 1) / 2
+    if heap[index].priority < heap[parent].priority {
+      let tmp = heap[parent]
+      heap[parent] = heap[index]
+      heap[index] = tmp
+      index = parent
+    } else {
+      break
+    }
+  }
+}
+
+///|
+fn ascii_grid_heap_pop(
+  heap : Array[AsciiGridFrontierEntry],
+) -> AsciiGridFrontierEntry? {
+  if heap.length() == 0 {
+    return None
+  }
+  let top = heap[0]
+  if heap.length() == 1 {
+    ignore(heap.pop())
+    return Some(top)
+  }
+
+  let last = match heap.pop() {
+    Some(found) => found
+    None => return Some(top)
+  }
+  heap[0] = last
+
+  let mut index = 0
+  let length = heap.length()
+  while true {
+    let mut smallest = index
+    let left = 2 * index + 1
+    let right = 2 * index + 2
+
+    if left < length && heap[left].priority < heap[smallest].priority {
+      smallest = left
+    }
+    if right < length && heap[right].priority < heap[smallest].priority {
+      smallest = right
+    }
+    if smallest == index {
+      break
+    }
+
+    let tmp = heap[index]
+    heap[index] = heap[smallest]
+    heap[smallest] = tmp
+    index = smallest
+  }
+  Some(top)
+}
+
+///|
 fn ascii_grid_pathfind(
   start : AsciiGridCoord,
   end : AsciiGridCoord,
@@ -101,37 +165,17 @@ fn ascii_grid_pathfind(
     coord: start,
     priority: 0,
   }]
-  let mut frontier_head = 0
-  let frontier_best_priority_by_key : Map[String, Int] = {}
-  frontier_best_priority_by_key[ascii_grid_key(start)] = 0
 
   let cost_so_far : Map[String, Int] = {}
   cost_so_far[ascii_grid_key(start)] = 0
   let came_from : Map[String, AsciiGridCoord] = {}
-  while frontier_head < frontier.length() {
-    let mut min_index = frontier_head
-    for i in (frontier_head + 1)..<frontier.length() {
-      if frontier[i].priority < frontier[min_index].priority {
-        min_index = i
-      }
+  while frontier.length() > 0 {
+    let entry = match ascii_grid_heap_pop(frontier) {
+      Some(found) => found
+      None => break
     }
-    if min_index != frontier_head {
-      let swap_value = frontier[min_index]
-      frontier[min_index] = frontier[frontier_head]
-      frontier[frontier_head] = swap_value
-    }
-
-    let entry = frontier[frontier_head]
-    frontier_head = frontier_head + 1
     let current = entry.coord
     let current_key = ascii_grid_key(current)
-    let best_priority = option_int_or(
-      frontier_best_priority_by_key.get(current_key),
-      entry.priority,
-    )
-    if entry.priority > best_priority {
-      continue
-    }
 
     if current == end {
       return ascii_grid_reconstruct_path(start, end, came_from)
@@ -157,8 +201,7 @@ fn ascii_grid_pathfind(
         cost_so_far[next_key] = new_cost
         came_from[next_key] = current
         let next_priority = new_cost + ascii_grid_heuristic(next, end)
-        frontier_best_priority_by_key[next_key] = next_priority
-        frontier.push(AsciiGridFrontierEntry::{
+        ascii_grid_heap_push(frontier, AsciiGridFrontierEntry::{
           coord: next,
           priority: next_priority,
         })
