@@ -180,6 +180,19 @@ fn label_overlap_offset(slot : Int) -> Int {
 }
 
 ///|
+fn label_overlap_offset_x(slot : Int) -> Int {
+  if slot <= 0 {
+    return 0
+  }
+  let magnitude = (slot + 1) / 2 * 40
+  if slot % 2 == 1 {
+    -magnitude
+  } else {
+    magnitude
+  }
+}
+
+///|
 fn label_anchor_key(point : Point) -> String {
   "\{point.x}:\{point.y}"
 }
@@ -1975,7 +1988,12 @@ fn layout_graph(
             let key = label_anchor_key(base)
             let slot = option_int_or(label_slots_by_anchor.get(key), 0)
             label_slots_by_anchor[key] = slot + 1
-            Some(Point::{ x: base.x, y: base.y + label_overlap_offset(slot) })
+            let label_x = if state_graph {
+              base.x + label_overlap_offset_x(slot)
+            } else {
+              base.x
+            }
+            Some(Point::{ x: label_x, y: base.y + label_overlap_offset(slot) })
           }
           None => None
         }
