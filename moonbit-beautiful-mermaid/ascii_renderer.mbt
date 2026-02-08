@@ -567,6 +567,69 @@ fn flow_draw_segment(
 }
 
 ///|
+fn flow_mark_blocked_cells_for_nodes(
+  blocked : Map[String, Bool],
+  nodes : Array[AsciiFlowNodeBox],
+) -> Unit {
+  for node in nodes {
+    for y in node.top..<(node.top + node.height) {
+      for x in node.left..<(node.left + node.width) {
+        blocked[ascii_grid_key(AsciiGridCoord::{ x, y })] = true
+      }
+    }
+  }
+}
+
+///|
+fn flow_draw_routed_diagonal_segment(
+  canvas : Array[Array[String]],
+  x1 : Int,
+  y1 : Int,
+  x2 : Int,
+  y2 : Int,
+  h_char : String,
+  v_char : String,
+  blocked : Map[String, Bool],
+) -> Bool {
+  if canvas.length() == 0 || canvas[0].length() == 0 {
+    return false
+  }
+  let start = AsciiGridCoord::{ x: x1, y: y1 }
+  let ending = AsciiGridCoord::{ x: x2, y: y2 }
+  match
+    ascii_grid_pathfind(
+      start,
+      ending,
+      blocked,
+      0,
+      canvas[0].length() - 1,
+      0,
+      canvas.length() - 1,
+    ) {
+    Some(path) => {
+      if path.length() < 2 {
+        return false
+      }
+      for i in 1..<path.length() {
+        let from = path[i - 1]
+        let to = path[i]
+        flow_draw_segment(
+          canvas,
+          from.x,
+          from.y,
+          to.x,
+          to.y,
+          h_char,
+          v_char,
+        )
+      }
+      true
+    }
+    None => false
+  }
+}
+
+///|
 fn map_flow_group(
   group : PositionedGroup,
   scale_x : Int,
@@ -824,6 +887,10 @@ fn render_ascii_flow_subgraphs(
   let arrow_overlays : Array[AsciiArrowPlacement] = []
   let border_overlays : Array[AsciiArrowPlacement] = []
   let edge_label_overlays : Array[AsciiEdgeLabelPlacement] = []
+  let blocked_cells : Map[String, Bool] = {}
+  if state_layout_mode {
+    flow_mark_blocked_cells_for_nodes(blocked_cells, mapped_nodes)
+  }
   for edge in positioned.edges {
     let (h_char, v_char) = flow_line_chars(edge.style, options.use_ascii)
     let points = edge.points
@@ -837,7 +904,23 @@ fn render_ascii_flow_subgraphs(
       let y1 = scale_coord(p1.y, scale_y, options.padding_y)
       let x2 = scale_coord(p2.x, scale_x, options.padding_x)
       let y2 = scale_coord(p2.y, scale_y, options.padding_y)
-      flow_draw_segment(canvas, x1, y1, x2, y2, h_char, v_char)
+      let routed =
+        state_layout_mode &&
+        x1 != x2 &&
+        y1 != y2 &&
+        flow_draw_routed_diagonal_segment(
+          canvas,
+          x1,
+          y1,
+          x2,
+          y2,
+          h_char,
+          v_char,
+          blocked_cells,
+        )
+      if !routed {
+        flow_draw_segment(canvas, x1, y1, x2, y2, h_char, v_char)
+      }
     }
 
     let first = points[0]
