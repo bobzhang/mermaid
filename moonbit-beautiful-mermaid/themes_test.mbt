@@ -177,6 +177,14 @@ test "shiki_theme constructor preserves provided fields" {
 }
 
 ///|
+test "shiki_dark_theme and shiki_light_theme set theme type" {
+  let dark = shiki_dark_theme(None, None)
+  let light = shiki_light_theme(None, None)
+  assert_eq(dark.theme_type, Some("dark"))
+  assert_eq(light.theme_type, Some("light"))
+}
+
+///|
 test "from_shiki_theme falls back for missing editor colors" {
   let dark = from_shiki_theme(ShikiTheme::{
     theme_type: Some("dark"),

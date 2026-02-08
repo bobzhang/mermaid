@@ -56,6 +56,22 @@ pub fn shiki_theme(
 }
 
 ///|
+pub fn shiki_dark_theme(
+  colors : Map[String, String]?,
+  token_colors : Array[ShikiTokenColor]?,
+) -> ShikiTheme {
+  shiki_theme(Some("dark"), colors, token_colors)
+}
+
+///|
+pub fn shiki_light_theme(
+  colors : Map[String, String]?,
+  token_colors : Array[ShikiTokenColor]?,
+) -> ShikiTheme {
+  shiki_theme(Some("light"), colors, token_colors)
+}
+
+///|
 fn shiki_theme_color(theme : ShikiTheme, key : String) -> String? {
   match theme.colors {
     Some(colors) => colors.get(key)

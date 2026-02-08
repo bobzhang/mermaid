@@ -30,6 +30,10 @@ pub fn render_mermaid_with_theme(String, ThemeName, options? : RenderOptions) ->
 
 pub fn render_mermaid_with_theme_name(String, String, options? : RenderOptions) -> String raise MermaidError
 
+pub fn shiki_dark_theme(Map[String, String]?, Array[ShikiTokenColor]?) -> ShikiTheme
+
+pub fn shiki_light_theme(Map[String, String]?, Array[ShikiTokenColor]?) -> ShikiTheme
+
 pub fn shiki_theme(String?, Map[String, String]?, Array[ShikiTokenColor]?) -> ShikiTheme
 
 pub fn shiki_token_color(String, String?) -> ShikiTokenColor
