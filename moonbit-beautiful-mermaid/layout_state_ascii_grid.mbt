@@ -504,6 +504,39 @@ fn layout_state_label_position(
 }
 
 ///|
+fn layout_state_label_position_from_source_segment(
+  points : Array[Point],
+  label_slots_by_anchor : Map[String, Int],
+) -> Point? {
+  if points.length() < 2 {
+    return None
+  }
+  let base = midpoint(points[0], points[1])
+  let key = label_anchor_key(base)
+  let slot = option_int_or(label_slots_by_anchor.get(key), 0)
+  label_slots_by_anchor[key] = slot + 1
+  Some(Point::{
+    x: base.x + label_overlap_offset_x(slot),
+    y: base.y + label_overlap_offset(slot),
+  })
+}
+
+///|
+fn layout_state_has_labeled_reverse_edge(
+  graph : MermaidGraph,
+  source_id : String,
+  target_id : String,
+) -> Bool {
+  for edge in graph.edges {
+    if edge.source == target_id && edge.target == source_id &&
+      edge.label is Some(_) {
+      return true
+    }
+  }
+  false
+}
+
+///|
 fn layout_state_empty_positioned_graph() -> PositionedGraph {
   PositionedGraph::{
     width: 0,
@@ -629,7 +662,19 @@ fn layout_flat_state_graph_for_ascii_grid(
           None => edge_points_for(source, target, false)
         }
         let label_position = match edge.label {
-          Some(_) => layout_state_label_position(points, label_slots_by_anchor)
+          Some(_) =>
+            if layout_state_has_labeled_reverse_edge(
+                graph,
+                edge.source,
+                edge.target,
+              ) {
+              layout_state_label_position_from_source_segment(
+                points,
+                label_slots_by_anchor,
+              )
+            } else {
+              layout_state_label_position(points, label_slots_by_anchor)
+            }
           None => None
         }
         positioned_edges.push(PositionedEdge::{

@@ -465,3 +465,34 @@ test "state flat layout reroutes diagonal reverse edge pair" {
   assert_eq(reverse_points.length() > 0, true)
   assert_eq(state_points_are_reverse(forward_points, reverse_points), false)
 }
+
+///|
+test "state flat layout places reverse-pair labels near source segments" {
+  let source = "stateDiagram-v2\n  [*] --> Closed\n  Closed --> Connecting : connect\n  Connecting --> Connected : success\n  Connecting --> Closed : timeout\n  Connected --> Disconnecting : close\n  Connected --> Reconnecting : error\n  Reconnecting --> Connected : success\n  Reconnecting --> Closed : max_retries\n  Disconnecting --> Closed : done\n  Closed --> [*]"
+  let graph = parse_mermaid(source)
+  let positioned = layout_flat_state_graph_for_ascii_grid(
+    graph,
+    RenderOptions::default(),
+  )
+
+  let mut error_label : Point? = None
+  let mut success_label : Point? = None
+  for edge in positioned.edges {
+    if edge.source == "Connected" && edge.target == "Reconnecting" &&
+      edge.label == Some("error") {
+      error_label = edge.label_position
+    }
+    if edge.source == "Reconnecting" && edge.target == "Connected" &&
+      edge.label == Some("success") {
+      success_label = edge.label_position
+    }
+  }
+
+  match (error_label, success_label) {
+    (Some(error_position), Some(success_position)) => {
+      assert_eq(success_position.x > error_position.x, true)
+      assert_eq(success_position.y > error_position.y, true)
+    }
+    _ => fail("expected both reverse-pair label positions to be present")
+  }
+}
