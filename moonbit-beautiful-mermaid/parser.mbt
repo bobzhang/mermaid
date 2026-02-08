@@ -2109,6 +2109,7 @@ fn parse_flowchart(lines : Array[String]) -> MermaidGraph raise MermaidError {
   let class_defs : Map[String, Map[String, String]] = {}
   let class_assignments : Map[String, String] = {}
   let node_styles : Map[String, Map[String, String]] = {}
+  let known_node_ids : Map[String, Bool] = {}
   let direction = match parse_flow_direction(lines[0]) {
     Some(found) => found
     None =>
@@ -2156,7 +2157,17 @@ fn parse_flowchart(lines : Array[String]) -> MermaidGraph raise MermaidError {
     let touched_node_ids = parse_flow_line(
       line, nodes, edges, class_defs, class_assignments, node_styles,
     )
-    append_nodes_to_current_subgraph(subgraph_stack, touched_node_ids)
+    let newly_defined_node_ids : Array[String] = []
+    for node_id in touched_node_ids {
+      if known_node_ids.contains(node_id) {
+        continue
+      }
+      if nodes.contains(node_id) {
+        known_node_ids[node_id] = true
+        newly_defined_node_ids.push(node_id)
+      }
+    }
+    append_nodes_to_current_subgraph(subgraph_stack, newly_defined_node_ids)
   }
 
   MermaidGraph::{

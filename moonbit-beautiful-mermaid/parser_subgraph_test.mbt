@@ -53,6 +53,22 @@ test "Parser keeps nested subgraph nodes scoped to their direct owner" {
 }
 
 ///|
+test "Parser keeps subgraph membership at first node definition" {
+  let graph = try! @beautiful_mermaid.parse_mermaid(
+    "graph TD\nsubgraph Clients\nA --> B\nend\nsubgraph Services\nB --> C\nend",
+  )
+
+  assert_eq(graph.subgraphs.length(), 2)
+  let clients = graph.subgraphs[0]
+  let services = graph.subgraphs[1]
+
+  assert_contains_id(clients.node_ids, "A")
+  assert_contains_id(clients.node_ids, "B")
+  assert_true(!services.node_ids.any(id => id == "B"))
+  assert_contains_id(services.node_ids, "C")
+}
+
+///|
 test "Parser captures direction override inside subgraph only" {
   let graph = try! @beautiful_mermaid.parse_mermaid(
     "graph TD\nsubgraph sub1 [Left Right Group]\ndirection LR\nA --> B\nend",
