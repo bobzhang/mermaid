@@ -25,6 +25,17 @@ test "Theme presets include zinc-dark mono defaults" {
 }
 
 ///|
+test "Theme presets include zinc-light default colors" {
+  let colors = match theme_by_name("zinc-light") {
+    Some(found) => found
+    None => fail("missing zinc-light preset")
+  }
+  assert_eq(colors.bg, "#FFFFFF")
+  assert_eq(colors.fg, "#27272A")
+  assert_eq(colors.line, None)
+}
+
+///|
 test "Theme slug and parser round-trip" {
   for theme in built_in_themes() {
     let slug = theme_slug(theme)
@@ -59,6 +70,7 @@ test "Theme lookup by name returns colors or none" {
 ///|
 test "Built-in theme slugs are exported for CLI and config UX" {
   let slugs = built_in_theme_slugs()
+  assert_true(slugs.contains("zinc-light"))
   assert_true(slugs.contains("tokyo-night"))
   assert_true(slugs.contains("github-dark"))
   assert_true(slugs.contains("one-dark"))

@@ -1,5 +1,6 @@
 ///|
 pub enum ThemeName {
+  ZincLight
   ZincDark
   TokyoNight
   TokyoNightStorm
@@ -19,6 +20,16 @@ pub enum ThemeName {
 ///|
 pub fn theme_colors(theme : ThemeName) -> DiagramColors {
   match theme {
+    ThemeName::ZincLight =>
+      {
+        bg: "#FFFFFF",
+        fg: "#27272A",
+        line: None,
+        accent: None,
+        muted: None,
+        surface: None,
+        border: None,
+      }
     ThemeName::ZincDark =>
       {
         bg: "#18181B",
@@ -165,6 +176,7 @@ pub fn theme_colors(theme : ThemeName) -> DiagramColors {
 ///|
 pub fn theme_slug(theme : ThemeName) -> String {
   match theme {
+    ThemeName::ZincLight => "zinc-light"
     ThemeName::ZincDark => "zinc-dark"
     ThemeName::TokyoNight => "tokyo-night"
     ThemeName::TokyoNightStorm => "tokyo-night-storm"
@@ -185,6 +197,7 @@ pub fn theme_slug(theme : ThemeName) -> String {
 ///|
 pub fn parse_theme_name(name : String) -> ThemeName? {
   match name.to_lower() {
+    "zinc-light" => Some(ThemeName::ZincLight)
     "zinc-dark" => Some(ThemeName::ZincDark)
     "tokyo-night" => Some(ThemeName::TokyoNight)
     "tokyo-night-storm" => Some(ThemeName::TokyoNightStorm)
@@ -214,6 +227,7 @@ pub fn theme_by_name(name : String) -> DiagramColors? {
 ///|
 pub fn built_in_themes() -> Array[ThemeName] {
   [
+    ThemeName::ZincLight,
     ThemeName::ZincDark,
     ThemeName::TokyoNight,
     ThemeName::TokyoNightStorm,

@@ -369,6 +369,7 @@ pub impl Show for SequenceParticipantKind
 pub impl ToJson for SequenceParticipantKind
 
 pub enum ThemeName {
+  ZincLight
   ZincDark
   TokyoNight
   TokyoNightStorm
