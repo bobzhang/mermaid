@@ -82,24 +82,11 @@ fn main {
     return
   }
 
-  let options = match theme_slug {
+  let rendered_svg = match theme_slug {
     Some(slug) =>
       match @beautiful_mermaid.theme_by_name(slug) {
         Some(colors) =>
-          @beautiful_mermaid.RenderOptions::{
-            bg: Some(colors.bg),
-            fg: Some(colors.fg),
-            line: colors.line,
-            accent: colors.accent,
-            muted: colors.muted,
-            surface: colors.surface,
-            border: colors.border,
-            font: None,
-            padding: None,
-            node_spacing: None,
-            layer_spacing: None,
-            transparent: None,
-          }
+          try? @beautiful_mermaid.render_mermaid_with_colors(input, colors)
         None => {
           println("Unknown theme: \{slug}")
           let names = @beautiful_mermaid.built_in_themes().map(
@@ -110,10 +97,9 @@ fn main {
           return
         }
       }
-    None => @beautiful_mermaid.RenderOptions::default()
+    None => try? @beautiful_mermaid.render_mermaid(input)
   }
 
-  let rendered_svg = try? @beautiful_mermaid.render_mermaid(input, options~)
   match rendered_svg {
     Ok(output) => println(output)
     Err(err) => println("Error: \{err}")
