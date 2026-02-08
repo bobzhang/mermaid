@@ -62,7 +62,7 @@ fn cli_args_without_program() -> Array[String] {
 
 ///|
 fn available_theme_list() -> String {
-  @beautiful_mermaid.built_in_theme_slugs_csv()
+  "\{@beautiful_mermaid.built_in_theme_slugs_csv()}, default"
 }
 
 ///|

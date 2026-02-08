@@ -179,3 +179,4 @@ Run the local CLI entrypoint from the module root:
 - `moon run cmd/main -- --layer-spacing 90 "graph TD\nA --> B --> C"`
 - `moon run cmd/main -- --transparent "graph TD\nA --> B"`
 - `moon run cmd/main -- --list-themes`
+- `--list-themes` includes built-in slugs plus `default` (alias of `zinc-light`)

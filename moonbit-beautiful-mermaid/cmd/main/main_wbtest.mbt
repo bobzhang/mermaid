@@ -46,6 +46,7 @@ test "available_theme_list includes representative built-in slugs" {
   let available = available_theme_list()
   assert_true(available.contains("tokyo-night"))
   assert_true(available.contains("github-dark"))
+  assert_true(available.contains("default"))
 }
 
 ///|
