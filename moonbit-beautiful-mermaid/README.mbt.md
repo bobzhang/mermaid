@@ -147,6 +147,7 @@ Run the local CLI entrypoint from the module root:
 
 - `moon run cmd/main -- "graph TD\nA --> B"`
 - `moon run cmd/main -- --ascii "graph LR\nA --> B"`
+- `moon run cmd/main -- --ascii --ascii-padding-x 8 "graph LR\nA --> B"`
 - `moon run cmd/main -- --theme=tokyo-night "graph TD\nA --> B"`
 - `moon run cmd/main -- --theme tokyo-night "graph TD\nA --> B"`
 - `moon run cmd/main -- --font "Roboto Mono" "graph TD\nA --> B"`
