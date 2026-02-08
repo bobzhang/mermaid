@@ -161,10 +161,14 @@ fn connector_for_edge(
 fn node_label_for_ascii(graph : MermaidGraph, node_id : String) -> String {
   match graph.nodes.get(node_id) {
     Some(node) =>
-      if node.label == "" {
-        node.id
-      } else {
-        node.label.replace_all(old="\n", new=" | ")
+      match node.shape {
+        NodeShape::StateStart | NodeShape::StateEnd => ""
+        _ =>
+          if node.label == "" {
+            node.id
+          } else {
+            node.label.replace_all(old="\n", new=" | ")
+          }
       }
     None => node_id
   }
