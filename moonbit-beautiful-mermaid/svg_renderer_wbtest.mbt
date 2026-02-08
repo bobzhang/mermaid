@@ -347,14 +347,14 @@ test "SVG renderer label class uses derived text fill at 13px" {
 }
 
 ///|
-test "SVG renderer state-start class uses derived text fill/stroke" {
+test "SVG renderer state-start class uses derived text fill" {
   let svg = render_svg(
     make_svg_test_graph([]),
     DiagramColors::default(),
     "Inter",
     false,
   )
-  assert_true(svg.contains(".state-start{fill:var(--_text);stroke:var(--_text)}"))
+  assert_true(svg.contains(".state-start{fill:var(--_text)}"))
 }
 
 ///|
