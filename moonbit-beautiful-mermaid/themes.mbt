@@ -304,12 +304,17 @@ pub fn theme_slug(theme : ThemeName) -> String {
 
 ///|
 fn normalize_theme_name_input(name : String) -> String {
-  name
+  let normalized = name
   .trim()
   .to_string()
   .to_lower()
   .replace_all(old="_", new="-")
   .replace_all(old=" ", new="-")
+  let mut collapsed = normalized
+  while collapsed.contains("--") {
+    collapsed = collapsed.replace_all(old="--", new="-")
+  }
+  collapsed
 }
 
 ///|
