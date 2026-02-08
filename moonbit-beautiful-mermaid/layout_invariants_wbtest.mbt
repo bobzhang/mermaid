@@ -179,6 +179,28 @@ test "Layout state composite direction override changes internal axis" {
 }
 
 ///|
+test "Layout ascii state composite keeps node edge targets over group anchors" {
+  let graph = try! parse_mermaid(
+    "stateDiagram-v2\n  [*] --> Idle\n  Idle --> Processing : submit\n  state Processing {\n    parse --> validate\n    validate --> execute\n  }\n  Processing --> Complete : done\n  Processing --> Error : fail\n  Error --> Idle : retry\n  Complete --> [*]",
+  )
+  let positioned = layout_graph_for_ascii(graph, RenderOptions::default())
+
+  let processing_edge = find_positioned_edge(positioned.edges, "Idle", "Processing")
+  let edge_end = processing_edge.points[processing_edge.points.length() - 1]
+
+  let mut processing_group_x = -1
+  for group in positioned.groups {
+    if group.id == "Processing" {
+      processing_group_x = group.x
+      break
+    }
+  }
+
+  assert_true(processing_group_x >= 0)
+  assert_true(edge_end.x < processing_group_x)
+}
+
+///|
 test "Layout keeps subgraph-defined-first content near top in TD" {
   let graph = try! parse_mermaid(
     "graph TD\nsubgraph Pipeline\nZZ1[Push Code] --> ZZ2{Tests Pass?}\nZZ2 -->|Yes| ZZ3[Build Image]\nend\nZZ3 --> AA([Deploy])\nAA --> BB{QA?}\nBB -->|Yes| CC((Production))",

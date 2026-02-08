@@ -1736,19 +1736,22 @@ fn shift_top_level_state_subgraphs_right(
 fn register_group_anchors(
   group : PositionedGroup,
   positioned_by_id : Map[String, PositionedNode],
+  preserve_existing : Bool,
 ) -> Unit {
-  positioned_by_id[group.id] = PositionedNode::{
-    id: group.id,
-    label: group.label,
-    shape: NodeShape::Rectangle,
-    x: group.x + group.width / 2,
-    y: group.y + group.height / 2,
-    width: group.width,
-    height: group.height,
-    inline_style: None,
+  if !preserve_existing || !positioned_by_id.contains(group.id) {
+    positioned_by_id[group.id] = PositionedNode::{
+      id: group.id,
+      label: group.label,
+      shape: NodeShape::Rectangle,
+      x: group.x + group.width / 2,
+      y: group.y + group.height / 2,
+      width: group.width,
+      height: group.height,
+      inline_style: None,
+    }
   }
   for child in group.children {
-    register_group_anchors(child, positioned_by_id)
+    register_group_anchors(child, positioned_by_id, preserve_existing)
   }
 }
 
@@ -2035,7 +2038,7 @@ fn layout_graph_with_subgraph_redirects(
   }
 
   for group in positioned_groups {
-    register_group_anchors(group, positioned_by_id)
+    register_group_anchors(group, positioned_by_id, state_graph)
   }
 
   let positioned_edges : Array[PositionedEdge] = []
