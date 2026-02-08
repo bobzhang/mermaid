@@ -8,6 +8,7 @@ Render Mermaid diagrams as SVG or ASCII/Unicode text in MoonBit.
 - SVG output with CSS-variable theming.
 - ASCII/Unicode terminal rendering.
 - Configurable layout and rendering options.
+- Smoke coverage against the upstream `beautiful-mermaid/samples-data.ts` corpus.
 
 ## Quick Start
 
