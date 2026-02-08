@@ -1887,7 +1887,12 @@ fn render_ascii_flow_subgraphs(
     flow_mark_blocked_cells_for_nodes(blocked_cells, mapped_nodes)
   }
   for edge in positioned.edges {
-    let (h_char, v_char) = flow_line_chars(edge.style, options.use_ascii)
+    let line_style = if state_layout_mode {
+      edge.style
+    } else {
+      EdgeStyle::Solid
+    }
+    let (h_char, v_char) = flow_line_chars(line_style, options.use_ascii)
     let mut first_x = 0
     let mut first_y = 0
     let mut end_x = 0
@@ -2072,7 +2077,8 @@ fn render_ascii_flow_subgraphs(
       None => ()
     }
 
-    if edge.has_arrow_end {
+    let show_arrow_end = edge.has_arrow_end || !state_layout_mode
+    if show_arrow_end {
       let dx = end_dx
       let dy = end_dy
       let mut arrow_x = target_anchor_x - unit_step(dx)
