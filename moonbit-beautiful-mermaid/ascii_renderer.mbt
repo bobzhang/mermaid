@@ -811,8 +811,25 @@ fn render_ascii_flow_subgraphs(
   let state_layout_mode =
     graph_has_shape(graph, NodeShape::StateStart) ||
     graph_has_shape(graph, NodeShape::StateEnd)
+  let state_flat_layout_mode = state_layout_mode && graph.subgraphs.length() == 0
   let scale_x = if state_layout_mode { 9 } else { flow_scale_x() }
   let scale_y = if state_layout_mode { 10 } else { flow_scale_y() }
+  let mut state_uniform_min_width : Int? = None
+  if state_flat_layout_mode {
+    let mut max_state_text_len = 0
+    for node in positioned.nodes {
+      max_state_text_len = max_state_text_len.max(flow_node_label(node).length())
+    }
+    for edge in positioned.edges {
+      match edge.label {
+        Some(label) => max_state_text_len = max_state_text_len.max(label.length())
+        None => ()
+      }
+    }
+    if max_state_text_len >= 12 {
+      state_uniform_min_width = Some(max_state_text_len + 4)
+    }
+  }
 
   let mapped_groups : Array[AsciiFlowGroupBox] = []
   for group in positioned.groups {
@@ -831,9 +848,13 @@ fn render_ascii_flow_subgraphs(
   for node in positioned.nodes {
     let label = flow_node_label(node)
     let (min_width, min_height) = if state_layout_mode {
-      match node.shape {
-        NodeShape::StateStart | NodeShape::StateEnd => (12, 5)
-        _ => ((label.length() + 6).max(12), 5)
+      match state_uniform_min_width {
+        Some(uniform_width) => (uniform_width, 5)
+        None =>
+          match node.shape {
+            NodeShape::StateStart | NodeShape::StateEnd => (12, 5)
+            _ => ((label.length() + 6).max(12), 5)
+          }
       }
     } else {
       match node.shape {
