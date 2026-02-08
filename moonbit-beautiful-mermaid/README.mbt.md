@@ -119,6 +119,7 @@ test {
 ### Theme Extraction from Editor-Like Theme Data
 
 Use `from_shiki_theme` to map editor/theme token data into `DiagramColors`.
+Use `shiki_token_color` / `shiki_token_color_many` to build token entries.
 
 ```mbt check
 test {
