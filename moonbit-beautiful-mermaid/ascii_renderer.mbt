@@ -1214,9 +1214,23 @@ fn render_ascii_flow_subgraphs(
     if edge.has_arrow_end {
       let dx = end_dx
       let dy = end_dy
+      let mut arrow_x = target_anchor_x - unit_step(dx)
+      let arrow_y = target_anchor_y - unit_step(dy)
+      if state_layout_mode &&
+        dx < 0 &&
+        dy == 0 {
+        arrow_x = target_anchor_x + 3
+        for gap_x in (target_anchor_x + 1)..<arrow_x {
+          arrow_overlays.push(AsciiArrowPlacement::{
+            x: gap_x,
+            y: target_anchor_y,
+            marker: " ",
+          })
+        }
+      }
       arrow_overlays.push(AsciiArrowPlacement::{
-        x: target_anchor_x - unit_step(dx),
-        y: target_anchor_y - unit_step(dy),
+        x: arrow_x,
+        y: arrow_y,
         marker: flow_arrow_marker(dx, dy, options.use_ascii),
       })
     }

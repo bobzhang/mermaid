@@ -88,3 +88,18 @@ test "state lifecycle ascii anchors done label near disconnecting source" {
 
   assert_true(output.contains("| Disconnecting |done--+"))
 }
+
+///|
+test "state lifecycle ascii keeps leftward back-edge arrow off closed border" {
+  let source = "stateDiagram-v2\n  [*] --> Closed\n  Closed --> Connecting : connect\n  Connecting --> Connected : success\n  Connecting --> Closed : timeout\n  Connected --> Disconnecting : close\n  Connected --> Reconnecting : error\n  Reconnecting --> Connected : success\n  Reconnecting --> Closed : max_retries\n  Disconnecting --> Closed : done\n  Closed --> [*]"
+  let graph = parse_mermaid(source)
+  let output = render_ascii(graph, AsciiRenderOptions::{
+    use_ascii: true,
+    padding_x: 5,
+    padding_y: 5,
+    box_border_padding: 1,
+  })
+
+  assert_true(output.contains("|     Closed    |  <"))
+  assert_eq(output.contains("|     Closed    |<"), false)
+}
