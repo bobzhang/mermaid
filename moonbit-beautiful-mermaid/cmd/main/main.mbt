@@ -12,6 +12,7 @@ fn print_usage() -> Unit {
   println("  moon run cmd/main -- --muted='#94a3b8' \"graph TD\\nA --> B\"")
   println("  moon run cmd/main -- --surface='#0b1220' \"graph TD\\nA --> B\"")
   println("  moon run cmd/main -- --border='#334155' \"graph TD\\nA --> B\"")
+  println("  moon run cmd/main -- --padding=20 \"graph TD\\nA --> B\"")
   println("  moon run cmd/main -- --transparent \"graph TD\\nA --> B\"")
   println("  moon run cmd/main -- --list-themes")
   println("Flags:")
@@ -25,6 +26,7 @@ fn print_usage() -> Unit {
   println("  --muted    SVG muted text color, e.g. #94a3b8")
   println("  --surface  SVG node fill color, e.g. #0b1220")
   println("  --border   SVG stroke color, e.g. #334155")
+  println("  --padding  SVG/layout padding in px, e.g. 20")
   println("  --transparent  Omit SVG background fill")
   println("  --list-themes  Print built-in theme names")
   println("  --help     Show this help")
@@ -45,6 +47,15 @@ fn cli_args_without_program() -> Array[String] {
 }
 
 ///|
+fn parse_non_negative_int(raw : String) -> Int? {
+  let parsed : Result[Int, @strconv.StrConvError] = try? @strconv.parse_int(raw)
+  match parsed {
+    Ok(value) => if value >= 0 { Some(value) } else { None }
+    Err(_) => None
+  }
+}
+
+///|
 fn main {
   let args = cli_args_without_program()
   let mut use_ascii = false
@@ -57,6 +68,7 @@ fn main {
   let mut muted_color : String? = None
   let mut surface_color : String? = None
   let mut border_color : String? = None
+  let mut padding : Int? = None
   let mut transparent = false
   let mut diagram : String? = None
   let mut expect_theme_value = false
@@ -68,8 +80,27 @@ fn main {
   let mut expect_muted_value = false
   let mut expect_surface_value = false
   let mut expect_border_value = false
+  let mut expect_padding_value = false
 
   for arg in args {
+    if expect_padding_value {
+      if arg.has_prefix("--") {
+        println("Error: --padding requires a value")
+        print_usage()
+        return
+      }
+      match parse_non_negative_int(arg) {
+        Some(value) => padding = Some(value)
+        None => {
+          println("Error: --padding requires a non-negative integer")
+          print_usage()
+          return
+        }
+      }
+      expect_padding_value = false
+      continue
+    }
+
     if expect_border_value {
       if arg.has_prefix("--") {
         println("Error: --border requires a value")
@@ -218,6 +249,10 @@ fn main {
       expect_border_value = true
       continue
     }
+    if arg == "--padding" {
+      expect_padding_value = true
+      continue
+    }
     if arg.has_prefix("--font=") {
       let font = (try! arg[7:]).to_string()
       if font == "" {
@@ -298,6 +333,23 @@ fn main {
       border_color = Some(border)
       continue
     }
+    if arg.has_prefix("--padding=") {
+      let raw_padding = (try! arg[10:]).to_string()
+      if raw_padding == "" {
+        println("Error: --padding requires a non-empty value")
+        print_usage()
+        return
+      }
+      match parse_non_negative_int(raw_padding) {
+        Some(value) => padding = Some(value)
+        None => {
+          println("Error: --padding requires a non-negative integer")
+          print_usage()
+          return
+        }
+      }
+      continue
+    }
     if arg == "--theme" {
       expect_theme_value = true
       continue
@@ -365,6 +417,11 @@ fn main {
     print_usage()
     return
   }
+  if expect_padding_value {
+    println("Error: --padding requires a value")
+    print_usage()
+    return
+  }
 
   let input = match diagram {
     Some(found) => found
@@ -399,7 +456,7 @@ fn main {
     surface: surface_color,
     border: border_color,
     font: font_name,
-    padding: None,
+    padding,
     node_spacing: None,
     layer_spacing: None,
     transparent: Some(transparent),
