@@ -333,6 +333,19 @@ test "SVG renderer lifeline class uses 0.75 stroke width" {
 }
 
 ///|
+test "SVG renderer sequence-actor class uses derived line token" {
+  let svg = render_svg(
+    make_svg_test_graph([]),
+    DiagramColors::default(),
+    "Inter",
+    false,
+  )
+  assert_true(
+    svg.contains(".sequence-actor{fill:none;stroke:var(--_line);stroke-width:1.5}"),
+  )
+}
+
+///|
 test "SVG renderer sequence-divider class uses 0.75 stroke width" {
   let svg = render_svg(
     make_svg_test_graph([]),
