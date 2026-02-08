@@ -1217,6 +1217,7 @@ fn render_ascii_flow_subgraphs(
       let mut arrow_x = target_anchor_x - unit_step(dx)
       let arrow_y = target_anchor_y - unit_step(dy)
       if state_layout_mode &&
+        options.use_ascii &&
         dx < 0 &&
         dy == 0 {
         arrow_x = target_anchor_x + 3
