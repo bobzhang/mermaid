@@ -122,3 +122,307 @@ test "state_grid_positions matches composite sample topology" {
   assert_eq(positions.get("Error"), Some(StateGridCoord::{ x: 4, y: 12 }))
   assert_eq(positions.get("state_end_1"), Some(StateGridCoord::{ x: 0, y: 16 }))
 }
+
+///|
+struct StateEdgeDir {
+  x : Int
+  y : Int
+} derive(Eq)
+
+///|
+fn state_dir_up() -> StateEdgeDir {
+  { x: 1, y: 0 }
+}
+
+///|
+fn state_dir_down() -> StateEdgeDir {
+  { x: 1, y: 2 }
+}
+
+///|
+fn state_dir_left() -> StateEdgeDir {
+  { x: 0, y: 1 }
+}
+
+///|
+fn state_dir_right() -> StateEdgeDir {
+  { x: 2, y: 1 }
+}
+
+///|
+fn state_dir_upper_right() -> StateEdgeDir {
+  { x: 2, y: 0 }
+}
+
+///|
+fn state_dir_upper_left() -> StateEdgeDir {
+  { x: 0, y: 0 }
+}
+
+///|
+fn state_dir_lower_right() -> StateEdgeDir {
+  { x: 2, y: 2 }
+}
+
+///|
+fn state_dir_lower_left() -> StateEdgeDir {
+  { x: 0, y: 2 }
+}
+
+///|
+fn state_dir_opposite(direction : StateEdgeDir) -> StateEdgeDir {
+  if direction == state_dir_up() {
+    return state_dir_down()
+  }
+  if direction == state_dir_down() {
+    return state_dir_up()
+  }
+  if direction == state_dir_left() {
+    return state_dir_right()
+  }
+  if direction == state_dir_right() {
+    return state_dir_left()
+  }
+  if direction == state_dir_upper_right() {
+    return state_dir_lower_left()
+  }
+  if direction == state_dir_upper_left() {
+    return state_dir_lower_right()
+  }
+  if direction == state_dir_lower_right() {
+    return state_dir_upper_left()
+  }
+  state_dir_upper_right()
+}
+
+///|
+fn state_determine_direction(from : StateGridCoord, to : StateGridCoord) -> StateEdgeDir {
+  if from.x == to.x {
+    if from.y < to.y {
+      state_dir_down()
+    } else {
+      state_dir_up()
+    }
+  } else if from.y == to.y {
+    if from.x < to.x {
+      state_dir_right()
+    } else {
+      state_dir_left()
+    }
+  } else if from.x < to.x {
+    if from.y < to.y {
+      state_dir_lower_right()
+    } else {
+      state_dir_upper_right()
+    }
+  } else if from.y < to.y {
+    state_dir_lower_left()
+  } else {
+    state_dir_upper_left()
+  }
+}
+
+///|
+fn state_determine_start_end_dirs_td(
+  from : StateGridCoord,
+  to : StateGridCoord,
+) -> (StateEdgeDir, StateEdgeDir, StateEdgeDir, StateEdgeDir) {
+  let direction = state_determine_direction(from, to)
+  let is_backwards = direction == state_dir_up() ||
+    direction == state_dir_upper_left() ||
+    direction == state_dir_upper_right()
+
+  if direction == state_dir_lower_right() {
+    (
+      state_dir_right(),
+      state_dir_up(),
+      state_dir_down(),
+      state_dir_left(),
+    )
+  } else if direction == state_dir_upper_right() {
+    (
+      state_dir_right(),
+      state_dir_down(),
+      state_dir_up(),
+      state_dir_left(),
+    )
+  } else if direction == state_dir_lower_left() {
+    (
+      state_dir_left(),
+      state_dir_up(),
+      state_dir_down(),
+      state_dir_right(),
+    )
+  } else if direction == state_dir_upper_left() {
+    (
+      state_dir_right(),
+      state_dir_right(),
+      state_dir_up(),
+      state_dir_right(),
+    )
+  } else if is_backwards && direction == state_dir_up() {
+    (
+      state_dir_right(),
+      state_dir_right(),
+      state_dir_up(),
+      state_dir_down(),
+    )
+  } else {
+    let opposite = state_dir_opposite(direction)
+    (direction, opposite, direction, opposite)
+  }
+}
+
+///|
+fn state_grid_coord_with_dir(
+  coord : StateGridCoord,
+  direction : StateEdgeDir,
+) -> AsciiGridCoord {
+  AsciiGridCoord::{ x: coord.x + direction.x, y: coord.y + direction.y }
+}
+
+///|
+fn state_grid_path_to_text(path : Array[AsciiGridCoord]) -> String {
+  let parts : Array[String] = []
+  for point in path {
+    parts.push("(\{point.x},\{point.y})")
+  }
+  parts.iter().join(" -> ")
+}
+
+///|
+fn merge_state_grid_path(path : Array[AsciiGridCoord]) -> Array[AsciiGridCoord] {
+  if path.length() <= 2 {
+    return path
+  }
+  let merged : Array[AsciiGridCoord] = [path[0]]
+  for i in 1..<(path.length() - 1) {
+    let previous = path[i - 1]
+    let current = path[i]
+    let next = path[i + 1]
+    let previous_dx = current.x - previous.x
+    let previous_dy = current.y - previous.y
+    let next_dx = next.x - current.x
+    let next_dy = next.y - current.y
+    if previous_dx == next_dx && previous_dy == next_dy {
+      continue
+    }
+    merged.push(current)
+  }
+  merged.push(path[path.length() - 1])
+  merged
+}
+
+///|
+fn state_grid_bounds(positions : Map[String, StateGridCoord]) -> (Int, Int) {
+  let mut max_x = 0
+  let mut max_y = 0
+  for _, position in positions {
+    max_x = max_x.max(position.x + 8)
+    max_y = max_y.max(position.y + 8)
+  }
+  (max_x, max_y)
+}
+
+///|
+fn state_grid_blocked_cells(
+  positions : Map[String, StateGridCoord],
+) -> Map[String, Bool] {
+  let blocked : Map[String, Bool] = {}
+  for _, position in positions {
+    for y in position.y..<(position.y + 3) {
+      for x in position.x..<(position.x + 3) {
+        blocked[ascii_grid_key(AsciiGridCoord::{ x, y })] = true
+      }
+    }
+  }
+  blocked
+}
+
+///|
+fn state_edge_path_text_td(
+  positions : Map[String, StateGridCoord],
+  blocked : Map[String, Bool],
+  source_id : String,
+  target_id : String,
+) -> String {
+  let (max_x, max_y) = state_grid_bounds(positions)
+  match (positions.get(source_id), positions.get(target_id)) {
+    (Some(source_coord), Some(target_coord)) => {
+      let (preferred, preferred_opp, alternative, alternative_opp) = state_determine_start_end_dirs_td(
+        source_coord,
+        target_coord,
+      )
+
+      let preferred_start = state_grid_coord_with_dir(source_coord, preferred)
+      let preferred_end = state_grid_coord_with_dir(target_coord, preferred_opp)
+      let preferred_path = match
+        ascii_grid_pathfind(
+          preferred_start,
+          preferred_end,
+          blocked,
+          0,
+          max_x,
+          0,
+          max_y,
+        ) {
+        Some(path) => Some(merge_state_grid_path(path))
+        None => None
+      }
+
+      let alternative_start = state_grid_coord_with_dir(source_coord, alternative)
+      let alternative_end = state_grid_coord_with_dir(target_coord, alternative_opp)
+      let alternative_path = match
+        ascii_grid_pathfind(
+          alternative_start,
+          alternative_end,
+          blocked,
+          0,
+          max_x,
+          0,
+          max_y,
+        ) {
+        Some(path) => Some(merge_state_grid_path(path))
+        None => None
+      }
+
+      match (preferred_path, alternative_path) {
+        (Some(preferred_value), Some(alternative_value)) =>
+          if preferred_value.length() <= alternative_value.length() {
+            state_grid_path_to_text(preferred_value)
+          } else {
+            state_grid_path_to_text(alternative_value)
+          }
+        (Some(preferred_value), None) => state_grid_path_to_text(preferred_value)
+        (None, Some(alternative_value)) => state_grid_path_to_text(alternative_value)
+        (None, None) => "NONE"
+      }
+    }
+    _ => "NONE"
+  }
+}
+
+///|
+test "state edge path prototype matches key lifecycle routes" {
+  let source = "stateDiagram-v2\n  [*] --> Closed\n  Closed --> Connecting : connect\n  Connecting --> Connected : success\n  Connecting --> Closed : timeout\n  Connected --> Disconnecting : close\n  Connected --> Reconnecting : error\n  Reconnecting --> Connected : success\n  Reconnecting --> Closed : max_retries\n  Disconnecting --> Closed : done\n  Closed --> [*]"
+  let graph = parse_mermaid(source)
+  let positions = state_grid_positions(graph, state_nodes_in_definition_order(graph))
+  let blocked = state_grid_blocked_cells(positions)
+
+  assert_eq(
+    state_edge_path_text_td(positions, blocked, "Connected", "Reconnecting"),
+    "(2,13) -> (5,13) -> (5,16)",
+  )
+  let reconnect_closed_path = state_edge_path_text_td(
+    positions,
+    blocked,
+    "Reconnecting",
+    "Closed",
+  )
+  assert_true(reconnect_closed_path.has_prefix("(5,16)"))
+  assert_true(reconnect_closed_path.has_suffix("(2,5)"))
+  assert_eq(
+    state_edge_path_text_td(positions, blocked, "Closed", "state_end_1"),
+    "(2,5) -> (5,5) -> (5,8)",
+  )
+}
