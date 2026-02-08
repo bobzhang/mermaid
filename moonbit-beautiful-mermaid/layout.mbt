@@ -1703,7 +1703,7 @@ fn shift_top_level_state_subgraphs_right(
     positioned_nodes,
   )
 
-  let min_gap = node_spacing.max(60)
+  let min_gap = (node_spacing / 3).max(24)
   let mut cursor_left = outside_right + min_gap
   let target_top = outside_top - (layer_spacing / 2).max(30)
   for i, subgraph in graph.subgraphs {

@@ -933,7 +933,7 @@ fn render_ascii_flow_subgraphs(
   let border_overlays : Array[AsciiArrowPlacement] = []
   let edge_label_overlays : Array[AsciiEdgeLabelPlacement] = []
   let blocked_cells : Map[String, Bool] = {}
-  if state_layout_mode {
+  if state_flat_layout_mode {
     flow_mark_blocked_cells_for_nodes(blocked_cells, mapped_nodes)
   }
   for edge in positioned.edges {
@@ -950,7 +950,7 @@ fn render_ascii_flow_subgraphs(
       let x2 = scale_coord(p2.x, scale_x, options.padding_x)
       let y2 = scale_coord(p2.y, scale_y, options.padding_y)
       let routed =
-        state_layout_mode &&
+        state_flat_layout_mode &&
         (x1 != x2 || y1 != y2) &&
         flow_draw_routed_segment(
           canvas,
