@@ -32,8 +32,20 @@ fn main {
   let mut use_ascii = false
   let mut theme_slug : String? = None
   let mut diagram : String? = None
+  let mut expect_theme_value = false
 
   for arg in args {
+    if expect_theme_value {
+      if arg.has_prefix("--") {
+        println("Error: --theme requires a value")
+        print_usage()
+        return
+      }
+      theme_slug = Some(arg)
+      expect_theme_value = false
+      continue
+    }
+
     if arg == "--help" {
       print_usage()
       return
@@ -45,6 +57,10 @@ fn main {
     }
     if arg == "--ascii" {
       use_ascii = true
+      continue
+    }
+    if arg == "--theme" {
+      expect_theme_value = true
       continue
     }
     if arg.has_prefix("--theme=") {
@@ -63,6 +79,12 @@ fn main {
       return
     }
     diagram = Some(arg)
+  }
+
+  if expect_theme_value {
+    println("Error: --theme requires a value")
+    print_usage()
+    return
   }
 
   let input = match diagram {
