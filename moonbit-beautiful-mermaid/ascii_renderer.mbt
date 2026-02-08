@@ -572,8 +572,11 @@ fn flow_mark_blocked_cells_for_nodes(
   nodes : Array[AsciiFlowNodeBox],
 ) -> Unit {
   for node in nodes {
-    for y in node.top..<(node.top + node.height) {
-      for x in node.left..<(node.left + node.width) {
+    if node.width <= 2 || node.height <= 2 {
+      continue
+    }
+    for y in (node.top + 1)..<(node.top + node.height - 1) {
+      for x in (node.left + 1)..<(node.left + node.width - 1) {
         blocked[ascii_grid_key(AsciiGridCoord::{ x, y })] = true
       }
     }
