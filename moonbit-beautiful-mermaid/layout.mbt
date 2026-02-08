@@ -1654,6 +1654,7 @@ fn find_positioned_group_index(
 fn shift_top_level_state_subgraphs_right(
   graph : MermaidGraph,
   node_spacing : Int,
+  layer_spacing : Int,
   positioned_nodes : Array[PositionedNode],
   positioned_groups : Array[PositionedGroup],
   positioned_index_by_id : Map[String, Int],
@@ -1697,9 +1698,14 @@ fn shift_top_level_state_subgraphs_right(
   if !has_outside {
     return
   }
+  let (_, _, outside_top, _, _) = member_indexes_bounds(
+    outside_indexes,
+    positioned_nodes,
+  )
 
   let min_gap = node_spacing.max(60)
   let mut cursor_left = outside_right + min_gap
+  let target_top = outside_top - (layer_spacing / 2).max(30)
   for i, subgraph in graph.subgraphs {
     let member_indexes = member_indexes_by_root[i]
     if member_indexes.length() == 0 {
@@ -1712,9 +1718,10 @@ fn shift_top_level_state_subgraphs_right(
     }
     let group = positioned_groups[group_index]
     let dx = cursor_left - group.x
-    if dx > 0 {
-      shift_member_indexes(member_indexes, dx, 0, positioned_nodes)
-      positioned_groups[group_index] = shift_positioned_group(group, dx, 0)
+    let dy = target_top - group.y
+    if dx > 0 || dy != 0 {
+      shift_member_indexes(member_indexes, dx.max(0), dy, positioned_nodes)
+      positioned_groups[group_index] = shift_positioned_group(group, dx.max(0), dy)
       for index in member_indexes {
         let node = positioned_nodes[index]
         positioned_by_id[node.id] = node
@@ -1980,6 +1987,7 @@ fn layout_graph(
     shift_top_level_state_subgraphs_right(
       graph,
       node_spacing,
+      layer_spacing,
       positioned_nodes,
       positioned_groups,
       positioned_index_by_id,
