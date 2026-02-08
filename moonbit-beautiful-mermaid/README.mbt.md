@@ -57,3 +57,41 @@ test {
   assert_true(svg.contains("--line:#7aa2f7"))
 }
 ```
+
+## Built-in Themes
+
+Use built-in theme presets by name and pass the resulting colors through `RenderOptions`.
+
+```mbt check
+test {
+  let colors = match theme_by_name("tokyo-night") {
+    Some(found) => found
+    None => fail("missing theme")
+  }
+  let options = RenderOptions::{
+    bg: Some(colors.bg),
+    fg: Some(colors.fg),
+    line: colors.line,
+    accent: colors.accent,
+    muted: colors.muted,
+    surface: colors.surface,
+    border: colors.border,
+    font: None,
+    padding: None,
+    node_spacing: None,
+    layer_spacing: None,
+    transparent: None,
+  }
+  let svg = try! render_mermaid("graph TD\nA --> B", options~)
+  assert_true(svg.contains("--bg:#1a1b26"))
+  assert_true(svg.contains("--accent:#7aa2f7"))
+}
+```
+
+## CLI
+
+Run the local CLI entrypoint from the module root:
+
+- `moon run cmd/main -- "graph TD\nA --> B"`
+- `moon run cmd/main -- --ascii "graph LR\nA --> B"`
+- `moon run cmd/main -- --theme=tokyo-night "graph TD\nA --> B"`
