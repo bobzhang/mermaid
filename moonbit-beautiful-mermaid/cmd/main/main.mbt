@@ -4,9 +4,11 @@ fn print_usage() -> Unit {
   println("  moon run cmd/main -- \"graph TD\\nA --> B\"")
   println("  moon run cmd/main -- --ascii \"graph LR\\nA --> B\"")
   println("  moon run cmd/main -- --theme=tokyo-night \"graph TD\\nA --> B\"")
+  println("  moon run cmd/main -- --list-themes")
   println("Flags:")
   println("  --ascii    Render ASCII output")
   println("  --theme    SVG theme slug, e.g. tokyo-night, github-dark")
+  println("  --list-themes  Print built-in theme names")
   println("  --help     Show this help")
 }
 
@@ -34,6 +36,11 @@ fn main {
   for arg in args {
     if arg == "--help" {
       print_usage()
+      return
+    }
+    if arg == "--list-themes" {
+      let available = @beautiful_mermaid.built_in_theme_slugs().join(", ")
+      println(available)
       return
     }
     if arg == "--ascii" {
