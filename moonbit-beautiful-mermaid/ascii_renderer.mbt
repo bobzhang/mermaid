@@ -232,6 +232,13 @@ priv struct AsciiEdgeLabelPlacement {
 }
 
 ///|
+priv struct StateAsciiEdgeLayout {
+  edge : MermaidEdge
+  path : Array[AsciiGridCoord]
+  label_line : Array[AsciiGridCoord]
+}
+
+///|
 fn flow_scale_x() -> Int {
   10
 }
@@ -1243,6 +1250,599 @@ fn flow_canvas_to_output(canvas : Array[Array[String]]) -> String {
 }
 
 ///|
+fn state_ascii_node_label(node : MermaidNode) -> String {
+  match node.shape {
+    NodeShape::StateStart | NodeShape::StateEnd => ""
+    _ =>
+      if node.label == "" {
+        node.id
+      } else {
+        node.label.replace_all(old="\n", new=" | ")
+      }
+  }
+}
+
+///|
+fn state_ascii_line_width(
+  column_width : Map[Int, Int],
+  start_x : Int,
+  end_x : Int,
+) -> Int {
+  let start = start_x.min(end_x)
+  let ending = start_x.max(end_x)
+  let mut total = 0
+  for x in start..=ending {
+    total = total + option_int_or(column_width.get(x), 0)
+  }
+  total
+}
+
+///|
+fn state_ascii_grid_to_draw(
+  column_width : Map[Int, Int],
+  row_height : Map[Int, Int],
+  coord : AsciiGridCoord,
+) -> (Int, Int) {
+  let mut x = 0
+  for column in 0..<coord.x {
+    x = x + option_int_or(column_width.get(column), 0)
+  }
+  let mut y = 0
+  for row in 0..<coord.y {
+    y = y + option_int_or(row_height.get(row), 0)
+  }
+  x = x + option_int_or(column_width.get(coord.x), 0) / 2
+  y = y + option_int_or(row_height.get(coord.y), 0) / 2
+  (x, y)
+}
+
+///|
+fn state_ascii_corner_char(
+  prev_dx : Int,
+  prev_dy : Int,
+  next_dx : Int,
+  next_dy : Int,
+  use_ascii : Bool,
+) -> String {
+  if use_ascii {
+    return "+"
+  }
+  if (prev_dx == 1 && prev_dy == 0 && next_dx == 0 && next_dy == 1) ||
+    (prev_dx == 0 && prev_dy == -1 && next_dx == -1 && next_dy == 0) {
+    "┐"
+  } else if (prev_dx == 1 && prev_dy == 0 && next_dx == 0 && next_dy == -1) ||
+    (prev_dx == 0 && prev_dy == 1 && next_dx == -1 && next_dy == 0) {
+    "┘"
+  } else if (prev_dx == -1 && prev_dy == 0 && next_dx == 0 && next_dy == 1) ||
+    (prev_dx == 0 && prev_dy == -1 && next_dx == 1 && next_dy == 0) {
+    "┌"
+  } else if (prev_dx == -1 && prev_dy == 0 && next_dx == 0 && next_dy == -1) ||
+    (prev_dx == 0 && prev_dy == 1 && next_dx == 1 && next_dy == 0) {
+    "└"
+  } else {
+    "+"
+  }
+}
+
+///|
+fn state_ascii_draw_segment_simple(
+  canvas : Array[Array[String]],
+  x1 : Int,
+  y1 : Int,
+  x2 : Int,
+  y2 : Int,
+  h_char : String,
+  v_char : String,
+) -> Unit {
+  if x1 == x2 {
+    let start = y1.min(y2)
+    let ending = y1.max(y2)
+    for y in start..<=ending {
+      put_canvas(canvas, x1, y, v_char)
+    }
+    return
+  }
+  if y1 == y2 {
+    let start = x1.min(x2)
+    let ending = x1.max(x2)
+    for x in start..<=ending {
+      put_canvas(canvas, x, y1, h_char)
+    }
+    return
+  }
+
+  let h_start = x1.min(x2)
+  let h_end = x1.max(x2)
+  for x in h_start..<=h_end {
+    put_canvas(canvas, x, y1, h_char)
+  }
+  let v_start = y1.min(y2)
+  let v_end = y1.max(y2)
+  for y in v_start..<=v_end {
+    put_canvas(canvas, x2, y, v_char)
+  }
+}
+
+///|
+fn render_ascii_state_flat_grid(
+  graph : MermaidGraph,
+  options : AsciiRenderOptions,
+) -> String {
+  let nodes_in_order = layout_state_nodes_in_definition_order(graph)
+  let grid_positions = layout_state_grid_positions(graph, nodes_in_order)
+  if grid_positions.length() == 0 {
+    return ""
+  }
+
+  let column_width : Map[Int, Int] = {}
+  let row_height : Map[Int, Int] = {}
+  for node in nodes_in_order {
+    match grid_positions.get(node.id) {
+      Some(coord) => {
+        let label = state_ascii_node_label(node)
+        let content_width = options.box_border_padding * 2 + label.length()
+        let content_height = 1 + options.box_border_padding * 2
+
+        let col0 = option_int_or(column_width.get(coord.x), 0)
+        if 1 > col0 {
+          column_width[coord.x] = 1
+        }
+        let col1 = option_int_or(column_width.get(coord.x + 1), 0)
+        if content_width > col1 {
+          column_width[coord.x + 1] = content_width
+        }
+        let col2 = option_int_or(column_width.get(coord.x + 2), 0)
+        if 1 > col2 {
+          column_width[coord.x + 2] = 1
+        }
+
+        let row0 = option_int_or(row_height.get(coord.y), 0)
+        if 1 > row0 {
+          row_height[coord.y] = 1
+        }
+        let row1 = option_int_or(row_height.get(coord.y + 1), 0)
+        if content_height > row1 {
+          row_height[coord.y + 1] = content_height
+        }
+        let row2 = option_int_or(row_height.get(coord.y + 2), 0)
+        if 1 > row2 {
+          row_height[coord.y + 2] = 1
+        }
+
+        if coord.x > 0 {
+          let gap_col = option_int_or(column_width.get(coord.x - 1), 0)
+          if options.padding_x > gap_col {
+            column_width[coord.x - 1] = options.padding_x
+          }
+        }
+        if coord.y > 0 {
+          let gap_row = option_int_or(row_height.get(coord.y - 1), 0)
+          if options.padding_y > gap_row {
+            row_height[coord.y - 1] = options.padding_y
+          }
+        }
+      }
+      None => ()
+    }
+  }
+
+  let blocked = layout_state_grid_blocked_cells(grid_positions)
+  let (max_grid_x, max_grid_y) = layout_state_grid_bounds(grid_positions)
+  let edge_layouts : Array[StateAsciiEdgeLayout] = []
+  for edge in graph.edges {
+    let path = match
+      layout_state_edge_grid_path_td(
+        grid_positions,
+        blocked,
+        max_grid_x,
+        max_grid_y,
+        edge.source,
+        edge.target,
+      ) {
+      Some(found) => found
+      None => []
+    }
+
+    for coord in path {
+      if !column_width.contains(coord.x) {
+        column_width[coord.x] = (options.padding_x / 2).max(1)
+      }
+      if !row_height.contains(coord.y) {
+        row_height[coord.y] = (options.padding_y / 2).max(1)
+      }
+    }
+
+    let label_line : Array[AsciiGridCoord] = []
+    match edge.label {
+      Some(label) =>
+        if path.length() >= 2 {
+          let mut best_start = path[0]
+          let mut best_end = path[1]
+          let mut best_width = 0
+          for i in 1..<path.length() {
+            let start = path[i - 1]
+            let ending = path[i]
+            let line_width = state_ascii_line_width(
+              column_width, start.x, ending.x,
+            )
+            if line_width >= label.length() {
+              best_start = start
+              best_end = ending
+              break
+            }
+            if line_width > best_width {
+              best_width = line_width
+              best_start = start
+              best_end = ending
+            }
+          }
+          let min_x = best_start.x.min(best_end.x)
+          let max_x = best_start.x.max(best_end.x)
+          let middle_x = min_x + (max_x - min_x) / 2
+          let current_width = option_int_or(column_width.get(middle_x), 0)
+          if label.length() + 2 > current_width {
+            column_width[middle_x] = label.length() + 2
+          }
+          label_line.push(best_start)
+          label_line.push(best_end)
+        }
+      None => ()
+    }
+    edge_layouts.push(StateAsciiEdgeLayout::{ edge, path, label_line })
+  }
+
+  let mapped_nodes : Array[AsciiFlowNodeBox] = []
+  let node_box_by_id : Map[String, AsciiFlowNodeBox] = {}
+  for node in nodes_in_order {
+    match grid_positions.get(node.id) {
+      Some(coord) => {
+        let (left, top) = state_ascii_grid_to_draw(
+          column_width,
+          row_height,
+          AsciiGridCoord::{ x: coord.x, y: coord.y },
+        )
+        let width = option_int_or(column_width.get(coord.x), 0) +
+          option_int_or(column_width.get(coord.x + 1), 0) +
+          1
+        let height = option_int_or(row_height.get(coord.y), 0) +
+          option_int_or(row_height.get(coord.y + 1), 0) +
+          1
+        let box = AsciiFlowNodeBox::{
+          id: node.id,
+          label: state_ascii_node_label(node),
+          left,
+          top,
+          width: width.max(3),
+          height: height.max(3),
+        }
+        mapped_nodes.push(box)
+        node_box_by_id[box.id] = box
+      }
+      None => ()
+    }
+  }
+
+  let mut min_x = 0
+  let mut min_y = 0
+  let mut max_x = 0
+  let mut max_y = 0
+  let mut has_bounds = false
+  for node in mapped_nodes {
+    let right = node.left + node.width - 1
+    let bottom = node.top + node.height - 1
+    if !has_bounds {
+      min_x = node.left
+      min_y = node.top
+      max_x = right
+      max_y = bottom
+      has_bounds = true
+    } else {
+      min_x = min_x.min(node.left)
+      min_y = min_y.min(node.top)
+      max_x = max_x.max(right)
+      max_y = max_y.max(bottom)
+    }
+  }
+  for layout in edge_layouts {
+    for coord in layout.path {
+      let (x, y) = state_ascii_grid_to_draw(column_width, row_height, coord)
+      if !has_bounds {
+        min_x = x
+        min_y = y
+        max_x = x
+        max_y = y
+        has_bounds = true
+      } else {
+        min_x = min_x.min(x)
+        min_y = min_y.min(y)
+        max_x = max_x.max(x)
+        max_y = max_y.max(y)
+      }
+    }
+    if layout.label_line.length() == 2 {
+      match layout.edge.label {
+        Some(label) => {
+          let (x1, y1) = state_ascii_grid_to_draw(
+            column_width,
+            row_height,
+            layout.label_line[0],
+          )
+          let (x2, y2) = state_ascii_grid_to_draw(
+            column_width,
+            row_height,
+            layout.label_line[1],
+          )
+          let anchor_x = x1.min(x2) + (x1.max(x2) - x1.min(x2)) / 2
+          let anchor_y = y1.min(y2) + (y1.max(y2) - y1.min(y2)) / 2
+          let label_x = anchor_x - label.length() / 2
+          let label_right = label_x + label.length() - 1
+          if !has_bounds {
+            min_x = label_x
+            max_x = label_right
+            min_y = anchor_y
+            max_y = anchor_y
+            has_bounds = true
+          } else {
+            min_x = min_x.min(label_x)
+            max_x = max_x.max(label_right)
+            min_y = min_y.min(anchor_y)
+            max_y = max_y.max(anchor_y)
+          }
+        }
+        None => ()
+      }
+    }
+  }
+  if !has_bounds {
+    return ""
+  }
+
+  let shift_x = if min_x < 0 { -min_x } else { 0 }
+  let shift_y = if min_y < 0 { -min_y } else { 0 }
+  let canvas = make_canvas(max_x + shift_x + 2, max_y + shift_y + 2)
+
+  for node in mapped_nodes {
+    flow_draw_box(
+      canvas,
+      node.left + shift_x,
+      node.top + shift_y,
+      node.width,
+      node.height,
+      node.label,
+      options.use_ascii,
+    )
+  }
+
+  let corner_overlays : Array[AsciiArrowPlacement] = []
+  let arrow_overlays : Array[AsciiArrowPlacement] = []
+  let box_start_overlays : Array[AsciiArrowPlacement] = []
+  let edge_label_overlays : Array[AsciiEdgeLabelPlacement] = []
+
+  for layout in edge_layouts {
+    let points : Array[Point] = []
+    for coord in layout.path {
+      let (x, y) = state_ascii_grid_to_draw(column_width, row_height, coord)
+      points.push(Point::{ x: x + shift_x, y: y + shift_y })
+    }
+    if points.length() < 2 {
+      continue
+    }
+
+    let (h_char, v_char) = flow_line_chars(layout.edge.style, options.use_ascii)
+    let mut first_drawn : Point? = None
+    let mut first_dir_x = 0
+    let mut first_dir_y = 0
+    let mut last_drawn : Point? = None
+    let mut last_dir_x = 0
+    let mut last_dir_y = 0
+
+    for i in 1..<points.length() {
+      let previous = points[i - 1]
+      let next = points[i]
+      let dir_x = unit_step(next.x - previous.x)
+      let dir_y = unit_step(next.y - previous.y)
+      let start_x = previous.x + dir_x
+      let start_y = previous.y + dir_y
+      let end_x = next.x - dir_x
+      let end_y = next.y - dir_y
+      if start_x == end_x && start_y == end_y {
+        continue
+      }
+
+      if options.use_ascii {
+        state_ascii_draw_segment_simple(
+          canvas,
+          start_x,
+          start_y,
+          end_x,
+          end_y,
+          h_char,
+          v_char,
+        )
+      } else {
+        flow_draw_segment(
+          canvas,
+          start_x,
+          start_y,
+          end_x,
+          end_y,
+          h_char,
+          v_char,
+        )
+      }
+      if first_drawn is None {
+        first_drawn = Some(Point::{ x: start_x, y: start_y })
+        first_dir_x = dir_x
+        first_dir_y = dir_y
+      }
+      last_drawn = Some(Point::{ x: end_x, y: end_y })
+      last_dir_x = dir_x
+      last_dir_y = dir_y
+    }
+
+    if points.length() >= 3 {
+      for i in 1..<(points.length() - 1) {
+        let previous = points[i - 1]
+        let current = points[i]
+        let next = points[i + 1]
+        let prev_dx = unit_step(current.x - previous.x)
+        let prev_dy = unit_step(current.y - previous.y)
+        let next_dx = unit_step(next.x - current.x)
+        let next_dy = unit_step(next.y - current.y)
+        if prev_dx == next_dx && prev_dy == next_dy {
+          continue
+        }
+        corner_overlays.push(AsciiArrowPlacement::{
+          x: current.x,
+          y: current.y,
+          marker: state_ascii_corner_char(
+            prev_dx,
+            prev_dy,
+            next_dx,
+            next_dy,
+            options.use_ascii,
+          ),
+        })
+      }
+    }
+
+    if !options.use_ascii {
+      match first_drawn {
+        Some(first) =>
+          if first_dir_x == 0 && first_dir_y < 0 {
+            box_start_overlays.push(AsciiArrowPlacement::{
+              x: first.x,
+              y: first.y + 1,
+              marker: "┴",
+            })
+          } else if first_dir_x == 0 && first_dir_y > 0 {
+            box_start_overlays.push(AsciiArrowPlacement::{
+              x: first.x,
+              y: first.y - 1,
+              marker: "┬",
+            })
+          } else if first_dir_x < 0 && first_dir_y == 0 {
+            box_start_overlays.push(AsciiArrowPlacement::{
+              x: first.x + 1,
+              y: first.y,
+              marker: "┤",
+            })
+          } else if first_dir_x > 0 && first_dir_y == 0 {
+            box_start_overlays.push(AsciiArrowPlacement::{
+              x: first.x - 1,
+              y: first.y,
+              marker: "├",
+            })
+          } else {
+            ()
+          }
+        None => ()
+      }
+    }
+
+    if layout.edge.has_arrow_end {
+      match last_drawn {
+        Some(last) =>
+          arrow_overlays.push(AsciiArrowPlacement::{
+            x: last.x,
+            y: last.y,
+            marker: flow_arrow_marker(last_dir_x, last_dir_y, options.use_ascii),
+          })
+        None => ()
+      }
+    }
+
+    if layout.edge.has_arrow_start {
+      match first_drawn {
+        Some(first) =>
+          arrow_overlays.push(AsciiArrowPlacement::{
+            x: first.x,
+            y: first.y,
+            marker: flow_arrow_marker(
+              -first_dir_x,
+              -first_dir_y,
+              options.use_ascii,
+            ),
+          })
+        None => ()
+      }
+    }
+
+    if layout.label_line.length() == 2 {
+      match layout.edge.label {
+        Some(label) => {
+          let (line_x1, line_y1) = state_ascii_grid_to_draw(
+            column_width,
+            row_height,
+            layout.label_line[0],
+          )
+          let (line_x2, line_y2) = state_ascii_grid_to_draw(
+            column_width,
+            row_height,
+            layout.label_line[1],
+          )
+          let anchor_x = line_x1.min(line_x2) +
+            (line_x1.max(line_x2) - line_x1.min(line_x2)) / 2 +
+            shift_x
+          let anchor_y = line_y1.min(line_y2) +
+            (line_y1.max(line_y2) - line_y1.min(line_y2)) / 2 +
+            shift_y
+          let label_x = anchor_x - label.length() / 2
+          edge_label_overlays.push(AsciiEdgeLabelPlacement::{
+            x: label_x,
+            y: anchor_y,
+            label,
+          })
+        }
+        None => ()
+      }
+    }
+  }
+
+  for corner in corner_overlays {
+    if options.use_ascii {
+      put_canvas(canvas, corner.x, corner.y, corner.marker)
+      continue
+    }
+    if corner.x < 0 || corner.y < 0 || corner.y >= canvas.length() ||
+      corner.x >= canvas[corner.y].length() {
+      continue
+    }
+    let existing = canvas[corner.y][corner.x]
+    let has_left = corner.x > 0 &&
+      flow_connects_right(canvas[corner.y][corner.x - 1])
+    let has_right = corner.x + 1 < canvas[corner.y].length() &&
+      flow_connects_left(canvas[corner.y][corner.x + 1])
+    let has_up = corner.y > 0 && flow_connects_down(canvas[corner.y - 1][corner.x])
+    let has_down = corner.y + 1 < canvas.length() &&
+      flow_connects_up(canvas[corner.y + 1][corner.x])
+    put_canvas(
+      canvas,
+      corner.x,
+      corner.y,
+      flow_unicode_char_for_connections(
+        existing,
+        has_left,
+        has_right,
+        has_up,
+        has_down,
+      ),
+    )
+  }
+  for arrow in arrow_overlays {
+    put_canvas(canvas, arrow.x, arrow.y, arrow.marker)
+  }
+  for box_start in box_start_overlays {
+    put_canvas(canvas, box_start.x, box_start.y, box_start.marker)
+  }
+  for placement in edge_label_overlays {
+    write_canvas_text(canvas, placement.x, placement.y, placement.label)
+  }
+
+  trim_flow_canvas_output(flow_canvas_to_output(canvas))
+}
+
+///|
 fn render_ascii_flow_subgraphs(
   graph : MermaidGraph,
   options : AsciiRenderOptions,
@@ -1551,6 +2151,10 @@ fn render_ascii(graph : MermaidGraph, options : AsciiRenderOptions) -> String {
   let state_mode = graph_has_shape(graph, NodeShape::StateStart) ||
     graph_has_shape(graph, NodeShape::StateEnd)
   if state_mode {
+    let td_like_direction = graph.direction is (Direction::TD | Direction::TB)
+    if graph.subgraphs.length() == 0 && td_like_direction {
+      return render_ascii_state_flat_grid(graph, options)
+    }
     return render_ascii_flow_subgraphs(graph, options)
   }
   if graph.subgraphs.length() > 0 {

@@ -86,7 +86,7 @@ test "state lifecycle ascii anchors done label near disconnecting source" {
     box_border_padding: 1,
   })
 
-  assert_true(output.contains("| Disconnecting |done--+"))
+  assert_true(output.contains("| Disconnecting |   done-+"))
 }
 
 ///|
@@ -100,7 +100,8 @@ test "state lifecycle ascii keeps leftward back-edge arrow off closed border" {
     box_border_padding: 1,
   })
 
-  assert_true(output.contains("|     Closed    |  <"))
+  assert_true(output.contains("|     Closed    |   <"))
+  assert_eq(output.contains("|     Closed    |  <"), false)
   assert_eq(output.contains("|     Closed    |<"), false)
 }
 
