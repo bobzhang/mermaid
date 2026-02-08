@@ -170,3 +170,20 @@ test "render_mermaid_with_theme_name rejects unknown theme" {
       }
   }
 }
+
+///|
+test "render_mermaid_with_theme_name unknown error keeps original input" {
+  let rendered = try? @beautiful_mermaid.render_mermaid_with_theme_name(
+    "graph TD\nA --> B",
+    "  moonbit   neon  ",
+  )
+  match rendered {
+    Ok(_) => fail("expected unknown theme to fail")
+    Err(err) =>
+      match err {
+        @beautiful_mermaid.MermaidError::UnknownTheme(name) =>
+          assert_eq(name, "  moonbit   neon  ")
+        _ => fail("expected UnknownTheme error")
+      }
+  }
+}
