@@ -15,6 +15,7 @@
  *   STOP_ON_FIRST_MISMATCH=1 bun run moonbit-beautiful-mermaid/scripts/check_sample_text_parity.ts
  *   MAX_DIFFS=5 bun run moonbit-beautiful-mermaid/scripts/check_sample_text_parity.ts
  *   PREVIEW_LINES=14 bun run moonbit-beautiful-mermaid/scripts/check_sample_text_parity.ts
+ *   TRIM_LINE_ENDING_SPACES=1 bun run moonbit-beautiful-mermaid/scripts/check_sample_text_parity.ts
  */
 
 import { spawnSync } from 'node:child_process'
@@ -44,8 +45,16 @@ type DiffPreview = {
   actual_preview: string
 }
 
-function normalize(value: string): string {
-  return value.replace(/\r\n/g, '\n').trim()
+function normalize(value: string, trimLineEndingSpaces: boolean): string {
+  const unix = value.replace(/\r\n/g, '\n')
+  if (!trimLineEndingSpaces) {
+    return unix.trim()
+  }
+  return unix
+    .split('\n')
+    .map(line => line.trimEnd())
+    .join('\n')
+    .trim()
 }
 
 function parseMode(value: string | undefined): Mode {
@@ -119,7 +128,11 @@ function makePreview(expected: string, actual: string, previewLines: number): Di
   }
 }
 
-function moonText(modeFlag: '--ascii' | '--unicode', source: string): string {
+function moonText(
+  modeFlag: '--ascii' | '--unicode',
+  source: string,
+  trimLineEndingSpaces: boolean,
+): string {
   const result = spawnSync(
     'moon',
     ['run', 'cmd/main', '--', modeFlag, source],
@@ -138,10 +151,14 @@ function moonText(modeFlag: '--ascii' | '--unicode', source: string): string {
     )
   }
 
-  return normalize(result.stdout ?? '')
+  return normalize(result.stdout ?? '', trimLineEndingSpaces)
 }
 
-function upstreamText(useAscii: boolean, source: string): string {
+function upstreamText(
+  useAscii: boolean,
+  source: string,
+  trimLineEndingSpaces: boolean,
+): string {
   return normalize(
     renderMermaidAscii(source, {
       useAscii,
@@ -149,6 +166,7 @@ function upstreamText(useAscii: boolean, source: string): string {
       paddingY: 5,
       boxBorderPadding: 1,
     }),
+    trimLineEndingSpaces,
   )
 }
 
@@ -159,6 +177,7 @@ const mode = parseMode(process.env.MODE)
 const stopOnFirstMismatch = parseBoolFlag(process.env.STOP_ON_FIRST_MISMATCH)
 const maxDiffs = parseNonNegativeInt('MAX_DIFFS', process.env.MAX_DIFFS, Number.MAX_SAFE_INTEGER)
 const previewLines = parseNonNegativeInt('PREVIEW_LINES', process.env.PREVIEW_LINES, 12)
+const trimLineEndingSpaces = parseBoolFlag(process.env.TRIM_LINE_ENDING_SPACES)
 
 const selected = samples.filter(sample => {
   const category = sample.category ?? 'Other'
@@ -192,8 +211,8 @@ for (const sample of selected) {
   let unicodePreview: DiffPreview | null = null
 
   if (compareAscii) {
-    const expectedAscii = upstreamText(true, sample.source)
-    const actualAscii = moonText('--ascii', sample.source)
+    const expectedAscii = upstreamText(true, sample.source, trimLineEndingSpaces)
+    const actualAscii = moonText('--ascii', sample.source, trimLineEndingSpaces)
     asciiMatch = actualAscii === expectedAscii
     if (!asciiMatch) {
       asciiPreview = makePreview(expectedAscii, actualAscii, previewLines)
@@ -201,8 +220,8 @@ for (const sample of selected) {
   }
 
   if (compareUnicode) {
-    const expectedUnicode = upstreamText(false, sample.source)
-    const actualUnicode = moonText('--unicode', sample.source)
+    const expectedUnicode = upstreamText(false, sample.source, trimLineEndingSpaces)
+    const actualUnicode = moonText('--unicode', sample.source, trimLineEndingSpaces)
     unicodeMatch = actualUnicode === expectedUnicode
     if (!unicodeMatch) {
       unicodePreview = makePreview(expectedUnicode, actualUnicode, previewLines)
@@ -246,6 +265,7 @@ console.log(
       stopOnFirstMismatch,
       maxDiffs,
       previewLines,
+      trimLineEndingSpaces,
       total,
       passed,
       failed,
