@@ -1121,6 +1121,26 @@ fn flow_group_max_y(group : AsciiFlowGroupBox) -> Int {
 }
 
 ///|
+fn shift_ascii_flow_group(
+  group : AsciiFlowGroupBox,
+  shift_x : Int,
+  shift_y : Int,
+) -> AsciiFlowGroupBox {
+  let children : Array[AsciiFlowGroupBox] = []
+  for child in group.children {
+    children.push(shift_ascii_flow_group(child, shift_x, shift_y))
+  }
+  AsciiFlowGroupBox::{
+    label: group.label,
+    left: group.left + shift_x,
+    top: group.top + shift_y,
+    width: group.width,
+    height: group.height,
+    children,
+  }
+}
+
+///|
 fn flow_draw_group(
   canvas : Array[Array[String]],
   group : AsciiFlowGroupBox,
@@ -1521,6 +1541,7 @@ fn render_ascii_state_flat_grid(
       None => ()
     }
   }
+  let mapped_groups = state_mapped_groups_from_nodes(graph, node_box_by_id)
 
   let mut min_x = 0
   let mut min_y = 0
@@ -1539,6 +1560,22 @@ fn render_ascii_state_flat_grid(
     } else {
       min_x = min_x.min(node.left)
       min_y = min_y.min(node.top)
+      max_x = max_x.max(right)
+      max_y = max_y.max(bottom)
+    }
+  }
+  for group in mapped_groups {
+    let right = flow_group_max_x(group) - 1
+    let bottom = flow_group_max_y(group) - 1
+    if !has_bounds {
+      min_x = group.left
+      min_y = group.top
+      max_x = right
+      max_y = bottom
+      has_bounds = true
+    } else {
+      min_x = min_x.min(group.left)
+      min_y = min_y.min(group.top)
       max_x = max_x.max(right)
       max_y = max_y.max(bottom)
     }
@@ -1600,6 +1637,14 @@ fn render_ascii_state_flat_grid(
   let shift_x = if min_x < 0 { -min_x } else { 0 }
   let shift_y = if min_y < 0 { -min_y } else { 0 }
   let canvas = make_canvas(max_x + shift_x + 2, max_y + shift_y + 2)
+  let shifted_groups : Array[AsciiFlowGroupBox] = []
+  for group in mapped_groups {
+    shifted_groups.push(shift_ascii_flow_group(group, shift_x, shift_y))
+  }
+
+  for group in shifted_groups {
+    flow_draw_group(canvas, group, options.use_ascii)
+  }
 
   for node in mapped_nodes {
     flow_draw_box(
@@ -1837,6 +1882,9 @@ fn render_ascii_state_flat_grid(
   }
   for placement in edge_label_overlays {
     write_canvas_text(canvas, placement.x, placement.y, placement.label)
+  }
+  for group in shifted_groups {
+    flow_draw_group_labels(canvas, group)
   }
 
   trim_flow_canvas_output(flow_canvas_to_output(canvas))
@@ -2152,7 +2200,7 @@ fn render_ascii(graph : MermaidGraph, options : AsciiRenderOptions) -> String {
     graph_has_shape(graph, NodeShape::StateEnd)
   if state_mode {
     let td_like_direction = graph.direction is (Direction::TD | Direction::TB)
-    if graph.subgraphs.length() == 0 && td_like_direction {
+    if td_like_direction {
       return render_ascii_state_flat_grid(graph, options)
     }
     return render_ascii_flow_subgraphs(graph, options)
