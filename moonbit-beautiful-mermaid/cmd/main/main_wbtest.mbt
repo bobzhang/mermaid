@@ -24,3 +24,10 @@ test "ascii_spacing_overridden is true when any spacing differs" {
   assert_eq(ascii_spacing_overridden(5, 2, 1), true)
   assert_eq(ascii_spacing_overridden(5, 5, 2), true)
 }
+
+///|
+test "ascii_spacing_requires_text_mode only errors in svg mode with overrides" {
+  assert_eq(ascii_spacing_requires_text_mode(false, 5, 5, 1), false)
+  assert_eq(ascii_spacing_requires_text_mode(false, 8, 5, 1), true)
+  assert_eq(ascii_spacing_requires_text_mode(true, 8, 5, 1), false)
+}

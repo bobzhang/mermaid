@@ -85,6 +85,16 @@ fn ascii_spacing_overridden(
 }
 
 ///|
+fn ascii_spacing_requires_text_mode(
+  render_text : Bool,
+  padding_x : Int,
+  padding_y : Int,
+  box_border_padding : Int,
+) -> Bool {
+  !render_text && ascii_spacing_overridden(padding_x, padding_y, box_border_padding)
+}
+
+///|
 fn main {
   let args = cli_args_without_program()
   let mut render_text = false
@@ -692,12 +702,12 @@ fn main {
     print_usage()
     return
   }
-  if !render_text &&
-    ascii_spacing_overridden(
-      ascii_padding_x,
-      ascii_padding_y,
-      ascii_box_border_padding,
-    ) {
+  if ascii_spacing_requires_text_mode(
+    render_text,
+    ascii_padding_x,
+    ascii_padding_y,
+    ascii_box_border_padding,
+  ) {
     println(
       "Error: ASCII spacing flags require --ascii or --unicode text output mode",
     )
