@@ -78,7 +78,11 @@ fn shiki_token_scope_color(theme : ShikiTheme, scope : String) -> String? {
 
 ///|
 pub fn from_shiki_theme(theme : ShikiTheme) -> DiagramColors {
-  let is_dark = theme.theme_type == Some("dark")
+  let theme_kind = match theme.theme_type {
+    Some(kind) => kind.trim().to_string().to_lower()
+    None => ""
+  }
+  let is_dark = theme_kind == "dark"
 
   let bg = match shiki_theme_color(theme, "editor.background") {
     Some(color) => color

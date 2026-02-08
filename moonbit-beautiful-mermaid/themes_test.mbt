@@ -149,6 +149,17 @@ test "from_shiki_theme falls back for missing editor colors" {
 }
 
 ///|
+test "from_shiki_theme treats theme_type case-insensitively" {
+  let dark = from_shiki_theme(ShikiTheme::{
+    theme_type: Some(" Dark "),
+    colors: None,
+    token_colors: None,
+  })
+  assert_eq(dark.bg, "#1e1e1e")
+  assert_eq(dark.fg, "#d4d4d4")
+}
+
+///|
 test "from_shiki_theme maps token and editor colors to enrichment fields" {
   let theme = ShikiTheme::{
     theme_type: Some("dark"),
