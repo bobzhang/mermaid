@@ -126,6 +126,7 @@ test {
 Use `from_shiki_theme` to map editor/theme token data into `DiagramColors`.
 Use `shiki_token_color` / `shiki_token_color_many` to build token entries.
 Use `shiki_dark_theme` / `shiki_light_theme` when constructing `ShikiTheme`.
+When `theme_type` is omitted, fallback colors use light defaults.
 
 ```mbt check
 test {
