@@ -161,6 +161,7 @@ Run the local CLI entrypoint from the module root:
 - SVG flags (`--theme`, `--font`, `--bg`, etc.) are valid only in SVG output mode (without `--ascii`/`--unicode`)
 - `moon run cmd/main -- --theme=tokyo-night "graph TD\nA --> B"`
 - `moon run cmd/main -- --theme tokyo-night "graph TD\nA --> B"`
+- `moon run cmd/main -- --theme "TOKYO   NIGHT" "graph TD\nA --> B"` (normalized automatically)
 - `moon run cmd/main -- --font "Roboto Mono" "graph TD\nA --> B"`
 - `moon run cmd/main -- --bg "#0f172a" "graph TD\nA --> B"`
 - `moon run cmd/main -- --fg "#e2e8f0" "graph TD\nA --> B"`
