@@ -625,7 +625,22 @@ fn trim_flow_canvas_output(output : String) -> String {
   }
 
   if min_leading <= 0 {
-    return lines.iter().join("\n")
+    let max_width = lines.fold(
+      init=0,
+      fn(acc, line) { acc.max(line.trim_end().length()) },
+    )
+    if max_width <= 0 {
+      return lines.iter().join("\n")
+    }
+    let normalized : Array[String] = []
+    for line in lines {
+      if line.length() <= max_width {
+        normalized.push(line)
+      } else {
+        normalized.push((try! line[:max_width]).to_string())
+      }
+    }
+    return normalized.iter().join("\n")
   }
 
   let trimmed : Array[String] = []
@@ -636,7 +651,32 @@ fn trim_flow_canvas_output(output : String) -> String {
       trimmed.push((try! line[min_leading:]).to_string())
     }
   }
-  trimmed.iter().join("\n")
+  let max_width = trimmed.fold(
+    init=0,
+    fn(acc, line) { acc.max(line.trim_end().length()) },
+  )
+  if max_width <= 0 {
+    return trimmed.iter().join("\n")
+  }
+
+  let normalized : Array[String] = []
+  for line in trimmed {
+    if line.length() <= max_width {
+      normalized.push(line)
+    } else {
+      normalized.push((try! line[:max_width]).to_string())
+    }
+  }
+  normalized.iter().join("\n")
+}
+
+///|
+fn flow_canvas_to_output(canvas : Array[Array[String]]) -> String {
+  let lines : Array[String] = []
+  for row in canvas {
+    lines.push(row.iter().join(""))
+  }
+  lines.iter().join("\n")
 }
 
 ///|
@@ -855,7 +895,7 @@ fn render_ascii_flow_subgraphs(
     flow_draw_group_labels(canvas, group)
   }
 
-  trim_flow_canvas_output(canvas_to_output(canvas))
+  trim_flow_canvas_output(flow_canvas_to_output(canvas))
 }
 
 ///|
