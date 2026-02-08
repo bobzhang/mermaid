@@ -228,6 +228,28 @@ test "SVG renderer base edge class uses 0.75 stroke width" {
 }
 
 ///|
+test "SVG renderer label class uses derived text fill at 13px" {
+  let svg = render_svg(
+    make_svg_test_graph([]),
+    DiagramColors::default(),
+    "Inter",
+    false,
+  )
+  assert_true(svg.contains(".label{fill:var(--_text);font-size:13px}"))
+}
+
+///|
+test "SVG renderer state-start class uses derived text fill/stroke" {
+  let svg = render_svg(
+    make_svg_test_graph([]),
+    DiagramColors::default(),
+    "Inter",
+    false,
+  )
+  assert_true(svg.contains(".state-start{fill:var(--_text);stroke:var(--_text)}"))
+}
+
+///|
 test "SVG renderer edge-label class uses text-muted fill at 11px" {
   let svg = render_svg(
     make_svg_test_graph([]),
