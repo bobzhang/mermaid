@@ -55,3 +55,12 @@ test "Theme lookup by name returns colors or none" {
   assert_eq(github_dark.accent, Some("#4493f8"))
   assert_eq(theme_by_name("github-neon"), None)
 }
+
+///|
+test "Built-in theme slugs are exported for CLI and config UX" {
+  let slugs = built_in_theme_slugs()
+  assert_true(slugs.contains("tokyo-night"))
+  assert_true(slugs.contains("github-dark"))
+  assert_true(slugs.contains("one-dark"))
+  assert_eq(slugs.length(), built_in_themes().length())
+}

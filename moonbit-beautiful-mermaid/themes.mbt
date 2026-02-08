@@ -230,3 +230,8 @@ pub fn built_in_themes() -> Array[ThemeName] {
     ThemeName::OneDark,
   ]
 }
+
+///|
+pub fn built_in_theme_slugs() -> Array[String] {
+  built_in_themes().map(theme_slug)
+}
