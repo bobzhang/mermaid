@@ -62,6 +62,7 @@ test {
 ## Built-in Themes
 
 Use built-in theme presets by name and pass the resulting colors through `RenderOptions`.
+Use `built_in_theme_colors()` if you want the full slug-to-colors map.
 
 ```mbt check
 test {
