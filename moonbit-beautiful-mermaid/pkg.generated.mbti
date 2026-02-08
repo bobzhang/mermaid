@@ -6,6 +6,8 @@ pub fn build_colors(RenderOptions) -> DiagramColors
 
 pub fn built_in_themes() -> Array[ThemeName]
 
+pub fn merge_options_with_colors(RenderOptions, DiagramColors) -> RenderOptions
+
 pub fn parse_mermaid(String) -> MermaidGraph raise MermaidError
 
 pub fn parse_theme_name(String) -> ThemeName?
@@ -13,6 +15,8 @@ pub fn parse_theme_name(String) -> ThemeName?
 pub fn render_mermaid(String, options? : RenderOptions) -> String raise MermaidError
 
 pub fn render_mermaid_ascii(String, options? : AsciiRenderOptions) -> String raise MermaidError
+
+pub fn render_mermaid_with_colors(String, DiagramColors, options? : RenderOptions) -> String raise MermaidError
 
 pub fn theme_by_name(String) -> DiagramColors?
 
