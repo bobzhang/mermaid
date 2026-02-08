@@ -1,0 +1,7 @@
+// import {
+//   "hongbozhang/beautiful_mermaid" @lib,
+// }
+
+options(
+  "is-main": true,
+)
