@@ -1773,7 +1773,6 @@ fn layout_graph_for_ascii(
   let reverse = layout_direction_is_reverse(graph.direction)
   let state_flat_ascii_grid_mode =
     state_graph &&
-    graph.subgraphs.length() == 0 &&
     !horizontal &&
     !reverse
   if state_flat_ascii_grid_mode {

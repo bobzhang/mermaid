@@ -774,9 +774,7 @@ fn flow_unicode_char_for_connections(
 }
 
 ///|
-fn flow_normalize_unicode_junctions(
-  canvas : Array[Array[String]],
-) -> Unit {
+fn flow_normalize_unicode_junctions(canvas : Array[Array[String]]) -> Unit {
   if canvas.length() == 0 || canvas[0].length() == 0 {
     return
   }
@@ -808,11 +806,7 @@ fn flow_normalize_unicode_junctions(
         flow_connects_up(snapshot[y + 1][x])
 
       canvas[y][x] = flow_unicode_char_for_connections(
-        existing,
-        has_left,
-        has_right,
-        has_up,
-        has_down,
+        existing, has_left, has_right, has_up, has_down,
       )
     }
   }
@@ -1000,6 +994,108 @@ fn map_flow_group(
 }
 
 ///|
+fn flow_group_right(group : AsciiFlowGroupBox) -> Int {
+  group.left + group.width - 1
+}
+
+///|
+fn flow_group_bottom(group : AsciiFlowGroupBox) -> Int {
+  group.top + group.height - 1
+}
+
+///|
+fn state_group_box_from_nodes(
+  subgraph : MermaidSubgraph,
+  node_box_by_id : Map[String, AsciiFlowNodeBox],
+) -> AsciiFlowGroupBox? {
+  let children : Array[AsciiFlowGroupBox] = []
+  let mut has_bounds = false
+  let mut min_left = 0
+  let mut min_top = 0
+  let mut max_right = 0
+  let mut max_bottom = 0
+
+  for child in subgraph.children {
+    match state_group_box_from_nodes(child, node_box_by_id) {
+      Some(group) => {
+        children.push(group)
+        let right = flow_group_right(group)
+        let bottom = flow_group_bottom(group)
+        if !has_bounds {
+          min_left = group.left
+          min_top = group.top
+          max_right = right
+          max_bottom = bottom
+          has_bounds = true
+        } else {
+          min_left = min_left.min(group.left)
+          min_top = min_top.min(group.top)
+          max_right = max_right.max(right)
+          max_bottom = max_bottom.max(bottom)
+        }
+      }
+      None => ()
+    }
+  }
+
+  for node_id in subgraph.node_ids {
+    match node_box_by_id.get(node_id) {
+      Some(box) => {
+        let right = box.left + box.width - 1
+        let bottom = box.top + box.height - 1
+        if !has_bounds {
+          min_left = box.left
+          min_top = box.top
+          max_right = right
+          max_bottom = bottom
+          has_bounds = true
+        } else {
+          min_left = min_left.min(box.left)
+          min_top = min_top.min(box.top)
+          max_right = max_right.max(right)
+          max_bottom = max_bottom.max(bottom)
+        }
+      }
+      None => ()
+    }
+  }
+
+  if !has_bounds {
+    return None
+  }
+
+  let group_padding = 2
+  let label_space = 2
+  let left = min_left - group_padding
+  let top = min_top - group_padding - label_space
+  let right = max_right + group_padding
+  let bottom = max_bottom + group_padding
+  Some(AsciiFlowGroupBox::{
+    label: subgraph.label,
+    left,
+    top,
+    width: right - left + 1,
+    height: bottom - top + 1,
+    children,
+  })
+}
+
+///|
+fn state_mapped_groups_from_nodes(
+  graph : MermaidGraph,
+  node_box_by_id : Map[String, AsciiFlowNodeBox],
+) -> Array[AsciiFlowGroupBox] {
+  let groups : Array[AsciiFlowGroupBox] = []
+  for subgraph in graph.subgraphs {
+    match state_group_box_from_nodes(subgraph, node_box_by_id) {
+      Some(group) => groups.push(group)
+      None => ()
+    }
+  }
+  groups
+}
+
+///|
 fn flow_group_max_x(group : AsciiFlowGroupBox) -> Int {
   let mut max_x = group.left + group.width
   for child in group.children {
@@ -1041,7 +1137,9 @@ fn flow_draw_group_labels(
   canvas : Array[Array[String]],
   group : AsciiFlowGroupBox,
 ) -> Unit {
-  let label_x = (group.left + ((group.width - group.label.length()) / 2).max(1) - 1).max(group.left + 1)
+  let label_x = (group.left +
+  ((group.width - group.label.length()) / 2).max(1) -
+  1).max(group.left + 1)
   let label_y = group.top + 1
   write_canvas_text(canvas, label_x, label_y, group.label)
   for child in group.children {
@@ -1157,83 +1255,26 @@ fn render_ascii_flow_subgraphs(
   let state_composite_layout_mode = state_layout_mode && !state_flat_layout_mode
   let scale_x = if state_layout_mode { 9 } else { flow_scale_x() }
   let scale_y = if state_layout_mode { 10 } else { flow_scale_y() }
-  let mut state_uniform_min_width : Int? = None
-  let mut state_flat_max_x : Int? = None
-  let mut state_flat_has_multiple_columns = false
-  if state_flat_layout_mode {
-    let mut max_state_text_len = 0
-    let x_columns : Map[Int, Bool] = {}
-    let mut max_node_x = 0
+  let state_column_width_by_x : Map[Int, Int] = {}
+  if state_layout_mode {
     for node in positioned.nodes {
-      max_state_text_len = max_state_text_len.max(
-        flow_node_label(node).length(),
-      )
-      x_columns[node.x] = true
-      max_node_x = max_node_x.max(node.x)
-    }
-    for edge in positioned.edges {
-      match edge.label {
-        Some(label) =>
-          max_state_text_len = max_state_text_len.max(label.length())
-        None => ()
+      let label = flow_node_label(node)
+      let base_width = match node.shape {
+        NodeShape::StateStart | NodeShape::StateEnd => 12
+        _ => (label.length() + 4).max(12)
+      }
+      let current = option_int_or(state_column_width_by_x.get(node.x), 0)
+      if base_width > current {
+        state_column_width_by_x[node.x] = base_width
       }
     }
-    state_flat_has_multiple_columns = x_columns.length() > 1
-    if state_flat_has_multiple_columns {
-      state_flat_max_x = Some(max_node_x)
-    }
-    if max_state_text_len >= 12 {
-      state_uniform_min_width = Some(max_state_text_len + 4)
-    }
-  }
-
-  let mapped_groups : Array[AsciiFlowGroupBox] = []
-  for group in positioned.groups {
-    mapped_groups.push(
-      map_flow_group(
-        group,
-        scale_x,
-        scale_y,
-        options.padding_x,
-        options.padding_y,
-        state_composite_layout_mode,
-      ),
-    )
   }
 
   let mapped_nodes : Array[AsciiFlowNodeBox] = []
   for node in positioned.nodes {
     let label = flow_node_label(node)
     let (min_width, min_height) = if state_layout_mode {
-      match state_uniform_min_width {
-        Some(uniform_width) => {
-          let narrowed_width = if state_flat_layout_mode &&
-            state_flat_has_multiple_columns {
-            match state_flat_max_x {
-              Some(max_x) =>
-                if node.x == max_x {
-                  (uniform_width - 1).max(12)
-                } else {
-                  uniform_width
-                }
-              None => uniform_width
-            }
-          } else {
-            uniform_width
-          }
-          (narrowed_width, 5)
-        }
-        None =>
-          match node.shape {
-            NodeShape::StateStart | NodeShape::StateEnd =>
-              if state_composite_layout_mode {
-                (14, 5)
-              } else {
-                (12, 5)
-              }
-            _ => ((label.length() + 6).max(12), 5)
-          }
-      }
+      (option_int_or(state_column_width_by_x.get(node.x), 12), 5)
     } else {
       match node.shape {
         NodeShape::StateStart | NodeShape::StateEnd => (10, 5)
@@ -1253,6 +1294,30 @@ fn render_ascii_flow_subgraphs(
       height,
     }
     mapped_nodes.push(box)
+  }
+
+  let node_box_by_id : Map[String, AsciiFlowNodeBox] = {}
+  for box in mapped_nodes {
+    node_box_by_id[box.id] = box
+  }
+
+  let mapped_groups : Array[AsciiFlowGroupBox] = if state_composite_layout_mode {
+    state_mapped_groups_from_nodes(graph, node_box_by_id)
+  } else {
+    let groups : Array[AsciiFlowGroupBox] = []
+    for group in positioned.groups {
+      groups.push(
+        map_flow_group(
+          group,
+          scale_x,
+          scale_y,
+          options.padding_x,
+          options.padding_y,
+          state_composite_layout_mode,
+        ),
+      )
+    }
+    groups
   }
 
   let mut max_x = 0
@@ -1277,10 +1342,6 @@ fn render_ascii_flow_subgraphs(
     max_x + options.padding_x + 2,
     max_y + options.padding_y + 2,
   )
-  let node_box_by_id : Map[String, AsciiFlowNodeBox] = {}
-  for box in mapped_nodes {
-    node_box_by_id[box.id] = box
-  }
 
   for group in mapped_groups {
     flow_draw_group(canvas, group, options.use_ascii)
@@ -1412,10 +1473,7 @@ fn render_ascii_flow_subgraphs(
       let dy = end_dy
       let mut arrow_x = target_anchor_x - unit_step(dx)
       let arrow_y = target_anchor_y - unit_step(dy)
-      if state_layout_mode &&
-        options.use_ascii &&
-        dx < 0 &&
-        dy == 0 {
+      if state_layout_mode && options.use_ascii && dx < 0 && dy == 0 {
         arrow_x = target_anchor_x + 3
         for gap_x in (target_anchor_x + 1)..<arrow_x {
           arrow_overlays.push(AsciiArrowPlacement::{

@@ -528,7 +528,8 @@ fn layout_state_has_labeled_reverse_edge(
   target_id : String,
 ) -> Bool {
   for edge in graph.edges {
-    if edge.source == target_id && edge.target == source_id &&
+    if edge.source == target_id &&
+      edge.target == source_id &&
       edge.label is Some(_) {
       return true
     }
@@ -543,8 +544,7 @@ fn layout_state_is_back_edge(
   target_id : String,
 ) -> Bool {
   match (positions.get(source_id), positions.get(target_id)) {
-    (Some(source), Some(target)) =>
-      source.y > target.y
+    (Some(source), Some(target)) => source.y > target.y
     _ => false
   }
 }
@@ -604,6 +604,26 @@ fn layout_flat_state_graph_for_ascii_grid(
       }
       None => ()
     }
+  }
+
+  let positioned_groups : Array[PositionedGroup] = []
+  let mut empty_group_top = padding
+  for subgraph in graph.subgraphs {
+    match build_positioned_group(subgraph, positioned_by_id, false, false) {
+      Some(group) => positioned_groups.push(group)
+      None => {
+        let empty_group = build_empty_group_tree_at(
+          subgraph, padding, empty_group_top, false, false,
+        )
+        positioned_groups.push(empty_group)
+        empty_group_top = empty_group_top +
+          empty_group.height +
+          subgraph_group_padding()
+      }
+    }
+  }
+  for group in positioned_groups {
+    register_group_anchors(group, positioned_by_id, true)
   }
 
   let blocked = layout_state_grid_blocked_cells(grid_positions)
@@ -688,8 +708,7 @@ fn layout_flat_state_graph_for_ascii_grid(
                 edge.target,
               ) {
               layout_state_label_position_from_source_segment(
-                points,
-                label_slots_by_anchor,
+                points, label_slots_by_anchor,
               )
             } else {
               layout_state_label_position(points, label_slots_by_anchor)
@@ -740,6 +759,12 @@ fn layout_flat_state_graph_for_ascii_grid(
       None => ()
     }
   }
+  for group in positioned_groups {
+    global_min_x = global_min_x.min(positioned_group_min_x(group))
+    global_min_y = global_min_y.min(positioned_group_min_y(group))
+    global_max_x = global_max_x.max(positioned_group_max_x(group))
+    global_max_y = global_max_y.max(positioned_group_max_y(group))
+  }
 
   let shift_x = if global_min_x < padding { padding - global_min_x } else { 0 }
   let shift_y = if global_min_y < padding { padding - global_min_y } else { 0 }
@@ -781,6 +806,9 @@ fn layout_flat_state_graph_for_ascii_grid(
         label_position: shifted_label,
       }
     }
+    for i, group in positioned_groups {
+      positioned_groups[i] = shift_positioned_group(group, shift_x, shift_y)
+    }
   }
 
   PositionedGraph::{
@@ -788,7 +816,7 @@ fn layout_flat_state_graph_for_ascii_grid(
     height: global_max_y + shift_y + padding,
     nodes: positioned_nodes,
     edges: positioned_edges,
-    groups: [],
+    groups: positioned_groups,
     sequence_lifelines: [],
     sequence_activations: [],
     sequence_blocks: [],
