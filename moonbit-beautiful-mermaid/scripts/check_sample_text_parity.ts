@@ -20,6 +20,12 @@ type Diff = {
   unicode_match: boolean
 }
 
+type CategorySummary = {
+  total: number
+  passed: number
+  failed: number
+}
+
 function normalize(value: string): string {
   return value.replace(/\r\n/g, '\n').trim()
 }
@@ -63,8 +69,14 @@ const selected = categoryFilter
   : samples
 
 const diffs: Diff[] = []
+const summaryByCategory: Record<string, CategorySummary> = {}
 for (const sample of selected) {
   const category = sample.category ?? 'Other'
+  if (!summaryByCategory[category]) {
+    summaryByCategory[category] = { total: 0, passed: 0, failed: 0 }
+  }
+  summaryByCategory[category]!.total += 1
+
   const expectedAscii = upstreamText(true, sample.source)
   const expectedUnicode = upstreamText(false, sample.source)
   const actualAscii = moonText('--ascii', sample.source)
@@ -73,12 +85,15 @@ for (const sample of selected) {
   const unicodeMatch = actualUnicode === expectedUnicode
 
   if (!asciiMatch || !unicodeMatch) {
+    summaryByCategory[category]!.failed += 1
     diffs.push({
       title: sample.title,
       category,
       ascii_match: asciiMatch,
       unicode_match: unicodeMatch,
     })
+  } else {
+    summaryByCategory[category]!.passed += 1
   }
 }
 
@@ -93,6 +108,7 @@ console.log(
       total,
       passed,
       failed,
+      summaryByCategory,
       diffs,
     },
     null,
