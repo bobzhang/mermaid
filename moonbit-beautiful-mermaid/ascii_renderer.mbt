@@ -199,6 +199,7 @@ fn flow_node_label(node : PositionedNode) -> String {
 
 ///|
 priv struct AsciiFlowNodeBox {
+  id : String
   label : String
   left : Int
   top : Int
@@ -221,6 +222,13 @@ priv struct AsciiArrowPlacement {
   x : Int
   y : Int
   marker : String
+}
+
+///|
+priv struct AsciiEdgeLabelPlacement {
+  x : Int
+  y : Int
+  label : String
 }
 
 ///|
@@ -295,6 +303,83 @@ fn unit_step(value : Int) -> Int {
     -1
   } else {
     0
+  }
+}
+
+///|
+fn axis_is_horizontal(dx : Int, dy : Int) -> Bool {
+  dx.abs() >= dy.abs()
+}
+
+///|
+fn border_join_marker(
+  dx : Int,
+  dy : Int,
+  for_target : Bool,
+  use_ascii : Bool,
+) -> String? {
+  if use_ascii {
+    return None
+  }
+
+  if axis_is_horizontal(dx, dy) {
+    if for_target {
+      if dx > 0 {
+        Some("┤")
+      } else {
+        Some("├")
+      }
+    } else if dx > 0 {
+      Some("├")
+    } else {
+      Some("┤")
+    }
+  } else if for_target {
+    if dy > 0 {
+      Some("┴")
+    } else {
+      Some("┬")
+    }
+  } else if dy > 0 {
+    Some("┬")
+  } else {
+    Some("┴")
+  }
+}
+
+///|
+fn flow_edge_anchor(
+  box : AsciiFlowNodeBox,
+  dx : Int,
+  dy : Int,
+  for_target : Bool,
+) -> (Int, Int) {
+  if axis_is_horizontal(dx, dy) {
+    let y = box.top + box.height / 2
+    if for_target {
+      if dx > 0 {
+        (box.left, y)
+      } else {
+        (box.left + box.width - 1, y)
+      }
+    } else if dx > 0 {
+      (box.left + box.width - 1, y)
+    } else {
+      (box.left, y)
+    }
+  } else {
+    let x = box.left + box.width / 2
+    if for_target {
+      if dy > 0 {
+        (x, box.top)
+      } else {
+        (x, box.top + box.height - 1)
+      }
+    } else if dy > 0 {
+      (x, box.top + box.height - 1)
+    } else {
+      (x, box.top)
+    }
   }
 }
 
@@ -598,6 +683,7 @@ fn render_ascii_flow_subgraphs(
     let cx = scale_coord(node.x, scale_x, options.padding_x)
     let cy = scale_coord(node.y, scale_y, options.padding_y)
     let box = AsciiFlowNodeBox::{
+      id: node.id,
       label,
       left: cx - width / 2,
       top: cy - height / 2,
@@ -629,12 +715,18 @@ fn render_ascii_flow_subgraphs(
     max_x + options.padding_x + 2,
     max_y + options.padding_y + 2,
   )
+  let node_box_by_id : Map[String, AsciiFlowNodeBox] = {}
+  for box in mapped_nodes {
+    node_box_by_id[box.id] = box
+  }
 
   for group in mapped_groups {
     flow_draw_group(canvas, group, options.use_ascii)
   }
 
   let arrow_overlays : Array[AsciiArrowPlacement] = []
+  let border_overlays : Array[AsciiArrowPlacement] = []
+  let edge_label_overlays : Array[AsciiEdgeLabelPlacement] = []
   for edge in positioned.edges {
     let (h_char, v_char) = flow_line_chars(edge.style, options.use_ascii)
     let points = edge.points
@@ -651,33 +743,87 @@ fn render_ascii_flow_subgraphs(
       flow_draw_segment(canvas, x1, y1, x2, y2, h_char, v_char)
     }
 
+    let first = points[0]
+    let next = points[1]
+    let first_x = scale_coord(first.x, scale_x, options.padding_x)
+    let first_y = scale_coord(first.y, scale_y, options.padding_y)
+    let next_x = scale_coord(next.x, scale_x, options.padding_x)
+    let next_y = scale_coord(next.y, scale_y, options.padding_y)
+    let start_dx = next_x - first_x
+    let start_dy = next_y - first_y
+    let (source_anchor_x, source_anchor_y) = match node_box_by_id.get(edge.source) {
+      Some(source_box) =>
+        flow_edge_anchor(source_box, start_dx, start_dy, false)
+      None => (first_x, first_y)
+    }
+    match border_join_marker(start_dx, start_dy, false, options.use_ascii) {
+      Some(marker) =>
+        border_overlays.push(
+          AsciiArrowPlacement::{
+            x: source_anchor_x,
+            y: source_anchor_y,
+            marker,
+          },
+        )
+      None => ()
+    }
+
     let last = points[points.length() - 1]
     let prev = points[points.length() - 2]
     let end_x = scale_coord(last.x, scale_x, options.padding_x)
     let end_y = scale_coord(last.y, scale_y, options.padding_y)
     let prev_x = scale_coord(prev.x, scale_x, options.padding_x)
     let prev_y = scale_coord(prev.y, scale_y, options.padding_y)
+    let end_dx = end_x - prev_x
+    let end_dy = end_y - prev_y
+    let (target_anchor_x, target_anchor_y) = match node_box_by_id.get(edge.target) {
+      Some(target_box) =>
+        flow_edge_anchor(target_box, end_dx, end_dy, true)
+      None => (end_x, end_y)
+    }
+    match edge.label {
+      Some(label) => {
+        let (anchor_x, anchor_y) = if state_layout_mode {
+          (
+            (source_anchor_x + target_anchor_x) / 2,
+            (source_anchor_y + target_anchor_y) / 2,
+          )
+        } else {
+          match edge.label_position {
+            Some(position) => (
+              scale_coord(position.x, scale_x, options.padding_x),
+              scale_coord(position.y, scale_y, options.padding_y),
+            )
+            None => (
+              (first_x + end_x) / 2,
+              (first_y + end_y) / 2,
+            )
+          }
+        }
+        edge_label_overlays.push(AsciiEdgeLabelPlacement::{
+          x: anchor_x - label.length() / 2,
+          y: anchor_y,
+          label,
+        })
+      }
+      None => ()
+    }
+
     if edge.has_arrow_end {
-      let dx = end_x - prev_x
-      let dy = end_y - prev_y
+      let dx = end_dx
+      let dy = end_dy
       arrow_overlays.push(AsciiArrowPlacement::{
-        x: end_x - unit_step(dx),
-        y: end_y - unit_step(dy),
+        x: target_anchor_x - unit_step(dx),
+        y: target_anchor_y - unit_step(dy),
         marker: flow_arrow_marker(dx, dy, options.use_ascii),
       })
     }
     if edge.has_arrow_start {
-      let first = points[0]
-      let next = points[1]
-      let first_x = scale_coord(first.x, scale_x, options.padding_x)
-      let first_y = scale_coord(first.y, scale_y, options.padding_y)
-      let next_x = scale_coord(next.x, scale_x, options.padding_x)
-      let next_y = scale_coord(next.y, scale_y, options.padding_y)
-      let dx = first_x - next_x
-      let dy = first_y - next_y
+      let dx = -start_dx
+      let dy = -start_dy
       arrow_overlays.push(AsciiArrowPlacement::{
-        x: first_x + unit_step(dx),
-        y: first_y + unit_step(dy),
+        x: source_anchor_x + unit_step(dx),
+        y: source_anchor_y + unit_step(dy),
         marker: flow_arrow_marker(dx, dy, options.use_ascii),
       })
     }
@@ -695,8 +841,15 @@ fn render_ascii_flow_subgraphs(
     )
   }
 
+  for join in border_overlays {
+    put_canvas(canvas, join.x, join.y, join.marker)
+  }
+
   for arrow in arrow_overlays {
     put_canvas(canvas, arrow.x, arrow.y, arrow.marker)
+  }
+  for placement in edge_label_overlays {
+    write_canvas_text(canvas, placement.x, placement.y, placement.label)
   }
   for group in mapped_groups {
     flow_draw_group_labels(canvas, group)
