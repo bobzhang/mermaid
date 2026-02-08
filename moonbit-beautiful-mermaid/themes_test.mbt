@@ -123,6 +123,13 @@ test "shiki_token_color builds a single-scope token entry" {
 }
 
 ///|
+test "shiki_token_color_many preserves multiple scopes" {
+  let token = shiki_token_color_many(["comment", "keyword"], Some("#aaaaaa"))
+  assert_eq(token.scopes, ["comment", "keyword"])
+  assert_eq(token.foreground, Some("#aaaaaa"))
+}
+
+///|
 test "from_shiki_theme falls back for missing editor colors" {
   let dark = from_shiki_theme(ShikiTheme::{
     theme_type: Some("dark"),

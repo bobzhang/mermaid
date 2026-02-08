@@ -32,6 +32,8 @@ pub fn render_mermaid_with_theme_name(String, String, options? : RenderOptions) 
 
 pub fn shiki_token_color(String, String?) -> ShikiTokenColor
 
+pub fn shiki_token_color_many(Array[String], String?) -> ShikiTokenColor
+
 pub fn theme_by_name(String) -> DiagramColors?
 
 pub fn theme_colors(ThemeName) -> DiagramColors

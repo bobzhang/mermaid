@@ -32,6 +32,14 @@ pub fn shiki_token_color(
 }
 
 ///|
+pub fn shiki_token_color_many(
+  scopes : Array[String],
+  foreground : String?,
+) -> ShikiTokenColor {
+  { scopes, foreground }
+}
+
+///|
 pub(all) struct ShikiTheme {
   theme_type : String?
   colors : Map[String, String]?
