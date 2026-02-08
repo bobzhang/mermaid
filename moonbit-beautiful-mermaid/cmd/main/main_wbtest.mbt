@@ -82,6 +82,24 @@ test "svg_options_overridden tracks svg-only flags and spacing options" {
   assert_eq(
     svg_options_overridden(
       None,
+      Some("Inter"),
+      None,
+      None,
+      Some("#64748b"),
+      Some("#38bdf8"),
+      None,
+      None,
+      Some("#334155"),
+      None,
+      None,
+      None,
+      false,
+    ),
+    true,
+  )
+  assert_eq(
+    svg_options_overridden(
+      None,
       None,
       None,
       None,
