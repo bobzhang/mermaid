@@ -195,8 +195,18 @@ pub fn theme_slug(theme : ThemeName) -> String {
 }
 
 ///|
+fn normalize_theme_name_input(name : String) -> String {
+  name
+  .trim()
+  .to_string()
+  .to_lower()
+  .replace_all(old="_", new="-")
+  .replace_all(old=" ", new="-")
+}
+
+///|
 pub fn parse_theme_name(name : String) -> ThemeName? {
-  match name.to_lower() {
+  match normalize_theme_name_input(name) {
     "zinc-light" => Some(ThemeName::ZincLight)
     "zinc-dark" => Some(ThemeName::ZincDark)
     "tokyo-night" => Some(ThemeName::TokyoNight)
