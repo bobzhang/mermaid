@@ -5,11 +5,13 @@ fn print_usage() -> Unit {
   println("  moon run cmd/main -- --ascii \"graph LR\\nA --> B\"")
   println("  moon run cmd/main -- --theme=tokyo-night \"graph TD\\nA --> B\"")
   println("  moon run cmd/main -- --font='Roboto Mono' \"graph TD\\nA --> B\"")
+  println("  moon run cmd/main -- --transparent \"graph TD\\nA --> B\"")
   println("  moon run cmd/main -- --list-themes")
   println("Flags:")
   println("  --ascii    Render ASCII output")
   println("  --theme    SVG theme slug, e.g. tokyo-night, github-dark")
   println("  --font     SVG font family, e.g. Inter, Roboto Mono")
+  println("  --transparent  Omit SVG background fill")
   println("  --list-themes  Print built-in theme names")
   println("  --help     Show this help")
 }
@@ -34,6 +36,7 @@ fn main {
   let mut use_ascii = false
   let mut theme_slug : String? = None
   let mut font_name : String? = None
+  let mut transparent = false
   let mut diagram : String? = None
   let mut expect_theme_value = false
   let mut expect_font_value = false
@@ -72,6 +75,10 @@ fn main {
     }
     if arg == "--ascii" {
       use_ascii = true
+      continue
+    }
+    if arg == "--transparent" {
+      transparent = true
       continue
     }
     if arg == "--font" {
@@ -157,7 +164,7 @@ fn main {
     padding: None,
     node_spacing: None,
     layer_spacing: None,
-    transparent: None,
+    transparent: Some(transparent),
   }
 
   let rendered_svg = match theme_slug {
