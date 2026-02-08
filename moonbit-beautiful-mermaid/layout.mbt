@@ -33,7 +33,7 @@ fn node_dimensions(node : MermaidNode) -> (Int, Int) {
   }
 
   match node.shape {
-    NodeShape::StateStart => (16, 16)
+    NodeShape::StateStart => (22, 22)
     NodeShape::StateEnd => (22, 22)
     NodeShape::Circle => (60, 60)
     NodeShape::DoubleCircle => (64, 64)
