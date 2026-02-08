@@ -2088,19 +2088,21 @@ fn layout_graph_with_subgraph_redirects(
     positioned_index_by_id[node.id] = i
   }
   let node_horizontal_by_id : Map[String, Bool] = {}
-  apply_subgraph_direction_overrides(
-    graph.subgraphs,
-    horizontal,
-    reverse,
-    false,
-    horizontal,
-    reverse,
-    node_spacing,
-    layer_spacing,
-    positioned_nodes,
-    positioned_index_by_id,
-    node_horizontal_by_id,
-  )
+  if state_graph {
+    apply_subgraph_direction_overrides(
+      graph.subgraphs,
+      horizontal,
+      reverse,
+      false,
+      horizontal,
+      reverse,
+      node_spacing,
+      layer_spacing,
+      positioned_nodes,
+      positioned_index_by_id,
+      node_horizontal_by_id,
+    )
+  }
 
   max_right = padding
   max_bottom = padding
