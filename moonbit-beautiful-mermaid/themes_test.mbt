@@ -95,6 +95,8 @@ test "Theme lookup by name returns colors or none" {
 test "theme_exists reflects whether a theme name is supported" {
   assert_eq(theme_exists("tokyo-night"), true)
   assert_eq(theme_exists("TOKYO NIGHT"), true)
+  assert_eq(theme_exists("tokyo\t night"), true)
+  assert_eq(theme_exists("github\n dark"), true)
   assert_eq(theme_exists("github-neon"), false)
 }
 
