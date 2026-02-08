@@ -17,6 +17,7 @@ Regenerate the upstream sample smoke test after upstream `samples-data.ts` chang
 - `bun run moonbit-beautiful-mermaid/scripts/generate_upstream_samples_smoke.ts`
 - `moon test upstream_samples_smoke_test.mbt --target native`
 - `moon test ascii_flowchart_corpus_test.mbt --target native`
+- `moon test ascii_state_corpus_test.mbt --target native`
 
 ## Quick Start
 
