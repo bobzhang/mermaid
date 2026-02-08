@@ -526,8 +526,9 @@ fn flow_draw_hline(
 ) -> Unit {
   let start = x1.min(x2)
   let ending = x1.max(x2)
+  let use_ascii = ch == "-" || ch == "." || ch == "="
   for x in start..<=ending {
-    put_canvas(canvas, x, y, ch)
+    flow_put_line_canvas(canvas, x, y, ch, use_ascii, true)
   }
 }
 
@@ -541,9 +542,66 @@ fn flow_draw_vline(
 ) -> Unit {
   let start = y1.min(y2)
   let ending = y1.max(y2)
+  let use_ascii = ch == "|" || ch == ":"
   for y in start..<=ending {
-    put_canvas(canvas, x, y, ch)
+    flow_put_line_canvas(canvas, x, y, ch, use_ascii, false)
   }
+}
+
+///|
+fn flow_is_horizontal_line_char(ch : String) -> Bool {
+  ch == "-" || ch == "." || ch == "=" || ch == "─" || ch == "┄" || ch == "═"
+}
+
+///|
+fn flow_is_vertical_line_char(ch : String) -> Bool {
+  ch == "|" || ch == ":" || ch == "│" || ch == "┊" || ch == "║"
+}
+
+///|
+fn flow_is_corner_or_junction_char(ch : String) -> Bool {
+  ch == "+" || ch == "┼" || ch == "┌" || ch == "┐" || ch == "└" || ch == "┘" ||
+  ch == "├" || ch == "┤" || ch == "┬" || ch == "┴"
+}
+
+///|
+fn flow_put_line_canvas(
+  canvas : Array[Array[String]],
+  x : Int,
+  y : Int,
+  ch : String,
+  use_ascii : Bool,
+  horizontal : Bool,
+) -> Unit {
+  if y < 0 || y >= canvas.length() {
+    return
+  }
+  if canvas.length() == 0 || x < 0 || x >= canvas[0].length() {
+    return
+  }
+  let existing = canvas[y][x]
+  if existing == " " || existing == "" {
+    canvas[y][x] = ch
+    return
+  }
+  if existing == ch {
+    return
+  }
+  if flow_is_corner_or_junction_char(existing) {
+    return
+  }
+
+  let cross = if horizontal {
+    flow_is_vertical_line_char(existing)
+  } else {
+    flow_is_horizontal_line_char(existing)
+  }
+  if cross {
+    canvas[y][x] = if use_ascii { "+" } else { "┼" }
+    return
+  }
+
+  canvas[y][x] = ch
 }
 
 ///|
