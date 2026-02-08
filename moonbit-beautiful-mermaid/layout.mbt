@@ -1765,8 +1765,20 @@ fn layout_graph_for_ascii(
   graph : MermaidGraph,
   options : RenderOptions,
 ) -> PositionedGraph {
+  let state_graph = is_state_graph(graph)
+  let horizontal = layout_direction_is_horizontal(graph.direction)
+  let reverse = layout_direction_is_reverse(graph.direction)
+  let state_flat_ascii_grid_mode =
+    state_graph &&
+    graph.subgraphs.length() == 0 &&
+    !horizontal &&
+    !reverse
+  if state_flat_ascii_grid_mode {
+    return layout_flat_state_graph_for_ascii_grid(graph, options)
+  }
+
   let state_composite_ascii_mode =
-    is_state_graph(graph) && graph.subgraphs.length() > 0
+    state_graph && graph.subgraphs.length() > 0
   layout_graph_with_subgraph_redirects(
     graph,
     options,
