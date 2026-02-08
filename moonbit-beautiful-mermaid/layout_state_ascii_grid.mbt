@@ -467,7 +467,7 @@ fn layout_flat_state_graph_for_ascii_grid(
   let padding = resolve_padding(options)
   let node_spacing = resolve_node_spacing(options)
   let layer_spacing = resolve_layer_spacing(options)
-  let cell_x = (node_spacing / 3).max(42)
+  let cell_x = (node_spacing / 3).max(54)
   let cell_y = (layer_spacing / 4).max(25)
   let origin_x = padding + cell_x * 2
   let origin_y = padding + cell_y * 2
