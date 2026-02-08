@@ -360,6 +360,88 @@ fn adjust_label_y_for_state_layout(
 }
 
 ///|
+fn flow_node_pair_key(a : String, b : String) -> String {
+  if a <= b {
+    "\{a}|\{b}"
+  } else {
+    "\{b}|\{a}"
+  }
+}
+
+///|
+fn flow_non_state_label_anchor(
+  source_x : Int,
+  source_y : Int,
+  target_x : Int,
+  target_y : Int,
+  label_len : Int,
+) -> (Int, Int) {
+  if source_y == target_y {
+    return ((source_x + target_x) / 2, source_y)
+  }
+  if source_x == target_x {
+    return (source_x, (source_y + target_y) / 2)
+  }
+
+  let horizontal_span = (target_x - source_x).abs() + 1
+  let vertical_span = (target_y - source_y).abs() + 1
+  if horizontal_span >= label_len || horizontal_span >= vertical_span {
+    ((source_x + target_x) / 2, source_y)
+  } else {
+    (target_x, (source_y + target_y) / 2)
+  }
+}
+
+///|
+fn flow_non_state_edge_label_placement(
+  source_x : Int,
+  source_y : Int,
+  target_x : Int,
+  target_y : Int,
+  label : String,
+  boxes : Array[AsciiFlowNodeBox],
+  existing_labels : Array[AsciiEdgeLabelPlacement],
+) -> AsciiEdgeLabelPlacement {
+  let (anchor_x, anchor_y) = flow_non_state_label_anchor(
+    source_x, source_y, target_x, target_y, label.length(),
+  )
+  let mut label_x = anchor_x - label.length() / 2
+  if source_y == target_y {
+    if source_x < target_x {
+      let max_right = target_x - 2
+      let label_right = label_x + label.length() - 1
+      if label_right > max_right {
+        label_x = max_right - label.length() + 1
+      }
+    } else if source_x > target_x {
+      let min_left = target_x + 2
+      if label_x < min_left {
+        label_x = min_left
+      }
+    }
+  }
+  if !label_overlaps_any_node_box(label_x, anchor_y, label, boxes) &&
+    !label_overlaps_any_edge_label(
+      label_x,
+      anchor_y,
+      label,
+      existing_labels,
+    ) {
+    return AsciiEdgeLabelPlacement::{ x: label_x, y: anchor_y, label }
+  }
+
+  let base_y = adjust_label_y_for_state_boxes(label_x, anchor_y, label, boxes)
+  let label_y = adjust_label_y_for_state_layout(
+    label_x,
+    base_y,
+    label,
+    boxes,
+    existing_labels,
+  )
+  AsciiEdgeLabelPlacement::{ x: label_x, y: label_y, label }
+}
+
+///|
 fn flow_draw_box(
   canvas : Array[Array[String]],
   left : Int,
@@ -1790,6 +1872,26 @@ fn render_ascii_flow_subgraphs(
     mapped_nodes.push(box)
   }
 
+  let horizontal_label_gap_by_pair : Map[String, Int] = {}
+  if !state_layout_mode && flow_direction_horizontal {
+    for edge in graph.edges {
+      match edge.label {
+        Some(label) => {
+          let pair_key = flow_node_pair_key(edge.source, edge.target)
+          let current_gap = option_int_or(
+            horizontal_label_gap_by_pair.get(pair_key),
+            options.padding_x,
+          )
+          let required_gap = (label.length() + 2).max(options.padding_x)
+          if required_gap > current_gap {
+            horizontal_label_gap_by_pair[pair_key] = required_gap
+          }
+        }
+        None => ()
+      }
+    }
+  }
+
   if !state_layout_mode {
     let row_indexes_by_center_y : Map[Int, Array[Int]] = {}
     for i, node in mapped_nodes {
@@ -1821,7 +1923,13 @@ fn render_ascii_flow_subgraphs(
         let curr_idx = row_indexes[i]
         let prev_node = mapped_nodes[prev_idx]
         let curr_node = mapped_nodes[curr_idx]
-        let desired_left = prev_node.left + prev_node.width + options.padding_x
+        let gap = option_int_or(
+          horizontal_label_gap_by_pair.get(
+            flow_node_pair_key(prev_node.id, curr_node.id),
+          ),
+          options.padding_x,
+        )
+        let desired_left = prev_node.left + prev_node.width + gap
         if curr_node.left != desired_left {
           mapped_nodes[curr_idx] = AsciiFlowNodeBox::{
             id: curr_node.id,
@@ -2014,9 +2122,9 @@ fn render_ascii_flow_subgraphs(
       None => ()
     }
     match edge.label {
-      Some(label) => {
-        let mut has_labeled_reverse_shared_path = false
+      Some(label) =>
         if state_layout_mode {
+          let mut has_labeled_reverse_shared_path = false
           for candidate in positioned.edges {
             if candidate.source == edge.target &&
               candidate.target == edge.source {
@@ -2027,39 +2135,50 @@ fn render_ascii_flow_subgraphs(
               }
             }
           }
-        }
-        let (anchor_x, anchor_y) = if has_labeled_reverse_shared_path {
-          (
-            (source_anchor_x + target_anchor_x) / 2,
-            (source_anchor_y + target_anchor_y) / 2,
-          )
-        } else {
-          match edge.label_position {
-            Some(position) =>
-              (
-                scale_coord(position.x, scale_x, options.padding_x),
-                scale_coord(position.y, scale_y, options.padding_y),
-              )
-            None => ((first_x + end_x) / 2, (first_y + end_y) / 2)
+          let (anchor_x, anchor_y) = if has_labeled_reverse_shared_path {
+            (
+              (source_anchor_x + target_anchor_x) / 2,
+              (source_anchor_y + target_anchor_y) / 2,
+            )
+          } else {
+            match edge.label_position {
+              Some(position) =>
+                (
+                  scale_coord(position.x, scale_x, options.padding_x),
+                  scale_coord(position.y, scale_y, options.padding_y),
+                )
+              None => ((first_x + end_x) / 2, (first_y + end_y) / 2)
+            }
           }
-        }
-        let label_x = anchor_x - label.length() / 2
-        let base_y = adjust_label_y_for_state_boxes(
-          label_x, anchor_y, label, mapped_nodes,
-        )
-        let label_y = if has_labeled_reverse_shared_path {
-          base_y
+          let label_x = anchor_x - label.length() / 2
+          let base_y = adjust_label_y_for_state_boxes(
+            label_x, anchor_y, label, mapped_nodes,
+          )
+          let label_y = if has_labeled_reverse_shared_path {
+            base_y
+          } else {
+            adjust_label_y_for_state_layout(
+              label_x, base_y, label, mapped_nodes, edge_label_overlays,
+            )
+          }
+          edge_label_overlays.push(AsciiEdgeLabelPlacement::{
+            x: label_x,
+            y: label_y,
+            label,
+          })
         } else {
-          adjust_label_y_for_state_layout(
-            label_x, base_y, label, mapped_nodes, edge_label_overlays,
+          edge_label_overlays.push(
+            flow_non_state_edge_label_placement(
+              source_anchor_x,
+              source_anchor_y,
+              target_anchor_x,
+              target_anchor_y,
+              label,
+              mapped_nodes,
+              edge_label_overlays,
+            ),
           )
         }
-        edge_label_overlays.push(AsciiEdgeLabelPlacement::{
-          x: label_x,
-          y: label_y,
-          label,
-        })
-      }
       None => ()
     }
 

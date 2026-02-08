@@ -85,8 +85,25 @@ test "non-state bidirectional flow suppresses start arrowheads" {
     box_border_padding: 1,
   })
 
-  assert_true(output.contains("| Client |---->| Server |"))
+  assert_true(output.contains("| Client |sync->| Server |"))
   assert_eq(output.contains("<"), false)
+}
+
+///|
+test "non-state chained labels stay on horizontal edge runs" {
+  let graph = parse_mermaid(
+    "graph LR\nA[Client] <-->|sync| B[Server]\nB <-.->|heartbeat| C[Monitor]\nC <==>|data| D[Storage]",
+  )
+  let output = render_ascii(graph, AsciiRenderOptions::{
+    use_ascii: true,
+    padding_x: 5,
+    padding_y: 5,
+    box_border_padding: 1,
+  })
+
+  assert_true(output.contains("sync->"))
+  assert_true(output.contains("heartbeat>"))
+  assert_true(output.contains("data->"))
 }
 
 ///|
