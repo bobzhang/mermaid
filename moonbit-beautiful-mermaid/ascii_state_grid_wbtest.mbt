@@ -496,3 +496,37 @@ test "state flat layout places reverse-pair labels near source segments" {
     _ => fail("expected both reverse-pair label positions to be present")
   }
 }
+
+///|
+test "state flat layout anchors diagonal back-edge label near source side" {
+  let source = "stateDiagram-v2\n  [*] --> Closed\n  Closed --> Connecting : connect\n  Connecting --> Connected : success\n  Connecting --> Closed : timeout\n  Connected --> Disconnecting : close\n  Connected --> Reconnecting : error\n  Reconnecting --> Connected : success\n  Reconnecting --> Closed : max_retries\n  Disconnecting --> Closed : done\n  Closed --> [*]"
+  let graph = parse_mermaid(source)
+  let positioned = layout_flat_state_graph_for_ascii_grid(
+    graph,
+    RenderOptions::default(),
+  )
+
+  let mut error_label : Point? = None
+  let mut max_retries_label : Point? = None
+  for edge in positioned.edges {
+    if edge.source == "Connected" && edge.target == "Reconnecting" &&
+      edge.label == Some("error") {
+      error_label = edge.label_position
+    }
+    if edge.source == "Reconnecting" && edge.target == "Closed" &&
+      edge.label == Some("max_retries") {
+      max_retries_label = edge.label_position
+    }
+  }
+
+  match (error_label, max_retries_label) {
+    (Some(error_position), Some(max_retries_position)) => {
+      assert_eq(max_retries_position.x > error_position.x, true)
+      assert_eq(max_retries_position.y > error_position.y, true)
+    }
+    _ =>
+      fail(
+        "expected both error and max_retries label positions to be present",
+      )
+  }
+}

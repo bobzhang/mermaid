@@ -537,6 +537,19 @@ fn layout_state_has_labeled_reverse_edge(
 }
 
 ///|
+fn layout_state_is_back_edge(
+  positions : Map[String, LayoutStateGridCoord],
+  source_id : String,
+  target_id : String,
+) -> Bool {
+  match (positions.get(source_id), positions.get(target_id)) {
+    (Some(source), Some(target)) =>
+      source.y > target.y && source.x != target.x
+    _ => false
+  }
+}
+
+///|
 fn layout_state_empty_positioned_graph() -> PositionedGraph {
   PositionedGraph::{
     width: 0,
@@ -665,6 +678,11 @@ fn layout_flat_state_graph_for_ascii_grid(
           Some(_) =>
             if layout_state_has_labeled_reverse_edge(
                 graph,
+                edge.source,
+                edge.target,
+              ) ||
+              layout_state_is_back_edge(
+                grid_positions,
                 edge.source,
                 edge.target,
               ) {
