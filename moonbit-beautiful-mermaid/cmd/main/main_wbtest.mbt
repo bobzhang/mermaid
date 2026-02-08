@@ -31,3 +31,10 @@ test "ascii_spacing_requires_text_mode only errors in svg mode with overrides" {
   assert_eq(ascii_spacing_requires_text_mode(false, 8, 5, 1), true)
   assert_eq(ascii_spacing_requires_text_mode(true, 8, 5, 1), false)
 }
+
+///|
+test "text_mode_override maps ascii and unicode flags" {
+  assert_eq(text_mode_override("--ascii"), Some(true))
+  assert_eq(text_mode_override("--unicode"), Some(false))
+  assert_eq(text_mode_override("--theme"), None)
+}

@@ -95,6 +95,17 @@ fn ascii_spacing_requires_text_mode(
 }
 
 ///|
+fn text_mode_override(arg : String) -> Bool? {
+  if arg == "--ascii" {
+    Some(true)
+  } else if arg == "--unicode" {
+    Some(false)
+  } else {
+    None
+  }
+}
+
+///|
 fn main {
   let args = cli_args_without_program()
   let mut render_text = false
@@ -351,15 +362,13 @@ fn main {
       println(available)
       return
     }
-    if arg == "--ascii" {
-      render_text = true
-      use_ascii_chars = true
-      continue
-    }
-    if arg == "--unicode" {
-      render_text = true
-      use_ascii_chars = false
-      continue
+    match text_mode_override(arg) {
+      Some(ascii_mode) => {
+        render_text = true
+        use_ascii_chars = ascii_mode
+        continue
+      }
+      None => ()
     }
     if arg == "--ascii-padding-x" {
       expect_ascii_padding_x_value = true
