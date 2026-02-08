@@ -683,6 +683,15 @@ fn main {
     print_usage()
     return
   }
+  if !render_text &&
+    (ascii_padding_x != 5 || ascii_padding_y != 5 ||
+    ascii_box_border_padding != 1) {
+    println(
+      "Error: ASCII spacing flags require --ascii or --unicode text output mode",
+    )
+    print_usage()
+    return
+  }
 
   let input = match diagram {
     Some(found) => found
