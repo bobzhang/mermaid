@@ -42,6 +42,13 @@ test "text_mode_override maps ascii and unicode flags" {
 }
 
 ///|
+test "available_theme_list includes representative built-in slugs" {
+  let available = available_theme_list()
+  assert_true(available.contains("tokyo-night"))
+  assert_true(available.contains("github-dark"))
+}
+
+///|
 test "svg_options_overridden tracks svg-only flags and spacing options" {
   assert_eq(
     svg_options_overridden(
