@@ -88,6 +88,19 @@ test {
 }
 ```
 
+Or render in one call:
+
+```mbt check
+test {
+  let svg = try! render_mermaid_with_theme_name(
+    "graph TD\nA --> B",
+    "github-dark",
+  )
+  assert_true(svg.contains("--bg:#0d1117"))
+  assert_true(svg.contains("--accent:#4493f8"))
+}
+```
+
 ## CLI
 
 Run the local CLI entrypoint from the module root:
