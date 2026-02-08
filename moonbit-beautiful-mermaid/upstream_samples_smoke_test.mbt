@@ -110,6 +110,9 @@ test "Render smoke for upstream samples-data corpus" {
     if !svg.has_prefix("<svg ") || !svg.has_suffix("</svg>") {
       fail("invalid svg envelope for sample: \{sample.title}")
     }
+    if sample.transparent {
+      assert_true(!svg.contains("background:var(--bg)"))
+    }
 
     let ascii = try! @beautiful_mermaid.render_mermaid_ascii(
       sample.source,
