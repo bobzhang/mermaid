@@ -333,7 +333,16 @@ fn normalize_theme_name_input(name : String) -> String {
   while collapsed.contains("--") {
     collapsed = collapsed.replace_all(old="--", new="-")
   }
-  collapsed
+
+  let mut trimmed = collapsed
+  while trimmed.has_prefix("-") && trimmed.length() > 0 {
+    trimmed = (try! trimmed[1:]).to_string()
+  }
+  while trimmed.has_suffix("-") && trimmed.length() > 0 {
+    trimmed = (try! trimmed[:trimmed.length() - 1]).to_string()
+  }
+
+  trimmed
 }
 
 ///|

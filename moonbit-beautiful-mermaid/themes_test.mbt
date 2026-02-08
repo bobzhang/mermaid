@@ -51,10 +51,16 @@ test "Theme parser is case-insensitive and unknown-safe" {
   assert_eq(normalize_theme_name("  TOKYO___NIGHT  "), "tokyo-night")
   assert_eq(normalize_theme_name("github\n dark"), "github-dark")
   assert_eq(normalize_theme_name("DEFAULT"), "default")
+  assert_eq(normalize_theme_name("__github_dark__"), "github-dark")
+  assert_eq(normalize_theme_name("---tokyo-night---"), "tokyo-night")
 
   match parse_theme_name("TOKYO-NIGHT") {
     Some(parsed) => assert_eq(theme_slug(parsed), "tokyo-night")
     None => fail("TOKYO-NIGHT should parse")
+  }
+  match parse_theme_name("__github_dark__") {
+    Some(parsed) => assert_eq(theme_slug(parsed), "github-dark")
+    None => fail("__github_dark__ should parse")
   }
   match parse_theme_name("DEFAULT") {
     Some(parsed) => assert_eq(theme_slug(parsed), "zinc-light")
@@ -113,6 +119,7 @@ test "theme_exists reflects whether a theme name is supported" {
 test "canonical_theme_slug returns normalized slug or none" {
   assert_eq(canonical_theme_slug("TOKYO   NIGHT"), Some("tokyo-night"))
   assert_eq(canonical_theme_slug("DEFAULT"), Some("zinc-light"))
+  assert_eq(canonical_theme_slug("__github_dark__"), Some("github-dark"))
   assert_eq(canonical_theme_slug("github__dark"), Some("github-dark"))
   assert_eq(canonical_theme_slug("tokyo\t night"), Some("tokyo-night"))
   assert_eq(canonical_theme_slug("github\n dark"), Some("github-dark"))
