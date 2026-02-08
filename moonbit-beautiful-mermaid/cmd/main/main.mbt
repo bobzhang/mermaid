@@ -89,10 +89,7 @@ fn main {
           try? @beautiful_mermaid.render_mermaid_with_colors(input, colors)
         None => {
           println("Unknown theme: \{slug}")
-          let names = @beautiful_mermaid.built_in_themes().map(
-            @beautiful_mermaid.theme_slug,
-          )
-          let available = names.join(", ")
+          let available = @beautiful_mermaid.built_in_theme_slugs().join(", ")
           println("Available themes: \{available}")
           return
         }
