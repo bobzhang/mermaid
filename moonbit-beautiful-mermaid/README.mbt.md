@@ -101,6 +101,19 @@ test {
 }
 ```
 
+Typed variant via parsed enum:
+
+```mbt check
+test {
+  let theme = match parse_theme_name("tokyo-night") {
+    Some(found) => found
+    None => fail("missing theme")
+  }
+  let svg = try! render_mermaid_with_theme("graph TD\nA --> B", theme)
+  assert_true(svg.contains("--bg:#1a1b26"))
+}
+```
+
 ## CLI
 
 Run the local CLI entrypoint from the module root:
