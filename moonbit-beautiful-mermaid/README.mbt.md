@@ -158,5 +158,6 @@ Run the local CLI entrypoint from the module root:
 - `moon run cmd/main -- --surface "#0b1220" "graph TD\nA --> B"`
 - `moon run cmd/main -- --border "#334155" "graph TD\nA --> B"`
 - `moon run cmd/main -- --padding 20 "graph TD\nA --> B"`
+- `moon run cmd/main -- --node-spacing 80 "graph TD\nA --> B --> C"`
 - `moon run cmd/main -- --transparent "graph TD\nA --> B"`
 - `moon run cmd/main -- --list-themes`
