@@ -1726,6 +1726,7 @@ fn render_ascii_flow_subgraphs(
   let state_flat_layout_mode = state_layout_mode &&
     graph.subgraphs.length() == 0
   let state_composite_layout_mode = state_layout_mode && !state_flat_layout_mode
+  let flow_direction_horizontal = graph.direction is (Direction::LR | Direction::RL)
   let scale_x = if state_layout_mode { 9 } else { flow_scale_x() }
   let scale_y = if state_layout_mode { 10 } else { flow_scale_y() }
   let state_column_width_by_x : Map[Int, Int] = {}
@@ -1749,7 +1750,14 @@ fn render_ascii_flow_subgraphs(
     let (min_width, min_height) = if state_layout_mode {
       (option_int_or(state_column_width_by_x.get(node.x), 12), 5)
     } else {
-      ((label.length() + 4).max(5), 5)
+      (
+        if flow_direction_horizontal {
+          (label.length() + 4).max(5)
+        } else {
+          (label.length() + 4).max(11)
+        },
+        5,
+      )
     }
     let width = if state_layout_mode {
       scale_size(node.width, scale_x, min_width)
