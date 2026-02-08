@@ -130,6 +130,16 @@ test "render_mermaid_with_theme_name applies built-in theme" {
 }
 
 ///|
+test "render_mermaid_with_theme_name normalizes user theme input" {
+  let svg = try! @beautiful_mermaid.render_mermaid_with_theme_name(
+    "graph TD\nA --> B",
+    "TOKYO   NIGHT",
+  )
+  assert_true(svg.contains("--bg:#1a1b26"))
+  assert_true(svg.contains("--accent:#7aa2f7"))
+}
+
+///|
 test "render_mermaid_with_theme applies enum theme directly" {
   let theme = match @beautiful_mermaid.parse_theme_name("tokyo-night") {
     Some(found) => found
