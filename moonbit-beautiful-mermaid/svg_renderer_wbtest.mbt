@@ -162,6 +162,18 @@ test "SVG renderer includes Google Fonts import" {
 }
 
 ///|
+test "SVG renderer escapes ampersand in Google Fonts import URL" {
+  let svg = render_svg(
+    make_svg_test_graph([]),
+    DiagramColors::default(),
+    "Inter",
+    false,
+  )
+
+  assert_true(svg.contains("&amp;display=swap"))
+}
+
+///|
 test "SVG renderer URL-encodes custom font name in import URL" {
   let svg = render_svg(
     make_svg_test_graph([]),
