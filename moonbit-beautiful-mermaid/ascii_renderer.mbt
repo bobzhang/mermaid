@@ -639,12 +639,26 @@ fn map_flow_group(
   scale_y : Int,
   pad_x : Int,
   pad_y : Int,
+  state_composite_layout_mode : Bool,
 ) -> AsciiFlowGroupBox {
   let children : Array[AsciiFlowGroupBox] = []
   for child in group.children {
-    children.push(map_flow_group(child, scale_x, scale_y, pad_x, pad_y))
+    children.push(
+      map_flow_group(
+        child,
+        scale_x,
+        scale_y,
+        pad_x,
+        pad_y,
+        state_composite_layout_mode,
+      ),
+    )
   }
-  let min_width = (group.label.length() + 4).max(7)
+  let min_width = if state_composite_layout_mode {
+    (group.label.length() + 6).max(9)
+  } else {
+    (group.label.length() + 4).max(7)
+  }
   AsciiFlowGroupBox::{
     label: group.label,
     left: scale_coord(group.x, scale_x, pad_x),
@@ -812,6 +826,7 @@ fn render_ascii_flow_subgraphs(
     graph_has_shape(graph, NodeShape::StateStart) ||
     graph_has_shape(graph, NodeShape::StateEnd)
   let state_flat_layout_mode = state_layout_mode && graph.subgraphs.length() == 0
+  let state_composite_layout_mode = state_layout_mode && !state_flat_layout_mode
   let scale_x = if state_layout_mode { 9 } else { flow_scale_x() }
   let scale_y = if state_layout_mode { 10 } else { flow_scale_y() }
   let mut state_uniform_min_width : Int? = None
@@ -840,6 +855,7 @@ fn render_ascii_flow_subgraphs(
         scale_y,
         options.padding_x,
         options.padding_y,
+        state_composite_layout_mode,
       ),
     )
   }
@@ -852,7 +868,12 @@ fn render_ascii_flow_subgraphs(
         Some(uniform_width) => (uniform_width, 5)
         None =>
           match node.shape {
-            NodeShape::StateStart | NodeShape::StateEnd => (12, 5)
+            NodeShape::StateStart | NodeShape::StateEnd =>
+              if state_composite_layout_mode {
+                (14, 5)
+              } else {
+                (12, 5)
+              }
             _ => ((label.length() + 6).max(12), 5)
           }
       }
