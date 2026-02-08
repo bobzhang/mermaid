@@ -245,6 +245,91 @@ test "SVG class supports explicit dark colors" {
 }
 
 ///|
+test "SVG render options include provided enrichment CSS vars" {
+  let options = @beautiful_mermaid.RenderOptions::{
+    bg: Some("#111111"),
+    fg: Some("#eeeeee"),
+    line: Some("#123456"),
+    accent: Some("#234567"),
+    muted: Some("#345678"),
+    surface: Some("#456789"),
+    border: Some("#56789a"),
+    font: None,
+    padding: None,
+    node_spacing: None,
+    layer_spacing: None,
+    transparent: None,
+  }
+  let svg = try! @beautiful_mermaid.render_mermaid(
+    "graph TD\nA --> B",
+    options~,
+  )
+
+  assert_true(svg.contains("--bg:#111111"))
+  assert_true(svg.contains("--fg:#eeeeee"))
+  assert_true(svg.contains("--line:#123456"))
+  assert_true(svg.contains("--accent:#234567"))
+  assert_true(svg.contains("--muted:#345678"))
+  assert_true(svg.contains("--surface:#456789"))
+  assert_true(svg.contains("--border:#56789a"))
+}
+
+///|
+test "SVG render options omit enrichment CSS vars when unset" {
+  let options = @beautiful_mermaid.RenderOptions::{
+    bg: Some("#18181B"),
+    fg: Some("#FAFAFA"),
+    line: None,
+    accent: None,
+    muted: None,
+    surface: None,
+    border: None,
+    font: None,
+    padding: None,
+    node_spacing: None,
+    layer_spacing: None,
+    transparent: None,
+  }
+  let svg = try! @beautiful_mermaid.render_mermaid(
+    "graph TD\nA --> B",
+    options~,
+  )
+
+  assert_true(svg.contains("--bg:#18181B"))
+  assert_true(svg.contains("--fg:#FAFAFA"))
+  assert_true(!svg.contains("--line:"))
+  assert_true(!svg.contains("--accent:"))
+  assert_true(!svg.contains("--muted:"))
+  assert_true(!svg.contains("--surface:"))
+  assert_true(!svg.contains("--border:"))
+}
+
+///|
+test "SVG transparent render option omits root background style and rect" {
+  let options = @beautiful_mermaid.RenderOptions::{
+    bg: Some("#18181B"),
+    fg: Some("#FAFAFA"),
+    line: None,
+    accent: None,
+    muted: None,
+    surface: None,
+    border: None,
+    font: None,
+    padding: None,
+    node_spacing: None,
+    layer_spacing: None,
+    transparent: Some(true),
+  }
+  let svg = try! @beautiful_mermaid.render_mermaid(
+    "graph TD\nA --> B",
+    options~,
+  )
+
+  assert_true(!svg.contains("background:var(--bg)"))
+  assert_true(!svg.contains("<rect width=\""))
+}
+
+///|
 test "SVG sequence renders lifelines and message labels" {
   let svg = try! @beautiful_mermaid.render_mermaid(
     "sequenceDiagram\nAlice->>Bob: Hello Bob\nBob-->>Alice: Hi Alice",
