@@ -10,6 +10,8 @@ pub fn built_in_theme_slugs() -> Array[String]
 
 pub fn built_in_themes() -> Array[ThemeName]
 
+pub fn canonical_theme_slug(String) -> String?
+
 pub fn default_colors() -> DiagramColors
 
 pub fn from_shiki_theme(ShikiTheme) -> DiagramColors

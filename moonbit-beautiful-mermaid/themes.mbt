@@ -372,6 +372,14 @@ pub fn theme_exists(name : String) -> Bool {
 }
 
 ///|
+pub fn canonical_theme_slug(name : String) -> String? {
+  match parse_theme_name(name) {
+    Some(theme) => Some(theme_slug(theme))
+    None => None
+  }
+}
+
+///|
 pub fn built_in_themes() -> Array[ThemeName] {
   [
     ThemeName::ZincLight,

@@ -101,6 +101,13 @@ test "theme_exists reflects whether a theme name is supported" {
 }
 
 ///|
+test "canonical_theme_slug returns normalized slug or none" {
+  assert_eq(canonical_theme_slug("TOKYO   NIGHT"), Some("tokyo-night"))
+  assert_eq(canonical_theme_slug("github__dark"), Some("github-dark"))
+  assert_eq(canonical_theme_slug("github-neon"), None)
+}
+
+///|
 test "Built-in theme slugs are exported for CLI and config UX" {
   let slugs = built_in_theme_slugs()
   assert_true(slugs.contains("zinc-light"))
