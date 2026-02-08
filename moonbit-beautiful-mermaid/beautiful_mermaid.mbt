@@ -93,6 +93,15 @@ pub fn render_mermaid_with_colors(
 }
 
 ///|
+pub fn render_mermaid_with_theme(
+  text : String,
+  theme : ThemeName,
+  options? : RenderOptions = RenderOptions::default(),
+) -> String raise MermaidError {
+  render_mermaid_with_colors(text, theme_colors(theme), options~)
+}
+
+///|
 pub fn render_mermaid_with_theme_name(
   text : String,
   theme_name : String,
