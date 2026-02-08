@@ -1614,6 +1614,105 @@ fn apply_subgraph_direction_overrides(
 }
 
 ///|
+fn is_state_graph(graph : MermaidGraph) -> Bool {
+  for _, node in graph.nodes {
+    match node.shape {
+      NodeShape::StateStart | NodeShape::StateEnd => return true
+      _ => ()
+    }
+  }
+  false
+}
+
+///|
+fn find_positioned_group_index(
+  groups : Array[PositionedGroup],
+  group_id : String,
+) -> Int? {
+  for i, group in groups {
+    if group.id == group_id {
+      return Some(i)
+    }
+  }
+  None
+}
+
+///|
+fn shift_top_level_state_subgraphs_right(
+  graph : MermaidGraph,
+  node_spacing : Int,
+  positioned_nodes : Array[PositionedNode],
+  positioned_groups : Array[PositionedGroup],
+  positioned_index_by_id : Map[String, Int],
+  positioned_by_id : Map[String, PositionedNode],
+) -> Unit {
+  if graph.subgraphs.length() == 0 {
+    return
+  }
+
+  let member_indexes_by_root : Array[Array[Int]] = []
+  let subgraph_node_ids : Map[String, Bool] = {}
+  for subgraph in graph.subgraphs {
+    let seen_node_ids : Map[String, Bool] = {}
+    let indexes : Array[Int] = []
+    collect_subgraph_node_indexes(
+      subgraph,
+      positioned_index_by_id,
+      seen_node_ids,
+      indexes,
+    )
+    for index in indexes {
+      subgraph_node_ids[positioned_nodes[index].id] = true
+    }
+    member_indexes_by_root.push(indexes)
+  }
+
+  let outside_indexes : Array[Int] = []
+  for i, node in positioned_nodes {
+    if !subgraph_node_ids.contains(node.id) {
+      outside_indexes.push(i)
+    }
+  }
+  if outside_indexes.length() == 0 {
+    return
+  }
+
+  let (has_outside, _, _, outside_right, _) = member_indexes_bounds(
+    outside_indexes,
+    positioned_nodes,
+  )
+  if !has_outside {
+    return
+  }
+
+  let min_gap = node_spacing.max(60)
+  let mut cursor_left = outside_right + min_gap
+  for i, subgraph in graph.subgraphs {
+    let member_indexes = member_indexes_by_root[i]
+    if member_indexes.length() == 0 {
+      continue
+    }
+
+    let group_index = match find_positioned_group_index(positioned_groups, subgraph.id) {
+      Some(index) => index
+      None => continue
+    }
+    let group = positioned_groups[group_index]
+    let dx = cursor_left - group.x
+    if dx > 0 {
+      shift_member_indexes(member_indexes, dx, 0, positioned_nodes)
+      positioned_groups[group_index] = shift_positioned_group(group, dx, 0)
+      for index in member_indexes {
+        let node = positioned_nodes[index]
+        positioned_by_id[node.id] = node
+      }
+    }
+    let shifted_group = positioned_groups[group_index]
+    cursor_left = shifted_group.x + shifted_group.width + min_gap
+  }
+}
+
+///|
 fn register_group_anchors(
   group : PositionedGroup,
   positioned_by_id : Map[String, PositionedNode],
@@ -1750,6 +1849,18 @@ fn layout_graph(
       }
     }
   }
+
+  if is_state_graph(graph) {
+    shift_top_level_state_subgraphs_right(
+      graph,
+      node_spacing,
+      positioned_nodes,
+      positioned_groups,
+      positioned_index_by_id,
+      positioned_by_id,
+    )
+  }
+
   for group in positioned_groups {
     register_group_anchors(group, positioned_by_id)
   }
