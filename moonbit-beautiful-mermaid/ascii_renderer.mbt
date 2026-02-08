@@ -821,7 +821,7 @@ fn render_ascii_flow_subgraphs(
   graph : MermaidGraph,
   options : AsciiRenderOptions,
 ) -> String {
-  let positioned = layout_graph(graph, RenderOptions::default())
+  let positioned = layout_graph_for_ascii(graph, RenderOptions::default())
   let state_layout_mode =
     graph_has_shape(graph, NodeShape::StateStart) ||
     graph_has_shape(graph, NodeShape::StateEnd)

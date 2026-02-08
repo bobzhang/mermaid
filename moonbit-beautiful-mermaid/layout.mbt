@@ -1757,6 +1757,29 @@ fn layout_graph(
   graph : MermaidGraph,
   options : RenderOptions,
 ) -> PositionedGraph {
+  layout_graph_with_subgraph_redirects(graph, options, true)
+}
+
+///|
+fn layout_graph_for_ascii(
+  graph : MermaidGraph,
+  options : RenderOptions,
+) -> PositionedGraph {
+  let state_composite_ascii_mode =
+    is_state_graph(graph) && graph.subgraphs.length() > 0
+  layout_graph_with_subgraph_redirects(
+    graph,
+    options,
+    !state_composite_ascii_mode,
+  )
+}
+
+///|
+fn layout_graph_with_subgraph_redirects(
+  graph : MermaidGraph,
+  options : RenderOptions,
+  use_subgraph_redirects : Bool,
+) -> PositionedGraph {
   if is_sequence_graph(graph) {
     return layout_sequence_graph(graph, options)
   }
@@ -1771,18 +1794,22 @@ fn layout_graph(
 
   let subgraph_entry_by_id : Map[String, String] = {}
   let subgraph_exit_by_id : Map[String, String] = {}
-  for subgraph in graph.subgraphs {
-    collect_subgraph_edge_redirects(
-      subgraph, subgraph_entry_by_id, subgraph_exit_by_id,
-    )
+  if use_subgraph_redirects {
+    for subgraph in graph.subgraphs {
+      collect_subgraph_edge_redirects(
+        subgraph, subgraph_entry_by_id, subgraph_exit_by_id,
+      )
+    }
   }
   let hidden_subgraph_node_ids : Map[String, Bool] = {}
-  collect_hidden_subgraph_node_ids(
-    graph.subgraphs,
-    subgraph_entry_by_id,
-    subgraph_exit_by_id,
-    hidden_subgraph_node_ids,
-  )
+  if use_subgraph_redirects {
+    collect_hidden_subgraph_node_ids(
+      graph.subgraphs,
+      subgraph_entry_by_id,
+      subgraph_exit_by_id,
+      hidden_subgraph_node_ids,
+    )
+  }
 
   let nodes_in_order : Array[MermaidNode] = []
   for entry in graph.nodes.to_array() {
@@ -2002,13 +2029,21 @@ fn layout_graph(
   let positioned_edges : Array[PositionedEdge] = []
   let label_slots_by_anchor : Map[String, Int] = {}
   for edge in graph.edges {
-    let resolved_source_id = match subgraph_exit_by_id.get(edge.source) {
-      Some(found) => found
-      None => edge.source
+    let resolved_source_id = if use_subgraph_redirects {
+      match subgraph_exit_by_id.get(edge.source) {
+        Some(found) => found
+        None => edge.source
+      }
+    } else {
+      edge.source
     }
-    let resolved_target_id = match subgraph_entry_by_id.get(edge.target) {
-      Some(found) => found
-      None => edge.target
+    let resolved_target_id = if use_subgraph_redirects {
+      match subgraph_entry_by_id.get(edge.target) {
+        Some(found) => found
+        None => edge.target
+      }
+    } else {
+      edge.target
     }
     match
       (
