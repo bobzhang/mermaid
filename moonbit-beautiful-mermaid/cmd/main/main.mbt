@@ -61,6 +61,11 @@ fn cli_args_without_program() -> Array[String] {
 }
 
 ///|
+fn available_theme_list() -> String {
+  @beautiful_mermaid.built_in_theme_slugs_csv()
+}
+
+///|
 fn parse_non_negative_int(raw : String) -> Int? {
   let normalized = raw.trim().to_string()
   if normalized == "" {
@@ -389,8 +394,7 @@ fn main {
       return
     }
     if arg == "--list-themes" {
-      let available = @beautiful_mermaid.built_in_theme_slugs_csv()
-      println(available)
+      println(available_theme_list())
       return
     }
     match text_mode_override(arg) {
@@ -826,8 +830,7 @@ fn main {
         )
         None => {
           println("Unknown theme: \{slug}")
-          let available = @beautiful_mermaid.built_in_theme_slugs_csv()
-          println("Available themes: \{available}")
+          println("Available themes: \{available_theme_list()}")
           return
         }
       }
