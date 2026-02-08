@@ -84,3 +84,61 @@ test "Built-in theme slugs are exported for CLI and config UX" {
   assert_true(slugs.contains("one-dark"))
   assert_eq(slugs.length(), built_in_themes().length())
 }
+
+///|
+test "from_shiki_theme extracts bg and fg from editor colors" {
+  let theme = ShikiTheme::{
+    theme_type: Some("dark"),
+    colors: Some({
+      "editor.background": "#1a1b26",
+      "editor.foreground": "#a9b1d6",
+    }),
+    token_colors: None,
+  }
+  let colors = from_shiki_theme(theme)
+  assert_eq(colors.bg, "#1a1b26")
+  assert_eq(colors.fg, "#a9b1d6")
+}
+
+///|
+test "from_shiki_theme falls back for missing editor colors" {
+  let dark = from_shiki_theme(ShikiTheme::{
+    theme_type: Some("dark"),
+    colors: None,
+    token_colors: None,
+  })
+  assert_eq(dark.bg, "#1e1e1e")
+  assert_eq(dark.fg, "#d4d4d4")
+
+  let light = from_shiki_theme(ShikiTheme::{
+    theme_type: Some("light"),
+    colors: None,
+    token_colors: None,
+  })
+  assert_eq(light.bg, "#ffffff")
+  assert_eq(light.fg, "#333333")
+}
+
+///|
+test "from_shiki_theme maps token and editor colors to enrichment fields" {
+  let theme = ShikiTheme::{
+    theme_type: Some("dark"),
+    colors: Some({
+      "editor.background": "#111111",
+      "editor.foreground": "#eeeeee",
+      "editorLineNumber.foreground": "#666666",
+      "editor.selectionBackground": "#222222",
+      "editorWidget.border": "#444444",
+    }),
+    token_colors: Some([
+      ShikiTokenColor::{ scopes: ["comment"], foreground: Some("#888888") },
+      ShikiTokenColor::{ scopes: ["keyword"], foreground: Some("#ff00ff") },
+    ]),
+  }
+  let colors = from_shiki_theme(theme)
+  assert_eq(colors.line, Some("#666666"))
+  assert_eq(colors.accent, Some("#ff00ff"))
+  assert_eq(colors.muted, Some("#888888"))
+  assert_eq(colors.surface, Some("#222222"))
+  assert_eq(colors.border, Some("#444444"))
+}

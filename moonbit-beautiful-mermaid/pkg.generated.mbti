@@ -10,6 +10,8 @@ pub fn built_in_themes() -> Array[ThemeName]
 
 pub fn default_colors() -> DiagramColors
 
+pub fn from_shiki_theme(ShikiTheme) -> DiagramColors
+
 pub fn merge_options_with_colors(RenderOptions, DiagramColors) -> RenderOptions
 
 pub fn parse_mermaid(String) -> MermaidGraph raise MermaidError
@@ -367,6 +369,23 @@ pub enum SequenceParticipantKind {
 pub impl Eq for SequenceParticipantKind
 pub impl Show for SequenceParticipantKind
 pub impl ToJson for SequenceParticipantKind
+
+pub(all) struct ShikiTheme {
+  theme_type : String?
+  colors : Map[String, String]?
+  token_colors : Array[ShikiTokenColor]?
+}
+pub impl Eq for ShikiTheme
+pub impl Show for ShikiTheme
+pub impl ToJson for ShikiTheme
+
+pub(all) struct ShikiTokenColor {
+  scopes : Array[String]
+  foreground : String?
+}
+pub impl Eq for ShikiTokenColor
+pub impl Show for ShikiTokenColor
+pub impl ToJson for ShikiTokenColor
 
 pub enum ThemeName {
   ZincLight

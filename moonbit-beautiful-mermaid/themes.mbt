@@ -18,6 +18,85 @@ pub enum ThemeName {
 } derive(Eq, Show, ToJson)
 
 ///|
+pub(all) struct ShikiTokenColor {
+  scopes : Array[String]
+  foreground : String?
+} derive(Eq, Show, ToJson)
+
+///|
+pub(all) struct ShikiTheme {
+  theme_type : String?
+  colors : Map[String, String]?
+  token_colors : Array[ShikiTokenColor]?
+} derive(Eq, Show, ToJson)
+
+///|
+fn shiki_theme_color(theme : ShikiTheme, key : String) -> String? {
+  match theme.colors {
+    Some(colors) => colors.get(key)
+    None => None
+  }
+}
+
+///|
+fn shiki_token_color(theme : ShikiTheme, scope : String) -> String? {
+  match theme.token_colors {
+    Some(token_colors) => {
+      let mut found : String? = None
+      for token in token_colors {
+        if found is Some(_) {
+          continue
+        }
+        if token.scopes.contains(scope) {
+          match token.foreground {
+            Some(color) => found = Some(color)
+            None => ()
+          }
+        }
+      }
+      found
+    }
+    None => None
+  }
+}
+
+///|
+pub fn from_shiki_theme(theme : ShikiTheme) -> DiagramColors {
+  let is_dark = theme.theme_type == Some("dark")
+
+  let bg = match shiki_theme_color(theme, "editor.background") {
+    Some(color) => color
+    None => if is_dark { "#1e1e1e" } else { "#ffffff" }
+  }
+  let fg = match shiki_theme_color(theme, "editor.foreground") {
+    Some(color) => color
+    None => if is_dark { "#d4d4d4" } else { "#333333" }
+  }
+
+  let line = shiki_theme_color(theme, "editorLineNumber.foreground")
+  let accent = match shiki_theme_color(theme, "focusBorder") {
+    Some(color) => Some(color)
+    None => shiki_token_color(theme, "keyword")
+  }
+  let muted = match shiki_token_color(theme, "comment") {
+    Some(color) => Some(color)
+    None => line
+  }
+  let surface = shiki_theme_color(theme, "editor.selectionBackground")
+  let border = shiki_theme_color(theme, "editorWidget.border")
+
+  {
+    bg,
+    fg,
+    line,
+    accent,
+    muted,
+    surface,
+    border,
+  }
+}
+
+///|
 pub fn theme_colors(theme : ThemeName) -> DiagramColors {
   match theme {
     ThemeName::ZincLight =>
