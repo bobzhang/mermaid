@@ -342,7 +342,7 @@ test "SVG renderer sequence-divider class uses 0.75 stroke width" {
   )
   assert_true(
     svg.contains(
-      ".sequence-divider{stroke:var(--line);stroke-width:0.75;stroke-dasharray:6 4}",
+      ".sequence-divider{stroke:var(--_line);stroke-width:0.75;stroke-dasharray:6 4}",
     ),
   )
 }
