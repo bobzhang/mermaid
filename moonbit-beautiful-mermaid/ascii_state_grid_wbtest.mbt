@@ -105,3 +105,20 @@ test "state_grid_positions matches lifecycle sample topology" {
   assert_eq(positions.get("Reconnecting"), Some(StateGridCoord::{ x: 4, y: 16 }))
   assert_eq(positions.get("state_end_1"), Some(StateGridCoord::{ x: 4, y: 8 }))
 }
+
+///|
+test "state_grid_positions matches composite sample topology" {
+  let source = "stateDiagram-v2\n  [*] --> Idle\n  Idle --> Processing : submit\n  state Processing {\n    parse --> validate\n    validate --> execute\n  }\n  Processing --> Complete : done\n  Processing --> Error : fail\n  Error --> Idle : retry\n  Complete --> [*]"
+  let graph = parse_mermaid(source)
+  let positions = state_grid_positions(graph, state_nodes_in_definition_order(graph))
+
+  assert_eq(positions.get("state_start_1"), Some(StateGridCoord::{ x: 0, y: 0 }))
+  assert_eq(positions.get("Idle"), Some(StateGridCoord::{ x: 0, y: 4 }))
+  assert_eq(positions.get("Processing"), Some(StateGridCoord::{ x: 0, y: 8 }))
+  assert_eq(positions.get("parse"), Some(StateGridCoord::{ x: 4, y: 0 }))
+  assert_eq(positions.get("validate"), Some(StateGridCoord::{ x: 4, y: 4 }))
+  assert_eq(positions.get("execute"), Some(StateGridCoord::{ x: 4, y: 8 }))
+  assert_eq(positions.get("Complete"), Some(StateGridCoord::{ x: 0, y: 12 }))
+  assert_eq(positions.get("Error"), Some(StateGridCoord::{ x: 4, y: 12 }))
+  assert_eq(positions.get("state_end_1"), Some(StateGridCoord::{ x: 0, y: 16 }))
+}
