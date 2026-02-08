@@ -772,7 +772,7 @@ fn flow_put_line_canvas(
   }
   if cross {
     if use_ascii {
-      canvas[y][x] = "+"
+      canvas[y][x] = ch
       return
     }
 
@@ -909,11 +909,16 @@ fn map_flow_group(
   } else {
     7
   }
+  let width = if state_composite_layout_mode {
+    scale_size(group.width, scale_x, min_width)
+  } else {
+    ((group.width + scale_x / 2) / scale_x).max(min_width)
+  }
   AsciiFlowGroupBox::{
     label: group.label,
     left: scale_coord(group.x, scale_x, pad_x),
     top: scale_coord(group.y, scale_y, pad_y),
-    width: scale_size(group.width, scale_x, min_width),
+    width,
     height: scale_size(group.height, scale_y, 5),
     children,
   }
@@ -1816,6 +1821,8 @@ fn render_ascii_flow_subgraphs(
   let state_composite_layout_mode = state_layout_mode && !state_flat_layout_mode
   let flow_direction_horizontal = graph.direction
     is (Direction::LR | Direction::RL)
+  let flow_with_subgraphs = !state_layout_mode && graph.subgraphs.length() > 0
+  let flow_vertical_min_node_width = if flow_with_subgraphs { 10 } else { 11 }
   let scale_x = if state_layout_mode { 9 } else { flow_scale_x() }
   let scale_y = if state_layout_mode { 10 } else { flow_scale_y() }
   let column_width_by_x : Map[Int, Int] = {}
@@ -1828,7 +1835,7 @@ fn render_ascii_flow_subgraphs(
           _ => (label.length() + 4).max(12)
         }
       } else {
-        (label.length() + 4).max(11)
+        (label.length() + 4).max(flow_vertical_min_node_width)
       }
       let current = option_int_or(column_width_by_x.get(node.x), 0)
       if base_width > current {
@@ -1849,7 +1856,7 @@ fn render_ascii_flow_subgraphs(
         } else {
           option_int_or(
             column_width_by_x.get(node.x),
-            (label.length() + 4).max(11),
+            (label.length() + 4).max(flow_vertical_min_node_width),
           )
         },
         5,
