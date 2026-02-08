@@ -579,8 +579,9 @@ fn layout_flat_state_graph_for_ascii_grid(
   let node_spacing = resolve_node_spacing(options)
   let layer_spacing = resolve_layer_spacing(options)
   let cell_x = (node_spacing / 3).max(54)
+  let cell_x_step = cell_x + 12
   let cell_y = (layer_spacing / 4).max(25)
-  let origin_x = padding + cell_x * 2
+  let origin_x = padding + cell_x_step * 2
   let origin_y = padding + cell_y * 2
 
   let positioned_nodes : Array[PositionedNode] = []
@@ -592,7 +593,7 @@ fn layout_flat_state_graph_for_ascii_grid(
           id: node.id,
           label: node.label,
           shape: node.shape,
-          x: origin_x + (coord.x + 1) * cell_x,
+          x: origin_x + (coord.x + 1) * cell_x_step,
           y: origin_y + (coord.y + 1) * cell_y,
           width: cell_x * 2,
           height: cell_y * 2,
@@ -666,7 +667,7 @@ fn layout_flat_state_graph_for_ascii_grid(
             routed_paths_by_pair[edge_key] = layout_state_clone_grid_path(path)
             if path.length() >= 2 {
               layout_state_grid_path_to_points(
-                path, origin_x, origin_y, cell_x, cell_y,
+                path, origin_x, origin_y, cell_x_step, cell_y,
               )
             } else {
               edge_points_for(source, target, false)
