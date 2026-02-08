@@ -237,3 +237,21 @@ test "from_shiki_theme ignores token entries without foreground" {
   let colors = from_shiki_theme(theme)
   assert_eq(colors.accent, Some("#ff00ff"))
 }
+
+///|
+test "from_shiki_theme matches multi-scope token entries" {
+  let theme = shiki_theme(
+    Some("dark"),
+    Some({
+      "editor.background": "#111111",
+      "editor.foreground": "#eeeeee",
+    }),
+    Some([
+      shiki_token_color_many(["storage", "keyword"], Some("#22d3ee")),
+      shiki_token_color_many(["meta", "comment"], Some("#94a3b8")),
+    ]),
+  )
+  let colors = from_shiki_theme(theme)
+  assert_eq(colors.accent, Some("#22d3ee"))
+  assert_eq(colors.muted, Some("#94a3b8"))
+}
