@@ -4,11 +4,21 @@ package "hongbozhang/beautiful_mermaid"
 // Values
 pub fn build_colors(RenderOptions) -> DiagramColors
 
+pub fn built_in_themes() -> Array[ThemeName]
+
 pub fn parse_mermaid(String) -> MermaidGraph raise MermaidError
+
+pub fn parse_theme_name(String) -> ThemeName?
 
 pub fn render_mermaid(String, options? : RenderOptions) -> String raise MermaidError
 
 pub fn render_mermaid_ascii(String, options? : AsciiRenderOptions) -> String raise MermaidError
+
+pub fn theme_by_name(String) -> DiagramColors?
+
+pub fn theme_colors(ThemeName) -> DiagramColors
+
+pub fn theme_slug(ThemeName) -> String
 
 // Errors
 pub(all) suberror MermaidError {
@@ -344,6 +354,26 @@ pub enum SequenceParticipantKind {
 pub impl Eq for SequenceParticipantKind
 pub impl Show for SequenceParticipantKind
 pub impl ToJson for SequenceParticipantKind
+
+pub enum ThemeName {
+  ZincDark
+  TokyoNight
+  TokyoNightStorm
+  TokyoNightLight
+  CatppuccinMocha
+  CatppuccinLatte
+  Nord
+  NordLight
+  Dracula
+  GithubLight
+  GithubDark
+  SolarizedLight
+  SolarizedDark
+  OneDark
+}
+pub impl Eq for ThemeName
+pub impl Show for ThemeName
+pub impl ToJson for ThemeName
 
 // Type aliases
 
