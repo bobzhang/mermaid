@@ -967,8 +967,8 @@ fn subgraph_group_header_height() -> Int {
 }
 
 ///|
-fn subgraph_group_min_width(label : String) -> Int {
-  (label.length() * 7 + 24).max(80)
+fn subgraph_group_min_width(_label : String) -> Int {
+  80
 }
 
 ///|

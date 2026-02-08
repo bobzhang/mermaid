@@ -907,7 +907,7 @@ fn map_flow_group(
   let min_width = if state_composite_layout_mode {
     (group.label.length() + 6).max(9)
   } else {
-    (group.label.length() + 4).max(7)
+    7
   }
   AsciiFlowGroupBox::{
     label: group.label,
@@ -1083,11 +1083,17 @@ fn flow_draw_group_labels(
   canvas : Array[Array[String]],
   group : AsciiFlowGroupBox,
 ) -> Unit {
+  let label_room = (group.width - 2).max(0)
+  let label = if group.label.length() > label_room {
+    (try! group.label[:label_room]).to_string()
+  } else {
+    group.label
+  }
   let label_x = (group.left +
-  ((group.width - group.label.length()) / 2).max(1) -
+  ((group.width - label.length()) / 2).max(1) -
   1).max(group.left + 1)
   let label_y = group.top + 1
-  write_canvas_text(canvas, label_x, label_y, group.label)
+  write_canvas_text(canvas, label_x, label_y, label)
   for child in group.children {
     flow_draw_group_labels(canvas, child)
   }
