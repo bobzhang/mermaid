@@ -3732,3 +3732,63 @@ test "ASCII/Unicode parity regression: Class: Basic Class sample" {
     class_basic_class_sample_expected_unicode(),
   )
 }
+
+///|
+fn class_visibility_markers_sample_source() -> String {
+  "classDiagram\n  class User {\n    +String name\n    -String password\n    #int internalId\n    ~String packageField\n    +login() bool\n    -hashPassword() String\n    #validate() void\n    ~notify() void\n  }"
+}
+
+///|
+fn class_visibility_markers_sample_expected_ascii() -> String {
+  [
+    "+-----------------------+    ",
+    "| User                  |    ",
+    "+-----------------------+    ",
+    "| +name: String         |    ",
+    "| -password: String     |    ",
+    "| #internalId: int      |    ",
+    "| ~packageField: String |    ",
+    "+-----------------------+    ",
+    "| +login: bool          |    ",
+    "| -hashPassword: String |    ",
+    "| #validate: void       |    ",
+    "| ~notify: void         |    ",
+    "+-----------------------+    ",
+    "                             ",
+    "                             ",
+  ]
+  .iter()
+  .join("\n")
+}
+
+///|
+fn class_visibility_markers_sample_expected_unicode() -> String {
+  [
+    "┌───────────────────────┐    ",
+    "│ User                  │    ",
+    "├───────────────────────┤    ",
+    "│ +name: String         │    ",
+    "│ -password: String     │    ",
+    "│ #internalId: int      │    ",
+    "│ ~packageField: String │    ",
+    "├───────────────────────┤    ",
+    "│ +login: bool          │    ",
+    "│ -hashPassword: String │    ",
+    "│ #validate: void       │    ",
+    "│ ~notify: void         │    ",
+    "└───────────────────────┘    ",
+    "                             ",
+    "                             ",
+  ]
+  .iter()
+  .join("\n")
+}
+
+///|
+test "ASCII/Unicode parity regression: Class: Visibility Markers sample" {
+  assert_text_parity(
+    class_visibility_markers_sample_source(),
+    class_visibility_markers_sample_expected_ascii(),
+    class_visibility_markers_sample_expected_unicode(),
+  )
+}
