@@ -305,6 +305,16 @@ test "SVG renders asymmetric flag shape" {
 }
 
 ///|
+test "SVG renders trapezoid variants" {
+  let svg = try! @beautiful_mermaid.render_mermaid(
+    "graph TD\nA[/Wider Bottom\\\\] --> B[\\\\Wider Top/]",
+  )
+  assert_true(svg.contains("Wider Bottom"))
+  assert_true(svg.contains("Wider Top"))
+  assert_true(svg.contains("<polygon"))
+}
+
+///|
 test "ASCII and Unicode modes differ" {
   let ascii_options = @beautiful_mermaid.AsciiRenderOptions::{
     use_ascii: true,
