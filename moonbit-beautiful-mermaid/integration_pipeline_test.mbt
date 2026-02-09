@@ -236,6 +236,21 @@ test "SVG renders complex CI pipeline diagram" {
 }
 
 ///|
+test "SVG renders original flowchart shape set" {
+  let svg = try! @beautiful_mermaid.render_mermaid(
+    "graph TD\nA[Rectangle] --> B(Rounded)\nB --> C{Diamond}\nC --> D([Stadium])\nD --> E((Circle))",
+  )
+
+  assert_true(svg.contains(">Rectangle</text>"))
+  assert_true(svg.contains(">Rounded</text>"))
+  assert_true(svg.contains(">Diamond</text>"))
+  assert_true(svg.contains(">Stadium</text>"))
+  assert_true(svg.contains(">Circle</text>"))
+  assert_true(svg.contains("<polygon"))
+  assert_true(svg.contains("<circle"))
+}
+
+///|
 test "ASCII and Unicode modes differ" {
   let ascii_options = @beautiful_mermaid.AsciiRenderOptions::{
     use_ascii: true,
