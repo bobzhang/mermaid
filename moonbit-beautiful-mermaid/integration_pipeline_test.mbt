@@ -393,6 +393,34 @@ test "SVG bidirectional edges include start and end arrowheads" {
 }
 
 ///|
+test "Flowchart bidirectional edges render across text and SVG modes" {
+  let input = "graph TD\nA[North] <--> B[South]"
+
+  let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
+    use_ascii: true,
+    padding_x: 5,
+    padding_y: 5,
+    box_border_padding: 1,
+  })
+  let unicode = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
+    use_ascii: false,
+    padding_x: 5,
+    padding_y: 5,
+    box_border_padding: 1,
+  })
+  let svg = try! @beautiful_mermaid.render_mermaid(input)
+
+  assert_true(ascii.contains("North"))
+  assert_true(ascii.contains("South"))
+  assert_true(unicode.contains("North"))
+  assert_true(unicode.contains("South"))
+  assert_true(svg.contains(">North</text>"))
+  assert_true(svg.contains(">South</text>"))
+  assert_true(svg.contains("marker-end=\"url(#arrowhead)\""))
+  assert_true(svg.contains("marker-start=\"url(#arrowhead-start)\""))
+}
+
+///|
 test "SVG parallel ampersand links emit one edge per source" {
   let svg = try! @beautiful_mermaid.render_mermaid("graph TD\nA & B --> C")
 
