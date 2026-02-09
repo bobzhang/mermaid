@@ -413,6 +413,168 @@ fn flow_non_state_route_points(
 }
 
 ///|
+fn flow_non_state_route_hits_blocked_cells(
+  points : Array[Point],
+  blocked : Map[String, Bool],
+) -> Bool {
+  if points.length() < 2 {
+    return false
+  }
+
+  for i in 1..<points.length() {
+    let start = points[i - 1]
+    let ending = points[i]
+    if start.x == ending.x {
+      let low = start.y.min(ending.y)
+      let high = start.y.max(ending.y)
+      for y in low..<=high {
+        if y == start.y || y == ending.y {
+          continue
+        }
+        if blocked.contains(ascii_grid_key(AsciiGridCoord::{ x: start.x, y })) {
+          return true
+        }
+      }
+    } else if start.y == ending.y {
+      let low = start.x.min(ending.x)
+      let high = start.x.max(ending.x)
+      for x in low..<=high {
+        if x == start.x || x == ending.x {
+          continue
+        }
+        if blocked.contains(ascii_grid_key(AsciiGridCoord::{ x, y: start.y })) {
+          return true
+        }
+      }
+    }
+  }
+  false
+}
+
+///|
+fn flow_compact_route_points(points : Array[Point]) -> Array[Point] {
+  if points.length() <= 1 {
+    return points
+  }
+  let compacted : Array[Point] = [points[0]]
+  for i in 1..<points.length() {
+    let current = points[i]
+    let previous = compacted[compacted.length() - 1]
+    if current.x != previous.x || current.y != previous.y {
+      compacted.push(current)
+    }
+  }
+  compacted
+}
+
+///|
+fn flow_non_state_route_points_with_pathfinder(
+  source_x : Int,
+  source_y : Int,
+  target_x : Int,
+  target_y : Int,
+  horizontal_first : Bool,
+  blocked : Map[String, Bool],
+  canvas_width : Int,
+  canvas_height : Int,
+) -> Array[Point] {
+  let fallback = flow_non_state_route_points(
+    source_x,
+    source_y,
+    target_x,
+    target_y,
+    horizontal_first,
+  )
+  if canvas_width <= 0 || canvas_height <= 0 {
+    return fallback
+  }
+
+  let start = AsciiGridCoord::{ x: source_x, y: source_y }
+  let ending = AsciiGridCoord::{ x: target_x, y: target_y }
+  match ascii_grid_pathfind(
+    start,
+    ending,
+    blocked,
+    0,
+    canvas_width - 1,
+    0,
+    canvas_height - 1,
+  ) {
+    Some(path) => {
+      if path.length() < 2 {
+        return fallback
+      }
+      let merged_path = ascii_grid_merge_path(path)
+      if merged_path.length() < 2 {
+        return fallback
+      }
+      let route : Array[Point] = []
+      for coord in merged_path {
+        route.push(Point::{ x: coord.x, y: coord.y })
+      }
+      route
+    }
+    None => fallback
+  }
+}
+
+///|
+fn flow_non_state_shared_back_edge_route_points(
+  source_id : String,
+  target_id : String,
+  source_anchor_x : Int,
+  source_anchor_y : Int,
+  source_box_height : Int,
+  target_anchor_x : Int,
+  target_anchor_y : Int,
+  source_out_degree : Int,
+  edges : Array[MermaidEdge],
+  node_box_by_id : Map[String, AsciiFlowNodeBox],
+) -> Array[Point]? {
+  if source_out_degree < 2 {
+    return None
+  }
+
+  let mut shared_anchor_x = -1
+  for sibling in edges {
+    if sibling.source != source_id || sibling.target == target_id {
+      continue
+    }
+    match node_box_by_id.get(sibling.target) {
+      Some(sibling_box) => {
+        let sibling_anchor_x = sibling_box.left + sibling_box.width + 2
+        let sibling_anchor_y = sibling_box.top + sibling_box.height / 2
+        if sibling_anchor_y == source_anchor_y &&
+          sibling_anchor_x < source_anchor_x &&
+          sibling_anchor_x > shared_anchor_x {
+          shared_anchor_x = sibling_anchor_x
+        }
+      }
+      None => ()
+    }
+  }
+  if shared_anchor_x <= target_anchor_x + 1 {
+    return None
+  }
+
+  let target_entry_x = target_anchor_x + 3
+  let detour_y = source_anchor_y + source_box_height.max(5)
+  let route = flow_compact_route_points([
+    Point::{ x: source_anchor_x, y: source_anchor_y },
+    Point::{ x: shared_anchor_x, y: source_anchor_y },
+    Point::{ x: shared_anchor_x, y: detour_y },
+    Point::{ x: target_entry_x, y: detour_y },
+    Point::{ x: target_entry_x, y: target_anchor_y },
+    Point::{ x: target_anchor_x, y: target_anchor_y },
+  ])
+  if route.length() >= 2 {
+    Some(route)
+  } else {
+    None
+  }
+}
+
+///|
 fn flow_non_state_edge_span(start : Point, ending : Point) -> Int {
   (ending.x - start.x).abs() + (ending.y - start.y).abs()
 }
@@ -959,6 +1121,28 @@ fn flow_draw_segment(
 }
 
 ///|
+fn flow_mark_ascii_route_bends(
+  canvas : Array[Array[String]],
+  route_points : Array[Point],
+) -> Unit {
+  if route_points.length() < 3 {
+    return
+  }
+  for i in 1..<(route_points.length() - 1) {
+    let previous = route_points[i - 1]
+    let current = route_points[i]
+    let next = route_points[i + 1]
+    let prev_dx = unit_step(current.x - previous.x)
+    let prev_dy = unit_step(current.y - previous.y)
+    let next_dx = unit_step(next.x - current.x)
+    let next_dy = unit_step(next.y - current.y)
+    if prev_dx != next_dx || prev_dy != next_dy {
+      put_canvas(canvas, current.x, current.y, "+")
+    }
+  }
+}
+
+///|
 fn flow_mark_blocked_cells_for_nodes(
   blocked : Map[String, Bool],
   nodes : Array[AsciiFlowNodeBox],
@@ -1271,13 +1455,14 @@ fn flow_expand_group_side_padding_for_nodes(
       right = desired_right
     }
   }
+  let extra_bottom_padding = if adjusted_children.length() > 0 { 1 } else { 0 }
 
   AsciiFlowGroupBox::{
     label: group.label,
     left,
     top: group.top,
     width: right - left + 1,
-    height: group.height,
+    height: group.height + extra_bottom_padding,
     children: adjusted_children,
   }
 }
@@ -2297,9 +2482,11 @@ fn render_ascii_flow_subgraphs(
   let border_overlays : Array[AsciiArrowPlacement] = []
   let edge_label_overlays : Array[AsciiEdgeLabelPlacement] = []
   let blocked_cells : Map[String, Bool] = {}
-  if state_flat_layout_mode {
+  if state_flat_layout_mode || !state_layout_mode {
     flow_mark_blocked_cells_for_nodes(blocked_cells, mapped_nodes)
   }
+  let canvas_height = canvas.length()
+  let canvas_width = if canvas_height == 0 { 0 } else { canvas[0].length() }
   let non_state_out_degree_by_source : Map[String, Int] = {}
   if !state_layout_mode {
     for edge in graph.edges {
@@ -2453,13 +2640,52 @@ fn render_ascii_flow_subgraphs(
             source_anchor_y = sy
             target_anchor_x = tx
             target_anchor_y = ty
-            flow_non_state_route_points(
+            let fallback_route_points = flow_non_state_route_points(
               source_anchor_x,
               source_anchor_y,
               target_anchor_x,
               target_anchor_y,
               horizontal_first,
             )
+            let shared_back_route = if center_dx < 0 &&
+              center_dy.abs() <= source_box.height &&
+              edge.label is None {
+              flow_non_state_shared_back_edge_route_points(
+                edge.source,
+                edge.target,
+                source_anchor_x,
+                source_anchor_y,
+                source_box.height,
+                target_anchor_x,
+                target_anchor_y,
+                source_out_degree,
+                graph.edges,
+                node_box_by_id,
+              )
+            } else {
+              None
+            }
+            match shared_back_route {
+              Some(route_points) => route_points
+              None =>
+                if flow_non_state_route_hits_blocked_cells(
+                  fallback_route_points,
+                  blocked_cells,
+                ) {
+                  flow_non_state_route_points_with_pathfinder(
+                    source_anchor_x,
+                    source_anchor_y,
+                    target_anchor_x,
+                    target_anchor_y,
+                    horizontal_first,
+                    blocked_cells,
+                    canvas_width,
+                    canvas_height,
+                  )
+                } else {
+                  fallback_route_points
+                }
+            }
           }
           non_state_route_points = route_points
           for i in 1..<non_state_route_points.length() {
@@ -2467,9 +2693,8 @@ fn render_ascii_flow_subgraphs(
             let to = non_state_route_points[i]
             flow_draw_segment(canvas, from.x, from.y, to.x, to.y, h_char, v_char)
           }
-          if options.use_ascii && non_state_route_points.length() == 3 {
-            let bend = non_state_route_points[1]
-            put_canvas(canvas, bend.x, bend.y, "+")
+          if options.use_ascii {
+            flow_mark_ascii_route_bends(canvas, non_state_route_points)
           }
           let first_point = non_state_route_points[0]
           let next_point = non_state_route_points[1]
