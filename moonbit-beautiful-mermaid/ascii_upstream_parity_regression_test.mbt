@@ -1373,6 +1373,97 @@ fn all_edge_styles_expected_unicode() -> String {
 }
 
 ///|
+fn no_arrow_edges_source() -> String {
+  "graph TD\n  A[Node 1] ---|related| B[Node 2]\n  B -.- C[Node 3]\n  C === D[Node 4]"
+}
+
+///|
+fn no_arrow_edges_expected_ascii() -> String {
+  [
+    "+---------+",
+    "|         |",
+    "|  Node 1 |",
+    "|         |",
+    "+---------+",
+    "     |",
+    "     |",
+    "  related",
+    "     |",
+    "     v",
+    "+---------+",
+    "|         |",
+    "|  Node 2 |",
+    "|         |",
+    "+---------+",
+    "     |",
+    "     |",
+    "     |",
+    "     |",
+    "     v",
+    "+---------+",
+    "|         |",
+    "|  Node 3 |",
+    "|         |",
+    "+---------+",
+    "     |",
+    "     |",
+    "     |",
+    "     |",
+    "     v",
+    "+---------+",
+    "|         |",
+    "|  Node 4 |",
+    "|         |",
+    "+---------+",
+  ]
+  .iter()
+  .join("\n")
+}
+
+///|
+fn no_arrow_edges_expected_unicode() -> String {
+  [
+    "┌─────────┐",
+    "│         │",
+    "│  Node 1 │",
+    "│         │",
+    "└────┬────┘",
+    "     │",
+    "     │",
+    "  related",
+    "     │",
+    "     ▼",
+    "┌─────────┐",
+    "│         │",
+    "│  Node 2 │",
+    "│         │",
+    "└────┬────┘",
+    "     │",
+    "     │",
+    "     │",
+    "     │",
+    "     ▼",
+    "┌─────────┐",
+    "│         │",
+    "│  Node 3 │",
+    "│         │",
+    "└────┬────┘",
+    "     │",
+    "     │",
+    "     │",
+    "     │",
+    "     ▼",
+    "┌─────────┐",
+    "│         │",
+    "│  Node 4 │",
+    "│         │",
+    "└─────────┘",
+  ]
+  .iter()
+  .join("\n")
+}
+
+///|
 test "ASCII/Unicode parity regression: Beautiful Mermaid sample" {
   assert_text_parity(
     beautiful_mermaid_source(),
@@ -1540,5 +1631,14 @@ test "ASCII/Unicode parity regression: All Edge Styles sample" {
     all_edge_styles_source(),
     all_edge_styles_expected_ascii(),
     all_edge_styles_expected_unicode(),
+  )
+}
+
+///|
+test "ASCII/Unicode parity regression: No-Arrow Edges sample" {
+  assert_text_parity(
+    no_arrow_edges_source(),
+    no_arrow_edges_expected_ascii(),
+    no_arrow_edges_expected_unicode(),
   )
 }
