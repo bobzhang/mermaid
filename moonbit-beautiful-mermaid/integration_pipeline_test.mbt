@@ -1321,6 +1321,41 @@ test "Class enum annotation renders across text and SVG modes" {
 }
 
 ///|
+test "Class visibility members render across text and SVG modes" {
+  let input = "classDiagram\nclass User {\n+int id\n-string secret\n#string name\n+login() bool\n}"
+
+  let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
+    use_ascii: true,
+    padding_x: 5,
+    padding_y: 5,
+    box_border_padding: 1,
+  })
+  let unicode = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
+    use_ascii: false,
+    padding_x: 5,
+    padding_y: 5,
+    box_border_padding: 1,
+  })
+  let svg = try! @beautiful_mermaid.render_mermaid(input)
+
+  assert_true(ascii.contains("User"))
+  assert_true(ascii.contains("id"))
+  assert_true(ascii.contains("secret"))
+  assert_true(ascii.contains("name"))
+  assert_true(ascii.contains("login"))
+  assert_true(unicode.contains("User"))
+  assert_true(unicode.contains("id"))
+  assert_true(unicode.contains("secret"))
+  assert_true(unicode.contains("name"))
+  assert_true(unicode.contains("login"))
+  assert_true(svg.contains(">User</text>"))
+  assert_true(svg.contains("id"))
+  assert_true(svg.contains("secret"))
+  assert_true(svg.contains("name"))
+  assert_true(svg.contains("login"))
+}
+
+///|
 test "Class relationship set renders across text and SVG modes" {
   let input = "classDiagram\nA <|-- B : inh\nC *-- D : own\nE o-- F : has\nG --> H : use\nI ..> J : dep\nK ..|> L : imp"
 
