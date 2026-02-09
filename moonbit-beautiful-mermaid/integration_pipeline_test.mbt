@@ -1383,6 +1383,38 @@ test "Class inheritance labels render across text and SVG modes" {
 }
 
 ///|
+test "Class abstract annotation renders across text and SVG modes" {
+  let input = "classDiagram\nclass Service {\n<<abstract>>\n+run() void\n}\nclass Worker {\n+run() void\n}\nService <|-- Worker"
+
+  let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
+    use_ascii: true,
+    padding_x: 5,
+    padding_y: 5,
+    box_border_padding: 1,
+  })
+  let unicode = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
+    use_ascii: false,
+    padding_x: 5,
+    padding_y: 5,
+    box_border_padding: 1,
+  })
+  let svg = try! @beautiful_mermaid.render_mermaid(input)
+
+  assert_true(ascii.contains("Service"))
+  assert_true(ascii.contains("Worker"))
+  assert_true(ascii.contains("abstract"))
+  assert_true(ascii.contains("run"))
+  assert_true(unicode.contains("Service"))
+  assert_true(unicode.contains("Worker"))
+  assert_true(unicode.contains("abstract"))
+  assert_true(unicode.contains("run"))
+  assert_true(svg.contains(">Service</text>"))
+  assert_true(svg.contains(">Worker</text>"))
+  assert_true(svg.contains("&lt;&lt;abstract&gt;&gt;"))
+  assert_true(svg.contains("marker-start=\"url(#class-inherit)\""))
+}
+
+///|
 test "Class interface realization renders across text and SVG modes" {
   let input = "classDiagram\nclass Flyable {\n<<interface>>\n+fly() void\n}\nclass Bird {\n+fly() void\n}\nBird ..|> Flyable : implements"
 
