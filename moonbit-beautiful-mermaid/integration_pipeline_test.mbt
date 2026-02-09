@@ -74,6 +74,55 @@ test "Pipeline dimensions honor direction" {
 }
 
 ///|
+test "SVG dimensions expand with padding option" {
+  let small_options = @beautiful_mermaid.RenderOptions::{
+    bg: None,
+    fg: None,
+    line: None,
+    accent: None,
+    muted: None,
+    surface: None,
+    border: None,
+    font: None,
+    padding: Some(10),
+    node_spacing: None,
+    layer_spacing: None,
+    transparent: None,
+  }
+  let large_options = @beautiful_mermaid.RenderOptions::{
+    bg: None,
+    fg: None,
+    line: None,
+    accent: None,
+    muted: None,
+    surface: None,
+    border: None,
+    font: None,
+    padding: Some(80),
+    node_spacing: None,
+    layer_spacing: None,
+    transparent: None,
+  }
+
+  let small_svg = try! @beautiful_mermaid.render_mermaid(
+    "graph TD\nA --> B",
+    options=small_options,
+  )
+  let large_svg = try! @beautiful_mermaid.render_mermaid(
+    "graph TD\nA --> B",
+    options=large_options,
+  )
+
+  let small_width = option_or_zero(@test_support.svg_attr_int(small_svg, "width"))
+  let large_width = option_or_zero(@test_support.svg_attr_int(large_svg, "width"))
+  let small_height = option_or_zero(@test_support.svg_attr_int(small_svg, "height"))
+  let large_height = option_or_zero(@test_support.svg_attr_int(large_svg, "height"))
+
+  assert_true(large_width > small_width)
+  assert_true(large_height > small_height)
+}
+
+///|
 test "ASCII and Unicode modes differ" {
   let ascii_options = @beautiful_mermaid.AsciiRenderOptions::{
     use_ascii: true,
