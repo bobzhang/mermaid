@@ -1801,6 +1801,77 @@ fn class_shorthand_expected_unicode() -> String {
 }
 
 ///|
+fn inline_style_overrides_source() -> String {
+  "graph TD\n  A[Default] --> B[Custom Colors] --> C[Another Custom]\n  style B fill:#3b82f6,stroke:#1d4ed8,color:#ffffff\n  style C fill:#10b981,stroke:#059669"
+}
+
+///|
+fn inline_style_overrides_expected_ascii() -> String {
+  [
+    "+----------------+",
+    "|                |",
+    "|    Default     |",
+    "|                |",
+    "+----------------+",
+    "         |        ",
+    "         |        ",
+    "         |        ",
+    "         |        ",
+    "         v        ",
+    "+----------------+",
+    "|                |",
+    "| Custom Colors  |",
+    "|                |",
+    "+----------------+",
+    "         |        ",
+    "         |        ",
+    "         |        ",
+    "         |        ",
+    "         v        ",
+    "+----------------+",
+    "|                |",
+    "| Another Custom |",
+    "|                |",
+    "+----------------+",
+  ]
+  .iter()
+  .join("\n")
+}
+
+///|
+fn inline_style_overrides_expected_unicode() -> String {
+  [
+    "┌────────────────┐",
+    "│                │",
+    "│    Default     │",
+    "│                │",
+    "└────────┬───────┘",
+    "         │        ",
+    "         │        ",
+    "         │        ",
+    "         │        ",
+    "         ▼        ",
+    "┌────────────────┐",
+    "│                │",
+    "│ Custom Colors  │",
+    "│                │",
+    "└────────┬───────┘",
+    "         │        ",
+    "         │        ",
+    "         │        ",
+    "         │        ",
+    "         ▼        ",
+    "┌────────────────┐",
+    "│                │",
+    "│ Another Custom │",
+    "│                │",
+    "└────────────────┘",
+  ]
+  .iter()
+  .join("\n")
+}
+
+///|
 test "ASCII/Unicode parity regression: Beautiful Mermaid sample" {
   assert_text_parity(
     beautiful_mermaid_source(),
@@ -2040,5 +2111,14 @@ test "ASCII/Unicode parity regression: ::: Class Shorthand sample" {
     class_shorthand_source(),
     class_shorthand_expected_ascii(),
     class_shorthand_expected_unicode(),
+  )
+}
+
+///|
+test "ASCII/Unicode parity regression: Inline Style Overrides sample" {
+  assert_text_parity(
+    inline_style_overrides_source(),
+    inline_style_overrides_expected_ascii(),
+    inline_style_overrides_expected_unicode(),
   )
 }
