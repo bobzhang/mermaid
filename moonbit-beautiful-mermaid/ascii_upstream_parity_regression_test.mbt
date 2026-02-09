@@ -5049,3 +5049,44 @@ test "ASCII/Unicode parity regression: ER: Zero-or-One to One-or-Many (|o--|{) s
     er_zero_or_one_to_one_or_many_o_sample_expected_unicode(),
   )
 }
+
+
+///|
+fn er_one_or_more_to_zero_or_many_o_sample_source() -> String {
+  "erDiagram\n  TEACHER }|--o{ COURSE : teaches"
+}
+
+///|
+fn er_one_or_more_to_zero_or_many_o_sample_expected_ascii() -> String {
+  [
+    "+---------+teache+--------+    ",
+    "| TEACHER |}|--o{| COURSE |    ",
+    "+---------+      +--------+    ",
+    "                               ",
+    "                               ",
+  ]
+  .iter()
+  .join("\n")
+}
+
+///|
+fn er_one_or_more_to_zero_or_many_o_sample_expected_unicode() -> String {
+  [
+    "┌─────────┐teache┌────────┐    ",
+    "│ TEACHER │╟───o╟│ COURSE │    ",
+    "└─────────┘      └────────┘    ",
+    "                               ",
+    "                               ",
+  ]
+  .iter()
+  .join("\n")
+}
+
+///|
+test "ASCII/Unicode parity regression: ER: One-or-More to Zero-or-Many (}|--o{) sample" {
+  assert_text_parity(
+    er_one_or_more_to_zero_or_many_o_sample_source(),
+    er_one_or_more_to_zero_or_many_o_sample_expected_ascii(),
+    er_one_or_more_to_zero_or_many_o_sample_expected_unicode(),
+  )
+}
