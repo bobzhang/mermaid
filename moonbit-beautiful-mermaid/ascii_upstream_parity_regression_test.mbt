@@ -1983,6 +1983,125 @@ fn basic_state_diagram_expected_unicode() -> String {
 }
 
 ///|
+fn state_composite_states_source() -> String {
+  "stateDiagram-v2\n  [*] --> Idle\n  Idle --> Processing : submit\n  state Processing {\n    parse --> validate\n    validate --> execute\n  }\n  Processing --> Complete : done\n  Processing --> Error : fail\n  Error --> Idle : retry\n  Complete --> [*]"
+}
+
+///|
+fn state_composite_states_expected_ascii() -> String {
+  [
+    "                      +--------------+",
+    "                      | Processing   |",
+    "                      |              |",
+    "                      |              |",
+    "+------------+        | +----------+ |",
+    "|            |        | |          | |",
+    "|            |        | |  parse   | |",
+    "|            |        | |          | |",
+    "+------------+        | +----------+ |",
+    "       |              |       |      |",
+    "       |              |       |      |",
+    "       |              |       |      |",
+    "       |              |       |      |",
+    "       v              |       v      |",
+    "+------------+        | +----------+ |",
+    "|            |        | |          | |",
+    "|    Idle    |   <---+| | validate | |",
+    "|            |       || |          | |",
+    "+------------+       || +----------+ |",
+    "       |             ||       |      |",
+    "       |             ||       |      |",
+    "    submit           ||       |      |",
+    "       |             ||       |      |",
+    "       v             ||       v      |",
+    "+------------+       || +----------+ |",
+    "|            |       || |          | |",
+    "| Processing |  fail-+| | execute  | |",
+    "|            |       || |          | |",
+    "+------------+       || +----------+ |",
+    "       |             ||              |",
+    "       |             |+--------------+",
+    "     done            +--------+       ",
+    "       |                    retry     ",
+    "       v                      v       ",
+    "+------------+          +----------+  ",
+    "|            |          |          |  ",
+    "|  Complete  |          |  Error   |  ",
+    "|            |          |          |  ",
+    "+------------+          +----------+  ",
+    "       |                              ",
+    "       |                              ",
+    "       |                              ",
+    "       |                              ",
+    "       v                              ",
+    "+------------+                        ",
+    "|            |                        ",
+    "|            |                        ",
+    "|            |                        ",
+    "+------------+                        ",
+  ]
+  .iter()
+  .join("\n")
+}
+
+///|
+fn state_composite_states_expected_unicode() -> String {
+  [
+    "                      ┌──────────────┐",
+    "                      │ Processing   │",
+    "                      │              │",
+    "                      │              │",
+    "┌────────────┐        │ ┌──────────┐ │",
+    "│            │        │ │          │ │",
+    "│            │        │ │  parse   │ │",
+    "│            │        │ │          │ │",
+    "└──────┬─────┘        │ └─────┬────┘ │",
+    "       │              │       │      │",
+    "       │              │       │      │",
+    "       │              │       │      │",
+    "       │              │       │      │",
+    "       ▼              │       ▼      │",
+    "┌────────────┐        │ ┌──────────┐ │",
+    "│            │        │ │          │ │",
+    "│    Idle    │   ◄───┐│ │ validate │ │",
+    "│            │       ││ │          │ │",
+    "└──────┬─────┘       ││ └─────┬────┘ │",
+    "       │             ││       │      │",
+    "       │             ││       │      │",
+    "    submit           ││       │      │",
+    "       │             ││       │      │",
+    "       ▼             ││       ▼      │",
+    "┌────────────┐       ││ ┌──────────┐ │",
+    "│            │       ││ │          │ │",
+    "│ Processing │  fail─┤│ │ execute  │ │",
+    "│            │       ││ │          │ │",
+    "└──────┬─────┘       ││ └──────────┘ │",
+    "       │             ││              │",
+    "       │             │└──────────────┘",
+    "     done            └────────┐       ",
+    "       │                    retry     ",
+    "       ▼                      ▼       ",
+    "┌────────────┐          ┌─────┴────┐  ",
+    "│            │          │          │  ",
+    "│  Complete  │          │  Error   │  ",
+    "│            │          │          │  ",
+    "└──────┬─────┘          └──────────┘  ",
+    "       │                              ",
+    "       │                              ",
+    "       │                              ",
+    "       │                              ",
+    "       ▼                              ",
+    "┌────────────┐                        ",
+    "│            │                        ",
+    "│            │                        ",
+    "│            │                        ",
+    "└────────────┘                        ",
+  ]
+  .iter()
+  .join("\n")
+}
+
+///|
 test "ASCII/Unicode parity regression: Beautiful Mermaid sample" {
   assert_text_parity(
     beautiful_mermaid_source(),
@@ -2240,5 +2359,14 @@ test "ASCII/Unicode parity regression: Basic State Diagram sample" {
     basic_state_diagram_source(),
     basic_state_diagram_expected_ascii(),
     basic_state_diagram_expected_unicode(),
+  )
+}
+
+///|
+test "ASCII/Unicode parity regression: State: Composite States sample" {
+  assert_text_parity(
+    state_composite_states_source(),
+    state_composite_states_expected_ascii(),
+    state_composite_states_expected_unicode(),
   )
 }
