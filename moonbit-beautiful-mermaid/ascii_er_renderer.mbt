@@ -65,7 +65,7 @@ fn er_crows_foot_chars(token : String, use_ascii : Bool) -> String {
       "||"
     } else if token is ("o|" | "|o") {
       "o|"
-    } else if token is ("|}" | "{|") {
+    } else if token is ("|}" | "{|" | "|{" | "}|") {
       "}|"
     } else if token is ("{o" | "o{") {
       "o{"
@@ -76,7 +76,7 @@ fn er_crows_foot_chars(token : String, use_ascii : Bool) -> String {
     "║"
   } else if token is ("o|" | "|o") {
     "o║"
-  } else if token is ("|}" | "{|") {
+  } else if token is ("|}" | "{|" | "|{" | "}|") {
     "╟"
   } else if token is ("{o" | "o{") {
     "o╟"
@@ -193,6 +193,9 @@ fn render_ascii_er(
     }
   }
   total_w = total_w + 4
+  if max_per_row > 2 && entities.length() > max_per_row * 2 {
+    total_w = total_w + 1
+  }
   total_h = total_h + 2 + graph.edges.length() * 3
 
   let canvas = make_canvas(total_w, total_h)
@@ -346,7 +349,7 @@ fn render_ascii_er(
                 let label_x = line_x + 2
                 er_ensure_canvas_size(
                   canvas,
-                  label_x + label.length(),
+                  label_x + label.length() + 1,
                   mid_y + 1,
                 )
                 write_canvas_text(canvas, label_x, mid_y, label)
