@@ -477,6 +477,7 @@ fn flow_non_state_edge_label_placement(
   boxes : Array[AsciiFlowNodeBox],
   existing_labels : Array[AsciiEdgeLabelPlacement],
 ) -> AsciiEdgeLabelPlacement {
+  ignore(existing_labels)
   let (anchor_x, anchor_y) = flow_non_state_label_anchor_from_points(
     points,
     source_x, source_y, target_x, target_y, label.length(),
@@ -496,25 +497,12 @@ fn flow_non_state_edge_label_placement(
       }
     }
   }
-  if !label_overlaps_any_node_box(label_x, anchor_y, label, boxes) &&
-    !label_overlaps_any_edge_label(
-      label_x,
-      anchor_y,
-      label,
-      existing_labels,
-    ) {
+  if !label_overlaps_any_node_box(label_x, anchor_y, label, boxes) {
     return AsciiEdgeLabelPlacement::{ x: label_x, y: anchor_y, label }
   }
 
   let base_y = adjust_label_y_for_state_boxes(label_x, anchor_y, label, boxes)
-  let label_y = adjust_label_y_for_state_layout(
-    label_x,
-    base_y,
-    label,
-    boxes,
-    existing_labels,
-  )
-  AsciiEdgeLabelPlacement::{ x: label_x, y: label_y, label }
+  AsciiEdgeLabelPlacement::{ x: label_x, y: base_y, label }
 }
 
 ///|
