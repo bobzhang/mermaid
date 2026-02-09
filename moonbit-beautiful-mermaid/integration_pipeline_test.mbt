@@ -792,6 +792,39 @@ test "Sequence par/and block renders across text and SVG modes" {
 }
 
 ///|
+test "Sequence activation markers render across text and SVG modes" {
+  let input = "sequenceDiagram\nparticipant U as User\nparticipant S as Server\nU->>+S: Request\nS-->>-U: Response"
+
+  let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
+    use_ascii: true,
+    padding_x: 5,
+    padding_y: 5,
+    box_border_padding: 1,
+  })
+  let unicode = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
+    use_ascii: false,
+    padding_x: 5,
+    padding_y: 5,
+    box_border_padding: 1,
+  })
+  let svg = try! @beautiful_mermaid.render_mermaid(input)
+
+  assert_true(ascii.contains("User"))
+  assert_true(ascii.contains("Server"))
+  assert_true(ascii.contains("Request"))
+  assert_true(ascii.contains("Response"))
+  assert_true(unicode.contains("User"))
+  assert_true(unicode.contains("Server"))
+  assert_true(unicode.contains("Request"))
+  assert_true(unicode.contains("Response"))
+  assert_true(svg.contains(">User</text>"))
+  assert_true(svg.contains(">Server</text>"))
+  assert_true(svg.contains(">Request</text>"))
+  assert_true(svg.contains(">Response</text>"))
+  assert_true(svg.contains("class=\"sequence-activation\""))
+}
+
+///|
 test "Class inheritance labels render across text and SVG modes" {
   let input = "classDiagram\nclass Shape {\n<<abstract>>\n+draw() void\n}\nclass Circle {\n+radius int\n+draw() void\n}\nShape <|-- Circle : inherits"
 
