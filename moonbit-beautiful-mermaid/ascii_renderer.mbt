@@ -1384,6 +1384,8 @@ fn render_ascii_state_flat_grid(
 ) -> String {
   let nodes_in_order = layout_state_nodes_in_definition_order(graph)
   let grid_positions = layout_state_grid_positions(graph, nodes_in_order)
+  let state_layout_mode = graph_has_shape(graph, NodeShape::StateStart) ||
+    graph_has_shape(graph, NodeShape::StateEnd)
   if grid_positions.length() == 0 {
     return ""
   }
@@ -1668,7 +1670,12 @@ fn render_ascii_state_flat_grid(
       continue
     }
 
-    let (h_char, v_char) = flow_line_chars(layout.edge.style, options.use_ascii)
+    let line_style = if state_layout_mode {
+      layout.edge.style
+    } else {
+      EdgeStyle::Solid
+    }
+    let (h_char, v_char) = flow_line_chars(line_style, options.use_ascii)
     let mut first_drawn : Point? = None
     let mut first_dir_x = 0
     let mut first_dir_y = 0
@@ -1768,7 +1775,12 @@ fn render_ascii_state_flat_grid(
       }
     }
 
-    if layout.edge.has_arrow_end {
+    let show_arrow_end = if state_layout_mode {
+      layout.edge.has_arrow_end
+    } else {
+      true
+    }
+    if show_arrow_end {
       match last_drawn {
         Some(last) =>
           arrow_overlays.push(AsciiArrowPlacement::{
@@ -1780,7 +1792,7 @@ fn render_ascii_state_flat_grid(
       }
     }
 
-    if layout.edge.has_arrow_start {
+    if state_layout_mode && layout.edge.has_arrow_start {
       match first_drawn {
         Some(first) =>
           arrow_overlays.push(AsciiArrowPlacement::{
@@ -2425,6 +2437,10 @@ fn render_ascii(graph : MermaidGraph, options : AsciiRenderOptions) -> String {
       return render_ascii_state_flat_grid(graph, options)
     }
     return render_ascii_flow_subgraphs(graph, options)
+  }
+  let td_like_direction = graph.direction is (Direction::TD | Direction::TB)
+  if graph.subgraphs.length() == 0 && td_like_direction {
+    return render_ascii_state_flat_grid(graph, options)
   }
   if graph.subgraphs.length() > 0 {
     return render_ascii_flow_subgraphs(graph, options)
