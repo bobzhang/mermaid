@@ -47,7 +47,7 @@ test "ASCII flowchart corpus subgraph cases keep labels and borders" {
       fail("expected at least one subgraph label for \{case_data.name}")
     }
 
-    let output = try! @beautiful_mermaid.render_mermaid_ascii(case_data.input, options=@beautiful_mermaid.AsciiRenderOptions::{
+    let output = try! @beautiful_mermaid.render_mermaid_ascii(case_data.input, options={
       use_ascii: true,
       padding_x: case_data.padding_x,
       padding_y: case_data.padding_y,
@@ -76,7 +76,7 @@ test "Unicode flowchart corpus subgraph cases keep labels and borders" {
       fail("expected at least one subgraph label for \{case_data.name}")
     }
 
-    let output = try! @beautiful_mermaid.render_mermaid_ascii(case_data.input, options=@beautiful_mermaid.AsciiRenderOptions::{
+    let output = try! @beautiful_mermaid.render_mermaid_ascii(case_data.input, options={
       use_ascii: false,
       padding_x: case_data.padding_x,
       padding_y: case_data.padding_y,

@@ -2,7 +2,7 @@
 test "ASCII preserves sequence operators for sequence diagrams" {
   let ascii = try! @beautiful_mermaid.render_mermaid_ascii(
     "sequenceDiagram\nA->B: Open\nB-->>A: Reply",
-    options=@beautiful_mermaid.AsciiRenderOptions::{
+    options={
       use_ascii: true,
       padding_x: 5,
       padding_y: 5,
@@ -16,7 +16,7 @@ test "ASCII preserves sequence operators for sequence diagrams" {
 
   let unicode = try! @beautiful_mermaid.render_mermaid_ascii(
     "sequenceDiagram\nA->B: Open\nB-->>A: Reply",
-    options=@beautiful_mermaid.AsciiRenderOptions::{
+    options={
       use_ascii: false,
       padding_x: 5,
       padding_y: 5,
@@ -35,7 +35,7 @@ test "ASCII preserves sequence operators for sequence diagrams" {
 test "ASCII sequence renders blocks, dividers, and notes" {
   let ascii = try! @beautiful_mermaid.render_mermaid_ascii(
     "sequenceDiagram\nA->>B: Request\nalt Success\nB-->>A: 200\nelse Failure\nB-->>A: 500\nend\nNote right of B: Inspect response",
-    options=@beautiful_mermaid.AsciiRenderOptions::{
+    options={
       use_ascii: true,
       padding_x: 5,
       padding_y: 5,
@@ -48,7 +48,7 @@ test "ASCII sequence renders blocks, dividers, and notes" {
 
   let unicode = try! @beautiful_mermaid.render_mermaid_ascii(
     "sequenceDiagram\nA->>B: Request\nalt Success\nB-->>A: 200\nelse Failure\nB-->>A: 500\nend\nNote right of B: Inspect response",
-    options=@beautiful_mermaid.AsciiRenderOptions::{
+    options={
       use_ascii: false,
       padding_x: 5,
       padding_y: 5,
@@ -65,7 +65,7 @@ test "ASCII sequence renders blocks, dividers, and notes" {
 test "ASCII sequence accepts activation operators without activation bars" {
   let ascii = try! @beautiful_mermaid.render_mermaid_ascii(
     "sequenceDiagram\nA->>+B: Activate\nB-->>-A: Return",
-    options=@beautiful_mermaid.AsciiRenderOptions::{
+    options={
       use_ascii: true,
       padding_x: 5,
       padding_y: 5,
@@ -78,7 +78,7 @@ test "ASCII sequence accepts activation operators without activation bars" {
 
   let unicode = try! @beautiful_mermaid.render_mermaid_ascii(
     "sequenceDiagram\nA->>+B: Activate\nB-->>-A: Return",
-    options=@beautiful_mermaid.AsciiRenderOptions::{
+    options={
       use_ascii: false,
       padding_x: 5,
       padding_y: 5,
@@ -94,7 +94,7 @@ test "ASCII sequence accepts activation operators without activation bars" {
 test "ASCII sequence ignores standalone activation commands" {
   let ascii = try! @beautiful_mermaid.render_mermaid_ascii(
     "sequenceDiagram\nparticipant A\nparticipant B\nactivate A\nA->>B: Work\ndeactivate A",
-    options=@beautiful_mermaid.AsciiRenderOptions::{
+    options={
       use_ascii: true,
       padding_x: 5,
       padding_y: 5,
@@ -107,7 +107,7 @@ test "ASCII sequence ignores standalone activation commands" {
 
   let unicode = try! @beautiful_mermaid.render_mermaid_ascii(
     "sequenceDiagram\nparticipant A\nparticipant B\nactivate A\nA->>B: Work\ndeactivate A",
-    options=@beautiful_mermaid.AsciiRenderOptions::{
+    options={
       use_ascii: false,
       padding_x: 5,
       padding_y: 5,
@@ -123,7 +123,7 @@ test "ASCII sequence ignores standalone activation commands" {
 test "ASCII sequence ignores standalone activation commands for self messages" {
   let ascii = try! @beautiful_mermaid.render_mermaid_ascii(
     "sequenceDiagram\nparticipant A\nactivate A\nA->>A: Think\ndeactivate A",
-    options=@beautiful_mermaid.AsciiRenderOptions::{
+    options={
       use_ascii: true,
       padding_x: 5,
       padding_y: 5,
@@ -135,7 +135,7 @@ test "ASCII sequence ignores standalone activation commands for self messages" {
 
   let unicode = try! @beautiful_mermaid.render_mermaid_ascii(
     "sequenceDiagram\nparticipant A\nactivate A\nA->>A: Think\ndeactivate A",
-    options=@beautiful_mermaid.AsciiRenderOptions::{
+    options={
       use_ascii: false,
       padding_x: 5,
       padding_y: 5,
@@ -150,7 +150,7 @@ test "ASCII sequence ignores standalone activation commands for self messages" {
 test "ASCII flowchart renders subgraph containers" {
   let ascii = try! @beautiful_mermaid.render_mermaid_ascii(
     "graph TD\nsubgraph one\nA --> B\nend",
-    options=@beautiful_mermaid.AsciiRenderOptions::{
+    options={
       use_ascii: true,
       padding_x: 2,
       padding_y: 2,
@@ -164,7 +164,7 @@ test "ASCII flowchart renders subgraph containers" {
 
   let unicode = try! @beautiful_mermaid.render_mermaid_ascii(
     "graph TD\nsubgraph one\nA --> B\nend",
-    options=@beautiful_mermaid.AsciiRenderOptions::{
+    options={
       use_ascii: false,
       padding_x: 2,
       padding_y: 2,
@@ -182,7 +182,7 @@ test "ASCII flowchart renders subgraph containers" {
 test "ASCII flowchart renders nested subgraph labels" {
   let output = try! @beautiful_mermaid.render_mermaid_ascii(
     "graph TD\nsubgraph Outer\nsubgraph Inner\nA --> B\nend\nC --> D\nend",
-    options=@beautiful_mermaid.AsciiRenderOptions::{
+    options={
       use_ascii: false,
       padding_x: 2,
       padding_y: 2,
@@ -198,7 +198,7 @@ test "ASCII flowchart renders nested subgraph labels" {
 test "ASCII preserves class operators for class diagrams" {
   let ascii = try! @beautiful_mermaid.render_mermaid_ascii(
     "classDiagram\nA <|-- B : inherits\nC *-- D : owns",
-    options=@beautiful_mermaid.AsciiRenderOptions::{
+    options={
       use_ascii: true,
       padding_x: 5,
       padding_y: 5,
@@ -213,7 +213,7 @@ test "ASCII preserves class operators for class diagrams" {
 
   let unicode = try! @beautiful_mermaid.render_mermaid_ascii(
     "classDiagram\nA <|-- B : inherits\nC *-- D : owns",
-    options=@beautiful_mermaid.AsciiRenderOptions::{
+    options={
       use_ascii: false,
       padding_x: 5,
       padding_y: 5,
@@ -231,7 +231,7 @@ test "ASCII preserves class operators for class diagrams" {
 test "ASCII preserves ER operator semantics" {
   let ascii = try! @beautiful_mermaid.render_mermaid_ascii(
     "erDiagram\nCUSTOMER ||--o{ ORDER : places",
-    options=@beautiful_mermaid.AsciiRenderOptions::{
+    options={
       use_ascii: true,
       padding_x: 5,
       padding_y: 5,
@@ -242,7 +242,7 @@ test "ASCII preserves ER operator semantics" {
 
   let unicode = try! @beautiful_mermaid.render_mermaid_ascii(
     "erDiagram\nCUSTOMER ||--o{ ORDER : places",
-    options=@beautiful_mermaid.AsciiRenderOptions::{
+    options={
       use_ascii: false,
       padding_x: 5,
       padding_y: 5,
@@ -256,7 +256,7 @@ test "ASCII preserves ER operator semantics" {
 test "ASCII state text renderer hides synthetic pseudostate ids in boxed mode" {
   let ascii = try! @beautiful_mermaid.render_mermaid_ascii(
     "stateDiagram-v2\n[*] --> Idle\nIdle --> [*]",
-    options=@beautiful_mermaid.AsciiRenderOptions::{
+    options={
       use_ascii: true,
       padding_x: 5,
       padding_y: 5,
@@ -270,7 +270,7 @@ test "ASCII state text renderer hides synthetic pseudostate ids in boxed mode" {
 
   let unicode = try! @beautiful_mermaid.render_mermaid_ascii(
     "stateDiagram-v2\n[*] --> Idle\nIdle --> [*]",
-    options=@beautiful_mermaid.AsciiRenderOptions::{
+    options={
       use_ascii: false,
       padding_x: 5,
       padding_y: 5,

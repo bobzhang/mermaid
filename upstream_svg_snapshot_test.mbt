@@ -50,44 +50,34 @@ fn snapshot_upstream_sample_svg(
 ///|
 test "Upstream sample snapshot: Beautiful Mermaid" (it : @test.Test) {
   snapshot_upstream_sample_svg(
-    it,
-    "Beautiful Mermaid",
-    "upstream_sample_beautiful_mermaid.svg",
+    it, "Beautiful Mermaid", "upstream_sample_beautiful_mermaid.svg",
   )
 }
 
 ///|
 test "Upstream sample snapshot: CI/CD Pipeline" (it : @test.Test) {
   snapshot_upstream_sample_svg(
-    it,
-    "CI/CD Pipeline",
-    "upstream_sample_ci_cd_pipeline.svg",
+    it, "CI/CD Pipeline", "upstream_sample_ci_cd_pipeline.svg",
   )
 }
 
 ///|
 test "Upstream sample snapshot: Sequence OAuth 2.0 Flow" (it : @test.Test) {
   snapshot_upstream_sample_svg(
-    it,
-    "Sequence: OAuth 2.0 Flow",
-    "upstream_sample_sequence_oauth.svg",
+    it, "Sequence: OAuth 2.0 Flow", "upstream_sample_sequence_oauth.svg",
   )
 }
 
 ///|
 test "Upstream sample snapshot: Class all relationships" (it : @test.Test) {
   snapshot_upstream_sample_svg(
-    it,
-    "Class: All 6 Relationship Types",
-    "upstream_sample_class_all_relationships.svg",
+    it, "Class: All 6 Relationship Types", "upstream_sample_class_all_relationships.svg",
   )
 }
 
 ///|
 test "Upstream sample snapshot: ER cardinalities" (it : @test.Test) {
   snapshot_upstream_sample_svg(
-    it,
-    "ER: All Cardinality Types",
-    "upstream_sample_er_cardinalities.svg",
+    it, "ER: All Cardinality Types", "upstream_sample_er_cardinalities.svg",
   )
 }

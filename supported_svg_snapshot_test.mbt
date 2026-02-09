@@ -25,54 +25,42 @@ fn snapshot_supported_case_svg(
 
   assert_true(svg.has_prefix("<svg "))
   assert_true(svg.has_suffix("</svg>"))
-  assert_true(
-    @test_support.contains_all(svg, case_data.expected_svg_fragments),
-  )
+  assert_true(@test_support.contains_all(svg, case_data.expected_svg_fragments))
 }
 
 ///|
 test "Supported flowchart sample emits stable SVG snapshot" (it : @test.Test) {
   snapshot_supported_case_svg(
-    it,
-    "flowchart_tb_simple",
-    "supported_case_flowchart_tb_simple.svg",
+    it, "flowchart_tb_simple", "supported_case_flowchart_tb_simple.svg",
   )
 }
 
 ///|
 test "Supported nested-subgraph sample emits stable SVG snapshot" (
-  it : @test.Test
+  it : @test.Test,
 ) {
   snapshot_supported_case_svg(
-    it,
-    "subgraph_complex_nested",
-    "supported_case_subgraph_complex_nested.svg",
+    it, "subgraph_complex_nested", "supported_case_subgraph_complex_nested.svg",
   )
 }
 
 ///|
 test "Supported sequence sample emits stable SVG snapshot" (it : @test.Test) {
   snapshot_supported_case_svg(
-    it,
-    "seq_multiple_messages",
-    "supported_case_seq_multiple_messages.svg",
+    it, "seq_multiple_messages", "supported_case_seq_multiple_messages.svg",
   )
 }
 
 ///|
 test "Supported class sample emits stable SVG snapshot" (it : @test.Test) {
   snapshot_supported_case_svg(
-    it,
-    "cls_all_relationships",
-    "supported_case_cls_all_relationships.svg",
+    it, "cls_all_relationships", "supported_case_cls_all_relationships.svg",
   )
 }
 
 ///|
 test "Supported ER sample emits stable SVG snapshot" (it : @test.Test) {
   snapshot_supported_case_svg(
-    it,
-    "er_identifying",
-    "supported_case_er_identifying.svg",
+    it, "er_identifying", "supported_case_er_identifying.svg",
   )
 }

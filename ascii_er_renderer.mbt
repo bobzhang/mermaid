@@ -222,8 +222,8 @@ fn render_ascii_er(
         let tw = entity_width.get(edge.target).unwrap()
         let th = entity_height.get(edge.target).unwrap()
 
-        let line_h = if edge.style == EdgeStyle::Dotted { dash_h } else { h }
-        let line_v = if edge.style == EdgeStyle::Dotted { dash_v } else { v }
+        let line_h = if edge.style == Dotted { dash_h } else { h }
+        let line_v = if edge.style == Dotted { dash_v } else { v }
 
         let scx = sx + sw / 2
         let scy = sy + sh / 2

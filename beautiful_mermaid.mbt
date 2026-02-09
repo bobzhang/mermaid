@@ -15,6 +15,7 @@ fn option_bool_or(value : Bool?, fallback : Bool) -> Bool {
 }
 
 ///|
+/// Public function `default_colors`.
 pub fn default_colors() -> DiagramColors {
   DiagramColors::default()
 }
@@ -28,6 +29,7 @@ fn option_color_or(value : String?, fallback : String?) -> String? {
 }
 
 ///|
+/// Public function `build_colors`.
 pub fn build_colors(options : RenderOptions) -> DiagramColors {
   let defaults = DiagramColors::default()
   {
@@ -52,11 +54,12 @@ fn resolve_transparent(options : RenderOptions) -> Bool {
 }
 
 ///|
+/// Public function `merge_options_with_colors`.
 pub fn merge_options_with_colors(
   options : RenderOptions,
   colors : DiagramColors,
 ) -> RenderOptions {
-  RenderOptions::{
+  {
     bg: Some(option_string_or(options.bg, colors.bg)),
     fg: Some(option_string_or(options.fg, colors.fg)),
     line: option_color_or(options.line, colors.line),
@@ -73,6 +76,7 @@ pub fn merge_options_with_colors(
 }
 
 ///|
+/// Public function `render_mermaid`.
 pub fn render_mermaid(
   text : String,
   options? : RenderOptions = RenderOptions::default(),
@@ -88,6 +92,7 @@ pub fn render_mermaid(
 }
 
 ///|
+/// Public function `render_mermaid_with_colors`.
 pub fn render_mermaid_with_colors(
   text : String,
   colors : DiagramColors,
@@ -98,6 +103,7 @@ pub fn render_mermaid_with_colors(
 }
 
 ///|
+/// Public function `render_mermaid_with_theme`.
 pub fn render_mermaid_with_theme(
   text : String,
   theme : ThemeName,
@@ -107,6 +113,7 @@ pub fn render_mermaid_with_theme(
 }
 
 ///|
+/// Public function `render_mermaid_with_theme_name`.
 pub fn render_mermaid_with_theme_name(
   text : String,
   theme_name : String,
@@ -114,11 +121,12 @@ pub fn render_mermaid_with_theme_name(
 ) -> String raise MermaidError {
   match theme_by_name(theme_name) {
     Some(colors) => render_mermaid_with_colors(text, colors, options~)
-    None => raise MermaidError::UnknownTheme(theme_name)
+    None => raise UnknownTheme(theme_name)
   }
 }
 
 ///|
+/// Public function `render_mermaid_ascii`.
 pub fn render_mermaid_ascii(
   text : String,
   options? : AsciiRenderOptions = AsciiRenderOptions::default(),

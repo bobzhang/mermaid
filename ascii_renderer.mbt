@@ -24,7 +24,7 @@ fn graph_has_shape(graph : MermaidGraph, expected : NodeShape) -> Bool {
 ///|
 fn flow_node_label(node : PositionedNode) -> String {
   match node.shape {
-    NodeShape::StateStart | NodeShape::StateEnd => ""
+    StateStart | StateEnd => ""
     _ =>
       if node.label == "" {
         node.id
@@ -100,15 +100,15 @@ fn scale_size(value : Int, scale : Int, min_size : Int) -> Int {
 fn flow_line_chars(style : EdgeStyle, use_ascii : Bool) -> (String, String) {
   if use_ascii {
     match style {
-      EdgeStyle::Solid => ("-", "|")
-      EdgeStyle::Dotted => (".", ":")
-      EdgeStyle::Thick => ("=", "|")
+      Solid => ("-", "|")
+      Dotted => (".", ":")
+      Thick => ("=", "|")
     }
   } else {
     match style {
-      EdgeStyle::Solid => ("─", "│")
-      EdgeStyle::Dotted => ("┄", "┊")
-      EdgeStyle::Thick => ("═", "║")
+      Solid => ("─", "│")
+      Dotted => ("┄", "┊")
+      Thick => ("═", "║")
     }
   }
 }
@@ -401,15 +401,15 @@ fn flow_non_state_route_points(
   target_y : Int,
   horizontal_first : Bool,
 ) -> Array[Point] {
-  let points : Array[Point] = [Point::{ x: source_x, y: source_y }]
+  let points : Array[Point] = [{ x: source_x, y: source_y }]
   if source_x != target_x && source_y != target_y {
     if horizontal_first {
-      points.push(Point::{ x: target_x, y: source_y })
+      points.push({ x: target_x, y: source_y })
     } else {
-      points.push(Point::{ x: source_x, y: target_y })
+      points.push({ x: source_x, y: target_y })
     }
   }
-  points.push(Point::{ x: target_x, y: target_y })
+  points.push({ x: target_x, y: target_y })
   points
 }
 
@@ -432,7 +432,7 @@ fn flow_non_state_route_hits_blocked_cells(
         if y == start.y || y == ending.y {
           continue
         }
-        if blocked.contains(ascii_grid_key(AsciiGridCoord::{ x: start.x, y })) {
+        if blocked.contains(ascii_grid_key({ x: start.x, y })) {
           return true
         }
       }
@@ -443,7 +443,7 @@ fn flow_non_state_route_hits_blocked_cells(
         if x == start.x || x == ending.x {
           continue
         }
-        if blocked.contains(ascii_grid_key(AsciiGridCoord::{ x, y: start.y })) {
+        if blocked.contains(ascii_grid_key({ x, y: start.y })) {
           return true
         }
       }
@@ -508,7 +508,7 @@ fn flow_non_state_route_points_with_pathfinder(
       }
       let route : Array[Point] = []
       for coord in merged_path {
-        route.push(Point::{ x: coord.x, y: coord.y })
+        route.push({ x: coord.x, y: coord.y })
       }
       route
     }
@@ -558,12 +558,12 @@ fn flow_non_state_shared_back_edge_route_points(
   let target_entry_x = target_anchor_x + 3
   let detour_y = source_anchor_y + source_box_height.max(5)
   let route = flow_compact_route_points([
-    Point::{ x: source_anchor_x, y: source_anchor_y },
-    Point::{ x: shared_anchor_x, y: source_anchor_y },
-    Point::{ x: shared_anchor_x, y: detour_y },
-    Point::{ x: target_entry_x, y: detour_y },
-    Point::{ x: target_entry_x, y: target_anchor_y },
-    Point::{ x: target_anchor_x, y: target_anchor_y },
+    { x: source_anchor_x, y: source_anchor_y },
+    { x: shared_anchor_x, y: source_anchor_y },
+    { x: shared_anchor_x, y: detour_y },
+    { x: target_entry_x, y: detour_y },
+    { x: target_entry_x, y: target_anchor_y },
+    { x: target_anchor_x, y: target_anchor_y },
   ])
   if route.length() >= 2 {
     Some(route)
@@ -733,7 +733,7 @@ fn flow_non_state_edge_label_placement(
   }
   if !label_overlaps_any_node_box(label_x, base_y, label, boxes) &&
     !overlaps_existing_labels(label_x, base_y, label, existing_labels) {
-    return AsciiEdgeLabelPlacement::{ x: label_x, y: base_y, label }
+    return { x: label_x, y: base_y, label }
   }
 
   for offset in 1..<8 {
@@ -741,16 +741,16 @@ fn flow_non_state_edge_label_placement(
     if up >= 0 &&
       !label_overlaps_any_node_box(label_x, up, label, boxes) &&
       !overlaps_existing_labels(label_x, up, label, existing_labels) {
-      return AsciiEdgeLabelPlacement::{ x: label_x, y: up, label }
+      return { x: label_x, y: up, label }
     }
     let down = base_y + offset
     if !label_overlaps_any_node_box(label_x, down, label, boxes) &&
       !overlaps_existing_labels(label_x, down, label, existing_labels) {
-      return AsciiEdgeLabelPlacement::{ x: label_x, y: down, label }
+      return { x: label_x, y: down, label }
     }
   }
 
-  AsciiEdgeLabelPlacement::{ x: label_x, y: base_y, label }
+  { x: label_x, y: base_y, label }
 }
 
 ///|
@@ -1275,7 +1275,7 @@ fn flow_mark_blocked_cells_for_nodes(
     }
     for y in (node.top + 1)..<(node.top + node.height - 1) {
       for x in (node.left + 1)..<(node.left + node.width - 1) {
-        blocked[ascii_grid_key(AsciiGridCoord::{ x, y })] = true
+        blocked[ascii_grid_key({ x, y })] = true
       }
     }
   }
@@ -1349,7 +1349,7 @@ fn map_flow_group(
   } else {
     (group.width / scale_x).max(min_width)
   }
-  AsciiFlowGroupBox::{
+  {
     id: group.id,
     label: group.label,
     left: scale_coord(group.x, scale_x, pad_x),
@@ -1437,7 +1437,7 @@ fn state_group_box_from_nodes(
   let top = min_top - group_padding - label_space
   let right = max_right + group_padding
   let bottom = max_bottom + group_padding
-  Some(AsciiFlowGroupBox::{
+  Some({
     id: subgraph.id,
     label: subgraph.label,
     left,
@@ -1491,7 +1491,7 @@ fn shift_ascii_flow_group(
   for child in group.children {
     children.push(shift_ascii_flow_group(child, shift_x, shift_y))
   }
-  AsciiFlowGroupBox::{
+  {
     id: group.id,
     label: group.label,
     left: group.left + shift_x,
@@ -1643,7 +1643,7 @@ fn flow_expand_group_side_padding_for_nodes(
   }
   let extra_bottom_padding = if adjusted_children.length() > 0 { 1 } else { 0 }
 
-  AsciiFlowGroupBox::{
+  {
     id: group.id,
     label: group.label,
     left,
@@ -1791,7 +1791,7 @@ fn flow_canvas_to_output(canvas : Array[Array[String]]) -> String {
 ///|
 fn state_ascii_node_label(node : MermaidNode) -> String {
   match node.shape {
-    NodeShape::StateStart | NodeShape::StateEnd => ""
+    StateStart | StateEnd => ""
     _ =>
       if node.label == "" {
         node.id
@@ -1909,8 +1909,8 @@ fn render_ascii_state_flat_grid(
 ) -> String {
   let nodes_in_order = layout_state_nodes_in_definition_order(graph)
   let grid_positions = layout_state_grid_positions(graph, nodes_in_order)
-  let state_layout_mode = graph_has_shape(graph, NodeShape::StateStart) ||
-    graph_has_shape(graph, NodeShape::StateEnd)
+  let state_layout_mode = graph_has_shape(graph, StateStart) ||
+    graph_has_shape(graph, StateEnd)
   if grid_positions.length() == 0 {
     return ""
   }
@@ -2031,7 +2031,7 @@ fn render_ascii_state_flat_grid(
         }
       None => ()
     }
-    edge_layouts.push(StateAsciiEdgeLayout::{ edge, path, label_line })
+    edge_layouts.push({ edge, path, label_line })
   }
 
   let mapped_nodes : Array[AsciiFlowNodeBox] = []
@@ -2039,7 +2039,7 @@ fn render_ascii_state_flat_grid(
   for node in nodes_in_order {
     match grid_positions.get(node.id) {
       Some(coord) => {
-        let (left, top) = state_ascii_grid_to_draw(column_width, row_height, AsciiGridCoord::{
+        let (left, top) = state_ascii_grid_to_draw(column_width, row_height, {
           x: coord.x,
           y: coord.y,
         })
@@ -2189,17 +2189,13 @@ fn render_ascii_state_flat_grid(
     let points : Array[Point] = []
     for coord in layout.path {
       let (x, y) = state_ascii_grid_to_draw(column_width, row_height, coord)
-      points.push(Point::{ x: x + shift_x, y: y + shift_y })
+      points.push({ x: x + shift_x, y: y + shift_y })
     }
     if points.length() < 2 {
       continue
     }
 
-    let line_style = if state_layout_mode {
-      layout.edge.style
-    } else {
-      EdgeStyle::Solid
-    }
+    let line_style = if state_layout_mode { layout.edge.style } else { Solid }
     let (h_char, v_char) = flow_line_chars(line_style, options.use_ascii)
     let mut first_drawn : Point? = None
     let mut first_dir_x = 0
@@ -2233,11 +2229,11 @@ fn render_ascii_state_flat_grid(
         )
       }
       if first_drawn is None {
-        first_drawn = Some(Point::{ x: start_x, y: start_y })
+        first_drawn = Some({ x: start_x, y: start_y })
         first_dir_x = dir_x
         first_dir_y = dir_y
       }
-      last_drawn = Some(Point::{ x: end_x, y: end_y })
+      last_drawn = Some({ x: end_x, y: end_y })
       last_dir_x = dir_x
       last_dir_y = dir_y
     }
@@ -2254,7 +2250,7 @@ fn render_ascii_state_flat_grid(
         if prev_dx == next_dx && prev_dy == next_dy {
           continue
         }
-        corner_overlays.push(AsciiArrowPlacement::{
+        corner_overlays.push({
           x: current.x,
           y: current.y,
           marker: state_ascii_corner_char(
@@ -2272,25 +2268,25 @@ fn render_ascii_state_flat_grid(
       match first_drawn {
         Some(first) =>
           if first_dir_x == 0 && first_dir_y < 0 {
-            box_start_overlays.push(AsciiArrowPlacement::{
+            box_start_overlays.push({
               x: first.x,
               y: first.y + 1,
               marker: "┴",
             })
           } else if first_dir_x == 0 && first_dir_y > 0 {
-            box_start_overlays.push(AsciiArrowPlacement::{
+            box_start_overlays.push({
               x: first.x,
               y: first.y - 1,
               marker: "┬",
             })
           } else if first_dir_x < 0 && first_dir_y == 0 {
-            box_start_overlays.push(AsciiArrowPlacement::{
+            box_start_overlays.push({
               x: first.x + 1,
               y: first.y,
               marker: "┤",
             })
           } else if first_dir_x > 0 && first_dir_y == 0 {
-            box_start_overlays.push(AsciiArrowPlacement::{
+            box_start_overlays.push({
               x: first.x - 1,
               y: first.y,
               marker: "├",
@@ -2310,7 +2306,7 @@ fn render_ascii_state_flat_grid(
     if show_arrow_end {
       match last_drawn {
         Some(last) =>
-          arrow_overlays.push(AsciiArrowPlacement::{
+          arrow_overlays.push({
             x: last.x,
             y: last.y,
             marker: flow_arrow_marker(last_dir_x, last_dir_y, options.use_ascii),
@@ -2322,7 +2318,7 @@ fn render_ascii_state_flat_grid(
     if state_layout_mode && layout.edge.has_arrow_start {
       match first_drawn {
         Some(first) =>
-          arrow_overlays.push(AsciiArrowPlacement::{
+          arrow_overlays.push({
             x: first.x,
             y: first.y,
             marker: flow_arrow_marker(
@@ -2355,11 +2351,7 @@ fn render_ascii_state_flat_grid(
             (line_y1.max(line_y2) - line_y1.min(line_y2)) / 2 +
             shift_y
           let label_x = anchor_x - label.length() / 2
-          edge_label_overlays.push(AsciiEdgeLabelPlacement::{
-            x: label_x,
-            y: anchor_y,
-            label,
-          })
+          edge_label_overlays.push({ x: label_x, y: anchor_y, label })
         }
         None => ()
       }
@@ -2417,10 +2409,9 @@ fn render_ascii_flow_subgraphs(
   options : AsciiRenderOptions,
 ) -> String {
   let positioned = layout_graph_for_ascii(graph, RenderOptions::default())
-  let flow_direction_horizontal = graph.direction
-    is (Direction::LR | Direction::RL)
-  let state_graph_mode = graph_has_shape(graph, NodeShape::StateStart) ||
-    graph_has_shape(graph, NodeShape::StateEnd)
+  let flow_direction_horizontal = graph.direction is (LR | RL)
+  let state_graph_mode = graph_has_shape(graph, StateStart) ||
+    graph_has_shape(graph, StateEnd)
   let state_layout_mode = state_graph_mode && !flow_direction_horizontal
   let horizontal_state_flow_mode = state_graph_mode && flow_direction_horizontal
   let state_flat_layout_mode = state_layout_mode &&
@@ -2451,12 +2442,7 @@ fn render_ascii_flow_subgraphs(
     }
     let base_width = if state_layout_mode {
       match node.shape {
-        NodeShape::StateStart | NodeShape::StateEnd =>
-          if flow_direction_horizontal {
-            4
-          } else {
-            12
-          }
+        StateStart | StateEnd => if flow_direction_horizontal { 4 } else { 12 }
         _ =>
           if flow_direction_horizontal {
             (label.length() + 4).max(5)
@@ -2465,8 +2451,7 @@ fn render_ascii_flow_subgraphs(
           }
       }
     } else if flow_direction_horizontal && !flow_with_subgraphs {
-      if horizontal_state_flow_mode &&
-        node.shape is (NodeShape::StateStart | NodeShape::StateEnd) {
+      if horizontal_state_flow_mode && node.shape is (StateStart | StateEnd) {
         4
       } else {
         (label.length() + 4).max(5)
@@ -2508,12 +2493,7 @@ fn render_ascii_flow_subgraphs(
     node_column_key_by_id[node.id] = column_key
     let (min_width, min_height) = if state_layout_mode {
       let state_min_width = match node.shape {
-        NodeShape::StateStart | NodeShape::StateEnd =>
-          if flow_direction_horizontal {
-            4
-          } else {
-            12
-          }
+        StateStart | StateEnd => if flow_direction_horizontal { 4 } else { 12 }
         _ =>
           if flow_direction_horizontal {
             (label.length() + 4).max(5)
@@ -2524,8 +2504,7 @@ fn render_ascii_flow_subgraphs(
       (option_int_or(column_width_by_x.get(column_key), state_min_width), 5)
     } else {
       let fallback_width = if flow_direction_horizontal && !flow_with_subgraphs {
-        if horizontal_state_flow_mode &&
-          node.shape is (NodeShape::StateStart | NodeShape::StateEnd) {
+        if horizontal_state_flow_mode && node.shape is (StateStart | StateEnd) {
           4
         } else {
           (label.length() + 4).max(5)
@@ -2536,7 +2515,7 @@ fn render_ascii_flow_subgraphs(
       (option_int_or(column_width_by_x.get(column_key), fallback_width), 5)
     }
     let horizontal_state_pseudostate = horizontal_state_flow_mode &&
-      node.shape is (NodeShape::StateStart | NodeShape::StateEnd)
+      node.shape is (StateStart | StateEnd)
     let width = if horizontal_state_pseudostate {
       4
     } else if state_layout_mode {
@@ -2669,7 +2648,7 @@ fn render_ascii_flow_subgraphs(
         )
         let desired_left = prev_node.left + prev_node.width + gap
         if curr_node.left != desired_left {
-          mapped_nodes[curr_idx] = AsciiFlowNodeBox::{
+          mapped_nodes[curr_idx] = {
             id: curr_node.id,
             label: curr_node.label,
             left: desired_left,
@@ -2705,7 +2684,7 @@ fn render_ascii_flow_subgraphs(
         node.left,
       )
       if node.left != canonical_left {
-        mapped_nodes[i] = AsciiFlowNodeBox::{
+        mapped_nodes[i] = {
           id: node.id,
           label: node.label,
           left: canonical_left,
@@ -2804,7 +2783,7 @@ fn render_ascii_flow_subgraphs(
             }
           }
           if adjusted_left != node.left {
-            mapped_nodes[i] = AsciiFlowNodeBox::{
+            mapped_nodes[i] = {
               id: node.id,
               label: node.label,
               left: adjusted_left,
@@ -2873,7 +2852,7 @@ fn render_ascii_flow_subgraphs(
                 None => ()
               }
               if aligned_left != node.left {
-                mapped_nodes[i] = AsciiFlowNodeBox::{
+                mapped_nodes[i] = {
                   id: node.id,
                   label: node.label,
                   left: aligned_left,
@@ -2951,11 +2930,7 @@ fn render_ascii_flow_subgraphs(
     }
   }
   for edge in positioned.edges {
-    let line_style = if state_layout_mode {
-      edge.style
-    } else {
-      EdgeStyle::Solid
-    }
+    let line_style = if state_layout_mode { edge.style } else { Solid }
     let (h_char, v_char) = flow_line_chars(line_style, options.use_ascii)
     let mut first_x = 0
     let mut first_y = 0
@@ -3124,9 +3099,9 @@ fn render_ascii_flow_subgraphs(
             )
             [
               Point::{ x: source_anchor_x, y: source_anchor_y },
-              Point::{ x: source_anchor_x, y: detour_y },
-              Point::{ x: target_anchor_x, y: detour_y },
-              Point::{ x: target_anchor_x, y: target_anchor_y },
+              { x: source_anchor_x, y: detour_y },
+              { x: target_anchor_x, y: detour_y },
+              { x: target_anchor_x, y: target_anchor_y },
             ]
           } else if labeled_left_descending_detour {
             let (sx, sy) = flow_edge_anchor(source_box, center_dx, 0, false)
@@ -3138,11 +3113,11 @@ fn render_ascii_flow_subgraphs(
             let shared_source_x = (source_box.left - 3).max(target_anchor_x + 1)
             let bend_y = (source_anchor_y + target_anchor_y) / 2 + 1
             flow_compact_route_points([
-              Point::{ x: source_anchor_x, y: source_anchor_y },
-              Point::{ x: shared_source_x, y: source_anchor_y },
-              Point::{ x: shared_source_x, y: bend_y },
-              Point::{ x: target_anchor_x, y: bend_y },
-              Point::{ x: target_anchor_x, y: target_anchor_y },
+              { x: source_anchor_x, y: source_anchor_y },
+              { x: shared_source_x, y: source_anchor_y },
+              { x: shared_source_x, y: bend_y },
+              { x: target_anchor_x, y: bend_y },
+              { x: target_anchor_x, y: target_anchor_y },
             ])
           } else if merge_primary_edge {
             let source_anchor = flow_edge_anchor(
@@ -3155,9 +3130,9 @@ fn render_ascii_flow_subgraphs(
             target_anchor_y = target_box.top + target_box.height / 2
             target_anchor_x = target_box.left
             [
-              Point::{ x: source_anchor_x, y: source_anchor_y },
-              Point::{ x: join_x, y: target_anchor_y },
-              Point::{ x: target_anchor_x, y: target_anchor_y },
+              { x: source_anchor_x, y: source_anchor_y },
+              { x: join_x, y: target_anchor_y },
+              { x: target_anchor_x, y: target_anchor_y },
             ]
           } else if merge_secondary_edge {
             let source_anchor = flow_edge_anchor(
@@ -3171,10 +3146,10 @@ fn render_ascii_flow_subgraphs(
             if source_anchor_y > target_anchor_y {
               let bend_y = (source_anchor_y + target_anchor_y) / 2 + 1
               flow_compact_route_points([
-                Point::{ x: source_anchor_x, y: source_anchor_y },
-                Point::{ x: source_anchor_x, y: bend_y },
-                Point::{ x: target_anchor_x, y: bend_y },
-                Point::{ x: target_anchor_x, y: target_anchor_y },
+                { x: source_anchor_x, y: source_anchor_y },
+                { x: source_anchor_x, y: bend_y },
+                { x: target_anchor_x, y: bend_y },
+                { x: target_anchor_x, y: target_anchor_y },
               ])
             } else {
               let secondary_horizontal_first = source_anchor_y < target_anchor_y
@@ -3287,11 +3262,7 @@ fn render_ascii_flow_subgraphs(
 
     match border_join_marker(start_dx, start_dy, false, options.use_ascii) {
       Some(marker) =>
-        border_overlays.push(AsciiArrowPlacement::{
-          x: source_anchor_x,
-          y: source_anchor_y,
-          marker,
-        })
+        border_overlays.push({ x: source_anchor_x, y: source_anchor_y, marker })
       None => ()
     }
     match edge.label {
@@ -3334,11 +3305,7 @@ fn render_ascii_flow_subgraphs(
               label_x, base_y, label, mapped_nodes, edge_label_overlays,
             )
           }
-          edge_label_overlays.push(AsciiEdgeLabelPlacement::{
-            x: label_x,
-            y: label_y,
-            label,
-          })
+          edge_label_overlays.push({ x: label_x, y: label_y, label })
         } else {
           let route_points = if non_state_route_points.length() >= 2 {
             non_state_route_points
@@ -3378,14 +3345,10 @@ fn render_ascii_flow_subgraphs(
       if state_layout_mode && options.use_ascii && dx < 0 && dy == 0 {
         arrow_x = target_anchor_x + 3
         for gap_x in (target_anchor_x + 1)..<arrow_x {
-          arrow_overlays.push(AsciiArrowPlacement::{
-            x: gap_x,
-            y: target_anchor_y,
-            marker: " ",
-          })
+          arrow_overlays.push({ x: gap_x, y: target_anchor_y, marker: " " })
         }
       }
-      arrow_overlays.push(AsciiArrowPlacement::{
+      arrow_overlays.push({
         x: arrow_x,
         y: arrow_y,
         marker: flow_arrow_marker(dx, dy, options.use_ascii),
@@ -3393,7 +3356,7 @@ fn render_ascii_flow_subgraphs(
     }
     if merge_primary_join_x >= 0 {
       let marker = if options.use_ascii { "+" } else { "┬" }
-      arrow_overlays.push(AsciiArrowPlacement::{
+      arrow_overlays.push({
         x: merge_primary_join_x,
         y: target_anchor_y,
         marker,
@@ -3402,7 +3365,7 @@ fn render_ascii_flow_subgraphs(
     if state_layout_mode && edge.has_arrow_start {
       let dx = -start_dx
       let dy = -start_dy
-      arrow_overlays.push(AsciiArrowPlacement::{
+      arrow_overlays.push({
         x: source_anchor_x + unit_step(dx),
         y: source_anchor_y + unit_step(dy),
         marker: flow_arrow_marker(dx, dy, options.use_ascii),
@@ -3451,28 +3414,28 @@ fn render_ascii_flow_subgraphs(
 ///|
 fn render_ascii(graph : MermaidGraph, options : AsciiRenderOptions) -> String {
   let lines : Array[String] = []
-  let sequence_mode = graph_is_shape(graph, NodeShape::SequenceParticipant)
+  let sequence_mode = graph_is_shape(graph, SequenceParticipant)
   if sequence_mode {
     return render_ascii_sequence(graph, options)
   }
-  let class_mode = graph_is_shape(graph, NodeShape::ClassEntity)
+  let class_mode = graph_is_shape(graph, ClassEntity)
   if class_mode {
     return render_ascii_class(graph, options)
   }
-  let er_mode = graph_is_shape(graph, NodeShape::ErEntity)
+  let er_mode = graph_is_shape(graph, ErEntity)
   if er_mode {
     return render_ascii_er(graph, options)
   }
-  let state_mode = graph_has_shape(graph, NodeShape::StateStart) ||
-    graph_has_shape(graph, NodeShape::StateEnd)
+  let state_mode = graph_has_shape(graph, StateStart) ||
+    graph_has_shape(graph, StateEnd)
   if state_mode {
-    let td_like_direction = graph.direction is (Direction::TD | Direction::TB)
+    let td_like_direction = graph.direction is (TD | TB)
     if td_like_direction {
       return render_ascii_state_flat_grid(graph, options)
     }
     return render_ascii_flow_subgraphs(graph, options)
   }
-  let td_like_direction = graph.direction is (Direction::TD | Direction::TB)
+  let td_like_direction = graph.direction is (TD | TB)
   if graph.subgraphs.length() == 0 && td_like_direction {
     return render_ascii_state_flat_grid(graph, options)
   }

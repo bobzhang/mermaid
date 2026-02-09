@@ -58,12 +58,12 @@ fn layout_state_grid_positions(
       continue
     }
     let highest = option_int_or(highest_position_by_level.get(0), 0)
-    positions[node.id] = LayoutStateGridCoord::{ x: highest, y: 0 }
+    positions[node.id] = { x: highest, y: 0 }
     highest_position_by_level[0] = highest + 4
   }
   if positions.length() == 0 && nodes_in_order.length() > 0 {
     let first_id = nodes_in_order[0].id
-    positions[first_id] = LayoutStateGridCoord::{ x: 0, y: 0 }
+    positions[first_id] = { x: 0, y: 0 }
     highest_position_by_level[0] = 4
   }
 
@@ -79,10 +79,7 @@ fn layout_state_grid_positions(
           if positions.contains(child_id) {
             continue
           }
-          positions[child_id] = LayoutStateGridCoord::{
-            x: highest,
-            y: child_level,
-          }
+          positions[child_id] = { x: highest, y: child_level }
           highest = highest + 4
         }
         highest_position_by_level[child_level] = highest
@@ -100,7 +97,7 @@ fn layout_state_grid_positions(
       highest_position_by_level.get(fallback_level),
       0,
     )
-    positions[node.id] = LayoutStateGridCoord::{ x: highest, y: fallback_level }
+    positions[node.id] = { x: highest, y: fallback_level }
     highest_position_by_level[fallback_level] = highest + 4
     fallback_level = fallback_level + 4
   }
@@ -129,7 +126,7 @@ fn layout_state_grid_blocked_cells(
   for _, position in positions {
     for y in position.y..<(position.y + 3) {
       for x in position.x..<(position.x + 3) {
-        blocked[ascii_grid_key(AsciiGridCoord::{ x, y })] = true
+        blocked[ascii_grid_key({ x, y })] = true
       }
     }
   }
@@ -295,7 +292,7 @@ fn layout_state_grid_coord_with_dir(
   coord : LayoutStateGridCoord,
   direction : LayoutStateEdgeDir,
 ) -> AsciiGridCoord {
-  AsciiGridCoord::{ x: coord.x + direction.x, y: coord.y + direction.y }
+  { x: coord.x + direction.x, y: coord.y + direction.y }
 }
 
 ///|
@@ -442,7 +439,7 @@ fn layout_state_grid_to_point(
   cell_x : Int,
   cell_y : Int,
 ) -> Point {
-  Point::{ x: origin_x + coord.x * cell_x, y: origin_y + coord.y * cell_y }
+  { x: origin_x + coord.x * cell_x, y: origin_y + coord.y * cell_y }
 }
 
 ///|
@@ -494,7 +491,7 @@ fn layout_state_label_position(
       let key = label_anchor_key(base)
       let slot = option_int_or(label_slots_by_anchor.get(key), 0)
       label_slots_by_anchor[key] = slot + 1
-      Some(Point::{
+      Some({
         x: base.x + label_overlap_offset_x(slot),
         y: base.y + label_overlap_offset(slot),
       })
@@ -515,7 +512,7 @@ fn layout_state_label_position_from_source_segment(
   let key = label_anchor_key(base)
   let slot = option_int_or(label_slots_by_anchor.get(key), 0)
   label_slots_by_anchor[key] = slot + 1
-  Some(Point::{
+  Some({
     x: base.x + label_overlap_offset_x(slot),
     y: base.y + label_overlap_offset(slot),
   })
@@ -551,7 +548,7 @@ fn layout_state_is_back_edge(
 
 ///|
 fn layout_state_empty_positioned_graph() -> PositionedGraph {
-  PositionedGraph::{
+  {
     width: 0,
     height: 0,
     nodes: [],
@@ -715,7 +712,7 @@ fn layout_flat_state_graph_for_ascii_grid(
             }
           None => None
         }
-        positioned_edges.push(PositionedEdge::{
+        positioned_edges.push({
           source: edge.source,
           target: edge.target,
           label: edge.label,
@@ -770,7 +767,7 @@ fn layout_flat_state_graph_for_ascii_grid(
   let shift_y = if global_min_y < padding { padding - global_min_y } else { 0 }
   if shift_x > 0 || shift_y > 0 {
     for i, node in positioned_nodes {
-      positioned_nodes[i] = PositionedNode::{
+      positioned_nodes[i] = {
         id: node.id,
         label: node.label,
         shape: node.shape,
@@ -784,17 +781,14 @@ fn layout_flat_state_graph_for_ascii_grid(
     for i, edge in positioned_edges {
       let shifted_points : Array[Point] = []
       for point in edge.points {
-        shifted_points.push(Point::{
-          x: point.x + shift_x,
-          y: point.y + shift_y,
-        })
+        shifted_points.push({ x: point.x + shift_x, y: point.y + shift_y })
       }
       let shifted_label = match edge.label_position {
         Some(position) =>
           Some(Point::{ x: position.x + shift_x, y: position.y + shift_y })
         None => None
       }
-      positioned_edges[i] = PositionedEdge::{
+      positioned_edges[i] = {
         source: edge.source,
         target: edge.target,
         label: edge.label,
@@ -811,7 +805,7 @@ fn layout_flat_state_graph_for_ascii_grid(
     }
   }
 
-  PositionedGraph::{
+  {
     width: global_max_x + shift_x + padding,
     height: global_max_y + shift_y + padding,
     nodes: positioned_nodes,

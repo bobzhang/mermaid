@@ -1,4 +1,5 @@
 ///|
+/// Public function `normalize_whitespace`.
 pub fn normalize_whitespace(text : String) -> String {
   let lines = text
     .split("\n")
@@ -23,11 +24,13 @@ pub fn normalize_whitespace(text : String) -> String {
 }
 
 ///|
+/// Public function `contains_all`.
 pub fn contains_all(haystack : String, needles : Array[String]) -> Bool {
   needles.all(needle => haystack.contains(needle))
 }
 
 ///|
+/// Public function `count_occurrences`.
 pub fn count_occurrences(haystack : String, needle : String) -> Int {
   if needle == "" {
     return 0
@@ -49,6 +52,7 @@ pub fn count_occurrences(haystack : String, needle : String) -> Int {
 }
 
 ///|
+/// Public function `svg_attr_int`.
 pub fn svg_attr_int(svg : String, attr : String) -> Int? {
   let marker = "\{attr}=\""
   match svg.find(marker) {

@@ -1,10 +1,12 @@
 ///|
+/// Public type `MermaidError`.
 pub(all) suberror MermaidError {
   ParseFailure(String)
   UnknownTheme(String)
 } derive(Eq, Show, ToJson)
 
 ///|
+/// Public type `Direction`.
 pub enum Direction {
   TD
   TB
@@ -14,6 +16,7 @@ pub enum Direction {
 } derive(Eq, Show, ToJson)
 
 ///|
+/// Public type `NodeShape`.
 pub enum NodeShape {
   Rectangle
   Rounded
@@ -35,6 +38,7 @@ pub enum NodeShape {
 } derive(Eq, Show, ToJson)
 
 ///|
+/// Public type `EdgeStyle`.
 pub enum EdgeStyle {
   Solid
   Dotted
@@ -42,6 +46,7 @@ pub enum EdgeStyle {
 } derive(Eq, Show, ToJson)
 
 ///|
+/// Public type `MermaidNode`.
 pub struct MermaidNode {
   id : String
   label : String
@@ -49,6 +54,7 @@ pub struct MermaidNode {
 } derive(Eq, Show, ToJson)
 
 ///|
+/// Public type `MermaidEdge`.
 pub struct MermaidEdge {
   source : String
   target : String
@@ -60,6 +66,7 @@ pub struct MermaidEdge {
 } derive(Eq, Show, ToJson)
 
 ///|
+/// Public type `MermaidSubgraph`.
 pub struct MermaidSubgraph {
   id : String
   label : String
@@ -69,6 +76,7 @@ pub struct MermaidSubgraph {
 } derive(Eq, Show, ToJson)
 
 ///|
+/// Create a new value.
 pub fn MermaidSubgraph::new(
   id : String,
   label : String,
@@ -80,12 +88,14 @@ pub fn MermaidSubgraph::new(
 }
 
 ///|
+/// Public type `SequenceParticipantKind`.
 pub enum SequenceParticipantKind {
   Participant
   Actor
 } derive(Eq, Show, ToJson)
 
 ///|
+/// Public type `SequenceBlockType`.
 pub enum SequenceBlockType {
   Loop
   Alt
@@ -97,12 +107,14 @@ pub enum SequenceBlockType {
 } derive(Eq, Show, ToJson)
 
 ///|
+/// Public type `SequenceBlockDivider`.
 pub struct SequenceBlockDivider {
   index : Int
   label : String
 } derive(Eq, Show, ToJson)
 
 ///|
+/// Public type `SequenceBlock`.
 pub struct SequenceBlock {
   block_type : SequenceBlockType
   label : String
@@ -112,6 +124,7 @@ pub struct SequenceBlock {
 } derive(Eq, Show, ToJson)
 
 ///|
+/// Public type `SequenceNotePosition`.
 pub enum SequenceNotePosition {
   Left
   Right
@@ -119,6 +132,7 @@ pub enum SequenceNotePosition {
 } derive(Eq, Show, ToJson)
 
 ///|
+/// Public type `SequenceNote`.
 pub struct SequenceNote {
   actor_ids : Array[String]
   text : String
@@ -127,6 +141,7 @@ pub struct SequenceNote {
 } derive(Eq, Show, ToJson)
 
 ///|
+/// Public type `SequenceActivationCommand`.
 pub struct SequenceActivationCommand {
   actor_id : String
   activate : Bool
@@ -134,6 +149,7 @@ pub struct SequenceActivationCommand {
 } derive(Eq, Show, ToJson)
 
 ///|
+/// Public type `MermaidGraph`.
 pub struct MermaidGraph {
   direction : Direction
   nodes : Map[String, MermaidNode]
@@ -150,6 +166,7 @@ pub struct MermaidGraph {
 } derive(Eq, Show, ToJson)
 
 ///|
+/// Public type `DiagramColors`.
 pub struct DiagramColors {
   bg : String
   fg : String
@@ -161,6 +178,7 @@ pub struct DiagramColors {
 } derive(Eq, Show, ToJson)
 
 ///|
+/// Return the default value for this type.
 pub fn DiagramColors::default() -> DiagramColors {
   {
     bg: "#FFFFFF",
@@ -174,6 +192,7 @@ pub fn DiagramColors::default() -> DiagramColors {
 }
 
 ///|
+/// Public type `RenderOptions`.
 pub(all) struct RenderOptions {
   bg : String?
   fg : String?
@@ -190,6 +209,7 @@ pub(all) struct RenderOptions {
 } derive(Eq, Show, ToJson)
 
 ///|
+/// Return the default value for this type.
 pub fn RenderOptions::default() -> RenderOptions {
   {
     bg: None,
@@ -208,6 +228,7 @@ pub fn RenderOptions::default() -> RenderOptions {
 }
 
 ///|
+/// Public type `AsciiRenderOptions`.
 pub(all) struct AsciiRenderOptions {
   use_ascii : Bool
   padding_x : Int
@@ -216,17 +237,20 @@ pub(all) struct AsciiRenderOptions {
 } derive(Eq, Show, ToJson)
 
 ///|
+/// Return the default value for this type.
 pub fn AsciiRenderOptions::default() -> AsciiRenderOptions {
   { use_ascii: false, padding_x: 5, padding_y: 5, box_border_padding: 1 }
 }
 
 ///|
+/// Public type `Point`.
 pub struct Point {
   x : Int
   y : Int
 } derive(Eq, Show, ToJson)
 
 ///|
+/// Public type `PositionedNode`.
 pub struct PositionedNode {
   id : String
   label : String
@@ -239,6 +263,7 @@ pub struct PositionedNode {
 } derive(Eq, Show, ToJson)
 
 ///|
+/// Public type `PositionedEdge`.
 pub struct PositionedEdge {
   source : String
   target : String
@@ -252,6 +277,7 @@ pub struct PositionedEdge {
 } derive(Eq, Show, ToJson)
 
 ///|
+/// Public type `PositionedGroup`.
 pub struct PositionedGroup {
   id : String
   label : String
@@ -263,6 +289,7 @@ pub struct PositionedGroup {
 } derive(Eq, Show, ToJson)
 
 ///|
+/// Create a new value.
 pub fn PositionedGroup::new(
   id : String,
   label : String,
@@ -276,6 +303,7 @@ pub fn PositionedGroup::new(
 }
 
 ///|
+/// Public type `PositionedSequenceLifeline`.
 pub struct PositionedSequenceLifeline {
   actor_id : String
   x : Int
@@ -284,6 +312,7 @@ pub struct PositionedSequenceLifeline {
 } derive(Eq, Show, ToJson)
 
 ///|
+/// Public type `PositionedSequenceActivation`.
 pub struct PositionedSequenceActivation {
   actor_id : String
   x : Int
@@ -293,12 +322,14 @@ pub struct PositionedSequenceActivation {
 } derive(Eq, Show, ToJson)
 
 ///|
+/// Public type `PositionedSequenceBlockDivider`.
 pub struct PositionedSequenceBlockDivider {
   y : Int
   label : String
 } derive(Eq, Show, ToJson)
 
 ///|
+/// Public type `PositionedSequenceBlock`.
 pub struct PositionedSequenceBlock {
   block_type : SequenceBlockType
   label : String
@@ -310,6 +341,7 @@ pub struct PositionedSequenceBlock {
 } derive(Eq, Show, ToJson)
 
 ///|
+/// Public type `PositionedSequenceNote`.
 pub struct PositionedSequenceNote {
   text : String
   x : Int
@@ -319,6 +351,7 @@ pub struct PositionedSequenceNote {
 } derive(Eq, Show, ToJson)
 
 ///|
+/// Public type `PositionedGraph`.
 pub struct PositionedGraph {
   width : Int
   height : Int

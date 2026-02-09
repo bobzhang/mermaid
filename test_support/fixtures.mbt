@@ -1,4 +1,5 @@
 ///|
+/// Public type `CorpusCase`.
 pub struct CorpusCase {
   name : String
   input : String
@@ -15,6 +16,7 @@ pub struct CorpusCase {
 } derive(Eq, Show, ToJson)
 
 ///|
+/// Public function `corpus_cases`.
 pub fn corpus_cases() -> Array[CorpusCase] {
   [
     {
@@ -1099,16 +1101,19 @@ pub fn corpus_cases() -> Array[CorpusCase] {
 }
 
 ///|
+/// Public function `supported_cases`.
 pub fn supported_cases() -> Array[CorpusCase] {
   corpus_cases().filter(case_data => case_data.supported_by_moonbit)
 }
 
 ///|
+/// Public function `supported_ascii_cases`.
 pub fn supported_ascii_cases() -> Array[CorpusCase] {
   supported_cases().filter(case_data => case_data.expected_ascii is Some(_))
 }
 
 ///|
+/// Public function `supported_unicode_cases`.
 pub fn supported_unicode_cases() -> Array[CorpusCase] {
   supported_cases().filter(case_data => case_data.expected_unicode is Some(_))
 }

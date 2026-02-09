@@ -40,7 +40,7 @@ test "ASCII flowchart corpus keeps node labels visible" {
       fail("expected at least one node for \{case_data.name}")
     }
 
-    let output = try! @beautiful_mermaid.render_mermaid_ascii(case_data.input, options=@beautiful_mermaid.AsciiRenderOptions::{
+    let output = try! @beautiful_mermaid.render_mermaid_ascii(case_data.input, options={
       use_ascii: true,
       padding_x: case_data.padding_x,
       padding_y: case_data.padding_y,
@@ -64,7 +64,7 @@ test "Unicode flowchart corpus keeps node labels visible" {
       fail("expected at least one node for \{case_data.name}")
     }
 
-    let output = try! @beautiful_mermaid.render_mermaid_ascii(case_data.input, options=@beautiful_mermaid.AsciiRenderOptions::{
+    let output = try! @beautiful_mermaid.render_mermaid_ascii(case_data.input, options={
       use_ascii: false,
       padding_x: case_data.padding_x,
       padding_y: case_data.padding_y,

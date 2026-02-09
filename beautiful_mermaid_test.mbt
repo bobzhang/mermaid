@@ -39,7 +39,7 @@ test "default_colors matches DiagramColors default" {
 
 ///|
 test "render_mermaid_with_colors applies theme colors by default" (
-  it : @test.Test
+  it : @test.Test,
 ) {
   let colors = match @beautiful_mermaid.theme_by_name("tokyo-night") {
     Some(found) => found
@@ -105,7 +105,7 @@ test "merge_options_with_colors preserves explicit overrides" {
 
 ///|
 test "render_mermaid_with_colors keeps explicit option overrides" (
-  it : @test.Test
+  it : @test.Test,
 ) {
   let colors = match @beautiful_mermaid.theme_by_name("tokyo-night") {
     Some(found) => found
@@ -150,7 +150,7 @@ test "render_mermaid_with_theme_name applies built-in theme" (it : @test.Test) {
 
 ///|
 test "render_mermaid_with_theme_name normalizes user theme input" (
-  it : @test.Test
+  it : @test.Test,
 ) {
   let svg = try! @beautiful_mermaid.render_mermaid_with_theme_name(
     "graph TD\nA --> B", "TOKYO   NIGHT",
@@ -163,9 +163,7 @@ test "render_mermaid_with_theme_name normalizes user theme input" (
 }
 
 ///|
-test "render_mermaid_with_theme_name accepts default alias" (
-  it : @test.Test
-) {
+test "render_mermaid_with_theme_name accepts default alias" (it : @test.Test) {
   let svg = try! @beautiful_mermaid.render_mermaid_with_theme_name(
     "graph TD\nA --> B", "default",
   )
@@ -175,9 +173,7 @@ test "render_mermaid_with_theme_name accepts default alias" (
 }
 
 ///|
-test "render_mermaid_with_theme applies enum theme directly" (
-  it : @test.Test
-) {
+test "render_mermaid_with_theme applies enum theme directly" (it : @test.Test) {
   let theme = match @beautiful_mermaid.parse_theme_name("tokyo-night") {
     Some(found) => found
     None => fail("failed to parse tokyo-night theme")
@@ -200,8 +196,7 @@ test "render_mermaid_with_theme_name rejects unknown theme" {
     Ok(_) => fail("expected unknown theme to fail")
     Err(err) =>
       match err {
-        @beautiful_mermaid.MermaidError::UnknownTheme(name) =>
-          assert_eq(name, "moonbit-neon")
+        UnknownTheme(name) => assert_eq(name, "moonbit-neon")
         _ => fail("expected UnknownTheme error")
       }
   }
@@ -216,8 +211,7 @@ test "render_mermaid_with_theme_name unknown error keeps original input" {
     Ok(_) => fail("expected unknown theme to fail")
     Err(err) =>
       match err {
-        @beautiful_mermaid.MermaidError::UnknownTheme(name) =>
-          assert_eq(name, "  moonbit   neon  ")
+        UnknownTheme(name) => assert_eq(name, "  moonbit   neon  ")
         _ => fail("expected UnknownTheme error")
       }
   }

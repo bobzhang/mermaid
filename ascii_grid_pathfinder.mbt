@@ -18,10 +18,10 @@ fn ascii_grid_key(coord : AsciiGridCoord) -> String {
 ///|
 fn ascii_grid_neighbors(coord : AsciiGridCoord) -> Array[AsciiGridCoord] {
   [
-    AsciiGridCoord::{ x: coord.x + 1, y: coord.y },
-    AsciiGridCoord::{ x: coord.x - 1, y: coord.y },
-    AsciiGridCoord::{ x: coord.x, y: coord.y + 1 },
-    AsciiGridCoord::{ x: coord.x, y: coord.y - 1 },
+    { x: coord.x + 1, y: coord.y },
+    { x: coord.x - 1, y: coord.y },
+    { x: coord.x, y: coord.y + 1 },
+    { x: coord.x, y: coord.y - 1 },
   ]
 }
 
@@ -158,9 +158,7 @@ fn ascii_grid_pathfind(
     return Some([start])
   }
 
-  let frontier : Array[AsciiGridFrontierEntry] = [
-    AsciiGridFrontierEntry::{ coord: start, priority: 0 },
-  ]
+  let frontier : Array[AsciiGridFrontierEntry] = [{ coord: start, priority: 0 }]
 
   let cost_so_far : Map[String, Int] = {}
   cost_so_far[ascii_grid_key(start)] = 0
@@ -197,10 +195,7 @@ fn ascii_grid_pathfind(
         cost_so_far[next_key] = new_cost
         came_from[next_key] = current
         let next_priority = new_cost + ascii_grid_heuristic(next, end)
-        ascii_grid_heap_push(frontier, AsciiGridFrontierEntry::{
-          coord: next,
-          priority: next_priority,
-        })
+        ascii_grid_heap_push(frontier, { coord: next, priority: next_priority })
       }
     }
   }

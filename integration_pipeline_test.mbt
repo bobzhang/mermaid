@@ -46,7 +46,7 @@ fn collect_edge_label_rects(svg : String) -> Array[EdgeLabelRect] {
                 @test_support.svg_attr_int(snippet, "height"),
               ) {
               (Some(x), Some(y), Some(width), Some(height)) =>
-                rects.push(EdgeLabelRect::{ x, y, width, height })
+                rects.push({ x, y, width, height })
               _ => ()
             }
             offset = start + close_idx + 2
@@ -96,13 +96,13 @@ test "Flowchart BT direction renders across text and SVG modes" (
 ) {
   let input = "graph BT\nA[Start] --> B[Middle] --> C[End]"
 
-  let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
+  let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: true,
     padding_x: 5,
     padding_y: 5,
     box_border_padding: 1,
   })
-  let unicode = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
+  let unicode = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: false,
     padding_x: 5,
     padding_y: 5,
@@ -128,13 +128,13 @@ test "Flowchart RL direction renders across text and SVG modes" (
 ) {
   let input = "graph RL\nA[Origin] --> B[Pivot] --> C[Target]"
 
-  let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
+  let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: true,
     padding_x: 5,
     padding_y: 5,
     box_border_padding: 1,
   })
-  let unicode = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
+  let unicode = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: false,
     padding_x: 5,
     padding_y: 5,
@@ -243,13 +243,13 @@ test "Flowchart chained labeled edges render across text and SVG modes" (
 ) {
   let input = "graph LR\nA[One] -->|first| B[Two] -->|second| C[Three] -->|third| D[Four]"
 
-  let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
+  let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: true,
     padding_x: 5,
     padding_y: 5,
     box_border_padding: 1,
   })
-  let unicode = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
+  let unicode = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: false,
     padding_x: 5,
     padding_y: 5,
@@ -367,13 +367,13 @@ test "Subgraph direction override renders across text and SVG modes" (
 ) {
   let input = "graph TD\nsubgraph FE [Frontend]\n  direction LR\n  A[Web] --> B[API]\nend\nsubgraph BE [Backend]\n  C[Service] --> D[(DB)]\nend\nB --> C"
 
-  let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
+  let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: true,
     padding_x: 5,
     padding_y: 5,
     box_border_padding: 1,
   })
-  let unicode = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
+  let unicode = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: false,
     padding_x: 5,
     padding_y: 5,
@@ -506,13 +506,13 @@ test "Flowchart no-arrow edges render across text and SVG modes" (
 ) {
   let input = "graph TD\nA[Client] --- B[Cache] --- C[Backend]"
 
-  let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
+  let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: true,
     padding_x: 5,
     padding_y: 5,
     box_border_padding: 1,
   })
-  let unicode = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
+  let unicode = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: false,
     padding_x: 5,
     padding_y: 5,
@@ -549,13 +549,13 @@ test "Flowchart bidirectional edges render across text and SVG modes" (
 ) {
   let input = "graph TD\nA[North] <--> B[South]"
 
-  let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
+  let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: true,
     padding_x: 5,
     padding_y: 5,
     box_border_padding: 1,
   })
-  let unicode = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
+  let unicode = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: false,
     padding_x: 5,
     padding_y: 5,
@@ -591,13 +591,13 @@ test "Flowchart ampersand fan-in renders across text and SVG modes" (
 ) {
   let input = "graph LR\nA[Web] & B[Mobile] --> C[API]\nC --> D[(Database)]"
 
-  let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
+  let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: true,
     padding_x: 5,
     padding_y: 5,
     box_border_padding: 1,
   })
-  let unicode = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
+  let unicode = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: false,
     padding_x: 5,
     padding_y: 5,
@@ -627,13 +627,13 @@ test "Flowchart nested subgraphs render across text and SVG modes" (
 ) {
   let input = "graph TD\nsubgraph Outer\n  subgraph Inner\n    A[API] --> B[DB]\n  end\nend\nB --> C[Client]"
 
-  let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
+  let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: true,
     padding_x: 5,
     padding_y: 5,
     box_border_padding: 1,
   })
-  let unicode = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
+  let unicode = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: false,
     padding_x: 5,
     padding_y: 5,
@@ -675,13 +675,13 @@ test "Flowchart inline style overrides keep text parity and affect SVG" (
 ) {
   let input = "graph TD\nA[Red Node] --> B[Blue Node]\nstyle A fill:#ff0000,stroke:#cc0000\nstyle B fill:#0000ff,stroke:#0000cc"
 
-  let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
+  let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: true,
     padding_x: 5,
     padding_y: 5,
     box_border_padding: 1,
   })
-  let unicode = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
+  let unicode = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: false,
     padding_x: 5,
     padding_y: 5,
@@ -708,13 +708,13 @@ test "Flowchart classDef shorthand renders across text and SVG modes" (
 ) {
   let input = "graph TD\nA[Start]:::entry --> B[End]\nclassDef entry fill:#f9f,stroke:#333,color:#111"
 
-  let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
+  let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: true,
     padding_x: 5,
     padding_y: 5,
     box_border_padding: 1,
   })
-  let unicode = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
+  let unicode = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: false,
     padding_x: 5,
     padding_y: 5,
@@ -773,13 +773,13 @@ test "State multiple pseudostates render across text and SVG modes" (
 ) {
   let input = "stateDiagram-v2\n[*] --> A\n[*] --> B\nA --> [*]\nB --> [*]"
 
-  let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
+  let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: true,
     padding_x: 5,
     padding_y: 5,
     box_border_padding: 1,
   })
-  let unicode = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
+  let unicode = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: false,
     padding_x: 5,
     padding_y: 5,
@@ -832,13 +832,13 @@ test "State description lines render across text and SVG modes" (
 ) {
   let input = "stateDiagram-v2\ns1 : Idle State\ns1 --> s2 : proceed"
 
-  let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
+  let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: true,
     padding_x: 5,
     padding_y: 5,
     box_border_padding: 1,
   })
-  let unicode = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
+  let unicode = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: false,
     padding_x: 5,
     padding_y: 5,
@@ -859,13 +859,13 @@ test "State description lines render across text and SVG modes" (
 test "State direction LR renders across text and SVG modes" (it : @test.Test) {
   let input = "stateDiagram-v2\ndirection LR\nIdle --> Active\nActive --> Done"
 
-  let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
+  let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: true,
     padding_x: 5,
     padding_y: 5,
     box_border_padding: 1,
   })
-  let unicode = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
+  let unicode = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: false,
     padding_x: 5,
     padding_y: 5,
@@ -891,13 +891,13 @@ test "State transition labels render across text and SVG modes" (
 ) {
   let input = "stateDiagram-v2\nIdle --> Active : start\nActive --> Busy : process\nBusy --> Done : finish"
 
-  let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
+  let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: true,
     padding_x: 5,
     padding_y: 5,
     box_border_padding: 1,
   })
-  let unicode = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
+  let unicode = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: false,
     padding_x: 5,
     padding_y: 5,
@@ -932,13 +932,13 @@ test "State composite direction override renders across text and SVG modes" (
 ) {
   let input = "stateDiagram-v2\n[*] --> Processing\nstate Processing {\n  direction LR\n  parse --> validate\n  validate --> execute\n}\nProcessing --> Done"
 
-  let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
+  let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: true,
     padding_x: 5,
     padding_y: 5,
     box_border_padding: 1,
   })
-  let unicode = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
+  let unicode = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: false,
     padding_x: 5,
     padding_y: 5,
@@ -970,13 +970,13 @@ test "State alias declarations render across text and SVG modes" (
 ) {
   let input = "stateDiagram-v2\nstate \"Waiting for input\" as waiting\nwaiting --> active : trigger"
 
-  let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
+  let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: true,
     padding_x: 5,
     padding_y: 5,
     box_border_padding: 1,
   })
-  let unicode = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
+  let unicode = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: false,
     padding_x: 5,
     padding_y: 5,
@@ -1002,13 +1002,13 @@ test "State composite alias blocks render across text and SVG modes" (
 ) {
   let input = "stateDiagram-v2\nstate \"Active Processing\" as AP {\n  parse --> validate\n}\nAP --> Done : finish"
 
-  let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
+  let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: true,
     padding_x: 5,
     padding_y: 5,
     box_border_padding: 1,
   })
-  let unicode = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
+  let unicode = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: false,
     padding_x: 5,
     padding_y: 5,
@@ -1106,7 +1106,7 @@ test "ASCII and Unicode modes differ" {
 test "ASCII mode avoids Unicode box drawing glyphs" {
   let output = try! @beautiful_mermaid.render_mermaid_ascii(
     "graph LR\nA --> B",
-    options=@beautiful_mermaid.AsciiRenderOptions::{
+    options={
       use_ascii: true,
       padding_x: 5,
       padding_y: 5,
@@ -1123,7 +1123,7 @@ test "ASCII mode avoids Unicode box drawing glyphs" {
 test "Unicode mode emits box drawing glyphs" {
   let output = try! @beautiful_mermaid.render_mermaid_ascii(
     "graph LR\nA --> B",
-    options=@beautiful_mermaid.AsciiRenderOptions::{
+    options={
       use_ascii: false,
       padding_x: 5,
       padding_y: 5,
@@ -1142,13 +1142,13 @@ test "Standalone sequence activate/deactivate lines are ignored for rendering pa
 ) {
   let input = "sequenceDiagram\nparticipant A\nparticipant B\nactivate A\nA->>B: Work\ndeactivate A"
 
-  let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
+  let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: true,
     padding_x: 5,
     padding_y: 5,
     box_border_padding: 1,
   })
-  let unicode = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
+  let unicode = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: false,
     padding_x: 5,
     padding_y: 5,
@@ -1172,13 +1172,13 @@ test "SVG renders sequence self-message labels with participant aliases" (
 ) {
   let input = "sequenceDiagram\nparticipant A as App\nA->>A: Retry"
 
-  let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
+  let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: true,
     padding_x: 5,
     padding_y: 5,
     box_border_padding: 1,
   })
-  let unicode = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
+  let unicode = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: false,
     padding_x: 5,
     padding_y: 5,
@@ -1201,13 +1201,13 @@ test "Sequence alt/else block renders across text and SVG modes" (
 ) {
   let input = "sequenceDiagram\nparticipant C as Client\nparticipant S as Server\nC->>S: Request\nalt OK\nS-->>C: 200\nelse Fail\nS-->>C: 500\nend"
 
-  let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
+  let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: true,
     padding_x: 5,
     padding_y: 5,
     box_border_padding: 1,
   })
-  let unicode = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
+  let unicode = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: false,
     padding_x: 5,
     padding_y: 5,
@@ -1237,13 +1237,13 @@ test "Sequence alt/else block renders across text and SVG modes" (
 test "Sequence loop block renders across text and SVG modes" (it : @test.Test) {
   let input = "sequenceDiagram\nparticipant W as Worker\nparticipant Q as Queue\nloop Retry every 5s\nW->>Q: Poll\nQ-->>W: Empty\nend"
 
-  let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
+  let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: true,
     padding_x: 5,
     padding_y: 5,
     box_border_padding: 1,
   })
-  let unicode = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
+  let unicode = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: false,
     padding_x: 5,
     padding_y: 5,
@@ -1273,13 +1273,13 @@ test "Sequence self-message loop renders across text and SVG modes" (
 ) {
   let input = "sequenceDiagram\nparticipant W as Worker\nloop Retry\nW->>W: Check cache\nend"
 
-  let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
+  let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: true,
     padding_x: 5,
     padding_y: 5,
     box_border_padding: 1,
   })
-  let unicode = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
+  let unicode = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: false,
     padding_x: 5,
     padding_y: 5,
@@ -1301,13 +1301,13 @@ test "Sequence self-message loop renders across text and SVG modes" (
 test "Sequence opt block renders across text and SVG modes" (it : @test.Test) {
   let input = "sequenceDiagram\nparticipant C as Client\nparticipant API\nC->>API: Fetch profile\nopt Cache hit\nAPI-->>C: 304 Not Modified\nend"
 
-  let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
+  let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: true,
     padding_x: 5,
     padding_y: 5,
     box_border_padding: 1,
   })
-  let unicode = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
+  let unicode = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: false,
     padding_x: 5,
     padding_y: 5,
@@ -1335,13 +1335,13 @@ test "Sequence opt block renders across text and SVG modes" (it : @test.Test) {
 test "Sequence note-over renders across text and SVG modes" (it : @test.Test) {
   let input = "sequenceDiagram\nparticipant A as API\nparticipant B as DB\nA->>B: Query\nNote over A,B: cache miss\nB-->>A: Result"
 
-  let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
+  let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: true,
     padding_x: 5,
     padding_y: 5,
     box_border_padding: 1,
   })
-  let unicode = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
+  let unicode = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: false,
     padding_x: 5,
     padding_y: 5,
@@ -1369,13 +1369,13 @@ test "Sequence note-left-right renders across text and SVG modes" (
 ) {
   let input = "sequenceDiagram\nparticipant A as App\nparticipant B as Backend\nA->>B: Request\nNote left of A: queued\nNote right of B: processing\nB-->>A: Done"
 
-  let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
+  let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: true,
     padding_x: 5,
     padding_y: 5,
     box_border_padding: 1,
   })
-  let unicode = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
+  let unicode = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: false,
     padding_x: 5,
     padding_y: 5,
@@ -1408,13 +1408,13 @@ test "Sequence critical/option block renders across text and SVG modes" (
 ) {
   let input = "sequenceDiagram\nparticipant S as Service\nparticipant DB as Database\nS->>DB: Begin\ncritical Commit transaction\nS->>DB: write row\noption Timeout\nDB-->>S: timeout\noption Success\nDB-->>S: ok\nend"
 
-  let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
+  let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: true,
     padding_x: 5,
     padding_y: 5,
     box_border_padding: 1,
   })
-  let unicode = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
+  let unicode = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: false,
     padding_x: 5,
     padding_y: 5,
@@ -1449,13 +1449,13 @@ test "Sequence par/and block renders across text and SVG modes" (
 ) {
   let input = "sequenceDiagram\nparticipant C as Client\nparticipant API\nparticipant DB\npar Request API\nC->>API: /items\nand Write audit\nAPI->>DB: INSERT audit\nend\nAPI-->>C: 200"
 
-  let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
+  let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: true,
     padding_x: 5,
     padding_y: 5,
     box_border_padding: 1,
   })
-  let unicode = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
+  let unicode = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: false,
     padding_x: 5,
     padding_y: 5,
@@ -1490,13 +1490,13 @@ test "Sequence activation markers render across text and SVG modes" (
 ) {
   let input = "sequenceDiagram\nparticipant U as User\nparticipant S as Server\nU->>+S: Request\nS-->>-U: Response"
 
-  let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
+  let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: true,
     padding_x: 5,
     padding_y: 5,
     box_border_padding: 1,
   })
-  let unicode = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
+  let unicode = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: false,
     padding_x: 5,
     padding_y: 5,
@@ -1526,13 +1526,13 @@ test "Sequence actor declarations render across text and SVG modes" (
 ) {
   let input = "sequenceDiagram\nactor U as User\nactor S as Service\nU->>S: Login\nS-->>U: Token"
 
-  let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
+  let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: true,
     padding_x: 5,
     padding_y: 5,
     box_border_padding: 1,
   })
-  let unicode = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
+  let unicode = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: false,
     padding_x: 5,
     padding_y: 5,
@@ -1562,13 +1562,13 @@ test "Sequence mixed arrow operators render across text and SVG modes" (
 ) {
   let input = "sequenceDiagram\nparticipant A\nparticipant B\nA->B: Open\nB--)A: Dotted Open\nA-->>B: Filled"
 
-  let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
+  let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: true,
     padding_x: 5,
     padding_y: 5,
     box_border_padding: 1,
   })
-  let unicode = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
+  let unicode = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: false,
     padding_x: 5,
     padding_y: 5,
@@ -1596,13 +1596,13 @@ test "Class inheritance labels render across text and SVG modes" (
 ) {
   let input = "classDiagram\nclass Shape {\n<<abstract>>\n+draw() void\n}\nclass Circle {\n+radius int\n+draw() void\n}\nShape <|-- Circle : inherits"
 
-  let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
+  let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: true,
     padding_x: 5,
     padding_y: 5,
     box_border_padding: 1,
   })
-  let unicode = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
+  let unicode = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: false,
     padding_x: 5,
     padding_y: 5,
@@ -1628,13 +1628,13 @@ test "Class abstract annotation renders across text and SVG modes" (
 ) {
   let input = "classDiagram\nclass Service {\n<<abstract>>\n+run() void\n}\nclass Worker {\n+run() void\n}\nService <|-- Worker"
 
-  let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
+  let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: true,
     padding_x: 5,
     padding_y: 5,
     box_border_padding: 1,
   })
-  let unicode = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
+  let unicode = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: false,
     padding_x: 5,
     padding_y: 5,
@@ -1663,13 +1663,13 @@ test "Class interface realization renders across text and SVG modes" (
 ) {
   let input = "classDiagram\nclass Flyable {\n<<interface>>\n+fly() void\n}\nclass Bird {\n+fly() void\n}\nBird ..|> Flyable : implements"
 
-  let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
+  let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: true,
     padding_x: 5,
     padding_y: 5,
     box_border_padding: 1,
   })
-  let unicode = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
+  let unicode = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: false,
     padding_x: 5,
     padding_y: 5,
@@ -1696,13 +1696,13 @@ test "Class interface realization renders across text and SVG modes" (
 test "Class enum annotation renders across text and SVG modes" (it : @test.Test) {
   let input = "classDiagram\nclass Status {\n<<enum>>\n+OPEN\n+CLOSED\n}\nStatus --> Ticket : labels"
 
-  let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
+  let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: true,
     padding_x: 5,
     padding_y: 5,
     box_border_padding: 1,
   })
-  let unicode = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
+  let unicode = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: false,
     padding_x: 5,
     padding_y: 5,
@@ -1733,13 +1733,13 @@ test "Class visibility members render across text and SVG modes" (
 ) {
   let input = "classDiagram\nclass User {\n+int id\n-string secret\n#string name\n+login() bool\n}"
 
-  let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
+  let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: true,
     padding_x: 5,
     padding_y: 5,
     box_border_padding: 1,
   })
-  let unicode = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
+  let unicode = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: false,
     padding_x: 5,
     padding_y: 5,
@@ -1771,13 +1771,13 @@ test "Class relationship set renders across text and SVG modes" (
 ) {
   let input = "classDiagram\nA <|-- B : inh\nC *-- D : own\nE o-- F : has\nG --> H : use\nI ..> J : dep\nK ..|> L : imp"
 
-  let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
+  let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: true,
     padding_x: 5,
     padding_y: 5,
     box_border_padding: 1,
   })
-  let unicode = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
+  let unicode = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: false,
     padding_x: 5,
     padding_y: 5,
@@ -1814,13 +1814,13 @@ test "ER entities and relationship labels render across text and SVG modes" (
 ) {
   let input = "erDiagram\nCUSTOMER {\n  int id PK\n  string email UK\n}\nORDER {\n  int id PK\n  int customer_id FK\n}\nCUSTOMER ||--o{ ORDER : places"
 
-  let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
+  let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: true,
     padding_x: 5,
     padding_y: 5,
     box_border_padding: 1,
   })
-  let unicode = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
+  let unicode = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: false,
     padding_x: 5,
     padding_y: 5,
@@ -1848,13 +1848,13 @@ test "ER entities and relationship labels render across text and SVG modes" (
 test "ER attribute keys render across text and SVG modes" (it : @test.Test) {
   let input = "erDiagram\nUSER {\n  int id PK\n  int role_id FK\n  string email UK\n}"
 
-  let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
+  let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: true,
     padding_x: 5,
     padding_y: 5,
     box_border_padding: 1,
   })
-  let unicode = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
+  let unicode = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: false,
     padding_x: 5,
     padding_y: 5,
@@ -1886,13 +1886,13 @@ test "ER identifying and non-identifying edges render across text and SVG modes"
 ) {
   let input = "erDiagram\nUSER ||--o{ ORDER : places\nUSER ||..o{ LOG : generates"
 
-  let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
+  let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: true,
     padding_x: 5,
     padding_y: 5,
     box_border_padding: 1,
   })
-  let unicode = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
+  let unicode = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: false,
     padding_x: 5,
     padding_y: 5,
@@ -1923,13 +1923,13 @@ test "ER identifying and non-identifying edges render across text and SVG modes"
 test "ER mixed cardinalities render across text and SVG modes" (it : @test.Test) {
   let input = "erDiagram\nA ||--|| B : one\nB ||--o{ C : many\nC |o--|{ D : optional\nD }|--o{ E : mixed"
 
-  let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
+  let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: true,
     padding_x: 5,
     padding_y: 5,
     box_border_padding: 1,
   })
-  let unicode = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
+  let unicode = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: false,
     padding_x: 5,
     padding_y: 5,

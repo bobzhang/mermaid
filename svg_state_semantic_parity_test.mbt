@@ -51,7 +51,7 @@ fn state_collect_edge_label_rects(svg : String) -> Array[StateEdgeLabelRect] {
                 state_svg_attr_int(snippet, "height"),
               ) {
               (Some(x), Some(y), Some(width), Some(height)) =>
-                rects.push(StateEdgeLabelRect::{ x, y, width, height })
+                rects.push({ x, y, width, height })
               _ => ()
             }
             offset = start + close_idx + 2

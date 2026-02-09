@@ -11,9 +11,9 @@ fn xml_escape(s : String) -> String {
 ///|
 fn style_for_edge(style : EdgeStyle) -> String {
   match style {
-    EdgeStyle::Solid => ""
-    EdgeStyle::Dotted => " stroke-dasharray=\"4 4\""
-    EdgeStyle::Thick => " stroke-width=\"1.5\""
+    Solid => ""
+    Dotted => " stroke-dasharray=\"4 4\""
+    Thick => " stroke-width=\"1.5\""
   }
 }
 
@@ -77,7 +77,7 @@ fn edge_midpoint(points : Array[Point]) -> Point? {
         continue
       }
       if remaining <= segment {
-        return Some(Point::{
+        return Some({
           x: start.x + dx * remaining / segment,
           y: start.y + dy * remaining / segment,
         })
@@ -253,13 +253,13 @@ fn render_class_like_label(node : PositionedNode) -> String {
 ///|
 fn sequence_block_type_text(block_type : SequenceBlockType) -> String {
   match block_type {
-    SequenceBlockType::Loop => "loop"
-    SequenceBlockType::Alt => "alt"
-    SequenceBlockType::Opt => "opt"
-    SequenceBlockType::Par => "par"
-    SequenceBlockType::Critical => "critical"
-    SequenceBlockType::Break => "break"
-    SequenceBlockType::Rect => "rect"
+    Loop => "loop"
+    Alt => "alt"
+    Opt => "opt"
+    Par => "par"
+    Critical => "critical"
+    Break => "break"
+    Rect => "rect"
   }
 }
 
@@ -354,11 +354,10 @@ fn render_node_label(node : PositionedNode) -> String {
   if node.label == "" {
     return ""
   }
-  if node.shape == NodeShape::SequenceParticipant &&
-    sequence_is_actor_node(node) {
+  if node.shape == SequenceParticipant && sequence_is_actor_node(node) {
     return "<text class=\"label\" x=\"\{node.x}\" y=\"\{node.y + node.height / 2 + 14}\" text-anchor=\"middle\"\{node_label_attrs(node)}>\{xml_escape(node.label)}</text>"
   }
-  if node.shape is (NodeShape::ClassEntity | NodeShape::ErEntity) {
+  if node.shape is (ClassEntity | ErEntity) {
     return render_class_like_label(node)
   }
   let lines = node.label.split("\n").map(part => part.to_string()).to_array()
@@ -394,7 +393,7 @@ fn is_sequence_render(graph : PositionedGraph) -> Bool {
     return false
   }
   for node in graph.nodes {
-    if node.shape != NodeShape::SequenceParticipant {
+    if node.shape != SequenceParticipant {
       return false
     }
   }
@@ -407,7 +406,7 @@ fn is_class_render(graph : PositionedGraph) -> Bool {
     return false
   }
   for node in graph.nodes {
-    if node.shape != NodeShape::ClassEntity {
+    if node.shape != ClassEntity {
       return false
     }
   }
@@ -420,7 +419,7 @@ fn is_er_render(graph : PositionedGraph) -> Bool {
     return false
   }
   for node in graph.nodes {
-    if node.shape != NodeShape::ErEntity {
+    if node.shape != ErEntity {
       return false
     }
   }
@@ -610,28 +609,28 @@ fn render_node_shape(node : PositionedNode) -> String {
   let attrs = node_shape_attrs(node)
 
   match node.shape {
-    NodeShape::Rectangle =>
+    Rectangle =>
       "<rect class=\"node-shape\" x=\"\{left}\" y=\"\{top}\" width=\"\{node.width}\" height=\"\{node.height}\" rx=\"0\" ry=\"0\"\{attrs} />"
-    NodeShape::Rounded =>
+    Rounded =>
       "<rect class=\"node-shape\" x=\"\{left}\" y=\"\{top}\" width=\"\{node.width}\" height=\"\{node.height}\" rx=\"6\" ry=\"6\"\{attrs} />"
-    NodeShape::Stadium =>
+    Stadium =>
       "<rect class=\"node-shape\" x=\"\{left}\" y=\"\{top}\" width=\"\{node.width}\" height=\"\{node.height}\" rx=\"\{node.height / 2}\" ry=\"\{node.height / 2}\"\{attrs} />"
-    NodeShape::Circle => {
+    Circle => {
       let radius = node.width.min(node.height) / 2
       "<circle class=\"node-shape\" cx=\"\{center_x}\" cy=\"\{center_y}\" r=\"\{radius}\"\{attrs} />"
     }
-    NodeShape::DoubleCircle => {
+    DoubleCircle => {
       let outer_r = node.width.min(node.height) / 2
       let inner_r = (outer_r - 5).max(1)
       "<circle class=\"node-shape\" cx=\"\{center_x}\" cy=\"\{center_y}\" r=\"\{outer_r}\"\{attrs} /><circle class=\"node-shape\" cx=\"\{center_x}\" cy=\"\{center_y}\" r=\"\{inner_r}\"\{attrs} />"
     }
-    NodeShape::Diamond =>
+    Diamond =>
       polygon_svg(
         "\{center_x},\{top} \{right},\{center_y} \{center_x},\{bottom} \{left},\{center_y}",
         "node-shape",
         attrs,
       )
-    NodeShape::Hexagon => {
+    Hexagon => {
       let offset = node.height / 4
       polygon_svg(
         "\{left + offset},\{top} \{right - offset},\{top} \{right},\{center_y} \{right - offset},\{bottom} \{left + offset},\{bottom} \{left},\{center_y}",
@@ -639,13 +638,13 @@ fn render_node_shape(node : PositionedNode) -> String {
         attrs,
       )
     }
-    NodeShape::Asymmetric =>
+    Asymmetric =>
       polygon_svg(
         "\{left + 12},\{top} \{right},\{top} \{right},\{bottom} \{left + 12},\{bottom} \{left},\{center_y}",
         "node-shape",
         attrs,
       )
-    NodeShape::Trapezoid => {
+    Trapezoid => {
       let offset = node.width * 15 / 100
       polygon_svg(
         "\{left + offset},\{top} \{right - offset},\{top} \{right},\{bottom} \{left},\{bottom}",
@@ -653,7 +652,7 @@ fn render_node_shape(node : PositionedNode) -> String {
         attrs,
       )
     }
-    NodeShape::TrapezoidAlt => {
+    TrapezoidAlt => {
       let offset = node.width * 15 / 100
       polygon_svg(
         "\{left},\{top} \{right},\{top} \{right - offset},\{bottom} \{left + offset},\{bottom}",
@@ -661,9 +660,9 @@ fn render_node_shape(node : PositionedNode) -> String {
         attrs,
       )
     }
-    NodeShape::Subroutine =>
+    Subroutine =>
       "<rect class=\"node-shape\" x=\"\{left}\" y=\"\{top}\" width=\"\{node.width}\" height=\"\{node.height}\" rx=\"0\" ry=\"0\"\{attrs} /><line class=\"node-shape\" x1=\"\{left + 8}\" y1=\"\{top}\" x2=\"\{left + 8}\" y2=\"\{bottom}\"\{attrs} /><line class=\"node-shape\" x1=\"\{right - 8}\" y1=\"\{top}\" x2=\"\{right - 8}\" y2=\"\{bottom}\"\{attrs} />"
-    NodeShape::Cylinder => {
+    Cylinder => {
       let ry = 7
       let fill_attr = attr("fill", style_value(node.inline_style, "fill"))
       let stroke_attrs = attr(
@@ -677,21 +676,21 @@ fn render_node_shape(node : PositionedNode) -> String {
         )
       "<rect class=\"node-shape\" x=\"\{left}\" y=\"\{top + ry}\" width=\"\{node.width}\" height=\"\{node.height - 2 * ry}\" rx=\"0\"\{fill_attr} stroke=\"none\" /><line class=\"node-shape\" x1=\"\{left}\" y1=\"\{top + ry}\" x2=\"\{left}\" y2=\"\{bottom - ry}\"\{stroke_attrs} /><line class=\"node-shape\" x1=\"\{right}\" y1=\"\{top + ry}\" x2=\"\{right}\" y2=\"\{bottom - ry}\"\{stroke_attrs} /><ellipse class=\"node-shape\" cx=\"\{center_x}\" cy=\"\{top + ry}\" rx=\"\{node.width / 2}\" ry=\"\{ry}\"\{attrs} /><ellipse class=\"node-shape\" cx=\"\{center_x}\" cy=\"\{bottom - ry}\" rx=\"\{node.width / 2}\" ry=\"\{ry}\"\{attrs} />"
     }
-    NodeShape::StateStart => {
+    StateStart => {
       let radius = (node.width.min(node.height) / 2 - 2).max(1)
       "<circle class=\"state-start\" cx=\"\{center_x}\" cy=\"\{center_y}\" r=\"\{radius}\" fill=\"var(--_text)\" stroke=\"none\" />"
     }
-    NodeShape::StateEnd => {
+    StateEnd => {
       let outer_r = (node.width.min(node.height) / 2 - 2).max(1)
       let inner_r = (outer_r - 4).max(1)
       "<circle class=\"node-shape\" cx=\"\{center_x}\" cy=\"\{center_y}\" r=\"\{outer_r}\" fill=\"none\" stroke=\"var(--_text)\" stroke-width=\"1.5\" /><circle class=\"state-start\" cx=\"\{center_x}\" cy=\"\{center_y}\" r=\"\{inner_r}\" fill=\"var(--_text)\" stroke=\"none\" />"
     }
-    NodeShape::ClassEntity | NodeShape::ErEntity => {
+    ClassEntity | ErEntity => {
       let header_height = 32
       let divider_y = top + header_height
       "<rect class=\"node-shape\" x=\"\{left}\" y=\"\{top}\" width=\"\{node.width}\" height=\"\{node.height}\" rx=\"0\"\{attrs} /><rect class=\"node-header\" x=\"\{left}\" y=\"\{top}\" width=\"\{node.width}\" height=\"\{header_height}\" rx=\"0\"\{attrs} /><line class=\"node-divider\" x1=\"\{left}\" y1=\"\{divider_y}\" x2=\"\{right}\" y2=\"\{divider_y}\" />"
     }
-    NodeShape::SequenceParticipant =>
+    SequenceParticipant =>
       if sequence_is_actor_node(node) {
         let outer_r = (node.height / 2 - 2).max(10)
         let head_r = (outer_r / 3).max(3)
@@ -800,7 +799,7 @@ fn render_svg(
     if edge.points.length() < 2 {
       continue
     }
-    let edge_style = if class_mode && edge.style == EdgeStyle::Dotted {
+    let edge_style = if class_mode && edge.style == Dotted {
       " stroke-dasharray=\"6 4\""
     } else {
       style_for_edge(edge.style)

@@ -218,7 +218,7 @@ test "shiki_dark_theme and shiki_light_theme set theme type" {
 
 ///|
 test "from_shiki_theme falls back for missing editor colors" {
-  let dark = from_shiki_theme(ShikiTheme::{
+  let dark = from_shiki_theme({
     theme_type: Some("dark"),
     colors: None,
     token_colors: None,
@@ -226,7 +226,7 @@ test "from_shiki_theme falls back for missing editor colors" {
   assert_eq(dark.bg, "#1e1e1e")
   assert_eq(dark.fg, "#d4d4d4")
 
-  let light = from_shiki_theme(ShikiTheme::{
+  let light = from_shiki_theme({
     theme_type: Some("light"),
     colors: None,
     token_colors: None,
@@ -234,7 +234,7 @@ test "from_shiki_theme falls back for missing editor colors" {
   assert_eq(light.bg, "#ffffff")
   assert_eq(light.fg, "#333333")
 
-  let unspecified = from_shiki_theme(ShikiTheme::{
+  let unspecified = from_shiki_theme({
     theme_type: None,
     colors: None,
     token_colors: None,
@@ -245,7 +245,7 @@ test "from_shiki_theme falls back for missing editor colors" {
 
 ///|
 test "from_shiki_theme treats theme_type case-insensitively" {
-  let dark = from_shiki_theme(ShikiTheme::{
+  let dark = from_shiki_theme({
     theme_type: Some(" Dark "),
     colors: None,
     token_colors: None,
@@ -266,8 +266,8 @@ test "from_shiki_theme maps token and editor colors to enrichment fields" {
       "editorWidget.border": "#444444",
     }),
     token_colors: Some([
-      ShikiTokenColor::{ scopes: ["comment"], foreground: Some("#888888") },
-      ShikiTokenColor::{ scopes: ["keyword"], foreground: Some("#ff00ff") },
+      { scopes: ["comment"], foreground: Some("#888888") },
+      { scopes: ["keyword"], foreground: Some("#ff00ff") },
     ]),
   }
   let colors = from_shiki_theme(theme)
@@ -288,9 +288,7 @@ test "from_shiki_theme prefers focusBorder and falls back muted to line" {
       "editorLineNumber.foreground": "#666666",
       "focusBorder": "#00ffcc",
     }),
-    token_colors: Some([
-      ShikiTokenColor::{ scopes: ["keyword"], foreground: Some("#ff00ff") },
-    ]),
+    token_colors: Some([{ scopes: ["keyword"], foreground: Some("#ff00ff") }]),
   }
   let colors = from_shiki_theme(theme)
   assert_eq(colors.accent, Some("#00ffcc"))
@@ -306,8 +304,8 @@ test "from_shiki_theme ignores token entries without foreground" {
       "editor.foreground": "#eeeeee",
     }),
     token_colors: Some([
-      ShikiTokenColor::{ scopes: ["keyword"], foreground: None },
-      ShikiTokenColor::{ scopes: ["keyword"], foreground: Some("#ff00ff") },
+      { scopes: ["keyword"], foreground: None },
+      { scopes: ["keyword"], foreground: Some("#ff00ff") },
     ]),
   }
   let colors = from_shiki_theme(theme)

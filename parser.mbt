@@ -20,11 +20,11 @@ fn trim_owned(s : String) -> String {
 ///|
 fn parse_direction_token_strict(token : String) -> Direction? {
   match token.to_upper() {
-    "TD" => Some(Direction::TD)
-    "TB" => Some(Direction::TB)
-    "LR" => Some(Direction::LR)
-    "BT" => Some(Direction::BT)
-    "RL" => Some(Direction::RL)
+    "TD" => Some(TD)
+    "TB" => Some(TB)
+    "LR" => Some(LR)
+    "BT" => Some(BT)
+    "RL" => Some(RL)
     _ => None
   }
 }
@@ -84,7 +84,7 @@ fn parse_delimited_token(
           } else {
             raw_id
           }
-          Some(MermaidNode::{ id, label: raw_label, shape })
+          Some({ id, label: raw_label, shape })
         }
       }
     None => None
@@ -96,42 +96,26 @@ fn parse_node_token(raw_token : String) -> MermaidNode {
   let token = trim_owned(raw_token)
 
   if token == "" {
-    return MermaidNode::{
-      id: "unnamed",
-      label: "unnamed",
-      shape: NodeShape::Rectangle,
-    }
+    return { id: "unnamed", label: "unnamed", shape: Rectangle }
   }
 
-  match parse_delimited_token(token, "(((", ")))", NodeShape::DoubleCircle) {
+  match parse_delimited_token(token, "(((", ")))", DoubleCircle) {
     Some(node) => node
     None =>
-      match parse_delimited_token(token, "[[", "]]", NodeShape::Subroutine) {
+      match parse_delimited_token(token, "[[", "]]", Subroutine) {
         Some(node) => node
         None =>
-          match parse_delimited_token(token, "{{", "}}", NodeShape::Hexagon) {
+          match parse_delimited_token(token, "{{", "}}", Hexagon) {
             Some(node) => node
             None =>
-              match
-                parse_delimited_token(token, "([", "])", NodeShape::Stadium) {
+              match parse_delimited_token(token, "([", "])", Stadium) {
                 Some(node) => node
                 None =>
-                  match
-                    parse_delimited_token(
-                      token,
-                      "[(",
-                      ")]",
-                      NodeShape::Cylinder,
-                    ) {
+                  match parse_delimited_token(token, "[(", ")]", Cylinder) {
                     Some(node) => node
                     None =>
                       match
-                        parse_delimited_token(
-                          token,
-                          "[/",
-                          "\\]",
-                          NodeShape::Trapezoid,
-                        ) {
+                        parse_delimited_token(token, "[/", "\\]", Trapezoid) {
                         Some(node) => node
                         None =>
                           match
@@ -139,7 +123,7 @@ fn parse_node_token(raw_token : String) -> MermaidNode {
                               token,
                               "[\\",
                               "/]",
-                              NodeShape::TrapezoidAlt,
+                              TrapezoidAlt,
                             ) {
                             Some(node) => node
                             None =>
@@ -148,7 +132,7 @@ fn parse_node_token(raw_token : String) -> MermaidNode {
                                   token,
                                   ">",
                                   "]",
-                                  NodeShape::Asymmetric,
+                                  Asymmetric,
                                 ) {
                                 Some(node) => node
                                 None =>
@@ -157,7 +141,7 @@ fn parse_node_token(raw_token : String) -> MermaidNode {
                                       token,
                                       "((",
                                       "))",
-                                      NodeShape::Circle,
+                                      Circle,
                                     ) {
                                     Some(node) => node
                                     None =>
@@ -166,7 +150,7 @@ fn parse_node_token(raw_token : String) -> MermaidNode {
                                           token,
                                           "[",
                                           "]",
-                                          NodeShape::Rectangle,
+                                          Rectangle,
                                         ) {
                                         Some(node) => node
                                         None =>
@@ -175,7 +159,7 @@ fn parse_node_token(raw_token : String) -> MermaidNode {
                                               token,
                                               "(",
                                               ")",
-                                              NodeShape::Rounded,
+                                              Rounded,
                                             ) {
                                             Some(node) => node
                                             None =>
@@ -184,14 +168,14 @@ fn parse_node_token(raw_token : String) -> MermaidNode {
                                                   token,
                                                   "{",
                                                   "}",
-                                                  NodeShape::Diamond,
+                                                  Diamond,
                                                 ) {
                                                 Some(node) => node
                                                 None =>
-                                                  MermaidNode::{
+                                                  {
                                                     id: token,
                                                     label: token,
-                                                    shape: NodeShape::Rectangle,
+                                                    shape: Rectangle,
                                                   }
                                               }
                                           }
@@ -316,57 +300,37 @@ fn split_parallel_nodes_with_classes(
 ///|
 fn edge_operators() -> Array[EdgeOp] {
   [
-    EdgeOp::{
-      symbol: "<==>",
-      style: EdgeStyle::Thick,
-      has_arrow_start: true,
-      has_arrow_end: true,
-    },
-    EdgeOp::{
+    { symbol: "<==>", style: Thick, has_arrow_start: true, has_arrow_end: true },
+    {
       symbol: "<-.->",
-      style: EdgeStyle::Dotted,
+      style: Dotted,
       has_arrow_start: true,
       has_arrow_end: true,
     },
-    EdgeOp::{
-      symbol: "<-->",
-      style: EdgeStyle::Solid,
-      has_arrow_start: true,
-      has_arrow_end: true,
-    },
-    EdgeOp::{
-      symbol: "==>",
-      style: EdgeStyle::Thick,
-      has_arrow_start: false,
-      has_arrow_end: true,
-    },
-    EdgeOp::{
+    { symbol: "<-->", style: Solid, has_arrow_start: true, has_arrow_end: true },
+    { symbol: "==>", style: Thick, has_arrow_start: false, has_arrow_end: true },
+    {
       symbol: "-.->",
-      style: EdgeStyle::Dotted,
+      style: Dotted,
       has_arrow_start: false,
       has_arrow_end: true,
     },
-    EdgeOp::{
-      symbol: "-->",
-      style: EdgeStyle::Solid,
-      has_arrow_start: false,
-      has_arrow_end: true,
-    },
-    EdgeOp::{
+    { symbol: "-->", style: Solid, has_arrow_start: false, has_arrow_end: true },
+    {
       symbol: "===",
-      style: EdgeStyle::Thick,
+      style: Thick,
       has_arrow_start: false,
       has_arrow_end: false,
     },
-    EdgeOp::{
+    {
       symbol: "-.-",
-      style: EdgeStyle::Dotted,
+      style: Dotted,
       has_arrow_start: false,
       has_arrow_end: false,
     },
-    EdgeOp::{
+    {
       symbol: "---",
-      style: EdgeStyle::Solid,
+      style: Solid,
       has_arrow_start: false,
       has_arrow_end: false,
     },
@@ -377,7 +341,7 @@ fn edge_operators() -> Array[EdgeOp] {
 fn find_edge_operator(line : String) -> FoundEdgeOp? {
   for op in edge_operators() {
     match line.find(op.symbol) {
-      Some(index) => return Some(FoundEdgeOp::{ op, index })
+      Some(index) => return Some({ op, index })
       None => ()
     }
   }
@@ -394,14 +358,14 @@ fn find_earliest_operator(
     match line.find(op.symbol) {
       Some(index) =>
         match best {
-          None => best = Some(FoundEdgeOp::{ op, index })
+          None => best = Some({ op, index })
           Some(current_best) =>
             if index < current_best.index ||
               (
                 index == current_best.index &&
                 op.symbol.length() > current_best.op.symbol.length()
               ) {
-              best = Some(FoundEdgeOp::{ op, index })
+              best = Some({ op, index })
             }
         }
       None => ()
@@ -418,54 +382,34 @@ fn find_earliest_edge_operator(line : String) -> FoundEdgeOp? {
 ///|
 fn sequence_edge_operators() -> Array[EdgeOp] {
   [
-    EdgeOp::{
+    {
       symbol: "-->>",
-      style: EdgeStyle::Dotted,
+      style: Dotted,
       has_arrow_start: false,
       has_arrow_end: true,
     },
-    EdgeOp::{
+    {
       symbol: "-->",
-      style: EdgeStyle::Dotted,
+      style: Dotted,
       has_arrow_start: false,
       has_arrow_end: true,
     },
-    EdgeOp::{
+    {
       symbol: "--)",
-      style: EdgeStyle::Dotted,
+      style: Dotted,
       has_arrow_start: false,
       has_arrow_end: true,
     },
-    EdgeOp::{
+    {
       symbol: "--x",
-      style: EdgeStyle::Dotted,
+      style: Dotted,
       has_arrow_start: false,
       has_arrow_end: true,
     },
-    EdgeOp::{
-      symbol: "->>",
-      style: EdgeStyle::Solid,
-      has_arrow_start: false,
-      has_arrow_end: true,
-    },
-    EdgeOp::{
-      symbol: "->",
-      style: EdgeStyle::Solid,
-      has_arrow_start: false,
-      has_arrow_end: true,
-    },
-    EdgeOp::{
-      symbol: "-)",
-      style: EdgeStyle::Solid,
-      has_arrow_start: false,
-      has_arrow_end: true,
-    },
-    EdgeOp::{
-      symbol: "-x",
-      style: EdgeStyle::Solid,
-      has_arrow_start: false,
-      has_arrow_end: true,
-    },
+    { symbol: "->>", style: Solid, has_arrow_start: false, has_arrow_end: true },
+    { symbol: "->", style: Solid, has_arrow_start: false, has_arrow_end: true },
+    { symbol: "-)", style: Solid, has_arrow_start: false, has_arrow_end: true },
+    { symbol: "-x", style: Solid, has_arrow_start: false, has_arrow_end: true },
   ]
 }
 
@@ -622,7 +566,7 @@ fn append_edges(
 ) -> Unit {
   for source_node in source_nodes {
     for target_node in target_nodes {
-      edges.push(MermaidEdge::{
+      edges.push({
         source: source_node.id,
         target: target_node.id,
         label,
@@ -722,7 +666,7 @@ fn parse_subgraph_start_line(line : String) -> MermaidSubgraph? {
           (try! rest[open_idx + 1:rest.length() - 1]).to_string(),
         )
         if raw_id != "" && raw_label != "" && is_subgraph_id_token(raw_id) {
-          return Some(MermaidSubgraph::{
+          return Some({
             id: raw_id,
             label: raw_label,
             node_ids: [],
@@ -734,7 +678,7 @@ fn parse_subgraph_start_line(line : String) -> MermaidSubgraph? {
     None => ()
   }
 
-  Some(MermaidSubgraph::{
+  Some({
     id: normalize_subgraph_id_from_label(rest),
     label: rest,
     node_ids: [],
@@ -757,7 +701,7 @@ fn append_nodes_to_current_subgraph(
   for node_id in touched_node_ids {
     push_unique_id(node_ids, node_id)
   }
-  subgraph_stack[last_index] = MermaidSubgraph::{
+  subgraph_stack[last_index] = {
     id: current.id,
     label: current.label,
     node_ids,
@@ -778,7 +722,7 @@ fn append_child_subgraph(
   let current = subgraph_stack[last_index]
   let children = current.children.copy()
   children.push(child)
-  subgraph_stack[last_index] = MermaidSubgraph::{
+  subgraph_stack[last_index] = {
     id: current.id,
     label: current.label,
     node_ids: current.node_ids,
@@ -797,7 +741,7 @@ fn set_current_subgraph_direction(
   }
   let last_index = subgraph_stack.length() - 1
   let current = subgraph_stack[last_index]
-  subgraph_stack[last_index] = MermaidSubgraph::{
+  subgraph_stack[last_index] = {
     id: current.id,
     label: current.label,
     node_ids: current.node_ids,
@@ -918,20 +862,12 @@ fn parse_state_token(
     if is_source {
       let next = start_counter + 1
       let id = "state_start_\{next}"
-      ensure_node(nodes, MermaidNode::{
-        id,
-        label: "",
-        shape: NodeShape::StateStart,
-      })
+      ensure_node(nodes, { id, label: "", shape: StateStart })
       (id, next, end_counter)
     } else {
       let next = end_counter + 1
       let id = "state_end_\{next}"
-      ensure_node(nodes, MermaidNode::{
-        id,
-        label: "",
-        shape: NodeShape::StateEnd,
-      })
+      ensure_node(nodes, { id, label: "", shape: StateEnd })
       (id, start_counter, next)
     }
   } else {
@@ -939,8 +875,8 @@ fn parse_state_token(
     let node = MermaidNode::{
       id: parsed.id,
       label: parsed.label,
-      shape: if parsed.shape == NodeShape::Rectangle {
-        NodeShape::Rounded
+      shape: if parsed.shape == Rectangle {
+        Rounded
       } else {
         parsed.shape
       },
@@ -973,11 +909,7 @@ fn parse_state_declaration(
           raw_label
         }
         if id != "" {
-          ensure_node(nodes, MermaidNode::{
-            id,
-            label,
-            shape: NodeShape::Rounded,
-          })
+          ensure_node(nodes, { id, label, shape: Rounded })
           append_nodes_to_current_subgraph(composite_stack, [id])
         }
       }
@@ -989,8 +921,8 @@ fn parse_state_declaration(
   let node = MermaidNode::{
     id: parsed.id,
     label: parsed.label,
-    shape: if parsed.shape == NodeShape::Rectangle {
-      NodeShape::Rounded
+    shape: if parsed.shape == Rectangle {
+      Rounded
     } else {
       parsed.shape
     },
@@ -1023,7 +955,7 @@ fn parse_state_composite_start_line(line : String) -> MermaidSubgraph? {
       } else {
         raw_label
       }
-      return Some(MermaidSubgraph::{
+      return Some({
         id,
         label: if label == "" {
           id
@@ -1041,13 +973,7 @@ fn parse_state_composite_start_line(line : String) -> MermaidSubgraph? {
   if !is_plain_identifier(rest) {
     return None
   }
-  Some(MermaidSubgraph::{
-    id: rest,
-    label: rest,
-    node_ids: [],
-    children: [],
-    direction: None,
-  })
+  Some({ id: rest, label: rest, node_ids: [], children: [], direction: None })
 }
 
 ///|
@@ -1075,14 +1001,14 @@ fn parse_state_description_line(
 
   match nodes.get(id) {
     Some(existing) => {
-      let shape = if existing.shape == NodeShape::Rectangle {
+      let shape = if existing.shape == Rectangle {
         NodeShape::Rounded
       } else {
         existing.shape
       }
-      nodes[id] = MermaidNode::{ id: existing.id, label, shape }
+      nodes[id] = { id: existing.id, label, shape }
     }
-    None => nodes[id] = MermaidNode::{ id, label, shape: NodeShape::Rounded }
+    None => nodes[id] = { id, label, shape: Rounded }
   }
   true
 }
@@ -1167,7 +1093,7 @@ fn parse_state_diagram(lines : Array[String]) -> MermaidGraph {
         )
         start_counter = final_start
         end_counter = final_end
-        edges.push(MermaidEdge::{
+        edges.push({
           source: source_id,
           target: target_id,
           label: edge_label,
@@ -1192,7 +1118,7 @@ fn parse_state_diagram(lines : Array[String]) -> MermaidGraph {
     }
   }
 
-  MermaidGraph::{
+  {
     direction,
     nodes,
     edges,
@@ -1222,7 +1148,7 @@ fn parse_sequence_participant_declaration(
     SequenceParticipantKind::Participant
   } else if lower_line.has_prefix("actor ") {
     rest = trim_owned((try! line[6:]).to_string())
-    SequenceParticipantKind::Actor
+    Actor
   } else {
     return false
   }
@@ -1240,14 +1166,14 @@ fn parse_sequence_participant_declaration(
         if !nodes.contains(id) {
           actor_order.push(id)
         }
-        nodes[id] = MermaidNode::{
+        nodes[id] = {
           id,
           label: if label == "" {
             id
           } else {
             label
           },
-          shape: NodeShape::SequenceParticipant,
+          shape: SequenceParticipant,
         }
         actor_kinds[id] = kind
       }
@@ -1256,11 +1182,7 @@ fn parse_sequence_participant_declaration(
       if !nodes.contains(rest) {
         actor_order.push(rest)
       }
-      nodes[rest] = MermaidNode::{
-        id: rest,
-        label: rest,
-        shape: NodeShape::SequenceParticipant,
-      }
+      nodes[rest] = { id: rest, label: rest, shape: SequenceParticipant }
       actor_kinds[rest] = kind
     }
   }
@@ -1276,14 +1198,14 @@ fn ensure_sequence_participant(
 ) -> Unit {
   if !nodes.contains(actor_id) {
     actor_order.push(actor_id)
-    nodes[actor_id] = MermaidNode::{
+    nodes[actor_id] = {
       id: actor_id,
       label: actor_id,
-      shape: NodeShape::SequenceParticipant,
+      shape: SequenceParticipant,
     }
   }
   if !actor_kinds.contains(actor_id) {
-    actor_kinds[actor_id] = SequenceParticipantKind::Participant
+    actor_kinds[actor_id] = Participant
   }
 }
 
@@ -1306,31 +1228,31 @@ fn sequence_label_for_keyword(
 fn parse_sequence_block_header(line : String) -> (SequenceBlockType, String)? {
   let lower_line = line.to_lower()
   match sequence_label_for_keyword(line, lower_line, "loop") {
-    Some(label) => return Some((SequenceBlockType::Loop, label))
+    Some(label) => return Some((Loop, label))
     None => ()
   }
   match sequence_label_for_keyword(line, lower_line, "alt") {
-    Some(label) => return Some((SequenceBlockType::Alt, label))
+    Some(label) => return Some((Alt, label))
     None => ()
   }
   match sequence_label_for_keyword(line, lower_line, "opt") {
-    Some(label) => return Some((SequenceBlockType::Opt, label))
+    Some(label) => return Some((Opt, label))
     None => ()
   }
   match sequence_label_for_keyword(line, lower_line, "par") {
-    Some(label) => return Some((SequenceBlockType::Par, label))
+    Some(label) => return Some((Par, label))
     None => ()
   }
   match sequence_label_for_keyword(line, lower_line, "critical") {
-    Some(label) => return Some((SequenceBlockType::Critical, label))
+    Some(label) => return Some((Critical, label))
     None => ()
   }
   match sequence_label_for_keyword(line, lower_line, "break") {
-    Some(label) => return Some((SequenceBlockType::Break, label))
+    Some(label) => return Some((Break, label))
     None => ()
   }
   match sequence_label_for_keyword(line, lower_line, "rect") {
-    Some(label) => return Some((SequenceBlockType::Rect, label))
+    Some(label) => return Some((Rect, label))
     None => ()
   }
   None
@@ -1369,15 +1291,9 @@ fn parse_sequence_note_line(
           trim_owned((try! placement[8:]).to_string()),
         )
       } else if placement_lower.has_prefix("right of ") {
-        (
-          SequenceNotePosition::Right,
-          trim_owned((try! placement[9:]).to_string()),
-        )
+        (Right, trim_owned((try! placement[9:]).to_string()))
       } else if placement_lower.has_prefix("over ") {
-        (
-          SequenceNotePosition::Over,
-          trim_owned((try! placement[5:]).to_string()),
-        )
+        (Over, trim_owned((try! placement[5:]).to_string()))
       } else {
         return true
       }
@@ -1391,7 +1307,7 @@ fn parse_sequence_note_line(
         }
       }
       if actor_ids.length() > 0 && text != "" {
-        notes.push(SequenceNote::{ actor_ids, text, position, after_index })
+        notes.push({ actor_ids, text, position, after_index })
       }
       true
     }
@@ -1467,7 +1383,7 @@ fn parse_sequence_message_line(
       } else {
         "\{found.op.symbol}\{activation_mark}"
       }
-      edges.push(MermaidEdge::{
+      edges.push({
         source,
         target,
         label,
@@ -1522,7 +1438,7 @@ fn parse_sequence_diagram(lines : Array[String]) -> MermaidGraph {
 
     match parse_sequence_block_header(line) {
       Some((block_type, label)) => {
-        stack_set_open_block(open_blocks, open_depth, OpenSequenceBlock::{
+        stack_set_open_block(open_blocks, open_depth, {
           block_type,
           label,
           start_index: edges.length(),
@@ -1543,11 +1459,8 @@ fn parse_sequence_diagram(lines : Array[String]) -> MermaidGraph {
           for divider in top.dividers {
             next_dividers.push(divider)
           }
-          next_dividers.push(SequenceBlockDivider::{
-            index: edges.length(),
-            label,
-          })
-          open_blocks[top_index] = OpenSequenceBlock::{
+          next_dividers.push({ index: edges.length(), label })
+          open_blocks[top_index] = {
             block_type: top.block_type,
             label: top.label,
             start_index: top.start_index,
@@ -1561,7 +1474,7 @@ fn parse_sequence_diagram(lines : Array[String]) -> MermaidGraph {
     if line == "end" && open_depth > 0 {
       open_depth = open_depth - 1
       let completed = open_blocks[open_depth]
-      blocks.push(SequenceBlock::{
+      blocks.push({
         block_type: completed.block_type,
         label: completed.label,
         start_index: completed.start_index,
@@ -1580,8 +1493,8 @@ fn parse_sequence_diagram(lines : Array[String]) -> MermaidGraph {
     )
   }
 
-  MermaidGraph::{
-    direction: Direction::LR,
+  {
+    direction: LR,
     nodes,
     edges,
     subgraphs: [],
@@ -1648,11 +1561,11 @@ fn parse_relation_parts(line : String) -> (String, String, String, String?)? {
 ///|
 fn edge_style_for_operator(operator : String) -> EdgeStyle {
   if operator.contains(".") {
-    EdgeStyle::Dotted
+    Dotted
   } else if operator.contains("=") {
-    EdgeStyle::Thick
+    Thick
   } else {
-    EdgeStyle::Solid
+    Solid
   }
 }
 
@@ -1805,7 +1718,7 @@ fn apply_details_to_nodes(
     match nodes.get(node_id) {
       Some(node) => {
         let detail_text = rows.iter().join("\n")
-        nodes[node_id] = MermaidNode::{
+        nodes[node_id] = {
           id: node.id,
           label: "\{node.label}\n\{detail_text}",
           shape: node.shape,
@@ -1834,17 +1747,9 @@ fn append_relation_edge(
   nodes : Map[String, MermaidNode],
   edges : Array[MermaidEdge],
 ) -> Unit {
-  ensure_node(nodes, MermaidNode::{
-    id: source,
-    label: source,
-    shape: default_shape,
-  })
-  ensure_node(nodes, MermaidNode::{
-    id: target,
-    label: target,
-    shape: default_shape,
-  })
-  edges.push(MermaidEdge::{
+  ensure_node(nodes, { id: source, label: source, shape: default_shape })
+  ensure_node(nodes, { id: target, label: target, shape: default_shape })
+  edges.push({
     source,
     target,
     label,
@@ -1922,11 +1827,7 @@ fn parse_class_diagram(lines : Array[String]) -> MermaidGraph {
 
     match parse_inline_class_declaration(line) {
       Some((class_id, inline_detail)) => {
-        ensure_node(nodes, MermaidNode::{
-          id: class_id,
-          label: class_id,
-          shape: NodeShape::ClassEntity,
-        })
+        ensure_node(nodes, { id: class_id, label: class_id, shape: ClassEntity })
         match inline_detail {
           Some(detail) =>
             append_detail(details, class_id, normalize_class_member(detail))
@@ -1939,11 +1840,7 @@ fn parse_class_diagram(lines : Array[String]) -> MermaidGraph {
 
     match parse_class_declaration(line) {
       Some((class_id, opens_block)) => {
-        ensure_node(nodes, MermaidNode::{
-          id: class_id,
-          label: class_id,
-          shape: NodeShape::ClassEntity,
-        })
+        ensure_node(nodes, { id: class_id, label: class_id, shape: ClassEntity })
         if opens_block {
           current_class = Some(class_id)
         }
@@ -1959,7 +1856,7 @@ fn parse_class_diagram(lines : Array[String]) -> MermaidGraph {
           operator,
           target,
           label,
-          NodeShape::ClassEntity,
+          ClassEntity,
           nodes,
           edges,
         )
@@ -1975,10 +1872,10 @@ fn parse_class_diagram(lines : Array[String]) -> MermaidGraph {
           trim_owned((try! line[idx + 1:]).to_string()),
         )
         if is_plain_identifier(candidate) {
-          ensure_node(nodes, MermaidNode::{
+          ensure_node(nodes, {
             id: candidate,
             label: candidate,
-            shape: NodeShape::ClassEntity,
+            shape: ClassEntity,
           })
           append_detail(details, candidate, detail)
         }
@@ -1989,8 +1886,8 @@ fn parse_class_diagram(lines : Array[String]) -> MermaidGraph {
 
   apply_details_to_nodes(nodes, details)
 
-  MermaidGraph::{
-    direction: Direction::TD,
+  {
+    direction: TD,
     nodes,
     edges,
     subgraphs: [],
@@ -2017,7 +1914,7 @@ fn parse_er_entity_declaration_line(
   if id == "" {
     return None
   }
-  ensure_node(nodes, MermaidNode::{ id, label: id, shape: NodeShape::ErEntity })
+  ensure_node(nodes, { id, label: id, shape: ErEntity })
   Some(id)
 }
 
@@ -2050,10 +1947,10 @@ fn parse_er_diagram(lines : Array[String]) -> MermaidGraph {
       Some(entity_id) => {
         match nodes.get(entity_id) {
           Some(node) =>
-            nodes[entity_id] = MermaidNode::{
+            nodes[entity_id] = {
               id: node.id,
               label: node.label,
-              shape: NodeShape::ErEntity,
+              shape: ErEntity,
             }
           None => ()
         }
@@ -2070,7 +1967,7 @@ fn parse_er_diagram(lines : Array[String]) -> MermaidGraph {
           operator,
           target,
           label,
-          NodeShape::ErEntity,
+          ErEntity,
           nodes,
           edges,
         )
@@ -2080,8 +1977,8 @@ fn parse_er_diagram(lines : Array[String]) -> MermaidGraph {
 
   apply_details_to_nodes(nodes, details)
 
-  MermaidGraph::{
-    direction: Direction::TD,
+  {
+    direction: TD,
     nodes,
     edges,
     subgraphs: [],
@@ -2109,7 +2006,7 @@ fn parse_flowchart(lines : Array[String]) -> MermaidGraph raise MermaidError {
   let direction = match parse_flow_direction(lines[0]) {
     Some(found) => found
     None =>
-      raise MermaidError::ParseFailure(
+      raise ParseFailure(
         "Invalid mermaid header: \"\{lines[0]}\". Expected \"graph TD\", \"flowchart LR\", \"stateDiagram-v2\", etc.",
       )
   }
@@ -2166,7 +2063,7 @@ fn parse_flowchart(lines : Array[String]) -> MermaidGraph raise MermaidError {
     append_nodes_to_current_subgraph(subgraph_stack, newly_defined_node_ids)
   }
 
-  MermaidGraph::{
+  {
     direction,
     nodes,
     edges,
@@ -2183,10 +2080,11 @@ fn parse_flowchart(lines : Array[String]) -> MermaidGraph raise MermaidError {
 }
 
 ///|
+/// Public function `parse_mermaid`.
 pub fn parse_mermaid(text : String) -> MermaidGraph raise MermaidError {
   let lines = preprocess_lines(text)
   if lines.length() == 0 {
-    raise MermaidError::ParseFailure("Mermaid input is empty")
+    raise ParseFailure("Mermaid input is empty")
   }
   let header = lines[0].replace_all(old="\t", new=" ").to_lower()
   if header.has_prefix("graph ") || header.has_prefix("flowchart ") {
@@ -2204,5 +2102,5 @@ pub fn parse_mermaid(text : String) -> MermaidGraph raise MermaidError {
   if header == "erdiagram" {
     return parse_er_diagram(lines)
   }
-  raise MermaidError::ParseFailure("Unsupported Mermaid header: \{lines[0]}")
+  raise ParseFailure("Unsupported Mermaid header: \{lines[0]}")
 }

@@ -396,7 +396,7 @@ test "Render smoke for upstream samples-data corpus" (it : @test.Test) {
       assert_true(!svg.contains("background:var(--bg)"))
     }
 
-    let ascii = try! @beautiful_mermaid.render_mermaid_ascii(sample.source, options=@beautiful_mermaid.AsciiRenderOptions::{
+    let ascii = try! @beautiful_mermaid.render_mermaid_ascii(sample.source, options={
       use_ascii: true,
       padding_x: 5,
       padding_y: 5,
@@ -406,7 +406,7 @@ test "Render smoke for upstream samples-data corpus" (it : @test.Test) {
       fail("empty ascii output for sample: \{sample.title}")
     }
 
-    let unicode = try! @beautiful_mermaid.render_mermaid_ascii(sample.source, options=@beautiful_mermaid.AsciiRenderOptions::{
+    let unicode = try! @beautiful_mermaid.render_mermaid_ascii(sample.source, options={
       use_ascii: false,
       padding_x: 5,
       padding_y: 5,

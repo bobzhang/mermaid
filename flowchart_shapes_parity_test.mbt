@@ -38,7 +38,7 @@ test "Parser recognizes all flowchart shape syntaxes" {
 
 ///|
 test "SVG renders all flowchart shape labels in a single diagram" (
-  it : @test.Test
+  it : @test.Test,
 ) {
   let svg = try! @beautiful_mermaid.render_mermaid(all_shapes_diagram())
   it.write(svg)

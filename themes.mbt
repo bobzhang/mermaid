@@ -1,4 +1,5 @@
 ///|
+/// Public type `ThemeName`.
 pub enum ThemeName {
   ZincLight
   ZincDark
@@ -18,12 +19,14 @@ pub enum ThemeName {
 } derive(Eq, Show, ToJson)
 
 ///|
+/// Public type `ShikiTokenColor`.
 pub(all) struct ShikiTokenColor {
   scopes : Array[String]
   foreground : String?
 } derive(Eq, Show, ToJson)
 
 ///|
+/// Public function `shiki_token_color`.
 pub fn shiki_token_color(
   scope : String,
   foreground : String?,
@@ -32,6 +35,7 @@ pub fn shiki_token_color(
 }
 
 ///|
+/// Public function `shiki_token_color_many`.
 pub fn shiki_token_color_many(
   scopes : Array[String],
   foreground : String?,
@@ -40,6 +44,7 @@ pub fn shiki_token_color_many(
 }
 
 ///|
+/// Public type `ShikiTheme`.
 pub(all) struct ShikiTheme {
   theme_type : String?
   colors : Map[String, String]?
@@ -47,6 +52,7 @@ pub(all) struct ShikiTheme {
 } derive(Eq, Show, ToJson)
 
 ///|
+/// Public function `shiki_theme`.
 pub fn shiki_theme(
   theme_type : String?,
   colors : Map[String, String]?,
@@ -56,6 +62,7 @@ pub fn shiki_theme(
 }
 
 ///|
+/// Public function `shiki_dark_theme`.
 pub fn shiki_dark_theme(
   colors : Map[String, String]?,
   token_colors : Array[ShikiTokenColor]?,
@@ -64,6 +71,7 @@ pub fn shiki_dark_theme(
 }
 
 ///|
+/// Public function `shiki_light_theme`.
 pub fn shiki_light_theme(
   colors : Map[String, String]?,
   token_colors : Array[ShikiTokenColor]?,
@@ -102,6 +110,7 @@ fn shiki_token_scope_color(theme : ShikiTheme, scope : String) -> String? {
 }
 
 ///|
+/// Public function `from_shiki_theme`.
 pub fn from_shiki_theme(theme : ShikiTheme) -> DiagramColors {
   let theme_kind = match theme.theme_type {
     Some(kind) => kind.trim().to_string().to_lower()
@@ -134,9 +143,10 @@ pub fn from_shiki_theme(theme : ShikiTheme) -> DiagramColors {
 }
 
 ///|
+/// Public function `theme_colors`.
 pub fn theme_colors(theme : ThemeName) -> DiagramColors {
   match theme {
-    ThemeName::ZincLight =>
+    ZincLight =>
       {
         bg: "#FFFFFF",
         fg: "#27272A",
@@ -146,7 +156,7 @@ pub fn theme_colors(theme : ThemeName) -> DiagramColors {
         surface: None,
         border: None,
       }
-    ThemeName::ZincDark =>
+    ZincDark =>
       {
         bg: "#18181B",
         fg: "#FAFAFA",
@@ -156,7 +166,7 @@ pub fn theme_colors(theme : ThemeName) -> DiagramColors {
         surface: None,
         border: None,
       }
-    ThemeName::TokyoNight =>
+    TokyoNight =>
       {
         bg: "#1a1b26",
         fg: "#a9b1d6",
@@ -166,7 +176,7 @@ pub fn theme_colors(theme : ThemeName) -> DiagramColors {
         surface: None,
         border: None,
       }
-    ThemeName::TokyoNightStorm =>
+    TokyoNightStorm =>
       {
         bg: "#24283b",
         fg: "#a9b1d6",
@@ -176,7 +186,7 @@ pub fn theme_colors(theme : ThemeName) -> DiagramColors {
         surface: None,
         border: None,
       }
-    ThemeName::TokyoNightLight =>
+    TokyoNightLight =>
       {
         bg: "#d5d6db",
         fg: "#343b58",
@@ -186,7 +196,7 @@ pub fn theme_colors(theme : ThemeName) -> DiagramColors {
         surface: None,
         border: None,
       }
-    ThemeName::CatppuccinMocha =>
+    CatppuccinMocha =>
       {
         bg: "#1e1e2e",
         fg: "#cdd6f4",
@@ -196,7 +206,7 @@ pub fn theme_colors(theme : ThemeName) -> DiagramColors {
         surface: None,
         border: None,
       }
-    ThemeName::CatppuccinLatte =>
+    CatppuccinLatte =>
       {
         bg: "#eff1f5",
         fg: "#4c4f69",
@@ -206,7 +216,7 @@ pub fn theme_colors(theme : ThemeName) -> DiagramColors {
         surface: None,
         border: None,
       }
-    ThemeName::Nord =>
+    Nord =>
       {
         bg: "#2e3440",
         fg: "#d8dee9",
@@ -216,7 +226,7 @@ pub fn theme_colors(theme : ThemeName) -> DiagramColors {
         surface: None,
         border: None,
       }
-    ThemeName::NordLight =>
+    NordLight =>
       {
         bg: "#eceff4",
         fg: "#2e3440",
@@ -226,7 +236,7 @@ pub fn theme_colors(theme : ThemeName) -> DiagramColors {
         surface: None,
         border: None,
       }
-    ThemeName::Dracula =>
+    Dracula =>
       {
         bg: "#282a36",
         fg: "#f8f8f2",
@@ -236,7 +246,7 @@ pub fn theme_colors(theme : ThemeName) -> DiagramColors {
         surface: None,
         border: None,
       }
-    ThemeName::GithubLight =>
+    GithubLight =>
       {
         bg: "#ffffff",
         fg: "#1f2328",
@@ -246,7 +256,7 @@ pub fn theme_colors(theme : ThemeName) -> DiagramColors {
         surface: None,
         border: None,
       }
-    ThemeName::GithubDark =>
+    GithubDark =>
       {
         bg: "#0d1117",
         fg: "#e6edf3",
@@ -256,7 +266,7 @@ pub fn theme_colors(theme : ThemeName) -> DiagramColors {
         surface: None,
         border: None,
       }
-    ThemeName::SolarizedLight =>
+    SolarizedLight =>
       {
         bg: "#fdf6e3",
         fg: "#657b83",
@@ -266,7 +276,7 @@ pub fn theme_colors(theme : ThemeName) -> DiagramColors {
         surface: None,
         border: None,
       }
-    ThemeName::SolarizedDark =>
+    SolarizedDark =>
       {
         bg: "#002b36",
         fg: "#839496",
@@ -276,7 +286,7 @@ pub fn theme_colors(theme : ThemeName) -> DiagramColors {
         surface: None,
         border: None,
       }
-    ThemeName::OneDark =>
+    OneDark =>
       {
         bg: "#282c34",
         fg: "#abb2bf",
@@ -290,23 +300,24 @@ pub fn theme_colors(theme : ThemeName) -> DiagramColors {
 }
 
 ///|
+/// Public function `theme_slug`.
 pub fn theme_slug(theme : ThemeName) -> String {
   match theme {
-    ThemeName::ZincLight => "zinc-light"
-    ThemeName::ZincDark => "zinc-dark"
-    ThemeName::TokyoNight => "tokyo-night"
-    ThemeName::TokyoNightStorm => "tokyo-night-storm"
-    ThemeName::TokyoNightLight => "tokyo-night-light"
-    ThemeName::CatppuccinMocha => "catppuccin-mocha"
-    ThemeName::CatppuccinLatte => "catppuccin-latte"
-    ThemeName::Nord => "nord"
-    ThemeName::NordLight => "nord-light"
-    ThemeName::Dracula => "dracula"
-    ThemeName::GithubLight => "github-light"
-    ThemeName::GithubDark => "github-dark"
-    ThemeName::SolarizedLight => "solarized-light"
-    ThemeName::SolarizedDark => "solarized-dark"
-    ThemeName::OneDark => "one-dark"
+    ZincLight => "zinc-light"
+    ZincDark => "zinc-dark"
+    TokyoNight => "tokyo-night"
+    TokyoNightStorm => "tokyo-night-storm"
+    TokyoNightLight => "tokyo-night-light"
+    CatppuccinMocha => "catppuccin-mocha"
+    CatppuccinLatte => "catppuccin-latte"
+    Nord => "nord"
+    NordLight => "nord-light"
+    Dracula => "dracula"
+    GithubLight => "github-light"
+    GithubDark => "github-dark"
+    SolarizedLight => "solarized-light"
+    SolarizedDark => "solarized-dark"
+    OneDark => "one-dark"
   }
 }
 
@@ -338,34 +349,37 @@ fn normalize_theme_name_input(name : String) -> String {
 }
 
 ///|
+/// Public function `normalize_theme_name`.
 pub fn normalize_theme_name(name : String) -> String {
   normalize_theme_name_input(name)
 }
 
 ///|
+/// Public function `parse_theme_name`.
 pub fn parse_theme_name(name : String) -> ThemeName? {
   match normalize_theme_name_input(name) {
-    "default" => Some(ThemeName::ZincLight)
-    "zinc-light" => Some(ThemeName::ZincLight)
-    "zinc-dark" => Some(ThemeName::ZincDark)
-    "tokyo-night" => Some(ThemeName::TokyoNight)
-    "tokyo-night-storm" => Some(ThemeName::TokyoNightStorm)
-    "tokyo-night-light" => Some(ThemeName::TokyoNightLight)
-    "catppuccin-mocha" => Some(ThemeName::CatppuccinMocha)
-    "catppuccin-latte" => Some(ThemeName::CatppuccinLatte)
-    "nord" => Some(ThemeName::Nord)
-    "nord-light" => Some(ThemeName::NordLight)
-    "dracula" => Some(ThemeName::Dracula)
-    "github-light" => Some(ThemeName::GithubLight)
-    "github-dark" => Some(ThemeName::GithubDark)
-    "solarized-light" => Some(ThemeName::SolarizedLight)
-    "solarized-dark" => Some(ThemeName::SolarizedDark)
-    "one-dark" => Some(ThemeName::OneDark)
+    "default" => Some(ZincLight)
+    "zinc-light" => Some(ZincLight)
+    "zinc-dark" => Some(ZincDark)
+    "tokyo-night" => Some(TokyoNight)
+    "tokyo-night-storm" => Some(TokyoNightStorm)
+    "tokyo-night-light" => Some(TokyoNightLight)
+    "catppuccin-mocha" => Some(CatppuccinMocha)
+    "catppuccin-latte" => Some(CatppuccinLatte)
+    "nord" => Some(Nord)
+    "nord-light" => Some(NordLight)
+    "dracula" => Some(Dracula)
+    "github-light" => Some(GithubLight)
+    "github-dark" => Some(GithubDark)
+    "solarized-light" => Some(SolarizedLight)
+    "solarized-dark" => Some(SolarizedDark)
+    "one-dark" => Some(OneDark)
     _ => None
   }
 }
 
 ///|
+/// Public function `theme_by_name`.
 pub fn theme_by_name(name : String) -> DiagramColors? {
   match parse_theme_name(name) {
     Some(theme) => Some(theme_colors(theme))
@@ -374,11 +388,13 @@ pub fn theme_by_name(name : String) -> DiagramColors? {
 }
 
 ///|
+/// Public function `theme_exists`.
 pub fn theme_exists(name : String) -> Bool {
   parse_theme_name(name) is Some(_)
 }
 
 ///|
+/// Public function `canonical_theme_slug`.
 pub fn canonical_theme_slug(name : String) -> String? {
   match parse_theme_name(name) {
     Some(theme) => Some(theme_slug(theme))
@@ -387,37 +403,41 @@ pub fn canonical_theme_slug(name : String) -> String? {
 }
 
 ///|
+/// Public function `built_in_themes`.
 pub fn built_in_themes() -> Array[ThemeName] {
   [
-    ThemeName::ZincLight,
-    ThemeName::ZincDark,
-    ThemeName::TokyoNight,
-    ThemeName::TokyoNightStorm,
-    ThemeName::TokyoNightLight,
-    ThemeName::CatppuccinMocha,
-    ThemeName::CatppuccinLatte,
-    ThemeName::Nord,
-    ThemeName::NordLight,
-    ThemeName::Dracula,
-    ThemeName::GithubLight,
-    ThemeName::GithubDark,
-    ThemeName::SolarizedLight,
-    ThemeName::SolarizedDark,
-    ThemeName::OneDark,
+    ZincLight,
+    ZincDark,
+    TokyoNight,
+    TokyoNightStorm,
+    TokyoNightLight,
+    CatppuccinMocha,
+    CatppuccinLatte,
+    Nord,
+    NordLight,
+    Dracula,
+    GithubLight,
+    GithubDark,
+    SolarizedLight,
+    SolarizedDark,
+    OneDark,
   ]
 }
 
 ///|
+/// Public function `built_in_theme_slugs`.
 pub fn built_in_theme_slugs() -> Array[String] {
   built_in_themes().map(theme_slug)
 }
 
 ///|
+/// Public function `built_in_theme_slugs_csv`.
 pub fn built_in_theme_slugs_csv() -> String {
   built_in_theme_slugs().join(", ")
 }
 
 ///|
+/// Public function `built_in_theme_colors`.
 pub fn built_in_theme_colors() -> Map[String, DiagramColors] {
   let themes : Map[String, DiagramColors] = {}
   for theme in built_in_themes() {

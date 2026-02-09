@@ -33,18 +33,18 @@ fn node_dimensions(node : MermaidNode) -> (Int, Int) {
   }
 
   match node.shape {
-    NodeShape::StateStart => (22, 22)
-    NodeShape::StateEnd => (22, 22)
-    NodeShape::Circle => (60, 60)
-    NodeShape::DoubleCircle => (64, 64)
-    NodeShape::ClassEntity => {
+    StateStart => (22, 22)
+    StateEnd => (22, 22)
+    Circle => (60, 60)
+    DoubleCircle => (64, 64)
+    ClassEntity => {
       let min_width = 120
       let width = min_width.max(longest_line * 8 + 30)
       let detail_rows = (label_lines.length() - 1).max(1)
       let height = 36 + detail_rows * 16 + 10
       (width, height)
     }
-    NodeShape::ErEntity => {
+    ErEntity => {
       let min_width = 120
       let width = min_width.max(longest_line * 8 + 30)
       let detail_rows = (label_lines.length() - 1).max(1)
@@ -62,12 +62,12 @@ fn node_dimensions(node : MermaidNode) -> (Int, Int) {
 
 ///|
 fn layout_direction_is_horizontal(direction : Direction) -> Bool {
-  direction is (Direction::LR | Direction::RL)
+  direction is (LR | RL)
 }
 
 ///|
 fn layout_direction_is_reverse(direction : Direction) -> Bool {
-  direction is (Direction::RL | Direction::BT)
+  direction is (RL | BT)
 }
 
 ///|
@@ -207,7 +207,7 @@ fn edge_points_for(
     }
     let start_x = source.x + source_delta
     let end_x = target.x + target_delta
-    [Point::{ x: start_x, y: source.y }, Point::{ x: end_x, y: target.y }]
+    [{ x: start_x, y: source.y }, { x: end_x, y: target.y }]
   } else {
     let moving_down = target.y >= source.y
     let source_delta = if moving_down {
@@ -222,13 +222,13 @@ fn edge_points_for(
     }
     let start_y = source.y + source_delta
     let end_y = target.y + target_delta
-    [Point::{ x: source.x, y: start_y }, Point::{ x: target.x, y: end_y }]
+    [{ x: source.x, y: start_y }, { x: target.x, y: end_y }]
   }
 }
 
 ///|
 fn midpoint(a : Point, b : Point) -> Point {
-  Point::{ x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }
+  { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }
 }
 
 ///|
@@ -269,7 +269,7 @@ fn is_sequence_graph(graph : MermaidGraph) -> Bool {
     return false
   }
   for node in nodes {
-    if node.shape != NodeShape::SequenceParticipant {
+    if node.shape != SequenceParticipant {
       return false
     }
   }
@@ -287,10 +287,10 @@ fn sequence_edge_points(
     let loop_x = start_x + 36
     let loop_bottom = y + 24
     [
-      Point::{ x: start_x, y },
-      Point::{ x: loop_x, y },
-      Point::{ x: loop_x, y: loop_bottom },
-      Point::{ x: start_x, y: loop_bottom },
+      { x: start_x, y },
+      { x: loop_x, y },
+      { x: loop_x, y: loop_bottom },
+      { x: start_x, y: loop_bottom },
     ]
   } else {
     let moving_right = target.x >= source.x
@@ -298,7 +298,7 @@ fn sequence_edge_points(
       (if moving_right { source.width / 2 } else { -source.width / 2 })
     let end_x = target.x +
       (if moving_right { -target.width / 2 } else { target.width / 2 })
-    [Point::{ x: start_x, y }, Point::{ x: end_x, y }]
+    [{ x: start_x, y }, { x: end_x, y }]
   }
 }
 
@@ -436,7 +436,7 @@ fn sequence_apply_activation_command(
     Some(start_y) =>
       match actor_index.get(command.actor_id) {
         Some(idx) =>
-          sequence_activations.push(PositionedSequenceActivation::{
+          sequence_activations.push({
             actor_id: command.actor_id,
             x: actor_center_x[idx] - activation_width / 2,
             top_y: start_y,
@@ -478,7 +478,7 @@ fn sequence_participant_kind(
 ) -> SequenceParticipantKind {
   match graph.sequence_actor_kinds.get(node_id) {
     Some(kind) => kind
-    None => SequenceParticipantKind::Participant
+    None => Participant
   }
 }
 
@@ -514,7 +514,7 @@ fn layout_sequence_graph(
 
   let nodes_in_order = sequence_collect_ordered_nodes(graph)
   if nodes_in_order.length() == 0 {
-    return PositionedGraph::{
+    return {
       width: 0,
       height: 0,
       nodes: [],
@@ -564,8 +564,8 @@ fn layout_sequence_graph(
     }
     inline_style["__sequence_kind"] = match
       sequence_participant_kind(graph, node.id) {
-      SequenceParticipantKind::Actor => "actor"
-      SequenceParticipantKind::Participant => "participant"
+      Actor => "actor"
+      Participant => "participant"
     }
     let positioned = PositionedNode::{
       id: node.id,
@@ -637,17 +637,14 @@ fn layout_sequence_graph(
               if edge.source == edge.target {
                 Some(Point::{ x: points[1].x + 6, y: points[1].y + 10 })
               } else {
-                Some(Point::{
-                  x: (points[0].x + points[1].x) / 2,
-                  y: points[0].y - 6,
-                })
+                Some({ x: (points[0].x + points[1].x) / 2, y: points[0].y - 6 })
               }
             } else {
               None
             }
           None => None
         }
-        positioned_edges.push(PositionedEdge::{
+        positioned_edges.push({
           source: edge.source,
           target: edge.target,
           label: edge.label,
@@ -666,11 +663,7 @@ fn layout_sequence_graph(
         }
         if sequence_operator_has_suffix(edge, "-") {
           sequence_apply_activation_command(
-            SequenceActivationCommand::{
-              actor_id: edge.source,
-              activate: false,
-              after_index: i,
-            },
+            { actor_id: edge.source, activate: false, after_index: i },
             message_y,
             actor_index,
             actor_center_x,
@@ -712,7 +705,7 @@ fn layout_sequence_graph(
     for start_y in stack {
       match actor_index.get(actor_id) {
         Some(idx) =>
-          sequence_activations.push(PositionedSequenceActivation::{
+          sequence_activations.push({
             actor_id,
             x: actor_center_x[idx] - activation_width / 2,
             top_y: start_y,
@@ -790,12 +783,9 @@ fn layout_sequence_graph(
         actor_index,
         actor_center_x,
       )
-      dividers.push(PositionedSequenceBlockDivider::{
-        y: divider_row - divider_offset,
-        label: divider.label,
-      })
+      dividers.push({ y: divider_row - divider_offset, label: divider.label })
     }
-    sequence_blocks.push(PositionedSequenceBlock::{
+    sequence_blocks.push({
       block_type: block.block_type,
       label: block.label,
       x: left,
@@ -821,14 +811,14 @@ fn layout_sequence_graph(
       padding + actor_height + 4
     }
     let note_x = match note.position {
-      SequenceNotePosition::Left =>
+      Left =>
         actor_center_x[first_index] -
         actor_widths[first_index] / 2 -
         note_w -
         note_gap
-      SequenceNotePosition::Right =>
+      Right =>
         actor_center_x[first_index] + actor_widths[first_index] / 2 + note_gap
-      SequenceNotePosition::Over =>
+      Over =>
         if note.actor_ids.length() > 1 {
           let last_actor = note.actor_ids[note.actor_ids.length() - 1]
           let last_index = option_int_or(
@@ -841,7 +831,7 @@ fn layout_sequence_graph(
           actor_center_x[first_index] - note_w / 2
         }
     }
-    sequence_notes.push(PositionedSequenceNote::{
+    sequence_notes.push({
       text: note.text,
       x: note_x,
       y: note_y,
@@ -869,7 +859,7 @@ fn layout_sequence_graph(
   let shift_x = if global_min_x < padding { padding - global_min_x } else { 0 }
   if shift_x > 0 {
     for i, node in positioned_nodes {
-      positioned_nodes[i] = PositionedNode::{
+      positioned_nodes[i] = {
         id: node.id,
         label: node.label,
         shape: node.shape,
@@ -883,14 +873,14 @@ fn layout_sequence_graph(
     for i, edge in positioned_edges {
       let shifted_points : Array[Point] = []
       for point in edge.points {
-        shifted_points.push(Point::{ x: point.x + shift_x, y: point.y })
+        shifted_points.push({ x: point.x + shift_x, y: point.y })
       }
       let shifted_label = match edge.label_position {
         Some(position) =>
           Some(Point::{ x: position.x + shift_x, y: position.y })
         None => None
       }
-      positioned_edges[i] = PositionedEdge::{
+      positioned_edges[i] = {
         source: edge.source,
         target: edge.target,
         label: edge.label,
@@ -903,7 +893,7 @@ fn layout_sequence_graph(
       }
     }
     for i, activation in sequence_activations {
-      sequence_activations[i] = PositionedSequenceActivation::{
+      sequence_activations[i] = {
         actor_id: activation.actor_id,
         x: activation.x + shift_x,
         top_y: activation.top_y,
@@ -912,7 +902,7 @@ fn layout_sequence_graph(
       }
     }
     for i, block in sequence_blocks {
-      sequence_blocks[i] = PositionedSequenceBlock::{
+      sequence_blocks[i] = {
         block_type: block.block_type,
         label: block.label,
         x: block.x + shift_x,
@@ -923,7 +913,7 @@ fn layout_sequence_graph(
       }
     }
     for i, note in sequence_notes {
-      sequence_notes[i] = PositionedSequenceNote::{
+      sequence_notes[i] = {
         text: note.text,
         x: note.x + shift_x,
         y: note.y,
@@ -935,7 +925,7 @@ fn layout_sequence_graph(
 
   let sequence_lifelines : Array[PositionedSequenceLifeline] = []
   for node in positioned_nodes {
-    sequence_lifelines.push(PositionedSequenceLifeline::{
+    sequence_lifelines.push({
       actor_id: node.id,
       x: node.x,
       top_y: padding + actor_height,
@@ -943,7 +933,7 @@ fn layout_sequence_graph(
     })
   }
 
-  PositionedGraph::{
+  {
     width: (global_max_x + shift_x + padding).max(200),
     height: diagram_bottom.max(100),
     nodes: positioned_nodes,
@@ -1105,15 +1095,7 @@ fn build_empty_group_tree_at(
     height = height.max(max_child_bottom - y + group_padding)
   }
 
-  PositionedGroup::{
-    id: subgraph.id,
-    label: subgraph.label,
-    x,
-    y,
-    width,
-    height,
-    children,
-  }
+  { id: subgraph.id, label: subgraph.label, x, y, width, height, children }
 }
 
 ///|
@@ -1216,15 +1198,7 @@ fn build_positioned_group(
     empty_child_top = child_group.y + child_group.height + group_padding
   }
 
-  Some(PositionedGroup::{
-    id: subgraph.id,
-    label: subgraph.label,
-    x,
-    y,
-    width,
-    height,
-    children,
-  })
+  Some({ id: subgraph.id, label: subgraph.label, x, y, width, height, children })
 }
 
 ///|
@@ -1273,7 +1247,7 @@ fn shift_positioned_group(
   for child in group.children {
     shifted_children.push(shift_positioned_group(child, shift_x, shift_y))
   }
-  PositionedGroup::{
+  {
     id: group.id,
     label: group.label,
     x: group.x + shift_x,
@@ -1398,7 +1372,7 @@ fn apply_subgraph_direction_override_to_members(
       } else {
         left + node.width / 2
       }
-      positioned_nodes[index] = PositionedNode::{
+      positioned_nodes[index] = {
         id: node.id,
         label: node.label,
         shape: node.shape,
@@ -1425,7 +1399,7 @@ fn apply_subgraph_direction_override_to_members(
       } else {
         top + node.height / 2
       }
-      positioned_nodes[index] = PositionedNode::{
+      positioned_nodes[index] = {
         id: node.id,
         label: node.label,
         shape: node.shape,
@@ -1517,7 +1491,7 @@ fn shift_member_indexes(
   }
   for index in indexes {
     let node = positioned_nodes[index]
-    positioned_nodes[index] = PositionedNode::{
+    positioned_nodes[index] = {
       id: node.id,
       label: node.label,
       shape: node.shape,
@@ -1559,7 +1533,7 @@ fn apply_subgraph_direction_override_to_children(
     if !child_has_bounds {
       continue
     }
-    member_blocks.push(SubgraphMemberBlock::{
+    member_blocks.push({
       node_indexes: indexes,
       left: child_left,
       top: child_top,
@@ -1695,7 +1669,7 @@ fn apply_subgraph_direction_overrides(
 fn is_state_graph(graph : MermaidGraph) -> Bool {
   for _, node in graph.nodes {
     match node.shape {
-      NodeShape::StateStart | NodeShape::StateEnd => return true
+      StateStart | StateEnd => return true
       _ => ()
     }
   }
@@ -1898,10 +1872,10 @@ fn register_group_anchors(
   preserve_existing : Bool,
 ) -> Unit {
   if !preserve_existing || !positioned_by_id.contains(group.id) {
-    positioned_by_id[group.id] = PositionedNode::{
+    positioned_by_id[group.id] = {
       id: group.id,
       label: group.label,
-      shape: NodeShape::Rectangle,
+      shape: Rectangle,
       x: group.x + group.width / 2,
       y: group.y + group.height / 2,
       width: group.width,
@@ -2101,7 +2075,7 @@ fn layout_graph_with_subgraph_redirects(
 
     for node in nodes_in_order {
       match node.shape {
-        NodeShape::StateStart | NodeShape::StateEnd => ()
+        StateStart | StateEnd => ()
         _ => {
           lane_assigned[node.id] = true
           break
@@ -2123,7 +2097,7 @@ fn layout_graph_with_subgraph_redirects(
       let target_is_state_end = match node_shape_by_id.get(edge.target) {
         Some(shape) =>
           match shape {
-            NodeShape::StateEnd => true
+            StateEnd => true
             _ => false
           }
         None => false
@@ -2159,7 +2133,7 @@ fn layout_graph_with_subgraph_redirects(
       let target_is_pseudostate = match node_shape_by_id.get(edge.target) {
         Some(shape) =>
           match shape {
-            NodeShape::StateStart | NodeShape::StateEnd => true
+            StateStart | StateEnd => true
             _ => false
           }
         None => false
@@ -2365,7 +2339,7 @@ fn layout_graph_with_subgraph_redirects(
           }
           None => None
         }
-        positioned_edges.push(PositionedEdge::{
+        positioned_edges.push({
           source: edge.source,
           target: edge.target,
           label: edge.label,
@@ -2420,7 +2394,7 @@ fn layout_graph_with_subgraph_redirects(
   let shift_y = if global_min_y < padding { padding - global_min_y } else { 0 }
   if shift_x > 0 || shift_y > 0 {
     for i, node in positioned_nodes {
-      positioned_nodes[i] = PositionedNode::{
+      positioned_nodes[i] = {
         id: node.id,
         label: node.label,
         shape: node.shape,
@@ -2434,17 +2408,14 @@ fn layout_graph_with_subgraph_redirects(
     for i, edge in positioned_edges {
       let shifted_points : Array[Point] = []
       for point in edge.points {
-        shifted_points.push(Point::{
-          x: point.x + shift_x,
-          y: point.y + shift_y,
-        })
+        shifted_points.push({ x: point.x + shift_x, y: point.y + shift_y })
       }
       let shifted_label = match edge.label_position {
         Some(position) =>
           Some(Point::{ x: position.x + shift_x, y: position.y + shift_y })
         None => None
       }
-      positioned_edges[i] = PositionedEdge::{
+      positioned_edges[i] = {
         source: edge.source,
         target: edge.target,
         label: edge.label,
@@ -2461,7 +2432,7 @@ fn layout_graph_with_subgraph_redirects(
     }
   }
 
-  PositionedGraph::{
+  {
     width: global_max_x + shift_x + padding,
     height: global_max_y + shift_y + padding,
     nodes: positioned_nodes,

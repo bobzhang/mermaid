@@ -41,12 +41,12 @@ fn state_grid_positions(
       continue
     }
     let highest = option_int_or(highest_position_by_level.get(0), 0)
-    positions[node.id] = StateGridCoord::{ x: highest, y: 0 }
+    positions[node.id] = { x: highest, y: 0 }
     highest_position_by_level[0] = highest + 4
   }
   if positions.length() == 0 && nodes_in_order.length() > 0 {
     let first_id = nodes_in_order[0].id
-    positions[first_id] = StateGridCoord::{ x: 0, y: 0 }
+    positions[first_id] = { x: 0, y: 0 }
     highest_position_by_level[0] = 4
   }
 
@@ -62,7 +62,7 @@ fn state_grid_positions(
           if positions.contains(child_id) {
             continue
           }
-          positions[child_id] = StateGridCoord::{ x: highest, y: child_level }
+          positions[child_id] = { x: highest, y: child_level }
           highest = highest + 4
         }
         highest_position_by_level[child_level] = highest
@@ -80,7 +80,7 @@ fn state_grid_positions(
       highest_position_by_level.get(fallback_level),
       0,
     )
-    positions[node.id] = StateGridCoord::{ x: highest, y: fallback_level }
+    positions[node.id] = { x: highest, y: fallback_level }
     highest_position_by_level[fallback_level] = highest + 4
     fallback_level = fallback_level + 4
   }
@@ -107,22 +107,13 @@ test "state_grid_positions matches lifecycle sample topology" {
     state_nodes_in_definition_order(graph),
   )
 
-  assert_eq(
-    positions.get("state_start_1"),
-    Some(StateGridCoord::{ x: 0, y: 0 }),
-  )
-  assert_eq(positions.get("Closed"), Some(StateGridCoord::{ x: 0, y: 4 }))
-  assert_eq(positions.get("Connecting"), Some(StateGridCoord::{ x: 0, y: 8 }))
-  assert_eq(positions.get("Connected"), Some(StateGridCoord::{ x: 0, y: 12 }))
-  assert_eq(
-    positions.get("Disconnecting"),
-    Some(StateGridCoord::{ x: 0, y: 16 }),
-  )
-  assert_eq(
-    positions.get("Reconnecting"),
-    Some(StateGridCoord::{ x: 4, y: 16 }),
-  )
-  assert_eq(positions.get("state_end_1"), Some(StateGridCoord::{ x: 4, y: 8 }))
+  assert_eq(positions.get("state_start_1"), Some({ x: 0, y: 0 }))
+  assert_eq(positions.get("Closed"), Some({ x: 0, y: 4 }))
+  assert_eq(positions.get("Connecting"), Some({ x: 0, y: 8 }))
+  assert_eq(positions.get("Connected"), Some({ x: 0, y: 12 }))
+  assert_eq(positions.get("Disconnecting"), Some({ x: 0, y: 16 }))
+  assert_eq(positions.get("Reconnecting"), Some({ x: 4, y: 16 }))
+  assert_eq(positions.get("state_end_1"), Some({ x: 4, y: 8 }))
 }
 
 ///|
@@ -134,18 +125,15 @@ test "state_grid_positions matches composite sample topology" {
     state_nodes_in_definition_order(graph),
   )
 
-  assert_eq(
-    positions.get("state_start_1"),
-    Some(StateGridCoord::{ x: 0, y: 0 }),
-  )
-  assert_eq(positions.get("Idle"), Some(StateGridCoord::{ x: 0, y: 4 }))
-  assert_eq(positions.get("Processing"), Some(StateGridCoord::{ x: 0, y: 8 }))
-  assert_eq(positions.get("parse"), Some(StateGridCoord::{ x: 4, y: 0 }))
-  assert_eq(positions.get("validate"), Some(StateGridCoord::{ x: 4, y: 4 }))
-  assert_eq(positions.get("execute"), Some(StateGridCoord::{ x: 4, y: 8 }))
-  assert_eq(positions.get("Complete"), Some(StateGridCoord::{ x: 0, y: 12 }))
-  assert_eq(positions.get("Error"), Some(StateGridCoord::{ x: 4, y: 12 }))
-  assert_eq(positions.get("state_end_1"), Some(StateGridCoord::{ x: 0, y: 16 }))
+  assert_eq(positions.get("state_start_1"), Some({ x: 0, y: 0 }))
+  assert_eq(positions.get("Idle"), Some({ x: 0, y: 4 }))
+  assert_eq(positions.get("Processing"), Some({ x: 0, y: 8 }))
+  assert_eq(positions.get("parse"), Some({ x: 4, y: 0 }))
+  assert_eq(positions.get("validate"), Some({ x: 4, y: 4 }))
+  assert_eq(positions.get("execute"), Some({ x: 4, y: 8 }))
+  assert_eq(positions.get("Complete"), Some({ x: 0, y: 12 }))
+  assert_eq(positions.get("Error"), Some({ x: 4, y: 12 }))
+  assert_eq(positions.get("state_end_1"), Some({ x: 0, y: 16 }))
 }
 
 ///|
@@ -281,7 +269,7 @@ fn state_grid_coord_with_dir(
   coord : StateGridCoord,
   direction : StateEdgeDir,
 ) -> AsciiGridCoord {
-  AsciiGridCoord::{ x: coord.x + direction.x, y: coord.y + direction.y }
+  { x: coord.x + direction.x, y: coord.y + direction.y }
 }
 
 ///|
@@ -352,7 +340,7 @@ fn state_grid_blocked_cells(
   for _, position in positions {
     for y in position.y..<(position.y + 3) {
       for x in position.x..<(position.x + 3) {
-        blocked[ascii_grid_key(AsciiGridCoord::{ x, y })] = true
+        blocked[ascii_grid_key({ x, y })] = true
       }
     }
   }

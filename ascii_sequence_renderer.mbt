@@ -116,13 +116,13 @@ fn canvas_to_output(canvas : Array[Array[String]]) -> String {
 ///|
 fn ascii_sequence_block_type_text(block_type : SequenceBlockType) -> String {
   match block_type {
-    SequenceBlockType::Loop => "loop"
-    SequenceBlockType::Alt => "alt"
-    SequenceBlockType::Opt => "opt"
-    SequenceBlockType::Par => "par"
-    SequenceBlockType::Critical => "critical"
-    SequenceBlockType::Break => "break"
-    SequenceBlockType::Rect => "rect"
+    Loop => "loop"
+    Alt => "alt"
+    Opt => "opt"
+    Par => "par"
+    Critical => "critical"
+    Break => "break"
+    Rect => "rect"
   }
 }
 
@@ -198,11 +198,7 @@ fn ascii_sequence_apply_activation_command(
                 next_stack.push(stack[i])
               }
               activation_starts[command.actor_id] = next_stack
-              activations.push(SequenceAsciiActivation::{
-                actor_idx,
-                top_y,
-                bottom_y: y,
-              })
+              activations.push({ actor_idx, top_y, bottom_y: y })
             }
           None => ()
         }
@@ -350,9 +346,9 @@ fn render_ascii_sequence(
 
         let actor_idx = option_int_or(actor_index.get(note.actor_ids[0]), 0)
         let mut note_x = match note.position {
-          SequenceNotePosition::Left => lifeline_x[actor_idx] - width - 1
-          SequenceNotePosition::Right => lifeline_x[actor_idx] + 2
-          SequenceNotePosition::Over =>
+          Left => lifeline_x[actor_idx] - width - 1
+          Right => lifeline_x[actor_idx] + 2
+          Over =>
             if note.actor_ids.length() >= 2 {
               let second_actor = note.actor_ids[note.actor_ids.length() - 1]
               let second_idx = option_int_or(
@@ -368,13 +364,7 @@ fn render_ascii_sequence(
           note_x = 0
         }
 
-        note_positions.push(SequenceAsciiNoteLayout::{
-          x: note_x,
-          y: cur_y,
-          width,
-          height,
-          lines,
-        })
+        note_positions.push({ x: note_x, y: cur_y, width, height, lines })
         cur_y = cur_y + height
       }
     }
@@ -448,11 +438,7 @@ fn render_ascii_sequence(
     let row_y = message_arrow_y[edge_index]
     if ascii_sequence_operator_has_suffix(edge.relation_operator, "+") {
       ascii_sequence_apply_activation_command(
-        SequenceActivationCommand::{
-          actor_id: edge.target,
-          activate: true,
-          after_index: edge_index,
-        },
+        { actor_id: edge.target, activate: true, after_index: edge_index },
         row_y,
         actor_index,
         activation_starts,
@@ -461,11 +447,7 @@ fn render_ascii_sequence(
     }
     if ascii_sequence_operator_has_suffix(edge.relation_operator, "-") {
       ascii_sequence_apply_activation_command(
-        SequenceActivationCommand::{
-          actor_id: edge.source,
-          activate: false,
-          after_index: edge_index,
-        },
+        { actor_id: edge.source, activate: false, after_index: edge_index },
         row_y,
         actor_index,
         activation_starts,
@@ -490,7 +472,7 @@ fn render_ascii_sequence(
     match actor_index.get(actor_id) {
       Some(actor_idx) =>
         for top_y in stack {
-          activations.push(SequenceAsciiActivation::{
+          activations.push({
             actor_idx,
             top_y,
             bottom_y: (footer_y - 1).max(top_y + 1),
@@ -556,7 +538,7 @@ fn render_ascii_sequence(
         let from_x = lifeline_x[fi]
         let to_x = lifeline_x[ti]
         let is_self = fi == ti
-        let is_dashed = edge.style == EdgeStyle::Dotted
+        let is_dashed = edge.style == Dotted
         let is_filled = sequence_is_filled_arrow(edge.relation_operator)
         let line_char = if is_dashed { dashed_h } else { h }
         let label = match edge.label {

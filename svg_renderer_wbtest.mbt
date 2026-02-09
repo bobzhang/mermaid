@@ -1,6 +1,6 @@
 ///|
 fn make_svg_test_graph(edges : Array[PositionedEdge]) -> PositionedGraph {
-  PositionedGraph::{
+  {
     width: 400,
     height: 300,
     nodes: [],
@@ -15,10 +15,10 @@ fn make_svg_test_graph(edges : Array[PositionedEdge]) -> PositionedGraph {
 
 ///|
 fn make_svg_test_node(label : String) -> PositionedNode {
-  PositionedNode::{
+  {
     id: "A",
     label,
-    shape: NodeShape::Rectangle,
+    shape: Rectangle,
     x: 100,
     y: 100,
     width: 80,
@@ -29,7 +29,7 @@ fn make_svg_test_node(label : String) -> PositionedNode {
 
 ///|
 fn make_svg_test_node_with_shape(shape : NodeShape) -> PositionedNode {
-  PositionedNode::{
+  {
     id: "A",
     label: "Test",
     shape,
@@ -43,11 +43,11 @@ fn make_svg_test_node_with_shape(shape : NodeShape) -> PositionedNode {
 
 ///|
 fn make_svg_test_edge(points : Array[Point]) -> PositionedEdge {
-  PositionedEdge::{
+  {
     source: "A",
     target: "B",
     label: None,
-    style: EdgeStyle::Solid,
+    style: Solid,
     has_arrow_start: false,
     has_arrow_end: true,
     relation_operator: None,
@@ -79,8 +79,8 @@ fn count_occurrences(text : String, pattern : String) -> Int {
 ///|
 test "SVG renderer skips edges with fewer than two points" {
   let graph = make_svg_test_graph([
-    make_svg_test_edge([Point::{ x: 10, y: 20 }]),
-    make_svg_test_edge([Point::{ x: 20, y: 30 }, Point::{ x: 60, y: 70 }]),
+    make_svg_test_edge([{ x: 10, y: 20 }]),
+    make_svg_test_edge([{ x: 20, y: 30 }, { x: 60, y: 70 }]),
   ])
   let svg = render_svg(graph, DiagramColors::default(), "Inter", false)
 
@@ -90,16 +90,16 @@ test "SVG renderer skips edges with fewer than two points" {
 ///|
 test "SVG renderer uses explicit edge label position" {
   let graph = make_svg_test_graph([
-    PositionedEdge::{
+    {
       source: "A",
       target: "B",
       label: Some("Go"),
-      style: EdgeStyle::Solid,
+      style: Solid,
       has_arrow_start: false,
       has_arrow_end: true,
       relation_operator: None,
-      points: [Point::{ x: 100, y: 120 }, Point::{ x: 100, y: 200 }],
-      label_position: Some(Point::{ x: 50, y: 80 }),
+      points: [{ x: 100, y: 120 }, { x: 100, y: 200 }],
+      label_position: Some({ x: 50, y: 80 }),
     },
   ])
   let svg = render_svg(graph, DiagramColors::default(), "Inter", false)
@@ -131,15 +131,15 @@ test "SVG renderer escapes special characters in node labels" {
 ///|
 test "SVG renderer falls back to midpoint for labels without explicit position" {
   let graph = make_svg_test_graph([
-    PositionedEdge::{
+    {
       source: "A",
       target: "B",
       label: Some("Yes"),
-      style: EdgeStyle::Solid,
+      style: Solid,
       has_arrow_start: false,
       has_arrow_end: true,
       relation_operator: None,
-      points: [Point::{ x: 100, y: 120 }, Point::{ x: 100, y: 200 }],
+      points: [{ x: 100, y: 120 }, { x: 100, y: 200 }],
       label_position: None,
     },
   ])
@@ -621,19 +621,15 @@ test "SVG renderer sequence-divider-label class uses text-muted fill" {
 ///|
 test "SVG renderer edge-label midpoint follows polyline segments" {
   let graph = make_svg_test_graph([
-    PositionedEdge::{
+    {
       source: "A",
       target: "B",
       label: Some("L"),
-      style: EdgeStyle::Solid,
+      style: Solid,
       has_arrow_start: false,
       has_arrow_end: true,
       relation_operator: None,
-      points: [
-        Point::{ x: 0, y: 0 },
-        Point::{ x: 100, y: 0 },
-        Point::{ x: 100, y: 100 },
-      ],
+      points: [{ x: 0, y: 0 }, { x: 100, y: 0 }, { x: 100, y: 100 }],
       label_position: None,
     },
   ])
@@ -645,15 +641,15 @@ test "SVG renderer edge-label midpoint follows polyline segments" {
 ///|
 test "SVG renderer renders thick edge with width 1.5" {
   let graph = make_svg_test_graph([
-    PositionedEdge::{
+    {
       source: "A",
       target: "B",
       label: None,
-      style: EdgeStyle::Thick,
+      style: Thick,
       has_arrow_start: false,
       has_arrow_end: true,
       relation_operator: None,
-      points: [Point::{ x: 10, y: 20 }, Point::{ x: 60, y: 70 }],
+      points: [{ x: 10, y: 20 }, { x: 60, y: 70 }],
       label_position: None,
     },
   ])
@@ -668,20 +664,20 @@ test "SVG renderer state pseudostates use text color fills" {
     width: 400,
     height: 300,
     nodes: [
-      PositionedNode::{
+      {
         id: "start",
         label: "",
-        shape: NodeShape::StateStart,
+        shape: StateStart,
         x: 80,
         y: 80,
         width: 28,
         height: 28,
         inline_style: None,
       },
-      PositionedNode::{
+      {
         id: "end",
         label: "",
-        shape: NodeShape::StateEnd,
+        shape: StateEnd,
         x: 160,
         y: 80,
         width: 28,
@@ -706,15 +702,15 @@ test "SVG renderer state pseudostates use text color fills" {
 ///|
 test "SVG renderer solid edges omit dasharray" {
   let graph = make_svg_test_graph([
-    PositionedEdge::{
+    {
       source: "A",
       target: "B",
       label: None,
-      style: EdgeStyle::Solid,
+      style: Solid,
       has_arrow_start: false,
       has_arrow_end: true,
       relation_operator: None,
-      points: [Point::{ x: 5, y: 5 }, Point::{ x: 20, y: 20 }],
+      points: [{ x: 5, y: 5 }, { x: 20, y: 20 }],
       label_position: None,
     },
   ])
@@ -775,7 +771,7 @@ test "SVG renderer flowchart arrow markers use 8x4.8 geometry and reversed start
 ///|
 test "SVG renderer omits edge-label elements when edge has no label" {
   let graph = make_svg_test_graph([
-    make_svg_test_edge([Point::{ x: 100, y: 120 }, Point::{ x: 100, y: 200 }]),
+    make_svg_test_edge([{ x: 100, y: 120 }, { x: 100, y: 200 }]),
   ])
   let svg = render_svg(graph, DiagramColors::default(), "Inter", false)
 
@@ -786,10 +782,10 @@ test "SVG renderer omits edge-label elements when edge has no label" {
 ///|
 test "SVG renderer rectangle and rounded nodes include ry attribute" {
   let rect_svg = render_svg(
-    PositionedGraph::{
+    {
       width: 400,
       height: 300,
-      nodes: [make_svg_test_node_with_shape(NodeShape::Rectangle)],
+      nodes: [make_svg_test_node_with_shape(Rectangle)],
       edges: [],
       groups: [],
       sequence_lifelines: [],
@@ -804,10 +800,10 @@ test "SVG renderer rectangle and rounded nodes include ry attribute" {
   assert_true(rect_svg.contains("rx=\"0\" ry=\"0\""))
 
   let rounded_svg = render_svg(
-    PositionedGraph::{
+    {
       width: 400,
       height: 300,
-      nodes: [make_svg_test_node_with_shape(NodeShape::Rounded)],
+      nodes: [make_svg_test_node_with_shape(Rounded)],
       edges: [],
       groups: [],
       sequence_lifelines: [],
@@ -825,14 +821,14 @@ test "SVG renderer rectangle and rounded nodes include ry attribute" {
 ///|
 test "SVG renderer stadium uses half-height corner radius for rx and ry" {
   let svg = render_svg(
-    PositionedGraph::{
+    {
       width: 400,
       height: 300,
       nodes: [
-        PositionedNode::{
+        {
           id: "S",
           label: "Stadium",
-          shape: NodeShape::Stadium,
+          shape: Stadium,
           x: 100,
           y: 100,
           width: 100,
@@ -857,14 +853,14 @@ test "SVG renderer stadium uses half-height corner radius for rx and ry" {
 ///|
 test "SVG renderer asymmetric shape is a left-pointed flag" {
   let svg = render_svg(
-    PositionedGraph::{
+    {
       width: 400,
       height: 300,
       nodes: [
-        PositionedNode::{
+        {
           id: "F",
           label: "Flag",
-          shape: NodeShape::Asymmetric,
+          shape: Asymmetric,
           x: 100,
           y: 100,
           width: 80,
@@ -890,14 +886,14 @@ test "SVG renderer asymmetric shape is a left-pointed flag" {
 ///|
 test "SVG renderer doublecircle uses 5px inner ring gap" {
   let svg = render_svg(
-    PositionedGraph::{
+    {
       width: 400,
       height: 300,
       nodes: [
-        PositionedNode::{
+        {
           id: "D",
           label: "Dbl",
-          shape: NodeShape::DoubleCircle,
+          shape: DoubleCircle,
           x: 100,
           y: 100,
           width: 40,
@@ -924,14 +920,14 @@ test "SVG renderer doublecircle uses 5px inner ring gap" {
 ///|
 test "SVG renderer circle uses min(width,height) radius" {
   let svg = render_svg(
-    PositionedGraph::{
+    {
       width: 400,
       height: 300,
       nodes: [
-        PositionedNode::{
+        {
           id: "C",
           label: "Circle",
-          shape: NodeShape::Circle,
+          shape: Circle,
           x: 100,
           y: 100,
           width: 80,
@@ -957,14 +953,14 @@ test "SVG renderer circle uses min(width,height) radius" {
 ///|
 test "SVG renderer doublecircle radius uses min(width,height)" {
   let svg = render_svg(
-    PositionedGraph::{
+    {
       width: 400,
       height: 300,
       nodes: [
-        PositionedNode::{
+        {
           id: "D",
           label: "Double",
-          shape: NodeShape::DoubleCircle,
+          shape: DoubleCircle,
           x: 100,
           y: 100,
           width: 90,
@@ -991,14 +987,14 @@ test "SVG renderer doublecircle radius uses min(width,height)" {
 ///|
 test "SVG renderer trapezoid uses width-proportional 15 percent inset" {
   let svg = render_svg(
-    PositionedGraph::{
+    {
       width: 400,
       height: 300,
       nodes: [
-        PositionedNode::{
+        {
           id: "T",
           label: "Trap",
-          shape: NodeShape::Trapezoid,
+          shape: Trapezoid,
           x: 100,
           y: 100,
           width: 80,
@@ -1024,14 +1020,14 @@ test "SVG renderer trapezoid uses width-proportional 15 percent inset" {
 ///|
 test "SVG renderer trapezoid-alt uses width-proportional 15 percent inset" {
   let svg = render_svg(
-    PositionedGraph::{
+    {
       width: 400,
       height: 300,
       nodes: [
-        PositionedNode::{
+        {
           id: "TA",
           label: "TrapAlt",
-          shape: NodeShape::TrapezoidAlt,
+          shape: TrapezoidAlt,
           x: 100,
           y: 100,
           width: 80,
@@ -1057,14 +1053,14 @@ test "SVG renderer trapezoid-alt uses width-proportional 15 percent inset" {
 ///|
 test "SVG renderer cylinder uses 7px ellipse cap radius" {
   let svg = render_svg(
-    PositionedGraph::{
+    {
       width: 400,
       height: 300,
       nodes: [
-        PositionedNode::{
+        {
           id: "C",
           label: "Cyl",
-          shape: NodeShape::Cylinder,
+          shape: Cylinder,
           x: 100,
           y: 100,
           width: 80,
@@ -1095,14 +1091,14 @@ test "SVG renderer cylinder uses 7px ellipse cap radius" {
 ///|
 test "SVG renderer hexagon uses height-based quarter inset" {
   let svg = render_svg(
-    PositionedGraph::{
+    {
       width: 400,
       height: 300,
       nodes: [
-        PositionedNode::{
+        {
           id: "H",
           label: "Hex",
-          shape: NodeShape::Hexagon,
+          shape: Hexagon,
           x: 100,
           y: 100,
           width: 80,
@@ -1130,15 +1126,15 @@ test "SVG renderer hexagon uses height-based quarter inset" {
 ///|
 test "SVG renderer bidirectional edges include both markers" {
   let graph = make_svg_test_graph([
-    PositionedEdge::{
+    {
       source: "A",
       target: "B",
       label: None,
-      style: EdgeStyle::Solid,
+      style: Solid,
       has_arrow_start: true,
       has_arrow_end: true,
       relation_operator: None,
-      points: [Point::{ x: 20, y: 30 }, Point::{ x: 60, y: 70 }],
+      points: [{ x: 20, y: 30 }, { x: 60, y: 70 }],
       label_position: None,
     },
   ])
@@ -1156,10 +1152,10 @@ test "SVG renderer escapes injection in inline fill style attribute" {
     width: 400,
     height: 300,
     nodes: [
-      PositionedNode::{
+      {
         id: "A",
         label: "Node",
-        shape: NodeShape::Rectangle,
+        shape: Rectangle,
         x: 100,
         y: 100,
         width: 80,
@@ -1183,19 +1179,15 @@ test "SVG renderer escapes injection in inline fill style attribute" {
 ///|
 test "SVG renderer edge-label midpoint uses Euclidean segment lengths" {
   let graph = make_svg_test_graph([
-    PositionedEdge::{
+    {
       source: "A",
       target: "B",
       label: Some("M"),
-      style: EdgeStyle::Solid,
+      style: Solid,
       has_arrow_start: false,
       has_arrow_end: true,
       relation_operator: None,
-      points: [
-        Point::{ x: 0, y: 0 },
-        Point::{ x: 10, y: 10 },
-        Point::{ x: 20, y: 10 },
-      ],
+      points: [{ x: 0, y: 0 }, { x: 10, y: 10 }, { x: 20, y: 10 }],
       label_position: None,
     },
   ])
@@ -1213,10 +1205,10 @@ test "SVG renderer escapes injection in inline stroke-width style attribute" {
     width: 400,
     height: 300,
     nodes: [
-      PositionedNode::{
+      {
         id: "A",
         label: "Node",
-        shape: NodeShape::Rectangle,
+        shape: Rectangle,
         x: 100,
         y: 100,
         width: 80,
@@ -1245,7 +1237,7 @@ test "SVG renderer escapes special characters in group labels" {
     nodes: [],
     edges: [],
     groups: [
-      PositionedGroup::{
+      {
         id: "g1",
         label: "A < B",
         x: 20,
@@ -1273,7 +1265,7 @@ test "SVG renderer group primitives use derived group tokens" {
     nodes: [],
     edges: [],
     groups: [
-      PositionedGroup::{
+      {
         id: "g1",
         label: "Outer",
         x: 20,
@@ -1307,15 +1299,15 @@ test "SVG renderer group primitives use derived group tokens" {
 ///|
 test "SVG renderer no-arrow edges omit marker attributes" {
   let graph = make_svg_test_graph([
-    PositionedEdge::{
+    {
       source: "A",
       target: "B",
       label: None,
-      style: EdgeStyle::Solid,
+      style: Solid,
       has_arrow_start: false,
       has_arrow_end: false,
       relation_operator: None,
-      points: [Point::{ x: 20, y: 30 }, Point::{ x: 60, y: 70 }],
+      points: [{ x: 20, y: 30 }, { x: 60, y: 70 }],
       label_position: None,
     },
   ])
@@ -1329,14 +1321,14 @@ test "SVG renderer no-arrow edges omit marker attributes" {
 ///|
 test "SVG renderer subroutine uses 8px inset vertical lines" {
   let svg = render_svg(
-    PositionedGraph::{
+    {
       width: 400,
       height: 300,
       nodes: [
-        PositionedNode::{
+        {
           id: "S",
           label: "Sub",
-          shape: NodeShape::Subroutine,
+          shape: Subroutine,
           x: 150,
           y: 120,
           width: 100,

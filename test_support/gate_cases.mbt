@@ -1,4 +1,5 @@
 ///|
+/// Public type `GateCase`.
 pub struct GateCase {
   name : String
   input : String
@@ -13,6 +14,7 @@ pub struct GateCase {
 } derive(Eq, Show, ToJson)
 
 ///|
+/// Public function `gate_cases`.
 pub fn gate_cases() -> Array[GateCase] {
   [
     {
