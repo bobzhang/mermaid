@@ -1995,6 +1995,7 @@ fn layout_graph_with_subgraph_redirects(
   let state_label_y_offset_by_node_id : Map[String, Int] = {}
   let flow_rank_by_node_id : Map[String, Int] = {}
   let flow_lane_by_node_id : Map[String, Int] = {}
+  let flow_label_y_offset_by_rank : Map[Int, Int] = {}
   let mut flow_max_rank = 0
   if !state_graph {
     let (rank_by_id, max_rank) = collect_non_state_flow_ranks(
@@ -2010,6 +2011,76 @@ fn layout_graph_with_subgraph_redirects(
     )
     for node_id, lane in lane_by_id {
       flow_lane_by_node_id[node_id] = lane
+    }
+    if !horizontal && graph.subgraphs.length() > 0 {
+      let forward_extra_units_by_rank : Map[Int, Int] = {}
+      let single_forward_adjust_by_rank : Map[Int, Int] = {}
+      let forward_labeled_out_degree_by_source : Map[String, Int] = {}
+      let label_row_units = 18
+      for edge in graph.edges {
+        match (
+          flow_rank_by_node_id.get(edge.source),
+          flow_rank_by_node_id.get(edge.target),
+          edge.label,
+        ) {
+          (Some(source_rank), Some(target_rank), Some(_)) =>
+            if target_rank > source_rank {
+              let current = option_int_or(
+                forward_labeled_out_degree_by_source.get(edge.source),
+                0,
+              )
+              forward_labeled_out_degree_by_source[edge.source] = current + 1
+            }
+          _ => ()
+        }
+      }
+      for edge in graph.edges {
+        match (
+          flow_rank_by_node_id.get(edge.source),
+          flow_rank_by_node_id.get(edge.target),
+          edge.label,
+        ) {
+          (Some(source_rank), Some(target_rank), Some(_)) =>
+            if target_rank > source_rank {
+              let forward_labeled_out_degree = option_int_or(
+                forward_labeled_out_degree_by_source.get(edge.source),
+                0,
+              )
+              if forward_labeled_out_degree > 1 {
+                let current = option_int_or(
+                  forward_extra_units_by_rank.get(target_rank),
+                  0,
+                )
+                forward_extra_units_by_rank[target_rank] = current + label_row_units
+              } else if forward_labeled_out_degree == 1 {
+                let current_adjust = option_int_or(
+                  single_forward_adjust_by_rank.get(target_rank),
+                  0,
+                )
+                let candidate_adjust = label_row_units / 2
+                if candidate_adjust > current_adjust {
+                  single_forward_adjust_by_rank[target_rank] = candidate_adjust
+                }
+              }
+            }
+          _ => ()
+        }
+      }
+      let mut cumulative_offset = 0
+      for rank in 0..=flow_max_rank {
+        cumulative_offset += option_int_or(
+          forward_extra_units_by_rank.get(rank),
+          0,
+        )
+        cumulative_offset -= option_int_or(
+          single_forward_adjust_by_rank.get(rank),
+          0,
+        )
+        if cumulative_offset < 0 {
+          cumulative_offset = 0
+        }
+        flow_label_y_offset_by_rank[rank] = cumulative_offset
+      }
     }
   }
 
@@ -2159,7 +2230,10 @@ fn layout_graph_with_subgraph_redirects(
       height / 2 +
       option_int_or(state_label_y_offset_by_node_id.get(node.id), 0)
     } else {
-      padding + flow_rank_index * layer_spacing + height / 2
+      padding +
+      flow_rank_index * layer_spacing +
+      height / 2 +
+      option_int_or(flow_label_y_offset_by_rank.get(flow_rank_index), 0)
     }
     let positioned = PositionedNode::{
       id: node.id,
