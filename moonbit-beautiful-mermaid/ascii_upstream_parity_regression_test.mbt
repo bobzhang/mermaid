@@ -3844,3 +3844,55 @@ test "ASCII/Unicode parity regression: Class: Interface Annotation sample" {
     class_interface_annotation_sample_expected_unicode(),
   )
 }
+
+///|
+fn class_abstract_annotation_sample_source() -> String {
+  "classDiagram\n  class Shape {\n    <<abstract>>\n    +String color\n    +area() double\n    +draw() void\n  }"
+}
+
+///|
+fn class_abstract_annotation_sample_expected_ascii() -> String {
+  [
+    "+----------------+    ",
+    "| <<abstract>>   |    ",
+    "| Shape          |    ",
+    "+----------------+    ",
+    "| +color: String |    ",
+    "+----------------+    ",
+    "| +area: double  |    ",
+    "| +draw: void    |    ",
+    "+----------------+    ",
+    "                      ",
+    "                      ",
+  ]
+  .iter()
+  .join("\n")
+}
+
+///|
+fn class_abstract_annotation_sample_expected_unicode() -> String {
+  [
+    "┌────────────────┐    ",
+    "│ <<abstract>>   │    ",
+    "│ Shape          │    ",
+    "├────────────────┤    ",
+    "│ +color: String │    ",
+    "├────────────────┤    ",
+    "│ +area: double  │    ",
+    "│ +draw: void    │    ",
+    "└────────────────┘    ",
+    "                      ",
+    "                      ",
+  ]
+  .iter()
+  .join("\n")
+}
+
+///|
+test "ASCII/Unicode parity regression: Class: Abstract Annotation sample" {
+  assert_text_parity(
+    class_abstract_annotation_sample_source(),
+    class_abstract_annotation_sample_expected_ascii(),
+    class_abstract_annotation_sample_expected_unicode(),
+  )
+}
