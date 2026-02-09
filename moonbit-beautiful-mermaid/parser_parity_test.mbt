@@ -18,6 +18,25 @@ test "Parser rejects unsupported header" {
 }
 
 ///|
+test "Parser rejects empty input" {
+  let result : Result[
+    @beautiful_mermaid.MermaidGraph,
+    @beautiful_mermaid.MermaidError,
+  ] = try? @beautiful_mermaid.parse_mermaid("")
+  assert_true(result is Err(_))
+}
+
+///|
+test "Parser accepts all supported flowchart directions" {
+  for direction in ["TD", "TB", "LR", "BT", "RL"] {
+    let graph = try! @beautiful_mermaid.parse_mermaid(
+      "graph \{direction}\nA --> B",
+    )
+    assert_eq(graph.direction.to_string(), direction)
+    assert_eq(graph.edges.length(), 1)
+  }
+}
+
 test "Parser rejects flowchart header without direction" {
   let result : Result[
     @beautiful_mermaid.MermaidGraph,
