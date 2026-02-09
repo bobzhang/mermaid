@@ -240,6 +240,16 @@ test "Parser expands chained edges in order" {
 }
 
 ///|
+test "Parser handles multiple edge lines" {
+  let graph = try! @beautiful_mermaid.parse_mermaid(
+    "graph TD\nA --> B\nB --> C\nC --> D",
+  )
+  assert_eq(graph.edges.length(), 3)
+  assert_eq(graph.edges[0].source, "A")
+  assert_eq(graph.edges[2].target, "D")
+}
+
+///|
 test "Parser keeps ampersand inside node labels while still expanding parallel links" {
   let graph = try! @beautiful_mermaid.parse_mermaid(
     "graph TD\nA[Input] & B[Config] --> C[Processor]\nB --> D[Fix & Retry]",
