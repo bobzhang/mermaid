@@ -82,6 +82,62 @@ test "Parser supports hyphenated node IDs" {
 }
 
 ///|
+test "Parser recognizes all flowchart node shape variants together" {
+  let graph = try! @beautiful_mermaid.parse_mermaid(
+    "graph TD\nA[Rectangle]\nB(Rounded)\nC{Diamond}\nD([Stadium])\nE((Circle))\nF[[Subroutine]]\nG(((DoubleCircle)))\nH{{Hexagon}}\nI[(Cylinder)]\nJ>Asymmetric]\nK[/Trapezoid\\\\]\nL[\\\\TrapAlt/]",
+  )
+
+  match graph.nodes.get("A") {
+    Some(node) => assert_eq(node.shape.to_string(), "Rectangle")
+    None => fail("missing node A")
+  }
+  match graph.nodes.get("B") {
+    Some(node) => assert_eq(node.shape.to_string(), "Rounded")
+    None => fail("missing node B")
+  }
+  match graph.nodes.get("C") {
+    Some(node) => assert_eq(node.shape.to_string(), "Diamond")
+    None => fail("missing node C")
+  }
+  match graph.nodes.get("D") {
+    Some(node) => assert_eq(node.shape.to_string(), "Stadium")
+    None => fail("missing node D")
+  }
+  match graph.nodes.get("E") {
+    Some(node) => assert_eq(node.shape.to_string(), "Circle")
+    None => fail("missing node E")
+  }
+  match graph.nodes.get("F") {
+    Some(node) => assert_eq(node.shape.to_string(), "Subroutine")
+    None => fail("missing node F")
+  }
+  match graph.nodes.get("G") {
+    Some(node) => assert_eq(node.shape.to_string(), "DoubleCircle")
+    None => fail("missing node G")
+  }
+  match graph.nodes.get("H") {
+    Some(node) => assert_eq(node.shape.to_string(), "Hexagon")
+    None => fail("missing node H")
+  }
+  match graph.nodes.get("I") {
+    Some(node) => assert_eq(node.shape.to_string(), "Cylinder")
+    None => fail("missing node I")
+  }
+  match graph.nodes.get("J") {
+    Some(node) => assert_eq(node.shape.to_string(), "Asymmetric")
+    None => fail("missing node J")
+  }
+  match graph.nodes.get("K") {
+    Some(node) => assert_eq(node.shape.to_string(), "Trapezoid")
+    None => fail("missing node K")
+  }
+  match graph.nodes.get("L") {
+    Some(node) => assert_eq(node.shape.to_string(), "TrapezoidAlt")
+    None => fail("missing node L")
+  }
+}
+
+///|
 test "Parser accepts case-insensitive flowchart header keywords" {
   let graph = try! @beautiful_mermaid.parse_mermaid("Graph td\nA --> B")
   assert_eq(graph.direction.to_string(), "TD")
