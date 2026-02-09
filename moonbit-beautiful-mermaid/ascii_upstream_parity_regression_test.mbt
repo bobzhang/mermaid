@@ -2260,6 +2260,59 @@ fn sequence_basic_messages_expected_unicode() -> String {
 }
 
 ///|
+fn sequence_participant_aliases_source() -> String {
+  "sequenceDiagram\n  participant A as Alice\n  participant B as Bob\n  participant C as Charlie\n  A->>B: Hello\n  B->>C: Forward\n  C-->>A: Reply"
+}
+
+///|
+fn sequence_participant_aliases_expected_ascii() -> String {
+  [
+    " +-------+   +-----+    +---------+   ",
+    " | Alice |   | Bob |    | Charlie |   ",
+    " +-------+   +-----+    +---------+   ",
+    "     |          |            |        ",
+    "     |  Hello   |            |        ",
+    "     |---------->            |        ",
+    "     |          |            |        ",
+    "     |          |  Forward   |        ",
+    "     |          |------------>        ",
+    "     |          |            |        ",
+    "     |         Reply         |        ",
+    "     <.......................|        ",
+    "     |          |            |        ",
+    " +-------+   +-----+    +---------+   ",
+    " | Alice |   | Bob |    | Charlie |   ",
+    " +-------+   +-----+    +---------+   ",
+  ]
+  .iter()
+  .join("\n")
+}
+
+///|
+fn sequence_participant_aliases_expected_unicode() -> String {
+  [
+    " ┌───────┐   ┌─────┐    ┌─────────┐   ",
+    " │ Alice │   │ Bob │    │ Charlie │   ",
+    " └───┬───┘   └──┬──┘    └────┬────┘   ",
+    "     │          │            │        ",
+    "     │  Hello   │            │        ",
+    "     │──────────▶            │        ",
+    "     │          │            │        ",
+    "     │          │  Forward   │        ",
+    "     │          │────────────▶        ",
+    "     │          │            │        ",
+    "     │         Reply         │        ",
+    "     ◀╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌│        ",
+    "     │          │            │        ",
+    " ┌───┴───┐   ┌──┴──┐    ┌────┴────┐   ",
+    " │ Alice │   │ Bob │    │ Charlie │   ",
+    " └───────┘   └─────┘    └─────────┘   ",
+  ]
+  .iter()
+  .join("\n")
+}
+
+///|
 test "ASCII/Unicode parity regression: Beautiful Mermaid sample" {
   assert_text_parity(
     beautiful_mermaid_source(),
@@ -2544,5 +2597,14 @@ test "ASCII/Unicode parity regression: Sequence: Basic Messages sample" {
     sequence_basic_messages_source(),
     sequence_basic_messages_expected_ascii(),
     sequence_basic_messages_expected_unicode(),
+  )
+}
+
+///|
+test "ASCII/Unicode parity regression: Sequence: Participant Aliases sample" {
+  assert_text_parity(
+    sequence_participant_aliases_source(),
+    sequence_participant_aliases_expected_ascii(),
+    sequence_participant_aliases_expected_unicode(),
   )
 }
