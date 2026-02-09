@@ -1544,7 +1544,9 @@ test "Sequence mixed arrow operators render across text and SVG modes" (
 }
 
 ///|
-test "Class inheritance labels render across text and SVG modes" {
+test "Class inheritance labels render across text and SVG modes" (
+  it : @test.Test
+) {
   let input = "classDiagram\nclass Shape {\n<<abstract>>\n+draw() void\n}\nclass Circle {\n+radius int\n+draw() void\n}\nShape <|-- Circle : inherits"
 
   let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
@@ -1560,6 +1562,7 @@ test "Class inheritance labels render across text and SVG modes" {
     box_border_padding: 1,
   })
   let svg = try! @beautiful_mermaid.render_mermaid(input)
+  snapshot_svg(it, "integration_class_inheritance.svg", svg)
 
   assert_true(ascii.contains("Shape"))
   assert_true(ascii.contains("Circle"))
@@ -1573,7 +1576,9 @@ test "Class inheritance labels render across text and SVG modes" {
 }
 
 ///|
-test "Class abstract annotation renders across text and SVG modes" {
+test "Class abstract annotation renders across text and SVG modes" (
+  it : @test.Test
+) {
   let input = "classDiagram\nclass Service {\n<<abstract>>\n+run() void\n}\nclass Worker {\n+run() void\n}\nService <|-- Worker"
 
   let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
@@ -1589,6 +1594,7 @@ test "Class abstract annotation renders across text and SVG modes" {
     box_border_padding: 1,
   })
   let svg = try! @beautiful_mermaid.render_mermaid(input)
+  snapshot_svg(it, "integration_class_abstract.svg", svg)
 
   assert_true(ascii.contains("Service"))
   assert_true(ascii.contains("Worker"))
@@ -1605,7 +1611,9 @@ test "Class abstract annotation renders across text and SVG modes" {
 }
 
 ///|
-test "Class interface realization renders across text and SVG modes" {
+test "Class interface realization renders across text and SVG modes" (
+  it : @test.Test
+) {
   let input = "classDiagram\nclass Flyable {\n<<interface>>\n+fly() void\n}\nclass Bird {\n+fly() void\n}\nBird ..|> Flyable : implements"
 
   let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
@@ -1621,6 +1629,7 @@ test "Class interface realization renders across text and SVG modes" {
     box_border_padding: 1,
   })
   let svg = try! @beautiful_mermaid.render_mermaid(input)
+  snapshot_svg(it, "integration_class_interface.svg", svg)
 
   assert_true(ascii.contains("Flyable"))
   assert_true(ascii.contains("Bird"))
@@ -1637,7 +1646,9 @@ test "Class interface realization renders across text and SVG modes" {
 }
 
 ///|
-test "Class enum annotation renders across text and SVG modes" {
+test "Class enum annotation renders across text and SVG modes" (
+  it : @test.Test
+) {
   let input = "classDiagram\nclass Status {\n<<enum>>\n+OPEN\n+CLOSED\n}\nStatus --> Ticket : labels"
 
   let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
@@ -1653,6 +1664,7 @@ test "Class enum annotation renders across text and SVG modes" {
     box_border_padding: 1,
   })
   let svg = try! @beautiful_mermaid.render_mermaid(input)
+  snapshot_svg(it, "integration_class_enum.svg", svg)
 
   assert_true(ascii.contains("Status"))
   assert_true(ascii.contains("Ticket"))
@@ -1671,7 +1683,9 @@ test "Class enum annotation renders across text and SVG modes" {
 }
 
 ///|
-test "Class visibility members render across text and SVG modes" {
+test "Class visibility members render across text and SVG modes" (
+  it : @test.Test
+) {
   let input = "classDiagram\nclass User {\n+int id\n-string secret\n#string name\n+login() bool\n}"
 
   let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
@@ -1687,6 +1701,7 @@ test "Class visibility members render across text and SVG modes" {
     box_border_padding: 1,
   })
   let svg = try! @beautiful_mermaid.render_mermaid(input)
+  snapshot_svg(it, "integration_class_visibility.svg", svg)
 
   assert_true(ascii.contains("User"))
   assert_true(ascii.contains("id"))
@@ -1706,7 +1721,9 @@ test "Class visibility members render across text and SVG modes" {
 }
 
 ///|
-test "Class relationship set renders across text and SVG modes" {
+test "Class relationship set renders across text and SVG modes" (
+  it : @test.Test
+) {
   let input = "classDiagram\nA <|-- B : inh\nC *-- D : own\nE o-- F : has\nG --> H : use\nI ..> J : dep\nK ..|> L : imp"
 
   let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
@@ -1722,6 +1739,7 @@ test "Class relationship set renders across text and SVG modes" {
     box_border_padding: 1,
   })
   let svg = try! @beautiful_mermaid.render_mermaid(input)
+  snapshot_svg(it, "integration_class_relationship_set.svg", svg)
 
   assert_true(ascii.contains("inh"))
   assert_true(ascii.contains("own"))
@@ -1746,7 +1764,9 @@ test "Class relationship set renders across text and SVG modes" {
 }
 
 ///|
-test "ER entities and relationship labels render across text and SVG modes" {
+test "ER entities and relationship labels render across text and SVG modes" (
+  it : @test.Test
+) {
   let input = "erDiagram\nCUSTOMER {\n  int id PK\n  string email UK\n}\nORDER {\n  int id PK\n  int customer_id FK\n}\nCUSTOMER ||--o{ ORDER : places"
 
   let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
@@ -1762,6 +1782,7 @@ test "ER entities and relationship labels render across text and SVG modes" {
     box_border_padding: 1,
   })
   let svg = try! @beautiful_mermaid.render_mermaid(input)
+  snapshot_svg(it, "integration_er_entities_relationship.svg", svg)
 
   assert_true(ascii.contains("CUSTOMER"))
   assert_true(ascii.contains("ORDER"))
@@ -1779,7 +1800,7 @@ test "ER entities and relationship labels render across text and SVG modes" {
 }
 
 ///|
-test "ER attribute keys render across text and SVG modes" {
+test "ER attribute keys render across text and SVG modes" (it : @test.Test) {
   let input = "erDiagram\nUSER {\n  int id PK\n  int role_id FK\n  string email UK\n}"
 
   let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
@@ -1795,6 +1816,7 @@ test "ER attribute keys render across text and SVG modes" {
     box_border_padding: 1,
   })
   let svg = try! @beautiful_mermaid.render_mermaid(input)
+  snapshot_svg(it, "integration_er_attribute_keys.svg", svg)
 
   assert_true(ascii.contains("USER"))
   assert_true(ascii.contains("id"))
@@ -1814,7 +1836,9 @@ test "ER attribute keys render across text and SVG modes" {
 }
 
 ///|
-test "ER identifying and non-identifying edges render across text and SVG modes" {
+test "ER identifying and non-identifying edges render across text and SVG modes" (
+  it : @test.Test
+) {
   let input = "erDiagram\nUSER ||--o{ ORDER : places\nUSER ||..o{ LOG : generates"
 
   let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
@@ -1830,6 +1854,7 @@ test "ER identifying and non-identifying edges render across text and SVG modes"
     box_border_padding: 1,
   })
   let svg = try! @beautiful_mermaid.render_mermaid(input)
+  snapshot_svg(it, "integration_er_identifying_mixed.svg", svg)
 
   assert_true(ascii.contains("USER"))
   assert_true(ascii.contains("ORDER"))
@@ -1850,7 +1875,9 @@ test "ER identifying and non-identifying edges render across text and SVG modes"
 }
 
 ///|
-test "ER mixed cardinalities render across text and SVG modes" {
+test "ER mixed cardinalities render across text and SVG modes" (
+  it : @test.Test
+) {
   let input = "erDiagram\nA ||--|| B : one\nB ||--o{ C : many\nC |o--|{ D : optional\nD }|--o{ E : mixed"
 
   let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
@@ -1866,6 +1893,7 @@ test "ER mixed cardinalities render across text and SVG modes" {
     box_border_padding: 1,
   })
   let svg = try! @beautiful_mermaid.render_mermaid(input)
+  snapshot_svg(it, "integration_er_mixed_cardinalities.svg", svg)
 
   assert_true(ascii.contains("A"))
   assert_true(ascii.contains("E"))
