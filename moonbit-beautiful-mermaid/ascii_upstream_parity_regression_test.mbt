@@ -138,6 +138,125 @@ fn git_branching_workflow_expected_unicode() -> String {
 }
 
 ///|
+fn subgraph_direction_override_source() -> String {
+  "graph TD\n  subgraph pipeline [Processing Pipeline]\n    direction LR\n    A[Input] --> B[Parse] --> C[Transform] --> D[Output]\n  end\n  E[Source] --> A\n  D --> F[Sink]"
+}
+
+///|
+fn subgraph_direction_override_expected_ascii() -> String {
+  [
+    "+---------------+             ",
+    "|Processing Pipe|             ",
+    "|               |             ",
+    "|               |             ",
+    "| +-----------+ |   +--------+",
+    "| |           | |   |        |",
+    "| |   Input   |<----| Source |",
+    "| |           | |   |        |",
+    "| +-----------+ |   +--------+",
+    "|       |       |             ",
+    "|       |       |             ",
+    "|       |       |             ",
+    "|       |       |             ",
+    "|       v       |             ",
+    "| +-----------+ |             ",
+    "| |           | |             ",
+    "| |   Parse   | |             ",
+    "| |           | |             ",
+    "| +-----------+ |             ",
+    "|       |       |             ",
+    "|       |       |             ",
+    "|       |       |             ",
+    "|       |       |             ",
+    "|       v       |             ",
+    "| +-----------+ |             ",
+    "| |           | |             ",
+    "| | Transform | |             ",
+    "| |           | |             ",
+    "| +-----------+ |             ",
+    "|       |       |             ",
+    "|       |       |             ",
+    "|       |       |             ",
+    "|       |       |             ",
+    "|       v       |             ",
+    "| +-----------+ |             ",
+    "| |           | |             ",
+    "| |   Output  | |             ",
+    "| |           | |             ",
+    "| +-----------+ |             ",
+    "|       |       |             ",
+    "+-------|-------+             ",
+    "        |                     ",
+    "        |                     ",
+    "        v                     ",
+    "  +-----------+               ",
+    "  |           |               ",
+    "  |    Sink   |               ",
+    "  |           |               ",
+    "  +-----------+               ",
+  ]
+  .iter()
+  .join("\n")
+}
+
+///|
+fn subgraph_direction_override_expected_unicode() -> String {
+  [
+    "┌───────────────┐             ",
+    "│Processing Pipe│             ",
+    "│               │             ",
+    "│               │             ",
+    "│ ┌───────────┐ │   ┌────────┐",
+    "│ │           │ │   │        │",
+    "│ │   Input   │◄┼───┤ Source │",
+    "│ │           │ │   │        │",
+    "│ └─────┬─────┘ │   └────────┘",
+    "│       │       │             ",
+    "│       │       │             ",
+    "│       │       │             ",
+    "│       │       │             ",
+    "│       ▼       │             ",
+    "│ ┌───────────┐ │             ",
+    "│ │           │ │             ",
+    "│ │   Parse   │ │             ",
+    "│ │           │ │             ",
+    "│ └─────┬─────┘ │             ",
+    "│       │       │             ",
+    "│       │       │             ",
+    "│       │       │             ",
+    "│       │       │             ",
+    "│       ▼       │             ",
+    "│ ┌───────────┐ │             ",
+    "│ │           │ │             ",
+    "│ │ Transform │ │             ",
+    "│ │           │ │             ",
+    "│ └─────┬─────┘ │             ",
+    "│       │       │             ",
+    "│       │       │             ",
+    "│       │       │             ",
+    "│       │       │             ",
+    "│       ▼       │             ",
+    "│ ┌───────────┐ │             ",
+    "│ │           │ │             ",
+    "│ │   Output  │ │             ",
+    "│ │           │ │             ",
+    "│ └─────┬─────┘ │             ",
+    "│       │       │             ",
+    "└───────┼───────┘             ",
+    "        │                     ",
+    "        │                     ",
+    "        ▼                     ",
+    "  ┌───────────┐               ",
+    "  │           │               ",
+    "  │    Sink   │               ",
+    "  │           │               ",
+    "  └───────────┘               ",
+  ]
+  .iter()
+  .join("\n")
+}
+
+///|
 test "ASCII/Unicode parity regression: Beautiful Mermaid sample" {
   assert_text_parity(
     beautiful_mermaid_source(),
@@ -152,5 +271,14 @@ test "ASCII/Unicode parity regression: Git Branching Workflow sample" {
     git_branching_workflow_source(),
     git_branching_workflow_expected_ascii(),
     git_branching_workflow_expected_unicode(),
+  )
+}
+
+///|
+test "ASCII/Unicode parity regression: Subgraph Direction Override sample" {
+  assert_text_parity(
+    subgraph_direction_override_source(),
+    subgraph_direction_override_expected_ascii(),
+    subgraph_direction_override_expected_unicode(),
   )
 }
