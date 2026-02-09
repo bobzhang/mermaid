@@ -74,6 +74,13 @@ test "Pipeline dimensions honor direction" {
 }
 
 ///|
+test "SVG simple flow keeps valid svg envelope" {
+  let svg = try! @beautiful_mermaid.render_mermaid("graph TD\nA --> B")
+  assert_true(svg.has_prefix("<svg "))
+  assert_true(svg.has_suffix("</svg>"))
+}
+
+///|
 test "SVG dimensions expand with padding option" {
   let small_options = @beautiful_mermaid.RenderOptions::{
     bg: None,
