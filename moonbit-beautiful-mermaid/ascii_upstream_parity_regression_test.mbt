@@ -2313,6 +2313,65 @@ fn sequence_participant_aliases_expected_unicode() -> String {
 }
 
 ///|
+fn sequence_actor_stick_figures_source() -> String {
+  "sequenceDiagram\n  actor U as User\n  participant S as System\n  participant DB as Database\n  U->>S: Click button\n  S->>DB: Query\n  DB-->>S: Results\n  S-->>U: Display"
+}
+
+///|
+fn sequence_actor_stick_figures_expected_ascii() -> String {
+  [
+    "+------+         +--------+  +----------+   ",
+    "| User |         | System |  | Database |   ",
+    "+------+         +--------+  +----------+   ",
+    "    |                 |            |        ",
+    "    |  Click button   |            |        ",
+    "    |----------------->            |        ",
+    "    |                 |            |        ",
+    "    |                 |   Query    |        ",
+    "    |                 |------------>        ",
+    "    |                 |            |        ",
+    "    |                 |  Results   |        ",
+    "    |                 <............|        ",
+    "    |                 |            |        ",
+    "    |     Display     |            |        ",
+    "    <.................|            |        ",
+    "    |                 |            |        ",
+    "+------+         +--------+  +----------+   ",
+    "| User |         | System |  | Database |   ",
+    "+------+         +--------+  +----------+   ",
+  ]
+  .iter()
+  .join("\n")
+}
+
+///|
+fn sequence_actor_stick_figures_expected_unicode() -> String {
+  [
+    "┌──────┐         ┌────────┐  ┌──────────┐   ",
+    "│ User │         │ System │  │ Database │   ",
+    "└───┬──┘         └────┬───┘  └─────┬────┘   ",
+    "    │                 │            │        ",
+    "    │  Click button   │            │        ",
+    "    │─────────────────▶            │        ",
+    "    │                 │            │        ",
+    "    │                 │   Query    │        ",
+    "    │                 │────────────▶        ",
+    "    │                 │            │        ",
+    "    │                 │  Results   │        ",
+    "    │                 ◀╌╌╌╌╌╌╌╌╌╌╌╌│        ",
+    "    │                 │            │        ",
+    "    │     Display     │            │        ",
+    "    ◀╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌│            │        ",
+    "    │                 │            │        ",
+    "┌───┴──┐         ┌────┴───┐  ┌─────┴────┐   ",
+    "│ User │         │ System │  │ Database │   ",
+    "└──────┘         └────────┘  └──────────┘   ",
+  ]
+  .iter()
+  .join("\n")
+}
+
+///|
 test "ASCII/Unicode parity regression: Beautiful Mermaid sample" {
   assert_text_parity(
     beautiful_mermaid_source(),
@@ -2606,5 +2665,14 @@ test "ASCII/Unicode parity regression: Sequence: Participant Aliases sample" {
     sequence_participant_aliases_source(),
     sequence_participant_aliases_expected_ascii(),
     sequence_participant_aliases_expected_unicode(),
+  )
+}
+
+///|
+test "ASCII/Unicode parity regression: Sequence: Actor Stick Figures sample" {
+  assert_text_parity(
+    sequence_actor_stick_figures_source(),
+    sequence_actor_stick_figures_expected_ascii(),
+    sequence_actor_stick_figures_expected_unicode(),
   )
 }
