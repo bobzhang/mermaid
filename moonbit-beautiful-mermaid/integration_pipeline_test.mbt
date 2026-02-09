@@ -562,6 +562,35 @@ test "State composite direction override renders across text and SVG modes" {
 }
 
 ///|
+test "State alias declarations render across text and SVG modes" {
+  let input = "stateDiagram-v2\nstate \"Waiting for input\" as waiting\nwaiting --> active : trigger"
+
+  let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
+    use_ascii: true,
+    padding_x: 5,
+    padding_y: 5,
+    box_border_padding: 1,
+  })
+  let unicode = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
+    use_ascii: false,
+    padding_x: 5,
+    padding_y: 5,
+    box_border_padding: 1,
+  })
+  let svg = try! @beautiful_mermaid.render_mermaid(input)
+
+  assert_true(ascii.contains("Waiting for input"))
+  assert_true(ascii.contains("active"))
+  assert_true(ascii.contains("trigger"))
+  assert_true(unicode.contains("Waiting for input"))
+  assert_true(unicode.contains("active"))
+  assert_true(unicode.contains("trigger"))
+  assert_true(svg.contains(">Waiting for input</text>"))
+  assert_true(svg.contains(">active</text>"))
+  assert_true(svg.contains(">trigger</text>"))
+}
+
+///|
 test "SVG does not duplicate composite state labels" {
   let svg = try! @beautiful_mermaid.render_mermaid(
     "stateDiagram-v2\n[*] --> Idle\nIdle --> Processing : submit\nstate Processing {\n  parse --> validate\n  validate --> execute\n}\nProcessing --> Complete : done\nComplete --> [*]",
