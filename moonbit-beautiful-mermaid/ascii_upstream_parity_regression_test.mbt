@@ -767,6 +767,77 @@ fn decision_tree_expected_unicode() -> String {
 }
 
 ///|
+fn direction_bottom_top_source() -> String {
+  "graph BT\n  A[Foundation] --> B[Layer 2] --> C[Top]"
+}
+
+///|
+fn direction_bottom_top_expected_ascii() -> String {
+  [
+    "+------------+",
+    "|            |",
+    "|    Top     |",
+    "|            |",
+    "+------------+",
+    "       ^",
+    "       |",
+    "       |",
+    "       |",
+    "       |",
+    "+------------+",
+    "|            |",
+    "|  Layer 2   |",
+    "|            |",
+    "+------------+",
+    "       ^",
+    "       |",
+    "       |",
+    "       |",
+    "       |",
+    "+------------+",
+    "|            |",
+    "| Foundation |",
+    "|            |",
+    "+------------+",
+  ]
+  .iter()
+  .join("\n")
+}
+
+///|
+fn direction_bottom_top_expected_unicode() -> String {
+  [
+    "┌────────────┐",
+    "│            │",
+    "│    Top     │",
+    "│            │",
+    "└────────────┘",
+    "       ▲",
+    "       │",
+    "       │",
+    "       │",
+    "       │",
+    "┌──────┴─────┐",
+    "│            │",
+    "│  Layer 2   │",
+    "│            │",
+    "└────────────┘",
+    "       ▲",
+    "       │",
+    "       │",
+    "       │",
+    "       │",
+    "┌──────┴─────┐",
+    "│            │",
+    "│ Foundation │",
+    "│            │",
+    "└────────────┘",
+  ]
+  .iter()
+  .join("\n")
+}
+
+///|
 fn system_architecture_source() -> String {
   "graph LR\n  subgraph clients [Client Layer]\n    A([Web App]) --> B[API Gateway]\n    C([Mobile App]) --> B\n  end\n  subgraph services [Service Layer]\n    B --> D[Auth Service]\n    B --> E[User Service]\n    B --> F[Order Service]\n  end\n  subgraph data [Data Layer]\n    D --> G[(Auth DB)]\n    E --> H[(User DB)]\n    F --> I[(Order DB)]\n    F --> J([Message Queue])\n  end"
 }
@@ -1133,6 +1204,15 @@ test "ASCII/Unicode parity regression: Decision Tree sample" {
     decision_tree_source(),
     decision_tree_expected_ascii(),
     decision_tree_expected_unicode(),
+  )
+}
+
+///|
+test "ASCII/Unicode parity regression: Direction Bottom-Top sample" {
+  assert_text_parity(
+    direction_bottom_top_source(),
+    direction_bottom_top_expected_ascii(),
+    direction_bottom_top_expected_unicode(),
   )
 }
 
