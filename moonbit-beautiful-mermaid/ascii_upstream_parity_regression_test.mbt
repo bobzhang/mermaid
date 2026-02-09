@@ -4277,3 +4277,76 @@ test "ASCII/Unicode parity regression: Class: Dependency (..>) sample" {
     class_dependency_sample_expected_unicode(),
   )
 }
+
+
+///|
+fn class_realization_sample_source() -> String {
+  "classDiagram\n  class Flyable {\n    <<interface>>\n    +fly() void\n  }\n  class Bird {\n    +fly() void\n    +sing() void\n  }\n  Bird ..|> Flyable"
+}
+
+///|
+fn class_realization_sample_expected_ascii() -> String {
+  [
+    "+---------------+    ",
+    "| <<interface>> |    ",
+    "| Flyable       |    ",
+    "+---------------+    ",
+    "|               |    ",
+    "+---------------+    ",
+    "| +fly: void    |    ",
+    "+---------------+    ",
+    "        ^            ",
+    "       ..            ",
+    "       :             ",
+    "+-------------+      ",
+    "| Bird        |      ",
+    "+-------------+      ",
+    "|             |      ",
+    "+-------------+      ",
+    "| +fly: void  |      ",
+    "| +sing: void |      ",
+    "+-------------+      ",
+    "                     ",
+    "                     ",
+  ]
+  .iter()
+  .join("\n")
+}
+
+///|
+fn class_realization_sample_expected_unicode() -> String {
+  [
+    "┌───────────────┐    ",
+    "│ <<interface>> │    ",
+    "│ Flyable       │    ",
+    "├───────────────┤    ",
+    "│               │    ",
+    "├───────────────┤    ",
+    "│ +fly: void    │    ",
+    "└───────────────┘    ",
+    "        △            ",
+    "       ┌┘            ",
+    "       ┊             ",
+    "┌─────────────┐      ",
+    "│ Bird        │      ",
+    "├─────────────┤      ",
+    "│             │      ",
+    "├─────────────┤      ",
+    "│ +fly: void  │      ",
+    "│ +sing: void │      ",
+    "└─────────────┘      ",
+    "                     ",
+    "                     ",
+  ]
+  .iter()
+  .join("\n")
+}
+
+///|
+test "ASCII/Unicode parity regression: Class: Realization (..|>) sample" {
+  assert_text_parity(
+    class_realization_sample_source(),
+    class_realization_sample_expected_ascii(),
+    class_realization_sample_expected_unicode(),
+  )
+}
