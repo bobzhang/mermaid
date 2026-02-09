@@ -4146,3 +4146,65 @@ test "ASCII/Unicode parity regression: Class: Aggregation (o--) sample" {
     class_aggregation_o_sample_expected_unicode(),
   )
 }
+
+
+///|
+fn class_association_sample_source() -> String {
+  "classDiagram\n  class Customer {\n    +String name\n  }\n  class Order {\n    +int orderId\n  }\n  Customer --> Order"
+}
+
+///|
+fn class_association_sample_expected_ascii() -> String {
+  [
+    "+---------------+    ",
+    "| Customer      |    ",
+    "+---------------+    ",
+    "| +name: String |    ",
+    "+---------------+    ",
+    "        |            ",
+    "        |            ",
+    "        v            ",
+    "+---------------+    ",
+    "| Order         |    ",
+    "+---------------+    ",
+    "| +orderId: int |    ",
+    "+---------------+    ",
+    "                     ",
+    "                     ",
+  ]
+  .iter()
+  .join("\n")
+}
+
+///|
+fn class_association_sample_expected_unicode() -> String {
+  [
+    "┌───────────────┐    ",
+    "│ Customer      │    ",
+    "├───────────────┤    ",
+    "│ +name: String │    ",
+    "└───────────────┘    ",
+    "        │            ",
+    "        │            ",
+    "        ▼            ",
+    "┌───────────────┐    ",
+    "│ Order         │    ",
+    "├───────────────┤    ",
+    "│ +orderId: int │    ",
+    "└───────────────┘    ",
+    "                     ",
+    "                     ",
+  ]
+  .iter()
+  .join("\n")
+}
+
+///|
+test "ASCII/Unicode parity regression: Class: Association (-->) sample" {
+  assert_text_parity(
+    class_association_sample_source(),
+    class_association_sample_expected_ascii(),
+    class_association_sample_expected_unicode(),
+  )
+}
+
