@@ -1628,6 +1628,77 @@ fn direction_left_right_lr_expected_unicode() -> String {
 }
 
 ///|
+fn direction_bottom_top_bt_source() -> String {
+  "graph BT\n  A[Foundation] --> B[Layer 2] --> C[Top]"
+}
+
+///|
+fn direction_bottom_top_bt_expected_ascii() -> String {
+  [
+    "+------------+",
+    "|            |",
+    "|    Top     |",
+    "|            |",
+    "+------------+",
+    "       ^      ",
+    "       |      ",
+    "       |      ",
+    "       |      ",
+    "       |      ",
+    "+------------+",
+    "|            |",
+    "|  Layer 2   |",
+    "|            |",
+    "+------------+",
+    "       ^      ",
+    "       |      ",
+    "       |      ",
+    "       |      ",
+    "       |      ",
+    "+------------+",
+    "|            |",
+    "| Foundation |",
+    "|            |",
+    "+------------+",
+  ]
+  .iter()
+  .join("\n")
+}
+
+///|
+fn direction_bottom_top_bt_expected_unicode() -> String {
+  [
+    "┌────────────┐",
+    "│            │",
+    "│    Top     │",
+    "│            │",
+    "└────────────┘",
+    "       ▲      ",
+    "       │      ",
+    "       │      ",
+    "       │      ",
+    "       │      ",
+    "┌──────┴─────┐",
+    "│            │",
+    "│  Layer 2   │",
+    "│            │",
+    "└────────────┘",
+    "       ▲      ",
+    "       │      ",
+    "       │      ",
+    "       │      ",
+    "       │      ",
+    "┌──────┴─────┐",
+    "│            │",
+    "│ Foundation │",
+    "│            │",
+    "└────────────┘",
+  ]
+  .iter()
+  .join("\n")
+}
+
+///|
 test "ASCII/Unicode parity regression: Beautiful Mermaid sample" {
   assert_text_parity(
     beautiful_mermaid_source(),
@@ -1840,5 +1911,14 @@ test "ASCII/Unicode parity regression: Direction: Left-Right (LR) sample" {
     direction_left_right_lr_source(),
     direction_left_right_lr_expected_ascii(),
     direction_left_right_lr_expected_unicode(),
+  )
+}
+
+///|
+test "ASCII/Unicode parity regression: Direction: Bottom-Top (BT) sample" {
+  assert_text_parity(
+    direction_bottom_top_bt_source(),
+    direction_bottom_top_bt_expected_ascii(),
+    direction_bottom_top_bt_expected_unicode(),
   )
 }
