@@ -5462,3 +5462,80 @@ test "ASCII/Unicode parity regression: ER: Blog Platform Schema sample" {
     er_blog_platform_schema_sample_expected_unicode(),
   )
 }
+
+
+///|
+fn er_school_management_schema_sample_source() -> String {
+  "erDiagram\n  STUDENT {\n    int id PK\n    string name\n    date dob\n    string grade\n  }\n  TEACHER {\n    int id PK\n    string name\n    string department\n  }\n  COURSE {\n    int id PK\n    string title\n    int teacher_id FK\n    int credits\n  }\n  ENROLLMENT {\n    int id PK\n    int student_id FK\n    int course_id FK\n    string semester\n    float grade\n  }\n  TEACHER ||--o{ COURSE : teaches\n  STUDENT ||--o{ ENROLLMENT : enrolled\n  COURSE ||--o{ ENROLLMENT : has"
+}
+
+///|
+fn er_school_management_schema_sample_expected_ascii() -> String {
+  [
+    "+-----------------+      +----------------------+    ",
+    "| STUDENT         |      | TEACHER              |    ",
+    "+-----------------+      +----------------------+    ",
+    "| PK int id       |      | PK int id            |    ",
+    "|    string name  |      |    string name       |    ",
+    "|    date dob     |      |    string department |    ",
+    "|    string grade |      +----------------------+    ",
+    "+-----------------+                 ||               ",
+    "        ||                           |               ",
+    "         --enrolled--------------------teaches       ",
+    "         ||                          ||              ",
+    "         |{                          o{              ",
+    "+-------------------+      +--------------------+    ",
+    "| COURSE            |      | ENROLLMENT         |    ",
+    "+-------------------+      +--------------------+    ",
+    "| PK int id         | has  | PK int id          |    ",
+    "|    string title   |||--o{| FK int student_id  |    ",
+    "| FK int teacher_id |      | FK int course_id   |    ",
+    "|    int credits    |      |    string semester |    ",
+    "+-------------------+      |    float grade     |    ",
+    "                           +--------------------+    ",
+    "                                                     ",
+    "                                                     ",
+  ]
+  .iter()
+  .join("\n")
+}
+
+///|
+fn er_school_management_schema_sample_expected_unicode() -> String {
+  [
+    "┌─────────────────┐      ┌──────────────────────┐    ",
+    "│ STUDENT         │      │ TEACHER              │    ",
+    "├─────────────────┤      ├──────────────────────┤    ",
+    "│ PK int id       │      │ PK int id            │    ",
+    "│    string name  │      │    string name       │    ",
+    "│    date dob     │      │    string department │    ",
+    "│    string grade │      └──────────────────────┘    ",
+    "└─────────────────┘                  ║               ",
+    "         ║                           │               ",
+    "         ──enrolled────────────────────teaches       ",
+    "         ││                          ││              ",
+    "         │╟                          o╟              ",
+    "┌───────────────────┐      ┌────────────────────┐    ",
+    "│ COURSE            │      │ ENROLLMENT         │    ",
+    "├───────────────────┤      ├────────────────────┤    ",
+    "│ PK int id         │ has  │ PK int id          │    ",
+    "│    string title   │║───o╟│ FK int student_id  │    ",
+    "│ FK int teacher_id │      │ FK int course_id   │    ",
+    "│    int credits    │      │    string semester │    ",
+    "└───────────────────┘      │    float grade     │    ",
+    "                           └────────────────────┘    ",
+    "                                                     ",
+    "                                                     ",
+  ]
+  .iter()
+  .join("\n")
+}
+
+///|
+test "ASCII/Unicode parity regression: ER: School Management Schema sample" {
+  assert_text_parity(
+    er_school_management_schema_sample_source(),
+    er_school_management_schema_sample_expected_ascii(),
+    er_school_management_schema_sample_expected_unicode(),
+  )
+}
