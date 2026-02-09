@@ -4779,3 +4779,44 @@ test "ASCII/Unicode parity regression: Class: Full Hierarchy sample" {
     class_full_hierarchy_sample_expected_unicode(),
   )
 }
+
+
+///|
+fn er_basic_relationship_sample_source() -> String {
+  "erDiagram\n  CUSTOMER ||--o{ ORDER : places"
+}
+
+///|
+fn er_basic_relationship_sample_expected_ascii() -> String {
+  [
+    "+----------+places+-------+    ",
+    "| CUSTOMER |||--o{| ORDER |    ",
+    "+----------+      +-------+    ",
+    "                               ",
+    "                               ",
+  ]
+  .iter()
+  .join("\n")
+}
+
+///|
+fn er_basic_relationship_sample_expected_unicode() -> String {
+  [
+    "┌──────────┐places┌───────┐    ",
+    "│ CUSTOMER │║───o╟│ ORDER │    ",
+    "└──────────┘      └───────┘    ",
+    "                               ",
+    "                               ",
+  ]
+  .iter()
+  .join("\n")
+}
+
+///|
+test "ASCII/Unicode parity regression: ER: Basic Relationship sample" {
+  assert_text_parity(
+    er_basic_relationship_sample_source(),
+    er_basic_relationship_sample_expected_ascii(),
+    er_basic_relationship_sample_expected_unicode(),
+  )
+}
