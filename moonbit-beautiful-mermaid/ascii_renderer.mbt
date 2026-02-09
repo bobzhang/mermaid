@@ -46,6 +46,7 @@ priv struct AsciiFlowNodeBox {
 
 ///|
 priv struct AsciiFlowGroupBox {
+  id : String
   label : String
   left : Int
   top : Int
@@ -1228,6 +1229,7 @@ fn map_flow_group(
     (group.width / scale_x).max(min_width)
   }
   AsciiFlowGroupBox::{
+    id: group.id,
     label: group.label,
     left: scale_coord(group.x, scale_x, pad_x),
     top: scale_coord(group.y, scale_y, pad_y),
@@ -1315,6 +1317,7 @@ fn state_group_box_from_nodes(
   let right = max_right + group_padding
   let bottom = max_bottom + group_padding
   Some(AsciiFlowGroupBox::{
+    id: subgraph.id,
     label: subgraph.label,
     left,
     top,
@@ -1368,6 +1371,7 @@ fn shift_ascii_flow_group(
     children.push(shift_ascii_flow_group(child, shift_x, shift_y))
   }
   AsciiFlowGroupBox::{
+    id: group.id,
     label: group.label,
     left: group.left + shift_x,
     top: group.top + shift_y,
@@ -1375,6 +1379,67 @@ fn shift_ascii_flow_group(
     height: group.height,
     children,
   }
+}
+
+///|
+fn flow_collect_node_top_level_group_ids(
+  subgraph : MermaidSubgraph,
+  top_level_group_id : String,
+  node_top_level_group_by_id : Map[String, String],
+) -> Unit {
+  for node_id in subgraph.node_ids {
+    if !node_top_level_group_by_id.contains(node_id) {
+      node_top_level_group_by_id[node_id] = top_level_group_id
+    }
+  }
+  for child in subgraph.children {
+    flow_collect_node_top_level_group_ids(
+      child,
+      top_level_group_id,
+      node_top_level_group_by_id,
+    )
+  }
+}
+
+///|
+fn flow_lr_top_level_group_shifts(
+  groups : Array[AsciiFlowGroupBox],
+) -> Map[String, Int] {
+  let shifts : Map[String, Int] = {}
+  if groups.length() <= 1 {
+    return shifts
+  }
+
+  let ordered_indexes : Array[Int] = []
+  for i in 0..<groups.length() {
+    ordered_indexes.push(i)
+  }
+  for i in 1..<ordered_indexes.length() {
+    let mut j = i
+    while j > 0 &&
+      groups[ordered_indexes[j - 1]].left > groups[ordered_indexes[j]].left {
+      let tmp = ordered_indexes[j - 1]
+      ordered_indexes[j - 1] = ordered_indexes[j]
+      ordered_indexes[j] = tmp
+      j = j - 1
+    }
+  }
+
+  let mut cumulative_shift = 0
+  let first_group = groups[ordered_indexes[0]]
+  shifts[first_group.id] = 0
+  let mut previous_right = first_group.left + first_group.width - 1
+  for i in 1..<ordered_indexes.length() {
+    let group = groups[ordered_indexes[i]]
+    let shifted_left = group.left + cumulative_shift
+    let desired_left = previous_right + 2
+    if shifted_left > desired_left {
+      cumulative_shift = cumulative_shift - (shifted_left - desired_left)
+    }
+    shifts[group.id] = cumulative_shift
+    previous_right = group.left + cumulative_shift + group.width - 1
+  }
+  shifts
 }
 
 ///|
@@ -1458,6 +1523,7 @@ fn flow_expand_group_side_padding_for_nodes(
   let extra_bottom_padding = if adjusted_children.length() > 0 { 1 } else { 0 }
 
   AsciiFlowGroupBox::{
+    id: group.id,
     label: group.label,
     left,
     top: group.top,
@@ -2365,6 +2431,17 @@ fn render_ascii_flow_subgraphs(
     }
   }
 
+  let node_top_level_group_by_id : Map[String, String] = {}
+  if flow_with_subgraphs {
+    for subgraph in graph.subgraphs {
+      flow_collect_node_top_level_group_ids(
+        subgraph,
+        subgraph.id,
+        node_top_level_group_by_id,
+      )
+    }
+  }
+
   if !state_layout_mode {
     let row_indexes_by_center_y : Map[Int, Array[Int]] = {}
     for i, node in mapped_nodes {
@@ -2456,6 +2533,70 @@ fn render_ascii_flow_subgraphs(
     padded_groups
   } else {
     mapped_groups
+  }
+  let top_level_group_shift_by_id : Map[String, Int] = if !state_layout_mode &&
+    flow_with_subgraphs &&
+    flow_direction_horizontal {
+    flow_lr_top_level_group_shifts(mapped_groups)
+  } else {
+    {}
+  }
+  let mapped_groups = if top_level_group_shift_by_id.length() > 0 {
+    let shifted_groups : Array[AsciiFlowGroupBox] = []
+    for group in mapped_groups {
+      let shift_x = option_int_or(top_level_group_shift_by_id.get(group.id), 0)
+      shifted_groups.push(shift_ascii_flow_group(group, shift_x, 0))
+    }
+    shifted_groups
+  } else {
+    mapped_groups
+  }
+  let top_level_group_by_id : Map[String, AsciiFlowGroupBox] = {}
+  for group in mapped_groups {
+    top_level_group_by_id[group.id] = group
+  }
+  if top_level_group_shift_by_id.length() > 0 ||
+    (flow_with_subgraphs && flow_direction_horizontal) {
+    for i, node in mapped_nodes {
+      match node_top_level_group_by_id.get(node.id) {
+        Some(top_level_group_id) => {
+          let shift_x = if top_level_group_shift_by_id.length() > 0 {
+            option_int_or(
+              top_level_group_shift_by_id.get(top_level_group_id),
+              0,
+            )
+          } else {
+            0
+          }
+          let mut adjusted_left = node.left + shift_x
+          if flow_with_subgraphs && flow_direction_horizontal {
+            match top_level_group_by_id.get(top_level_group_id) {
+              Some(top_level_group) => {
+                let min_left = top_level_group.left + 2
+                if adjusted_left < min_left {
+                  adjusted_left = min_left
+                }
+              }
+              None => ()
+            }
+          }
+          if adjusted_left != node.left {
+            mapped_nodes[i] = AsciiFlowNodeBox::{
+              id: node.id,
+              label: node.label,
+              left: adjusted_left,
+              top: node.top,
+              width: node.width,
+              height: node.height,
+            }
+          }
+        }
+        None => ()
+      }
+    }
+    for box in mapped_nodes {
+      node_box_by_id[box.id] = box
+    }
   }
   let mut max_x = 0
   let mut max_y = 0
