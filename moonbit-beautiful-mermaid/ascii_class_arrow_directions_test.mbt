@@ -225,6 +225,25 @@ test "Multiple inheritance from one parent keeps upward markers" {
 }
 
 ///|
+test "Combined sibling and multi-level inheritance keeps hierarchy ordering" {
+  let diagram = "classDiagram\nAnimal <|-- Dog\nAnimal <|-- Cat\nDog <|-- Puppy"
+  let unicode = class_render(diagram, false)
+
+  let animal_line = line_index(unicode, "Animal")
+  let dog_line = line_index(unicode, "Dog")
+  let cat_line = line_index(unicode, "Cat")
+  let puppy_line = line_index(unicode, "Puppy")
+  assert_true(animal_line >= 0)
+  assert_true(dog_line >= 0)
+  assert_true(cat_line >= 0)
+  assert_true(puppy_line >= 0)
+  assert_true(animal_line < dog_line)
+  assert_true(animal_line < cat_line)
+  assert_true(dog_line < puppy_line)
+  assert_true(unicode.contains("△"))
+}
+
+///|
 test "Multi-level class inheritance keeps parent-first ordering" {
   let diagram = "classDiagram\nAnimal <|-- Mammal\nMammal <|-- Dog"
   let unicode = class_render(diagram, false)
