@@ -368,6 +368,69 @@ fn state_connection_lifecycle_expected_unicode() -> String {
 }
 
 ///|
+fn sequence_activation_boxes_source() -> String {
+  "sequenceDiagram\n  participant C as Client\n  participant S as Server\n  C->>+S: Request\n  S->>+S: Process\n  S->>-S: Done\n  S-->>-C: Response"
+}
+
+///|
+fn sequence_activation_boxes_expected_ascii() -> String {
+  [
+    "+--------+    +--------+            ",
+    "| Client |    | Server |            ",
+    "+--------+    +--------+            ",
+    "     |             |                ",
+    "     |   Request   |                ",
+    "     |------------->                ",
+    "     |             |                ",
+    "     |             +---+            ",
+    "     |             |   | Process    ",
+    "     |             <---+            ",
+    "     |             |                ",
+    "     |             +---+            ",
+    "     |             |   | Done       ",
+    "     |             <---+            ",
+    "     |             |                ",
+    "     |  Response   |                ",
+    "     <.............|                ",
+    "     |             |                ",
+    "+--------+    +--------+            ",
+    "| Client |    | Server |            ",
+    "+--------+    +--------+            ",
+  ]
+  .iter()
+  .join("\n")
+}
+
+///|
+fn sequence_activation_boxes_expected_unicode() -> String {
+  [
+    "┌────────┐    ┌────────┐            ",
+    "│ Client │    │ Server │            ",
+    "└────┬───┘    └────┬───┘            ",
+    "     │             │                ",
+    "     │   Request   │                ",
+    "     │─────────────▶                ",
+    "     │             │                ",
+    "     │             ├───┐            ",
+    "     │             │   │ Process    ",
+    "     │             ◀───┘            ",
+    "     │             │                ",
+    "     │             ├───┐            ",
+    "     │             │   │ Done       ",
+    "     │             ◀───┘            ",
+    "     │             │                ",
+    "     │  Response   │                ",
+    "     ◀╌╌╌╌╌╌╌╌╌╌╌╌╌│                ",
+    "     │             │                ",
+    "┌────┴───┐    ┌────┴───┐            ",
+    "│ Client │    │ Server │            ",
+    "└────────┘    └────────┘            ",
+  ]
+  .iter()
+  .join("\n")
+}
+
+///|
 test "ASCII/Unicode parity regression: Beautiful Mermaid sample" {
   assert_text_parity(
     beautiful_mermaid_source(),
@@ -400,5 +463,14 @@ test "ASCII/Unicode parity regression: State Connection Lifecycle sample" {
     state_connection_lifecycle_source(),
     state_connection_lifecycle_expected_ascii(),
     state_connection_lifecycle_expected_unicode(),
+  )
+}
+
+///|
+test "ASCII/Unicode parity regression: Sequence Activation Boxes sample" {
+  assert_text_parity(
+    sequence_activation_boxes_source(),
+    sequence_activation_boxes_expected_ascii(),
+    sequence_activation_boxes_expected_unicode(),
   )
 }
