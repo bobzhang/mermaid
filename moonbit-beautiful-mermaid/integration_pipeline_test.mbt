@@ -1117,6 +1117,45 @@ test "ER identifying and non-identifying edges render across text and SVG modes"
 }
 
 ///|
+test "ER mixed cardinalities render across text and SVG modes" {
+  let input = "erDiagram\nA ||--|| B : one\nB ||--o{ C : many\nC |o--|{ D : optional\nD }|--o{ E : mixed"
+
+  let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
+    use_ascii: true,
+    padding_x: 5,
+    padding_y: 5,
+    box_border_padding: 1,
+  })
+  let unicode = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
+    use_ascii: false,
+    padding_x: 5,
+    padding_y: 5,
+    box_border_padding: 1,
+  })
+  let svg = try! @beautiful_mermaid.render_mermaid(input)
+
+  assert_true(ascii.contains("A"))
+  assert_true(ascii.contains("E"))
+  assert_true(ascii.contains("one"))
+  assert_true(ascii.contains("many"))
+  assert_true(ascii.contains("optional"))
+  assert_true(ascii.contains("mixed"))
+  assert_true(unicode.contains("A"))
+  assert_true(unicode.contains("E"))
+  assert_true(unicode.contains("one"))
+  assert_true(unicode.contains("many"))
+  assert_true(unicode.contains("optional"))
+  assert_true(unicode.contains("mixed"))
+  assert_true(svg.contains(">A</text>"))
+  assert_true(svg.contains(">E</text>"))
+  assert_true(svg.contains(">one</text>"))
+  assert_true(svg.contains(">many</text>"))
+  assert_true(svg.contains(">optional</text>"))
+  assert_true(svg.contains(">mixed</text>"))
+  assert_true(integration_count_occurrences(svg, "class=\"edge-endpoint\"") >= 4)
+}
+
+///|
 test "Flowchart cycle edge label pills do not overlap" {
   let svg = try! @beautiful_mermaid.render_mermaid(
     "graph LR\nA -->|forward| B\nB -->|back| A\nA -->|down| C",
