@@ -1716,6 +1716,100 @@ fn find_positioned_group_index(
 }
 
 ///|
+fn shift_top_level_flow_subgraphs_with_gap(
+  graph : MermaidGraph,
+  horizontal : Bool,
+  reverse : Bool,
+  layer_spacing : Int,
+  positioned_nodes : Array[PositionedNode],
+  positioned_groups : Array[PositionedGroup],
+  positioned_index_by_id : Map[String, Int],
+  positioned_by_id : Map[String, PositionedNode],
+) -> Unit {
+  if reverse || graph.subgraphs.length() < 2 {
+    return
+  }
+
+  let member_indexes_by_root : Array[Array[Int]] = []
+  for subgraph in graph.subgraphs {
+    let seen_node_ids : Map[String, Bool] = {}
+    let indexes : Array[Int] = []
+    collect_subgraph_node_indexes(
+      subgraph, positioned_index_by_id, seen_node_ids, indexes,
+    )
+    member_indexes_by_root.push(indexes)
+  }
+
+  if horizontal {
+    let min_gap = 8
+    let mut has_previous = false
+    let mut previous_right = 0
+    for i, subgraph in graph.subgraphs {
+      let member_indexes = member_indexes_by_root[i]
+      if member_indexes.length() == 0 {
+        continue
+      }
+      let group_index = match
+        find_positioned_group_index(positioned_groups, subgraph.id) {
+        Some(index) => index
+        None => continue
+      }
+      let group = positioned_groups[group_index]
+      let desired_left = if has_previous {
+        previous_right + min_gap
+      } else {
+        group.x
+      }
+      let dx = desired_left - group.x
+      if dx > 0 {
+        shift_member_indexes(member_indexes, dx, 0, positioned_nodes)
+        positioned_groups[group_index] = shift_positioned_group(group, dx, 0)
+        for index in member_indexes {
+          let node = positioned_nodes[index]
+          positioned_by_id[node.id] = node
+        }
+      }
+      let shifted_group = positioned_groups[group_index]
+      previous_right = shifted_group.x + shifted_group.width
+      has_previous = true
+    }
+  } else {
+    let min_gap = (layer_spacing / 3).max(24)
+    let mut has_previous = false
+    let mut previous_bottom = 0
+    for i, subgraph in graph.subgraphs {
+      let member_indexes = member_indexes_by_root[i]
+      if member_indexes.length() == 0 {
+        continue
+      }
+      let group_index = match
+        find_positioned_group_index(positioned_groups, subgraph.id) {
+        Some(index) => index
+        None => continue
+      }
+      let group = positioned_groups[group_index]
+      let desired_top = if has_previous {
+        previous_bottom + min_gap
+      } else {
+        group.y
+      }
+      let dy = desired_top - group.y
+      if dy > 0 {
+        shift_member_indexes(member_indexes, 0, dy, positioned_nodes)
+        positioned_groups[group_index] = shift_positioned_group(group, 0, dy)
+        for index in member_indexes {
+          let node = positioned_nodes[index]
+          positioned_by_id[node.id] = node
+        }
+      }
+      let shifted_group = positioned_groups[group_index]
+      previous_bottom = shifted_group.y + shifted_group.height
+      has_previous = true
+    }
+  }
+}
+
+///|
 fn shift_top_level_state_subgraphs_right(
   graph : MermaidGraph,
   node_spacing : Int,
@@ -2133,6 +2227,17 @@ fn layout_graph_with_subgraph_redirects(
   if state_graph {
     shift_top_level_state_subgraphs_right(
       graph, node_spacing, layer_spacing, positioned_nodes, positioned_groups, positioned_index_by_id,
+      positioned_by_id,
+    )
+  } else {
+    shift_top_level_flow_subgraphs_with_gap(
+      graph,
+      horizontal,
+      reverse,
+      layer_spacing,
+      positioned_nodes,
+      positioned_groups,
+      positioned_index_by_id,
       positioned_by_id,
     )
   }
