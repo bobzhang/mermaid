@@ -2494,6 +2494,65 @@ fn sequence_activation_boxes_sample_expected_unicode() -> String {
 }
 
 ///|
+fn sequence_self_messages_source() -> String {
+  "sequenceDiagram\n  participant S as Server\n  S->>S: Internal process\n  S->>S: Validate\n  S-->>S: Log"
+}
+
+///|
+fn sequence_self_messages_expected_ascii() -> String {
+  [
+    "+--------+                     ",
+    "| Server |                     ",
+    "+--------+                     ",
+    "     |                         ",
+    "     +---+                     ",
+    "     |   | Internal process    ",
+    "     <---+                     ",
+    "     |                         ",
+    "     +---+                     ",
+    "     |   | Validate            ",
+    "     <---+                     ",
+    "     |                         ",
+    "     +...+                     ",
+    "     |   | Log                 ",
+    "     <...+                     ",
+    "     |                         ",
+    "+--------+                     ",
+    "| Server |                     ",
+    "+--------+                     ",
+  ]
+  .iter()
+  .join("\n")
+}
+
+///|
+fn sequence_self_messages_expected_unicode() -> String {
+  [
+    "┌────────┐                     ",
+    "│ Server │                     ",
+    "└────┬───┘                     ",
+    "     │                         ",
+    "     ├───┐                     ",
+    "     │   │ Internal process    ",
+    "     ◀───┘                     ",
+    "     │                         ",
+    "     ├───┐                     ",
+    "     │   │ Validate            ",
+    "     ◀───┘                     ",
+    "     │                         ",
+    "     ├╌╌╌┐                     ",
+    "     │   │ Log                 ",
+    "     ◀╌╌╌┘                     ",
+    "     │                         ",
+    "┌────┴───┐                     ",
+    "│ Server │                     ",
+    "└────────┘                     ",
+  ]
+  .iter()
+  .join("\n")
+}
+
+///|
 test "ASCII/Unicode parity regression: Beautiful Mermaid sample" {
   assert_text_parity(
     beautiful_mermaid_source(),
@@ -2814,5 +2873,14 @@ test "ASCII/Unicode parity regression: Sequence: Activation Boxes sample" {
     sequence_activation_boxes_sample_source(),
     sequence_activation_boxes_sample_expected_ascii(),
     sequence_activation_boxes_sample_expected_unicode(),
+  )
+}
+
+///|
+test "ASCII/Unicode parity regression: Sequence: Self-Messages sample" {
+  assert_text_parity(
+    sequence_self_messages_source(),
+    sequence_self_messages_expected_ascii(),
+    sequence_self_messages_expected_unicode(),
   )
 }
