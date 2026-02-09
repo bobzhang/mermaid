@@ -693,8 +693,17 @@ fn flow_non_state_edge_label_placement(
     points[2].x == points[3].x &&
     points[0].x > points[3].x &&
     points[0].y == points[3].y
+  let left_descending_labeled_detour = points.length() == 5 &&
+    points[0].y == points[1].y &&
+    points[1].x == points[2].x &&
+    points[2].y == points[3].y &&
+    points[3].x == points[4].x &&
+    points[0].x > points[1].x &&
+    points[2].y < points[4].y
   let (anchor_x, anchor_y) = if level_back_edge_detour {
     (points[0].x, points[0].y + 1)
+  } else if left_descending_labeled_detour {
+    (points[0].x, points[0].y)
   } else {
     flow_non_state_label_anchor_from_points(
       points,
@@ -705,7 +714,11 @@ fn flow_non_state_edge_label_placement(
       label.length(),
     )
   }
-  let mut label_x = anchor_x - label.length() / 2
+  let mut label_x = if left_descending_labeled_detour {
+    points[0].x - label.length()
+  } else {
+    anchor_x - label.length() / 2
+  }
   if source_y == target_y {
     if source_x < target_x {
       let max_right = target_x - 2
@@ -1226,6 +1239,42 @@ fn flow_mark_ascii_route_bends(
     let next_dy = unit_step(next.y - current.y)
     if prev_dx != next_dx || prev_dy != next_dy {
       put_canvas(canvas, current.x, current.y, "+")
+    }
+  }
+}
+
+///|
+fn flow_mark_ascii_route_intersections(
+  canvas : Array[Array[String]],
+  route_points : Array[Point],
+) -> Unit {
+  if route_points.length() < 2 || canvas.length() == 0 {
+    return
+  }
+  let width = canvas[0].length()
+  for i in 1..<route_points.length() {
+    let start = route_points[i - 1]
+    let ending = route_points[i]
+    if start.y != ending.y {
+      continue
+    }
+    let y = start.y
+    if y < 0 || y >= canvas.length() {
+      continue
+    }
+    let low = start.x.min(ending.x)
+    let high = start.x.max(ending.x)
+    for x in low..<=high {
+      if x < 0 || x >= width {
+        continue
+      }
+      let has_left = x > 0 && flow_connects_right(canvas[y][x - 1])
+      let has_right = x + 1 < width && flow_connects_left(canvas[y][x + 1])
+      let has_up = y > 0 && flow_connects_down(canvas[y - 1][x])
+      let has_down = y + 1 < canvas.length() && flow_connects_up(canvas[y + 1][x])
+      if (has_left || has_right) && (has_up || has_down) {
+        put_canvas(canvas, x, y, "+")
+      }
     }
   }
 }
@@ -2658,7 +2707,7 @@ fn render_ascii_flow_subgraphs(
     }
   }
 
-  if horizontal_state_flow_mode {
+  if !state_layout_mode && flow_direction_horizontal {
     let canonical_left_by_key : Map[Int, Int] = {}
     for node in mapped_nodes {
       let key = option_int_or(node_column_key_by_id.get(node.id), node.left)
@@ -2895,6 +2944,7 @@ fn render_ascii_flow_subgraphs(
   let canvas_width = if canvas_height == 0 { 0 } else { canvas[0].length() }
   let non_state_out_degree_by_source : Map[String, Int] = {}
   let non_state_in_degree_by_target : Map[String, Int] = {}
+  let non_state_has_labeled_incoming_target : Map[String, Bool] = {}
   if !state_layout_mode {
     for edge in graph.edges {
       let current = option_int_or(
@@ -2907,6 +2957,9 @@ fn render_ascii_flow_subgraphs(
         0,
       )
       non_state_in_degree_by_target[edge.target] = target_current + 1
+      if edge.label is Some(_) {
+        non_state_has_labeled_incoming_target[edge.target] = true
+      }
     }
   }
   for edge in positioned.edges {
@@ -3013,6 +3066,7 @@ fn render_ascii_flow_subgraphs(
             center_dx > 0 &&
             target_in_degree > 1 &&
             target_out_degree <= 1 &&
+            !non_state_has_labeled_incoming_target.contains(edge.target) &&
             edge.label is None
           let merge_primary_edge = merge_target && center_dy == 0
           merge_secondary_edge = merge_target && center_dy != 0
@@ -3052,10 +3106,20 @@ fn render_ascii_flow_subgraphs(
             center_dx < 0 &&
             (center_dy.abs() <= source_box.height || center_dy < 0) &&
             edge.label is Some(_)
+          let labeled_left_descending_detour = flow_direction_horizontal &&
+            center_dx < 0 &&
+            center_dy > 0 &&
+            source_out_degree > 1 &&
+            edge.label is Some(_)
           let route_points = if labeled_back_edge_detour {
             let (sx, sy) = flow_edge_anchor(source_box, 0, 1, false)
             let (tx, ty) = flow_edge_anchor(target_box, 0, -1, true)
-            source_anchor_x = sx
+            let shared_source_x = if source_out_degree > 1 {
+              (source_box.left - 3).max(target_box.left + 1)
+            } else {
+              sx
+            }
+            source_anchor_x = shared_source_x
             source_anchor_y = sy
             target_anchor_x = tx
             target_anchor_y = ty
@@ -3078,6 +3142,37 @@ fn render_ascii_flow_subgraphs(
               Point::{ x: target_anchor_x, y: detour_y },
               Point::{ x: target_anchor_x, y: target_anchor_y },
             ]
+          } else if labeled_left_descending_detour {
+            let (sx, sy) = flow_edge_anchor(source_box, center_dx, 0, false)
+            let (tx, ty) = flow_edge_anchor(target_box, 0, center_dy, true)
+            source_anchor_x = sx
+            source_anchor_y = sy
+            target_anchor_x = tx
+            target_anchor_y = ty
+            let shared_source_x = (source_box.left - 3).max(target_anchor_x + 1)
+            let bend_y = (source_anchor_y + target_anchor_y) / 2 + 1
+            flow_compact_route_points([
+              Point::{ x: source_anchor_x, y: source_anchor_y },
+              Point::{ x: shared_source_x, y: source_anchor_y },
+              Point::{ x: shared_source_x, y: bend_y },
+              Point::{ x: target_anchor_x, y: bend_y },
+              Point::{ x: target_anchor_x, y: target_anchor_y },
+            ])
+          } else if merge_primary_edge {
+            let source_anchor = flow_edge_anchor(
+              source_box, source_dir_dx, source_dir_dy, false,
+            )
+            let (sx, sy) = source_anchor
+            source_anchor_x = sx
+            source_anchor_y = sy
+            let join_x = target_box.left - 3
+            target_anchor_y = target_box.top + target_box.height / 2
+            target_anchor_x = target_box.left
+            [
+              Point::{ x: source_anchor_x, y: source_anchor_y },
+              Point::{ x: join_x, y: target_anchor_y },
+              Point::{ x: target_anchor_x, y: target_anchor_y },
+            ]
           } else if merge_secondary_edge {
             let source_anchor = flow_edge_anchor(
               source_box, source_dir_dx, source_dir_dy, false,
@@ -3087,14 +3182,24 @@ fn render_ascii_flow_subgraphs(
             source_anchor_y = sy
             target_anchor_y = target_box.top + target_box.height / 2
             target_anchor_x = (target_box.left - 3).max(source_anchor_x + 1)
-            let secondary_horizontal_first = source_anchor_y > target_anchor_y
-            flow_non_state_route_points(
-              source_anchor_x,
-              source_anchor_y,
-              target_anchor_x,
-              target_anchor_y,
-              secondary_horizontal_first,
-            )
+            if source_anchor_y > target_anchor_y {
+              let bend_y = (source_anchor_y + target_anchor_y) / 2 + 1
+              flow_compact_route_points([
+                Point::{ x: source_anchor_x, y: source_anchor_y },
+                Point::{ x: source_anchor_x, y: bend_y },
+                Point::{ x: target_anchor_x, y: bend_y },
+                Point::{ x: target_anchor_x, y: target_anchor_y },
+              ])
+            } else {
+              let secondary_horizontal_first = source_anchor_y < target_anchor_y
+              flow_non_state_route_points(
+                source_anchor_x,
+                source_anchor_y,
+                target_anchor_x,
+                target_anchor_y,
+                secondary_horizontal_first,
+              )
+            }
           } else {
             let source_anchor = flow_edge_anchor(
               source_box, source_dir_dx, source_dir_dy, false,
@@ -3174,6 +3279,11 @@ fn render_ascii_flow_subgraphs(
             } else if non_state_route_points.length() == 3 {
               let bend = non_state_route_points[1]
               put_canvas(canvas, bend.x, bend.y, "+")
+            }
+            if !flow_with_subgraphs &&
+              flow_direction_horizontal &&
+              edge.label is Some(_) {
+              flow_mark_ascii_route_intersections(canvas, non_state_route_points)
             }
           }
           let first_point = non_state_route_points[0]
