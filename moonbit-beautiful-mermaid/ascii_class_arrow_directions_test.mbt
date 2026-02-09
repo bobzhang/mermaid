@@ -89,6 +89,26 @@ test "Class realization arrows stay compatible across syntax variants" {
 }
 
 ///|
+test "Multiple inheritance from one parent keeps upward markers" {
+  let diagram = "classDiagram\nAnimal <|-- Dog\nAnimal <|-- Cat"
+  let unicode = class_render(diagram, false)
+  // Two upward markers may merge visually at shared connection points.
+  assert_true(unicode.contains("△"))
+
+  let animal = line_index(unicode, "Animal")
+  let dog = line_index(unicode, "Dog")
+  let cat = line_index(unicode, "Cat")
+  assert_true(animal >= 0)
+  assert_true(dog >= 0)
+  assert_true(cat >= 0)
+  assert_true(animal < dog)
+  assert_true(animal < cat)
+
+  let ascii = class_render(diagram, true)
+  assert_true(ascii.contains("^"))
+}
+
+///|
 test "Multi-level class inheritance keeps parent-first ordering" {
   let diagram = "classDiagram\nAnimal <|-- Mammal\nMammal <|-- Dog"
   let unicode = class_render(diagram, false)
