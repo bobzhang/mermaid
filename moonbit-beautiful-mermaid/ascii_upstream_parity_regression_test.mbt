@@ -2906,6 +2906,69 @@ fn sequence_critical_block_expected_unicode() -> String {
 }
 
 ///|
+fn sequence_notes_right_left_over_source() -> String {
+  "sequenceDiagram\n  participant A as Alice\n  participant B as Bob\n  Note left of A: Alice prepares\n  A->>B: Hello\n  Note right of B: Bob thinks\n  B-->>A: Reply\n  Note over A,B: Conversation complete"
+}
+
+///|
+fn sequence_notes_right_left_over_expected_ascii() -> String {
+  [
+    " +-------+   +-----+              ",
+    " | Alice |   | Bob |              ",
+    " +-------+   +-----+              ",
+    "     |          |                 ",
+    "     |  Hello   |                 ",
+    "     |---------->                 ",
+    "     |          |                 ",
+    "     |          | +------------+  ",
+    "     |          | | Bob thinks |  ",
+    "     |          | +------------+  ",
+    "     |          |                 ",
+    "     |  Reply   |                 ",
+    "     <..........|                 ",
+    "     |          |                 ",
+    "+-----------------------+         ",
+    "| Conversation complete |         ",
+    "+-----------------------+         ",
+    "     |          |                 ",
+    " +-------+   +-----+              ",
+    " | Alice |   | Bob |              ",
+    " +-------+   +-----+              ",
+  ]
+  .iter()
+  .join("\n")
+}
+
+///|
+fn sequence_notes_right_left_over_expected_unicode() -> String {
+  [
+    " ┌───────┐   ┌─────┐              ",
+    " │ Alice │   │ Bob │              ",
+    " └───┬───┘   └──┬──┘              ",
+    "     │          │                 ",
+    "     │  Hello   │                 ",
+    "     │──────────▶                 ",
+    "     │          │                 ",
+    "     │          │ ┌────────────┐  ",
+    "     │          │ │ Bob thinks │  ",
+    "     │          │ └────────────┘  ",
+    "     │          │                 ",
+    "     │  Reply   │                 ",
+    "     ◀╌╌╌╌╌╌╌╌╌╌│                 ",
+    "     │          │                 ",
+    "┌───────────────────────┐         ",
+    "│ Conversation complete │         ",
+    "└───────────────────────┘         ",
+    "     │          │                 ",
+    " ┌───┴───┐   ┌──┴──┐              ",
+    " │ Alice │   │ Bob │              ",
+    " └───────┘   └─────┘              ",
+  ]
+  .iter()
+  .join("\n")
+}
+
+///|
 test "ASCII/Unicode parity regression: Beautiful Mermaid sample" {
   assert_text_parity(
     beautiful_mermaid_source(),
@@ -3280,5 +3343,14 @@ test "ASCII/Unicode parity regression: Sequence: Critical Block sample" {
     sequence_critical_block_source(),
     sequence_critical_block_expected_ascii(),
     sequence_critical_block_expected_unicode(),
+  )
+}
+
+///|
+test "ASCII/Unicode parity regression: Sequence: Notes (Right/Left/Over) sample" {
+  assert_text_parity(
+    sequence_notes_right_left_over_source(),
+    sequence_notes_right_left_over_expected_ascii(),
+    sequence_notes_right_left_over_expected_unicode(),
   )
 }
