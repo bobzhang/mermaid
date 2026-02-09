@@ -123,6 +123,23 @@ test "non-state vertical fan-in avoids source-row cross-links" {
 }
 
 ///|
+test "non-state subgraph override keeps border crossings clean" {
+  let graph = parse_mermaid(
+    "graph TD\nsubgraph pipeline [Processing Pipeline]\ndirection LR\nA[Input] --> B[Parse] --> C[Transform] --> D[Output]\nend\nE[Source] --> A\nD --> F[Sink]",
+  )
+  let output = render_ascii(graph, AsciiRenderOptions::{
+    use_ascii: true,
+    padding_x: 5,
+    padding_y: 5,
+    box_border_padding: 1,
+  })
+
+  assert_eq(output.contains("|<+---|"), false)
+  assert_true(output.contains("|<----|"))
+  assert_true(output.contains("+-------|-------+"))
+}
+
+///|
 test "state lifecycle ascii keeps compact right lane width" {
   let source = "stateDiagram-v2\n  [*] --> Closed\n  Closed --> Connecting : connect\n  Connecting --> Connected : success\n  Connecting --> Closed : timeout\n  Connected --> Disconnecting : close\n  Connected --> Reconnecting : error\n  Reconnecting --> Connected : success\n  Reconnecting --> Closed : max_retries\n  Disconnecting --> Closed : done\n  Closed --> [*]"
   let graph = parse_mermaid(source)
