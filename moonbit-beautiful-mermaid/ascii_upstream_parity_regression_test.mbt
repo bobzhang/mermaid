@@ -4926,3 +4926,44 @@ test "ASCII/Unicode parity regression: ER: Attribute Keys (PK, FK, UK) sample" {
     er_attribute_keys_pk_fk_uk_sample_expected_unicode(),
   )
 }
+
+
+///|
+fn er_exactly_one_to_exactly_one_sample_source() -> String {
+  "erDiagram\n  PERSON ||--|| PASSPORT : has"
+}
+
+///|
+fn er_exactly_one_to_exactly_one_sample_expected_ascii() -> String {
+  [
+    "+--------+ has  +----------+    ",
+    "| PERSON |||--||| PASSPORT |    ",
+    "+--------+      +----------+    ",
+    "                                ",
+    "                                ",
+  ]
+  .iter()
+  .join("\n")
+}
+
+///|
+fn er_exactly_one_to_exactly_one_sample_expected_unicode() -> String {
+  [
+    "┌────────┐ has  ┌──────────┐    ",
+    "│ PERSON │║────║│ PASSPORT │    ",
+    "└────────┘      └──────────┘    ",
+    "                                ",
+    "                                ",
+  ]
+  .iter()
+  .join("\n")
+}
+
+///|
+test "ASCII/Unicode parity regression: ER: Exactly One to Exactly One (||--||) sample" {
+  assert_text_parity(
+    er_exactly_one_to_exactly_one_sample_source(),
+    er_exactly_one_to_exactly_one_sample_expected_ascii(),
+    er_exactly_one_to_exactly_one_sample_expected_unicode(),
+  )
+}
