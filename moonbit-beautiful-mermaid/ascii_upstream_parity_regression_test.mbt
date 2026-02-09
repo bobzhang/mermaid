@@ -1464,6 +1464,37 @@ fn no_arrow_edges_expected_unicode() -> String {
 }
 
 ///|
+fn bidirectional_arrows_source() -> String {
+  "graph LR\n  A[Client] <-->|sync| B[Server]\n  B <-.->|heartbeat| C[Monitor]\n  C <==>|data| D[Storage]"
+}
+
+///|
+fn bidirectional_arrows_expected_ascii() -> String {
+  [
+    "+--------+      +--------+           +---------+      +---------+",
+    "|        |      |        |           |         |      |         |",
+    "| Client |sync->| Server |-heartbeat>| Monitor |data->| Storage |",
+    "|        |      |        |           |         |      |         |",
+    "+--------+      +--------+           +---------+      +---------+",
+  ]
+  .iter()
+  .join("\n")
+}
+
+///|
+fn bidirectional_arrows_expected_unicode() -> String {
+  [
+    "┌────────┐      ┌────────┐           ┌─────────┐      ┌─────────┐",
+    "│        │      │        │           │         │      │         │",
+    "│ Client ├sync─►│ Server ├─heartbeat►│ Monitor ├data─►│ Storage │",
+    "│        │      │        │           │         │      │         │",
+    "└────────┘      └────────┘           └─────────┘      └─────────┘",
+  ]
+  .iter()
+  .join("\n")
+}
+
+///|
 test "ASCII/Unicode parity regression: Beautiful Mermaid sample" {
   assert_text_parity(
     beautiful_mermaid_source(),
@@ -1640,5 +1671,14 @@ test "ASCII/Unicode parity regression: No-Arrow Edges sample" {
     no_arrow_edges_source(),
     no_arrow_edges_expected_ascii(),
     no_arrow_edges_expected_unicode(),
+  )
+}
+
+///|
+test "ASCII/Unicode parity regression: Bidirectional Arrows sample" {
+  assert_text_parity(
+    bidirectional_arrows_source(),
+    bidirectional_arrows_expected_ascii(),
+    bidirectional_arrows_expected_unicode(),
   )
 }
