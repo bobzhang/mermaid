@@ -404,6 +404,14 @@ test "SVG renders full state lifecycle with labels" {
 }
 
 ///|
+test "SVG does not duplicate composite state labels" {
+  let svg = try! @beautiful_mermaid.render_mermaid(
+    "stateDiagram-v2\n[*] --> Idle\nIdle --> Processing : submit\nstate Processing {\n  parse --> validate\n  validate --> execute\n}\nProcessing --> Complete : done\nComplete --> [*]",
+  )
+  assert_eq(integration_count_occurrences(svg, ">Processing</text>"), 1)
+}
+
+///|
 test "ASCII and Unicode modes differ" {
   let ascii_options = @beautiful_mermaid.AsciiRenderOptions::{
     use_ascii: true,
