@@ -3,13 +3,13 @@
  * the sample titles from beautiful-mermaid/samples-data.ts.
  *
  * Usage:
- *   bun run moonbit-beautiful-mermaid/scripts/check_upstream_parity_title_coverage.ts
+ *   bun run scripts/check_upstream_parity_title_coverage.ts
  */
 
 import { readFileSync } from 'node:fs'
 
 const samplesPath = './beautiful-mermaid/samples-data.ts'
-const parityPath = './moonbit-beautiful-mermaid/ascii_upstream_parity_regression_test.mbt'
+const parityPath = './ascii_upstream_parity_regression_test.mbt'
 
 const samplesRaw = readFileSync(samplesPath, 'utf8')
 const parityRaw = readFileSync(parityPath, 'utf8')

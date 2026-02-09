@@ -3,24 +3,24 @@
  * for samples in beautiful-mermaid/samples-data.ts.
  *
  * Usage:
- *   bun run moonbit-beautiful-mermaid/scripts/check_sample_text_parity.ts
+ *   bun run scripts/check_sample_text_parity.ts
  *
  * Optional filters:
- *   CATEGORY=State bun run moonbit-beautiful-mermaid/scripts/check_sample_text_parity.ts
- *   TITLE="Basic State Diagram" bun run moonbit-beautiful-mermaid/scripts/check_sample_text_parity.ts
- *   TITLE_CONTAINS=state bun run moonbit-beautiful-mermaid/scripts/check_sample_text_parity.ts
- *   MODE=ascii bun run moonbit-beautiful-mermaid/scripts/check_sample_text_parity.ts
+ *   CATEGORY=State bun run scripts/check_sample_text_parity.ts
+ *   TITLE="Basic State Diagram" bun run scripts/check_sample_text_parity.ts
+ *   TITLE_CONTAINS=state bun run scripts/check_sample_text_parity.ts
+ *   MODE=ascii bun run scripts/check_sample_text_parity.ts
  *
  * Optional controls:
- *   STOP_ON_FIRST_MISMATCH=1 bun run moonbit-beautiful-mermaid/scripts/check_sample_text_parity.ts
- *   MAX_DIFFS=5 bun run moonbit-beautiful-mermaid/scripts/check_sample_text_parity.ts
- *   PREVIEW_LINES=14 bun run moonbit-beautiful-mermaid/scripts/check_sample_text_parity.ts
- *   TRIM_LINE_ENDING_SPACES=1 bun run moonbit-beautiful-mermaid/scripts/check_sample_text_parity.ts
+ *   STOP_ON_FIRST_MISMATCH=1 bun run scripts/check_sample_text_parity.ts
+ *   MAX_DIFFS=5 bun run scripts/check_sample_text_parity.ts
+ *   PREVIEW_LINES=14 bun run scripts/check_sample_text_parity.ts
+ *   TRIM_LINE_ENDING_SPACES=1 bun run scripts/check_sample_text_parity.ts
  */
 
 import { spawnSync } from 'node:child_process'
-import { samples } from '../../beautiful-mermaid/samples-data.ts'
-import { renderMermaidAscii } from '../../beautiful-mermaid/src/index.ts'
+import { samples } from '../beautiful-mermaid/samples-data.ts'
+import { renderMermaidAscii } from '../beautiful-mermaid/src/index.ts'
 
 type Diff = {
   title: string
@@ -137,7 +137,7 @@ function moonText(
     'moon',
     ['run', 'cmd/main', '--', modeFlag, source],
     {
-      cwd: './moonbit-beautiful-mermaid',
+      cwd: '.',
       encoding: 'utf8',
       maxBuffer: 32 * 1024 * 1024,
     },

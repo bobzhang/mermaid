@@ -14,12 +14,12 @@ Render Mermaid diagrams as SVG or ASCII/Unicode text in MoonBit.
 
 Regenerate the upstream sample smoke test after upstream `samples-data.ts` changes:
 
-- `bun run moonbit-beautiful-mermaid/scripts/generate_upstream_samples_smoke.ts`
+- `bun run scripts/generate_upstream_samples_smoke.ts`
 - `moon test upstream_samples_smoke_test.mbt --target native`
 - `moon test ascii_flowchart_corpus_test.mbt --target native`
 - `moon test ascii_state_corpus_test.mbt --target native`
-- `CATEGORY=State bun run moonbit-beautiful-mermaid/scripts/check_sample_text_parity.ts` (optional parity audit against upstream text output)
-- `bun run moonbit-beautiful-mermaid/scripts/check_upstream_parity_title_coverage.ts` (ensures parity titles match upstream sample titles exactly)
+- `CATEGORY=State bun run scripts/check_sample_text_parity.ts` (optional parity audit against upstream text output)
+- `bun run scripts/check_upstream_parity_title_coverage.ts` (ensures parity titles match upstream sample titles exactly)
 
 ## Quick Start
 

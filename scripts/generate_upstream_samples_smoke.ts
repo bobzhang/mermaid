@@ -1,14 +1,14 @@
 /**
- * Regenerate moonbit-beautiful-mermaid/upstream_samples_smoke_test.mbt
+ * Regenerate upstream_samples_smoke_test.mbt
  * from beautiful-mermaid/samples-data.ts.
  *
  * Usage:
- *   bun run moonbit-beautiful-mermaid/scripts/generate_upstream_samples_smoke.ts
+ *   bun run scripts/generate_upstream_samples_smoke.ts
  */
 
 import { writeFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { samples } from '../../beautiful-mermaid/samples-data.ts'
+import { samples } from '../beautiful-mermaid/samples-data.ts'
 
 function sanitizeTitle(title: string): string {
   // Keep generated MoonBit source ASCII-only.
