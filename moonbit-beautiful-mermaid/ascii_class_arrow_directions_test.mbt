@@ -70,6 +70,25 @@ test "Class association and dependency arrows point toward targets" {
 }
 
 ///|
+test "Multiple class associations keep source above all targets" {
+  let diagram = "classDiagram\nPerson --> Address\nPerson --> Phone"
+  let unicode = class_render(diagram, false)
+  assert_true(unicode.contains("▼"))
+
+  let person_line = line_index(unicode, "Person")
+  let address_line = line_index(unicode, "Address")
+  let phone_line = line_index(unicode, "Phone")
+  assert_true(person_line >= 0)
+  assert_true(address_line >= 0)
+  assert_true(phone_line >= 0)
+  assert_true(person_line < address_line)
+  assert_true(person_line < phone_line)
+
+  let ascii = class_render(diagram, true)
+  assert_true(ascii.contains("v"))
+}
+
+///|
 test "Multiple class dependencies keep source above all targets" {
   let diagram = "classDiagram\nClient ..> Server\nClient ..> Database"
   let unicode = class_render(diagram, false)
