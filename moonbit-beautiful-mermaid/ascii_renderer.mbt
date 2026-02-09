@@ -1225,7 +1225,7 @@ fn map_flow_group(
   let width = if state_composite_layout_mode {
     scale_size(group.width, scale_x, min_width)
   } else {
-    ((group.width + scale_x / 2) / scale_x).max(min_width)
+    (group.width / scale_x).max(min_width)
   }
   AsciiFlowGroupBox::{
     label: group.label,
@@ -2293,6 +2293,13 @@ fn render_ascii_flow_subgraphs(
   }
 
   let mapped_nodes : Array[AsciiFlowNodeBox] = []
+  let flow_horizontal_subgraph_node_inset = if !state_layout_mode &&
+    flow_with_subgraphs &&
+    flow_direction_horizontal {
+    1
+  } else {
+    0
+  }
   for node in positioned.nodes {
     let label = flow_node_label(node)
     let column_key = if !state_layout_mode && flow_direction_horizontal {
@@ -2330,7 +2337,7 @@ fn render_ascii_flow_subgraphs(
     let box = AsciiFlowNodeBox::{
       id: node.id,
       label,
-      left: cx - width / 2,
+      left: cx - width / 2 + flow_horizontal_subgraph_node_inset,
       top: cy - height / 2,
       width,
       height,
