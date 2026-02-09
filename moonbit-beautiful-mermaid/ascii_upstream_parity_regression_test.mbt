@@ -767,6 +767,109 @@ fn decision_tree_expected_unicode() -> String {
 }
 
 ///|
+fn system_architecture_source() -> String {
+  "graph LR\n  subgraph clients [Client Layer]\n    A([Web App]) --> B[API Gateway]\n    C([Mobile App]) --> B\n  end\n  subgraph services [Service Layer]\n    B --> D[Auth Service]\n    B --> E[User Service]\n    B --> F[Order Service]\n  end\n  subgraph data [Data Layer]\n    D --> G[(Auth DB)]\n    E --> H[(User DB)]\n    F --> I[(Order DB)]\n    F --> J([Message Queue])\n  end"
+}
+
+///|
+fn system_architecture_expected_ascii() -> String {
+  [
+    "+------------------------------------+ +-------------------+ +-------------------+",
+    "|           Client Layer             | |   Service Layer   | |    Data Layer     |",
+    "|                                    | |                   | |                   |",
+    "|                                    | |                   | |                   |",
+    "| +------------+     +-------------+ | | +---------------+ | | +---------------+ |",
+    "| |            |     |             | | | |               | | | |               | |",
+    "| |  Web App   |---->| API Gateway |---->|  Auth Service |---->|    Auth DB    | |",
+    "| |            |     |             | | | |               | | | |               | |",
+    "| +------------+     +-------------+ | | +---------------+ | | +---------------+ |",
+    "|                           ^        | |                   | |                   |",
+    "|                           |        | |                   | |                   |",
+    "|                           |        | |                   | |                   |",
+    "|                           |        | |                   | |                   |",
+    "|                           |        | |                   | |                   |",
+    "| +------------+            |        | | +---------------+ | | +---------------+ |",
+    "| |            |            |        | | |               | | | |               | |",
+    "| | Mobile App |------------+----------->|  User Service |---->|    User DB    | |",
+    "| |            |            |        | | |               | | | |               | |",
+    "| +------------+            |        | | +---------------+ | | +---------------+ |",
+    "|                           |        | |                   | |                   |",
+    "+---------------------------|--------+ |                   | |                   |",
+    "                            |          |                   | |                   |",
+    "                            |          |                   | |                   |",
+    "                            |          |                   | |                   |",
+    "                            |          | +---------------+ | | +---------------+ |",
+    "                            |          | |               | | | |               | |",
+    "                            +----------->| Order Service |---->|    Order DB   | |",
+    "                                       | |               | | | |               | |",
+    "                                       | +---------------+ | | +---------------+ |",
+    "                                       |         |         | |                   |",
+    "                                       +---------|---------+ |                   |",
+    "                                                 |           |                   |",
+    "                                                 |           |                   |",
+    "                                                 |           |                   |",
+    "                                                 |           | +---------------+ |",
+    "                                                 |           | |               | |",
+    "                                                 +------------>| Message Queue | |",
+    "                                                             | |               | |",
+    "                                                             | +---------------+ |",
+    "                                                             |                   |",
+    "                                                             +-------------------+",
+  ]
+  .iter()
+  .join("\n")
+}
+
+///|
+fn system_architecture_expected_unicode() -> String {
+  [
+    "┌────────────────────────────────────┐ ┌───────────────────┐ ┌───────────────────┐",
+    "│           Client Layer             │ │   Service Layer   │ │    Data Layer     │",
+    "│                                    │ │                   │ │                   │",
+    "│                                    │ │                   │ │                   │",
+    "│ ┌────────────┐     ┌─────────────┐ │ │ ┌───────────────┐ │ │ ┌───────────────┐ │",
+    "│ │            │     │             │ │ │ │               │ │ │ │               │ │",
+    "│ │  Web App   ├────►│ API Gateway ├─┼─┼►│  Auth Service ├─┼─┼►│    Auth DB    │ │",
+    "│ │            │     │             │ │ │ │               │ │ │ │               │ │",
+    "│ └────────────┘     └──────┬──────┘ │ │ └───────────────┘ │ │ └───────────────┘ │",
+    "│                           ▲        │ │                   │ │                   │",
+    "│                           │        │ │                   │ │                   │",
+    "│                           │        │ │                   │ │                   │",
+    "│                           │        │ │                   │ │                   │",
+    "│                           │        │ │                   │ │                   │",
+    "│ ┌────────────┐            │        │ │ ┌───────────────┐ │ │ ┌───────────────┐ │",
+    "│ │            │            │        │ │ │               │ │ │ │               │ │",
+    "│ │ Mobile App ├────────────┼────────┼─┼►│  User Service ├─┼─┼►│    User DB    │ │",
+    "│ │            │            │        │ │ │               │ │ │ │               │ │",
+    "│ └────────────┘            │        │ │ └───────────────┘ │ │ └───────────────┘ │",
+    "│                           │        │ │                   │ │                   │",
+    "└───────────────────────────┼────────┘ │                   │ │                   │",
+    "                            │          │                   │ │                   │",
+    "                            │          │                   │ │                   │",
+    "                            │          │                   │ │                   │",
+    "                            │          │ ┌───────────────┐ │ │ ┌───────────────┐ │",
+    "                            │          │ │               │ │ │ │               │ │",
+    "                            └──────────┼►│ Order Service ├─┼─┼►│    Order DB   │ │",
+    "                                       │ │               │ │ │ │               │ │",
+    "                                       │ └───────┬───────┘ │ │ └───────────────┘ │",
+    "                                       │         │         │ │                   │",
+    "                                       └─────────┼─────────┘ │                   │",
+    "                                                 │           │                   │",
+    "                                                 │           │                   │",
+    "                                                 │           │                   │",
+    "                                                 │           │ ┌───────────────┐ │",
+    "                                                 │           │ │               │ │",
+    "                                                 └───────────┼►│ Message Queue │ │",
+    "                                                             │ │               │ │",
+    "                                                             │ └───────────────┘ │",
+    "                                                             │                   │",
+    "                                                             └───────────────────┘",
+  ]
+  .iter()
+  .join("\n")
+}
+
+///|
 test "ASCII/Unicode parity regression: Beautiful Mermaid sample" {
   assert_text_parity(
     beautiful_mermaid_source(),
@@ -844,5 +947,14 @@ test "ASCII/Unicode parity regression: Decision Tree sample" {
     decision_tree_source(),
     decision_tree_expected_ascii(),
     decision_tree_expected_unicode(),
+  )
+}
+
+///|
+test "ASCII/Unicode parity regression: System Architecture sample" {
+  assert_text_parity(
+    system_architecture_source(),
+    system_architecture_expected_ascii(),
+    system_architecture_expected_unicode(),
   )
 }
