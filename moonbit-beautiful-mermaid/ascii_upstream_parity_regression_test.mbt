@@ -4464,3 +4464,124 @@ test "ASCII/Unicode parity regression: Class: Relationship Labels sample" {
     class_relationship_labels_sample_expected_unicode(),
   )
 }
+
+
+///|
+fn class_design_pattern_observer_sample_source() -> String {
+  "classDiagram\n  class Subject {\n    <<interface>>\n    +attach(Observer) void\n    +detach(Observer) void\n    +notify() void\n  }\n  class Observer {\n    <<interface>>\n    +update() void\n  }\n  class EventEmitter {\n    -List~Observer~ observers\n    +attach(Observer) void\n    +detach(Observer) void\n    +notify() void\n  }\n  class Logger {\n    +update() void\n  }\n  class Alerter {\n    +update() void\n  }\n  Subject <|.. EventEmitter\n  Observer <|.. Logger\n  Observer <|.. Alerter\n  EventEmitter --> Observer"
+}
+
+///|
+fn class_design_pattern_observer_sample_expected_ascii() -> String {
+  [
+    "+---------------+                         ",
+    "| <<interface>> |                         ",
+    "| Subject       |                         ",
+    "+---------------+                         ",
+    "|               |                         ",
+    "+---------------+                         ",
+    "| +attach: void |                         ",
+    "| +detach: void |                         ",
+    "| +notify: void |                         ",
+    "+---------------+                         ",
+    "        ^                                 ",
+    "        ........                          ",
+    "               :                          ",
+    "+----------------------------+            ",
+    "| EventEmitter               |            ",
+    "+----------------------------+            ",
+    "| -observers: List~Observer~ |            ",
+    "+----------------------------+            ",
+    "| +attach: void              |            ",
+    "| +detach: void              |            ",
+    "| +notify: void              |            ",
+    "+----------------------------+            ",
+    "               |                          ",
+    "        --------                          ",
+    "        v                                 ",
+    "+---------------+                         ",
+    "| <<interface>> |                         ",
+    "| Observer      |                         ",
+    "+---------------+                         ",
+    "|               |                         ",
+    "+---------------+                         ",
+    "| +update: void |                         ",
+    "+---------------+                         ",
+    "        ^                                 ",
+    "        ......................            ",
+    "        :                    :            ",
+    "+---------------+    +---------------+    ",
+    "| Logger        |    | Alerter       |    ",
+    "+---------------+    +---------------+    ",
+    "|               |    |               |    ",
+    "+---------------+    +---------------+    ",
+    "| +update: void |    | +update: void |    ",
+    "+---------------+    +---------------+    ",
+    "                                          ",
+    "                                          ",
+  ]
+  .iter()
+  .join("\n")
+}
+
+///|
+fn class_design_pattern_observer_sample_expected_unicode() -> String {
+  [
+    "┌───────────────┐                         ",
+    "│ <<interface>> │                         ",
+    "│ Subject       │                         ",
+    "├───────────────┤                         ",
+    "│               │                         ",
+    "├───────────────┤                         ",
+    "│ +attach: void │                         ",
+    "│ +detach: void │                         ",
+    "│ +notify: void │                         ",
+    "└───────────────┘                         ",
+    "        △                                 ",
+    "        └╌╌╌╌╌╌┐                          ",
+    "               ┊                          ",
+    "┌────────────────────────────┐            ",
+    "│ EventEmitter               │            ",
+    "├────────────────────────────┤            ",
+    "│ -observers: List~Observer~ │            ",
+    "├────────────────────────────┤            ",
+    "│ +attach: void              │            ",
+    "│ +detach: void              │            ",
+    "│ +notify: void              │            ",
+    "└────────────────────────────┘            ",
+    "               │                          ",
+    "        ┌──────┘                          ",
+    "        ▼                                 ",
+    "┌───────────────┐                         ",
+    "│ <<interface>> │                         ",
+    "│ Observer      │                         ",
+    "├───────────────┤                         ",
+    "│               │                         ",
+    "├───────────────┤                         ",
+    "│ +update: void │                         ",
+    "└───────────────┘                         ",
+    "        △                                 ",
+    "        └╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┐            ",
+    "        ┊                    ┊            ",
+    "┌───────────────┐    ┌───────────────┐    ",
+    "│ Logger        │    │ Alerter       │    ",
+    "├───────────────┤    ├───────────────┤    ",
+    "│               │    │               │    ",
+    "├───────────────┤    ├───────────────┤    ",
+    "│ +update: void │    │ +update: void │    ",
+    "└───────────────┘    └───────────────┘    ",
+    "                                          ",
+    "                                          ",
+  ]
+  .iter()
+  .join("\n")
+}
+
+///|
+test "ASCII/Unicode parity regression: Class: Design Pattern — Observer sample" {
+  assert_text_parity(
+    class_design_pattern_observer_sample_source(),
+    class_design_pattern_observer_sample_expected_ascii(),
+    class_design_pattern_observer_sample_expected_unicode(),
+  )
+}
