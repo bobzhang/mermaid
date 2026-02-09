@@ -371,6 +371,12 @@ test "SVG renders state start pseudostate as filled circle" {
 }
 
 ///|
+test "SVG renders state end pseudostate as bullseye" {
+  let svg = try! @beautiful_mermaid.render_mermaid("stateDiagram-v2\nDone --> [*]")
+  assert_true(integration_count_occurrences(svg, "<circle") >= 2)
+}
+
+///|
 test "ASCII and Unicode modes differ" {
   let ascii_options = @beautiful_mermaid.AsciiRenderOptions::{
     use_ascii: true,
