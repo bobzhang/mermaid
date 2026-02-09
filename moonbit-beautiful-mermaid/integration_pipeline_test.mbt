@@ -348,6 +348,20 @@ test "SVG applies inline style overrides for nodes" {
 }
 
 ///|
+test "SVG renders basic state diagram labels" {
+  let svg = try! @beautiful_mermaid.render_mermaid(
+    "stateDiagram-v2\n[*] --> Idle\nIdle --> Active : start\nActive --> Done",
+  )
+
+  assert_true(svg.contains("<svg"))
+  assert_true(svg.contains("</svg>"))
+  assert_true(svg.contains(">Idle</text>"))
+  assert_true(svg.contains(">Active</text>"))
+  assert_true(svg.contains(">Done</text>"))
+  assert_true(svg.contains(">start</text>"))
+}
+
+///|
 test "ASCII and Unicode modes differ" {
   let ascii_options = @beautiful_mermaid.AsciiRenderOptions::{
     use_ascii: true,
