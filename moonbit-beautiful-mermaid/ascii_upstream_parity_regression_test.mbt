@@ -870,6 +870,117 @@ fn system_architecture_expected_unicode() -> String {
 }
 
 ///|
+fn subgraphs_source() -> String {
+  "graph TD\n  subgraph Frontend\n    A[React App] --> B[State Manager]\n  end\n  subgraph Backend\n    C[API Server] --> D[Database]\n  end\n  B --> C"
+}
+
+///|
+fn subgraphs_expected_ascii() -> String {
+  [
+    "+-------------------+",
+    "|     Frontend      |",
+    "|                   |",
+    "|                   |",
+    "| +---------------+ |",
+    "| |               | |",
+    "| |   React App   | |",
+    "| |               | |",
+    "| +---------------+ |",
+    "|         |         |",
+    "|         |         |",
+    "|         |         |",
+    "|         |         |",
+    "|         v         |",
+    "| +---------------+ |",
+    "| |               | |",
+    "| | State Manager | |",
+    "| |               | |",
+    "| +---------------+ |",
+    "|         |         |",
+    "+---------|---------+",
+    "          |",
+    "          |",
+    "          |",
+    "+---------|---------+",
+    "|      Backend      |",
+    "|         |         |",
+    "|         v         |",
+    "| +---------------+ |",
+    "| |               | |",
+    "| |   API Server  | |",
+    "| |               | |",
+    "| +---------------+ |",
+    "|         |         |",
+    "|         |         |",
+    "|         |         |",
+    "|         |         |",
+    "|         v         |",
+    "| +---------------+ |",
+    "| |               | |",
+    "| |    Database   | |",
+    "| |               | |",
+    "| +---------------+ |",
+    "|                   |",
+    "+-------------------+",
+  ]
+  .iter()
+  .join("\n")
+}
+
+///|
+fn subgraphs_expected_unicode() -> String {
+  [
+    "┌───────────────────┐",
+    "│     Frontend      │",
+    "│                   │",
+    "│                   │",
+    "│ ┌───────────────┐ │",
+    "│ │               │ │",
+    "│ │   React App   │ │",
+    "│ │               │ │",
+    "│ └───────┬───────┘ │",
+    "│         │         │",
+    "│         │         │",
+    "│         │         │",
+    "│         │         │",
+    "│         ▼         │",
+    "│ ┌───────────────┐ │",
+    "│ │               │ │",
+    "│ │ State Manager │ │",
+    "│ │               │ │",
+    "│ └───────┬───────┘ │",
+    "│         │         │",
+    "└─────────┼─────────┘",
+    "          │",
+    "          │",
+    "          │",
+    "┌─────────┼─────────┐",
+    "│      Backend      │",
+    "│         │         │",
+    "│         ▼         │",
+    "│ ┌───────────────┐ │",
+    "│ │               │ │",
+    "│ │   API Server  │ │",
+    "│ │               │ │",
+    "│ └───────┬───────┘ │",
+    "│         │         │",
+    "│         │         │",
+    "│         │         │",
+    "│         │         │",
+    "│         ▼         │",
+    "│ ┌───────────────┐ │",
+    "│ │               │ │",
+    "│ │    Database   │ │",
+    "│ │               │ │",
+    "│ └───────────────┘ │",
+    "│                   │",
+    "└───────────────────┘",
+  ]
+  .iter()
+  .join("\n")
+}
+
+///|
 fn nested_subgraphs_source() -> String {
   "graph TD\n  subgraph Cloud\n    subgraph us-east [US East Region]\n      A[Web Server] --> B[App Server]\n    end\n    subgraph us-west [US West Region]\n      C[Web Server] --> D[App Server]\n    end\n  end\n  E[Load Balancer] --> A\n  E --> C"
 }
@@ -1031,6 +1142,15 @@ test "ASCII/Unicode parity regression: System Architecture sample" {
     system_architecture_source(),
     system_architecture_expected_ascii(),
     system_architecture_expected_unicode(),
+  )
+}
+
+///|
+test "ASCII/Unicode parity regression: Subgraphs sample" {
+  assert_text_parity(
+    subgraphs_source(),
+    subgraphs_expected_ascii(),
+    subgraphs_expected_unicode(),
   )
 }
 
