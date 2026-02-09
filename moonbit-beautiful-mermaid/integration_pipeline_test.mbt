@@ -424,6 +424,14 @@ test "SVG renders subgraph-first TD diagrams without ordering regressions" {
 }
 
 ///|
+test "SVG renders flowchart self-loop edges" {
+  let svg = try! @beautiful_mermaid.render_mermaid("graph TD\nA[Node] --> A")
+  assert_true(svg.contains("<svg"))
+  assert_true(svg.contains(">Node</text>"))
+  assert_true(svg.contains("<polyline"))
+}
+
+///|
 test "ASCII and Unicode modes differ" {
   let ascii_options = @beautiful_mermaid.AsciiRenderOptions::{
     use_ascii: true,
