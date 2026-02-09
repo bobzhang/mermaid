@@ -2012,7 +2012,9 @@ fn layout_graph_with_subgraph_redirects(
     for node_id, lane in lane_by_id {
       flow_lane_by_node_id[node_id] = lane
     }
-    if !horizontal && graph.subgraphs.length() > 0 {
+    if !horizontal &&
+      graph.subgraphs.length() > 0 &&
+      graph.edges.any(edge => edge.label is Some(_)) {
       let forward_extra_units_by_rank : Map[Int, Int] = {}
       let single_forward_adjust_by_rank : Map[Int, Int] = {}
       let forward_labeled_out_degree_by_source : Map[String, Int] = {}
