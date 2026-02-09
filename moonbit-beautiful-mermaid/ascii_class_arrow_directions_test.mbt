@@ -108,6 +108,25 @@ test "Class realization arrows stay compatible across syntax variants" {
 }
 
 ///|
+test "Multiple realizations keep interface above implementations" {
+  let diagram = "classDiagram\nCircle ..|> Shape\nSquare ..|> Shape"
+  let unicode = class_render(diagram, false)
+  assert_true(unicode.contains("△"))
+
+  let shape_line = line_index(unicode, "Shape")
+  let circle_line = line_index(unicode, "Circle")
+  let square_line = line_index(unicode, "Square")
+  assert_true(shape_line >= 0)
+  assert_true(circle_line >= 0)
+  assert_true(square_line >= 0)
+  assert_true(shape_line < circle_line)
+  assert_true(shape_line < square_line)
+
+  let ascii = class_render(diagram, true)
+  assert_true(ascii.contains("^"))
+}
+
+///|
 test "Multiple inheritance from one parent keeps upward markers" {
   let diagram = "classDiagram\nAnimal <|-- Dog\nAnimal <|-- Cat"
   let unicode = class_render(diagram, false)
