@@ -5159,3 +5159,44 @@ test "ASCII/Unicode parity regression: ER: All Cardinality Types sample" {
     er_all_cardinality_types_sample_expected_unicode(),
   )
 }
+
+
+///|
+fn er_identifying_solid_relationship_sample_source() -> String {
+  "erDiagram\n  ORDER ||--|{ LINE_ITEM : contains"
+}
+
+///|
+fn er_identifying_solid_relationship_sample_expected_ascii() -> String {
+  [
+    "+-------+contai+-----------+    ",
+    "| ORDER |||--}|| LINE_ITEM |    ",
+    "+-------+      +-----------+    ",
+    "                                ",
+    "                                ",
+  ]
+  .iter()
+  .join("\n")
+}
+
+///|
+fn er_identifying_solid_relationship_sample_expected_unicode() -> String {
+  [
+    "┌───────┐contai┌───────────┐    ",
+    "│ ORDER │║────╟│ LINE_ITEM │    ",
+    "└───────┘      └───────────┘    ",
+    "                                ",
+    "                                ",
+  ]
+  .iter()
+  .join("\n")
+}
+
+///|
+test "ASCII/Unicode parity regression: ER: Identifying (Solid) Relationship sample" {
+  assert_text_parity(
+    er_identifying_solid_relationship_sample_source(),
+    er_identifying_solid_relationship_sample_expected_ascii(),
+    er_identifying_solid_relationship_sample_expected_unicode(),
+  )
+}
