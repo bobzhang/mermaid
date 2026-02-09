@@ -2969,6 +2969,101 @@ fn sequence_notes_right_left_over_expected_unicode() -> String {
 }
 
 ///|
+fn sequence_oauth_2_0_flow_source() -> String {
+  "sequenceDiagram\n  actor U as User\n  participant App as Client App\n  participant Auth as Auth Server\n  participant API as Resource API\n  U->>App: Click Login\n  App->>Auth: Authorization request\n  Auth->>U: Login page\n  U->>Auth: Credentials\n  Auth-->>App: Authorization code\n  App->>Auth: Exchange code for token\n  Auth-->>App: Access token\n  App->>API: Request + token\n  API-->>App: Protected resource\n  App-->>U: Display data"
+}
+
+///|
+fn sequence_oauth_2_0_flow_expected_ascii() -> String {
+  [
+    "+------+       +------------+               +-------------+  +--------------+   ",
+    "| User |       | Client App |               | Auth Server |  | Resource API |   ",
+    "+------+       +------------+               +-------------+  +--------------+   ",
+    "    |                 |                            |                 |          ",
+    "    |   Click Login   |                            |                 |          ",
+    "    |----------------->                            |                 |          ",
+    "    |                 |                            |                 |          ",
+    "    |                 |   Authorization request    |                 |          ",
+    "    |                 |---------------------------->                 |          ",
+    "    |                 |                            |                 |          ",
+    "    |                 Login page                   |                 |          ",
+    "    <----------------------------------------------|                 |          ",
+    "    |                 |                            |                 |          ",
+    "    |                 Credentials                  |                 |          ",
+    "    |---------------------------------------------->                 |          ",
+    "    |                 |                            |                 |          ",
+    "    |                 |    Authorization code      |                 |          ",
+    "    |                 <............................|                 |          ",
+    "    |                 |                            |                 |          ",
+    "    |                 |  Exchange code for token   |                 |          ",
+    "    |                 |---------------------------->                 |          ",
+    "    |                 |                            |                 |          ",
+    "    |                 |       Access token         |                 |          ",
+    "    |                 <............................|                 |          ",
+    "    |                 |                            |                 |          ",
+    "    |                 |               Request + token                |          ",
+    "    |                 |---------------------------------------------->          ",
+    "    |                 |                            |                 |          ",
+    "    |                 |             Protected resource               |          ",
+    "    |                 <..............................................|          ",
+    "    |                 |                            |                 |          ",
+    "    |  Display data   |                            |                 |          ",
+    "    <.................|                            |                 |          ",
+    "    |                 |                            |                 |          ",
+    "+------+       +------------+               +-------------+  +--------------+   ",
+    "| User |       | Client App |               | Auth Server |  | Resource API |   ",
+    "+------+       +------------+               +-------------+  +--------------+   ",
+  ]
+  .iter()
+  .join("\n")
+}
+
+///|
+fn sequence_oauth_2_0_flow_expected_unicode() -> String {
+  [
+    "┌──────┐       ┌────────────┐               ┌─────────────┐  ┌──────────────┐   ",
+    "│ User │       │ Client App │               │ Auth Server │  │ Resource API │   ",
+    "└───┬──┘       └──────┬─────┘               └──────┬──────┘  └───────┬──────┘   ",
+    "    │                 │                            │                 │          ",
+    "    │   Click Login   │                            │                 │          ",
+    "    │─────────────────▶                            │                 │          ",
+    "    │                 │                            │                 │          ",
+    "    │                 │   Authorization request    │                 │          ",
+    "    │                 │────────────────────────────▶                 │          ",
+    "    │                 │                            │                 │          ",
+    "    │                 Login page                   │                 │          ",
+    "    ◀──────────────────────────────────────────────│                 │          ",
+    "    │                 │                            │                 │          ",
+    "    │                 Credentials                  │                 │          ",
+    "    │──────────────────────────────────────────────▶                 │          ",
+    "    │                 │                            │                 │          ",
+    "    │                 │    Authorization code      │                 │          ",
+    "    │                 ◀╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌│                 │          ",
+    "    │                 │                            │                 │          ",
+    "    │                 │  Exchange code for token   │                 │          ",
+    "    │                 │────────────────────────────▶                 │          ",
+    "    │                 │                            │                 │          ",
+    "    │                 │       Access token         │                 │          ",
+    "    │                 ◀╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌│                 │          ",
+    "    │                 │                            │                 │          ",
+    "    │                 │               Request + token                │          ",
+    "    │                 │──────────────────────────────────────────────▶          ",
+    "    │                 │                            │                 │          ",
+    "    │                 │             Protected resource               │          ",
+    "    │                 ◀╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌│          ",
+    "    │                 │                            │                 │          ",
+    "    │  Display data   │                            │                 │          ",
+    "    ◀╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌│                            │                 │          ",
+    "    │                 │                            │                 │          ",
+    "┌───┴──┐       ┌──────┴─────┐               ┌──────┴──────┐  ┌───────┴──────┐   ",
+    "│ User │       │ Client App │               │ Auth Server │  │ Resource API │   ",
+    "└──────┘       └────────────┘               └─────────────┘  └──────────────┘   ",
+  ]
+  .iter()
+  .join("\n")
+}
+
+///|
 test "ASCII/Unicode parity regression: Beautiful Mermaid sample" {
   assert_text_parity(
     beautiful_mermaid_source(),
@@ -3352,5 +3447,14 @@ test "ASCII/Unicode parity regression: Sequence: Notes (Right/Left/Over) sample"
     sequence_notes_right_left_over_source(),
     sequence_notes_right_left_over_expected_ascii(),
     sequence_notes_right_left_over_expected_unicode(),
+  )
+}
+
+///|
+test "ASCII/Unicode parity regression: Sequence: OAuth 2.0 Flow sample" {
+  assert_text_parity(
+    sequence_oauth_2_0_flow_source(),
+    sequence_oauth_2_0_flow_expected_ascii(),
+    sequence_oauth_2_0_flow_expected_unicode(),
   )
 }
