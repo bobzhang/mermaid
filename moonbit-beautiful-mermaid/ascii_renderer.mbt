@@ -599,7 +599,7 @@ fn flow_non_state_back_edge_detour_row(
     let node_left = node.left
     let node_right = node.left + node.width - 1
     let overlaps_x = !(right < node_left || left > node_right)
-    if overlaps_x {
+    if overlaps_x && node.top <= min_y {
       detour_y = detour_y.max(node.top + node.height + 1)
     }
   }
@@ -2745,6 +2745,8 @@ fn render_ascii_flow_subgraphs(
     let mut target_anchor_x = 0
     let mut target_anchor_y = 0
     let mut non_state_route_points : Array[Point] = []
+    let mut merge_primary_join_x = -1
+    let mut merge_secondary_edge = false
 
     if state_layout_mode {
       let points = edge.points
@@ -2813,10 +2815,25 @@ fn render_ascii_flow_subgraphs(
             non_state_out_degree_by_source.get(edge.source),
             0,
           )
+          let target_out_degree = option_int_or(
+            non_state_out_degree_by_source.get(edge.target),
+            0,
+          )
           let target_in_degree = option_int_or(
             non_state_in_degree_by_target.get(edge.target),
             0,
           )
+          let merge_target = !flow_with_subgraphs &&
+            flow_direction_horizontal &&
+            center_dx > 0 &&
+            target_in_degree > 1 &&
+            target_out_degree <= 1 &&
+            edge.label is None
+          let merge_primary_edge = merge_target && center_dy == 0
+          merge_secondary_edge = merge_target && center_dy != 0
+          if merge_primary_edge {
+            merge_primary_join_x = target_box.left - 3
+          }
           let horizontal_first = if flow_direction_horizontal {
             if !flow_with_subgraphs &&
               center_dy != 0 &&
@@ -2867,6 +2884,22 @@ fn render_ascii_flow_subgraphs(
               Point::{ x: target_anchor_x, y: detour_y },
               Point::{ x: target_anchor_x, y: target_anchor_y },
             ]
+          } else if merge_secondary_edge {
+            let source_anchor = flow_edge_anchor(
+              source_box, source_dir_dx, source_dir_dy, false,
+            )
+            let (sx, sy) = source_anchor
+            source_anchor_x = sx
+            source_anchor_y = sy
+            target_anchor_y = target_box.top + target_box.height / 2
+            target_anchor_x = (target_box.left - 2).max(source_anchor_x + 1)
+            flow_non_state_route_points(
+              source_anchor_x,
+              source_anchor_y,
+              target_anchor_x,
+              target_anchor_y,
+              false,
+            )
           } else {
             let source_anchor = flow_edge_anchor(
               source_box, source_dir_dx, source_dir_dy, false,
@@ -3049,7 +3082,8 @@ fn render_ascii_flow_subgraphs(
       None => ()
     }
 
-    let show_arrow_end = edge.has_arrow_end || !state_layout_mode
+    let show_arrow_end = (edge.has_arrow_end || !state_layout_mode) &&
+      !merge_secondary_edge
     if show_arrow_end {
       let dx = end_dx
       let dy = end_dy
@@ -3069,6 +3103,13 @@ fn render_ascii_flow_subgraphs(
         x: arrow_x,
         y: arrow_y,
         marker: flow_arrow_marker(dx, dy, options.use_ascii),
+      })
+    }
+    if options.use_ascii && merge_primary_join_x >= 0 {
+      arrow_overlays.push(AsciiArrowPlacement::{
+        x: merge_primary_join_x,
+        y: target_anchor_y,
+        marker: "+",
       })
     }
     if state_layout_mode && edge.has_arrow_start {
