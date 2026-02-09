@@ -377,6 +377,18 @@ test "SVG renders state end pseudostate as bullseye" {
 }
 
 ///|
+test "SVG renders composite state with inner nodes" {
+  let svg = try! @beautiful_mermaid.render_mermaid(
+    "stateDiagram-v2\nstate Processing {\n  parse --> validate\n  validate --> execute\n}\n[*] --> Processing",
+  )
+
+  assert_true(svg.contains(">Processing</text>"))
+  assert_true(svg.contains(">parse</text>"))
+  assert_true(svg.contains(">validate</text>"))
+  assert_true(svg.contains(">execute</text>"))
+}
+
+///|
 test "ASCII and Unicode modes differ" {
   let ascii_options = @beautiful_mermaid.AsciiRenderOptions::{
     use_ascii: true,
