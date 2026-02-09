@@ -473,6 +473,36 @@ test "SVG applies inline style overrides for nodes" {
 }
 
 ///|
+test "Flowchart inline style overrides keep text parity and affect SVG" {
+  let input = "graph TD\nA[Red Node] --> B[Blue Node]\nstyle A fill:#ff0000,stroke:#cc0000\nstyle B fill:#0000ff,stroke:#0000cc"
+
+  let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
+    use_ascii: true,
+    padding_x: 5,
+    padding_y: 5,
+    box_border_padding: 1,
+  })
+  let unicode = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
+    use_ascii: false,
+    padding_x: 5,
+    padding_y: 5,
+    box_border_padding: 1,
+  })
+  let svg = try! @beautiful_mermaid.render_mermaid(input)
+
+  assert_true(ascii.contains("Red Node"))
+  assert_true(ascii.contains("Blue Node"))
+  assert_true(unicode.contains("Red Node"))
+  assert_true(unicode.contains("Blue Node"))
+  assert_true(svg.contains(">Red Node</text>"))
+  assert_true(svg.contains(">Blue Node</text>"))
+  assert_true(svg.contains("fill=\"#ff0000\""))
+  assert_true(svg.contains("stroke=\"#cc0000\""))
+  assert_true(svg.contains("fill=\"#0000ff\""))
+  assert_true(svg.contains("stroke=\"#0000cc\""))
+}
+
+///|
 test "SVG renders basic state diagram labels" {
   let svg = try! @beautiful_mermaid.render_mermaid(
     "stateDiagram-v2\n[*] --> Idle\nIdle --> Active : start\nActive --> Done",
