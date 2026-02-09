@@ -821,6 +821,38 @@ test "Class inheritance labels render across text and SVG modes" {
 }
 
 ///|
+test "Class interface realization renders across text and SVG modes" {
+  let input = "classDiagram\nclass Flyable {\n<<interface>>\n+fly() void\n}\nclass Bird {\n+fly() void\n}\nBird ..|> Flyable : implements"
+
+  let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
+    use_ascii: true,
+    padding_x: 5,
+    padding_y: 5,
+    box_border_padding: 1,
+  })
+  let unicode = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
+    use_ascii: false,
+    padding_x: 5,
+    padding_y: 5,
+    box_border_padding: 1,
+  })
+  let svg = try! @beautiful_mermaid.render_mermaid(input)
+
+  assert_true(ascii.contains("Flyable"))
+  assert_true(ascii.contains("Bird"))
+  assert_true(ascii.contains("interface"))
+  assert_true(ascii.contains("implements"))
+  assert_true(unicode.contains("Flyable"))
+  assert_true(unicode.contains("Bird"))
+  assert_true(unicode.contains("interface"))
+  assert_true(unicode.contains("implements"))
+  assert_true(svg.contains(">Flyable</text>"))
+  assert_true(svg.contains(">Bird</text>"))
+  assert_true(svg.contains("&lt;&lt;interface&gt;&gt;"))
+  assert_true(svg.contains(">implements</text>"))
+}
+
+///|
 test "ER entities and relationship labels render across text and SVG modes" {
   let input = "erDiagram\nCUSTOMER {\n  int id PK\n  string email UK\n}\nORDER {\n  int id PK\n  int customer_id FK\n}\nCUSTOMER ||--o{ ORDER : places"
 
