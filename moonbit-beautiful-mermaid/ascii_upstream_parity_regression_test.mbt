@@ -5008,3 +5008,44 @@ test "ASCII/Unicode parity regression: ER: Exactly One to Zero-or-Many (||--o{) 
     er_exactly_one_to_zero_or_many_o_sample_expected_unicode(),
   )
 }
+
+
+///|
+fn er_zero_or_one_to_one_or_many_o_sample_source() -> String {
+  "erDiagram\n  SUPERVISOR |o--|{ EMPLOYEE : manages"
+}
+
+///|
+fn er_zero_or_one_to_one_or_many_o_sample_expected_ascii() -> String {
+  [
+    "+------------+manage+----------+    ",
+    "| SUPERVISOR |o|--}|| EMPLOYEE |    ",
+    "+------------+      +----------+    ",
+    "                                    ",
+    "                                    ",
+  ]
+  .iter()
+  .join("\n")
+}
+
+///|
+fn er_zero_or_one_to_one_or_many_o_sample_expected_unicode() -> String {
+  [
+    "┌────────────┐manage┌──────────┐    ",
+    "│ SUPERVISOR │o║───╟│ EMPLOYEE │    ",
+    "└────────────┘      └──────────┘    ",
+    "                                    ",
+    "                                    ",
+  ]
+  .iter()
+  .join("\n")
+}
+
+///|
+test "ASCII/Unicode parity regression: ER: Zero-or-One to One-or-Many (|o--|{) sample" {
+  assert_text_parity(
+    er_zero_or_one_to_one_or_many_o_sample_source(),
+    er_zero_or_one_to_one_or_many_o_sample_expected_ascii(),
+    er_zero_or_one_to_one_or_many_o_sample_expected_unicode(),
+  )
+}
