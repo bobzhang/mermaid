@@ -1,14 +1,20 @@
 ///|
 fn class_is_method_detail(detail : String) -> Bool {
+  if detail.has_suffix(" ()") {
+    return true
+  }
   if detail.contains("(") && detail.contains(")") {
     return true
   }
-  match detail.find(":") {
-    Some(idx) => {
-      let rhs = trim_owned((try! detail[idx + 1:]).to_string()).to_lower()
-      rhs is ("void" | "bool" | "boolean")
-    }
-    None => false
+  false
+}
+
+///|
+fn class_strip_method_marker(detail : String) -> String {
+  if detail.has_suffix(" ()") {
+    trim_owned((try! detail[:detail.length() - 3]).to_string())
+  } else {
+    detail
   }
 }
 
@@ -25,15 +31,16 @@ fn class_sections(node : MermaidNode) -> Array[Array[String]] {
 
   for i in 1..<lines.length() {
     let detail = trim_owned(lines[i])
+    let rendered = class_strip_method_marker(detail)
     if detail == "" {
       continue
     }
     if detail.has_prefix("<<") && detail.has_suffix(">>") {
-      header.push(detail)
+      header.push(rendered)
     } else if class_is_method_detail(detail) {
-      methods.push(detail)
+      methods.push(rendered)
     } else {
-      attributes.push(detail)
+      attributes.push(rendered)
     }
   }
   header.push(lines[0])

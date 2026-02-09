@@ -1754,10 +1754,11 @@ fn normalize_class_member(raw : String) -> String {
         } else {
           "\{name}: \{return_type}"
         }
+        let marked = "\{rendered} ()"
         return if visibility == "" {
-          rendered
+          marked
         } else {
-          "\{visibility}\{rendered}"
+          "\{visibility}\{marked}"
         }
       }
       _ => ()
