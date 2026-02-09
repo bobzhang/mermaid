@@ -112,6 +112,35 @@ test "Flowchart BT direction renders across text and SVG modes" {
 }
 
 ///|
+test "Flowchart RL direction renders across text and SVG modes" {
+  let input = "graph RL\nA[Origin] --> B[Pivot] --> C[Target]"
+
+  let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
+    use_ascii: true,
+    padding_x: 5,
+    padding_y: 5,
+    box_border_padding: 1,
+  })
+  let unicode = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
+    use_ascii: false,
+    padding_x: 5,
+    padding_y: 5,
+    box_border_padding: 1,
+  })
+  let svg = try! @beautiful_mermaid.render_mermaid(input)
+
+  assert_true(ascii.contains("Origin"))
+  assert_true(ascii.contains("Pivot"))
+  assert_true(ascii.contains("Target"))
+  assert_true(unicode.contains("Origin"))
+  assert_true(unicode.contains("Pivot"))
+  assert_true(unicode.contains("Target"))
+  assert_true(svg.contains(">Origin</text>"))
+  assert_true(svg.contains(">Pivot</text>"))
+  assert_true(svg.contains(">Target</text>"))
+}
+
+///|
 test "SVG simple flow keeps valid svg envelope" {
   let svg = try! @beautiful_mermaid.render_mermaid("graph TD\nA --> B")
   assert_true(svg.has_prefix("<svg "))
