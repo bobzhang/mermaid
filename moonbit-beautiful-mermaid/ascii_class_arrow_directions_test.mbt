@@ -151,6 +151,22 @@ test "Class layout ordering stays consistent across unicode and ascii modes" {
 }
 
 ///|
+test "Class inheritance with members keeps parent above child" {
+  let diagram = "classDiagram\nclass Animal {\n  +String name\n  +eat() void\n}\nclass Dog {\n  +String breed\n  +bark() void\n}\nAnimal <|-- Dog"
+  let unicode = class_render(diagram, false)
+
+  let animal_line = line_index(unicode, "Animal")
+  let dog_line = line_index(unicode, "Dog")
+  assert_true(animal_line >= 0)
+  assert_true(dog_line >= 0)
+  assert_true(animal_line < dog_line)
+  assert_true(unicode.contains("△"))
+
+  let ascii = class_render(diagram, true)
+  assert_true(ascii.contains("^"))
+}
+
+///|
 test "Class realization arrows stay compatible across syntax variants" {
   let forward = class_render("classDiagram\nCircle ..|> Shape", false)
   assert_true(forward.contains("△"))
