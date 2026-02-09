@@ -1872,6 +1872,117 @@ fn inline_style_overrides_expected_unicode() -> String {
 }
 
 ///|
+fn basic_state_diagram_source() -> String {
+  "stateDiagram-v2\n  [*] --> Idle\n  Idle --> Active : start\n  Active --> Idle : cancel\n  Active --> Done : complete\n  Done --> [*]"
+}
+
+///|
+fn basic_state_diagram_expected_ascii() -> String {
+  [
+    "+----------+",
+    "|          |",
+    "|          |",
+    "|          |",
+    "+----------+",
+    "      |     ",
+    "      |     ",
+    "      |     ",
+    "      |     ",
+    "      v     ",
+    "+----------+",
+    "|          |",
+    "|   Idle   |",
+    "|          |",
+    "+----------+",
+    "      ^     ",
+    "      |     ",
+    "   cancel   ",
+    "      |     ",
+    "      v     ",
+    "+----------+",
+    "|          |",
+    "|  Active  |",
+    "|          |",
+    "+----------+",
+    "      |     ",
+    "      |     ",
+    "  complete  ",
+    "      |     ",
+    "      v     ",
+    "+----------+",
+    "|          |",
+    "|   Done   |",
+    "|          |",
+    "+----------+",
+    "      |     ",
+    "      |     ",
+    "      |     ",
+    "      |     ",
+    "      v     ",
+    "+----------+",
+    "|          |",
+    "|          |",
+    "|          |",
+    "+----------+",
+  ]
+  .iter()
+  .join("\n")
+}
+
+///|
+fn basic_state_diagram_expected_unicode() -> String {
+  [
+    "┌──────────┐",
+    "│          │",
+    "│          │",
+    "│          │",
+    "└─────┬────┘",
+    "      │     ",
+    "      │     ",
+    "      │     ",
+    "      │     ",
+    "      ▼     ",
+    "┌──────────┐",
+    "│          │",
+    "│   Idle   │",
+    "│          │",
+    "└─────┬────┘",
+    "      ▲     ",
+    "      │     ",
+    "   cancel   ",
+    "      │     ",
+    "      ▼     ",
+    "┌─────┴────┐",
+    "│          │",
+    "│  Active  │",
+    "│          │",
+    "└─────┬────┘",
+    "      │     ",
+    "      │     ",
+    "  complete  ",
+    "      │     ",
+    "      ▼     ",
+    "┌──────────┐",
+    "│          │",
+    "│   Done   │",
+    "│          │",
+    "└─────┬────┘",
+    "      │     ",
+    "      │     ",
+    "      │     ",
+    "      │     ",
+    "      ▼     ",
+    "┌──────────┐",
+    "│          │",
+    "│          │",
+    "│          │",
+    "└──────────┘",
+  ]
+  .iter()
+  .join("\n")
+}
+
+///|
 test "ASCII/Unicode parity regression: Beautiful Mermaid sample" {
   assert_text_parity(
     beautiful_mermaid_source(),
@@ -2120,5 +2231,14 @@ test "ASCII/Unicode parity regression: Inline Style Overrides sample" {
     inline_style_overrides_source(),
     inline_style_overrides_expected_ascii(),
     inline_style_overrides_expected_unicode(),
+  )
+}
+
+///|
+test "ASCII/Unicode parity regression: Basic State Diagram sample" {
+  assert_text_parity(
+    basic_state_diagram_source(),
+    basic_state_diagram_expected_ascii(),
+    basic_state_diagram_expected_unicode(),
   )
 }
