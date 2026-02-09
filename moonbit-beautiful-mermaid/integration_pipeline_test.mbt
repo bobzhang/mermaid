@@ -181,6 +181,41 @@ test "SVG renders edge labels for simple flow" {
 }
 
 ///|
+test "Flowchart chained labeled edges render across text and SVG modes" {
+  let input = "graph LR\nA[One] -->|first| B[Two] -->|second| C[Three] -->|third| D[Four]"
+
+  let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
+    use_ascii: true,
+    padding_x: 5,
+    padding_y: 5,
+    box_border_padding: 1,
+  })
+  let unicode = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
+    use_ascii: false,
+    padding_x: 5,
+    padding_y: 5,
+    box_border_padding: 1,
+  })
+  let svg = try! @beautiful_mermaid.render_mermaid(input)
+
+  assert_true(ascii.contains("One"))
+  assert_true(ascii.contains("Four"))
+  assert_true(ascii.contains("first"))
+  assert_true(ascii.contains("second"))
+  assert_true(ascii.contains("third"))
+  assert_true(unicode.contains("One"))
+  assert_true(unicode.contains("Four"))
+  assert_true(unicode.contains("first"))
+  assert_true(unicode.contains("second"))
+  assert_true(unicode.contains("third"))
+  assert_true(svg.contains(">One</text>"))
+  assert_true(svg.contains(">Four</text>"))
+  assert_true(svg.contains(">first</text>"))
+  assert_true(svg.contains(">second</text>"))
+  assert_true(svg.contains(">third</text>"))
+}
+
+///|
 test "SVG applies custom font option" {
   let options = @beautiful_mermaid.RenderOptions::{
     bg: None,
