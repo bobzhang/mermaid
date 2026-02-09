@@ -751,6 +751,39 @@ test "Sequence loop block renders across text and SVG modes" {
 }
 
 ///|
+test "Sequence opt block renders across text and SVG modes" {
+  let input = "sequenceDiagram\nparticipant C as Client\nparticipant API\nC->>API: Fetch profile\nopt Cache hit\nAPI-->>C: 304 Not Modified\nend"
+
+  let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
+    use_ascii: true,
+    padding_x: 5,
+    padding_y: 5,
+    box_border_padding: 1,
+  })
+  let unicode = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
+    use_ascii: false,
+    padding_x: 5,
+    padding_y: 5,
+    box_border_padding: 1,
+  })
+  let svg = try! @beautiful_mermaid.render_mermaid(input)
+
+  assert_true(ascii.contains("Client"))
+  assert_true(ascii.contains("API"))
+  assert_true(ascii.contains("Fetch profile"))
+  assert_true(ascii.contains("304 Not Modified"))
+  assert_true(unicode.contains("Client"))
+  assert_true(unicode.contains("API"))
+  assert_true(unicode.contains("Fetch profile"))
+  assert_true(unicode.contains("304 Not Modified"))
+  assert_true(svg.contains(">Client</text>"))
+  assert_true(svg.contains(">API</text>"))
+  assert_true(svg.contains(">Fetch profile</text>"))
+  assert_true(svg.contains(">304 Not Modified</text>"))
+  assert_true(svg.contains("class=\"sequence-block\""))
+}
+
+///|
 test "Sequence note-over renders across text and SVG modes" {
   let input = "sequenceDiagram\nparticipant A as API\nparticipant B as DB\nA->>B: Query\nNote over A,B: cache miss\nB-->>A: Result"
 
