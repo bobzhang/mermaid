@@ -5200,3 +5200,58 @@ test "ASCII/Unicode parity regression: ER: Identifying (Solid) Relationship samp
     er_identifying_solid_relationship_sample_expected_unicode(),
   )
 }
+
+
+///|
+fn er_non_identifying_dashed_relationship_sample_source() -> String {
+  "erDiagram\n  USER ||..o{ LOG_ENTRY : generates\n  USER ||..o{ SESSION : opens"
+}
+
+///|
+fn er_non_identifying_dashed_relationship_sample_expected_ascii() -> String {
+  [
+    "+------+genera+-----------+    ",
+    "| USER |||..o{| LOG_ENTRY |    ",
+    "+------+      +-----------+    ",
+    "   ||                          ",
+    "    ..opens                    ",
+    "    ::                         ",
+    "    o{                         ",
+    "+---------+                    ",
+    "| SESSION |                    ",
+    "+---------+                    ",
+    "                               ",
+    "                               ",
+  ]
+  .iter()
+  .join("\n")
+}
+
+///|
+fn er_non_identifying_dashed_relationship_sample_expected_unicode() -> String {
+  [
+    "┌──────┐genera┌───────────┐    ",
+    "│ USER │║╌╌╌o╟│ LOG_ENTRY │    ",
+    "└──────┘      └───────────┘    ",
+    "    ║                          ",
+    "    ╌╌opens                    ",
+    "    ┊┊                         ",
+    "    o╟                         ",
+    "┌─────────┐                    ",
+    "│ SESSION │                    ",
+    "└─────────┘                    ",
+    "                               ",
+    "                               ",
+  ]
+  .iter()
+  .join("\n")
+}
+
+///|
+test "ASCII/Unicode parity regression: ER: Non-Identifying (Dashed) Relationship sample" {
+  assert_text_parity(
+    er_non_identifying_dashed_relationship_sample_source(),
+    er_non_identifying_dashed_relationship_sample_expected_ascii(),
+    er_non_identifying_dashed_relationship_sample_expected_unicode(),
+  )
+}
