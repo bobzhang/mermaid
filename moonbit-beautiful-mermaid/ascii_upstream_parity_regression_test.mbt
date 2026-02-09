@@ -4967,3 +4967,44 @@ test "ASCII/Unicode parity regression: ER: Exactly One to Exactly One (||--||) s
     er_exactly_one_to_exactly_one_sample_expected_unicode(),
   )
 }
+
+
+///|
+fn er_exactly_one_to_zero_or_many_o_sample_source() -> String {
+  "erDiagram\n  CUSTOMER ||--o{ ORDER : places"
+}
+
+///|
+fn er_exactly_one_to_zero_or_many_o_sample_expected_ascii() -> String {
+  [
+    "+----------+places+-------+    ",
+    "| CUSTOMER |||--o{| ORDER |    ",
+    "+----------+      +-------+    ",
+    "                               ",
+    "                               ",
+  ]
+  .iter()
+  .join("\n")
+}
+
+///|
+fn er_exactly_one_to_zero_or_many_o_sample_expected_unicode() -> String {
+  [
+    "┌──────────┐places┌───────┐    ",
+    "│ CUSTOMER │║───o╟│ ORDER │    ",
+    "└──────────┘      └───────┘    ",
+    "                               ",
+    "                               ",
+  ]
+  .iter()
+  .join("\n")
+}
+
+///|
+test "ASCII/Unicode parity regression: ER: Exactly One to Zero-or-Many (||--o{) sample" {
+  assert_text_parity(
+    er_exactly_one_to_zero_or_many_o_sample_source(),
+    er_exactly_one_to_zero_or_many_o_sample_expected_ascii(),
+    er_exactly_one_to_zero_or_many_o_sample_expected_unicode(),
+  )
+}
