@@ -2620,6 +2620,81 @@ fn sequence_loop_block_expected_unicode() -> String {
 }
 
 ///|
+fn sequence_alt_else_block_source() -> String {
+  "sequenceDiagram\n  participant C as Client\n  participant S as Server\n  C->>S: Login\n  alt Valid credentials\n    S-->>C: 200 OK\n  else Invalid\n    S-->>C: 401 Unauthorized\n  else Account locked\n    S-->>C: 403 Forbidden\n  end"
+}
+
+///|
+fn sequence_alt_else_block_expected_ascii() -> String {
+  [
+    "+--------+            +--------+   ",
+    "| Client |            | Server |   ",
+    "+--------+            +--------+   ",
+    "     |                     |       ",
+    "     |        Login        |       ",
+    "     |--------------------->       ",
+    "     |                     |       ",
+    " +alt [Valid credentials]------+   ",
+    " |   |                     |   |   ",
+    " |   |       200 OK        |   |   ",
+    " |   <.....................|   |   ",
+    " |   |                     |   |   ",
+    " +[Invalid]--------------------+   ",
+    " |   |                     |   |   ",
+    " |   |  401 Unauthorized   |   |   ",
+    " |   <.....................|   |   ",
+    " |   |                     |   |   ",
+    " +[Account locked]-------------+   ",
+    " |   |                     |   |   ",
+    " |   |    403 Forbidden    |   |   ",
+    " |   <.....................|   |   ",
+    " |   |                     |   |   ",
+    " +-----------------------------+   ",
+    "     |                     |       ",
+    "+--------+            +--------+   ",
+    "| Client |            | Server |   ",
+    "+--------+            +--------+   ",
+  ]
+  .iter()
+  .join("\n")
+}
+
+///|
+fn sequence_alt_else_block_expected_unicode() -> String {
+  [
+    "┌────────┐            ┌────────┐   ",
+    "│ Client │            │ Server │   ",
+    "└────┬───┘            └────┬───┘   ",
+    "     │                     │       ",
+    "     │        Login        │       ",
+    "     │─────────────────────▶       ",
+    "     │                     │       ",
+    " ┌alt [Valid credentials]──────┐   ",
+    " │   │                     │   │   ",
+    " │   │       200 OK        │   │   ",
+    " │   ◀╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌│   │   ",
+    " │   │                     │   │   ",
+    " ├[Invalid]╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┤   ",
+    " │   │                     │   │   ",
+    " │   │  401 Unauthorized   │   │   ",
+    " │   ◀╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌│   │   ",
+    " │   │                     │   │   ",
+    " ├[Account locked]╌╌╌╌╌╌╌╌╌╌╌╌╌┤   ",
+    " │   │                     │   │   ",
+    " │   │    403 Forbidden    │   │   ",
+    " │   ◀╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌│   │   ",
+    " │   │                     │   │   ",
+    " └─────────────────────────────┘   ",
+    "     │                     │       ",
+    "┌────┴───┐            ┌────┴───┐   ",
+    "│ Client │            │ Server │   ",
+    "└────────┘            └────────┘   ",
+  ]
+  .iter()
+  .join("\n")
+}
+
+///|
 test "ASCII/Unicode parity regression: Beautiful Mermaid sample" {
   assert_text_parity(
     beautiful_mermaid_source(),
@@ -2958,5 +3033,14 @@ test "ASCII/Unicode parity regression: Sequence: Loop Block sample" {
     sequence_loop_block_source(),
     sequence_loop_block_expected_ascii(),
     sequence_loop_block_expected_unicode(),
+  )
+}
+
+///|
+test "ASCII/Unicode parity regression: Sequence: Alt/Else Block sample" {
+  assert_text_parity(
+    sequence_alt_else_block_source(),
+    sequence_alt_else_block_expected_ascii(),
+    sequence_alt_else_block_expected_unicode(),
   )
 }
