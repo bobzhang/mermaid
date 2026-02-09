@@ -4684,3 +4684,98 @@ test "ASCII/Unicode parity regression: Class: MVC Architecture sample" {
     class_mvc_architecture_sample_expected_unicode(),
   )
 }
+
+
+///|
+fn class_full_hierarchy_sample_source() -> String {
+  "classDiagram\n  class Animal {\n    <<abstract>>\n    +String name\n    +int age\n    +eat() void\n    +sleep() void\n  }\n  class Mammal {\n    +bool warmBlooded\n    +nurse() void\n  }\n  class Bird {\n    +bool canFly\n    +layEggs() void\n  }\n  class Dog {\n    +String breed\n    +bark() void\n  }\n  class Cat {\n    +bool isIndoor\n    +purr() void\n  }\n  class Parrot {\n    +String vocabulary\n    +speak() void\n  }\n  Animal <|-- Mammal\n  Animal <|-- Bird\n  Mammal <|-- Dog\n  Mammal <|-- Cat\n  Bird <|-- Parrot"
+}
+
+///|
+fn class_full_hierarchy_sample_expected_ascii() -> String {
+  [
+    "+---------------+                                                       ",
+    "| <<abstract>>  |                                                       ",
+    "| Animal        |                                                       ",
+    "+---------------+                                                       ",
+    "| +name: String |                                                       ",
+    "| +age: int     |                                                       ",
+    "+---------------+                                                       ",
+    "| +eat: void    |                                                       ",
+    "| +sleep: void  |                                                       ",
+    "+---------------+                                                       ",
+    "        ^                                                               ",
+    "        ----------------------------                                    ",
+    "           |                       |                                    ",
+    "+--------------------+    +----------------+                            ",
+    "| Mammal             |    | Bird           |                            ",
+    "+--------------------+    +----------------+                            ",
+    "| +warmBlooded: bool |    | +canFly: bool  |                            ",
+    "+--------------------+    +----------------+                            ",
+    "| +nurse: void       |    | +layEggs: void |                            ",
+    "+--------------------+    +----------------+                            ",
+    "           ^                       ^                                    ",
+    "         -----------------------   ----------------------               ",
+    "         |                     |                        |               ",
+    "+----------------+    +-----------------+    +---------------------+    ",
+    "| Dog            |    | Cat             |    | Parrot              |    ",
+    "+----------------+    +-----------------+    +---------------------+    ",
+    "| +breed: String |    | +isIndoor: bool |    | +vocabulary: String |    ",
+    "+----------------+    +-----------------+    +---------------------+    ",
+    "| +bark: void    |    | +purr: void     |    | +speak: void        |    ",
+    "+----------------+    +-----------------+    +---------------------+    ",
+    "                                                                        ",
+    "                                                                        ",
+  ]
+  .iter()
+  .join("\n")
+}
+
+///|
+fn class_full_hierarchy_sample_expected_unicode() -> String {
+  [
+    "┌───────────────┐                                                       ",
+    "│ <<abstract>>  │                                                       ",
+    "│ Animal        │                                                       ",
+    "├───────────────┤                                                       ",
+    "│ +name: String │                                                       ",
+    "│ +age: int     │                                                       ",
+    "├───────────────┤                                                       ",
+    "│ +eat: void    │                                                       ",
+    "│ +sleep: void  │                                                       ",
+    "└───────────────┘                                                       ",
+    "        △                                                               ",
+    "        └──────────────────────────┐                                    ",
+    "           │                       │                                    ",
+    "┌────────────────────┐    ┌────────────────┐                            ",
+    "│ Mammal             │    │ Bird           │                            ",
+    "├────────────────────┤    ├────────────────┤                            ",
+    "│ +warmBlooded: bool │    │ +canFly: bool  │                            ",
+    "├────────────────────┤    ├────────────────┤                            ",
+    "│ +nurse: void       │    │ +layEggs: void │                            ",
+    "└────────────────────┘    └────────────────┘                            ",
+    "           △                       △                                    ",
+    "         ┌─└───────────────────┐   └────────────────────┐               ",
+    "         │                     │                        │               ",
+    "┌────────────────┐    ┌─────────────────┐    ┌─────────────────────┐    ",
+    "│ Dog            │    │ Cat             │    │ Parrot              │    ",
+    "├────────────────┤    ├─────────────────┤    ├─────────────────────┤    ",
+    "│ +breed: String │    │ +isIndoor: bool │    │ +vocabulary: String │    ",
+    "├────────────────┤    ├─────────────────┤    ├─────────────────────┤    ",
+    "│ +bark: void    │    │ +purr: void     │    │ +speak: void        │    ",
+    "└────────────────┘    └─────────────────┘    └─────────────────────┘    ",
+    "                                                                        ",
+    "                                                                        ",
+  ]
+  .iter()
+  .join("\n")
+}
+
+///|
+test "ASCII/Unicode parity regression: Class: Full Hierarchy sample" {
+  assert_text_parity(
+    class_full_hierarchy_sample_source(),
+    class_full_hierarchy_sample_expected_ascii(),
+    class_full_hierarchy_sample_expected_unicode(),
+  )
+}
