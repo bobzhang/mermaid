@@ -3792,3 +3792,55 @@ test "ASCII/Unicode parity regression: Class: Visibility Markers sample" {
     class_visibility_markers_sample_expected_unicode(),
   )
 }
+
+///|
+fn class_interface_annotation_sample_source() -> String {
+  "classDiagram\n  class Serializable {\n    <<interface>>\n    +serialize() String\n    +deserialize(data) void\n  }"
+}
+
+///|
+fn class_interface_annotation_sample_expected_ascii() -> String {
+  [
+    "+--------------------+    ",
+    "| <<interface>>      |    ",
+    "| Serializable       |    ",
+    "+--------------------+    ",
+    "|                    |    ",
+    "+--------------------+    ",
+    "| +serialize: String |    ",
+    "| +deserialize: void |    ",
+    "+--------------------+    ",
+    "                          ",
+    "                          ",
+  ]
+  .iter()
+  .join("\n")
+}
+
+///|
+fn class_interface_annotation_sample_expected_unicode() -> String {
+  [
+    "┌────────────────────┐    ",
+    "│ <<interface>>      │    ",
+    "│ Serializable       │    ",
+    "├────────────────────┤    ",
+    "│                    │    ",
+    "├────────────────────┤    ",
+    "│ +serialize: String │    ",
+    "│ +deserialize: void │    ",
+    "└────────────────────┘    ",
+    "                          ",
+    "                          ",
+  ]
+  .iter()
+  .join("\n")
+}
+
+///|
+test "ASCII/Unicode parity regression: Class: Interface Annotation sample" {
+  assert_text_parity(
+    class_interface_annotation_sample_source(),
+    class_interface_annotation_sample_expected_ascii(),
+    class_interface_annotation_sample_expected_unicode(),
+  )
+}
