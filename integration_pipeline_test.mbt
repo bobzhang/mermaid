@@ -1086,7 +1086,9 @@ test "Unicode mode emits box drawing glyphs" {
 }
 
 ///|
-test "Standalone sequence activate/deactivate lines are ignored for rendering parity" {
+test "Standalone sequence activate/deactivate lines are ignored for rendering parity" (
+  it : @test.Test
+) {
   let input = "sequenceDiagram\nparticipant A\nparticipant B\nactivate A\nA->>B: Work\ndeactivate A"
 
   let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
@@ -1102,6 +1104,7 @@ test "Standalone sequence activate/deactivate lines are ignored for rendering pa
     box_border_padding: 1,
   })
   let svg = try! @beautiful_mermaid.render_mermaid(input)
+  snapshot_svg(it, "integration_sequence_standalone_activation.svg", svg)
 
   assert_true(ascii.contains("Work"))
   assert_true(unicode.contains("Work"))
@@ -1113,7 +1116,9 @@ test "Standalone sequence activate/deactivate lines are ignored for rendering pa
 }
 
 ///|
-test "SVG renders sequence self-message labels with participant aliases" {
+test "SVG renders sequence self-message labels with participant aliases" (
+  it : @test.Test
+) {
   let input = "sequenceDiagram\nparticipant A as App\nA->>A: Retry"
 
   let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
@@ -1129,6 +1134,7 @@ test "SVG renders sequence self-message labels with participant aliases" {
     box_border_padding: 1,
   })
   let svg = try! @beautiful_mermaid.render_mermaid(input)
+  snapshot_svg(it, "integration_sequence_self_message_alias.svg", svg)
 
   assert_true(ascii.contains("App"))
   assert_true(ascii.contains("Retry"))
@@ -1139,7 +1145,9 @@ test "SVG renders sequence self-message labels with participant aliases" {
 }
 
 ///|
-test "Sequence alt/else block renders across text and SVG modes" {
+test "Sequence alt/else block renders across text and SVG modes" (
+  it : @test.Test
+) {
   let input = "sequenceDiagram\nparticipant C as Client\nparticipant S as Server\nC->>S: Request\nalt OK\nS-->>C: 200\nelse Fail\nS-->>C: 500\nend"
 
   let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
@@ -1155,6 +1163,7 @@ test "Sequence alt/else block renders across text and SVG modes" {
     box_border_padding: 1,
   })
   let svg = try! @beautiful_mermaid.render_mermaid(input)
+  snapshot_svg(it, "integration_sequence_alt_else.svg", svg)
 
   assert_true(ascii.contains("Client"))
   assert_true(ascii.contains("Server"))
@@ -1174,7 +1183,9 @@ test "Sequence alt/else block renders across text and SVG modes" {
 }
 
 ///|
-test "Sequence loop block renders across text and SVG modes" {
+test "Sequence loop block renders across text and SVG modes" (
+  it : @test.Test
+) {
   let input = "sequenceDiagram\nparticipant W as Worker\nparticipant Q as Queue\nloop Retry every 5s\nW->>Q: Poll\nQ-->>W: Empty\nend"
 
   let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
@@ -1190,6 +1201,7 @@ test "Sequence loop block renders across text and SVG modes" {
     box_border_padding: 1,
   })
   let svg = try! @beautiful_mermaid.render_mermaid(input)
+  snapshot_svg(it, "integration_sequence_loop.svg", svg)
 
   assert_true(ascii.contains("Worker"))
   assert_true(ascii.contains("Queue"))
@@ -1207,7 +1219,9 @@ test "Sequence loop block renders across text and SVG modes" {
 }
 
 ///|
-test "Sequence self-message loop renders across text and SVG modes" {
+test "Sequence self-message loop renders across text and SVG modes" (
+  it : @test.Test
+) {
   let input = "sequenceDiagram\nparticipant W as Worker\nloop Retry\nW->>W: Check cache\nend"
 
   let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
@@ -1223,6 +1237,7 @@ test "Sequence self-message loop renders across text and SVG modes" {
     box_border_padding: 1,
   })
   let svg = try! @beautiful_mermaid.render_mermaid(input)
+  snapshot_svg(it, "integration_sequence_self_message_loop.svg", svg)
 
   assert_true(ascii.contains("Worker"))
   assert_true(ascii.contains("Check cache"))
@@ -1234,7 +1249,9 @@ test "Sequence self-message loop renders across text and SVG modes" {
 }
 
 ///|
-test "Sequence opt block renders across text and SVG modes" {
+test "Sequence opt block renders across text and SVG modes" (
+  it : @test.Test
+) {
   let input = "sequenceDiagram\nparticipant C as Client\nparticipant API\nC->>API: Fetch profile\nopt Cache hit\nAPI-->>C: 304 Not Modified\nend"
 
   let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
@@ -1250,6 +1267,7 @@ test "Sequence opt block renders across text and SVG modes" {
     box_border_padding: 1,
   })
   let svg = try! @beautiful_mermaid.render_mermaid(input)
+  snapshot_svg(it, "integration_sequence_opt.svg", svg)
 
   assert_true(ascii.contains("Client"))
   assert_true(ascii.contains("API"))
@@ -1267,7 +1285,7 @@ test "Sequence opt block renders across text and SVG modes" {
 }
 
 ///|
-test "Sequence note-over renders across text and SVG modes" {
+test "Sequence note-over renders across text and SVG modes" (it : @test.Test) {
   let input = "sequenceDiagram\nparticipant A as API\nparticipant B as DB\nA->>B: Query\nNote over A,B: cache miss\nB-->>A: Result"
 
   let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
@@ -1283,6 +1301,7 @@ test "Sequence note-over renders across text and SVG modes" {
     box_border_padding: 1,
   })
   let svg = try! @beautiful_mermaid.render_mermaid(input)
+  snapshot_svg(it, "integration_sequence_note_over.svg", svg)
 
   assert_true(ascii.contains("API"))
   assert_true(ascii.contains("DB"))
@@ -1298,7 +1317,9 @@ test "Sequence note-over renders across text and SVG modes" {
 }
 
 ///|
-test "Sequence note-left-right renders across text and SVG modes" {
+test "Sequence note-left-right renders across text and SVG modes" (
+  it : @test.Test
+) {
   let input = "sequenceDiagram\nparticipant A as App\nparticipant B as Backend\nA->>B: Request\nNote left of A: queued\nNote right of B: processing\nB-->>A: Done"
 
   let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
@@ -1314,6 +1335,7 @@ test "Sequence note-left-right renders across text and SVG modes" {
     box_border_padding: 1,
   })
   let svg = try! @beautiful_mermaid.render_mermaid(input)
+  snapshot_svg(it, "integration_sequence_note_left_right.svg", svg)
 
   assert_true(ascii.contains("App"))
   assert_true(ascii.contains("Backend"))
@@ -1334,7 +1356,9 @@ test "Sequence note-left-right renders across text and SVG modes" {
 }
 
 ///|
-test "Sequence critical/option block renders across text and SVG modes" {
+test "Sequence critical/option block renders across text and SVG modes" (
+  it : @test.Test
+) {
   let input = "sequenceDiagram\nparticipant S as Service\nparticipant DB as Database\nS->>DB: Begin\ncritical Commit transaction\nS->>DB: write row\noption Timeout\nDB-->>S: timeout\noption Success\nDB-->>S: ok\nend"
 
   let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
@@ -1350,6 +1374,7 @@ test "Sequence critical/option block renders across text and SVG modes" {
     box_border_padding: 1,
   })
   let svg = try! @beautiful_mermaid.render_mermaid(input)
+  snapshot_svg(it, "integration_sequence_critical_option.svg", svg)
 
   assert_true(ascii.contains("Service"))
   assert_true(ascii.contains("Database"))
@@ -1372,7 +1397,9 @@ test "Sequence critical/option block renders across text and SVG modes" {
 }
 
 ///|
-test "Sequence par/and block renders across text and SVG modes" {
+test "Sequence par/and block renders across text and SVG modes" (
+  it : @test.Test
+) {
   let input = "sequenceDiagram\nparticipant C as Client\nparticipant API\nparticipant DB\npar Request API\nC->>API: /items\nand Write audit\nAPI->>DB: INSERT audit\nend\nAPI-->>C: 200"
 
   let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
@@ -1388,6 +1415,7 @@ test "Sequence par/and block renders across text and SVG modes" {
     box_border_padding: 1,
   })
   let svg = try! @beautiful_mermaid.render_mermaid(input)
+  snapshot_svg(it, "integration_sequence_par_and.svg", svg)
 
   assert_true(ascii.contains("Client"))
   assert_true(ascii.contains("API"))
@@ -1410,7 +1438,9 @@ test "Sequence par/and block renders across text and SVG modes" {
 }
 
 ///|
-test "Sequence activation markers render across text and SVG modes" {
+test "Sequence activation markers render across text and SVG modes" (
+  it : @test.Test
+) {
   let input = "sequenceDiagram\nparticipant U as User\nparticipant S as Server\nU->>+S: Request\nS-->>-U: Response"
 
   let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
@@ -1426,6 +1456,7 @@ test "Sequence activation markers render across text and SVG modes" {
     box_border_padding: 1,
   })
   let svg = try! @beautiful_mermaid.render_mermaid(input)
+  snapshot_svg(it, "integration_sequence_activation_markers.svg", svg)
 
   assert_true(ascii.contains("User"))
   assert_true(ascii.contains("Server"))
@@ -1443,7 +1474,9 @@ test "Sequence activation markers render across text and SVG modes" {
 }
 
 ///|
-test "Sequence actor declarations render across text and SVG modes" {
+test "Sequence actor declarations render across text and SVG modes" (
+  it : @test.Test
+) {
   let input = "sequenceDiagram\nactor U as User\nactor S as Service\nU->>S: Login\nS-->>U: Token"
 
   let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
@@ -1459,6 +1492,7 @@ test "Sequence actor declarations render across text and SVG modes" {
     box_border_padding: 1,
   })
   let svg = try! @beautiful_mermaid.render_mermaid(input)
+  snapshot_svg(it, "integration_sequence_actor_declarations.svg", svg)
 
   assert_true(ascii.contains("User"))
   assert_true(ascii.contains("Service"))
@@ -1476,7 +1510,9 @@ test "Sequence actor declarations render across text and SVG modes" {
 }
 
 ///|
-test "Sequence mixed arrow operators render across text and SVG modes" {
+test "Sequence mixed arrow operators render across text and SVG modes" (
+  it : @test.Test
+) {
   let input = "sequenceDiagram\nparticipant A\nparticipant B\nA->B: Open\nB--)A: Dotted Open\nA-->>B: Filled"
 
   let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
@@ -1492,6 +1528,7 @@ test "Sequence mixed arrow operators render across text and SVG modes" {
     box_border_padding: 1,
   })
   let svg = try! @beautiful_mermaid.render_mermaid(input)
+  snapshot_svg(it, "integration_sequence_mixed_arrows.svg", svg)
 
   assert_true(ascii.contains("Open"))
   assert_true(ascii.contains("Dotted Open"))
