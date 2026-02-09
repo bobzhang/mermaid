@@ -1730,6 +1730,77 @@ fn all_12_flowchart_shapes_expected_unicode() -> String {
 }
 
 ///|
+fn class_shorthand_source() -> String {
+  "graph TD\n  A[Normal]:::default --> B[Highlighted]:::highlight --> C[Error]:::error\n  classDef default fill:#f4f4f5,stroke:#a1a1aa\n  classDef highlight fill:#fbbf24,stroke:#d97706\n  classDef error fill:#ef4444,stroke:#dc2626"
+}
+
+///|
+fn class_shorthand_expected_ascii() -> String {
+  [
+    "+-------------+",
+    "|             |",
+    "|    Normal   |",
+    "|             |",
+    "+-------------+",
+    "       |       ",
+    "       |       ",
+    "       |       ",
+    "       |       ",
+    "       v       ",
+    "+-------------+",
+    "|             |",
+    "| Highlighted |",
+    "|             |",
+    "+-------------+",
+    "       |       ",
+    "       |       ",
+    "       |       ",
+    "       |       ",
+    "       v       ",
+    "+-------------+",
+    "|             |",
+    "|    Error    |",
+    "|             |",
+    "+-------------+",
+  ]
+  .iter()
+  .join("\n")
+}
+
+///|
+fn class_shorthand_expected_unicode() -> String {
+  [
+    "┌─────────────┐",
+    "│             │",
+    "│    Normal   │",
+    "│             │",
+    "└──────┬──────┘",
+    "       │       ",
+    "       │       ",
+    "       │       ",
+    "       │       ",
+    "       ▼       ",
+    "┌─────────────┐",
+    "│             │",
+    "│ Highlighted │",
+    "│             │",
+    "└──────┬──────┘",
+    "       │       ",
+    "       │       ",
+    "       │       ",
+    "       │       ",
+    "       ▼       ",
+    "┌─────────────┐",
+    "│             │",
+    "│    Error    │",
+    "│             │",
+    "└─────────────┘",
+  ]
+  .iter()
+  .join("\n")
+}
+
+///|
 test "ASCII/Unicode parity regression: Beautiful Mermaid sample" {
   assert_text_parity(
     beautiful_mermaid_source(),
@@ -1960,5 +2031,14 @@ test "ASCII/Unicode parity regression: All 12 Flowchart Shapes sample" {
     all_12_flowchart_shapes_source(),
     all_12_flowchart_shapes_expected_ascii(),
     all_12_flowchart_shapes_expected_unicode(),
+  )
+}
+
+///|
+test "ASCII/Unicode parity regression: ::: Class Shorthand sample" {
+  assert_text_parity(
+    class_shorthand_source(),
+    class_shorthand_expected_ascii(),
+    class_shorthand_expected_unicode(),
   )
 }
