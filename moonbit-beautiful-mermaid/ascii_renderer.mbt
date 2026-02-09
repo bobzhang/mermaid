@@ -2462,6 +2462,7 @@ fn render_ascii_flow_subgraphs(
 
   let mapped_nodes : Array[AsciiFlowNodeBox] = []
   let node_layout_x_by_id : Map[String, Int] = {}
+  let node_column_key_by_id : Map[String, Int] = {}
   let flow_horizontal_subgraph_node_inset = if !state_layout_mode &&
     flow_with_subgraphs &&
     flow_direction_horizontal {
@@ -2484,6 +2485,7 @@ fn render_ascii_flow_subgraphs(
     } else {
       node.x
     }
+    node_column_key_by_id[node.id] = column_key
     let (min_width, min_height) = if state_layout_mode {
       let state_min_width = match node.shape {
         NodeShape::StateStart | NodeShape::StateEnd =>
@@ -2568,7 +2570,7 @@ fn render_ascii_flow_subgraphs(
           }
         }
         None =>
-          if !flow_with_subgraphs {
+          if !flow_with_subgraphs && !horizontal_state_flow_mode {
             let target_in_degree = option_int_or(
               flow_in_degree_by_target.get(edge.target),
               0,
@@ -2651,6 +2653,35 @@ fn render_ascii_flow_subgraphs(
             width: curr_node.width,
             height: curr_node.height,
           }
+        }
+      }
+    }
+  }
+
+  if horizontal_state_flow_mode {
+    let canonical_left_by_key : Map[Int, Int] = {}
+    for node in mapped_nodes {
+      let key = option_int_or(node_column_key_by_id.get(node.id), node.left)
+      if !canonical_left_by_key.contains(key) {
+        canonical_left_by_key[key] = node.left
+      } else {
+        let current_left = option_int_or(canonical_left_by_key.get(key), node.left)
+        if node.left < current_left {
+          canonical_left_by_key[key] = node.left
+        }
+      }
+    }
+    for i, node in mapped_nodes {
+      let key = option_int_or(node_column_key_by_id.get(node.id), node.left)
+      let canonical_left = option_int_or(canonical_left_by_key.get(key), node.left)
+      if node.left != canonical_left {
+        mapped_nodes[i] = AsciiFlowNodeBox::{
+          id: node.id,
+          label: node.label,
+          left: canonical_left,
+          top: node.top,
+          width: node.width,
+          height: node.height,
         }
       }
     }
@@ -2989,7 +3020,11 @@ fn render_ascii_flow_subgraphs(
             merge_primary_join_x = target_box.left - 3
           }
           let horizontal_first = if flow_direction_horizontal {
-            if !flow_with_subgraphs &&
+            if horizontal_state_flow_mode &&
+              center_dx != 0 &&
+              center_dy < 0 {
+              true
+            } else if !flow_with_subgraphs &&
               center_dy != 0 &&
               center_dx > 0 &&
               (source_out_degree > 1 || target_in_degree > 1) {
