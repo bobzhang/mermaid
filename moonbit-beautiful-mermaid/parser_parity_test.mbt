@@ -190,6 +190,26 @@ test "Parser parses dotted bidirectional edge operator" {
 }
 
 ///|
+test "Parser keeps edge styles and labels for solid dotted and thick links" {
+  let graph = try! @beautiful_mermaid.parse_mermaid(
+    "graph TD\nA -->|solid| B\nB -.->|dotted| C\nC ==>|thick| D",
+  )
+  assert_eq(graph.edges.length(), 3)
+
+  let e1 = graph.edges[0]
+  assert_eq(e1.style.to_string(), "Solid")
+  assert_eq(e1.label, Some("solid"))
+
+  let e2 = graph.edges[1]
+  assert_eq(e2.style.to_string(), "Dotted")
+  assert_eq(e2.label, Some("dotted"))
+
+  let e3 = graph.edges[2]
+  assert_eq(e3.style.to_string(), "Thick")
+  assert_eq(e3.label, Some("thick"))
+}
+
+///|
 test "Parser keeps ampersand inside node labels while still expanding parallel links" {
   let graph = try! @beautiful_mermaid.parse_mermaid(
     "graph TD\nA[Input] & B[Config] --> C[Processor]\nB --> D[Fix & Retry]",
