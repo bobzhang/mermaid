@@ -367,7 +367,8 @@ fn non_empty_output(value : String) -> Bool {
 }
 
 ///|
-test "Render smoke for upstream samples-data corpus" {
+test "Render smoke for upstream samples-data corpus" (it : @test.Test) {
+  let svg_sections : Array[String] = []
   for sample in upstream_samples() {
     let svg_options = @beautiful_mermaid.RenderOptions::{
       bg: None,
@@ -390,6 +391,7 @@ test "Render smoke for upstream samples-data corpus" {
     if !svg.has_prefix("<svg ") || !svg.has_suffix("</svg>") {
       fail("invalid svg envelope for sample: \{sample.title}")
     }
+    svg_sections.push("<section><h2>\{sample.title}</h2>\n\{svg}\n</section>")
     if sample.transparent {
       assert_true(!svg.contains("background:var(--bg)"))
     }
@@ -414,4 +416,9 @@ test "Render smoke for upstream samples-data corpus" {
       fail("empty unicode output for sample: \{sample.title}")
     }
   }
+
+  let gallery_body = svg_sections.join("\n<hr/>\n")
+  let gallery = "<!doctype html><html><head><meta charset=\"utf-8\" /><title>Upstream Samples SVG Gallery</title></head><body>\n\{gallery_body}\n</body></html>"
+  it.write(gallery)
+  it.snapshot(filename="upstream_samples_smoke_gallery.html")
 }
