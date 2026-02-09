@@ -529,6 +529,32 @@ test "Standalone sequence activate/deactivate lines are ignored for rendering pa
 }
 
 ///|
+test "SVG renders sequence self-message labels with participant aliases" {
+  let input = "sequenceDiagram\nparticipant A as App\nA->>A: Retry"
+
+  let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
+    use_ascii: true,
+    padding_x: 5,
+    padding_y: 5,
+    box_border_padding: 1,
+  })
+  let unicode = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
+    use_ascii: false,
+    padding_x: 5,
+    padding_y: 5,
+    box_border_padding: 1,
+  })
+  let svg = try! @beautiful_mermaid.render_mermaid(input)
+
+  assert_true(ascii.contains("App"))
+  assert_true(ascii.contains("Retry"))
+  assert_true(unicode.contains("App"))
+  assert_true(unicode.contains("Retry"))
+  assert_true(svg.contains(">App</text>"))
+  assert_true(svg.contains(">Retry</text>"))
+}
+
+///|
 test "Flowchart cycle edge label pills do not overlap" {
   let svg = try! @beautiful_mermaid.render_mermaid(
     "graph LR\nA -->|forward| B\nB -->|back| A\nA -->|down| C",
