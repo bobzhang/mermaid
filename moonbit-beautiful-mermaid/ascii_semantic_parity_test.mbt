@@ -62,7 +62,7 @@ test "ASCII sequence renders blocks, dividers, and notes" {
 }
 
 ///|
-test "ASCII sequence renders activation bars" {
+test "ASCII sequence accepts activation operators without activation bars" {
   let ascii = try! @beautiful_mermaid.render_mermaid_ascii(
     "sequenceDiagram\nA->>+B: Activate\nB-->>-A: Return",
     options=@beautiful_mermaid.AsciiRenderOptions::{
@@ -74,7 +74,7 @@ test "ASCII sequence renders activation bars" {
   )
   assert_true(ascii.contains("Activate"))
   assert_true(ascii.contains("Return"))
-  assert_true(ascii.contains("|||"))
+  assert_true(!ascii.contains("|||"))
 
   let unicode = try! @beautiful_mermaid.render_mermaid_ascii(
     "sequenceDiagram\nA->>+B: Activate\nB-->>-A: Return",
@@ -87,7 +87,7 @@ test "ASCII sequence renders activation bars" {
   )
   assert_true(unicode.contains("Activate"))
   assert_true(unicode.contains("Return"))
-  assert_true(unicode.contains("│││"))
+  assert_true(!unicode.contains("│││"))
 }
 
 ///|

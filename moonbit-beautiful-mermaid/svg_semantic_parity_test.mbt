@@ -131,7 +131,7 @@ test "SVG renders multiline class labels from parser details" {
   assert_true(svg.contains("class=\"class-row\""))
   assert_true(svg.contains(">Animal</text>"))
   assert_true(svg.contains(">+name: String</text>"))
-  assert_true(svg.contains(">+eat: void</text>"))
+  assert_true(svg.contains(">+eat: void ()</text>"))
 }
 
 ///|
@@ -142,7 +142,7 @@ test "SVG class renders annotations and members" {
 
   assert_true(svg.contains("&lt;&lt;interface&gt;&gt;"))
   assert_true(svg.contains(">Flyable</text>"))
-  assert_true(svg.contains(">+fly: void</text>"))
+  assert_true(svg.contains(">+fly: void ()</text>"))
 }
 
 ///|
