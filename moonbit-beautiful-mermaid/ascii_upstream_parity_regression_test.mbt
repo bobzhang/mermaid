@@ -4016,3 +4016,72 @@ test "ASCII/Unicode parity regression: Class: Inheritance (<|--) sample" {
     class_inheritance_sample_expected_unicode(),
   )
 }
+
+
+///|
+fn class_composition_sample_source() -> String {
+  "classDiagram\n  class Car {\n    +String model\n    +start() void\n  }\n  class Engine {\n    +int horsepower\n    +rev() void\n  }\n  Car *-- Engine"
+}
+
+///|
+fn class_composition_sample_expected_ascii() -> String {
+  [
+    "+----------------+      ",
+    "| Car            |      ",
+    "+----------------+      ",
+    "| +model: String |      ",
+    "+----------------+      ",
+    "| +start: void   |      ",
+    "+----------------+      ",
+    "         *              ",
+    "         --             ",
+    "          |             ",
+    "+------------------+    ",
+    "| Engine           |    ",
+    "+------------------+    ",
+    "| +horsepower: int |    ",
+    "+------------------+    ",
+    "| +rev: void       |    ",
+    "+------------------+    ",
+    "                        ",
+    "                        ",
+  ]
+  .iter()
+  .join("\n")
+}
+
+///|
+fn class_composition_sample_expected_unicode() -> String {
+  [
+    "┌────────────────┐      ",
+    "│ Car            │      ",
+    "├────────────────┤      ",
+    "│ +model: String │      ",
+    "├────────────────┤      ",
+    "│ +start: void   │      ",
+    "└────────────────┘      ",
+    "         ◆              ",
+    "         └┐             ",
+    "          │             ",
+    "┌──────────────────┐    ",
+    "│ Engine           │    ",
+    "├──────────────────┤    ",
+    "│ +horsepower: int │    ",
+    "├──────────────────┤    ",
+    "│ +rev: void       │    ",
+    "└──────────────────┘    ",
+    "                        ",
+    "                        ",
+  ]
+  .iter()
+  .join("\n")
+}
+
+///|
+test "ASCII/Unicode parity regression: Class: Composition (*--) sample" {
+  assert_text_parity(
+    class_composition_sample_source(),
+    class_composition_sample_expected_ascii(),
+    class_composition_sample_expected_unicode(),
+  )
+}
