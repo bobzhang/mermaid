@@ -3268,6 +3268,49 @@ fn sequence_microservice_orchestration_expected_unicode() -> String {
 }
 
 ///|
+fn class_basic_class_sample_source() -> String {
+  "classDiagram\n  class Animal {\n    +String name\n    +int age\n    +eat() void\n    +sleep() void\n  }"
+}
+
+///|
+fn class_basic_class_sample_expected_ascii() -> String {
+  [
+    "+---------------+    ",
+    "| Animal        |    ",
+    "+---------------+    ",
+    "| +name: String |    ",
+    "| +age: int     |    ",
+    "+---------------+    ",
+    "| +eat: void    |    ",
+    "| +sleep: void  |    ",
+    "+---------------+    ",
+    "                     ",
+    "                     ",
+  ]
+  .iter()
+  .join("\n")
+}
+
+///|
+fn class_basic_class_sample_expected_unicode() -> String {
+  [
+    "┌───────────────┐    ",
+    "│ Animal        │    ",
+    "├───────────────┤    ",
+    "│ +name: String │    ",
+    "│ +age: int     │    ",
+    "├───────────────┤    ",
+    "│ +eat: void    │    ",
+    "│ +sleep: void  │    ",
+    "└───────────────┘    ",
+    "                     ",
+    "                     ",
+  ]
+  .iter()
+  .join("\n")
+}
+
+///|
 test "ASCII/Unicode parity regression: Beautiful Mermaid sample" {
   assert_text_parity(
     beautiful_mermaid_source(),
@@ -3678,5 +3721,14 @@ test "ASCII/Unicode parity regression: Sequence: Microservice Orchestration samp
     sequence_microservice_orchestration_source(),
     sequence_microservice_orchestration_expected_ascii(),
     sequence_microservice_orchestration_expected_unicode(),
+  )
+}
+
+///|
+test "ASCII/Unicode parity regression: Class: Basic Class sample" {
+  assert_text_parity(
+    class_basic_class_sample_source(),
+    class_basic_class_sample_expected_ascii(),
+    class_basic_class_sample_expected_unicode(),
   )
 }
