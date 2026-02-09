@@ -1229,6 +1229,37 @@ fn simple_flow_expected_unicode() -> String {
 }
 
 ///|
+fn original_node_shapes_source() -> String {
+  "graph LR\n  A[Rectangle] --> B(Rounded)\n  B --> C{Diamond}\n  C --> D([Stadium])\n  D --> E((Circle))"
+}
+
+///|
+fn original_node_shapes_expected_ascii() -> String {
+  [
+    "+-----------+     +---------+     +---------+     +---------+     +--------+",
+    "|           |     |         |     |         |     |         |     |        |",
+    "| Rectangle |---->| Rounded |---->| Diamond |---->| Stadium |---->| Circle |",
+    "|           |     |         |     |         |     |         |     |        |",
+    "+-----------+     +---------+     +---------+     +---------+     +--------+",
+  ]
+  .iter()
+  .join("\n")
+}
+
+///|
+fn original_node_shapes_expected_unicode() -> String {
+  [
+    "┌───────────┐     ┌─────────┐     ┌─────────┐     ┌─────────┐     ┌────────┐",
+    "│           │     │         │     │         │     │         │     │        │",
+    "│ Rectangle ├────►│ Rounded ├────►│ Diamond ├────►│ Stadium ├────►│ Circle │",
+    "│           │     │         │     │         │     │         │     │        │",
+    "└───────────┘     └─────────┘     └─────────┘     └─────────┘     └────────┘",
+  ]
+  .iter()
+  .join("\n")
+}
+
+///|
 test "ASCII/Unicode parity regression: Beautiful Mermaid sample" {
   assert_text_parity(
     beautiful_mermaid_source(),
@@ -1360,5 +1391,14 @@ test "ASCII/Unicode parity regression: Simple Flow sample" {
     simple_flow_source(),
     simple_flow_expected_ascii(),
     simple_flow_expected_unicode(),
+  )
+}
+
+///|
+test "ASCII/Unicode parity regression: Original Node Shapes sample" {
+  assert_text_parity(
+    original_node_shapes_source(),
+    original_node_shapes_expected_ascii(),
+    original_node_shapes_expected_unicode(),
   )
 }
