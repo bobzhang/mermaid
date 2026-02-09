@@ -3064,6 +3064,107 @@ fn sequence_oauth_2_0_flow_expected_unicode() -> String {
 }
 
 ///|
+fn sequence_database_transaction_source() -> String {
+  "sequenceDiagram\n  participant C as Client\n  participant S as Server\n  participant DB as Database\n  C->>S: POST /transfer\n  S->>DB: BEGIN\n  S->>DB: Debit account A\n  alt Success\n    S->>DB: Credit account B\n    S->>DB: INSERT audit_log\n    S->>DB: COMMIT\n    S-->>C: 200 OK\n  else Insufficient funds\n    S->>DB: ROLLBACK\n    S-->>C: 400 Bad Request\n  end"
+}
+
+///|
+fn sequence_database_transaction_expected_ascii() -> String {
+  [
+    "+--------+           +--------+           +----------+   ",
+    "| Client |           | Server |           | Database |   ",
+    "+--------+           +--------+           +----------+   ",
+    "     |                    |                     |        ",
+    "     |  POST /transfer    |                     |        ",
+    "     |-------------------->                     |        ",
+    "     |                    |                     |        ",
+    "     |                    |        BEGIN        |        ",
+    "     |                    |--------------------->        ",
+    "     |                    |                     |        ",
+    "     |                    |   Debit account A   |        ",
+    "     |                    |--------------------->        ",
+    "     |                    |                     |        ",
+    " +alt [Success]-------------------------------------+    ",
+    " |   |                    |                     |   |    ",
+    " |   |                    |  Credit account B   |   |    ",
+    " |   |                    |--------------------->   |    ",
+    " |   |                    |                     |   |    ",
+    " |   |                    |  INSERT audit_log   |   |    ",
+    " |   |                    |--------------------->   |    ",
+    " |   |                    |                     |   |    ",
+    " |   |                    |       COMMIT        |   |    ",
+    " |   |                    |--------------------->   |    ",
+    " |   |                    |                     |   |    ",
+    " |   |      200 OK        |                     |   |    ",
+    " |   <....................|                     |   |    ",
+    " |   |                    |                     |   |    ",
+    " +[Insufficient funds]------------------------------+    ",
+    " |   |                    |                     |   |    ",
+    " |   |                    |      ROLLBACK       |   |    ",
+    " |   |                    |--------------------->   |    ",
+    " |   |                    |                     |   |    ",
+    " |   |  400 Bad Request   |                     |   |    ",
+    " |   <....................|                     |   |    ",
+    " |   |                    |                     |   |    ",
+    " +--------------------------------------------------+    ",
+    "     |                    |                     |        ",
+    "+--------+           +--------+           +----------+   ",
+    "| Client |           | Server |           | Database |   ",
+    "+--------+           +--------+           +----------+   ",
+  ]
+  .iter()
+  .join("\n")
+}
+
+///|
+fn sequence_database_transaction_expected_unicode() -> String {
+  [
+    "┌────────┐           ┌────────┐           ┌──────────┐   ",
+    "│ Client │           │ Server │           │ Database │   ",
+    "└────┬───┘           └────┬───┘           └─────┬────┘   ",
+    "     │                    │                     │        ",
+    "     │  POST /transfer    │                     │        ",
+    "     │────────────────────▶                     │        ",
+    "     │                    │                     │        ",
+    "     │                    │        BEGIN        │        ",
+    "     │                    │─────────────────────▶        ",
+    "     │                    │                     │        ",
+    "     │                    │   Debit account A   │        ",
+    "     │                    │─────────────────────▶        ",
+    "     │                    │                     │        ",
+    " ┌alt [Success]─────────────────────────────────────┐    ",
+    " │   │                    │                     │   │    ",
+    " │   │                    │  Credit account B   │   │    ",
+    " │   │                    │─────────────────────▶   │    ",
+    " │   │                    │                     │   │    ",
+    " │   │                    │  INSERT audit_log   │   │    ",
+    " │   │                    │─────────────────────▶   │    ",
+    " │   │                    │                     │   │    ",
+    " │   │                    │       COMMIT        │   │    ",
+    " │   │                    │─────────────────────▶   │    ",
+    " │   │                    │                     │   │    ",
+    " │   │      200 OK        │                     │   │    ",
+    " │   ◀╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌│                     │   │    ",
+    " │   │                    │                     │   │    ",
+    " ├[Insufficient funds]╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┤    ",
+    " │   │                    │                     │   │    ",
+    " │   │                    │      ROLLBACK       │   │    ",
+    " │   │                    │─────────────────────▶   │    ",
+    " │   │                    │                     │   │    ",
+    " │   │  400 Bad Request   │                     │   │    ",
+    " │   ◀╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌│                     │   │    ",
+    " │   │                    │                     │   │    ",
+    " └──────────────────────────────────────────────────┘    ",
+    "     │                    │                     │        ",
+    "┌────┴───┐           ┌────┴───┐           ┌─────┴────┐   ",
+    "│ Client │           │ Server │           │ Database │   ",
+    "└────────┘           └────────┘           └──────────┘   ",
+  ]
+  .iter()
+  .join("\n")
+}
+
+///|
 test "ASCII/Unicode parity regression: Beautiful Mermaid sample" {
   assert_text_parity(
     beautiful_mermaid_source(),
@@ -3456,5 +3557,14 @@ test "ASCII/Unicode parity regression: Sequence: OAuth 2.0 Flow sample" {
     sequence_oauth_2_0_flow_source(),
     sequence_oauth_2_0_flow_expected_ascii(),
     sequence_oauth_2_0_flow_expected_unicode(),
+  )
+}
+
+///|
+test "ASCII/Unicode parity regression: Sequence: Database Transaction sample" {
+  assert_text_parity(
+    sequence_database_transaction_source(),
+    sequence_database_transaction_expected_ascii(),
+    sequence_database_transaction_expected_unicode(),
   )
 }
