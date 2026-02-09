@@ -5310,3 +5310,76 @@ test "ASCII/Unicode parity regression: ER: Mixed Identifying & Non-Identifying s
     er_mixed_identifying_non_identifying_sample_expected_unicode(),
   )
 }
+
+
+///|
+fn er_e_commerce_schema_sample_source() -> String {
+  "erDiagram\n  CUSTOMER {\n    int id PK\n    string name\n    string email UK\n  }\n  ORDER {\n    int id PK\n    date created\n    int customer_id FK\n  }\n  PRODUCT {\n    int id PK\n    string name\n    float price\n  }\n  LINE_ITEM {\n    int id PK\n    int order_id FK\n    int product_id FK\n    int quantity\n  }\n  CUSTOMER ||--o{ ORDER : places\n  ORDER ||--|{ LINE_ITEM : contains\n  PRODUCT ||--o{ LINE_ITEM : includes"
+}
+
+///|
+fn er_e_commerce_schema_sample_expected_ascii() -> String {
+  [
+    "+-----------------+      +--------------------+    ",
+    "| CUSTOMER        |      | ORDER              |    ",
+    "+-----------------+places+--------------------+    ",
+    "| PK int id       |||--o{| PK int id          |    ",
+    "|    string name  |      |    date created    |    ",
+    "| UK string email |      | FK int customer_id |    ",
+    "+-----------------+      +--------------------+    ",
+    "                                   ||              ",
+    "                                  --- contains     ",
+    "                                  | |              ",
+    "                                 }| |              ",
+    "+----------------+      +-------------------+      ",
+    "| PRODUCT        |      | LINE_ITEM         |      ",
+    "+----------------+includ+-------------------+      ",
+    "| PK int id      |||--o{| PK int id         |      ",
+    "|    string name |      | FK int order_id   |      ",
+    "|    float price |      | FK int product_id |      ",
+    "+----------------+      |    int quantity   |      ",
+    "                        +-------------------+      ",
+    "                                                   ",
+    "                                                   ",
+  ]
+  .iter()
+  .join("\n")
+}
+
+///|
+fn er_e_commerce_schema_sample_expected_unicode() -> String {
+  [
+    "┌─────────────────┐      ┌────────────────────┐    ",
+    "│ CUSTOMER        │      │ ORDER              │    ",
+    "├─────────────────┤places├────────────────────┤    ",
+    "│ PK int id       │║───o╟│ PK int id          │    ",
+    "│    string name  │      │    date created    │    ",
+    "│ UK string email │      │ FK int customer_id │    ",
+    "└─────────────────┘      └────────────────────┘    ",
+    "                                    ║              ",
+    "                                  ─── contains     ",
+    "                                  │ │              ",
+    "                                  ╟ │              ",
+    "┌────────────────┐      ┌───────────────────┐      ",
+    "│ PRODUCT        │      │ LINE_ITEM         │      ",
+    "├────────────────┤includ├───────────────────┤      ",
+    "│ PK int id      │║───o╟│ PK int id         │      ",
+    "│    string name │      │ FK int order_id   │      ",
+    "│    float price │      │ FK int product_id │      ",
+    "└────────────────┘      │    int quantity   │      ",
+    "                        └───────────────────┘      ",
+    "                                                   ",
+    "                                                   ",
+  ]
+  .iter()
+  .join("\n")
+}
+
+///|
+test "ASCII/Unicode parity regression: ER: E-Commerce Schema sample" {
+  assert_text_parity(
+    er_e_commerce_schema_sample_source(),
+    er_e_commerce_schema_sample_expected_ascii(),
+    er_e_commerce_schema_sample_expected_unicode(),
+  )
+}
