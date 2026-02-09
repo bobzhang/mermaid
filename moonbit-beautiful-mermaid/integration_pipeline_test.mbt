@@ -719,6 +719,44 @@ test "Sequence critical/option block renders across text and SVG modes" {
 }
 
 ///|
+test "Sequence par/and block renders across text and SVG modes" {
+  let input = "sequenceDiagram\nparticipant C as Client\nparticipant API\nparticipant DB\npar Request API\nC->>API: /items\nand Write audit\nAPI->>DB: INSERT audit\nend\nAPI-->>C: 200"
+
+  let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
+    use_ascii: true,
+    padding_x: 5,
+    padding_y: 5,
+    box_border_padding: 1,
+  })
+  let unicode = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
+    use_ascii: false,
+    padding_x: 5,
+    padding_y: 5,
+    box_border_padding: 1,
+  })
+  let svg = try! @beautiful_mermaid.render_mermaid(input)
+
+  assert_true(ascii.contains("Client"))
+  assert_true(ascii.contains("API"))
+  assert_true(ascii.contains("DB"))
+  assert_true(ascii.contains("/items"))
+  assert_true(ascii.contains("INSERT audit"))
+  assert_true(ascii.contains("200"))
+  assert_true(unicode.contains("Client"))
+  assert_true(unicode.contains("API"))
+  assert_true(unicode.contains("DB"))
+  assert_true(unicode.contains("/items"))
+  assert_true(unicode.contains("INSERT audit"))
+  assert_true(unicode.contains("200"))
+  assert_true(svg.contains(">Client</text>"))
+  assert_true(svg.contains(">API</text>"))
+  assert_true(svg.contains(">DB</text>"))
+  assert_true(svg.contains(">/items</text>"))
+  assert_true(svg.contains(">INSERT audit</text>"))
+  assert_true(svg.contains(">200</text>"))
+}
+
+///|
 test "Class inheritance labels render across text and SVG modes" {
   let input = "classDiagram\nclass Shape {\n<<abstract>>\n+draw() void\n}\nclass Circle {\n+radius int\n+draw() void\n}\nShape <|-- Circle : inherits"
 
