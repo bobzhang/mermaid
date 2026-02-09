@@ -687,10 +687,24 @@ fn flow_non_state_edge_label_placement(
     false
   }
 
-  let (anchor_x, anchor_y) = flow_non_state_label_anchor_from_points(
-    points,
-    source_x, source_y, target_x, target_y, label.length(),
-  )
+  let level_back_edge_detour = points.length() == 4 &&
+    points[0].x == points[1].x &&
+    points[1].y == points[2].y &&
+    points[2].x == points[3].x &&
+    points[0].x > points[3].x &&
+    points[0].y == points[3].y
+  let (anchor_x, anchor_y) = if level_back_edge_detour {
+    (points[0].x, points[0].y + 1)
+  } else {
+    flow_non_state_label_anchor_from_points(
+      points,
+      source_x,
+      source_y,
+      target_x,
+      target_y,
+      label.length(),
+    )
+  }
   let mut label_x = anchor_x - label.length() / 2
   if source_y == target_y {
     if source_x < target_x {
@@ -2975,12 +2989,17 @@ fn render_ascii_flow_subgraphs(
             source_anchor_y = sy
             target_anchor_x = tx
             target_anchor_y = ty
+            let detour_start_y = if center_dy < 0 {
+              target_anchor_y + 3
+            } else {
+              source_anchor_y.max(target_anchor_y) + 3
+            }
             let detour_y = flow_non_state_back_edge_detour_row(
               edge.source,
               edge.target,
               source_anchor_x,
               target_anchor_x,
-              source_anchor_y.max(target_anchor_y) + 3,
+              detour_start_y,
               mapped_nodes,
             )
             [
@@ -3172,18 +3191,28 @@ fn render_ascii_flow_subgraphs(
               flow_direction_horizontal,
             )
           }
-          edge_label_overlays.push(
-            flow_non_state_edge_label_placement(
-              route_points,
-              source_anchor_x,
-              source_anchor_y,
-              target_anchor_x,
-              target_anchor_y,
-              label,
-              mapped_nodes,
-              edge_label_overlays,
-            ),
-          )
+          let back_edge_detour = flow_direction_horizontal &&
+            route_points.length() == 4 &&
+            route_points[0].x == route_points[1].x &&
+            route_points[1].y == route_points[2].y &&
+            route_points[2].x == route_points[3].x &&
+            route_points[0].x > route_points[3].x
+          let upward_back_edge_detour = back_edge_detour &&
+            route_points[0].y > route_points[3].y
+          if !upward_back_edge_detour {
+            edge_label_overlays.push(
+              flow_non_state_edge_label_placement(
+                route_points,
+                source_anchor_x,
+                source_anchor_y,
+                target_anchor_x,
+                target_anchor_y,
+                label,
+                mapped_nodes,
+                edge_label_overlays,
+              ),
+            )
+          }
         }
       None => ()
     }
