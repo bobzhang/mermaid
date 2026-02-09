@@ -1,8 +1,8 @@
 {
   "name": "bobzhang/beautiful_mermaid",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "readme": "README.mbt.md",
-  "repository": "",
+  "repository": "https://github.com/bobzhang/mermaid",
   "license": "Apache-2.0",
   "keywords": [],
   "description": ""
