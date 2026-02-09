@@ -1714,10 +1714,28 @@ fn render_ascii_state_flat_grid(
       let next = points[i]
       let dir_x = unit_step(next.x - previous.x)
       let dir_y = unit_step(next.y - previous.y)
-      let start_x = previous.x + dir_x
-      let start_y = previous.y + dir_y
-      let end_x = next.x - dir_x
-      let end_y = next.y - dir_y
+      let first_segment = i == 1
+      let last_segment = i == points.length() - 1
+      let start_x = if first_segment {
+        previous.x + dir_x
+      } else {
+        previous.x
+      }
+      let start_y = if first_segment {
+        previous.y + dir_y
+      } else {
+        previous.y
+      }
+      let end_x = if last_segment {
+        next.x - dir_x
+      } else {
+        next.x
+      }
+      let end_y = if last_segment {
+        next.y - dir_y
+      } else {
+        next.y
+      }
       if start_x == end_x && start_y == end_y {
         continue
       }
