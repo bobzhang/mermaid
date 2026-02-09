@@ -767,6 +767,37 @@ fn decision_tree_expected_unicode() -> String {
 }
 
 ///|
+fn direction_left_right_source() -> String {
+  "graph LR\n  A[Input] --> B[Transform] --> C[Output]"
+}
+
+///|
+fn direction_left_right_expected_ascii() -> String {
+  [
+    "+-------+     +-----------+     +--------+",
+    "|       |     |           |     |        |",
+    "| Input |---->| Transform |---->| Output |",
+    "|       |     |           |     |        |",
+    "+-------+     +-----------+     +--------+",
+  ]
+  .iter()
+  .join("\n")
+}
+
+///|
+fn direction_left_right_expected_unicode() -> String {
+  [
+    "┌───────┐     ┌───────────┐     ┌────────┐",
+    "│       │     │           │     │        │",
+    "│ Input ├────►│ Transform ├────►│ Output │",
+    "│       │     │           │     │        │",
+    "└───────┘     └───────────┘     └────────┘",
+  ]
+  .iter()
+  .join("\n")
+}
+
+///|
 fn direction_bottom_top_source() -> String {
   "graph BT\n  A[Foundation] --> B[Layer 2] --> C[Top]"
 }
@@ -1204,6 +1235,15 @@ test "ASCII/Unicode parity regression: Decision Tree sample" {
     decision_tree_source(),
     decision_tree_expected_ascii(),
     decision_tree_expected_unicode(),
+  )
+}
+
+///|
+test "ASCII/Unicode parity regression: Direction Left-Right sample" {
+  assert_text_parity(
+    direction_left_right_source(),
+    direction_left_right_expected_ascii(),
+    direction_left_right_expected_unicode(),
   )
 }
 
