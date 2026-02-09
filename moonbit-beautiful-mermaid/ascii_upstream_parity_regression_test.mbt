@@ -4085,3 +4085,64 @@ test "ASCII/Unicode parity regression: Class: Composition (*--) sample" {
     class_composition_sample_expected_unicode(),
   )
 }
+
+
+///|
+fn class_aggregation_o_sample_source() -> String {
+  "classDiagram\n  class University {\n    +String name\n  }\n  class Department {\n    +String faculty\n  }\n  University o-- Department"
+}
+
+///|
+fn class_aggregation_o_sample_expected_ascii() -> String {
+  [
+    "+---------------+       ",
+    "| University    |       ",
+    "+---------------+       ",
+    "| +name: String |       ",
+    "+---------------+       ",
+    "        o               ",
+    "        ---             ",
+    "          |             ",
+    "+------------------+    ",
+    "| Department       |    ",
+    "+------------------+    ",
+    "| +faculty: String |    ",
+    "+------------------+    ",
+    "                        ",
+    "                        ",
+  ]
+  .iter()
+  .join("\n")
+}
+
+///|
+fn class_aggregation_o_sample_expected_unicode() -> String {
+  [
+    "┌───────────────┐       ",
+    "│ University    │       ",
+    "├───────────────┤       ",
+    "│ +name: String │       ",
+    "└───────────────┘       ",
+    "        ◇               ",
+    "        └─┐             ",
+    "          │             ",
+    "┌──────────────────┐    ",
+    "│ Department       │    ",
+    "├──────────────────┤    ",
+    "│ +faculty: String │    ",
+    "└──────────────────┘    ",
+    "                        ",
+    "                        ",
+  ]
+  .iter()
+  .join("\n")
+}
+
+///|
+test "ASCII/Unicode parity regression: Class: Aggregation (o--) sample" {
+  assert_text_parity(
+    class_aggregation_o_sample_source(),
+    class_aggregation_o_sample_expected_ascii(),
+    class_aggregation_o_sample_expected_unicode(),
+  )
+}
