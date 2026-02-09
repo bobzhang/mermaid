@@ -167,6 +167,13 @@ test "SVG applies custom font option" {
 }
 
 ///|
+test "SVG defaults to light theme colors" {
+  let svg = try! @beautiful_mermaid.render_mermaid("graph TD\nA --> B")
+  assert_true(svg.contains("--bg:#FFFFFF"))
+  assert_true(svg.contains("--fg:#27272A"))
+}
+
+///|
 test "ASCII and Unicode modes differ" {
   let ascii_options = @beautiful_mermaid.AsciiRenderOptions::{
     use_ascii: true,
