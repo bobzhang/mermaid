@@ -5383,3 +5383,82 @@ test "ASCII/Unicode parity regression: ER: E-Commerce Schema sample" {
     er_e_commerce_schema_sample_expected_unicode(),
   )
 }
+
+
+///|
+fn er_blog_platform_schema_sample_source() -> String {
+  "erDiagram\n  USER {\n    int id PK\n    string username UK\n    string email UK\n    date joined\n  }\n  POST {\n    int id PK\n    string title\n    text content\n    int author_id FK\n    date published\n  }\n  COMMENT {\n    int id PK\n    text body\n    int post_id FK\n    int user_id FK\n    date created\n  }\n  TAG {\n    int id PK\n    string name UK\n  }\n  USER ||--o{ POST : writes\n  USER ||--o{ COMMENT : authors\n  POST ||--o{ COMMENT : has\n  POST }|--o{ TAG : tagged-with"
+}
+
+///|
+fn er_blog_platform_schema_sample_expected_ascii() -> String {
+  [
+    "+--------------------+      +-------------------+    ",
+    "| USER               |      | POST              |    ",
+    "+--------------------+      +-------------------+    ",
+    "| PK int id          |writes| PK int id         |    ",
+    "| UK string username |||--o{|    string title   |    ",
+    "| UK string email    |      |    text content   |    ",
+    "|    date joined     |      | FK int author_id  |    ",
+    "+--------------------+      |    date published |    ",
+    "          ||                +-------------------+    ",
+    "           |                         }|              ",
+    "         ------------------------------ tagged-with  ",
+    "         | |                      |   |              ",
+    "        o{ |                     o{   |              ",
+    "+-----------------+      +----------------+          ",
+    "| COMMENT         |      | TAG            |          ",
+    "+-----------------+      +----------------+          ",
+    "| PK int id       |      | PK int id      |          ",
+    "|    text body    |      | UK string name |          ",
+    "| FK int post_id  |      +----------------+          ",
+    "| FK int user_id  |                                  ",
+    "|    date created |                                  ",
+    "+-----------------+                                  ",
+    "                                                     ",
+    "                                                     ",
+  ]
+  .iter()
+  .join("\n")
+}
+
+///|
+fn er_blog_platform_schema_sample_expected_unicode() -> String {
+  [
+    "┌────────────────────┐      ┌───────────────────┐    ",
+    "│ USER               │      │ POST              │    ",
+    "├────────────────────┤      ├───────────────────┤    ",
+    "│ PK int id          │writes│ PK int id         │    ",
+    "│ UK string username │║───o╟│    string title   │    ",
+    "│ UK string email    │      │    text content   │    ",
+    "│    date joined     │      │ FK int author_id  │    ",
+    "└────────────────────┘      │    date published │    ",
+    "           ║                └───────────────────┘    ",
+    "           │                          ╟              ",
+    "         ────────────────────────────── tagged-with  ",
+    "         │ │                      │   │              ",
+    "        o╟ │                     o╟   │              ",
+    "┌─────────────────┐      ┌────────────────┐          ",
+    "│ COMMENT         │      │ TAG            │          ",
+    "├─────────────────┤      ├────────────────┤          ",
+    "│ PK int id       │      │ PK int id      │          ",
+    "│    text body    │      │ UK string name │          ",
+    "│ FK int post_id  │      └────────────────┘          ",
+    "│ FK int user_id  │                                  ",
+    "│    date created │                                  ",
+    "└─────────────────┘                                  ",
+    "                                                     ",
+    "                                                     ",
+  ]
+  .iter()
+  .join("\n")
+}
+
+///|
+test "ASCII/Unicode parity regression: ER: Blog Platform Schema sample" {
+  assert_text_parity(
+    er_blog_platform_schema_sample_source(),
+    er_blog_platform_schema_sample_expected_ascii(),
+    er_blog_platform_schema_sample_expected_unicode(),
+  )
+}
