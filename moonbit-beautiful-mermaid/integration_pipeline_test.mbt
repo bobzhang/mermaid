@@ -329,6 +329,16 @@ test "SVG bidirectional edges include start and end arrowheads" {
 }
 
 ///|
+test "SVG parallel ampersand links emit one edge per source" {
+  let svg = try! @beautiful_mermaid.render_mermaid("graph TD\nA & B --> C")
+
+  assert_true(svg.contains(">A</text>"))
+  assert_true(svg.contains(">B</text>"))
+  assert_true(svg.contains(">C</text>"))
+  assert_true(integration_count_occurrences(svg, "<polyline") >= 2)
+}
+
+///|
 test "ASCII and Unicode modes differ" {
   let ascii_options = @beautiful_mermaid.AsciiRenderOptions::{
     use_ascii: true,
