@@ -4208,3 +4208,72 @@ test "ASCII/Unicode parity regression: Class: Association (-->) sample" {
   )
 }
 
+
+
+///|
+fn class_dependency_sample_source() -> String {
+  "classDiagram\n  class Service {\n    +process() void\n  }\n  class Repository {\n    +find() Object\n  }\n  Service ..> Repository"
+}
+
+///|
+fn class_dependency_sample_expected_ascii() -> String {
+  [
+    "+----------------+    ",
+    "| Service        |    ",
+    "+----------------+    ",
+    "|                |    ",
+    "+----------------+    ",
+    "| +process: void |    ",
+    "+----------------+    ",
+    "         :            ",
+    "        ..            ",
+    "        v             ",
+    "+---------------+     ",
+    "| Repository    |     ",
+    "+---------------+     ",
+    "|               |     ",
+    "+---------------+     ",
+    "| +find: Object |     ",
+    "+---------------+     ",
+    "                      ",
+    "                      ",
+  ]
+  .iter()
+  .join("\n")
+}
+
+///|
+fn class_dependency_sample_expected_unicode() -> String {
+  [
+    "┌────────────────┐    ",
+    "│ Service        │    ",
+    "├────────────────┤    ",
+    "│                │    ",
+    "├────────────────┤    ",
+    "│ +process: void │    ",
+    "└────────────────┘    ",
+    "         ┊            ",
+    "        ┌┘            ",
+    "        ▼             ",
+    "┌───────────────┐     ",
+    "│ Repository    │     ",
+    "├───────────────┤     ",
+    "│               │     ",
+    "├───────────────┤     ",
+    "│ +find: Object │     ",
+    "└───────────────┘     ",
+    "                      ",
+    "                      ",
+  ]
+  .iter()
+  .join("\n")
+}
+
+///|
+test "ASCII/Unicode parity regression: Class: Dependency (..>) sample" {
+  assert_text_parity(
+    class_dependency_sample_source(),
+    class_dependency_sample_expected_ascii(),
+    class_dependency_sample_expected_unicode(),
+  )
+}
