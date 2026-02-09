@@ -108,7 +108,7 @@ fn draw_actor_box(
 fn canvas_to_output(canvas : Array[Array[String]]) -> String {
   let lines : Array[String] = []
   for row in canvas {
-    lines.push(row.iter().join("").trim_end().to_string())
+    lines.push(row.iter().join(""))
   }
   lines.iter().join("\n")
 }
@@ -500,7 +500,7 @@ fn render_ascii_sequence(
     }
   }
 
-  let canvas = make_canvas(total_w, total_h)
+  let canvas = make_canvas(total_w + 1, total_h)
 
   for i in 0..<actors.length() {
     let x = lifeline_x[i]
