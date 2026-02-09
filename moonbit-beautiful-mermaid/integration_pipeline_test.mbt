@@ -198,6 +198,18 @@ test "SVG applies explicit dark colors" {
 }
 
 ///|
+test "SVG renders solid dotted and thick edge styles with labels" {
+  let svg = try! @beautiful_mermaid.render_mermaid(
+    "graph TD\nA -->|solid| B\nB -.->|dotted| C\nC ==>|thick| D",
+  )
+
+  assert_true(svg.contains(">solid</text>"))
+  assert_true(svg.contains(">dotted</text>"))
+  assert_true(svg.contains(">thick</text>"))
+  assert_true(svg.contains("stroke-dasharray=\"4 4\""))
+}
+
+///|
 test "ASCII and Unicode modes differ" {
   let ascii_options = @beautiful_mermaid.AsciiRenderOptions::{
     use_ascii: true,
