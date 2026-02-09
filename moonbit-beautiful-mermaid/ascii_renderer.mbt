@@ -418,6 +418,32 @@ fn flow_non_state_edge_span(start : Point, ending : Point) -> Int {
 }
 
 ///|
+fn flow_non_state_back_edge_detour_row(
+  source_id : String,
+  target_id : String,
+  source_x : Int,
+  target_x : Int,
+  min_y : Int,
+  nodes : Array[AsciiFlowNodeBox],
+) -> Int {
+  let mut detour_y = min_y
+  let left = source_x.min(target_x)
+  let right = source_x.max(target_x)
+  for node in nodes {
+    if node.id == source_id || node.id == target_id {
+      continue
+    }
+    let node_left = node.left
+    let node_right = node.left + node.width - 1
+    let overlaps_x = !(right < node_left || left > node_right)
+    if overlaps_x {
+      detour_y = detour_y.max(node.top + node.height + 1)
+    }
+  }
+  detour_y
+}
+
+///|
 fn flow_non_state_label_anchor_from_points(
   points : Array[Point],
   source_x : Int,
@@ -2214,29 +2240,55 @@ fn render_ascii_flow_subgraphs(
               target_dir_dy = 0
             }
           }
-
-          let source_anchor = flow_edge_anchor(
-            source_box, source_dir_dx, source_dir_dy, false,
-          )
-          let target_anchor = flow_edge_anchor(
-            target_box,
-            target_dir_dx,
-            target_dir_dy,
-            true,
-          )
-          let (sx, sy) = source_anchor
-          let (tx, ty) = target_anchor
-          source_anchor_x = sx
-          source_anchor_y = sy
-          target_anchor_x = tx
-          target_anchor_y = ty
-          let route_points = flow_non_state_route_points(
-            source_anchor_x,
-            source_anchor_y,
-            target_anchor_x,
-            target_anchor_y,
-            horizontal_first,
-          )
+          let labeled_back_edge_detour = flow_direction_horizontal &&
+            center_dx < 0 &&
+            center_dy.abs() <= source_box.height &&
+            edge.label is Some(_)
+          let route_points = if labeled_back_edge_detour {
+            let (sx, sy) = flow_edge_anchor(source_box, 0, 1, false)
+            let (tx, ty) = flow_edge_anchor(target_box, 0, -1, true)
+            source_anchor_x = sx
+            source_anchor_y = sy
+            target_anchor_x = tx
+            target_anchor_y = ty
+            let detour_y = flow_non_state_back_edge_detour_row(
+              edge.source,
+              edge.target,
+              source_anchor_x,
+              target_anchor_x,
+              source_anchor_y.max(target_anchor_y) + 2,
+              mapped_nodes,
+            )
+            [
+              Point::{ x: source_anchor_x, y: source_anchor_y },
+              Point::{ x: source_anchor_x, y: detour_y },
+              Point::{ x: target_anchor_x, y: detour_y },
+              Point::{ x: target_anchor_x, y: target_anchor_y },
+            ]
+          } else {
+            let source_anchor = flow_edge_anchor(
+              source_box, source_dir_dx, source_dir_dy, false,
+            )
+            let target_anchor = flow_edge_anchor(
+              target_box,
+              target_dir_dx,
+              target_dir_dy,
+              true,
+            )
+            let (sx, sy) = source_anchor
+            let (tx, ty) = target_anchor
+            source_anchor_x = sx
+            source_anchor_y = sy
+            target_anchor_x = tx
+            target_anchor_y = ty
+            flow_non_state_route_points(
+              source_anchor_x,
+              source_anchor_y,
+              target_anchor_x,
+              target_anchor_y,
+              horizontal_first,
+            )
+          }
           non_state_route_points = route_points
           for i in 1..<non_state_route_points.length() {
             let from = non_state_route_points[i - 1]
