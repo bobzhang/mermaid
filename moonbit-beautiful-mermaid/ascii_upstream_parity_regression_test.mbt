@@ -1495,6 +1495,77 @@ fn bidirectional_arrows_expected_unicode() -> String {
 }
 
 ///|
+fn parallel_links_and_source() -> String {
+  "graph TD\n  A[Input] & B[Config] --> C[Processor]\n  C --> D[Output] & E[Log]"
+}
+
+///|
+fn parallel_links_and_expected_ascii() -> String {
+  [
+    "+-----------+     +--------+",
+    "|           |     |        |",
+    "|   Input   |     | Config |",
+    "|           |     |        |",
+    "+-----------+     +--------+",
+    "      |                |    ",
+    "      |                |    ",
+    "      |                |    ",
+    "      |                |    ",
+    "      v                |    ",
+    "+-----------+          |    ",
+    "|           |          |    ",
+    "| Processor |<---------+    ",
+    "|           |          |    ",
+    "+-----------+          |    ",
+    "      |                |    ",
+    "      |                |    ",
+    "      |                |    ",
+    "      |                |    ",
+    "      v                v    ",
+    "+-----------+     +--------+",
+    "|           |     |        |",
+    "|   Output  |     |  Log   |",
+    "|           |     |        |",
+    "+-----------+     +--------+",
+  ]
+  .iter()
+  .join("\n")
+}
+
+///|
+fn parallel_links_and_expected_unicode() -> String {
+  [
+    "┌───────────┐     ┌────────┐",
+    "│           │     │        │",
+    "│   Input   │     │ Config │",
+    "│           │     │        │",
+    "└─────┬─────┘     └────┬───┘",
+    "      │                │    ",
+    "      │                │    ",
+    "      │                │    ",
+    "      │                │    ",
+    "      ▼                │    ",
+    "┌───────────┐          │    ",
+    "│           │          │    ",
+    "│ Processor ├◄─────────┤    ",
+    "│           │          │    ",
+    "└─────┬─────┘          │    ",
+    "      │                │    ",
+    "      │                │    ",
+    "      │                │    ",
+    "      │                │    ",
+    "      ▼                ▼    ",
+    "┌───────────┐     ┌────────┐",
+    "│           │     │        │",
+    "│   Output  │     │  Log   │",
+    "│           │     │        │",
+    "└───────────┘     └────────┘",
+  ]
+  .iter()
+  .join("\n")
+}
+
+///|
 test "ASCII/Unicode parity regression: Beautiful Mermaid sample" {
   assert_text_parity(
     beautiful_mermaid_source(),
@@ -1680,5 +1751,14 @@ test "ASCII/Unicode parity regression: Bidirectional Arrows sample" {
     bidirectional_arrows_source(),
     bidirectional_arrows_expected_ascii(),
     bidirectional_arrows_expected_unicode(),
+  )
+}
+
+///|
+test "ASCII/Unicode parity regression: Parallel Links (&) sample" {
+  assert_text_parity(
+    parallel_links_and_source(),
+    parallel_links_and_expected_ascii(),
+    parallel_links_and_expected_unicode(),
   )
 }
