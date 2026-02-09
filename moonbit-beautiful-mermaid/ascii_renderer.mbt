@@ -2487,6 +2487,22 @@ fn render_ascii_flow_subgraphs(
     }
     mapped_nodes.push(box)
   }
+  let flow_out_degree_by_source : Map[String, Int] = {}
+  let flow_in_degree_by_target : Map[String, Int] = {}
+  if !state_layout_mode && flow_direction_horizontal && !flow_with_subgraphs {
+    for edge in graph.edges {
+      let source_current = option_int_or(
+        flow_out_degree_by_source.get(edge.source),
+        0,
+      )
+      flow_out_degree_by_source[edge.source] = source_current + 1
+      let target_current = option_int_or(
+        flow_in_degree_by_target.get(edge.target),
+        0,
+      )
+      flow_in_degree_by_target[edge.target] = target_current + 1
+    }
+  }
 
   let horizontal_label_gap_by_pair : Map[String, Int] = {}
   if !state_layout_mode && flow_direction_horizontal {
@@ -2503,7 +2519,28 @@ fn render_ascii_flow_subgraphs(
             horizontal_label_gap_by_pair[pair_key] = required_gap
           }
         }
-        None => ()
+        None =>
+          if !flow_with_subgraphs {
+            let target_in_degree = option_int_or(
+              flow_in_degree_by_target.get(edge.target),
+              0,
+            )
+            let target_out_degree = option_int_or(
+              flow_out_degree_by_source.get(edge.target),
+              0,
+            )
+            if target_in_degree > 1 && target_out_degree <= 1 {
+              let pair_key = flow_node_pair_key(edge.source, edge.target)
+              let current_gap = option_int_or(
+                horizontal_label_gap_by_pair.get(pair_key),
+                options.padding_x,
+              )
+              let required_gap = options.padding_x + 1
+              if required_gap > current_gap {
+                horizontal_label_gap_by_pair[pair_key] = required_gap
+              }
+            }
+          }
       }
     }
   }
@@ -2929,7 +2966,7 @@ fn render_ascii_flow_subgraphs(
           }
           let labeled_back_edge_detour = flow_direction_horizontal &&
             center_dx < 0 &&
-            center_dy.abs() <= source_box.height &&
+            (center_dy.abs() <= source_box.height || center_dy < 0) &&
             edge.label is Some(_)
           let route_points = if labeled_back_edge_detour {
             let (sx, sy) = flow_edge_anchor(source_box, 0, 1, false)
@@ -2943,7 +2980,7 @@ fn render_ascii_flow_subgraphs(
               edge.target,
               source_anchor_x,
               target_anchor_x,
-              source_anchor_y.max(target_anchor_y) + 2,
+              source_anchor_y.max(target_anchor_y) + 3,
               mapped_nodes,
             )
             [
@@ -2960,13 +2997,14 @@ fn render_ascii_flow_subgraphs(
             source_anchor_x = sx
             source_anchor_y = sy
             target_anchor_y = target_box.top + target_box.height / 2
-            target_anchor_x = (target_box.left - 2).max(source_anchor_x + 1)
+            target_anchor_x = (target_box.left - 3).max(source_anchor_x + 1)
+            let secondary_horizontal_first = source_anchor_y > target_anchor_y
             flow_non_state_route_points(
               source_anchor_x,
               source_anchor_y,
               target_anchor_x,
               target_anchor_y,
-              false,
+              secondary_horizontal_first,
             )
           } else {
             let source_anchor = flow_edge_anchor(
@@ -3173,11 +3211,12 @@ fn render_ascii_flow_subgraphs(
         marker: flow_arrow_marker(dx, dy, options.use_ascii),
       })
     }
-    if options.use_ascii && merge_primary_join_x >= 0 {
+    if merge_primary_join_x >= 0 {
+      let marker = if options.use_ascii { "+" } else { "┬" }
       arrow_overlays.push(AsciiArrowPlacement::{
         x: merge_primary_join_x,
         y: target_anchor_y,
-        marker: "+",
+        marker,
       })
     }
     if state_layout_mode && edge.has_arrow_start {
