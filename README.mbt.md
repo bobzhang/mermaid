@@ -10,6 +10,10 @@ Render Mermaid diagrams as SVG or ASCII/Unicode text in MoonBit.
 - Configurable layout and rendering options.
 - Smoke coverage against the upstream `beautiful-mermaid/samples-data.ts` corpus.
 
+## Architecture
+
+See [`ARCHITECTURE.md`](ARCHITECTURE.md) for the parser/layout/renderer pipeline, module boundaries, and test architecture.
+
 ## Credits
 
 This project is a MoonBit port of [`beautiful-mermaid`](https://github.com/lukilabs/beautiful-mermaid) by Luki Labs, with additional inspiration from [`mermaid-ascii`](https://github.com/AlexanderGrooff/mermaid-ascii) by Alexander Grooff.
@@ -37,12 +41,13 @@ Regenerate the upstream sample smoke test after upstream `samples-data.ts` chang
 ```mbt check
 ///|
 test "simple_td" (it : @test.Test) {
-  let svg = render_mermaid("graph TD\nA --> B")
-  it.write(svg.to_string())
-  it.snapshot(filename="simle_td.svg")
-  // assert_true(svg.has_prefix("<svg "))
-  // assert_true(svg.contains(">A</text>"))
-  // assert_true(svg.contains(">B</text>"))
+  let svg = try! render_mermaid("graph TD\nA --> B")
+  assert_true(svg.has_prefix("<svg "))
+  assert_true(svg.has_suffix("</svg>"))
+  assert_true(svg.contains(">A</text>"))
+  assert_true(svg.contains(">B</text>"))
+  it.write(svg)
+  it.snapshot(filename="simple_td.svg")
 }
 ```
 
@@ -52,10 +57,25 @@ test "simple_td" (it : @test.Test) {
 ///|
 test {
   let ascii = try! render_mermaid_ascii("graph LR\nA --> B")
+  assert_true(ascii.length() > 0)
   assert_true(ascii.contains("A"))
   assert_true(ascii.contains("B"))
 }
 ```
+
+## Public API
+
+- `parse_mermaid(text) -> MermaidGraph raise MermaidError`
+- `render_mermaid(text, options?) -> String raise MermaidError`
+- `render_mermaid_ascii(text, options?) -> String raise MermaidError`
+- `render_mermaid_with_colors(text, colors, options?) -> String raise MermaidError`
+- `render_mermaid_with_theme(text, theme, options?) -> String raise MermaidError`
+- `render_mermaid_with_theme_name(text, theme_name, options?) -> String raise MermaidError`
+- `build_colors(options) -> DiagramColors`
+- `default_colors() -> DiagramColors`
+- `merge_options_with_colors(options, colors) -> RenderOptions`
+- Theme helpers: `theme_by_name`, `parse_theme_name`, `theme_exists`, `built_in_theme_slugs`, `built_in_theme_colors`
+- Shiki mapping helpers: `shiki_theme`, `shiki_dark_theme`, `shiki_light_theme`, `from_shiki_theme`
 
 ## Styling Options
 

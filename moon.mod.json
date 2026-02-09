@@ -3,8 +3,8 @@
   "version": "0.1.2",
   "readme": "README.mbt.md",
   "repository": "https://github.com/bobzhang/mermaid",
-  "license": "Apache-2.0",
-  "keywords": [],
-  "description": "",
+  "license": "MIT",
+  "keywords": ["mermaid", "diagram", "svg", "ascii", "renderer", "moonbit"],
+  "description": "MoonBit port of beautiful-mermaid: render Mermaid diagrams to SVG and ASCII/Unicode text.",
   "warn-list": "+missing_doc+unnecessary_annotation"
 }

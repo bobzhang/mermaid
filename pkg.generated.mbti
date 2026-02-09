@@ -1,5 +1,5 @@
 // Generated using `moon info`, DON'T EDIT IT
-package "hongbozhang/beautiful_mermaid"
+package "bobzhang/beautiful_mermaid"
 
 // Values
 pub fn build_colors(RenderOptions) -> DiagramColors

@@ -1,12 +1,12 @@
 ///|
-/// Public type `MermaidError`.
+/// Error type returned by parsing and themed render helpers.
 pub(all) suberror MermaidError {
   ParseFailure(String)
   UnknownTheme(String)
 } derive(Eq, Show, ToJson)
 
 ///|
-/// Public type `Direction`.
+/// Flow/state layout direction.
 pub enum Direction {
   TD
   TB
@@ -16,7 +16,7 @@ pub enum Direction {
 } derive(Eq, Show, ToJson)
 
 ///|
-/// Public type `NodeShape`.
+/// Normalized node shapes used by parser and renderers.
 pub enum NodeShape {
   Rectangle
   Rounded
@@ -38,7 +38,7 @@ pub enum NodeShape {
 } derive(Eq, Show, ToJson)
 
 ///|
-/// Public type `EdgeStyle`.
+/// Edge stroke style.
 pub enum EdgeStyle {
   Solid
   Dotted
@@ -46,7 +46,7 @@ pub enum EdgeStyle {
 } derive(Eq, Show, ToJson)
 
 ///|
-/// Public type `MermaidNode`.
+/// Parsed logical node before layout.
 pub struct MermaidNode {
   id : String
   label : String
@@ -54,7 +54,7 @@ pub struct MermaidNode {
 } derive(Eq, Show, ToJson)
 
 ///|
-/// Public type `MermaidEdge`.
+/// Parsed logical edge before layout.
 pub struct MermaidEdge {
   source : String
   target : String
@@ -66,7 +66,7 @@ pub struct MermaidEdge {
 } derive(Eq, Show, ToJson)
 
 ///|
-/// Public type `MermaidSubgraph`.
+/// Parsed subgraph/composite block with optional direction override.
 pub struct MermaidSubgraph {
   id : String
   label : String
@@ -76,7 +76,7 @@ pub struct MermaidSubgraph {
 } derive(Eq, Show, ToJson)
 
 ///|
-/// Create a new value.
+/// Convenience constructor for `MermaidSubgraph`.
 pub fn MermaidSubgraph::new(
   id : String,
   label : String,
@@ -88,14 +88,14 @@ pub fn MermaidSubgraph::new(
 }
 
 ///|
-/// Public type `SequenceParticipantKind`.
+/// Sequence participant visual kind.
 pub enum SequenceParticipantKind {
   Participant
   Actor
 } derive(Eq, Show, ToJson)
 
 ///|
-/// Public type `SequenceBlockType`.
+/// Sequence block keyword kind (`alt`, `loop`, `par`, etc.).
 pub enum SequenceBlockType {
   Loop
   Alt
@@ -107,14 +107,14 @@ pub enum SequenceBlockType {
 } derive(Eq, Show, ToJson)
 
 ///|
-/// Public type `SequenceBlockDivider`.
+/// Divider row metadata (`else` / `and`) inside a sequence block.
 pub struct SequenceBlockDivider {
   index : Int
   label : String
 } derive(Eq, Show, ToJson)
 
 ///|
-/// Public type `SequenceBlock`.
+/// Parsed sequence control block (`alt`, `opt`, `loop`, ...).
 pub struct SequenceBlock {
   block_type : SequenceBlockType
   label : String
@@ -124,7 +124,7 @@ pub struct SequenceBlock {
 } derive(Eq, Show, ToJson)
 
 ///|
-/// Public type `SequenceNotePosition`.
+/// Placement mode for sequence notes.
 pub enum SequenceNotePosition {
   Left
   Right
@@ -132,7 +132,7 @@ pub enum SequenceNotePosition {
 } derive(Eq, Show, ToJson)
 
 ///|
-/// Public type `SequenceNote`.
+/// Sequence note attached after a message index.
 pub struct SequenceNote {
   actor_ids : Array[String]
   text : String
@@ -141,7 +141,7 @@ pub struct SequenceNote {
 } derive(Eq, Show, ToJson)
 
 ///|
-/// Public type `SequenceActivationCommand`.
+/// Sequence activation/deactivation command positioned relative to messages.
 pub struct SequenceActivationCommand {
   actor_id : String
   activate : Bool
@@ -149,7 +149,7 @@ pub struct SequenceActivationCommand {
 } derive(Eq, Show, ToJson)
 
 ///|
-/// Public type `MermaidGraph`.
+/// Normalized parsed Mermaid model consumed by layout/render stages.
 pub struct MermaidGraph {
   direction : Direction
   nodes : Map[String, MermaidNode]
@@ -166,7 +166,7 @@ pub struct MermaidGraph {
 } derive(Eq, Show, ToJson)
 
 ///|
-/// Public type `DiagramColors`.
+/// SVG theme colors. `bg` and `fg` are required; the rest are optional enrichments.
 pub struct DiagramColors {
   bg : String
   fg : String
@@ -178,7 +178,7 @@ pub struct DiagramColors {
 } derive(Eq, Show, ToJson)
 
 ///|
-/// Return the default value for this type.
+/// Default diagram colors used when options omit `bg`/`fg`.
 pub fn DiagramColors::default() -> DiagramColors {
   {
     bg: "#FFFFFF",
@@ -192,7 +192,7 @@ pub fn DiagramColors::default() -> DiagramColors {
 }
 
 ///|
-/// Public type `RenderOptions`.
+/// SVG render configuration (theme colors, font, spacing, transparency).
 pub(all) struct RenderOptions {
   bg : String?
   fg : String?
@@ -209,7 +209,7 @@ pub(all) struct RenderOptions {
 } derive(Eq, Show, ToJson)
 
 ///|
-/// Return the default value for this type.
+/// Default SVG render options (all optional fields unset).
 pub fn RenderOptions::default() -> RenderOptions {
   {
     bg: None,
@@ -228,7 +228,7 @@ pub fn RenderOptions::default() -> RenderOptions {
 }
 
 ///|
-/// Public type `AsciiRenderOptions`.
+/// ASCII/Unicode render configuration for terminal output.
 pub(all) struct AsciiRenderOptions {
   use_ascii : Bool
   padding_x : Int
@@ -237,20 +237,20 @@ pub(all) struct AsciiRenderOptions {
 } derive(Eq, Show, ToJson)
 
 ///|
-/// Return the default value for this type.
+/// Default ASCII render options (Unicode mode, standard spacing).
 pub fn AsciiRenderOptions::default() -> AsciiRenderOptions {
   { use_ascii: false, padding_x: 5, padding_y: 5, box_border_padding: 1 }
 }
 
 ///|
-/// Public type `Point`.
+/// 2D point used by positioned edge routes.
 pub struct Point {
   x : Int
   y : Int
 } derive(Eq, Show, ToJson)
 
 ///|
-/// Public type `PositionedNode`.
+/// Node after layout with absolute coordinates and computed size.
 pub struct PositionedNode {
   id : String
   label : String
@@ -263,7 +263,7 @@ pub struct PositionedNode {
 } derive(Eq, Show, ToJson)
 
 ///|
-/// Public type `PositionedEdge`.
+/// Edge after layout with routed polyline points and optional label anchor.
 pub struct PositionedEdge {
   source : String
   target : String
@@ -277,7 +277,7 @@ pub struct PositionedEdge {
 } derive(Eq, Show, ToJson)
 
 ///|
-/// Public type `PositionedGroup`.
+/// Positioned subgraph/composite group bounds and nested children.
 pub struct PositionedGroup {
   id : String
   label : String
@@ -289,7 +289,7 @@ pub struct PositionedGroup {
 } derive(Eq, Show, ToJson)
 
 ///|
-/// Create a new value.
+/// Convenience constructor for `PositionedGroup`.
 pub fn PositionedGroup::new(
   id : String,
   label : String,
@@ -303,7 +303,7 @@ pub fn PositionedGroup::new(
 }
 
 ///|
-/// Public type `PositionedSequenceLifeline`.
+/// Sequence lifeline geometry for SVG/ASCII sequence renderers.
 pub struct PositionedSequenceLifeline {
   actor_id : String
   x : Int
@@ -312,7 +312,7 @@ pub struct PositionedSequenceLifeline {
 } derive(Eq, Show, ToJson)
 
 ///|
-/// Public type `PositionedSequenceActivation`.
+/// Sequence activation bar geometry.
 pub struct PositionedSequenceActivation {
   actor_id : String
   x : Int
@@ -322,14 +322,14 @@ pub struct PositionedSequenceActivation {
 } derive(Eq, Show, ToJson)
 
 ///|
-/// Public type `PositionedSequenceBlockDivider`.
+/// Positioned divider label row inside a sequence block.
 pub struct PositionedSequenceBlockDivider {
   y : Int
   label : String
 } derive(Eq, Show, ToJson)
 
 ///|
-/// Public type `PositionedSequenceBlock`.
+/// Positioned sequence block container and divider rows.
 pub struct PositionedSequenceBlock {
   block_type : SequenceBlockType
   label : String
@@ -341,7 +341,7 @@ pub struct PositionedSequenceBlock {
 } derive(Eq, Show, ToJson)
 
 ///|
-/// Public type `PositionedSequenceNote`.
+/// Positioned sequence note box.
 pub struct PositionedSequenceNote {
   text : String
   x : Int
@@ -351,7 +351,7 @@ pub struct PositionedSequenceNote {
 } derive(Eq, Show, ToJson)
 
 ///|
-/// Public type `PositionedGraph`.
+/// Full positioned scene graph consumed by SVG and ASCII renderers.
 pub struct PositionedGraph {
   width : Int
   height : Int

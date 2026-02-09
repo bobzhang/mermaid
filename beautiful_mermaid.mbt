@@ -15,7 +15,17 @@ fn option_bool_or(value : Bool?, fallback : Bool) -> Bool {
 }
 
 ///|
-/// Public function `default_colors`.
+/// Return the package default colors (`#FFFFFF` background, `#27272A` foreground).
+/// Use this when building custom theme presets.
+///
+/// # Example
+/// ```mbt check
+/// test {
+///   let colors = default_colors()
+///   assert_eq(colors.bg, "#FFFFFF")
+///   assert_eq(colors.fg, "#27272A")
+/// }
+/// ```
 pub fn default_colors() -> DiagramColors {
   DiagramColors::default()
 }
@@ -29,7 +39,8 @@ fn option_color_or(value : String?, fallback : String?) -> String? {
 }
 
 ///|
-/// Public function `build_colors`.
+/// Resolve a full `DiagramColors` value from `RenderOptions`.
+/// Missing `bg`/`fg` values fall back to `default_colors()`.
 pub fn build_colors(options : RenderOptions) -> DiagramColors {
   let defaults = DiagramColors::default()
   {
@@ -54,7 +65,8 @@ fn resolve_transparent(options : RenderOptions) -> Bool {
 }
 
 ///|
-/// Public function `merge_options_with_colors`.
+/// Merge user `options` with an explicit color palette.
+/// Explicit values in `options` win; missing color fields are filled from `colors`.
 pub fn merge_options_with_colors(
   options : RenderOptions,
   colors : DiagramColors,
@@ -76,7 +88,17 @@ pub fn merge_options_with_colors(
 }
 
 ///|
-/// Public function `render_mermaid`.
+/// Parse Mermaid text and render an SVG string.
+/// Supports flowchart, state, sequence, class, and ER headers.
+///
+/// # Example
+/// ```mbt check
+/// test {
+///   let svg = try! render_mermaid("graph TD\nA --> B")
+///   assert_true(svg.has_prefix("<svg "))
+///   assert_true(svg.contains(">A</text>"))
+/// }
+/// ```
 pub fn render_mermaid(
   text : String,
   options? : RenderOptions = RenderOptions::default(),
@@ -92,7 +114,7 @@ pub fn render_mermaid(
 }
 
 ///|
-/// Public function `render_mermaid_with_colors`.
+/// Render SVG using an explicit color palette, plus optional non-color options.
 pub fn render_mermaid_with_colors(
   text : String,
   colors : DiagramColors,
@@ -103,7 +125,7 @@ pub fn render_mermaid_with_colors(
 }
 
 ///|
-/// Public function `render_mermaid_with_theme`.
+/// Render SVG with a built-in `ThemeName` palette.
 pub fn render_mermaid_with_theme(
   text : String,
   theme : ThemeName,
@@ -113,7 +135,19 @@ pub fn render_mermaid_with_theme(
 }
 
 ///|
-/// Public function `render_mermaid_with_theme_name`.
+/// Render SVG with a theme name string.
+/// Theme names are normalized (`TOKYO   NIGHT`, `tokyo_night`, etc. are accepted).
+/// Raises `UnknownTheme` if the name cannot be resolved.
+///
+/// # Example
+/// ```mbt check
+/// test {
+///   let svg = try! render_mermaid_with_theme_name(
+///     "graph TD\nA --> B", "TOKYO   NIGHT",
+///   )
+///   assert_true(svg.contains("--bg:#1a1b26"))
+/// }
+/// ```
 pub fn render_mermaid_with_theme_name(
   text : String,
   theme_name : String,
@@ -126,7 +160,22 @@ pub fn render_mermaid_with_theme_name(
 }
 
 ///|
-/// Public function `render_mermaid_ascii`.
+/// Parse Mermaid text and render ASCII/Unicode terminal output.
+/// Use `AsciiRenderOptions.use_ascii = true` for pure ASCII glyphs.
+///
+/// # Example
+/// ```mbt check
+/// test {
+///   let ascii = try! render_mermaid_ascii("graph LR\nA --> B", options={
+///     use_ascii: true,
+///     padding_x: 5,
+///     padding_y: 5,
+///     box_border_padding: 1,
+///   })
+///   assert_true(ascii.contains("A"))
+///   assert_true(ascii.contains("B"))
+/// }
+/// ```
 pub fn render_mermaid_ascii(
   text : String,
   options? : AsciiRenderOptions = AsciiRenderOptions::default(),

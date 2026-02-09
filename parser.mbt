@@ -2080,7 +2080,15 @@ fn parse_flowchart(lines : Array[String]) -> MermaidGraph raise MermaidError {
 }
 
 ///|
-/// Public function `parse_mermaid`.
+/// Parse Mermaid text into the normalized in-memory graph model used by
+/// both SVG and ASCII renderers.
+///
+/// Supported headers:
+/// - `graph` / `flowchart`
+/// - `stateDiagram` / `stateDiagram-v2`
+/// - `sequenceDiagram`
+/// - `classDiagram`
+/// - `erDiagram`
 pub fn parse_mermaid(text : String) -> MermaidGraph raise MermaidError {
   let lines = preprocess_lines(text)
   if lines.length() == 0 {

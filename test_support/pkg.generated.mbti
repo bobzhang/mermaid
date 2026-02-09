@@ -1,5 +1,5 @@
 // Generated using `moon info`, DON'T EDIT IT
-package "hongbozhang/beautiful_mermaid/test_support"
+package "bobzhang/beautiful_mermaid/test_support"
 
 // Values
 pub fn contains_all(String, Array[String]) -> Bool
