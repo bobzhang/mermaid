@@ -287,6 +287,15 @@ test "SVG renders hexagon shape as polygon" {
 }
 
 ///|
+test "SVG renders cylinder database shape" {
+  let svg = try! @beautiful_mermaid.render_mermaid(
+    "graph TD\nA[(Database)] --> B",
+  )
+  assert_true(svg.contains(">Database</text>"))
+  assert_true(svg.contains("<ellipse"))
+}
+
+///|
 test "ASCII and Unicode modes differ" {
   let ascii_options = @beautiful_mermaid.AsciiRenderOptions::{
     use_ascii: true,
