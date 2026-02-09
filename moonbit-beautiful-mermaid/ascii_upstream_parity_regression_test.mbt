@@ -870,6 +870,81 @@ fn system_architecture_expected_unicode() -> String {
 }
 
 ///|
+fn nested_subgraphs_source() -> String {
+  "graph TD\n  subgraph Cloud\n    subgraph us-east [US East Region]\n      A[Web Server] --> B[App Server]\n    end\n    subgraph us-west [US West Region]\n      C[Web Server] --> D[App Server]\n    end\n  end\n  E[Load Balancer] --> A\n  E --> C"
+}
+
+///|
+fn nested_subgraphs_expected_ascii() -> String {
+  [
+    "+---------------------------------------+",
+    "|                 Cloud                 |",
+    "|                                       |",
+    "|                                       |",
+    "| +----------------+ +----------------+ |",
+    "| |US East Region  | |US West Region  | |",
+    "| |                | |                | |",
+    "| |                | |                | |",
+    "| | +------------+ | | +------------+ | | +---------------+",
+    "| | |            | | | |            | | | |               |",
+    "| | | Web Server |<-+| | Web Server |<-+--| Load Balancer |",
+    "| | |            | ||| |            | ||| |               |",
+    "| | +------------+ ||| +------------+ ||| +---------------+",
+    "| |        |       |||        |       |||",
+    "| |        |       |||        |       |||",
+    "| |        |       |+------------------+|",
+    "| |        |       | |        |       | |",
+    "| |        v       | |        v       | |",
+    "| | +------------+ | | +------------+ | |",
+    "| | |            | | | |            | | |",
+    "| | | App Server | | | | App Server | | |",
+    "| | |            | | | |            | | |",
+    "| | +------------+ | | +------------+ | |",
+    "| |                | |                | |",
+    "| +----------------+ +----------------+ |",
+    "|                                       |",
+    "+---------------------------------------+",
+  ]
+  .iter()
+  .join("\n")
+}
+
+///|
+fn nested_subgraphs_expected_unicode() -> String {
+  [
+    "┌───────────────────────────────────────┐",
+    "│                 Cloud                 │",
+    "│                                       │",
+    "│                                       │",
+    "│ ┌────────────────┐ ┌────────────────┐ │",
+    "│ │US East Region  │ │US West Region  │ │",
+    "│ │                │ │                │ │",
+    "│ │                │ │                │ │",
+    "│ │ ┌────────────┐ │ │ ┌────────────┐ │ │ ┌───────────────┐",
+    "│ │ │            │ │ │ │            │ │ │ │               │",
+    "│ │ │ Web Server │◄┼┐│ │ Web Server │◄┼┬┼─┤ Load Balancer │",
+    "│ │ │            │ │││ │            │ │││ │               │",
+    "│ │ └──────┬─────┘ │││ └──────┬─────┘ │││ └───────────────┘",
+    "│ │        │       │││        │       │││",
+    "│ │        │       │││        │       │││",
+    "│ │        │       │└┼────────┼───────┼┘│",
+    "│ │        │       │ │        │       │ │",
+    "│ │        ▼       │ │        ▼       │ │",
+    "│ │ ┌────────────┐ │ │ ┌────────────┐ │ │",
+    "│ │ │            │ │ │ │            │ │ │",
+    "│ │ │ App Server │ │ │ │ App Server │ │ │",
+    "│ │ │            │ │ │ │            │ │ │",
+    "│ │ └────────────┘ │ │ └────────────┘ │ │",
+    "│ │                │ │                │ │",
+    "│ └────────────────┘ └────────────────┘ │",
+    "│                                       │",
+    "└───────────────────────────────────────┘",
+  ]
+  .iter()
+  .join("\n")
+}
+
+///|
 test "ASCII/Unicode parity regression: Beautiful Mermaid sample" {
   assert_text_parity(
     beautiful_mermaid_source(),
@@ -956,5 +1031,14 @@ test "ASCII/Unicode parity regression: System Architecture sample" {
     system_architecture_source(),
     system_architecture_expected_ascii(),
     system_architecture_expected_unicode(),
+  )
+}
+
+///|
+test "ASCII/Unicode parity regression: Nested Subgraphs sample" {
+  assert_text_parity(
+    nested_subgraphs_source(),
+    nested_subgraphs_expected_ascii(),
+    nested_subgraphs_expected_unicode(),
   )
 }
