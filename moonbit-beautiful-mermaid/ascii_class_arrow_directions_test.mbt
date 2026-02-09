@@ -124,6 +124,33 @@ test "Class association chain keeps top-to-bottom ordering" {
 }
 
 ///|
+test "Class layout ordering stays consistent across unicode and ascii modes" {
+  let diagram = "classDiagram\nAnimal <|-- Dog\nDog --> Toy"
+  let unicode = class_render(diagram, false)
+  let ascii = class_render(diagram, true)
+
+  let animal_unicode = line_index(unicode, "Animal")
+  let dog_unicode = line_index(unicode, "Dog")
+  let toy_unicode = line_index(unicode, "Toy")
+
+  let animal_ascii = line_index(ascii, "Animal")
+  let dog_ascii = line_index(ascii, "Dog")
+  let toy_ascii = line_index(ascii, "Toy")
+
+  assert_true(animal_unicode >= 0)
+  assert_true(dog_unicode >= 0)
+  assert_true(toy_unicode >= 0)
+  assert_true(animal_ascii >= 0)
+  assert_true(dog_ascii >= 0)
+  assert_true(toy_ascii >= 0)
+
+  assert_true(animal_unicode < dog_unicode)
+  assert_true(dog_unicode < toy_unicode)
+  assert_true(animal_ascii < dog_ascii)
+  assert_true(dog_ascii < toy_ascii)
+}
+
+///|
 test "Class realization arrows stay compatible across syntax variants" {
   let forward = class_render("classDiagram\nCircle ..|> Shape", false)
   assert_true(forward.contains("△"))
