@@ -1,6 +1,17 @@
 ///|
-test "Public API smoke test" {
+fn snapshot_public_api_svg(
+  it : @test.Test,
+  filename : String,
+  svg : String,
+) -> Unit raise {
+  it.write(svg)
+  it.snapshot(filename~)
+}
+
+///|
+test "Public API smoke test" (it : @test.Test) {
   let svg = try! @beautiful_mermaid.render_mermaid("graph TD\nA --> B")
+  snapshot_public_api_svg(it, "public_api_smoke.svg", svg)
   assert_true(svg.contains("<svg"))
   assert_true(svg.contains("</svg>"))
 
@@ -27,7 +38,9 @@ test "default_colors matches DiagramColors default" {
 }
 
 ///|
-test "render_mermaid_with_colors applies theme colors by default" {
+test "render_mermaid_with_colors applies theme colors by default" (
+  it : @test.Test
+) {
   let colors = match @beautiful_mermaid.theme_by_name("tokyo-night") {
     Some(found) => found
     None => fail("missing tokyo-night theme")
@@ -35,6 +48,7 @@ test "render_mermaid_with_colors applies theme colors by default" {
   let svg = try! @beautiful_mermaid.render_mermaid_with_colors(
     "graph TD\nA --> B", colors,
   )
+  snapshot_public_api_svg(it, "public_api_with_colors_default.svg", svg)
 
   assert_true(svg.contains("--bg:#1a1b26"))
   assert_true(svg.contains("--fg:#a9b1d6"))
@@ -90,7 +104,9 @@ test "merge_options_with_colors preserves explicit overrides" {
 }
 
 ///|
-test "render_mermaid_with_colors keeps explicit option overrides" {
+test "render_mermaid_with_colors keeps explicit option overrides" (
+  it : @test.Test
+) {
   let colors = match @beautiful_mermaid.theme_by_name("tokyo-night") {
     Some(found) => found
     None => fail("missing tokyo-night theme")
@@ -114,40 +130,54 @@ test "render_mermaid_with_colors keeps explicit option overrides" {
     colors,
     options~,
   )
+  snapshot_public_api_svg(
+    it, "public_api_with_colors_override_options.svg", svg,
+  )
 
   assert_true(svg.contains("--bg:#000000"))
   assert_true(svg.contains("--fg:#a9b1d6"))
 }
 
 ///|
-test "render_mermaid_with_theme_name applies built-in theme" {
+test "render_mermaid_with_theme_name applies built-in theme" (it : @test.Test) {
   let svg = try! @beautiful_mermaid.render_mermaid_with_theme_name(
     "graph TD\nA --> B", "github-dark",
   )
+  snapshot_public_api_svg(it, "public_api_theme_name_github_dark.svg", svg)
   assert_true(svg.contains("--bg:#0d1117"))
   assert_true(svg.contains("--accent:#4493f8"))
 }
 
 ///|
-test "render_mermaid_with_theme_name normalizes user theme input" {
+test "render_mermaid_with_theme_name normalizes user theme input" (
+  it : @test.Test
+) {
   let svg = try! @beautiful_mermaid.render_mermaid_with_theme_name(
     "graph TD\nA --> B", "TOKYO   NIGHT",
+  )
+  snapshot_public_api_svg(
+    it, "public_api_theme_name_normalized_tokyo_night.svg", svg,
   )
   assert_true(svg.contains("--bg:#1a1b26"))
   assert_true(svg.contains("--accent:#7aa2f7"))
 }
 
 ///|
-test "render_mermaid_with_theme_name accepts default alias" {
+test "render_mermaid_with_theme_name accepts default alias" (
+  it : @test.Test
+) {
   let svg = try! @beautiful_mermaid.render_mermaid_with_theme_name(
     "graph TD\nA --> B", "default",
   )
+  snapshot_public_api_svg(it, "public_api_theme_name_default_alias.svg", svg)
   assert_true(svg.contains("--bg:#FFFFFF"))
   assert_true(svg.contains("--fg:#27272A"))
 }
 
 ///|
-test "render_mermaid_with_theme applies enum theme directly" {
+test "render_mermaid_with_theme applies enum theme directly" (
+  it : @test.Test
+) {
   let theme = match @beautiful_mermaid.parse_theme_name("tokyo-night") {
     Some(found) => found
     None => fail("failed to parse tokyo-night theme")
@@ -155,6 +185,7 @@ test "render_mermaid_with_theme applies enum theme directly" {
   let svg = try! @beautiful_mermaid.render_mermaid_with_theme(
     "graph TD\nA --> B", theme,
   )
+  snapshot_public_api_svg(it, "public_api_theme_enum_tokyo_night.svg", svg)
   assert_true(svg.contains("--bg:#1a1b26"))
   assert_true(svg.contains("--line:#3d59a1"))
   assert_true(svg.contains("--accent:#7aa2f7"))
