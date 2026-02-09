@@ -711,6 +711,35 @@ test "State description lines render across text and SVG modes" {
 }
 
 ///|
+test "State direction LR renders across text and SVG modes" {
+  let input = "stateDiagram-v2\ndirection LR\nIdle --> Active\nActive --> Done"
+
+  let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
+    use_ascii: true,
+    padding_x: 5,
+    padding_y: 5,
+    box_border_padding: 1,
+  })
+  let unicode = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
+    use_ascii: false,
+    padding_x: 5,
+    padding_y: 5,
+    box_border_padding: 1,
+  })
+  let svg = try! @beautiful_mermaid.render_mermaid(input)
+
+  assert_true(ascii.contains("Idle"))
+  assert_true(ascii.contains("Active"))
+  assert_true(ascii.contains("Done"))
+  assert_true(unicode.contains("Idle"))
+  assert_true(unicode.contains("Active"))
+  assert_true(unicode.contains("Done"))
+  assert_true(svg.contains(">Idle</text>"))
+  assert_true(svg.contains(">Active</text>"))
+  assert_true(svg.contains(">Done</text>"))
+}
+
+///|
 test "State composite direction override renders across text and SVG modes" {
   let input = "stateDiagram-v2\n[*] --> Processing\nstate Processing {\n  direction LR\n  parse --> validate\n  validate --> execute\n}\nProcessing --> Done"
 
