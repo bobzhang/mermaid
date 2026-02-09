@@ -1184,8 +1184,12 @@ fn flow_draw_group_labels(
   } else {
     group.label
   }
-  let label_x = (group.left +
-  (group.width - label.length()) / 2).max(group.left + 1)
+  let label_padding = group.width - label.length()
+  let label_x = if label_padding <= 4 {
+    group.left + 1
+  } else {
+    (group.left + (group.width - label.length()) / 2).max(group.left + 1)
+  }
   let label_y = group.top + 1
   write_canvas_text(canvas, label_x, label_y, label)
   for child in group.children {
