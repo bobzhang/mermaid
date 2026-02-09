@@ -373,6 +373,39 @@ test "SVG parallel ampersand links emit one edge per source" {
 }
 
 ///|
+test "Flowchart ampersand fan-in renders across text and SVG modes" {
+  let input = "graph LR\nA[Web] & B[Mobile] --> C[API]\nC --> D[(Database)]"
+
+  let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
+    use_ascii: true,
+    padding_x: 5,
+    padding_y: 5,
+    box_border_padding: 1,
+  })
+  let unicode = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
+    use_ascii: false,
+    padding_x: 5,
+    padding_y: 5,
+    box_border_padding: 1,
+  })
+  let svg = try! @beautiful_mermaid.render_mermaid(input)
+
+  assert_true(ascii.contains("Web"))
+  assert_true(ascii.contains("Mobile"))
+  assert_true(ascii.contains("API"))
+  assert_true(ascii.contains("Database"))
+  assert_true(unicode.contains("Web"))
+  assert_true(unicode.contains("Mobile"))
+  assert_true(unicode.contains("API"))
+  assert_true(unicode.contains("Database"))
+  assert_true(svg.contains(">Web</text>"))
+  assert_true(svg.contains(">Mobile</text>"))
+  assert_true(svg.contains(">API</text>"))
+  assert_true(svg.contains(">Database</text>"))
+  assert_true(integration_count_occurrences(svg, "<polyline") >= 3)
+}
+
+///|
 test "SVG applies inline style overrides for nodes" {
   let svg = try! @beautiful_mermaid.render_mermaid(
     "graph TD\nA[Red Node] --> B\nstyle A fill:#ff0000,stroke:#cc0000",
