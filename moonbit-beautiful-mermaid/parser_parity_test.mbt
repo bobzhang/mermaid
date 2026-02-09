@@ -210,6 +210,16 @@ test "Parser keeps edge styles and labels for solid dotted and thick links" {
 }
 
 ///|
+test "Parser expands chained edges in order" {
+  let graph = try! @beautiful_mermaid.parse_mermaid("graph TD\nA --> B --> C")
+  assert_eq(graph.edges.length(), 2)
+  assert_eq(graph.edges[0].source, "A")
+  assert_eq(graph.edges[0].target, "B")
+  assert_eq(graph.edges[1].source, "B")
+  assert_eq(graph.edges[1].target, "C")
+}
+
+///|
 test "Parser keeps ampersand inside node labels while still expanding parallel links" {
   let graph = try! @beautiful_mermaid.parse_mermaid(
     "graph TD\nA[Input] & B[Config] --> C[Processor]\nB --> D[Fix & Retry]",
