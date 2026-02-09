@@ -5255,3 +5255,58 @@ test "ASCII/Unicode parity regression: ER: Non-Identifying (Dashed) Relationship
     er_non_identifying_dashed_relationship_sample_expected_unicode(),
   )
 }
+
+
+///|
+fn er_mixed_identifying_non_identifying_sample_source() -> String {
+  "erDiagram\n  ORDER ||--|{ LINE_ITEM : contains\n  ORDER ||..o{ SHIPMENT : ships-via\n  PRODUCT ||--o{ LINE_ITEM : includes\n  PRODUCT ||..o{ REVIEW : receives"
+}
+
+///|
+fn er_mixed_identifying_non_identifying_sample_expected_ascii() -> String {
+  [
+    "+-------+contai+-ships-via-+      +----------+    ",
+    "| ORDER |||.....................o{| SHIPMENT |    ",
+    "+-------+      +-----------+      +----------+    ",
+    "                    o{                            ",
+    "     ----------------- includes                   ",
+    "     |               |                            ",
+    "    ||               |                            ",
+    "+---------+receiv+--------+                       ",
+    "| PRODUCT |||..o{| REVIEW |                       ",
+    "+---------+      +--------+                       ",
+    "                                                  ",
+    "                                                  ",
+  ]
+  .iter()
+  .join("\n")
+}
+
+///|
+fn er_mixed_identifying_non_identifying_sample_expected_unicode() -> String {
+  [
+    "┌───────┐contai┌─ships-via─┐      ┌──────────┐    ",
+    "│ ORDER │║╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌o╟│ SHIPMENT │    ",
+    "└───────┘      └───────────┘      └──────────┘    ",
+    "                    o╟                            ",
+    "     ───────────────── includes                   ",
+    "     │               │                            ",
+    "     ║               │                            ",
+    "┌─────────┐receiv┌────────┐                       ",
+    "│ PRODUCT │║╌╌╌o╟│ REVIEW │                       ",
+    "└─────────┘      └────────┘                       ",
+    "                                                  ",
+    "                                                  ",
+  ]
+  .iter()
+  .join("\n")
+}
+
+///|
+test "ASCII/Unicode parity regression: ER: Mixed Identifying & Non-Identifying sample" {
+  assert_text_parity(
+    er_mixed_identifying_non_identifying_sample_source(),
+    er_mixed_identifying_non_identifying_sample_expected_ascii(),
+    er_mixed_identifying_non_identifying_sample_expected_unicode(),
+  )
+}
