@@ -123,6 +123,13 @@ test "SVG dimensions expand with padding option" {
 }
 
 ///|
+test "SVG renders labeled nodes for simple flow" {
+  let svg = try! @beautiful_mermaid.render_mermaid("graph TD\nA[Start] --> B[End]")
+  assert_true(svg.contains(">Start</text>"))
+  assert_true(svg.contains(">End</text>"))
+}
+
+///|
 test "ASCII and Unicode modes differ" {
   let ascii_options = @beautiful_mermaid.AsciiRenderOptions::{
     use_ascii: true,
