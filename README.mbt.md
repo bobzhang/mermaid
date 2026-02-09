@@ -12,9 +12,10 @@ Render Mermaid diagrams as SVG or ASCII/Unicode text in MoonBit.
 
 ## Credits
 
-This project is a MoonBit port of [`beautiful-mermaid`](https://github.com/lukilabs/beautiful-mermaid) by Luki Labs.
+This project is a MoonBit port of [`beautiful-mermaid`](https://github.com/lukilabs/beautiful-mermaid) by Luki Labs, with additional inspiration from [`mermaid-ascii`](https://github.com/AlexanderGrooff/mermaid-ascii) by Alexander Grooff.
 
 - Original project: `beautiful-mermaid` (TypeScript)
+- Original terminal renderer inspiration: `mermaid-ascii` (Go)
 - Port in this repository: `bobzhang/beautiful_mermaid` (MoonBit)
 - License: MIT (aligned with the original project)
 
