@@ -7,6 +7,15 @@ fn option_or_zero(value : Int?) -> Int {
 }
 
 ///|
+fn integration_count_occurrences(haystack : String, needle : String) -> Int {
+  let parts = haystack.split(needle).to_array()
+  if parts.length() == 0 {
+    return 0
+  }
+  parts.length() - 1
+}
+
+///|
 struct EdgeLabelRect {
   x : Int
   y : Int
@@ -257,6 +266,15 @@ test "SVG renders subroutine shape with inner guide lines" {
   )
   assert_true(svg.contains(">Subroutine</text>"))
   assert_true(svg.contains("<line"))
+}
+
+///|
+test "SVG renders double-circle shape with two circle elements" {
+  let svg = try! @beautiful_mermaid.render_mermaid(
+    "graph TD\nA(((Important))) --> B",
+  )
+  assert_true(svg.contains(">Important</text>"))
+  assert_true(integration_count_occurrences(svg, "<circle") >= 2)
 }
 
 ///|
