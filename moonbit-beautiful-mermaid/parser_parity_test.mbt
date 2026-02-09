@@ -200,6 +200,29 @@ test "Parser parses no-arrow edge with label" {
 }
 
 ///|
+test "Parser keeps no-arrow operators without arrowheads across styles" {
+  let graph = try! @beautiful_mermaid.parse_mermaid(
+    "graph TD\nA --- B\nB -.- C\nC === D",
+  )
+  assert_eq(graph.edges.length(), 3)
+
+  let e1 = graph.edges[0]
+  assert_eq(e1.style.to_string(), "Solid")
+  assert_true(!e1.has_arrow_start)
+  assert_true(!e1.has_arrow_end)
+
+  let e2 = graph.edges[1]
+  assert_eq(e2.style.to_string(), "Dotted")
+  assert_true(!e2.has_arrow_start)
+  assert_true(!e2.has_arrow_end)
+
+  let e3 = graph.edges[2]
+  assert_eq(e3.style.to_string(), "Thick")
+  assert_true(!e3.has_arrow_start)
+  assert_true(!e3.has_arrow_end)
+}
+
+///|
 test "Parser parses dotted bidirectional edge operator" {
   let graph = try! @beautiful_mermaid.parse_mermaid("graph TD\nA <-.-> B")
   assert_eq(graph.edges.length(), 1)
