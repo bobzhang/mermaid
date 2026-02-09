@@ -676,6 +676,39 @@ test "Class inheritance labels render across text and SVG modes" {
 }
 
 ///|
+test "ER entities and relationship labels render across text and SVG modes" {
+  let input = "erDiagram\nCUSTOMER {\n  int id PK\n  string email UK\n}\nORDER {\n  int id PK\n  int customer_id FK\n}\nCUSTOMER ||--o{ ORDER : places"
+
+  let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
+    use_ascii: true,
+    padding_x: 5,
+    padding_y: 5,
+    box_border_padding: 1,
+  })
+  let unicode = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
+    use_ascii: false,
+    padding_x: 5,
+    padding_y: 5,
+    box_border_padding: 1,
+  })
+  let svg = try! @beautiful_mermaid.render_mermaid(input)
+
+  assert_true(ascii.contains("CUSTOMER"))
+  assert_true(ascii.contains("ORDER"))
+  assert_true(ascii.contains("PK"))
+  assert_true(ascii.contains("FK"))
+  assert_true(ascii.contains("places"))
+  assert_true(unicode.contains("CUSTOMER"))
+  assert_true(unicode.contains("ORDER"))
+  assert_true(unicode.contains("PK"))
+  assert_true(unicode.contains("FK"))
+  assert_true(unicode.contains("places"))
+  assert_true(svg.contains(">CUSTOMER</text>"))
+  assert_true(svg.contains(">ORDER</text>"))
+  assert_true(svg.contains(">places</text>"))
+}
+
+///|
 test "Flowchart cycle edge label pills do not overlap" {
   let svg = try! @beautiful_mermaid.render_mermaid(
     "graph LR\nA -->|forward| B\nB -->|back| A\nA -->|down| C",
