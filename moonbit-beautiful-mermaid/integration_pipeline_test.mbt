@@ -932,6 +932,42 @@ test "Sequence note-over renders across text and SVG modes" {
 }
 
 ///|
+test "Sequence note-left-right renders across text and SVG modes" {
+  let input = "sequenceDiagram\nparticipant A as App\nparticipant B as Backend\nA->>B: Request\nNote left of A: queued\nNote right of B: processing\nB-->>A: Done"
+
+  let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
+    use_ascii: true,
+    padding_x: 5,
+    padding_y: 5,
+    box_border_padding: 1,
+  })
+  let unicode = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
+    use_ascii: false,
+    padding_x: 5,
+    padding_y: 5,
+    box_border_padding: 1,
+  })
+  let svg = try! @beautiful_mermaid.render_mermaid(input)
+
+  assert_true(ascii.contains("App"))
+  assert_true(ascii.contains("Backend"))
+  assert_true(ascii.contains("queued"))
+  assert_true(ascii.contains("processing"))
+  assert_true(ascii.contains("Done"))
+  assert_true(unicode.contains("App"))
+  assert_true(unicode.contains("Backend"))
+  assert_true(unicode.contains("queued"))
+  assert_true(unicode.contains("processing"))
+  assert_true(unicode.contains("Done"))
+  assert_true(svg.contains(">App</text>"))
+  assert_true(svg.contains(">Backend</text>"))
+  assert_true(svg.contains(">queued</text>"))
+  assert_true(svg.contains(">processing</text>"))
+  assert_true(svg.contains(">Done</text>"))
+  assert_true(svg.contains("class=\"sequence-note\""))
+}
+
+///|
 test "Sequence critical/option block renders across text and SVG modes" {
   let input = "sequenceDiagram\nparticipant S as Service\nparticipant DB as Database\nS->>DB: Begin\ncritical Commit transaction\nS->>DB: write row\noption Timeout\nDB-->>S: timeout\noption Success\nDB-->>S: ok\nend"
 
