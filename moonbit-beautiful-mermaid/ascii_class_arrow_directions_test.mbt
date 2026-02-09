@@ -256,6 +256,23 @@ test "Class composition and aggregation keep diamond markers" {
 }
 
 ///|
+test "Mixed inheritance and association keep distinct arrow directions" {
+  let diagram = "classDiagram\nAnimal <|-- Dog\nDog --> Owner"
+  let unicode = class_render(diagram, false)
+  assert_true(unicode.contains("△"))
+  assert_true(unicode.contains("▼"))
+
+  let animal_line = line_index(unicode, "Animal")
+  let dog_line = line_index(unicode, "Dog")
+  let owner_line = line_index(unicode, "Owner")
+  assert_true(animal_line >= 0)
+  assert_true(dog_line >= 0)
+  assert_true(owner_line >= 0)
+  assert_true(animal_line < dog_line)
+  assert_true(dog_line < owner_line)
+}
+
+///|
 test "Mixed class relationships preserve marker families" {
   let diagram = "classDiagram\nA <|-- B : inheritance\nC *-- D : composition\nE o-- F : aggregation\nG --> H : association\nI ..> J : dependency\nK ..|> L : realization"
   let unicode = class_render(diagram, false)
