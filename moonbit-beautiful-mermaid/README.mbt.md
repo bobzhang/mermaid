@@ -1,4 +1,4 @@
-# hongbozhang/beautiful_mermaid
+# bobzhang/beautiful_mermaid
 
 Render Mermaid diagrams as SVG or ASCII/Unicode text in MoonBit.
 
