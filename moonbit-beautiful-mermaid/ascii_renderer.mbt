@@ -2613,7 +2613,7 @@ fn render_ascii_flow_subgraphs(
       match node_top_level_group_by_id.get(node.id) {
         Some(top_level_group_id) => {
           let layout_x = option_int_or(node_layout_x_by_id.get(node.id), node.left)
-          let layout_column = layout_x / scale_x
+          let layout_column = layout_x / (scale_x * 5)
           let key = "\{top_level_group_id}|\{layout_column}"
           let current_left = option_int_or(
             min_left_by_group_and_layout_x.get(key),
@@ -2631,7 +2631,7 @@ fn render_ascii_flow_subgraphs(
       match node_top_level_group_by_id.get(node.id) {
         Some(top_level_group_id) => {
           let layout_x = option_int_or(node_layout_x_by_id.get(node.id), node.left)
-          let layout_column = layout_x / scale_x
+          let layout_column = layout_x / (scale_x * 5)
           let key = "\{top_level_group_id}|\{layout_column}"
           match min_left_by_group_and_layout_x.get(key) {
             Some(column_left) => {
