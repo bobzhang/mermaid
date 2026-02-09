@@ -174,6 +174,30 @@ test "SVG defaults to light theme colors" {
 }
 
 ///|
+test "SVG applies explicit dark colors" {
+  let options = @beautiful_mermaid.RenderOptions::{
+    bg: Some("#18181B"),
+    fg: Some("#FAFAFA"),
+    line: None,
+    accent: None,
+    muted: None,
+    surface: None,
+    border: None,
+    font: None,
+    padding: None,
+    node_spacing: None,
+    layer_spacing: None,
+    transparent: None,
+  }
+  let svg = try! @beautiful_mermaid.render_mermaid(
+    "graph TD\nA --> B",
+    options~,
+  )
+  assert_true(svg.contains("--bg:#18181B"))
+  assert_true(svg.contains("--fg:#FAFAFA"))
+}
+
+///|
 test "ASCII and Unicode modes differ" {
   let ascii_options = @beautiful_mermaid.AsciiRenderOptions::{
     use_ascii: true,
