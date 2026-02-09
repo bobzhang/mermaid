@@ -343,10 +343,11 @@ test "SVG renders solid dotted and thick edge styles with labels" (
 }
 
 ///|
-test "SVG renders subgraph labels and nodes" {
+test "SVG renders subgraph labels and nodes" (it : @test.Test) {
   let svg = try! @beautiful_mermaid.render_mermaid(
     "graph TD\nsubgraph Backend\nA[API] --> B[DB]\nend\nC[Client] --> A",
   )
+  snapshot_svg(it, "integration_flowchart_subgraph_labels.svg", svg)
 
   assert_true(svg.contains(">Backend</text>"))
   assert_true(svg.contains(">API</text>"))
@@ -355,7 +356,9 @@ test "SVG renders subgraph labels and nodes" {
 }
 
 ///|
-test "Subgraph direction override renders across text and SVG modes" {
+test "Subgraph direction override renders across text and SVG modes" (
+  it : @test.Test
+) {
   let input = "graph TD\nsubgraph FE [Frontend]\n  direction LR\n  A[Web] --> B[API]\nend\nsubgraph BE [Backend]\n  C[Service] --> D[(DB)]\nend\nB --> C"
 
   let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
@@ -371,6 +374,7 @@ test "Subgraph direction override renders across text and SVG modes" {
     box_border_padding: 1,
   })
   let svg = try! @beautiful_mermaid.render_mermaid(input)
+  snapshot_svg(it, "integration_flowchart_subgraph_direction_override.svg", svg)
 
   assert_true(ascii.contains("Frontend"))
   assert_true(ascii.contains("Backend"))
@@ -389,10 +393,11 @@ test "Subgraph direction override renders across text and SVG modes" {
 }
 
 ///|
-test "SVG renders complex CI pipeline diagram" {
+test "SVG renders complex CI pipeline diagram" (it : @test.Test) {
   let svg = try! @beautiful_mermaid.render_mermaid(
     "graph TD\nsubgraph ci [CI Pipeline]\nA[Push Code] --> B{Tests Pass?}\nB -->|Yes| C[Build Docker]\nB -->|No| D[Fix & Retry]\nD --> A\nend\nC --> E([Deploy to Staging])\nE --> F{QA Approved?}\nF -->|Yes| G((Production))\nF -->|No| D",
   )
+  snapshot_svg(it, "integration_flowchart_ci_pipeline.svg", svg)
 
   assert_true(svg.contains(">CI Pipeline</text>"))
   assert_true(svg.contains(">Push Code</text>"))
@@ -403,10 +408,11 @@ test "SVG renders complex CI pipeline diagram" {
 }
 
 ///|
-test "SVG renders original flowchart shape set" {
+test "SVG renders original flowchart shape set" (it : @test.Test) {
   let svg = try! @beautiful_mermaid.render_mermaid(
     "graph TD\nA[Rectangle] --> B(Rounded)\nB --> C{Diamond}\nC --> D([Stadium])\nD --> E((Circle))",
   )
+  snapshot_svg(it, "integration_flowchart_original_shapes.svg", svg)
 
   assert_true(svg.contains(">Rectangle</text>"))
   assert_true(svg.contains(">Rounded</text>"))
@@ -418,69 +424,80 @@ test "SVG renders original flowchart shape set" {
 }
 
 ///|
-test "SVG renders subroutine shape with inner guide lines" {
+test "SVG renders subroutine shape with inner guide lines" (it : @test.Test) {
   let svg = try! @beautiful_mermaid.render_mermaid(
     "graph TD\nA[[Subroutine]] --> B",
   )
+  snapshot_svg(it, "integration_flowchart_subroutine.svg", svg)
   assert_true(svg.contains(">Subroutine</text>"))
   assert_true(svg.contains("<line"))
 }
 
 ///|
-test "SVG renders double-circle shape with two circle elements" {
+test "SVG renders double-circle shape with two circle elements" (
+  it : @test.Test
+) {
   let svg = try! @beautiful_mermaid.render_mermaid(
     "graph TD\nA(((Important))) --> B",
   )
+  snapshot_svg(it, "integration_flowchart_double_circle.svg", svg)
   assert_true(svg.contains(">Important</text>"))
   assert_true(integration_count_occurrences(svg, "<circle") >= 2)
 }
 
 ///|
-test "SVG renders hexagon shape as polygon" {
+test "SVG renders hexagon shape as polygon" (it : @test.Test) {
   let svg = try! @beautiful_mermaid.render_mermaid(
     "graph TD\nA{{Decision}} --> B",
   )
+  snapshot_svg(it, "integration_flowchart_hexagon.svg", svg)
   assert_true(svg.contains(">Decision</text>"))
   assert_true(svg.contains("<polygon"))
 }
 
 ///|
-test "SVG renders cylinder database shape" {
+test "SVG renders cylinder database shape" (it : @test.Test) {
   let svg = try! @beautiful_mermaid.render_mermaid(
     "graph TD\nA[(Database)] --> B",
   )
+  snapshot_svg(it, "integration_flowchart_cylinder.svg", svg)
   assert_true(svg.contains(">Database</text>"))
   assert_true(svg.contains("<ellipse"))
 }
 
 ///|
-test "SVG renders asymmetric flag shape" {
+test "SVG renders asymmetric flag shape" (it : @test.Test) {
   let svg = try! @beautiful_mermaid.render_mermaid(
     "graph TD\nA>Flag Shape] --> B",
   )
+  snapshot_svg(it, "integration_flowchart_asymmetric.svg", svg)
   assert_true(svg.contains(">Flag Shape</text>"))
   assert_true(svg.contains("<polygon"))
 }
 
 ///|
-test "SVG renders trapezoid variants" {
+test "SVG renders trapezoid variants" (it : @test.Test) {
   let svg = try! @beautiful_mermaid.render_mermaid(
     "graph TD\nA[/Wider Bottom\\\\] --> B[\\\\Wider Top/]",
   )
+  snapshot_svg(it, "integration_flowchart_trapezoid_variants.svg", svg)
   assert_true(svg.contains("Wider Bottom"))
   assert_true(svg.contains("Wider Top"))
   assert_true(svg.contains("<polygon"))
 }
 
 ///|
-test "SVG no-arrow edges omit marker-end" {
+test "SVG no-arrow edges omit marker-end" (it : @test.Test) {
   let svg = try! @beautiful_mermaid.render_mermaid("graph TD\nA --- B")
+  snapshot_svg(it, "integration_flowchart_no_arrow_svg.svg", svg)
   assert_true(svg.contains("<polyline"))
   assert_true(!svg.contains("marker-end="))
 }
 
 ///|
-test "Flowchart no-arrow edges render across text and SVG modes" {
+test "Flowchart no-arrow edges render across text and SVG modes" (
+  it : @test.Test
+) {
   let input = "graph TD\nA[Client] --- B[Cache] --- C[Backend]"
 
   let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
@@ -496,6 +513,7 @@ test "Flowchart no-arrow edges render across text and SVG modes" {
     box_border_padding: 1,
   })
   let svg = try! @beautiful_mermaid.render_mermaid(input)
+  snapshot_svg(it, "integration_flowchart_no_arrow_cross_mode.svg", svg)
 
   assert_true(ascii.contains("Client"))
   assert_true(ascii.contains("Cache"))
@@ -510,14 +528,19 @@ test "Flowchart no-arrow edges render across text and SVG modes" {
 }
 
 ///|
-test "SVG bidirectional edges include start and end arrowheads" {
+test "SVG bidirectional edges include start and end arrowheads" (
+  it : @test.Test
+) {
   let svg = try! @beautiful_mermaid.render_mermaid("graph TD\nA <--> B")
+  snapshot_svg(it, "integration_flowchart_bidirectional_svg.svg", svg)
   assert_true(svg.contains("marker-end=\"url(#arrowhead)\""))
   assert_true(svg.contains("marker-start=\"url(#arrowhead-start)\""))
 }
 
 ///|
-test "Flowchart bidirectional edges render across text and SVG modes" {
+test "Flowchart bidirectional edges render across text and SVG modes" (
+  it : @test.Test
+) {
   let input = "graph TD\nA[North] <--> B[South]"
 
   let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
@@ -533,6 +556,11 @@ test "Flowchart bidirectional edges render across text and SVG modes" {
     box_border_padding: 1,
   })
   let svg = try! @beautiful_mermaid.render_mermaid(input)
+  snapshot_svg(
+    it,
+    "integration_flowchart_bidirectional_cross_mode.svg",
+    svg,
+  )
 
   assert_true(ascii.contains("North"))
   assert_true(ascii.contains("South"))
@@ -545,8 +573,9 @@ test "Flowchart bidirectional edges render across text and SVG modes" {
 }
 
 ///|
-test "SVG parallel ampersand links emit one edge per source" {
+test "SVG parallel ampersand links emit one edge per source" (it : @test.Test) {
   let svg = try! @beautiful_mermaid.render_mermaid("graph TD\nA & B --> C")
+  snapshot_svg(it, "integration_flowchart_parallel_amp.svg", svg)
 
   assert_true(svg.contains(">A</text>"))
   assert_true(svg.contains(">B</text>"))
@@ -555,7 +584,9 @@ test "SVG parallel ampersand links emit one edge per source" {
 }
 
 ///|
-test "Flowchart ampersand fan-in renders across text and SVG modes" {
+test "Flowchart ampersand fan-in renders across text and SVG modes" (
+  it : @test.Test
+) {
   let input = "graph LR\nA[Web] & B[Mobile] --> C[API]\nC --> D[(Database)]"
 
   let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
@@ -571,6 +602,7 @@ test "Flowchart ampersand fan-in renders across text and SVG modes" {
     box_border_padding: 1,
   })
   let svg = try! @beautiful_mermaid.render_mermaid(input)
+  snapshot_svg(it, "integration_flowchart_amp_fan_in.svg", svg)
 
   assert_true(ascii.contains("Web"))
   assert_true(ascii.contains("Mobile"))
@@ -588,7 +620,9 @@ test "Flowchart ampersand fan-in renders across text and SVG modes" {
 }
 
 ///|
-test "Flowchart nested subgraphs render across text and SVG modes" {
+test "Flowchart nested subgraphs render across text and SVG modes" (
+  it : @test.Test
+) {
   let input = "graph TD\nsubgraph Outer\n  subgraph Inner\n    A[API] --> B[DB]\n  end\nend\nB --> C[Client]"
 
   let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
@@ -604,6 +638,7 @@ test "Flowchart nested subgraphs render across text and SVG modes" {
     box_border_padding: 1,
   })
   let svg = try! @beautiful_mermaid.render_mermaid(input)
+  snapshot_svg(it, "integration_flowchart_nested_subgraphs.svg", svg)
 
   assert_true(ascii.contains("Outer"))
   assert_true(ascii.contains("Inner"))
@@ -623,16 +658,19 @@ test "Flowchart nested subgraphs render across text and SVG modes" {
 }
 
 ///|
-test "SVG applies inline style overrides for nodes" {
+test "SVG applies inline style overrides for nodes" (it : @test.Test) {
   let svg = try! @beautiful_mermaid.render_mermaid(
     "graph TD\nA[Red Node] --> B\nstyle A fill:#ff0000,stroke:#cc0000",
   )
+  snapshot_svg(it, "integration_flowchart_inline_style_svg.svg", svg)
   assert_true(svg.contains("fill=\"#ff0000\""))
   assert_true(svg.contains("stroke=\"#cc0000\""))
 }
 
 ///|
-test "Flowchart inline style overrides keep text parity and affect SVG" {
+test "Flowchart inline style overrides keep text parity and affect SVG" (
+  it : @test.Test
+) {
   let input = "graph TD\nA[Red Node] --> B[Blue Node]\nstyle A fill:#ff0000,stroke:#cc0000\nstyle B fill:#0000ff,stroke:#0000cc"
 
   let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
@@ -648,6 +686,7 @@ test "Flowchart inline style overrides keep text parity and affect SVG" {
     box_border_padding: 1,
   })
   let svg = try! @beautiful_mermaid.render_mermaid(input)
+  snapshot_svg(it, "integration_flowchart_inline_style_cross_mode.svg", svg)
 
   assert_true(ascii.contains("Red Node"))
   assert_true(ascii.contains("Blue Node"))
@@ -662,7 +701,9 @@ test "Flowchart inline style overrides keep text parity and affect SVG" {
 }
 
 ///|
-test "Flowchart classDef shorthand renders across text and SVG modes" {
+test "Flowchart classDef shorthand renders across text and SVG modes" (
+  it : @test.Test
+) {
   let input = "graph TD\nA[Start]:::entry --> B[End]\nclassDef entry fill:#f9f,stroke:#333,color:#111"
 
   let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
@@ -678,6 +719,7 @@ test "Flowchart classDef shorthand renders across text and SVG modes" {
     box_border_padding: 1,
   })
   let svg = try! @beautiful_mermaid.render_mermaid(input)
+  snapshot_svg(it, "integration_flowchart_classdef_shorthand.svg", svg)
 
   assert_true(ascii.contains("Start"))
   assert_true(ascii.contains("End"))
@@ -996,10 +1038,13 @@ test "SVG does not duplicate composite state labels" (it : @test.Test) {
 }
 
 ///|
-test "SVG renders subgraph-first TD diagrams without ordering regressions" {
+test "SVG renders subgraph-first TD diagrams without ordering regressions" (
+  it : @test.Test
+) {
   let svg = try! @beautiful_mermaid.render_mermaid(
     "graph TD\nsubgraph ci [CI Pipeline]\nA[Push Code] --> B{Tests Pass?}\nB -->|Yes| C[Build Image]\nend\nC --> D([Deploy])\nD --> E{QA?}\nE -->|Yes| F((Production))",
   )
+  snapshot_svg(it, "integration_flowchart_subgraph_first_order.svg", svg)
 
   assert_true(svg.contains(">CI Pipeline</text>"))
   assert_true(svg.contains(">Push Code</text>"))
@@ -1008,18 +1053,20 @@ test "SVG renders subgraph-first TD diagrams without ordering regressions" {
 }
 
 ///|
-test "SVG renders flowchart self-loop edges" {
+test "SVG renders flowchart self-loop edges" (it : @test.Test) {
   let svg = try! @beautiful_mermaid.render_mermaid("graph TD\nA[Node] --> A")
+  snapshot_svg(it, "integration_flowchart_self_loop.svg", svg)
   assert_true(svg.contains("<svg"))
   assert_true(svg.contains(">Node</text>"))
   assert_true(svg.contains("<polyline"))
 }
 
 ///|
-test "SVG renders self-loop labels" {
+test "SVG renders self-loop labels" (it : @test.Test) {
   let svg = try! @beautiful_mermaid.render_mermaid(
     "graph TD\nA[Retry] -->|again| A",
   )
+  snapshot_svg(it, "integration_flowchart_self_loop_label.svg", svg)
   assert_true(svg.contains(">Retry</text>"))
   assert_true(svg.contains(">again</text>"))
 }
@@ -1917,10 +1964,11 @@ test "ER mixed cardinalities render across text and SVG modes" (
 }
 
 ///|
-test "Flowchart cycle edge label pills do not overlap" {
+test "Flowchart cycle edge label pills do not overlap" (it : @test.Test) {
   let svg = try! @beautiful_mermaid.render_mermaid(
     "graph LR\nA -->|forward| B\nB -->|back| A\nA -->|down| C",
   )
+  snapshot_svg(it, "integration_flowchart_cycle_labels.svg", svg)
 
   let rects = collect_edge_label_rects(svg)
   assert_true(rects.length() >= 3)
