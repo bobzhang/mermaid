@@ -681,6 +681,44 @@ test "Sequence note-over renders across text and SVG modes" {
 }
 
 ///|
+test "Sequence critical/option block renders across text and SVG modes" {
+  let input = "sequenceDiagram\nparticipant S as Service\nparticipant DB as Database\nS->>DB: Begin\ncritical Commit transaction\nS->>DB: write row\noption Timeout\nDB-->>S: timeout\noption Success\nDB-->>S: ok\nend"
+
+  let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
+    use_ascii: true,
+    padding_x: 5,
+    padding_y: 5,
+    box_border_padding: 1,
+  })
+  let unicode = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
+    use_ascii: false,
+    padding_x: 5,
+    padding_y: 5,
+    box_border_padding: 1,
+  })
+  let svg = try! @beautiful_mermaid.render_mermaid(input)
+
+  assert_true(ascii.contains("Service"))
+  assert_true(ascii.contains("Database"))
+  assert_true(ascii.contains("Begin"))
+  assert_true(ascii.contains("write row"))
+  assert_true(ascii.contains("timeout"))
+  assert_true(ascii.contains("ok"))
+  assert_true(unicode.contains("Service"))
+  assert_true(unicode.contains("Database"))
+  assert_true(unicode.contains("Begin"))
+  assert_true(unicode.contains("write row"))
+  assert_true(unicode.contains("timeout"))
+  assert_true(unicode.contains("ok"))
+  assert_true(svg.contains(">Service</text>"))
+  assert_true(svg.contains(">Database</text>"))
+  assert_true(svg.contains(">Begin</text>"))
+  assert_true(svg.contains(">write row</text>"))
+  assert_true(svg.contains(">timeout</text>"))
+  assert_true(svg.contains(">ok</text>"))
+}
+
+///|
 test "Class inheritance labels render across text and SVG modes" {
   let input = "classDiagram\nclass Shape {\n<<abstract>>\n+draw() void\n}\nclass Circle {\n+radius int\n+draw() void\n}\nShape <|-- Circle : inherits"
 
