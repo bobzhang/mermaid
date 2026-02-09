@@ -233,6 +233,16 @@ test "Parser parses dotted bidirectional edge operator" {
 }
 
 ///|
+test "Parser parses solid bidirectional edge operator" {
+  let graph = try! @beautiful_mermaid.parse_mermaid("graph TD\nA <--> B")
+  assert_eq(graph.edges.length(), 1)
+  let edge = graph.edges[0]
+  assert_eq(edge.style.to_string(), "Solid")
+  assert_true(edge.has_arrow_start)
+  assert_true(edge.has_arrow_end)
+}
+
+///|
 test "Parser keeps edge styles and labels for solid dotted and thick links" {
   let graph = try! @beautiful_mermaid.parse_mermaid(
     "graph TD\nA -->|solid| B\nB -.->|dotted| C\nC ==>|thick| D",
