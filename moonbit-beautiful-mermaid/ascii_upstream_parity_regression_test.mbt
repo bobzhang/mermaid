@@ -676,6 +676,97 @@ fn ci_cd_pipeline_expected_unicode() -> String {
 }
 
 ///|
+fn decision_tree_source() -> String {
+  "graph TD\n  A{Is it raining?} -->|Yes| B{Have umbrella?}\n  A -->|No| C([Go outside])\n  B -->|Yes| D([Go with umbrella])\n  B -->|No| E{Is it heavy?}\n  E -->|Yes| F([Stay inside])\n  E -->|No| G([Run for it])"
+}
+
+///|
+fn decision_tree_expected_ascii() -> String {
+  [
+    "+------------------+",
+    "|                  |",
+    "|  Is it raining?  |  -----No-------+",
+    "|                  |                |",
+    "+------------------+                |",
+    "          |                         |",
+    "          |                         |",
+    "         Yes                        |",
+    "          |                         |",
+    "          v                         v",
+    "+------------------+        +--------------+",
+    "|                  |        |              |",
+    "|  Have umbrella?  |  No-+  |  Go outside  |",
+    "|                  |     |  |              |",
+    "+------------------+     |  +--------------+",
+    "          |              |",
+    "          |              |",
+    "         Yes             +----------+",
+    "          |                         |",
+    "          v                         v",
+    "+------------------+        +--------------+",
+    "|                  |        |              |",
+    "| Go with umbrella |     Yes| Is it heavy? |",
+    "|                  |     |  |              |",
+    "+------------------+     |  +--------------+",
+    "                         |          |",
+    "                         |          |",
+    "          +--------------+         No",
+    "          |                         |",
+    "          v                         v",
+    "+------------------+        +--------------+",
+    "|                  |        |              |",
+    "|   Stay inside    |        |  Run for it  |",
+    "|                  |        |              |",
+    "+------------------+        +--------------+",
+  ]
+  .iter()
+  .join("\n")
+}
+
+///|
+fn decision_tree_expected_unicode() -> String {
+  [
+    "┌──────────────────┐",
+    "│                  │",
+    "│  Is it raining?  │ ├─────No───────┐",
+    "│                  │                │",
+    "└─────────┬────────┘                │",
+    "          │                         │",
+    "          │                         │",
+    "         Yes                        │",
+    "          │                         │",
+    "          ▼                         ▼",
+    "┌──────────────────┐        ┌──────────────┐",
+    "│                  │        │              │",
+    "│  Have umbrella?  │ ├No─┐  │  Go outside  │",
+    "│                  │     │  │              │",
+    "└─────────┬────────┘     │  └──────────────┘",
+    "          │              │",
+    "          │              │",
+    "         Yes             └──────────┐",
+    "          │                         │",
+    "          ▼                         ▼",
+    "┌──────────────────┐        ┌──────────────┐",
+    "│                  │        │              │",
+    "│ Go with umbrella │     Yes┤ Is it heavy? │",
+    "│                  │     │  │              │",
+    "└──────────────────┘     │  └───────┬──────┘",
+    "                         │          │",
+    "                         │          │",
+    "          ┌──────────────┘         No",
+    "          │                         │",
+    "          ▼                         ▼",
+    "┌──────────────────┐        ┌──────────────┐",
+    "│                  │        │              │",
+    "│   Stay inside    │        │  Run for it  │",
+    "│                  │        │              │",
+    "└──────────────────┘        └──────────────┘",
+  ]
+  .iter()
+  .join("\n")
+}
+
+///|
 test "ASCII/Unicode parity regression: Beautiful Mermaid sample" {
   assert_text_parity(
     beautiful_mermaid_source(),
@@ -744,5 +835,14 @@ test "ASCII/Unicode parity regression: CI/CD Pipeline sample" {
     ci_cd_pipeline_source(),
     ci_cd_pipeline_expected_ascii(),
     ci_cd_pipeline_expected_unicode(),
+  )
+}
+
+///|
+test "ASCII/Unicode parity regression: Decision Tree sample" {
+  assert_text_parity(
+    decision_tree_source(),
+    decision_tree_expected_ascii(),
+    decision_tree_expected_unicode(),
   )
 }
