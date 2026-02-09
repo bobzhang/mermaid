@@ -10,6 +10,14 @@ Render Mermaid diagrams as SVG or ASCII/Unicode text in MoonBit.
 - Configurable layout and rendering options.
 - Smoke coverage against the upstream `beautiful-mermaid/samples-data.ts` corpus.
 
+## Credits
+
+This project is a MoonBit port of [`beautiful-mermaid`](https://github.com/lukilabs/beautiful-mermaid) by Luki Labs.
+
+- Original project: `beautiful-mermaid` (TypeScript)
+- Port in this repository: `bobzhang/beautiful_mermaid` (MoonBit)
+- License: MIT (aligned with the original project)
+
 ## Maintainer Workflow
 
 Regenerate the upstream sample smoke test after upstream `samples-data.ts` changes:
@@ -27,7 +35,7 @@ Regenerate the upstream sample smoke test after upstream `samples-data.ts` chang
 
 ```mbt check
 ///|
-test "simple_td" (it : @test.Test){
+test "simple_td" (it : @test.Test) {
   let svg = render_mermaid("graph TD\nA --> B")
   it.write(svg.to_string())
   it.snapshot(filename="simle_td.svg")
