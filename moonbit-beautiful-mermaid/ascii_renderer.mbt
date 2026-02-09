@@ -1031,6 +1031,79 @@ fn flow_normalize_unicode_junctions(canvas : Array[Array[String]]) -> Unit {
 }
 
 ///|
+fn flow_refine_unicode_side_tees(canvas : Array[Array[String]]) -> Unit {
+  if canvas.length() == 0 || canvas[0].length() == 0 {
+    return
+  }
+
+  let snapshot : Array[Array[String]] = []
+  for row in canvas {
+    let copied_row : Array[String] = []
+    for ch in row {
+      copied_row.push(ch)
+    }
+    snapshot.push(copied_row)
+  }
+
+  for y in 0..<snapshot.length() {
+    for x in 0..<snapshot[0].length() {
+      let existing = snapshot[y][x]
+      if existing != "┤" && existing != "├" {
+        continue
+      }
+      let has_left = x > 0 && flow_connects_right(snapshot[y][x - 1])
+      let has_right = x + 1 < snapshot[0].length() &&
+        flow_connects_left(snapshot[y][x + 1])
+      let has_up = y > 0 && flow_connects_down(snapshot[y - 1][x])
+      let has_down = y + 1 < snapshot.length() &&
+        flow_connects_up(snapshot[y + 1][x])
+      canvas[y][x] = flow_unicode_char_for_connections(
+        existing,
+        has_left,
+        has_right,
+        has_up,
+        has_down,
+      )
+    }
+  }
+}
+
+///|
+fn flow_put_unicode_border_join(
+  canvas : Array[Array[String]],
+  x : Int,
+  y : Int,
+) -> Unit {
+  if y < 0 || y >= canvas.length() {
+    return
+  }
+  if canvas.length() == 0 || x < 0 || x >= canvas[0].length() {
+    return
+  }
+
+  let existing = canvas[y][x]
+  let has_left = x > 0 && flow_connects_right(canvas[y][x - 1])
+  let has_right = x + 1 < canvas[0].length() &&
+    flow_connects_left(canvas[y][x + 1])
+  let has_up = y > 0 && flow_connects_down(canvas[y - 1][x])
+  let has_down = y + 1 < canvas.length() &&
+    flow_connects_up(canvas[y + 1][x])
+
+  put_canvas(
+    canvas,
+    x,
+    y,
+    flow_unicode_char_for_connections(
+      existing,
+      has_left,
+      has_right,
+      has_up,
+      has_down,
+    ),
+  )
+}
+
+///|
 fn flow_put_line_canvas(
   canvas : Array[Array[String]],
   x : Int,
@@ -3120,6 +3193,7 @@ fn render_ascii_flow_subgraphs(
 
   if !options.use_ascii {
     flow_normalize_unicode_junctions(canvas)
+    flow_refine_unicode_side_tees(canvas)
   }
 
   for node in mapped_nodes {
@@ -3135,7 +3209,11 @@ fn render_ascii_flow_subgraphs(
   }
 
   for join in border_overlays {
-    put_canvas(canvas, join.x, join.y, join.marker)
+    if options.use_ascii {
+      put_canvas(canvas, join.x, join.y, join.marker)
+    } else {
+      flow_put_unicode_border_join(canvas, join.x, join.y)
+    }
   }
 
   for arrow in arrow_overlays {
