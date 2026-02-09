@@ -37,6 +37,7 @@ test "Parser accepts all supported flowchart directions" {
   }
 }
 
+///|
 test "Parser rejects flowchart header without direction" {
   let result : Result[
     @beautiful_mermaid.MermaidGraph,

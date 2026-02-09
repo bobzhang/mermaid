@@ -69,13 +69,9 @@ fn edge_label_rects_overlap(a : EdgeLabelRect, b : EdgeLabelRect) -> Bool {
 }
 
 ///|
-fn snapshot_svg(
-  it : @test.Test,
-  filename : String,
-  svg : String,
-) -> Unit raise {
+fn snapshot_svg(it : @test.Test, filename : String, svg : String) -> Unit raise {
   it.write(svg)
-  it.snapshot(filename=filename)
+  it.snapshot(filename~)
 }
 
 ///|
@@ -96,7 +92,7 @@ test "Pipeline dimensions honor direction" (it : @test.Test) {
 
 ///|
 test "Flowchart BT direction renders across text and SVG modes" (
-  it : @test.Test
+  it : @test.Test,
 ) {
   let input = "graph BT\nA[Start] --> B[Middle] --> C[End]"
 
@@ -128,7 +124,7 @@ test "Flowchart BT direction renders across text and SVG modes" (
 
 ///|
 test "Flowchart RL direction renders across text and SVG modes" (
-  it : @test.Test
+  it : @test.Test,
 ) {
   let input = "graph RL\nA[Origin] --> B[Pivot] --> C[Target]"
 
@@ -207,10 +203,18 @@ test "SVG dimensions expand with padding option" (it : @test.Test) {
   )
   snapshot_svg(it, "integration_flowchart_padding_small.svg", small_svg)
 
-  let small_width = option_or_zero(@test_support.svg_attr_int(small_svg, "width"))
-  let large_width = option_or_zero(@test_support.svg_attr_int(large_svg, "width"))
-  let small_height = option_or_zero(@test_support.svg_attr_int(small_svg, "height"))
-  let large_height = option_or_zero(@test_support.svg_attr_int(large_svg, "height"))
+  let small_width = option_or_zero(
+    @test_support.svg_attr_int(small_svg, "width"),
+  )
+  let large_width = option_or_zero(
+    @test_support.svg_attr_int(large_svg, "width"),
+  )
+  let small_height = option_or_zero(
+    @test_support.svg_attr_int(small_svg, "height"),
+  )
+  let large_height = option_or_zero(
+    @test_support.svg_attr_int(large_svg, "height"),
+  )
 
   assert_true(large_width > small_width)
   assert_true(large_height > small_height)
@@ -218,7 +222,9 @@ test "SVG dimensions expand with padding option" (it : @test.Test) {
 
 ///|
 test "SVG renders labeled nodes for simple flow" (it : @test.Test) {
-  let svg = try! @beautiful_mermaid.render_mermaid("graph TD\nA[Start] --> B[End]")
+  let svg = try! @beautiful_mermaid.render_mermaid(
+    "graph TD\nA[Start] --> B[End]",
+  )
   snapshot_svg(it, "integration_flowchart_labeled_nodes.svg", svg)
   assert_true(svg.contains(">Start</text>"))
   assert_true(svg.contains(">End</text>"))
@@ -233,7 +239,7 @@ test "SVG renders edge labels for simple flow" (it : @test.Test) {
 
 ///|
 test "Flowchart chained labeled edges render across text and SVG modes" (
-  it : @test.Test
+  it : @test.Test,
 ) {
   let input = "graph LR\nA[One] -->|first| B[Two] -->|second| C[Three] -->|third| D[Four]"
 
@@ -329,7 +335,7 @@ test "SVG applies explicit dark colors" (it : @test.Test) {
 
 ///|
 test "SVG renders solid dotted and thick edge styles with labels" (
-  it : @test.Test
+  it : @test.Test,
 ) {
   let svg = try! @beautiful_mermaid.render_mermaid(
     "graph TD\nA -->|solid| B\nB -.->|dotted| C\nC ==>|thick| D",
@@ -357,7 +363,7 @@ test "SVG renders subgraph labels and nodes" (it : @test.Test) {
 
 ///|
 test "Subgraph direction override renders across text and SVG modes" (
-  it : @test.Test
+  it : @test.Test,
 ) {
   let input = "graph TD\nsubgraph FE [Frontend]\n  direction LR\n  A[Web] --> B[API]\nend\nsubgraph BE [Backend]\n  C[Service] --> D[(DB)]\nend\nB --> C"
 
@@ -435,7 +441,7 @@ test "SVG renders subroutine shape with inner guide lines" (it : @test.Test) {
 
 ///|
 test "SVG renders double-circle shape with two circle elements" (
-  it : @test.Test
+  it : @test.Test,
 ) {
   let svg = try! @beautiful_mermaid.render_mermaid(
     "graph TD\nA(((Important))) --> B",
@@ -496,7 +502,7 @@ test "SVG no-arrow edges omit marker-end" (it : @test.Test) {
 
 ///|
 test "Flowchart no-arrow edges render across text and SVG modes" (
-  it : @test.Test
+  it : @test.Test,
 ) {
   let input = "graph TD\nA[Client] --- B[Cache] --- C[Backend]"
 
@@ -529,7 +535,7 @@ test "Flowchart no-arrow edges render across text and SVG modes" (
 
 ///|
 test "SVG bidirectional edges include start and end arrowheads" (
-  it : @test.Test
+  it : @test.Test,
 ) {
   let svg = try! @beautiful_mermaid.render_mermaid("graph TD\nA <--> B")
   snapshot_svg(it, "integration_flowchart_bidirectional_svg.svg", svg)
@@ -539,7 +545,7 @@ test "SVG bidirectional edges include start and end arrowheads" (
 
 ///|
 test "Flowchart bidirectional edges render across text and SVG modes" (
-  it : @test.Test
+  it : @test.Test,
 ) {
   let input = "graph TD\nA[North] <--> B[South]"
 
@@ -556,11 +562,7 @@ test "Flowchart bidirectional edges render across text and SVG modes" (
     box_border_padding: 1,
   })
   let svg = try! @beautiful_mermaid.render_mermaid(input)
-  snapshot_svg(
-    it,
-    "integration_flowchart_bidirectional_cross_mode.svg",
-    svg,
-  )
+  snapshot_svg(it, "integration_flowchart_bidirectional_cross_mode.svg", svg)
 
   assert_true(ascii.contains("North"))
   assert_true(ascii.contains("South"))
@@ -585,7 +587,7 @@ test "SVG parallel ampersand links emit one edge per source" (it : @test.Test) {
 
 ///|
 test "Flowchart ampersand fan-in renders across text and SVG modes" (
-  it : @test.Test
+  it : @test.Test,
 ) {
   let input = "graph LR\nA[Web] & B[Mobile] --> C[API]\nC --> D[(Database)]"
 
@@ -621,7 +623,7 @@ test "Flowchart ampersand fan-in renders across text and SVG modes" (
 
 ///|
 test "Flowchart nested subgraphs render across text and SVG modes" (
-  it : @test.Test
+  it : @test.Test,
 ) {
   let input = "graph TD\nsubgraph Outer\n  subgraph Inner\n    A[API] --> B[DB]\n  end\nend\nB --> C[Client]"
 
@@ -669,7 +671,7 @@ test "SVG applies inline style overrides for nodes" (it : @test.Test) {
 
 ///|
 test "Flowchart inline style overrides keep text parity and affect SVG" (
-  it : @test.Test
+  it : @test.Test,
 ) {
   let input = "graph TD\nA[Red Node] --> B[Blue Node]\nstyle A fill:#ff0000,stroke:#cc0000\nstyle B fill:#0000ff,stroke:#0000cc"
 
@@ -702,7 +704,7 @@ test "Flowchart inline style overrides keep text parity and affect SVG" (
 
 ///|
 test "Flowchart classDef shorthand renders across text and SVG modes" (
-  it : @test.Test
+  it : @test.Test,
 ) {
   let input = "graph TD\nA[Start]:::entry --> B[End]\nclassDef entry fill:#f9f,stroke:#333,color:#111"
 
@@ -758,14 +760,16 @@ test "SVG renders state start pseudostate as filled circle" (it : @test.Test) {
 
 ///|
 test "SVG renders state end pseudostate as bullseye" (it : @test.Test) {
-  let svg = try! @beautiful_mermaid.render_mermaid("stateDiagram-v2\nDone --> [*]")
+  let svg = try! @beautiful_mermaid.render_mermaid(
+    "stateDiagram-v2\nDone --> [*]",
+  )
   snapshot_svg(it, "integration_state_end_pseudostate.svg", svg)
   assert_true(integration_count_occurrences(svg, "<circle") >= 2)
 }
 
 ///|
 test "State multiple pseudostates render across text and SVG modes" (
-  it : @test.Test
+  it : @test.Test,
 ) {
   let input = "stateDiagram-v2\n[*] --> A\n[*] --> B\nA --> [*]\nB --> [*]"
 
@@ -824,7 +828,7 @@ test "SVG renders full state lifecycle with labels" (it : @test.Test) {
 
 ///|
 test "State description lines render across text and SVG modes" (
-  it : @test.Test
+  it : @test.Test,
 ) {
   let input = "stateDiagram-v2\ns1 : Idle State\ns1 --> s2 : proceed"
 
@@ -883,7 +887,7 @@ test "State direction LR renders across text and SVG modes" (it : @test.Test) {
 
 ///|
 test "State transition labels render across text and SVG modes" (
-  it : @test.Test
+  it : @test.Test,
 ) {
   let input = "stateDiagram-v2\nIdle --> Active : start\nActive --> Busy : process\nBusy --> Done : finish"
 
@@ -924,7 +928,7 @@ test "State transition labels render across text and SVG modes" (
 
 ///|
 test "State composite direction override renders across text and SVG modes" (
-  it : @test.Test
+  it : @test.Test,
 ) {
   let input = "stateDiagram-v2\n[*] --> Processing\nstate Processing {\n  direction LR\n  parse --> validate\n  validate --> execute\n}\nProcessing --> Done"
 
@@ -962,7 +966,7 @@ test "State composite direction override renders across text and SVG modes" (
 
 ///|
 test "State alias declarations render across text and SVG modes" (
-  it : @test.Test
+  it : @test.Test,
 ) {
   let input = "stateDiagram-v2\nstate \"Waiting for input\" as waiting\nwaiting --> active : trigger"
 
@@ -994,7 +998,7 @@ test "State alias declarations render across text and SVG modes" (
 
 ///|
 test "State composite alias blocks render across text and SVG modes" (
-  it : @test.Test
+  it : @test.Test,
 ) {
   let input = "stateDiagram-v2\nstate \"Active Processing\" as AP {\n  parse --> validate\n}\nAP --> Done : finish"
 
@@ -1039,7 +1043,7 @@ test "SVG does not duplicate composite state labels" (it : @test.Test) {
 
 ///|
 test "SVG renders subgraph-first TD diagrams without ordering regressions" (
-  it : @test.Test
+  it : @test.Test,
 ) {
   let svg = try! @beautiful_mermaid.render_mermaid(
     "graph TD\nsubgraph ci [CI Pipeline]\nA[Push Code] --> B{Tests Pass?}\nB -->|Yes| C[Build Image]\nend\nC --> D([Deploy])\nD --> E{QA?}\nE -->|Yes| F((Production))",
@@ -1134,7 +1138,7 @@ test "Unicode mode emits box drawing glyphs" {
 
 ///|
 test "Standalone sequence activate/deactivate lines are ignored for rendering parity" (
-  it : @test.Test
+  it : @test.Test,
 ) {
   let input = "sequenceDiagram\nparticipant A\nparticipant B\nactivate A\nA->>B: Work\ndeactivate A"
 
@@ -1164,7 +1168,7 @@ test "Standalone sequence activate/deactivate lines are ignored for rendering pa
 
 ///|
 test "SVG renders sequence self-message labels with participant aliases" (
-  it : @test.Test
+  it : @test.Test,
 ) {
   let input = "sequenceDiagram\nparticipant A as App\nA->>A: Retry"
 
@@ -1193,7 +1197,7 @@ test "SVG renders sequence self-message labels with participant aliases" (
 
 ///|
 test "Sequence alt/else block renders across text and SVG modes" (
-  it : @test.Test
+  it : @test.Test,
 ) {
   let input = "sequenceDiagram\nparticipant C as Client\nparticipant S as Server\nC->>S: Request\nalt OK\nS-->>C: 200\nelse Fail\nS-->>C: 500\nend"
 
@@ -1230,9 +1234,7 @@ test "Sequence alt/else block renders across text and SVG modes" (
 }
 
 ///|
-test "Sequence loop block renders across text and SVG modes" (
-  it : @test.Test
-) {
+test "Sequence loop block renders across text and SVG modes" (it : @test.Test) {
   let input = "sequenceDiagram\nparticipant W as Worker\nparticipant Q as Queue\nloop Retry every 5s\nW->>Q: Poll\nQ-->>W: Empty\nend"
 
   let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
@@ -1267,7 +1269,7 @@ test "Sequence loop block renders across text and SVG modes" (
 
 ///|
 test "Sequence self-message loop renders across text and SVG modes" (
-  it : @test.Test
+  it : @test.Test,
 ) {
   let input = "sequenceDiagram\nparticipant W as Worker\nloop Retry\nW->>W: Check cache\nend"
 
@@ -1296,9 +1298,7 @@ test "Sequence self-message loop renders across text and SVG modes" (
 }
 
 ///|
-test "Sequence opt block renders across text and SVG modes" (
-  it : @test.Test
-) {
+test "Sequence opt block renders across text and SVG modes" (it : @test.Test) {
   let input = "sequenceDiagram\nparticipant C as Client\nparticipant API\nC->>API: Fetch profile\nopt Cache hit\nAPI-->>C: 304 Not Modified\nend"
 
   let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
@@ -1365,7 +1365,7 @@ test "Sequence note-over renders across text and SVG modes" (it : @test.Test) {
 
 ///|
 test "Sequence note-left-right renders across text and SVG modes" (
-  it : @test.Test
+  it : @test.Test,
 ) {
   let input = "sequenceDiagram\nparticipant A as App\nparticipant B as Backend\nA->>B: Request\nNote left of A: queued\nNote right of B: processing\nB-->>A: Done"
 
@@ -1404,7 +1404,7 @@ test "Sequence note-left-right renders across text and SVG modes" (
 
 ///|
 test "Sequence critical/option block renders across text and SVG modes" (
-  it : @test.Test
+  it : @test.Test,
 ) {
   let input = "sequenceDiagram\nparticipant S as Service\nparticipant DB as Database\nS->>DB: Begin\ncritical Commit transaction\nS->>DB: write row\noption Timeout\nDB-->>S: timeout\noption Success\nDB-->>S: ok\nend"
 
@@ -1445,7 +1445,7 @@ test "Sequence critical/option block renders across text and SVG modes" (
 
 ///|
 test "Sequence par/and block renders across text and SVG modes" (
-  it : @test.Test
+  it : @test.Test,
 ) {
   let input = "sequenceDiagram\nparticipant C as Client\nparticipant API\nparticipant DB\npar Request API\nC->>API: /items\nand Write audit\nAPI->>DB: INSERT audit\nend\nAPI-->>C: 200"
 
@@ -1486,7 +1486,7 @@ test "Sequence par/and block renders across text and SVG modes" (
 
 ///|
 test "Sequence activation markers render across text and SVG modes" (
-  it : @test.Test
+  it : @test.Test,
 ) {
   let input = "sequenceDiagram\nparticipant U as User\nparticipant S as Server\nU->>+S: Request\nS-->>-U: Response"
 
@@ -1522,7 +1522,7 @@ test "Sequence activation markers render across text and SVG modes" (
 
 ///|
 test "Sequence actor declarations render across text and SVG modes" (
-  it : @test.Test
+  it : @test.Test,
 ) {
   let input = "sequenceDiagram\nactor U as User\nactor S as Service\nU->>S: Login\nS-->>U: Token"
 
@@ -1558,7 +1558,7 @@ test "Sequence actor declarations render across text and SVG modes" (
 
 ///|
 test "Sequence mixed arrow operators render across text and SVG modes" (
-  it : @test.Test
+  it : @test.Test,
 ) {
   let input = "sequenceDiagram\nparticipant A\nparticipant B\nA->B: Open\nB--)A: Dotted Open\nA-->>B: Filled"
 
@@ -1592,7 +1592,7 @@ test "Sequence mixed arrow operators render across text and SVG modes" (
 
 ///|
 test "Class inheritance labels render across text and SVG modes" (
-  it : @test.Test
+  it : @test.Test,
 ) {
   let input = "classDiagram\nclass Shape {\n<<abstract>>\n+draw() void\n}\nclass Circle {\n+radius int\n+draw() void\n}\nShape <|-- Circle : inherits"
 
@@ -1624,7 +1624,7 @@ test "Class inheritance labels render across text and SVG modes" (
 
 ///|
 test "Class abstract annotation renders across text and SVG modes" (
-  it : @test.Test
+  it : @test.Test,
 ) {
   let input = "classDiagram\nclass Service {\n<<abstract>>\n+run() void\n}\nclass Worker {\n+run() void\n}\nService <|-- Worker"
 
@@ -1659,7 +1659,7 @@ test "Class abstract annotation renders across text and SVG modes" (
 
 ///|
 test "Class interface realization renders across text and SVG modes" (
-  it : @test.Test
+  it : @test.Test,
 ) {
   let input = "classDiagram\nclass Flyable {\n<<interface>>\n+fly() void\n}\nclass Bird {\n+fly() void\n}\nBird ..|> Flyable : implements"
 
@@ -1693,9 +1693,7 @@ test "Class interface realization renders across text and SVG modes" (
 }
 
 ///|
-test "Class enum annotation renders across text and SVG modes" (
-  it : @test.Test
-) {
+test "Class enum annotation renders across text and SVG modes" (it : @test.Test) {
   let input = "classDiagram\nclass Status {\n<<enum>>\n+OPEN\n+CLOSED\n}\nStatus --> Ticket : labels"
 
   let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
@@ -1731,7 +1729,7 @@ test "Class enum annotation renders across text and SVG modes" (
 
 ///|
 test "Class visibility members render across text and SVG modes" (
-  it : @test.Test
+  it : @test.Test,
 ) {
   let input = "classDiagram\nclass User {\n+int id\n-string secret\n#string name\n+login() bool\n}"
 
@@ -1769,7 +1767,7 @@ test "Class visibility members render across text and SVG modes" (
 
 ///|
 test "Class relationship set renders across text and SVG modes" (
-  it : @test.Test
+  it : @test.Test,
 ) {
   let input = "classDiagram\nA <|-- B : inh\nC *-- D : own\nE o-- F : has\nG --> H : use\nI ..> J : dep\nK ..|> L : imp"
 
@@ -1812,7 +1810,7 @@ test "Class relationship set renders across text and SVG modes" (
 
 ///|
 test "ER entities and relationship labels render across text and SVG modes" (
-  it : @test.Test
+  it : @test.Test,
 ) {
   let input = "erDiagram\nCUSTOMER {\n  int id PK\n  string email UK\n}\nORDER {\n  int id PK\n  int customer_id FK\n}\nCUSTOMER ||--o{ ORDER : places"
 
@@ -1884,7 +1882,7 @@ test "ER attribute keys render across text and SVG modes" (it : @test.Test) {
 
 ///|
 test "ER identifying and non-identifying edges render across text and SVG modes" (
-  it : @test.Test
+  it : @test.Test,
 ) {
   let input = "erDiagram\nUSER ||--o{ ORDER : places\nUSER ||..o{ LOG : generates"
 
@@ -1922,9 +1920,7 @@ test "ER identifying and non-identifying edges render across text and SVG modes"
 }
 
 ///|
-test "ER mixed cardinalities render across text and SVG modes" (
-  it : @test.Test
-) {
+test "ER mixed cardinalities render across text and SVG modes" (it : @test.Test) {
   let input = "erDiagram\nA ||--|| B : one\nB ||--o{ C : many\nC |o--|{ D : optional\nD }|--o{ E : mixed"
 
   let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
@@ -1960,7 +1956,9 @@ test "ER mixed cardinalities render across text and SVG modes" (
   assert_true(svg.contains(">many</text>"))
   assert_true(svg.contains(">optional</text>"))
   assert_true(svg.contains(">mixed</text>"))
-  assert_true(integration_count_occurrences(svg, "class=\"edge-endpoint\"") >= 4)
+  assert_true(
+    integration_count_occurrences(svg, "class=\"edge-endpoint\"") >= 4,
+  )
 }
 
 ///|
