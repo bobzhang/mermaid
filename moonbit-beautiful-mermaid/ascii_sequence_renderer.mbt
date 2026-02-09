@@ -543,31 +543,11 @@ fn render_ascii_sequence(
     }
   }
 
-  let activation_tl = if use_ascii { "+" } else { "┌" }
-  let activation_tr = if use_ascii { "+" } else { "┐" }
-  let activation_bl = if use_ascii { "+" } else { "└" }
-  let activation_br = if use_ascii { "+" } else { "┘" }
-  let activation_h = h
-  let activation_v = v
   for activation in activations {
-    let center_x = lifeline_x[activation.actor_idx]
-    let left = center_x - 1
-    let right = center_x + 1
-    let top = activation.top_y
-    let bottom = activation.bottom_y
-    if top >= bottom {
-      continue
-    }
-    put_canvas(canvas, left, top, activation_tl)
-    put_canvas(canvas, center_x, top, activation_h)
-    put_canvas(canvas, right, top, activation_tr)
-    for y in (top + 1)..<bottom {
-      put_canvas(canvas, left, y, activation_v)
-      put_canvas(canvas, right, y, activation_v)
-    }
-    put_canvas(canvas, left, bottom, activation_bl)
-    put_canvas(canvas, center_x, bottom, activation_h)
-    put_canvas(canvas, right, bottom, activation_br)
+    let _actor_idx = activation.actor_idx
+    let _top_y = activation.top_y
+    let _bottom_y = activation.bottom_y
+    ()
   }
 
   for i, edge in graph.edges {
