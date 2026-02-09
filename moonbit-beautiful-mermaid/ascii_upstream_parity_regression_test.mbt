@@ -1291,6 +1291,37 @@ fn batch_1_shapes_expected_unicode() -> String {
 }
 
 ///|
+fn batch_2_shapes_source() -> String {
+  "graph LR\n  A[(Database)] --> B>Flag Shape]\n  B --> C[/Wider Bottom\\]\n  C --> D[\\Wider Top/]"
+}
+
+///|
+fn batch_2_shapes_expected_ascii() -> String {
+  [
+    "+----------+     +------------+     +--------------+     +-----------+",
+    "|          |     |            |     |              |     |           |",
+    "| Database |---->| Flag Shape |---->| Wider Bottom |---->| Wider Top |",
+    "|          |     |            |     |              |     |           |",
+    "+----------+     +------------+     +--------------+     +-----------+",
+  ]
+  .iter()
+  .join("\n")
+}
+
+///|
+fn batch_2_shapes_expected_unicode() -> String {
+  [
+    "┌──────────┐     ┌────────────┐     ┌──────────────┐     ┌───────────┐",
+    "│          │     │            │     │              │     │           │",
+    "│ Database ├────►│ Flag Shape ├────►│ Wider Bottom ├────►│ Wider Top │",
+    "│          │     │            │     │              │     │           │",
+    "└──────────┘     └────────────┘     └──────────────┘     └───────────┘",
+  ]
+  .iter()
+  .join("\n")
+}
+
+///|
 test "ASCII/Unicode parity regression: Beautiful Mermaid sample" {
   assert_text_parity(
     beautiful_mermaid_source(),
@@ -1440,5 +1471,14 @@ test "ASCII/Unicode parity regression: Batch 1 Shapes sample" {
     batch_1_shapes_source(),
     batch_1_shapes_expected_ascii(),
     batch_1_shapes_expected_unicode(),
+  )
+}
+
+///|
+test "ASCII/Unicode parity regression: Batch 2 Shapes sample" {
+  assert_text_parity(
+    batch_2_shapes_source(),
+    batch_2_shapes_expected_ascii(),
+    batch_2_shapes_expected_unicode(),
   )
 }
