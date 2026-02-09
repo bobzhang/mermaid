@@ -2710,6 +2710,7 @@ fn render_ascii_flow_subgraphs(
   let canvas_height = canvas.length()
   let canvas_width = if canvas_height == 0 { 0 } else { canvas[0].length() }
   let non_state_out_degree_by_source : Map[String, Int] = {}
+  let non_state_in_degree_by_target : Map[String, Int] = {}
   if !state_layout_mode {
     for edge in graph.edges {
       let current = option_int_or(
@@ -2717,6 +2718,11 @@ fn render_ascii_flow_subgraphs(
         0,
       )
       non_state_out_degree_by_source[edge.source] = current + 1
+      let target_current = option_int_or(
+        non_state_in_degree_by_target.get(edge.target),
+        0,
+      )
+      non_state_in_degree_by_target[edge.target] = target_current + 1
     }
   }
   for edge in positioned.edges {
@@ -2807,8 +2813,19 @@ fn render_ascii_flow_subgraphs(
             non_state_out_degree_by_source.get(edge.source),
             0,
           )
+          let target_in_degree = option_int_or(
+            non_state_in_degree_by_target.get(edge.target),
+            0,
+          )
           let horizontal_first = if flow_direction_horizontal {
-            !(flow_with_subgraphs && source_out_degree > 1)
+            if !flow_with_subgraphs &&
+              center_dy != 0 &&
+              center_dx > 0 &&
+              (source_out_degree > 1 || target_in_degree > 1) {
+              false
+            } else {
+              !(flow_with_subgraphs && source_out_degree > 1)
+            }
           } else {
             source_out_degree > 1
           }
