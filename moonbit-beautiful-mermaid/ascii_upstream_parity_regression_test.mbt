@@ -1597,6 +1597,37 @@ fn chained_edges_expected_unicode() -> String {
 }
 
 ///|
+fn direction_left_right_lr_source() -> String {
+  "graph LR\n  A[Input] --> B[Transform] --> C[Output]"
+}
+
+///|
+fn direction_left_right_lr_expected_ascii() -> String {
+  [
+    "+-------+     +-----------+     +--------+",
+    "|       |     |           |     |        |",
+    "| Input |---->| Transform |---->| Output |",
+    "|       |     |           |     |        |",
+    "+-------+     +-----------+     +--------+",
+  ]
+  .iter()
+  .join("\n")
+}
+
+///|
+fn direction_left_right_lr_expected_unicode() -> String {
+  [
+    "┌───────┐     ┌───────────┐     ┌────────┐",
+    "│       │     │           │     │        │",
+    "│ Input ├────►│ Transform ├────►│ Output │",
+    "│       │     │           │     │        │",
+    "└───────┘     └───────────┘     └────────┘",
+  ]
+  .iter()
+  .join("\n")
+}
+
+///|
 test "ASCII/Unicode parity regression: Beautiful Mermaid sample" {
   assert_text_parity(
     beautiful_mermaid_source(),
@@ -1800,5 +1831,14 @@ test "ASCII/Unicode parity regression: Chained Edges sample" {
     chained_edges_source(),
     chained_edges_expected_ascii(),
     chained_edges_expected_unicode(),
+  )
+}
+
+///|
+test "ASCII/Unicode parity regression: Direction: Left-Right (LR) sample" {
+  assert_text_parity(
+    direction_left_right_lr_source(),
+    direction_left_right_lr_expected_ascii(),
+    direction_left_right_lr_expected_unicode(),
   )
 }
