@@ -296,6 +296,15 @@ test "SVG renders cylinder database shape" {
 }
 
 ///|
+test "SVG renders asymmetric flag shape" {
+  let svg = try! @beautiful_mermaid.render_mermaid(
+    "graph TD\nA>Flag Shape] --> B",
+  )
+  assert_true(svg.contains(">Flag Shape</text>"))
+  assert_true(svg.contains("<polygon"))
+}
+
+///|
 test "ASCII and Unicode modes differ" {
   let ascii_options = @beautiful_mermaid.AsciiRenderOptions::{
     use_ascii: true,
