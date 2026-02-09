@@ -503,7 +503,27 @@ fn flow_non_state_edge_label_placement(
   boxes : Array[AsciiFlowNodeBox],
   existing_labels : Array[AsciiEdgeLabelPlacement],
 ) -> AsciiEdgeLabelPlacement {
-  ignore(existing_labels)
+  fn overlaps_existing_labels(
+    label_x : Int,
+    label_y : Int,
+    label : String,
+    existing_labels : Array[AsciiEdgeLabelPlacement],
+  ) -> Bool {
+    let left = label_x
+    let right = label_x + label.length() - 1
+    for placement in existing_labels {
+      if placement.y != label_y {
+        continue
+      }
+      let other_left = placement.x
+      let other_right = placement.x + placement.label.length() - 1
+      if !(right + 1 < other_left || left > other_right + 1) {
+        return true
+      }
+    }
+    false
+  }
+
   let (anchor_x, anchor_y) = flow_non_state_label_anchor_from_points(
     points,
     source_x, source_y, target_x, target_y, label.length(),
@@ -523,11 +543,30 @@ fn flow_non_state_edge_label_placement(
       }
     }
   }
-  if !label_overlaps_any_node_box(label_x, anchor_y, label, boxes) {
-    return AsciiEdgeLabelPlacement::{ x: label_x, y: anchor_y, label }
+  let base_y = if label_overlaps_any_node_box(label_x, anchor_y, label, boxes) {
+    adjust_label_y_for_state_boxes(label_x, anchor_y, label, boxes)
+  } else {
+    anchor_y
+  }
+  if !label_overlaps_any_node_box(label_x, base_y, label, boxes) &&
+    !overlaps_existing_labels(label_x, base_y, label, existing_labels) {
+    return AsciiEdgeLabelPlacement::{ x: label_x, y: base_y, label }
   }
 
-  let base_y = adjust_label_y_for_state_boxes(label_x, anchor_y, label, boxes)
+  for offset in 1..<8 {
+    let up = base_y - offset
+    if up >= 0 &&
+      !label_overlaps_any_node_box(label_x, up, label, boxes) &&
+      !overlaps_existing_labels(label_x, up, label, existing_labels) {
+      return AsciiEdgeLabelPlacement::{ x: label_x, y: up, label }
+    }
+    let down = base_y + offset
+    if !label_overlaps_any_node_box(label_x, down, label, boxes) &&
+      !overlaps_existing_labels(label_x, down, label, existing_labels) {
+      return AsciiEdgeLabelPlacement::{ x: label_x, y: down, label }
+    }
+  }
+
   AsciiEdgeLabelPlacement::{ x: label_x, y: base_y, label }
 }
 
