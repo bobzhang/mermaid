@@ -404,6 +404,32 @@ test "SVG renders full state lifecycle with labels" {
 }
 
 ///|
+test "State description lines render across text and SVG modes" {
+  let input = "stateDiagram-v2\ns1 : Idle State\ns1 --> s2 : proceed"
+
+  let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
+    use_ascii: true,
+    padding_x: 5,
+    padding_y: 5,
+    box_border_padding: 1,
+  })
+  let unicode = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
+    use_ascii: false,
+    padding_x: 5,
+    padding_y: 5,
+    box_border_padding: 1,
+  })
+  let svg = try! @beautiful_mermaid.render_mermaid(input)
+
+  assert_true(ascii.contains("Idle State"))
+  assert_true(ascii.contains("proceed"))
+  assert_true(unicode.contains("Idle State"))
+  assert_true(unicode.contains("proceed"))
+  assert_true(svg.contains(">Idle State</text>"))
+  assert_true(svg.contains(">proceed</text>"))
+}
+
+///|
 test "SVG does not duplicate composite state labels" {
   let svg = try! @beautiful_mermaid.render_mermaid(
     "stateDiagram-v2\n[*] --> Idle\nIdle --> Processing : submit\nstate Processing {\n  parse --> validate\n  validate --> execute\n}\nProcessing --> Complete : done\nComplete --> [*]",
