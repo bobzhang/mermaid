@@ -3165,6 +3165,109 @@ fn sequence_database_transaction_expected_unicode() -> String {
 }
 
 ///|
+fn sequence_microservice_orchestration_source() -> String {
+  "sequenceDiagram\n  participant G as Gateway\n  participant A as Auth\n  participant U as Users\n  participant O as Orders\n  participant N as Notify\n  G->>A: Validate token\n  A-->>G: Valid\n  par Fetch data\n    G->>U: Get user\n    U-->>G: User data\n  and\n    G->>O: Get orders\n    O-->>G: Order list\n  end\n  G->>N: Send notification\n  N-->>G: Queued\n  Note over G: Aggregate response"
+}
+
+///|
+fn sequence_microservice_orchestration_expected_ascii() -> String {
+  [
+    " +---------+          +------+   +-------+  +--------+  +--------+   ",
+    " | Gateway |          | Auth |   | Users |  | Orders |  | Notify |   ",
+    " +---------+          +------+   +-------+  +--------+  +--------+   ",
+    "      |                   |          |           |           |       ",
+    "      |  Validate token   |          |           |           |       ",
+    "      |------------------->          |           |           |       ",
+    "      |                   |          |           |           |       ",
+    "      |       Valid       |          |           |           |       ",
+    "      <...................|          |           |           |       ",
+    "      |                   |          |           |           |       ",
+    "  +par [Fetch data]----------------------------------+       |       ",
+    "  |   |                   |          |           |   |       |       ",
+    "  |   |          Get user |          |           |   |       |       ",
+    "  |   |------------------------------>           |   |       |       ",
+    "  |   |                   |          |           |   |       |       ",
+    "  |   |          User data|          |           |   |       |       ",
+    "  |   <..............................|           |   |       |       ",
+    "  |   |                   |          |           |   |       |       ",
+    "  +--------------------------------------------------+       |       ",
+    "  |   |                   |          |           |   |       |       ",
+    "  |   |               Get orders     |           |   |       |       ",
+    "  |   |------------------------------------------>   |       |       ",
+    "  |   |                   |          |           |   |       |       ",
+    "  |   |               Order list     |           |   |       |       ",
+    "  |   <..........................................|   |       |       ",
+    "  |   |                   |          |           |   |       |       ",
+    "  +--------------------------------------------------+       |       ",
+    "      |                   |          |           |           |       ",
+    "      |                  Send notification       |           |       ",
+    "      |------------------------------------------------------>       ",
+    "      |                   |          |           |           |       ",
+    "      |                   |   Queued |           |           |       ",
+    "      <......................................................|       ",
+    "      |                   |          |           |           |       ",
+    "+--------------------+    |          |           |           |       ",
+    "| Aggregate response |    |          |           |           |       ",
+    "+--------------------+    |          |           |           |       ",
+    "      |                   |          |           |           |       ",
+    " +---------+          +------+   +-------+  +--------+  +--------+   ",
+    " | Gateway |          | Auth |   | Users |  | Orders |  | Notify |   ",
+    " +---------+          +------+   +-------+  +--------+  +--------+   ",
+  ]
+  .iter()
+  .join("\n")
+}
+
+///|
+fn sequence_microservice_orchestration_expected_unicode() -> String {
+  [
+    " ┌─────────┐          ┌──────┐   ┌───────┐  ┌────────┐  ┌────────┐   ",
+    " │ Gateway │          │ Auth │   │ Users │  │ Orders │  │ Notify │   ",
+    " └────┬────┘          └───┬──┘   └───┬───┘  └────┬───┘  └────┬───┘   ",
+    "      │                   │          │           │           │       ",
+    "      │  Validate token   │          │           │           │       ",
+    "      │───────────────────▶          │           │           │       ",
+    "      │                   │          │           │           │       ",
+    "      │       Valid       │          │           │           │       ",
+    "      ◀╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌│          │           │           │       ",
+    "      │                   │          │           │           │       ",
+    "  ┌par [Fetch data]──────────────────────────────────┐       │       ",
+    "  │   │                   │          │           │   │       │       ",
+    "  │   │          Get user │          │           │   │       │       ",
+    "  │   │──────────────────────────────▶           │   │       │       ",
+    "  │   │                   │          │           │   │       │       ",
+    "  │   │          User data│          │           │   │       │       ",
+    "  │   ◀╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌│           │   │       │       ",
+    "  │   │                   │          │           │   │       │       ",
+    "  ├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┤       │       ",
+    "  │   │                   │          │           │   │       │       ",
+    "  │   │               Get orders     │           │   │       │       ",
+    "  │   │──────────────────────────────────────────▶   │       │       ",
+    "  │   │                   │          │           │   │       │       ",
+    "  │   │               Order list     │           │   │       │       ",
+    "  │   ◀╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌│   │       │       ",
+    "  │   │                   │          │           │   │       │       ",
+    "  └──────────────────────────────────────────────────┘       │       ",
+    "      │                   │          │           │           │       ",
+    "      │                  Send notification       │           │       ",
+    "      │──────────────────────────────────────────────────────▶       ",
+    "      │                   │          │           │           │       ",
+    "      │                   │   Queued │           │           │       ",
+    "      ◀╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌│       ",
+    "      │                   │          │           │           │       ",
+    "┌────────────────────┐    │          │           │           │       ",
+    "│ Aggregate response │    │          │           │           │       ",
+    "└────────────────────┘    │          │           │           │       ",
+    "      │                   │          │           │           │       ",
+    " ┌────┴────┐          ┌───┴──┐   ┌───┴───┐  ┌────┴───┐  ┌────┴───┐   ",
+    " │ Gateway │          │ Auth │   │ Users │  │ Orders │  │ Notify │   ",
+    " └─────────┘          └──────┘   └───────┘  └────────┘  └────────┘   ",
+  ]
+  .iter()
+  .join("\n")
+}
+
+///|
 test "ASCII/Unicode parity regression: Beautiful Mermaid sample" {
   assert_text_parity(
     beautiful_mermaid_source(),
@@ -3566,5 +3669,14 @@ test "ASCII/Unicode parity regression: Sequence: Database Transaction sample" {
     sequence_database_transaction_source(),
     sequence_database_transaction_expected_ascii(),
     sequence_database_transaction_expected_unicode(),
+  )
+}
+
+///|
+test "ASCII/Unicode parity regression: Sequence: Microservice Orchestration sample" {
+  assert_text_parity(
+    sequence_microservice_orchestration_source(),
+    sequence_microservice_orchestration_expected_ascii(),
+    sequence_microservice_orchestration_expected_unicode(),
   )
 }
