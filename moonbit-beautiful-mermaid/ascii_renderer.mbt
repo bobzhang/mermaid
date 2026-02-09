@@ -2450,7 +2450,6 @@ fn render_ascii_flow_subgraphs(
   } else {
     mapped_groups
   }
-
   let mut max_x = 0
   let mut max_y = 0
   for group in mapped_groups {
@@ -2482,7 +2481,8 @@ fn render_ascii_flow_subgraphs(
   let border_overlays : Array[AsciiArrowPlacement] = []
   let edge_label_overlays : Array[AsciiEdgeLabelPlacement] = []
   let blocked_cells : Map[String, Bool] = {}
-  if state_flat_layout_mode || !state_layout_mode {
+  if state_flat_layout_mode ||
+    (!state_layout_mode && flow_with_subgraphs && !flow_direction_horizontal) {
     flow_mark_blocked_cells_for_nodes(blocked_cells, mapped_nodes)
   }
   let canvas_height = canvas.length()
@@ -2585,7 +2585,11 @@ fn render_ascii_flow_subgraphs(
             non_state_out_degree_by_source.get(edge.source),
             0,
           )
-          let horizontal_first = flow_direction_horizontal || source_out_degree > 1
+          let horizontal_first = if flow_direction_horizontal {
+            !(flow_with_subgraphs && source_out_degree > 1)
+          } else {
+            source_out_degree > 1
+          }
           let mut source_dir_dx = center_dx
           let mut source_dir_dy = center_dy
           let mut target_dir_dx = center_dx
@@ -2647,7 +2651,9 @@ fn render_ascii_flow_subgraphs(
               target_anchor_y,
               horizontal_first,
             )
-            let shared_back_route = if center_dx < 0 &&
+            let shared_back_route = if flow_with_subgraphs &&
+              !flow_direction_horizontal &&
+              center_dx < 0 &&
               center_dy.abs() <= source_box.height &&
               edge.label is None {
               flow_non_state_shared_back_edge_route_points(
@@ -2668,10 +2674,12 @@ fn render_ascii_flow_subgraphs(
             match shared_back_route {
               Some(route_points) => route_points
               None =>
-                if flow_non_state_route_hits_blocked_cells(
-                  fallback_route_points,
-                  blocked_cells,
-                ) {
+                if flow_with_subgraphs &&
+                  !flow_direction_horizontal &&
+                  flow_non_state_route_hits_blocked_cells(
+                    fallback_route_points,
+                    blocked_cells,
+                  ) {
                   flow_non_state_route_points_with_pathfinder(
                     source_anchor_x,
                     source_anchor_y,
@@ -2694,7 +2702,12 @@ fn render_ascii_flow_subgraphs(
             flow_draw_segment(canvas, from.x, from.y, to.x, to.y, h_char, v_char)
           }
           if options.use_ascii {
-            flow_mark_ascii_route_bends(canvas, non_state_route_points)
+            if flow_with_subgraphs && !flow_direction_horizontal {
+              flow_mark_ascii_route_bends(canvas, non_state_route_points)
+            } else if non_state_route_points.length() == 3 {
+              let bend = non_state_route_points[1]
+              put_canvas(canvas, bend.x, bend.y, "+")
+            }
           }
           let first_point = non_state_route_points[0]
           let next_point = non_state_route_points[1]
