@@ -4585,3 +4585,102 @@ test "ASCII/Unicode parity regression: Class: Design Pattern — Observer sample
     class_design_pattern_observer_sample_expected_unicode(),
   )
 }
+
+
+///|
+fn class_mvc_architecture_sample_source() -> String {
+  "classDiagram\n  class Model {\n    -data Map\n    +getData() Map\n    +setData(key, val) void\n    +notify() void\n  }\n  class View {\n    -model Model\n    +render() void\n    +update() void\n  }\n  class Controller {\n    -model Model\n    -view View\n    +handleInput(event) void\n    +updateModel(data) void\n  }\n  Controller --> Model : updates\n  Controller --> View : refreshes\n  View --> Model : reads\n  Model ..> View : notifies"
+}
+
+///|
+fn class_mvc_architecture_sample_expected_ascii() -> String {
+  [
+    "+--------------------+    ",
+    "| Controller         |    ",
+    "+--------------------+    ",
+    "| -Model: model      |    ",
+    "| -View: view        |    ",
+    "+--------------------+    ",
+    "| +handleInput: void |    ",
+    "| +updateModel: void |    ",
+    "+--------------------+    ",
+    "           |              ",
+    "       upda|es            ",
+    "         v |              ",
+    "+----------|-----+        ",
+    "| Model    |     |        ",
+    "+----------|-----+        ",
+    "| -Map: dat|     |        ",
+    "+--- refreshes --+        ",
+    "| +getDa|a: Map  |        ",
+    "| +setDa|a: void |        ",
+    "| +notif|: void  |        ",
+    "+-------|--------+        ",
+    "        |:                ",
+    "    notifies              ",
+    "        v                 ",
+    "+---------------+         ",
+    "| View          |         ",
+    "+---------------+         ",
+    "| -Model: model |         ",
+    "+---------------+         ",
+    "| +render: void |         ",
+    "| +update: void |         ",
+    "+---------------+         ",
+    "                          ",
+    "                          ",
+  ]
+  .iter()
+  .join("\n")
+}
+
+///|
+fn class_mvc_architecture_sample_expected_unicode() -> String {
+  [
+    "┌────────────────────┐    ",
+    "│ Controller         │    ",
+    "├────────────────────┤    ",
+    "│ -Model: model      │    ",
+    "│ -View: view        │    ",
+    "├────────────────────┤    ",
+    "│ +handleInput: void │    ",
+    "│ +updateModel: void │    ",
+    "└────────────────────┘    ",
+    "           │              ",
+    "       upda│es            ",
+    "         ▼ │              ",
+    "┌──────────│─────┐        ",
+    "│ Model    │     │        ",
+    "├──────────│─────┤        ",
+    "│ -Map: dat│     │        ",
+    "├─── refreshes ──┤        ",
+    "│ +getDa│a: Map  │        ",
+    "│ +setDa│a: void │        ",
+    "│ +notif│: void  │        ",
+    "└───────│────────┘        ",
+    "        │┊                ",
+    "    notifies              ",
+    "        ▼                 ",
+    "┌───────────────┐         ",
+    "│ View          │         ",
+    "├───────────────┤         ",
+    "│ -Model: model │         ",
+    "├───────────────┤         ",
+    "│ +render: void │         ",
+    "│ +update: void │         ",
+    "└───────────────┘         ",
+    "                          ",
+    "                          ",
+  ]
+  .iter()
+  .join("\n")
+}
+
+///|
+test "ASCII/Unicode parity regression: Class: MVC Architecture sample" {
+  assert_text_parity(
+    class_mvc_architecture_sample_source(),
+    class_mvc_architecture_sample_expected_ascii(),
+    class_mvc_architecture_sample_expected_unicode(),
+  )
+}
