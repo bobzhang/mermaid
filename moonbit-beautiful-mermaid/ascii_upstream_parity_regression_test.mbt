@@ -1260,6 +1260,37 @@ fn original_node_shapes_expected_unicode() -> String {
 }
 
 ///|
+fn batch_1_shapes_source() -> String {
+  "graph LR\n  A[[Subroutine]] --> B(((Double Circle)))\n  B --> C{{Hexagon}}"
+}
+
+///|
+fn batch_1_shapes_expected_ascii() -> String {
+  [
+    "+------------+     +---------------+     +---------+",
+    "|            |     |               |     |         |",
+    "| Subroutine |---->| Double Circle |---->| Hexagon |",
+    "|            |     |               |     |         |",
+    "+------------+     +---------------+     +---------+",
+  ]
+  .iter()
+  .join("\n")
+}
+
+///|
+fn batch_1_shapes_expected_unicode() -> String {
+  [
+    "┌────────────┐     ┌───────────────┐     ┌─────────┐",
+    "│            │     │               │     │         │",
+    "│ Subroutine ├────►│ Double Circle ├────►│ Hexagon │",
+    "│            │     │               │     │         │",
+    "└────────────┘     └───────────────┘     └─────────┘",
+  ]
+  .iter()
+  .join("\n")
+}
+
+///|
 test "ASCII/Unicode parity regression: Beautiful Mermaid sample" {
   assert_text_parity(
     beautiful_mermaid_source(),
@@ -1400,5 +1431,14 @@ test "ASCII/Unicode parity regression: Original Node Shapes sample" {
     original_node_shapes_source(),
     original_node_shapes_expected_ascii(),
     original_node_shapes_expected_unicode(),
+  )
+}
+
+///|
+test "ASCII/Unicode parity regression: Batch 1 Shapes sample" {
+  assert_text_parity(
+    batch_1_shapes_source(),
+    batch_1_shapes_expected_ascii(),
+    batch_1_shapes_expected_unicode(),
   )
 }
