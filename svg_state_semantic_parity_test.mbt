@@ -74,10 +74,23 @@ fn state_rects_overlap(a : StateEdgeLabelRect, b : StateEdgeLabelRect) -> Bool {
 }
 
 ///|
-test "SVG state diagram renders basic labels and transition text" {
+fn snapshot_state_svg(
+  it : @test.Test,
+  filename : String,
+  svg : String,
+) -> Unit raise {
+  it.write(svg)
+  it.snapshot(filename~)
+}
+
+///|
+test "SVG state diagram renders basic labels and transition text" (
+  it : @test.Test
+) {
   let svg = try! @beautiful_mermaid.render_mermaid(
     "stateDiagram-v2\n[*] --> Idle\nIdle --> Active : start\nActive --> Done",
   )
+  snapshot_state_svg(it, "semantic_state_basic_labels_transitions.svg", svg)
 
   assert_true(svg.contains("<svg"))
   assert_true(svg.contains("</svg>"))
@@ -88,10 +101,11 @@ test "SVG state diagram renders basic labels and transition text" {
 }
 
 ///|
-test "SVG state normal states render rounded corners" {
+test "SVG state normal states render rounded corners" (it : @test.Test) {
   let svg = try! @beautiful_mermaid.render_mermaid(
     "stateDiagram-v2\nIdle --> Active",
   )
+  snapshot_state_svg(it, "semantic_state_rounded_corners.svg", svg)
 
   assert_true(svg.contains("rx=\"6\""))
   assert_true(svg.contains(">Idle</text>"))
@@ -99,10 +113,13 @@ test "SVG state normal states render rounded corners" {
 }
 
 ///|
-test "SVG state start pseudostate is a filled no-stroke circle" {
+test "SVG state start pseudostate is a filled no-stroke circle" (
+  it : @test.Test
+) {
   let svg = try! @beautiful_mermaid.render_mermaid(
     "stateDiagram-v2\n[*] --> Ready",
   )
+  snapshot_state_svg(it, "semantic_state_start_pseudostate.svg", svg)
 
   assert_true(svg.contains("<circle"))
   assert_true(svg.contains("class=\"state-start\""))
@@ -110,10 +127,11 @@ test "SVG state start pseudostate is a filled no-stroke circle" {
 }
 
 ///|
-test "SVG state end pseudostate renders as a bullseye" {
+test "SVG state end pseudostate renders as a bullseye" (it : @test.Test) {
   let svg = try! @beautiful_mermaid.render_mermaid(
     "stateDiagram-v2\nDone --> [*]",
   )
+  snapshot_state_svg(it, "semantic_state_end_pseudostate.svg", svg)
 
   assert_true(state_count_occurrences(svg, "<circle") >= 2)
   assert_true(svg.contains("fill=\"none\""))
@@ -121,10 +139,13 @@ test "SVG state end pseudostate renders as a bullseye" {
 }
 
 ///|
-test "SVG state composite declarations avoid duplicate state labels" {
+test "SVG state composite declarations avoid duplicate state labels" (
+  it : @test.Test
+) {
   let svg = try! @beautiful_mermaid.render_mermaid(
     "stateDiagram-v2\n[*] --> Idle\nIdle --> Processing : submit\nstate Processing {\n  parse --> validate\n  validate --> execute\n}\nProcessing --> Complete : done\nComplete --> [*]",
   )
+  snapshot_state_svg(it, "semantic_state_composite_no_duplicate_labels.svg", svg)
 
   assert_true(svg.contains(">Idle</text>"))
   assert_true(svg.contains(">Complete</text>"))
@@ -138,10 +159,11 @@ test "SVG state composite declarations avoid duplicate state labels" {
 }
 
 ///|
-test "SVG state cycle renders edge label background pills" {
+test "SVG state cycle renders edge label background pills" (it : @test.Test) {
   let svg = try! @beautiful_mermaid.render_mermaid(
     "stateDiagram-v2\n[*] --> Ready\nReady --> Running : start\nRunning --> Paused : pause\nPaused --> Running : resume\nRunning --> Stopped : stop\nStopped --> [*]",
   )
+  snapshot_state_svg(it, "semantic_state_cycle_label_bg_pills.svg", svg)
 
   assert_true(state_count_occurrences(svg, "class=\"edge-label-bg\"") >= 3)
   assert_true(svg.contains(">start</text>"))
@@ -151,10 +173,11 @@ test "SVG state cycle renders edge label background pills" {
 }
 
 ///|
-test "SVG state cycle edge label pills do not overlap" {
+test "SVG state cycle edge label pills do not overlap" (it : @test.Test) {
   let svg = try! @beautiful_mermaid.render_mermaid(
     "stateDiagram-v2\n[*] --> Ready\nReady --> Running : start\nRunning --> Paused : pause\nPaused --> Running : resume\nRunning --> Stopped : stop\nStopped --> [*]",
   )
+  snapshot_state_svg(it, "semantic_state_cycle_label_pills_non_overlap.svg", svg)
 
   let rects = state_collect_edge_label_rects(svg)
   assert_true(rects.length() >= 3)
@@ -167,10 +190,11 @@ test "SVG state cycle edge label pills do not overlap" {
 }
 
 ///|
-test "SVG state supports nested composite declarations" {
+test "SVG state supports nested composite declarations" (it : @test.Test) {
   let svg = try! @beautiful_mermaid.render_mermaid(
     "stateDiagram-v2\n[*] --> Active\nstate Active {\n  state Processing {\n    state Validating {\n      check --> verify\n    }\n  }\n}\nActive --> [*]",
   )
+  snapshot_state_svg(it, "semantic_state_nested_composite.svg", svg)
 
   assert_true(svg.contains("<svg"))
   assert_true(svg.contains(">Active</text>"))
@@ -181,10 +205,13 @@ test "SVG state supports nested composite declarations" {
 }
 
 ///|
-test "SVG state diagram direction override changes orientation" {
+test "SVG state diagram direction override changes orientation" (
+  it : @test.Test
+) {
   let lr_svg = try! @beautiful_mermaid.render_mermaid(
     "stateDiagram-v2\ndirection LR\n[*] --> A\nA --> [*]",
   )
+  snapshot_state_svg(it, "semantic_state_direction_lr.svg", lr_svg)
   let td_svg = try! @beautiful_mermaid.render_mermaid(
     "stateDiagram-v2\n[*] --> A\nA --> [*]",
   )
