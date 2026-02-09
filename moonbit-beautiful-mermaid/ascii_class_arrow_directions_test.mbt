@@ -108,6 +108,22 @@ test "Multiple class dependencies keep source above all targets" {
 }
 
 ///|
+test "Class association chain keeps top-to-bottom ordering" {
+  let diagram = "classDiagram\nA --> B\nB --> C"
+  let unicode = class_render(diagram, false)
+
+  let a_line = line_index(unicode, " A ")
+  let b_line = line_index(unicode, " B ")
+  let c_line = line_index(unicode, " C ")
+  assert_true(a_line >= 0)
+  assert_true(b_line >= 0)
+  assert_true(c_line >= 0)
+  assert_true(a_line < b_line)
+  assert_true(b_line < c_line)
+  assert_eq(count_occurrences(unicode, "▼"), 2)
+}
+
+///|
 test "Class realization arrows stay compatible across syntax variants" {
   let forward = class_render("classDiagram\nCircle ..|> Shape", false)
   assert_true(forward.contains("△"))
