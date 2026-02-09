@@ -2695,6 +2695,79 @@ fn sequence_alt_else_block_expected_unicode() -> String {
 }
 
 ///|
+fn sequence_opt_block_source() -> String {
+  "sequenceDiagram\n  participant A as App\n  participant C as Cache\n  participant DB as Database\n  A->>C: Get data\n  C-->>A: Cache miss\n  opt Cache miss\n    A->>DB: Query\n    DB-->>A: Results\n    A->>C: Store in cache\n  end"
+}
+
+///|
+fn sequence_opt_block_expected_ascii() -> String {
+  [
+    " +-----+            +-------+  +----------+   ",
+    " | App |            | Cache |  | Database |   ",
+    " +-----+            +-------+  +----------+   ",
+    "    |                   |            |        ",
+    "    |     Get data      |            |        ",
+    "    |------------------->            |        ",
+    "    |                   |            |        ",
+    "    |    Cache miss     |            |        ",
+    "    <...................|            |        ",
+    "    |                   |            |        ",
+    "+opt [Cache miss]------------------------+    ",
+    "|   |                   |            |   |    ",
+    "|   |             Query |            |   |    ",
+    "|   |-------------------------------->   |    ",
+    "|   |                   |            |   |    ",
+    "|   |            Results|            |   |    ",
+    "|   <................................|   |    ",
+    "|   |                   |            |   |    ",
+    "|   |  Store in cache   |            |   |    ",
+    "|   |------------------->            |   |    ",
+    "|   |                   |            |   |    ",
+    "+----------------------------------------+    ",
+    "    |                   |            |        ",
+    " +-----+            +-------+  +----------+   ",
+    " | App |            | Cache |  | Database |   ",
+    " +-----+            +-------+  +----------+   ",
+  ]
+  .iter()
+  .join("\n")
+}
+
+///|
+fn sequence_opt_block_expected_unicode() -> String {
+  [
+    " ┌─────┐            ┌───────┐  ┌──────────┐   ",
+    " │ App │            │ Cache │  │ Database │   ",
+    " └──┬──┘            └───┬───┘  └─────┬────┘   ",
+    "    │                   │            │        ",
+    "    │     Get data      │            │        ",
+    "    │───────────────────▶            │        ",
+    "    │                   │            │        ",
+    "    │    Cache miss     │            │        ",
+    "    ◀╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌│            │        ",
+    "    │                   │            │        ",
+    "┌opt [Cache miss]────────────────────────┐    ",
+    "│   │                   │            │   │    ",
+    "│   │             Query │            │   │    ",
+    "│   │────────────────────────────────▶   │    ",
+    "│   │                   │            │   │    ",
+    "│   │            Results│            │   │    ",
+    "│   ◀╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌│   │    ",
+    "│   │                   │            │   │    ",
+    "│   │  Store in cache   │            │   │    ",
+    "│   │───────────────────▶            │   │    ",
+    "│   │                   │            │   │    ",
+    "└────────────────────────────────────────┘    ",
+    "    │                   │            │        ",
+    " ┌──┴──┐            ┌───┴───┐  ┌─────┴────┐   ",
+    " │ App │            │ Cache │  │ Database │   ",
+    " └─────┘            └───────┘  └──────────┘   ",
+  ]
+  .iter()
+  .join("\n")
+}
+
+///|
 test "ASCII/Unicode parity regression: Beautiful Mermaid sample" {
   assert_text_parity(
     beautiful_mermaid_source(),
@@ -3042,5 +3115,14 @@ test "ASCII/Unicode parity regression: Sequence: Alt/Else Block sample" {
     sequence_alt_else_block_source(),
     sequence_alt_else_block_expected_ascii(),
     sequence_alt_else_block_expected_unicode(),
+  )
+}
+
+///|
+test "ASCII/Unicode parity regression: Sequence: Opt Block sample" {
+  assert_text_parity(
+    sequence_opt_block_source(),
+    sequence_opt_block_expected_ascii(),
+    sequence_opt_block_expected_unicode(),
   )
 }
