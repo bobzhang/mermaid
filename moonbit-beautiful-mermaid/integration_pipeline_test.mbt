@@ -532,6 +532,33 @@ test "SVG renders state end pseudostate as bullseye" {
 }
 
 ///|
+test "State multiple pseudostates render across text and SVG modes" {
+  let input = "stateDiagram-v2\n[*] --> A\n[*] --> B\nA --> [*]\nB --> [*]"
+
+  let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
+    use_ascii: true,
+    padding_x: 5,
+    padding_y: 5,
+    box_border_padding: 1,
+  })
+  let unicode = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
+    use_ascii: false,
+    padding_x: 5,
+    padding_y: 5,
+    box_border_padding: 1,
+  })
+  let svg = try! @beautiful_mermaid.render_mermaid(input)
+
+  assert_true(ascii.contains("A"))
+  assert_true(ascii.contains("B"))
+  assert_true(unicode.contains("A"))
+  assert_true(unicode.contains("B"))
+  assert_true(svg.contains(">A</text>"))
+  assert_true(svg.contains(">B</text>"))
+  assert_true(integration_count_occurrences(svg, "<circle") >= 4)
+}
+
+///|
 test "SVG renders composite state with inner nodes" {
   let svg = try! @beautiful_mermaid.render_mermaid(
     "stateDiagram-v2\nstate Processing {\n  parse --> validate\n  validate --> execute\n}\n[*] --> Processing",
