@@ -957,6 +957,33 @@ test "Sequence loop block renders across text and SVG modes" {
 }
 
 ///|
+test "Sequence self-message loop renders across text and SVG modes" {
+  let input = "sequenceDiagram\nparticipant W as Worker\nloop Retry\nW->>W: Check cache\nend"
+
+  let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
+    use_ascii: true,
+    padding_x: 5,
+    padding_y: 5,
+    box_border_padding: 1,
+  })
+  let unicode = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
+    use_ascii: false,
+    padding_x: 5,
+    padding_y: 5,
+    box_border_padding: 1,
+  })
+  let svg = try! @beautiful_mermaid.render_mermaid(input)
+
+  assert_true(ascii.contains("Worker"))
+  assert_true(ascii.contains("Check cache"))
+  assert_true(unicode.contains("Worker"))
+  assert_true(unicode.contains("Check cache"))
+  assert_true(svg.contains(">Worker</text>"))
+  assert_true(svg.contains(">Check cache</text>"))
+  assert_true(svg.contains("class=\"sequence-block\""))
+}
+
+///|
 test "Sequence opt block renders across text and SVG modes" {
   let input = "sequenceDiagram\nparticipant C as Client\nparticipant API\nC->>API: Fetch profile\nopt Cache hit\nAPI-->>C: 304 Not Modified\nend"
 
