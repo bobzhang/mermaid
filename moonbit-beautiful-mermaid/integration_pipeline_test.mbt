@@ -590,6 +590,37 @@ test "Sequence alt/else block renders across text and SVG modes" {
 }
 
 ///|
+test "Sequence note-over renders across text and SVG modes" {
+  let input = "sequenceDiagram\nparticipant A as API\nparticipant B as DB\nA->>B: Query\nNote over A,B: cache miss\nB-->>A: Result"
+
+  let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
+    use_ascii: true,
+    padding_x: 5,
+    padding_y: 5,
+    box_border_padding: 1,
+  })
+  let unicode = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
+    use_ascii: false,
+    padding_x: 5,
+    padding_y: 5,
+    box_border_padding: 1,
+  })
+  let svg = try! @beautiful_mermaid.render_mermaid(input)
+
+  assert_true(ascii.contains("API"))
+  assert_true(ascii.contains("DB"))
+  assert_true(ascii.contains("cache miss"))
+  assert_true(unicode.contains("API"))
+  assert_true(unicode.contains("DB"))
+  assert_true(unicode.contains("cache miss"))
+  assert_true(svg.contains(">API</text>"))
+  assert_true(svg.contains(">DB</text>"))
+  assert_true(svg.contains(">cache miss</text>"))
+  assert_true(svg.contains(">Query</text>"))
+  assert_true(svg.contains(">Result</text>"))
+}
+
+///|
 test "Flowchart cycle edge label pills do not overlap" {
   let svg = try! @beautiful_mermaid.render_mermaid(
     "graph LR\nA -->|forward| B\nB -->|back| A\nA -->|down| C",
