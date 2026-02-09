@@ -1699,6 +1699,37 @@ fn direction_bottom_top_bt_expected_unicode() -> String {
 }
 
 ///|
+fn all_12_flowchart_shapes_source() -> String {
+  "graph LR\n  A[Rectangle] --> B(Rounded)\n  B --> C{Diamond}\n  C --> D([Stadium])\n  D --> E((Circle))\n  E --> F[[Subroutine]]\n  F --> G(((Double Circle)))\n  G --> H{{Hexagon}}\n  H --> I[(Database)]\n  I --> J>Flag]\n  J --> K[/Trapezoid\\]\n  K --> L[\\Inverse Trap/]"
+}
+
+///|
+fn all_12_flowchart_shapes_expected_ascii() -> String {
+  [
+    "+-----------+     +---------+     +---------+     +---------+     +--------+     +------------+     +---------------+     +---------+     +----------+     +------+     +-----------+     +--------------+",
+    "|           |     |         |     |         |     |         |     |        |     |            |     |               |     |         |     |          |     |      |     |           |     |              |",
+    "| Rectangle |---->| Rounded |---->| Diamond |---->| Stadium |---->| Circle |---->| Subroutine |---->| Double Circle |---->| Hexagon |---->| Database |---->| Flag |---->| Trapezoid |---->| Inverse Trap |",
+    "|           |     |         |     |         |     |         |     |        |     |            |     |               |     |         |     |          |     |      |     |           |     |              |",
+    "+-----------+     +---------+     +---------+     +---------+     +--------+     +------------+     +---------------+     +---------+     +----------+     +------+     +-----------+     +--------------+",
+  ]
+  .iter()
+  .join("\n")
+}
+
+///|
+fn all_12_flowchart_shapes_expected_unicode() -> String {
+  [
+    "┌───────────┐     ┌─────────┐     ┌─────────┐     ┌─────────┐     ┌────────┐     ┌────────────┐     ┌───────────────┐     ┌─────────┐     ┌──────────┐     ┌──────┐     ┌───────────┐     ┌──────────────┐",
+    "│           │     │         │     │         │     │         │     │        │     │            │     │               │     │         │     │          │     │      │     │           │     │              │",
+    "│ Rectangle ├────►│ Rounded ├────►│ Diamond ├────►│ Stadium ├────►│ Circle ├────►│ Subroutine ├────►│ Double Circle ├────►│ Hexagon ├────►│ Database ├────►│ Flag ├────►│ Trapezoid ├────►│ Inverse Trap │",
+    "│           │     │         │     │         │     │         │     │        │     │            │     │               │     │         │     │          │     │      │     │           │     │              │",
+    "└───────────┘     └─────────┘     └─────────┘     └─────────┘     └────────┘     └────────────┘     └───────────────┘     └─────────┘     └──────────┘     └──────┘     └───────────┘     └──────────────┘",
+  ]
+  .iter()
+  .join("\n")
+}
+
+///|
 test "ASCII/Unicode parity regression: Beautiful Mermaid sample" {
   assert_text_parity(
     beautiful_mermaid_source(),
@@ -1920,5 +1951,14 @@ test "ASCII/Unicode parity regression: Direction: Bottom-Top (BT) sample" {
     direction_bottom_top_bt_source(),
     direction_bottom_top_bt_expected_ascii(),
     direction_bottom_top_bt_expected_unicode(),
+  )
+}
+
+///|
+test "ASCII/Unicode parity regression: All 12 Flowchart Shapes sample" {
+  assert_text_parity(
+    all_12_flowchart_shapes_source(),
+    all_12_flowchart_shapes_expected_ascii(),
+    all_12_flowchart_shapes_expected_unicode(),
   )
 }
