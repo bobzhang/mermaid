@@ -1322,6 +1322,57 @@ fn batch_2_shapes_expected_unicode() -> String {
 }
 
 ///|
+fn all_edge_styles_source() -> String {
+  "graph TD\n  A[Source] -->|solid| B[Target 1]\n  A -.->|dotted| C[Target 2]\n  A ==>|thick| D[Target 3]"
+}
+
+///|
+fn all_edge_styles_expected_ascii() -> String {
+  [
+    "+----------+",
+    "|          |",
+    "|  Source  |-thickted-----+",
+    "|          |        |     |",
+    "+----------+        +----------------------+",
+    "      |                   |                |",
+    "      |                   |                |",
+    "    solid                 |                |",
+    "      |                   |                |",
+    "      v                   v                v",
+    "+----------+        +----------+     +----------+",
+    "|          |        |          |     |          |",
+    "| Target 1 |        | Target 2 |     | Target 3 |",
+    "|          |        |          |     |          |",
+    "+----------+        +----------+     +----------+",
+  ]
+  .iter()
+  .join("\n")
+}
+
+///|
+fn all_edge_styles_expected_unicode() -> String {
+  [
+    "┌──────────┐",
+    "│          │",
+    "│  Source  ├─thickted─────┐",
+    "│          │        │     │",
+    "└─────┬────┘        └─────┼────────────────┐",
+    "      │                   │                │",
+    "      │                   │                │",
+    "    solid                 │                │",
+    "      │                   │                │",
+    "      ▼                   ▼                ▼",
+    "┌──────────┐        ┌──────────┐     ┌──────────┐",
+    "│          │        │          │     │          │",
+    "│ Target 1 │        │ Target 2 │     │ Target 3 │",
+    "│          │        │          │     │          │",
+    "└──────────┘        └──────────┘     └──────────┘",
+  ]
+  .iter()
+  .join("\n")
+}
+
+///|
 test "ASCII/Unicode parity regression: Beautiful Mermaid sample" {
   assert_text_parity(
     beautiful_mermaid_source(),
@@ -1480,5 +1531,14 @@ test "ASCII/Unicode parity regression: Batch 2 Shapes sample" {
     batch_2_shapes_source(),
     batch_2_shapes_expected_ascii(),
     batch_2_shapes_expected_unicode(),
+  )
+}
+
+///|
+test "ASCII/Unicode parity regression: All Edge Styles sample" {
+  assert_text_parity(
+    all_edge_styles_source(),
+    all_edge_styles_expected_ascii(),
+    all_edge_styles_expected_unicode(),
   )
 }
