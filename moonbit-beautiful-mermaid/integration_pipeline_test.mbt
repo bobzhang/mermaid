@@ -389,6 +389,21 @@ test "SVG renders composite state with inner nodes" {
 }
 
 ///|
+test "SVG renders full state lifecycle with labels" {
+  let svg = try! @beautiful_mermaid.render_mermaid(
+    "stateDiagram-v2\n[*] --> Idle\nIdle --> Processing : submit\nstate Processing {\n  parse --> validate\n  validate --> execute\n}\nProcessing --> Complete : done\nComplete --> [*]",
+  )
+
+  assert_true(svg.contains("<svg"))
+  assert_true(svg.contains("</svg>"))
+  assert_true(svg.contains(">Idle</text>"))
+  assert_true(svg.contains(">Complete</text>"))
+  assert_true(svg.contains(">Processing</text>"))
+  assert_true(svg.contains(">submit</text>"))
+  assert_true(svg.contains(">done</text>"))
+}
+
+///|
 test "ASCII and Unicode modes differ" {
   let ascii_options = @beautiful_mermaid.AsciiRenderOptions::{
     use_ascii: true,
