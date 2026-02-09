@@ -315,6 +315,13 @@ test "SVG renders trapezoid variants" {
 }
 
 ///|
+test "SVG no-arrow edges omit marker-end" {
+  let svg = try! @beautiful_mermaid.render_mermaid("graph TD\nA --- B")
+  assert_true(svg.contains("<polyline"))
+  assert_true(!svg.contains("marker-end="))
+}
+
+///|
 test "ASCII and Unicode modes differ" {
   let ascii_options = @beautiful_mermaid.AsciiRenderOptions::{
     use_ascii: true,
