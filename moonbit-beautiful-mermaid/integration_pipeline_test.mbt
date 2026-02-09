@@ -339,6 +339,15 @@ test "SVG parallel ampersand links emit one edge per source" {
 }
 
 ///|
+test "SVG applies inline style overrides for nodes" {
+  let svg = try! @beautiful_mermaid.render_mermaid(
+    "graph TD\nA[Red Node] --> B\nstyle A fill:#ff0000,stroke:#cc0000",
+  )
+  assert_true(svg.contains("fill=\"#ff0000\""))
+  assert_true(svg.contains("stroke=\"#cc0000\""))
+}
+
+///|
 test "ASCII and Unicode modes differ" {
   let ascii_options = @beautiful_mermaid.AsciiRenderOptions::{
     use_ascii: true,
