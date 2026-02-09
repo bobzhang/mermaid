@@ -143,6 +143,30 @@ test "SVG renders edge labels for simple flow" {
 }
 
 ///|
+test "SVG applies custom font option" {
+  let options = @beautiful_mermaid.RenderOptions::{
+    bg: None,
+    fg: None,
+    line: None,
+    accent: None,
+    muted: None,
+    surface: None,
+    border: None,
+    font: Some("JetBrains Mono"),
+    padding: None,
+    node_spacing: None,
+    layer_spacing: None,
+    transparent: None,
+  }
+  let svg = try! @beautiful_mermaid.render_mermaid(
+    "graph TD\nA --> B",
+    options~,
+  )
+
+  assert_true(svg.contains("'JetBrains Mono'"))
+}
+
+///|
 test "ASCII and Unicode modes differ" {
   let ascii_options = @beautiful_mermaid.AsciiRenderOptions::{
     use_ascii: true,
