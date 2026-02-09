@@ -231,6 +231,40 @@ test "SVG renders subgraph labels and nodes" {
 }
 
 ///|
+test "Subgraph direction override renders across text and SVG modes" {
+  let input = "graph TD\nsubgraph FE [Frontend]\n  direction LR\n  A[Web] --> B[API]\nend\nsubgraph BE [Backend]\n  C[Service] --> D[(DB)]\nend\nB --> C"
+
+  let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
+    use_ascii: true,
+    padding_x: 5,
+    padding_y: 5,
+    box_border_padding: 1,
+  })
+  let unicode = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
+    use_ascii: false,
+    padding_x: 5,
+    padding_y: 5,
+    box_border_padding: 1,
+  })
+  let svg = try! @beautiful_mermaid.render_mermaid(input)
+
+  assert_true(ascii.contains("Frontend"))
+  assert_true(ascii.contains("Backend"))
+  assert_true(ascii.contains("Web"))
+  assert_true(ascii.contains("Service"))
+  assert_true(unicode.contains("Frontend"))
+  assert_true(unicode.contains("Backend"))
+  assert_true(unicode.contains("Web"))
+  assert_true(unicode.contains("Service"))
+  assert_true(svg.contains(">Frontend</text>"))
+  assert_true(svg.contains(">Backend</text>"))
+  assert_true(svg.contains(">Web</text>"))
+  assert_true(svg.contains(">API</text>"))
+  assert_true(svg.contains(">Service</text>"))
+  assert_true(svg.contains(">DB</text>"))
+}
+
+///|
 test "SVG renders complex CI pipeline diagram" {
   let svg = try! @beautiful_mermaid.render_mermaid(
     "graph TD\nsubgraph ci [CI Pipeline]\nA[Push Code] --> B{Tests Pass?}\nB -->|Yes| C[Build Docker]\nB -->|No| D[Fix & Retry]\nD --> A\nend\nC --> E([Deploy to Staging])\nE --> F{QA Approved?}\nF -->|Yes| G((Production))\nF -->|No| D",
