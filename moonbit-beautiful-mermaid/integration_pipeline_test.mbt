@@ -412,6 +412,18 @@ test "SVG does not duplicate composite state labels" {
 }
 
 ///|
+test "SVG renders subgraph-first TD diagrams without ordering regressions" {
+  let svg = try! @beautiful_mermaid.render_mermaid(
+    "graph TD\nsubgraph ci [CI Pipeline]\nA[Push Code] --> B{Tests Pass?}\nB -->|Yes| C[Build Image]\nend\nC --> D([Deploy])\nD --> E{QA?}\nE -->|Yes| F((Production))",
+  )
+
+  assert_true(svg.contains(">CI Pipeline</text>"))
+  assert_true(svg.contains(">Push Code</text>"))
+  assert_true(svg.contains(">Deploy</text>"))
+  assert_true(svg.contains(">Production</text>"))
+}
+
+///|
 test "ASCII and Unicode modes differ" {
   let ascii_options = @beautiful_mermaid.AsciiRenderOptions::{
     use_ascii: true,
