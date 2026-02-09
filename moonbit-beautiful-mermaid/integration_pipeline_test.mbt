@@ -1354,6 +1354,37 @@ test "Sequence actor declarations render across text and SVG modes" {
 }
 
 ///|
+test "Sequence mixed arrow operators render across text and SVG modes" {
+  let input = "sequenceDiagram\nparticipant A\nparticipant B\nA->B: Open\nB--)A: Dotted Open\nA-->>B: Filled"
+
+  let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
+    use_ascii: true,
+    padding_x: 5,
+    padding_y: 5,
+    box_border_padding: 1,
+  })
+  let unicode = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
+    use_ascii: false,
+    padding_x: 5,
+    padding_y: 5,
+    box_border_padding: 1,
+  })
+  let svg = try! @beautiful_mermaid.render_mermaid(input)
+
+  assert_true(ascii.contains("Open"))
+  assert_true(ascii.contains("Dotted Open"))
+  assert_true(ascii.contains("Filled"))
+  assert_true(unicode.contains("Open"))
+  assert_true(unicode.contains("Dotted Open"))
+  assert_true(unicode.contains("Filled"))
+  assert_true(svg.contains(">Open</text>"))
+  assert_true(svg.contains(">Dotted Open</text>"))
+  assert_true(svg.contains(">Filled</text>"))
+  assert_true(svg.contains("marker-end=\"url(#seq-arrow-open)\""))
+  assert_true(svg.contains("marker-end=\"url(#seq-arrow)\""))
+}
+
+///|
 test "Class inheritance labels render across text and SVG modes" {
   let input = "classDiagram\nclass Shape {\n<<abstract>>\n+draw() void\n}\nclass Circle {\n+radius int\n+draw() void\n}\nShape <|-- Circle : inherits"
 
