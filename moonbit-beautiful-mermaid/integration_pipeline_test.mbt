@@ -825,6 +825,39 @@ test "Sequence activation markers render across text and SVG modes" {
 }
 
 ///|
+test "Sequence actor declarations render across text and SVG modes" {
+  let input = "sequenceDiagram\nactor U as User\nactor S as Service\nU->>S: Login\nS-->>U: Token"
+
+  let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
+    use_ascii: true,
+    padding_x: 5,
+    padding_y: 5,
+    box_border_padding: 1,
+  })
+  let unicode = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
+    use_ascii: false,
+    padding_x: 5,
+    padding_y: 5,
+    box_border_padding: 1,
+  })
+  let svg = try! @beautiful_mermaid.render_mermaid(input)
+
+  assert_true(ascii.contains("User"))
+  assert_true(ascii.contains("Service"))
+  assert_true(ascii.contains("Login"))
+  assert_true(ascii.contains("Token"))
+  assert_true(unicode.contains("User"))
+  assert_true(unicode.contains("Service"))
+  assert_true(unicode.contains("Login"))
+  assert_true(unicode.contains("Token"))
+  assert_true(svg.contains(">User</text>"))
+  assert_true(svg.contains(">Service</text>"))
+  assert_true(svg.contains(">Login</text>"))
+  assert_true(svg.contains(">Token</text>"))
+  assert_true(svg.contains("class=\"sequence-actor\""))
+}
+
+///|
 test "Class inheritance labels render across text and SVG modes" {
   let input = "classDiagram\nclass Shape {\n<<abstract>>\n+draw() void\n}\nclass Circle {\n+radius int\n+draw() void\n}\nShape <|-- Circle : inherits"
 
