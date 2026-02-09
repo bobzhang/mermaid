@@ -58,7 +58,10 @@ test "canonical_cli_theme_slug handles aliases and normalization" {
 
 ///|
 test "available_theme_list remains deduplicated" {
-  let items = available_theme_list().split(",").map(item => item.trim().to_string()).to_array()
+  let items = available_theme_list()
+    .split(",")
+    .map(item => item.trim().to_string())
+    .to_array()
   let seen : Map[String, Bool] = {}
   for item in items {
     assert_true(item != "")

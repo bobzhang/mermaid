@@ -130,15 +130,7 @@ pub fn from_shiki_theme(theme : ShikiTheme) -> DiagramColors {
   let surface = shiki_theme_color(theme, "editor.selectionBackground")
   let border = shiki_theme_color(theme, "editorWidget.border")
 
-  {
-    bg,
-    fg,
-    line,
-    accent,
-    muted,
-    surface,
-    border,
-  }
+  { bg, fg, line, accent, muted, surface, border }
 }
 
 ///|
@@ -321,14 +313,14 @@ pub fn theme_slug(theme : ThemeName) -> String {
 ///|
 fn normalize_theme_name_input(name : String) -> String {
   let normalized = name
-  .trim()
-  .to_string()
-  .to_lower()
-  .replace_all(old="_", new="-")
-  .replace_all(old=" ", new="-")
-  .replace_all(old="\t", new="-")
-  .replace_all(old="\n", new="-")
-  .replace_all(old="\r", new="-")
+    .trim()
+    .to_string()
+    .to_lower()
+    .replace_all(old="_", new="-")
+    .replace_all(old=" ", new="-")
+    .replace_all(old="\t", new="-")
+    .replace_all(old="\n", new="-")
+    .replace_all(old="\r", new="-")
   let mut collapsed = normalized
   while collapsed.contains("--") {
     collapsed = collapsed.replace_all(old="--", new="-")

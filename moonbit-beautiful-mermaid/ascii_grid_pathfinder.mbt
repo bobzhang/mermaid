@@ -33,10 +33,7 @@ fn ascii_grid_in_bounds(
   min_y : Int,
   max_y : Int,
 ) -> Bool {
-  coord.x >= min_x &&
-  coord.x <= max_x &&
-  coord.y >= min_y &&
-  coord.y <= max_y
+  coord.x >= min_x && coord.x <= max_x && coord.y >= min_y && coord.y <= max_y
 }
 
 ///|
@@ -161,10 +158,9 @@ fn ascii_grid_pathfind(
     return Some([start])
   }
 
-  let frontier : Array[AsciiGridFrontierEntry] = [AsciiGridFrontierEntry::{
-    coord: start,
-    priority: 0,
-  }]
+  let frontier : Array[AsciiGridFrontierEntry] = [
+    AsciiGridFrontierEntry::{ coord: start, priority: 0 },
+  ]
 
   let cost_so_far : Map[String, Int] = {}
   cost_so_far[ascii_grid_key(start)] = 0

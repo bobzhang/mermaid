@@ -64,6 +64,10 @@ pub impl Show for MermaidError
 pub impl ToJson for MermaidError
 
 // Types and methods
+type AsciiGridCoord
+pub impl Eq for AsciiGridCoord
+pub impl Show for AsciiGridCoord
+
 pub(all) struct AsciiRenderOptions {
   use_ascii : Bool
   padding_x : Int
@@ -108,6 +112,13 @@ pub enum EdgeStyle {
 pub impl Eq for EdgeStyle
 pub impl Show for EdgeStyle
 pub impl ToJson for EdgeStyle
+
+type LayoutStateEdgeDir
+pub impl Eq for LayoutStateEdgeDir
+
+type LayoutStateGridCoord
+pub impl Eq for LayoutStateGridCoord
+pub impl Show for LayoutStateGridCoord
 
 pub struct MermaidEdge {
   source : String

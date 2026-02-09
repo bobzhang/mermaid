@@ -307,7 +307,9 @@ test "SVG renderer root style only sets required CSS vars by default" {
     "Inter",
     false,
   )
-  assert_true(svg.contains("style=\"--bg:#FFFFFF;--fg:#27272A;background:var(--bg)\""))
+  assert_true(
+    svg.contains("style=\"--bg:#FFFFFF;--fg:#27272A;background:var(--bg)\""),
+  )
   assert_true(!svg.contains("--line:"))
   assert_true(!svg.contains("--accent:"))
   assert_true(!svg.contains("--muted:"))
@@ -404,7 +406,9 @@ test "SVG renderer class-row class uses text-muted fill at 11px" {
     "Inter",
     false,
   )
-  assert_true(svg.contains(".class-row{fill:var(--_text-muted);font-size:11px}"))
+  assert_true(
+    svg.contains(".class-row{fill:var(--_text-muted);font-size:11px}"),
+  )
 }
 
 ///|
@@ -445,7 +449,9 @@ test "SVG renderer node-divider class uses node-stroke token" {
     "Inter",
     false,
   )
-  assert_true(svg.contains(".node-divider{stroke:var(--_node-stroke);stroke-width:1}"))
+  assert_true(
+    svg.contains(".node-divider{stroke:var(--_node-stroke);stroke-width:1}"),
+  )
 }
 
 ///|
@@ -457,7 +463,9 @@ test "SVG renderer edge-label background uses inner-stroke border" {
     false,
   )
   assert_true(
-    svg.contains(".edge-label-bg{fill:var(--bg);stroke:var(--_inner-stroke);stroke-width:0.5}"),
+    svg.contains(
+      ".edge-label-bg{fill:var(--bg);stroke:var(--_inner-stroke);stroke-width:0.5}",
+    ),
   )
 }
 
@@ -485,7 +493,9 @@ test "SVG renderer sequence-actor class uses derived line token" {
     false,
   )
   assert_true(
-    svg.contains(".sequence-actor{fill:none;stroke:var(--_line);stroke-width:1.5}"),
+    svg.contains(
+      ".sequence-actor{fill:none;stroke:var(--_line);stroke-width:1.5}",
+    ),
   )
 }
 

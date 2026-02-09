@@ -480,11 +480,7 @@ fn flow_non_state_route_points_with_pathfinder(
   canvas_height : Int,
 ) -> Array[Point] {
   let fallback = flow_non_state_route_points(
-    source_x,
-    source_y,
-    target_x,
-    target_y,
-    horizontal_first,
+    source_x, source_y, target_x, target_y, horizontal_first,
   )
   if canvas_width <= 0 || canvas_height <= 0 {
     return fallback
@@ -492,15 +488,16 @@ fn flow_non_state_route_points_with_pathfinder(
 
   let start = AsciiGridCoord::{ x: source_x, y: source_y }
   let ending = AsciiGridCoord::{ x: target_x, y: target_y }
-  match ascii_grid_pathfind(
-    start,
-    ending,
-    blocked,
-    0,
-    canvas_width - 1,
-    0,
-    canvas_height - 1,
-  ) {
+  match
+    ascii_grid_pathfind(
+      start,
+      ending,
+      blocked,
+      0,
+      canvas_width - 1,
+      0,
+      canvas_height - 1,
+    ) {
     Some(path) => {
       if path.length() < 2 {
         return fallback
@@ -617,11 +614,7 @@ fn flow_non_state_label_anchor_from_points(
 ) -> (Int, Int) {
   if points.length() < 2 {
     return flow_non_state_label_anchor(
-      source_x,
-      source_y,
-      target_x,
-      target_y,
-      label_len,
+      source_x, source_y, target_x, target_y, label_len,
     )
   }
 
@@ -1085,11 +1078,7 @@ fn flow_refine_unicode_side_tees(canvas : Array[Array[String]]) -> Unit {
       let has_down = y + 1 < snapshot.length() &&
         flow_connects_up(snapshot[y + 1][x])
       canvas[y][x] = flow_unicode_char_for_connections(
-        existing,
-        has_left,
-        has_right,
-        has_up,
-        has_down,
+        existing, has_left, has_right, has_up, has_down,
       )
     }
   }
@@ -1113,19 +1102,14 @@ fn flow_put_unicode_border_join(
   let has_right = x + 1 < canvas[0].length() &&
     flow_connects_left(canvas[y][x + 1])
   let has_up = y > 0 && flow_connects_down(canvas[y - 1][x])
-  let has_down = y + 1 < canvas.length() &&
-    flow_connects_up(canvas[y + 1][x])
+  let has_down = y + 1 < canvas.length() && flow_connects_up(canvas[y + 1][x])
 
   put_canvas(
     canvas,
     x,
     y,
     flow_unicode_char_for_connections(
-      existing,
-      has_left,
-      has_right,
-      has_up,
-      has_down,
+      existing, has_left, has_right, has_up, has_down,
     ),
   )
 }
@@ -1271,7 +1255,8 @@ fn flow_mark_ascii_route_intersections(
       let has_left = x > 0 && flow_connects_right(canvas[y][x - 1])
       let has_right = x + 1 < width && flow_connects_left(canvas[y][x + 1])
       let has_up = y > 0 && flow_connects_down(canvas[y - 1][x])
-      let has_down = y + 1 < canvas.length() && flow_connects_up(canvas[y + 1][x])
+      let has_down = y + 1 < canvas.length() &&
+        flow_connects_up(canvas[y + 1][x])
       if (has_left || has_right) && (has_up || has_down) {
         put_canvas(canvas, x, y, "+")
       }
@@ -1530,9 +1515,7 @@ fn flow_collect_node_top_level_group_ids(
   }
   for child in subgraph.children {
     flow_collect_node_top_level_group_ids(
-      child,
-      top_level_group_id,
-      node_top_level_group_by_id,
+      child, top_level_group_id, node_top_level_group_by_id,
     )
   }
 }
@@ -1553,7 +1536,7 @@ fn flow_lr_top_level_group_shifts(
   for i in 1..<ordered_indexes.length() {
     let mut j = i
     while j > 0 &&
-      groups[ordered_indexes[j - 1]].left > groups[ordered_indexes[j]].left {
+          groups[ordered_indexes[j - 1]].left > groups[ordered_indexes[j]].left {
       let tmp = ordered_indexes[j - 1]
       ordered_indexes[j - 1] = ordered_indexes[j]
       ordered_indexes[j] = tmp
@@ -1598,7 +1581,9 @@ fn flow_expand_group_side_padding_for_nodes(
 ) -> AsciiFlowGroupBox {
   let adjusted_children : Array[AsciiFlowGroupBox] = []
   for child in group.children {
-    adjusted_children.push(flow_expand_group_side_padding_for_nodes(child, nodes))
+    adjusted_children.push(
+      flow_expand_group_side_padding_for_nodes(child, nodes),
+    )
   }
 
   let mut left = group.left
@@ -2230,26 +2215,10 @@ fn render_ascii_state_flat_grid(
       let dir_y = unit_step(next.y - previous.y)
       let first_segment = i == 1
       let last_segment = i == points.length() - 1
-      let start_x = if first_segment {
-        previous.x + dir_x
-      } else {
-        previous.x
-      }
-      let start_y = if first_segment {
-        previous.y + dir_y
-      } else {
-        previous.y
-      }
-      let end_x = if last_segment {
-        next.x - dir_x
-      } else {
-        next.x
-      }
-      let end_y = if last_segment {
-        next.y - dir_y
-      } else {
-        next.y
-      }
+      let start_x = if first_segment { previous.x + dir_x } else { previous.x }
+      let start_y = if first_segment { previous.y + dir_y } else { previous.y }
+      let end_x = if last_segment { next.x - dir_x } else { next.x }
+      let end_y = if last_segment { next.y - dir_y } else { next.y }
       if start_x == end_x && start_y == end_y {
         continue
       }
@@ -2452,10 +2421,8 @@ fn render_ascii_flow_subgraphs(
     is (Direction::LR | Direction::RL)
   let state_graph_mode = graph_has_shape(graph, NodeShape::StateStart) ||
     graph_has_shape(graph, NodeShape::StateEnd)
-  let state_layout_mode = state_graph_mode &&
-    !flow_direction_horizontal
-  let horizontal_state_flow_mode = state_graph_mode &&
-    flow_direction_horizontal
+  let state_layout_mode = state_graph_mode && !flow_direction_horizontal
+  let horizontal_state_flow_mode = state_graph_mode && flow_direction_horizontal
   let state_flat_layout_mode = state_layout_mode &&
     graph.subgraphs.length() == 0
   let state_composite_layout_mode = state_layout_mode && !state_flat_layout_mode
@@ -2485,7 +2452,11 @@ fn render_ascii_flow_subgraphs(
     let base_width = if state_layout_mode {
       match node.shape {
         NodeShape::StateStart | NodeShape::StateEnd =>
-          if flow_direction_horizontal { 4 } else { 12 }
+          if flow_direction_horizontal {
+            4
+          } else {
+            12
+          }
         _ =>
           if flow_direction_horizontal {
             (label.length() + 4).max(5)
@@ -2495,7 +2466,7 @@ fn render_ascii_flow_subgraphs(
       }
     } else if flow_direction_horizontal && !flow_with_subgraphs {
       if horizontal_state_flow_mode &&
-        (node.shape is (NodeShape::StateStart | NodeShape::StateEnd)) {
+        node.shape is (NodeShape::StateStart | NodeShape::StateEnd) {
         4
       } else {
         (label.length() + 4).max(5)
@@ -2538,7 +2509,11 @@ fn render_ascii_flow_subgraphs(
     let (min_width, min_height) = if state_layout_mode {
       let state_min_width = match node.shape {
         NodeShape::StateStart | NodeShape::StateEnd =>
-          if flow_direction_horizontal { 4 } else { 12 }
+          if flow_direction_horizontal {
+            4
+          } else {
+            12
+          }
         _ =>
           if flow_direction_horizontal {
             (label.length() + 4).max(5)
@@ -2550,7 +2525,7 @@ fn render_ascii_flow_subgraphs(
     } else {
       let fallback_width = if flow_direction_horizontal && !flow_with_subgraphs {
         if horizontal_state_flow_mode &&
-          (node.shape is (NodeShape::StateStart | NodeShape::StateEnd)) {
+          node.shape is (NodeShape::StateStart | NodeShape::StateEnd) {
           4
         } else {
           (label.length() + 4).max(5)
@@ -2561,7 +2536,7 @@ fn render_ascii_flow_subgraphs(
       (option_int_or(column_width_by_x.get(column_key), fallback_width), 5)
     }
     let horizontal_state_pseudostate = horizontal_state_flow_mode &&
-      (node.shape is (NodeShape::StateStart | NodeShape::StateEnd))
+      node.shape is (NodeShape::StateStart | NodeShape::StateEnd)
     let width = if horizontal_state_pseudostate {
       4
     } else if state_layout_mode {
@@ -2714,7 +2689,10 @@ fn render_ascii_flow_subgraphs(
       if !canonical_left_by_key.contains(key) {
         canonical_left_by_key[key] = node.left
       } else {
-        let current_left = option_int_or(canonical_left_by_key.get(key), node.left)
+        let current_left = option_int_or(
+          canonical_left_by_key.get(key),
+          node.left,
+        )
         if node.left < current_left {
           canonical_left_by_key[key] = node.left
         }
@@ -2722,7 +2700,10 @@ fn render_ascii_flow_subgraphs(
     }
     for i, node in mapped_nodes {
       let key = option_int_or(node_column_key_by_id.get(node.id), node.left)
-      let canonical_left = option_int_or(canonical_left_by_key.get(key), node.left)
+      let canonical_left = option_int_or(
+        canonical_left_by_key.get(key),
+        node.left,
+      )
       if node.left != canonical_left {
         mapped_nodes[i] = AsciiFlowNodeBox::{
           id: node.id,
@@ -2759,9 +2740,9 @@ fn render_ascii_flow_subgraphs(
     }
     groups
   }
-  let flow_has_subgraph_direction_override = graph.subgraphs.any(
-    subgraph => subgraph.direction is Some(_),
-  )
+  let flow_has_subgraph_direction_override = graph.subgraphs.any(subgraph => {
+    subgraph.direction is Some(_)
+  })
   let mapped_groups = if !state_layout_mode &&
     flow_with_subgraphs &&
     !flow_direction_horizontal &&
@@ -2845,7 +2826,10 @@ fn render_ascii_flow_subgraphs(
     for node in mapped_nodes {
       match node_top_level_group_by_id.get(node.id) {
         Some(top_level_group_id) => {
-          let layout_x = option_int_or(node_layout_x_by_id.get(node.id), node.left)
+          let layout_x = option_int_or(
+            node_layout_x_by_id.get(node.id),
+            node.left,
+          )
           let layout_column = layout_x / (scale_x * 5)
           let key = "\{top_level_group_id}|\{layout_column}"
           let current_left = option_int_or(
@@ -2863,7 +2847,10 @@ fn render_ascii_flow_subgraphs(
     for i, node in mapped_nodes {
       match node_top_level_group_by_id.get(node.id) {
         Some(top_level_group_id) => {
-          let layout_x = option_int_or(node_layout_x_by_id.get(node.id), node.left)
+          let layout_x = option_int_or(
+            node_layout_x_by_id.get(node.id),
+            node.left,
+          )
           let layout_column = layout_x / (scale_x * 5)
           let key = "\{top_level_group_id}|\{layout_column}"
           match min_left_by_group_and_layout_x.get(key) {
@@ -2872,9 +2859,10 @@ fn render_ascii_flow_subgraphs(
               match top_level_group_by_id.get(top_level_group_id) {
                 Some(top_level_group) => {
                   let min_left = top_level_group.left + 2
-                  let max_left = (
-                    top_level_group.left + top_level_group.width - node.width - 1
-                  ).max(min_left)
+                  let max_left = (top_level_group.left +
+                  top_level_group.width -
+                  node.width -
+                  1).max(min_left)
                   if aligned_left < min_left {
                     aligned_left = min_left
                   }
@@ -3074,9 +3062,7 @@ fn render_ascii_flow_subgraphs(
             merge_primary_join_x = target_box.left - 3
           }
           let horizontal_first = if flow_direction_horizontal {
-            if horizontal_state_flow_mode &&
-              center_dx != 0 &&
-              center_dy < 0 {
+            if horizontal_state_flow_mode && center_dx != 0 && center_dy < 0 {
               true
             } else if !flow_with_subgraphs &&
               center_dy != 0 &&
@@ -3193,10 +3179,7 @@ fn render_ascii_flow_subgraphs(
             } else {
               let secondary_horizontal_first = source_anchor_y < target_anchor_y
               flow_non_state_route_points(
-                source_anchor_x,
-                source_anchor_y,
-                target_anchor_x,
-                target_anchor_y,
+                source_anchor_x, source_anchor_y, target_anchor_x, target_anchor_y,
                 secondary_horizontal_first,
               )
             }
@@ -3205,10 +3188,7 @@ fn render_ascii_flow_subgraphs(
               source_box, source_dir_dx, source_dir_dy, false,
             )
             let target_anchor = flow_edge_anchor(
-              target_box,
-              target_dir_dx,
-              target_dir_dy,
-              true,
+              target_box, target_dir_dx, target_dir_dy, true,
             )
             let (sx, sy) = source_anchor
             let (tx, ty) = target_anchor
@@ -3217,10 +3197,7 @@ fn render_ascii_flow_subgraphs(
             target_anchor_x = tx
             target_anchor_y = ty
             let fallback_route_points = flow_non_state_route_points(
-              source_anchor_x,
-              source_anchor_y,
-              target_anchor_x,
-              target_anchor_y,
+              source_anchor_x, source_anchor_y, target_anchor_x, target_anchor_y,
               horizontal_first,
             )
             let shared_back_route = if flow_with_subgraphs &&
@@ -3249,18 +3226,11 @@ fn render_ascii_flow_subgraphs(
                 if flow_with_subgraphs &&
                   !flow_direction_horizontal &&
                   flow_non_state_route_hits_blocked_cells(
-                    fallback_route_points,
-                    blocked_cells,
+                    fallback_route_points, blocked_cells,
                   ) {
                   flow_non_state_route_points_with_pathfinder(
-                    source_anchor_x,
-                    source_anchor_y,
-                    target_anchor_x,
-                    target_anchor_y,
-                    horizontal_first,
-                    blocked_cells,
-                    canvas_width,
-                    canvas_height,
+                    source_anchor_x, source_anchor_y, target_anchor_x, target_anchor_y,
+                    horizontal_first, blocked_cells, canvas_width, canvas_height,
                   )
                 } else {
                   fallback_route_points
@@ -3271,7 +3241,15 @@ fn render_ascii_flow_subgraphs(
           for i in 1..<non_state_route_points.length() {
             let from = non_state_route_points[i - 1]
             let to = non_state_route_points[i]
-            flow_draw_segment(canvas, from.x, from.y, to.x, to.y, h_char, v_char)
+            flow_draw_segment(
+              canvas,
+              from.x,
+              from.y,
+              to.x,
+              to.y,
+              h_char,
+              v_char,
+            )
           }
           if options.use_ascii {
             if flow_with_subgraphs && !flow_direction_horizontal {
@@ -3283,7 +3261,9 @@ fn render_ascii_flow_subgraphs(
             if !flow_with_subgraphs &&
               flow_direction_horizontal &&
               edge.label is Some(_) {
-              flow_mark_ascii_route_intersections(canvas, non_state_route_points)
+              flow_mark_ascii_route_intersections(
+                canvas, non_state_route_points,
+              )
             }
           }
           let first_point = non_state_route_points[0]
@@ -3364,10 +3344,7 @@ fn render_ascii_flow_subgraphs(
             non_state_route_points
           } else {
             flow_non_state_route_points(
-              source_anchor_x,
-              source_anchor_y,
-              target_anchor_x,
-              target_anchor_y,
+              source_anchor_x, source_anchor_y, target_anchor_x, target_anchor_y,
               flow_direction_horizontal,
             )
           }
@@ -3382,14 +3359,8 @@ fn render_ascii_flow_subgraphs(
           if !upward_back_edge_detour {
             edge_label_overlays.push(
               flow_non_state_edge_label_placement(
-                route_points,
-                source_anchor_x,
-                source_anchor_y,
-                target_anchor_x,
-                target_anchor_y,
-                label,
-                mapped_nodes,
-                edge_label_overlays,
+                route_points, source_anchor_x, source_anchor_y, target_anchor_x,
+                target_anchor_y, label, mapped_nodes, edge_label_overlays,
               ),
             )
           }

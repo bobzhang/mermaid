@@ -478,11 +478,13 @@ test "state flat layout places reverse-pair labels near source segments" {
   let mut error_label : Point? = None
   let mut success_label : Point? = None
   for edge in positioned.edges {
-    if edge.source == "Connected" && edge.target == "Reconnecting" &&
+    if edge.source == "Connected" &&
+      edge.target == "Reconnecting" &&
       edge.label == Some("error") {
       error_label = edge.label_position
     }
-    if edge.source == "Reconnecting" && edge.target == "Connected" &&
+    if edge.source == "Reconnecting" &&
+      edge.target == "Connected" &&
       edge.label == Some("success") {
       success_label = edge.label_position
     }
@@ -509,11 +511,13 @@ test "state flat layout anchors diagonal back-edge label near source side" {
   let mut error_label : Point? = None
   let mut max_retries_label : Point? = None
   for edge in positioned.edges {
-    if edge.source == "Connected" && edge.target == "Reconnecting" &&
+    if edge.source == "Connected" &&
+      edge.target == "Reconnecting" &&
       edge.label == Some("error") {
       error_label = edge.label_position
     }
-    if edge.source == "Reconnecting" && edge.target == "Closed" &&
+    if edge.source == "Reconnecting" &&
+      edge.target == "Closed" &&
       edge.label == Some("max_retries") {
       max_retries_label = edge.label_position
     }
@@ -525,8 +529,6 @@ test "state flat layout anchors diagonal back-edge label near source side" {
       assert_eq(max_retries_position.y > error_position.y, true)
     }
     _ =>
-      fail(
-        "expected both error and max_retries label positions to be present",
-      )
+      fail("expected both error and max_retries label positions to be present")
   }
 }

@@ -4,8 +4,12 @@ fn print_usage() -> Unit {
   println("  moon run cmd/main -- \"graph TD\\nA --> B\"")
   println("  moon run cmd/main -- --ascii \"graph LR\\nA --> B\"")
   println("  moon run cmd/main -- --unicode \"graph LR\\nA --> B\"")
-  println("  moon run cmd/main -- --ascii --ascii-padding-x=8 \"graph LR\\nA --> B\"")
-  println("  moon run cmd/main -- --ascii --ascii-padding-y=2 \"graph LR\\nA --> B\"")
+  println(
+    "  moon run cmd/main -- --ascii --ascii-padding-x=8 \"graph LR\\nA --> B\"",
+  )
+  println(
+    "  moon run cmd/main -- --ascii --ascii-padding-y=2 \"graph LR\\nA --> B\"",
+  )
   println(
     "  moon run cmd/main -- --ascii --ascii-box-border-padding=2 \"graph LR\\nA --> B\"",
   )
@@ -102,7 +106,8 @@ fn ascii_spacing_requires_text_mode(
   padding_y : Int,
   box_border_padding : Int,
 ) -> Bool {
-  !render_text && ascii_spacing_overridden(padding_x, padding_y, box_border_padding)
+  !render_text &&
+  ascii_spacing_overridden(padding_x, padding_y, box_border_padding)
 }
 
 ///|
@@ -753,11 +758,8 @@ fn main {
     return
   }
   if ascii_spacing_requires_text_mode(
-    render_text,
-    ascii_padding_x,
-    ascii_padding_y,
-    ascii_box_border_padding,
-  ) {
+      render_text, ascii_padding_x, ascii_padding_y, ascii_box_border_padding,
+    ) {
     println(
       "Error: ASCII spacing flags require --ascii or --unicode text output mode",
     )
@@ -766,23 +768,10 @@ fn main {
   }
   if render_text &&
     svg_options_overridden(
-      theme_slug,
-      font_name,
-      bg_color,
-      fg_color,
-      line_color,
-      accent_color,
-      muted_color,
-      surface_color,
-      border_color,
-      padding,
-      node_spacing,
-      layer_spacing,
-      transparent,
+      theme_slug, font_name, bg_color, fg_color, line_color, accent_color, muted_color,
+      surface_color, border_color, padding, node_spacing, layer_spacing, transparent,
     ) {
-    println(
-      "Error: SVG flags require SVG output mode (omit --ascii/--unicode)",
-    )
+    println("Error: SVG flags require SVG output mode (omit --ascii/--unicode)")
     print_usage()
     return
   }
@@ -827,20 +816,20 @@ fn main {
   }
 
   let rendered_svg = match theme_slug {
-    Some(slug) => {
+    Some(slug) =>
       match canonical_cli_theme_slug(slug) {
-        Some(canonical_slug) => try? @beautiful_mermaid.render_mermaid_with_theme_name(
-          input,
-          canonical_slug,
-          options=svg_options,
-        )
+        Some(canonical_slug) =>
+          try? @beautiful_mermaid.render_mermaid_with_theme_name(
+            input,
+            canonical_slug,
+            options=svg_options,
+          )
         None => {
           println("Unknown theme: \{slug}")
           println("Available themes: \{available_theme_list()}")
           return
         }
       }
-    }
     None => try? @beautiful_mermaid.render_mermaid(input, options=svg_options)
   }
 

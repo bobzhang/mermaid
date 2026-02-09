@@ -22,7 +22,9 @@ fn collect_state_labels(
 }
 
 ///|
-fn graph_has_state_pseudostates(graph : @beautiful_mermaid.MermaidGraph) -> Bool {
+fn graph_has_state_pseudostates(
+  graph : @beautiful_mermaid.MermaidGraph,
+) -> Bool {
   for _, node in graph.nodes {
     let shape_name = node.shape.to_string()
     if shape_name == "StateStart" || shape_name == "StateEnd" {
@@ -69,8 +71,7 @@ test "ASCII state corpus keeps readable labels and pseudostate rendering" {
 
 ///|
 test "Unicode state corpus keeps readable labels and pseudostate rendering" {
-  for
-    case_data in @test_support.supported_unicode_cases().filter(is_state_case) {
+  for case_data in @test_support.supported_unicode_cases().filter(is_state_case) {
     let graph = try! @beautiful_mermaid.parse_mermaid(case_data.input)
     let output = try! @beautiful_mermaid.render_mermaid_ascii(case_data.input, options=@beautiful_mermaid.AsciiRenderOptions::{
       use_ascii: false,

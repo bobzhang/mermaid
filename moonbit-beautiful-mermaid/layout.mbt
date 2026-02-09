@@ -2020,11 +2020,12 @@ fn layout_graph_with_subgraph_redirects(
       let forward_labeled_out_degree_by_source : Map[String, Int] = {}
       let label_row_units = 18
       for edge in graph.edges {
-        match (
-          flow_rank_by_node_id.get(edge.source),
-          flow_rank_by_node_id.get(edge.target),
-          edge.label,
-        ) {
+        match
+          (
+            flow_rank_by_node_id.get(edge.source),
+            flow_rank_by_node_id.get(edge.target),
+            edge.label,
+          ) {
           (Some(source_rank), Some(target_rank), Some(_)) =>
             if target_rank > source_rank {
               let current = option_int_or(
@@ -2037,11 +2038,12 @@ fn layout_graph_with_subgraph_redirects(
         }
       }
       for edge in graph.edges {
-        match (
-          flow_rank_by_node_id.get(edge.source),
-          flow_rank_by_node_id.get(edge.target),
-          edge.label,
-        ) {
+        match
+          (
+            flow_rank_by_node_id.get(edge.source),
+            flow_rank_by_node_id.get(edge.target),
+            edge.label,
+          ) {
           (Some(source_rank), Some(target_rank), Some(_)) =>
             if target_rank > source_rank {
               let forward_labeled_out_degree = option_int_or(
@@ -2053,7 +2055,8 @@ fn layout_graph_with_subgraph_redirects(
                   forward_extra_units_by_rank.get(target_rank),
                   0,
                 )
-                forward_extra_units_by_rank[target_rank] = current + label_row_units
+                forward_extra_units_by_rank[target_rank] = current +
+                  label_row_units
               } else if forward_labeled_out_degree == 1 {
                 let current_adjust = option_int_or(
                   single_forward_adjust_by_rank.get(target_rank),
@@ -2069,7 +2072,7 @@ fn layout_graph_with_subgraph_redirects(
         }
       }
       let mut cumulative_offset = 0
-      for rank in 0..=flow_max_rank {
+      for rank in 0..<=flow_max_rank {
         cumulative_offset += option_int_or(
           forward_extra_units_by_rank.get(rank),
           0,
@@ -2299,14 +2302,8 @@ fn layout_graph_with_subgraph_redirects(
     )
   } else {
     shift_top_level_flow_subgraphs_with_gap(
-      graph,
-      horizontal,
-      reverse,
-      layer_spacing,
-      positioned_nodes,
-      positioned_groups,
-      positioned_index_by_id,
-      positioned_by_id,
+      graph, horizontal, reverse, layer_spacing, positioned_nodes, positioned_groups,
+      positioned_index_by_id, positioned_by_id,
     )
   }
 

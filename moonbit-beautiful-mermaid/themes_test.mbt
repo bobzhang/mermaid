@@ -318,10 +318,7 @@ test "from_shiki_theme ignores token entries without foreground" {
 test "from_shiki_theme matches multi-scope token entries" {
   let theme = shiki_theme(
     Some("dark"),
-    Some({
-      "editor.background": "#111111",
-      "editor.foreground": "#eeeeee",
-    }),
+    Some({ "editor.background": "#111111", "editor.foreground": "#eeeeee" }),
     Some([
       shiki_token_color_many(["storage", "keyword"], Some("#22d3ee")),
       shiki_token_color_many(["meta", "comment"], Some("#94a3b8")),

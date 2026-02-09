@@ -185,7 +185,11 @@ test "Layout ascii state composite keeps node edge targets over group anchors" {
   )
   let positioned = layout_graph_for_ascii(graph, RenderOptions::default())
 
-  let processing_edge = find_positioned_edge(positioned.edges, "Idle", "Processing")
+  let processing_edge = find_positioned_edge(
+    positioned.edges,
+    "Idle",
+    "Processing",
+  )
   let edge_end = processing_edge.points[processing_edge.points.length() - 1]
 
   let mut processing_group_x = -1

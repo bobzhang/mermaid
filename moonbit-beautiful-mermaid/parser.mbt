@@ -282,8 +282,7 @@ fn split_parallel_node_segments(segment : String) -> Array[String] {
       }
       continue
     }
-    if unit == '&' && square_depth == 0 && round_depth == 0 &&
-      curly_depth == 0 {
+    if unit == '&' && square_depth == 0 && round_depth == 0 && curly_depth == 0 {
       let part = trim_owned((try! segment[start:i]).to_string())
       if part != "" {
         parts.push(part)
@@ -1755,11 +1754,7 @@ fn normalize_class_member(raw : String) -> String {
           "\{name}: \{return_type}"
         }
         let marked = "\{rendered} ()"
-        return if visibility == "" {
-          marked
-        } else {
-          "\{visibility}\{marked}"
-        }
+        return if visibility == "" { marked } else { "\{visibility}\{marked}" }
       }
       _ => ()
     }

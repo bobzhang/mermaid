@@ -33,8 +33,7 @@ test "render_mermaid_with_colors applies theme colors by default" {
     None => fail("missing tokyo-night theme")
   }
   let svg = try! @beautiful_mermaid.render_mermaid_with_colors(
-    "graph TD\nA --> B",
-    colors,
+    "graph TD\nA --> B", colors,
   )
 
   assert_true(svg.contains("--bg:#1a1b26"))
@@ -123,8 +122,7 @@ test "render_mermaid_with_colors keeps explicit option overrides" {
 ///|
 test "render_mermaid_with_theme_name applies built-in theme" {
   let svg = try! @beautiful_mermaid.render_mermaid_with_theme_name(
-    "graph TD\nA --> B",
-    "github-dark",
+    "graph TD\nA --> B", "github-dark",
   )
   assert_true(svg.contains("--bg:#0d1117"))
   assert_true(svg.contains("--accent:#4493f8"))
@@ -133,8 +131,7 @@ test "render_mermaid_with_theme_name applies built-in theme" {
 ///|
 test "render_mermaid_with_theme_name normalizes user theme input" {
   let svg = try! @beautiful_mermaid.render_mermaid_with_theme_name(
-    "graph TD\nA --> B",
-    "TOKYO   NIGHT",
+    "graph TD\nA --> B", "TOKYO   NIGHT",
   )
   assert_true(svg.contains("--bg:#1a1b26"))
   assert_true(svg.contains("--accent:#7aa2f7"))
@@ -143,8 +140,7 @@ test "render_mermaid_with_theme_name normalizes user theme input" {
 ///|
 test "render_mermaid_with_theme_name accepts default alias" {
   let svg = try! @beautiful_mermaid.render_mermaid_with_theme_name(
-    "graph TD\nA --> B",
-    "default",
+    "graph TD\nA --> B", "default",
   )
   assert_true(svg.contains("--bg:#FFFFFF"))
   assert_true(svg.contains("--fg:#27272A"))
@@ -157,8 +153,7 @@ test "render_mermaid_with_theme applies enum theme directly" {
     None => fail("failed to parse tokyo-night theme")
   }
   let svg = try! @beautiful_mermaid.render_mermaid_with_theme(
-    "graph TD\nA --> B",
-    theme,
+    "graph TD\nA --> B", theme,
   )
   assert_true(svg.contains("--bg:#1a1b26"))
   assert_true(svg.contains("--line:#3d59a1"))
@@ -168,8 +163,7 @@ test "render_mermaid_with_theme applies enum theme directly" {
 ///|
 test "render_mermaid_with_theme_name rejects unknown theme" {
   let rendered = try? @beautiful_mermaid.render_mermaid_with_theme_name(
-    "graph TD\nA --> B",
-    "moonbit-neon",
+    "graph TD\nA --> B", "moonbit-neon",
   )
   match rendered {
     Ok(_) => fail("expected unknown theme to fail")
@@ -185,8 +179,7 @@ test "render_mermaid_with_theme_name rejects unknown theme" {
 ///|
 test "render_mermaid_with_theme_name unknown error keeps original input" {
   let rendered = try? @beautiful_mermaid.render_mermaid_with_theme_name(
-    "graph TD\nA --> B",
-    "  moonbit   neon  ",
+    "graph TD\nA --> B", "  moonbit   neon  ",
   )
   match rendered {
     Ok(_) => fail("expected unknown theme to fail")

@@ -25,6 +25,7 @@ Regenerate the upstream sample smoke test after upstream `samples-data.ts` chang
 ### SVG rendering
 
 ```mbt check
+///|
 test {
   let svg = try! render_mermaid("graph TD\nA --> B")
   assert_true(svg.has_prefix("<svg "))
@@ -36,6 +37,7 @@ test {
 ### ASCII rendering
 
 ```mbt check
+///|
 test {
   let ascii = try! render_mermaid_ascii("graph LR\nA --> B")
   assert_true(ascii.contains("A"))
@@ -49,6 +51,7 @@ test {
 Use `default_colors()` if you want to start from package defaults and override selectively.
 
 ```mbt check
+///|
 test {
   let options = RenderOptions::{
     bg: Some("#18181B"),
@@ -83,6 +86,7 @@ Theme names are case-insensitive and accept whitespace/underscores/hyphens.
 Leading/trailing separators are ignored, so forms like `__github_dark__` also normalize.
 
 ```mbt check
+///|
 test {
   let colors = match theme_by_name("tokyo-night") {
     Some(found) => found
@@ -111,10 +115,10 @@ test {
 Or render in one call:
 
 ```mbt check
+///|
 test {
   let svg = try! render_mermaid_with_theme_name(
-    "graph TD\nA --> B",
-    "github-dark",
+    "graph TD\nA --> B", "github-dark",
   )
   assert_true(svg.contains("--bg:#0d1117"))
   assert_true(svg.contains("--accent:#4493f8"))
@@ -124,6 +128,7 @@ test {
 Typed variant via parsed enum:
 
 ```mbt check
+///|
 test {
   let theme = match parse_theme_name("tokyo-night") {
     Some(found) => found
@@ -142,6 +147,7 @@ Use `shiki_dark_theme` / `shiki_light_theme` when constructing `ShikiTheme`.
 When `theme_type` is omitted, fallback colors use light defaults.
 
 ```mbt check
+///|
 test {
   let shiki_theme = shiki_theme(
     Some("dark"),
@@ -151,9 +157,7 @@ test {
       "editorLineNumber.foreground": "#565f89",
       "focusBorder": "#7aa2f7",
     }),
-    Some([
-      shiki_token_color("comment", Some("#565f89")),
-    ]),
+    Some([shiki_token_color("comment", Some("#565f89"))]),
   )
   let colors = from_shiki_theme(shiki_theme)
   let svg = try! render_mermaid_with_colors("graph TD\nA --> B", colors)
