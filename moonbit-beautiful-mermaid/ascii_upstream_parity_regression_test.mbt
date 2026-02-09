@@ -1158,6 +1158,77 @@ fn nested_subgraphs_expected_unicode() -> String {
 }
 
 ///|
+fn simple_flow_source() -> String {
+  "graph TD\n  A[Start] --> B[Process] --> C[End]"
+}
+
+///|
+fn simple_flow_expected_ascii() -> String {
+  [
+    "+---------+",
+    "|         |",
+    "|  Start  |",
+    "|         |",
+    "+---------+",
+    "     |",
+    "     |",
+    "     |",
+    "     |",
+    "     v",
+    "+---------+",
+    "|         |",
+    "| Process |",
+    "|         |",
+    "+---------+",
+    "     |",
+    "     |",
+    "     |",
+    "     |",
+    "     v",
+    "+---------+",
+    "|         |",
+    "|   End   |",
+    "|         |",
+    "+---------+",
+  ]
+  .iter()
+  .join("\n")
+}
+
+///|
+fn simple_flow_expected_unicode() -> String {
+  [
+    "┌─────────┐",
+    "│         │",
+    "│  Start  │",
+    "│         │",
+    "└────┬────┘",
+    "     │",
+    "     │",
+    "     │",
+    "     │",
+    "     ▼",
+    "┌─────────┐",
+    "│         │",
+    "│ Process │",
+    "│         │",
+    "└────┬────┘",
+    "     │",
+    "     │",
+    "     │",
+    "     │",
+    "     ▼",
+    "┌─────────┐",
+    "│         │",
+    "│   End   │",
+    "│         │",
+    "└─────────┘",
+  ]
+  .iter()
+  .join("\n")
+}
+
+///|
 test "ASCII/Unicode parity regression: Beautiful Mermaid sample" {
   assert_text_parity(
     beautiful_mermaid_source(),
@@ -1280,5 +1351,14 @@ test "ASCII/Unicode parity regression: Nested Subgraphs sample" {
     nested_subgraphs_source(),
     nested_subgraphs_expected_ascii(),
     nested_subgraphs_expected_unicode(),
+  )
+}
+
+///|
+test "ASCII/Unicode parity regression: Simple Flow sample" {
+  assert_text_parity(
+    simple_flow_source(),
+    simple_flow_expected_ascii(),
+    simple_flow_expected_unicode(),
   )
 }
