@@ -1221,11 +1221,11 @@ fn flow_expand_group_side_padding_for_nodes(
   for child in adjusted_children {
     let child_left = child.left
     let child_right = flow_group_right(child)
-    if child_left <= left {
-      left = child_left - 1
+    if child_left <= left + 1 {
+      left = child_left - 2
     }
-    if child_right >= right {
-      right = child_right + 1
+    if child_right >= right - 1 {
+      right = child_right + 2
     }
   }
 
@@ -1235,11 +1235,11 @@ fn flow_expand_group_side_padding_for_nodes(
     }
     let node_left = node.left
     let node_right = node.left + node.width - 1
-    if node_left <= left {
-      left = node_left - 1
+    if node_left <= left + 1 {
+      left = node_left - 2
     }
-    if node_right >= right {
-      right = node_right + 1
+    if node_right >= right - 1 {
+      right = node_right + 2
     }
   }
 
