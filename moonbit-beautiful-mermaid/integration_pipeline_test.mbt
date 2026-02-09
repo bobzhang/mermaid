@@ -432,6 +432,15 @@ test "SVG renders flowchart self-loop edges" {
 }
 
 ///|
+test "SVG renders self-loop labels" {
+  let svg = try! @beautiful_mermaid.render_mermaid(
+    "graph TD\nA[Retry] -->|again| A",
+  )
+  assert_true(svg.contains(">Retry</text>"))
+  assert_true(svg.contains(">again</text>"))
+}
+
+///|
 test "ASCII and Unicode modes differ" {
   let ascii_options = @beautiful_mermaid.AsciiRenderOptions::{
     use_ascii: true,
