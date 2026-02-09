@@ -3948,3 +3948,71 @@ test "ASCII/Unicode parity regression: Class: Enum Annotation sample" {
     class_enum_annotation_sample_expected_unicode(),
   )
 }
+
+///|
+fn class_inheritance_sample_source() -> String {
+  "classDiagram\n  class Animal {\n    +String name\n    +eat() void\n  }\n  class Dog {\n    +String breed\n    +bark() void\n  }\n  class Cat {\n    +bool isIndoor\n    +meow() void\n  }\n  Animal <|-- Dog\n  Animal <|-- Cat"
+}
+
+///|
+fn class_inheritance_sample_expected_ascii() -> String {
+  [
+    "+---------------+                            ",
+    "| Animal        |                            ",
+    "+---------------+                            ",
+    "| +name: String |                            ",
+    "+---------------+                            ",
+    "| +eat: void    |                            ",
+    "+---------------+                            ",
+    "        ^                                    ",
+    "        ------------------------             ",
+    "         |                     |             ",
+    "+----------------+    +-----------------+    ",
+    "| Dog            |    | Cat             |    ",
+    "+----------------+    +-----------------+    ",
+    "| +breed: String |    | +isIndoor: bool |    ",
+    "+----------------+    +-----------------+    ",
+    "| +bark: void    |    | +meow: void     |    ",
+    "+----------------+    +-----------------+    ",
+    "                                             ",
+    "                                             ",
+  ]
+  .iter()
+  .join("\n")
+}
+
+///|
+fn class_inheritance_sample_expected_unicode() -> String {
+  [
+    "┌───────────────┐                            ",
+    "│ Animal        │                            ",
+    "├───────────────┤                            ",
+    "│ +name: String │                            ",
+    "├───────────────┤                            ",
+    "│ +eat: void    │                            ",
+    "└───────────────┘                            ",
+    "        △                                    ",
+    "        └──────────────────────┐             ",
+    "         │                     │             ",
+    "┌────────────────┐    ┌─────────────────┐    ",
+    "│ Dog            │    │ Cat             │    ",
+    "├────────────────┤    ├─────────────────┤    ",
+    "│ +breed: String │    │ +isIndoor: bool │    ",
+    "├────────────────┤    ├─────────────────┤    ",
+    "│ +bark: void    │    │ +meow: void     │    ",
+    "└────────────────┘    └─────────────────┘    ",
+    "                                             ",
+    "                                             ",
+  ]
+  .iter()
+  .join("\n")
+}
+
+///|
+test "ASCII/Unicode parity regression: Class: Inheritance (<|--) sample" {
+  assert_text_parity(
+    class_inheritance_sample_source(),
+    class_inheritance_sample_expected_ascii(),
+    class_inheritance_sample_expected_unicode(),
+  )
+}
