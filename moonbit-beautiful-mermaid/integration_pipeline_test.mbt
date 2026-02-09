@@ -1557,6 +1557,41 @@ test "ER entities and relationship labels render across text and SVG modes" {
 }
 
 ///|
+test "ER attribute keys render across text and SVG modes" {
+  let input = "erDiagram\nUSER {\n  int id PK\n  int role_id FK\n  string email UK\n}"
+
+  let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
+    use_ascii: true,
+    padding_x: 5,
+    padding_y: 5,
+    box_border_padding: 1,
+  })
+  let unicode = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
+    use_ascii: false,
+    padding_x: 5,
+    padding_y: 5,
+    box_border_padding: 1,
+  })
+  let svg = try! @beautiful_mermaid.render_mermaid(input)
+
+  assert_true(ascii.contains("USER"))
+  assert_true(ascii.contains("id"))
+  assert_true(ascii.contains("role_id"))
+  assert_true(ascii.contains("email"))
+  assert_true(ascii.contains("PK"))
+  assert_true(ascii.contains("FK"))
+  assert_true(ascii.contains("UK"))
+  assert_true(unicode.contains("USER"))
+  assert_true(unicode.contains("PK"))
+  assert_true(unicode.contains("FK"))
+  assert_true(unicode.contains("UK"))
+  assert_true(svg.contains(">USER</text>"))
+  assert_true(svg.contains("PK"))
+  assert_true(svg.contains("FK"))
+  assert_true(svg.contains("UK"))
+}
+
+///|
 test "ER identifying and non-identifying edges render across text and SVG modes" {
   let input = "erDiagram\nUSER ||--o{ ORDER : places\nUSER ||..o{ LOG : generates"
 
