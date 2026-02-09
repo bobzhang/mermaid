@@ -250,6 +250,27 @@ test "Parser handles multiple edge lines" {
 }
 
 ///|
+test "Parser expands chained edges while preserving inline shapes" {
+  let graph = try! @beautiful_mermaid.parse_mermaid(
+    "graph TD\nA[Start] --> B{Check} --> C(End)",
+  )
+  assert_eq(graph.edges.length(), 2)
+
+  match graph.nodes.get("A") {
+    Some(node) => assert_eq(node.shape.to_string(), "Rectangle")
+    None => fail("missing node A")
+  }
+  match graph.nodes.get("B") {
+    Some(node) => assert_eq(node.shape.to_string(), "Diamond")
+    None => fail("missing node B")
+  }
+  match graph.nodes.get("C") {
+    Some(node) => assert_eq(node.shape.to_string(), "Rounded")
+    None => fail("missing node C")
+  }
+}
+
+///|
 test "Parser keeps ampersand inside node labels while still expanding parallel links" {
   let graph = try! @beautiful_mermaid.parse_mermaid(
     "graph TD\nA[Input] & B[Config] --> C[Processor]\nB --> D[Fix & Retry]",
