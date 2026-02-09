@@ -1956,9 +1956,14 @@ fn render_ascii_flow_subgraphs(
   let scale_x = if state_layout_mode { 9 } else { flow_scale_x() }
   let scale_y = if state_layout_mode { 10 } else { flow_scale_y() }
   let column_width_by_x : Map[Int, Int] = {}
-  if state_layout_mode || !flow_direction_horizontal {
+  if state_layout_mode || !flow_direction_horizontal || flow_with_subgraphs {
     for node in positioned.nodes {
       let label = flow_node_label(node)
+      let column_key = if !state_layout_mode && flow_direction_horizontal {
+        node.x - node.width / 2
+      } else {
+        node.x
+      }
       let base_width = if state_layout_mode {
         match node.shape {
           NodeShape::StateStart | NodeShape::StateEnd => 12
@@ -1967,9 +1972,9 @@ fn render_ascii_flow_subgraphs(
       } else {
         (label.length() + 4).max(flow_vertical_min_node_width)
       }
-      let current = option_int_or(column_width_by_x.get(node.x), 0)
+      let current = option_int_or(column_width_by_x.get(column_key), 0)
       if base_width > current {
-        column_width_by_x[node.x] = base_width
+        column_width_by_x[column_key] = base_width
       }
     }
   }
@@ -1977,15 +1982,20 @@ fn render_ascii_flow_subgraphs(
   let mapped_nodes : Array[AsciiFlowNodeBox] = []
   for node in positioned.nodes {
     let label = flow_node_label(node)
+    let column_key = if !state_layout_mode && flow_direction_horizontal {
+      node.x - node.width / 2
+    } else {
+      node.x
+    }
     let (min_width, min_height) = if state_layout_mode {
-      (option_int_or(column_width_by_x.get(node.x), 12), 5)
+      (option_int_or(column_width_by_x.get(column_key), 12), 5)
     } else {
       (
-        if flow_direction_horizontal {
+        if flow_direction_horizontal && !flow_with_subgraphs {
           (label.length() + 4).max(5)
         } else {
           option_int_or(
-            column_width_by_x.get(node.x),
+            column_width_by_x.get(column_key),
             (label.length() + 4).max(flow_vertical_min_node_width),
           )
         },
