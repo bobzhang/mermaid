@@ -529,6 +529,153 @@ fn er_ecommerce_schema_expected_unicode() -> String {
 }
 
 ///|
+fn ci_cd_pipeline_source() -> String {
+  "graph TD\n  subgraph ci [CI Pipeline]\n    A[Push Code] --> B{Tests Pass?}\n    B -->|Yes| C[Build Image]\n    B -->|No| D[Fix & Retry]\n    D -.-> A\n  end\n  C --> E([Deploy Staging])\n  E --> F{QA Approved?}\n  F -->|Yes| G((Production))\n  F -->|No| D"
+}
+
+///|
+fn ci_cd_pipeline_expected_ascii() -> String {
+  [
+    "+----------------------------------------+",
+    "|              CI Pipeline               |",
+    "|                                        |",
+    "|                                        |",
+    "| +----------------+                     |",
+    "| |                |                     |",
+    "| |   Push Code    |<-----------+        |",
+    "| |                |            |        |",
+    "| +----------------+            |        |",
+    "|          |                    |        |",
+    "|          |                    |        |",
+    "|          |                    |        |",
+    "|          |                    |        |",
+    "|          v                    |        |",
+    "| +----------------+            |        |",
+    "| |                |            |        |",
+    "| |  Tests Pass?   |----No------+        |",
+    "| |                |            |        |",
+    "| +----------------+            |        |",
+    "|          |                    |        |",
+    "|          |                    |        |",
+    "|          |                    |        |",
+    "|          |                    |        |",
+    "|         Yes                   |        |",
+    "|          |                    |        |",
+    "|          |                    |        |",
+    "|          |                    |        |",
+    "|          v                    v        |",
+    "| +----------------+     +-------------+ |",
+    "| |                |     |             | |",
+    "| |  Build Image   |     | Fix & Retry | |",
+    "| |                |     |             | |",
+    "| +----------------+     +-------------+ |",
+    "|          |                    ^        |",
+    "+----------|--------------------|--------+",
+    "           |                    |",
+    "           |                    |",
+    "           v                    |",
+    "  +----------------+            |",
+    "  |                |            |",
+    "  | Deploy Staging |            |",
+    "  |                |            |",
+    "  +----------------+            |",
+    "           |                    |",
+    "           |                    |",
+    "           |                    |",
+    "           |                    |",
+    "           v                    |",
+    "  +----------------+            |",
+    "  |                |            |",
+    "  |  QA Approved?  |----No------+",
+    "  |                |",
+    "  +----------------+",
+    "           |",
+    "           |",
+    "          Yes",
+    "           |",
+    "           v",
+    "  +----------------+",
+    "  |                |",
+    "  |   Production   |",
+    "  |                |",
+    "  +----------------+",
+  ]
+  .iter()
+  .join("\n")
+}
+
+///|
+fn ci_cd_pipeline_expected_unicode() -> String {
+  [
+    "┌────────────────────────────────────────┐",
+    "│              CI Pipeline               │",
+    "│                                        │",
+    "│                                        │",
+    "│ ┌────────────────┐                     │",
+    "│ │                │                     │",
+    "│ │   Push Code    │◄───────────┐        │",
+    "│ │                │            │        │",
+    "│ └────────┬───────┘            │        │",
+    "│          │                    │        │",
+    "│          │                    │        │",
+    "│          │                    │        │",
+    "│          │                    │        │",
+    "│          ▼                    │        │",
+    "│ ┌────────────────┐            │        │",
+    "│ │                │            │        │",
+    "│ │  Tests Pass?   ├────No──────┤        │",
+    "│ │                │            │        │",
+    "│ └────────┬───────┘            │        │",
+    "│          │                    │        │",
+    "│          │                    │        │",
+    "│          │                    │        │",
+    "│          │                    │        │",
+    "│         Yes                   │        │",
+    "│          │                    │        │",
+    "│          │                    │        │",
+    "│          │                    │        │",
+    "│          ▼                    ▼        │",
+    "│ ┌────────────────┐     ┌──────┴──────┐ │",
+    "│ │                │     │             │ │",
+    "│ │  Build Image   │     │ Fix & Retry │ │",
+    "│ │                │     │             │ │",
+    "│ └────────┬───────┘     └─────────────┘ │",
+    "│          │                    ▲        │",
+    "└──────────┼────────────────────┼────────┘",
+    "           │                    │",
+    "           │                    │",
+    "           ▼                    │",
+    "  ┌────────────────┐            │",
+    "  │                │            │",
+    "  │ Deploy Staging │            │",
+    "  │                │            │",
+    "  └────────┬───────┘            │",
+    "           │                    │",
+    "           │                    │",
+    "           │                    │",
+    "           │                    │",
+    "           ▼                    │",
+    "  ┌────────────────┐            │",
+    "  │                │            │",
+    "  │  QA Approved?  ├────No──────┘",
+    "  │                │",
+    "  └────────┬───────┘",
+    "           │",
+    "           │",
+    "          Yes",
+    "           │",
+    "           ▼",
+    "  ┌────────────────┐",
+    "  │                │",
+    "  │   Production   │",
+    "  │                │",
+    "  └────────────────┘",
+  ]
+  .iter()
+  .join("\n")
+}
+
+///|
 test "ASCII/Unicode parity regression: Beautiful Mermaid sample" {
   assert_text_parity(
     beautiful_mermaid_source(),
@@ -588,5 +735,14 @@ test "ASCII/Unicode parity regression: ER E-Commerce Schema sample" {
     er_ecommerce_schema_source(),
     er_ecommerce_schema_expected_ascii(),
     er_ecommerce_schema_expected_unicode(),
+  )
+}
+
+///|
+test "ASCII/Unicode parity regression: CI/CD Pipeline sample" {
+  assert_text_parity(
+    ci_cd_pipeline_source(),
+    ci_cd_pipeline_expected_ascii(),
+    ci_cd_pipeline_expected_unicode(),
   )
 }
