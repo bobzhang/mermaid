@@ -69,9 +69,21 @@ fn edge_label_rects_overlap(a : EdgeLabelRect, b : EdgeLabelRect) -> Bool {
 }
 
 ///|
-test "Pipeline dimensions honor direction" {
+fn snapshot_svg(
+  it : @test.Test,
+  filename : String,
+  svg : String,
+) -> Unit raise {
+  it.write(svg)
+  it.snapshot(filename=filename)
+}
+
+///|
+test "Pipeline dimensions honor direction" (it : @test.Test) {
   let lr_svg = try! @beautiful_mermaid.render_mermaid("graph LR\nA --> B --> C")
   let td_svg = try! @beautiful_mermaid.render_mermaid("graph TD\nA --> B --> C")
+
+  snapshot_svg(it, "integration_pipeline_direction_lr.svg", lr_svg)
 
   let lr_width = option_or_zero(@test_support.svg_attr_int(lr_svg, "width"))
   let td_width = option_or_zero(@test_support.svg_attr_int(td_svg, "width"))
@@ -83,7 +95,9 @@ test "Pipeline dimensions honor direction" {
 }
 
 ///|
-test "Flowchart BT direction renders across text and SVG modes" {
+test "Flowchart BT direction renders across text and SVG modes" (
+  it : @test.Test
+) {
   let input = "graph BT\nA[Start] --> B[Middle] --> C[End]"
 
   let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
@@ -99,6 +113,7 @@ test "Flowchart BT direction renders across text and SVG modes" {
     box_border_padding: 1,
   })
   let svg = try! @beautiful_mermaid.render_mermaid(input)
+  snapshot_svg(it, "integration_flowchart_bt.svg", svg)
 
   assert_true(ascii.contains("Start"))
   assert_true(ascii.contains("Middle"))
@@ -112,7 +127,9 @@ test "Flowchart BT direction renders across text and SVG modes" {
 }
 
 ///|
-test "Flowchart RL direction renders across text and SVG modes" {
+test "Flowchart RL direction renders across text and SVG modes" (
+  it : @test.Test
+) {
   let input = "graph RL\nA[Origin] --> B[Pivot] --> C[Target]"
 
   let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
@@ -128,6 +145,7 @@ test "Flowchart RL direction renders across text and SVG modes" {
     box_border_padding: 1,
   })
   let svg = try! @beautiful_mermaid.render_mermaid(input)
+  snapshot_svg(it, "integration_flowchart_rl.svg", svg)
 
   assert_true(ascii.contains("Origin"))
   assert_true(ascii.contains("Pivot"))
@@ -141,14 +159,15 @@ test "Flowchart RL direction renders across text and SVG modes" {
 }
 
 ///|
-test "SVG simple flow keeps valid svg envelope" {
+test "SVG simple flow keeps valid svg envelope" (it : @test.Test) {
   let svg = try! @beautiful_mermaid.render_mermaid("graph TD\nA --> B")
+  snapshot_svg(it, "integration_flowchart_simple.svg", svg)
   assert_true(svg.has_prefix("<svg "))
   assert_true(svg.has_suffix("</svg>"))
 }
 
 ///|
-test "SVG dimensions expand with padding option" {
+test "SVG dimensions expand with padding option" (it : @test.Test) {
   let small_options = @beautiful_mermaid.RenderOptions::{
     bg: None,
     fg: None,
@@ -186,6 +205,7 @@ test "SVG dimensions expand with padding option" {
     "graph TD\nA --> B",
     options=large_options,
   )
+  snapshot_svg(it, "integration_flowchart_padding_small.svg", small_svg)
 
   let small_width = option_or_zero(@test_support.svg_attr_int(small_svg, "width"))
   let large_width = option_or_zero(@test_support.svg_attr_int(large_svg, "width"))
@@ -197,20 +217,24 @@ test "SVG dimensions expand with padding option" {
 }
 
 ///|
-test "SVG renders labeled nodes for simple flow" {
+test "SVG renders labeled nodes for simple flow" (it : @test.Test) {
   let svg = try! @beautiful_mermaid.render_mermaid("graph TD\nA[Start] --> B[End]")
+  snapshot_svg(it, "integration_flowchart_labeled_nodes.svg", svg)
   assert_true(svg.contains(">Start</text>"))
   assert_true(svg.contains(">End</text>"))
 }
 
 ///|
-test "SVG renders edge labels for simple flow" {
+test "SVG renders edge labels for simple flow" (it : @test.Test) {
   let svg = try! @beautiful_mermaid.render_mermaid("graph TD\nA -->|Yes| B")
+  snapshot_svg(it, "integration_flowchart_edge_label.svg", svg)
   assert_true(svg.contains(">Yes</text>"))
 }
 
 ///|
-test "Flowchart chained labeled edges render across text and SVG modes" {
+test "Flowchart chained labeled edges render across text and SVG modes" (
+  it : @test.Test
+) {
   let input = "graph LR\nA[One] -->|first| B[Two] -->|second| C[Three] -->|third| D[Four]"
 
   let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
@@ -226,6 +250,7 @@ test "Flowchart chained labeled edges render across text and SVG modes" {
     box_border_padding: 1,
   })
   let svg = try! @beautiful_mermaid.render_mermaid(input)
+  snapshot_svg(it, "integration_flowchart_chained_labels.svg", svg)
 
   assert_true(ascii.contains("One"))
   assert_true(ascii.contains("Four"))
@@ -245,7 +270,7 @@ test "Flowchart chained labeled edges render across text and SVG modes" {
 }
 
 ///|
-test "SVG applies custom font option" {
+test "SVG applies custom font option" (it : @test.Test) {
   let options = @beautiful_mermaid.RenderOptions::{
     bg: None,
     fg: None,
@@ -264,19 +289,21 @@ test "SVG applies custom font option" {
     "graph TD\nA --> B",
     options~,
   )
+  snapshot_svg(it, "integration_flowchart_custom_font.svg", svg)
 
   assert_true(svg.contains("'JetBrains Mono'"))
 }
 
 ///|
-test "SVG defaults to light theme colors" {
+test "SVG defaults to light theme colors" (it : @test.Test) {
   let svg = try! @beautiful_mermaid.render_mermaid("graph TD\nA --> B")
+  snapshot_svg(it, "integration_flowchart_default_light.svg", svg)
   assert_true(svg.contains("--bg:#FFFFFF"))
   assert_true(svg.contains("--fg:#27272A"))
 }
 
 ///|
-test "SVG applies explicit dark colors" {
+test "SVG applies explicit dark colors" (it : @test.Test) {
   let options = @beautiful_mermaid.RenderOptions::{
     bg: Some("#18181B"),
     fg: Some("#FAFAFA"),
@@ -295,15 +322,19 @@ test "SVG applies explicit dark colors" {
     "graph TD\nA --> B",
     options~,
   )
+  snapshot_svg(it, "integration_flowchart_explicit_dark.svg", svg)
   assert_true(svg.contains("--bg:#18181B"))
   assert_true(svg.contains("--fg:#FAFAFA"))
 }
 
 ///|
-test "SVG renders solid dotted and thick edge styles with labels" {
+test "SVG renders solid dotted and thick edge styles with labels" (
+  it : @test.Test
+) {
   let svg = try! @beautiful_mermaid.render_mermaid(
     "graph TD\nA -->|solid| B\nB -.->|dotted| C\nC ==>|thick| D",
   )
+  snapshot_svg(it, "integration_flowchart_edge_styles.svg", svg)
 
   assert_true(svg.contains(">solid</text>"))
   assert_true(svg.contains(">dotted</text>"))

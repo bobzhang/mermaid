@@ -27,11 +27,13 @@ Regenerate the upstream sample smoke test after upstream `samples-data.ts` chang
 
 ```mbt check
 ///|
-test {
-  let svg = try! render_mermaid("graph TD\nA --> B")
-  assert_true(svg.has_prefix("<svg "))
-  assert_true(svg.contains(">A</text>"))
-  assert_true(svg.contains(">B</text>"))
+test "simple_td" (it : @test.Test){
+  let svg = render_mermaid("graph TD\nA --> B")
+  it.write(svg.to_string())
+  it.snapshot(filename="simle_td.svg")
+  // assert_true(svg.has_prefix("<svg "))
+  // assert_true(svg.contains(">A</text>"))
+  // assert_true(svg.contains(">B</text>"))
 }
 ```
 
