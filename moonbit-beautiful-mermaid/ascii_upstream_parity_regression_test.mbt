@@ -1566,6 +1566,37 @@ fn parallel_links_and_expected_unicode() -> String {
 }
 
 ///|
+fn chained_edges_source() -> String {
+  "graph LR\n  A[Step 1] --> B[Step 2] --> C[Step 3] --> D[Step 4] --> E[Step 5]"
+}
+
+///|
+fn chained_edges_expected_ascii() -> String {
+  [
+    "+--------+     +--------+     +--------+     +--------+     +--------+",
+    "|        |     |        |     |        |     |        |     |        |",
+    "| Step 1 |---->| Step 2 |---->| Step 3 |---->| Step 4 |---->| Step 5 |",
+    "|        |     |        |     |        |     |        |     |        |",
+    "+--------+     +--------+     +--------+     +--------+     +--------+",
+  ]
+  .iter()
+  .join("\n")
+}
+
+///|
+fn chained_edges_expected_unicode() -> String {
+  [
+    "┌────────┐     ┌────────┐     ┌────────┐     ┌────────┐     ┌────────┐",
+    "│        │     │        │     │        │     │        │     │        │",
+    "│ Step 1 ├────►│ Step 2 ├────►│ Step 3 ├────►│ Step 4 ├────►│ Step 5 │",
+    "│        │     │        │     │        │     │        │     │        │",
+    "└────────┘     └────────┘     └────────┘     └────────┘     └────────┘",
+  ]
+  .iter()
+  .join("\n")
+}
+
+///|
 test "ASCII/Unicode parity regression: Beautiful Mermaid sample" {
   assert_text_parity(
     beautiful_mermaid_source(),
@@ -1760,5 +1791,14 @@ test "ASCII/Unicode parity regression: Parallel Links (&) sample" {
     parallel_links_and_source(),
     parallel_links_and_expected_ascii(),
     parallel_links_and_expected_unicode(),
+  )
+}
+
+///|
+test "ASCII/Unicode parity regression: Chained Edges sample" {
+  assert_text_parity(
+    chained_edges_source(),
+    chained_edges_expected_ascii(),
+    chained_edges_expected_unicode(),
   )
 }
