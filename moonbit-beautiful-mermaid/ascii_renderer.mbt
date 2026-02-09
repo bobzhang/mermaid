@@ -1155,6 +1155,66 @@ fn shift_ascii_flow_group(
 }
 
 ///|
+fn flow_group_contains_node_center(
+  group : AsciiFlowGroupBox,
+  node : AsciiFlowNodeBox,
+) -> Bool {
+  let center_x = node.left + node.width / 2
+  let center_y = node.top + node.height / 2
+  center_x > group.left &&
+  center_x < group.left + group.width - 1 &&
+  center_y > group.top &&
+  center_y < group.top + group.height - 1
+}
+
+///|
+fn flow_expand_group_side_padding_for_nodes(
+  group : AsciiFlowGroupBox,
+  nodes : Array[AsciiFlowNodeBox],
+) -> AsciiFlowGroupBox {
+  let adjusted_children : Array[AsciiFlowGroupBox] = []
+  for child in group.children {
+    adjusted_children.push(flow_expand_group_side_padding_for_nodes(child, nodes))
+  }
+
+  let mut left = group.left
+  let mut right = flow_group_right(group)
+  for child in adjusted_children {
+    let child_left = child.left
+    let child_right = flow_group_right(child)
+    if child_left <= left {
+      left = child_left - 1
+    }
+    if child_right >= right {
+      right = child_right + 1
+    }
+  }
+
+  for node in nodes {
+    if !flow_group_contains_node_center(group, node) {
+      continue
+    }
+    let node_left = node.left
+    let node_right = node.left + node.width - 1
+    if node_left <= left {
+      left = node_left - 1
+    }
+    if node_right >= right {
+      right = node_right + 1
+    }
+  }
+
+  AsciiFlowGroupBox::{
+    label: group.label,
+    left,
+    top: group.top,
+    width: right - left + 1,
+    height: group.height,
+    children: adjusted_children,
+  }
+}
+
+///|
 fn flow_draw_group(
   canvas : Array[Array[String]],
   group : AsciiFlowGroupBox,
@@ -2119,6 +2179,23 @@ fn render_ascii_flow_subgraphs(
       )
     }
     groups
+  }
+  let flow_has_subgraph_direction_override = graph.subgraphs.any(
+    subgraph => subgraph.direction is Some(_),
+  )
+  let mapped_groups = if !state_layout_mode &&
+    flow_with_subgraphs &&
+    !flow_direction_horizontal &&
+    !flow_has_subgraph_direction_override {
+    let padded_groups : Array[AsciiFlowGroupBox] = []
+    for group in mapped_groups {
+      padded_groups.push(
+        flow_expand_group_side_padding_for_nodes(group, mapped_nodes),
+      )
+    }
+    padded_groups
+  } else {
+    mapped_groups
   }
 
   let mut max_x = 0
