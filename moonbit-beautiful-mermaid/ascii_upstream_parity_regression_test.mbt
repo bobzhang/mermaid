@@ -4820,3 +4820,54 @@ test "ASCII/Unicode parity regression: ER: Basic Relationship sample" {
     er_basic_relationship_sample_expected_unicode(),
   )
 }
+
+
+///|
+fn er_entity_with_attributes_sample_source() -> String {
+  "erDiagram\n  CUSTOMER {\n    int id PK\n    string name\n    string email UK\n    date created_at\n  }"
+}
+
+///|
+fn er_entity_with_attributes_sample_expected_ascii() -> String {
+  [
+    "+--------------------+    ",
+    "| CUSTOMER           |    ",
+    "+--------------------+    ",
+    "| PK int id          |    ",
+    "|    string name     |    ",
+    "| UK string email    |    ",
+    "|    date created_at |    ",
+    "+--------------------+    ",
+    "                          ",
+    "                          ",
+  ]
+  .iter()
+  .join("\n")
+}
+
+///|
+fn er_entity_with_attributes_sample_expected_unicode() -> String {
+  [
+    "┌────────────────────┐    ",
+    "│ CUSTOMER           │    ",
+    "├────────────────────┤    ",
+    "│ PK int id          │    ",
+    "│    string name     │    ",
+    "│ UK string email    │    ",
+    "│    date created_at │    ",
+    "└────────────────────┘    ",
+    "                          ",
+    "                          ",
+  ]
+  .iter()
+  .join("\n")
+}
+
+///|
+test "ASCII/Unicode parity regression: ER: Entity with Attributes sample" {
+  assert_text_parity(
+    er_entity_with_attributes_sample_source(),
+    er_entity_with_attributes_sample_expected_ascii(),
+    er_entity_with_attributes_sample_expected_unicode(),
+  )
+}
