@@ -1997,7 +1997,7 @@ fn layout_graph_with_subgraph_redirects(
   let flow_lane_by_node_id : Map[String, Int] = {}
   let flow_label_y_offset_by_rank : Map[Int, Int] = {}
   let mut flow_max_rank = 0
-  if !state_graph {
+  if !state_graph || horizontal {
     let (rank_by_id, max_rank) = collect_non_state_flow_ranks(
       nodes_in_order,
       graph.edges,
@@ -2206,11 +2206,7 @@ fn layout_graph_with_subgraph_redirects(
       flow_rank
     }
     let x = if horizontal {
-      if state_graph {
-        padding + order_index * node_spacing + width / 2
-      } else {
-        padding + flow_rank_index * node_spacing + width / 2
-      }
+      padding + flow_rank_index * node_spacing + width / 2
     } else if flat_state_graph {
       padding +
       90 +
@@ -2221,11 +2217,7 @@ fn layout_graph_with_subgraph_redirects(
       padding + 90 + flow_lane * node_spacing
     }
     let y = if horizontal {
-      if state_graph {
-        padding + 70
-      } else {
-        padding + 70 + flow_lane * layer_spacing
-      }
+      padding + 70 + flow_lane * layer_spacing
     } else if state_graph {
       padding +
       order_index * layer_spacing +

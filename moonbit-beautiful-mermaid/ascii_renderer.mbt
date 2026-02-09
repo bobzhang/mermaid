@@ -2399,13 +2399,17 @@ fn render_ascii_flow_subgraphs(
   options : AsciiRenderOptions,
 ) -> String {
   let positioned = layout_graph_for_ascii(graph, RenderOptions::default())
-  let state_layout_mode = graph_has_shape(graph, NodeShape::StateStart) ||
+  let flow_direction_horizontal = graph.direction
+    is (Direction::LR | Direction::RL)
+  let state_graph_mode = graph_has_shape(graph, NodeShape::StateStart) ||
     graph_has_shape(graph, NodeShape::StateEnd)
+  let state_layout_mode = state_graph_mode &&
+    !flow_direction_horizontal
+  let horizontal_state_flow_mode = state_graph_mode &&
+    flow_direction_horizontal
   let state_flat_layout_mode = state_layout_mode &&
     graph.subgraphs.length() == 0
   let state_composite_layout_mode = state_layout_mode && !state_flat_layout_mode
-  let flow_direction_horizontal = graph.direction
-    is (Direction::LR | Direction::RL)
   let flow_with_subgraphs = !state_layout_mode && graph.subgraphs.length() > 0
   let flow_has_labeled_edges = if state_layout_mode {
     false
@@ -2431,11 +2435,22 @@ fn render_ascii_flow_subgraphs(
     }
     let base_width = if state_layout_mode {
       match node.shape {
-        NodeShape::StateStart | NodeShape::StateEnd => 12
-        _ => (label.length() + 4).max(12)
+        NodeShape::StateStart | NodeShape::StateEnd =>
+          if flow_direction_horizontal { 4 } else { 12 }
+        _ =>
+          if flow_direction_horizontal {
+            (label.length() + 4).max(5)
+          } else {
+            (label.length() + 4).max(12)
+          }
       }
     } else if flow_direction_horizontal && !flow_with_subgraphs {
-      (label.length() + 4).max(5)
+      if horizontal_state_flow_mode &&
+        (node.shape is (NodeShape::StateStart | NodeShape::StateEnd)) {
+        4
+      } else {
+        (label.length() + 4).max(5)
+      }
     } else {
       (label.length() + 4).max(flow_vertical_min_node_width)
     }
@@ -2470,16 +2485,35 @@ fn render_ascii_flow_subgraphs(
       node.x
     }
     let (min_width, min_height) = if state_layout_mode {
-      (option_int_or(column_width_by_x.get(column_key), 12), 5)
+      let state_min_width = match node.shape {
+        NodeShape::StateStart | NodeShape::StateEnd =>
+          if flow_direction_horizontal { 4 } else { 12 }
+        _ =>
+          if flow_direction_horizontal {
+            (label.length() + 4).max(5)
+          } else {
+            12
+          }
+      }
+      (option_int_or(column_width_by_x.get(column_key), state_min_width), 5)
     } else {
       let fallback_width = if flow_direction_horizontal && !flow_with_subgraphs {
-        (label.length() + 4).max(5)
+        if horizontal_state_flow_mode &&
+          (node.shape is (NodeShape::StateStart | NodeShape::StateEnd)) {
+          4
+        } else {
+          (label.length() + 4).max(5)
+        }
       } else {
         (label.length() + 4).max(flow_vertical_min_node_width)
       }
       (option_int_or(column_width_by_x.get(column_key), fallback_width), 5)
     }
-    let width = if state_layout_mode {
+    let horizontal_state_pseudostate = horizontal_state_flow_mode &&
+      (node.shape is (NodeShape::StateStart | NodeShape::StateEnd))
+    let width = if horizontal_state_pseudostate {
+      4
+    } else if state_layout_mode {
       scale_size(node.width, scale_x, min_width)
     } else {
       min_width
@@ -2942,7 +2976,8 @@ fn render_ascii_flow_subgraphs(
             non_state_in_degree_by_target.get(edge.target),
             0,
           )
-          let merge_target = !flow_with_subgraphs &&
+          let merge_target = !horizontal_state_flow_mode &&
+            !flow_with_subgraphs &&
             flow_direction_horizontal &&
             center_dx > 0 &&
             target_in_degree > 1 &&
