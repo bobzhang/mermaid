@@ -210,6 +210,18 @@ test "SVG renders solid dotted and thick edge styles with labels" {
 }
 
 ///|
+test "SVG renders subgraph labels and nodes" {
+  let svg = try! @beautiful_mermaid.render_mermaid(
+    "graph TD\nsubgraph Backend\nA[API] --> B[DB]\nend\nC[Client] --> A",
+  )
+
+  assert_true(svg.contains(">Backend</text>"))
+  assert_true(svg.contains(">API</text>"))
+  assert_true(svg.contains(">DB</text>"))
+  assert_true(svg.contains(">Client</text>"))
+}
+
+///|
 test "ASCII and Unicode modes differ" {
   let ascii_options = @beautiful_mermaid.AsciiRenderOptions::{
     use_ascii: true,
