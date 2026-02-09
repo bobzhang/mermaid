@@ -356,6 +356,36 @@ test "SVG no-arrow edges omit marker-end" {
 }
 
 ///|
+test "Flowchart no-arrow edges render across text and SVG modes" {
+  let input = "graph TD\nA[Client] --- B[Cache] --- C[Backend]"
+
+  let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
+    use_ascii: true,
+    padding_x: 5,
+    padding_y: 5,
+    box_border_padding: 1,
+  })
+  let unicode = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
+    use_ascii: false,
+    padding_x: 5,
+    padding_y: 5,
+    box_border_padding: 1,
+  })
+  let svg = try! @beautiful_mermaid.render_mermaid(input)
+
+  assert_true(ascii.contains("Client"))
+  assert_true(ascii.contains("Cache"))
+  assert_true(ascii.contains("Backend"))
+  assert_true(unicode.contains("Client"))
+  assert_true(unicode.contains("Cache"))
+  assert_true(unicode.contains("Backend"))
+  assert_true(svg.contains(">Client</text>"))
+  assert_true(svg.contains(">Cache</text>"))
+  assert_true(svg.contains(">Backend</text>"))
+  assert_true(!svg.contains("marker-end=\"url(#arrowhead)\""))
+}
+
+///|
 test "SVG bidirectional edges include start and end arrowheads" {
   let svg = try! @beautiful_mermaid.render_mermaid("graph TD\nA <--> B")
   assert_true(svg.contains("marker-end=\"url(#arrowhead)\""))
