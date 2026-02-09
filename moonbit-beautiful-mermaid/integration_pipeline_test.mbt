@@ -705,6 +705,39 @@ test "State alias declarations render across text and SVG modes" {
 }
 
 ///|
+test "State composite alias blocks render across text and SVG modes" {
+  let input = "stateDiagram-v2\nstate \"Active Processing\" as AP {\n  parse --> validate\n}\nAP --> Done : finish"
+
+  let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
+    use_ascii: true,
+    padding_x: 5,
+    padding_y: 5,
+    box_border_padding: 1,
+  })
+  let unicode = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
+    use_ascii: false,
+    padding_x: 5,
+    padding_y: 5,
+    box_border_padding: 1,
+  })
+  let svg = try! @beautiful_mermaid.render_mermaid(input)
+
+  assert_true(ascii.contains("Active Process"))
+  assert_true(ascii.contains("parse"))
+  assert_true(ascii.contains("validate"))
+  assert_true(ascii.contains("Done"))
+  assert_true(unicode.contains("Active Process"))
+  assert_true(unicode.contains("parse"))
+  assert_true(unicode.contains("validate"))
+  assert_true(unicode.contains("Done"))
+  assert_true(svg.contains(">Active Processing</text>"))
+  assert_true(svg.contains(">parse</text>"))
+  assert_true(svg.contains(">validate</text>"))
+  assert_true(svg.contains(">Done</text>"))
+  assert_true(svg.contains(">finish</text>"))
+}
+
+///|
 test "SVG does not duplicate composite state labels" {
   let svg = try! @beautiful_mermaid.render_mermaid(
     "stateDiagram-v2\n[*] --> Idle\nIdle --> Processing : submit\nstate Processing {\n  parse --> validate\n  validate --> execute\n}\nProcessing --> Complete : done\nComplete --> [*]",
