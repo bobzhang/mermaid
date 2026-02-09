@@ -4403,3 +4403,64 @@ test "ASCII/Unicode parity regression: Class: All 6 Relationship Types sample" {
     class_all_6_relationship_types_sample_expected_unicode(),
   )
 }
+
+
+///|
+fn class_relationship_labels_sample_source() -> String {
+  "classDiagram\n  class Teacher {\n    +String name\n  }\n  class Student {\n    +String name\n  }\n  class Course {\n    +String title\n  }\n  Teacher --> Course : teaches\n  Student --> Course : enrolled in"
+}
+
+///|
+fn class_relationship_labels_sample_expected_ascii() -> String {
+  [
+    "+---------------+    +---------------+    ",
+    "| Teacher       |    | Student       |    ",
+    "+---------------+    +---------------+    ",
+    "| +name: String |    | +name: String |    ",
+    "+---------------+    +---------------+    ",
+    "        |                    |            ",
+    "     teac---- enrolled in ----            ",
+    "         v                                ",
+    "+----------------+                        ",
+    "| Course         |                        ",
+    "+----------------+                        ",
+    "| +title: String |                        ",
+    "+----------------+                        ",
+    "                                          ",
+    "                                          ",
+  ]
+  .iter()
+  .join("\n")
+}
+
+///|
+fn class_relationship_labels_sample_expected_unicode() -> String {
+  [
+    "┌───────────────┐    ┌───────────────┐    ",
+    "│ Teacher       │    │ Student       │    ",
+    "├───────────────┤    ├───────────────┤    ",
+    "│ +name: String │    │ +name: String │    ",
+    "└───────────────┘    └───────────────┘    ",
+    "        │                    │            ",
+    "     teac┌─── enrolled in ───┘            ",
+    "         ▼                                ",
+    "┌────────────────┐                        ",
+    "│ Course         │                        ",
+    "├────────────────┤                        ",
+    "│ +title: String │                        ",
+    "└────────────────┘                        ",
+    "                                          ",
+    "                                          ",
+  ]
+  .iter()
+  .join("\n")
+}
+
+///|
+test "ASCII/Unicode parity regression: Class: Relationship Labels sample" {
+  assert_text_parity(
+    class_relationship_labels_sample_source(),
+    class_relationship_labels_sample_expected_ascii(),
+    class_relationship_labels_sample_expected_unicode(),
+  )
+}
