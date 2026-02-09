@@ -4871,3 +4871,58 @@ test "ASCII/Unicode parity regression: ER: Entity with Attributes sample" {
     er_entity_with_attributes_sample_expected_unicode(),
   )
 }
+
+
+///|
+fn er_attribute_keys_pk_fk_uk_sample_source() -> String {
+  "erDiagram\n  ORDER {\n    int id PK\n    int customer_id FK\n    string invoice_number UK\n    decimal total\n    date order_date\n    string status\n  }"
+}
+
+///|
+fn er_attribute_keys_pk_fk_uk_sample_expected_ascii() -> String {
+  [
+    "+--------------------------+    ",
+    "| ORDER                    |    ",
+    "+--------------------------+    ",
+    "| PK int id                |    ",
+    "| FK int customer_id       |    ",
+    "| UK string invoice_number |    ",
+    "|    decimal total         |    ",
+    "|    date order_date       |    ",
+    "|    string status         |    ",
+    "+--------------------------+    ",
+    "                                ",
+    "                                ",
+  ]
+  .iter()
+  .join("\n")
+}
+
+///|
+fn er_attribute_keys_pk_fk_uk_sample_expected_unicode() -> String {
+  [
+    "┌──────────────────────────┐    ",
+    "│ ORDER                    │    ",
+    "├──────────────────────────┤    ",
+    "│ PK int id                │    ",
+    "│ FK int customer_id       │    ",
+    "│ UK string invoice_number │    ",
+    "│    decimal total         │    ",
+    "│    date order_date       │    ",
+    "│    string status         │    ",
+    "└──────────────────────────┘    ",
+    "                                ",
+    "                                ",
+  ]
+  .iter()
+  .join("\n")
+}
+
+///|
+test "ASCII/Unicode parity regression: ER: Attribute Keys (PK, FK, UK) sample" {
+  assert_text_parity(
+    er_attribute_keys_pk_fk_uk_sample_source(),
+    er_attribute_keys_pk_fk_uk_sample_expected_ascii(),
+    er_attribute_keys_pk_fk_uk_sample_expected_unicode(),
+  )
+}
