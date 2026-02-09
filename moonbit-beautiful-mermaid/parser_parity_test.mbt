@@ -82,6 +82,26 @@ test "Parser supports hyphenated node IDs" {
 }
 
 ///|
+test "Parser creates default rectangle nodes for bare references" {
+  let graph = try! @beautiful_mermaid.parse_mermaid("graph TD\nA --> B")
+
+  match graph.nodes.get("A") {
+    Some(node) => {
+      assert_eq(node.shape.to_string(), "Rectangle")
+      assert_eq(node.label, "A")
+    }
+    None => fail("missing node A")
+  }
+  match graph.nodes.get("B") {
+    Some(node) => {
+      assert_eq(node.shape.to_string(), "Rectangle")
+      assert_eq(node.label, "B")
+    }
+    None => fail("missing node B")
+  }
+}
+
+///|
 test "Parser recognizes all flowchart node shape variants together" {
   let graph = try! @beautiful_mermaid.parse_mermaid(
     "graph TD\nA[Rectangle]\nB(Rounded)\nC{Diamond}\nD([Stadium])\nE((Circle))\nF[[Subroutine]]\nG(((DoubleCircle)))\nH{{Hexagon}}\nI[(Cylinder)]\nJ>Asymmetric]\nK[/Trapezoid\\\\]\nL[\\\\TrapAlt/]",
