@@ -431,6 +431,45 @@ fn sequence_activation_boxes_expected_unicode() -> String {
 }
 
 ///|
+fn class_all_relationship_types_source() -> String {
+  "classDiagram\n  A <|-- B : inheritance\n  C *-- D : composition\n  E o-- F : aggregation\n  G --> H : association\n  I ..> J : dependency\n  K ..|> L : realization"
+}
+
+///|
+fn class_all_relationship_types_expected_ascii() -> String {
+  [
+    "+---+    +---+    +---+    +---+    +---+    +---+",
+    "| A |    | C |    | E |    | G |    | I |    | L |",
+    "+---+    +---+    +---+    +---+    +---+    +---+",
+    "  ^        *        o        |        :        ^",
+    "erita composit aggregat associat dependen realization",
+    "  |        |        |        v        v        :",
+    "+---+    +---+    +---+    +---+    +---+    +---+",
+    "| B |    | D |    | F |    | H |    | J |    | K |",
+    "+---+    +---+    +---+    +---+    +---+    +---+",
+  ]
+  .iter()
+  .join("\n")
+}
+
+///|
+fn class_all_relationship_types_expected_unicode() -> String {
+  [
+    "┌───┐    ┌───┐    ┌───┐    ┌───┐    ┌───┐    ┌───┐",
+    "│ A │    │ C │    │ E │    │ G │    │ I │    │ L │",
+    "└───┘    └───┘    └───┘    └───┘    └───┘    └───┘",
+    "  △        ◆        ◇        │        ┊        △",
+    "erita composit aggregat associat dependen realization",
+    "  │        │        │        ▼        ▼        ┊",
+    "┌───┐    ┌───┐    ┌───┐    ┌───┐    ┌───┐    ┌───┐",
+    "│ B │    │ D │    │ F │    │ H │    │ J │    │ K │",
+    "└───┘    └───┘    └───┘    └───┘    └───┘    └───┘",
+  ]
+  .iter()
+  .join("\n")
+}
+
+///|
 test "ASCII/Unicode parity regression: Beautiful Mermaid sample" {
   assert_text_parity(
     beautiful_mermaid_source(),
@@ -472,5 +511,14 @@ test "ASCII/Unicode parity regression: Sequence Activation Boxes sample" {
     sequence_activation_boxes_source(),
     sequence_activation_boxes_expected_ascii(),
     sequence_activation_boxes_expected_unicode(),
+  )
+}
+
+///|
+test "ASCII/Unicode parity regression: Class All 6 Relationship Types sample" {
+  assert_text_parity(
+    class_all_relationship_types_source(),
+    class_all_relationship_types_expected_ascii(),
+    class_all_relationship_types_expected_unicode(),
   )
 }
