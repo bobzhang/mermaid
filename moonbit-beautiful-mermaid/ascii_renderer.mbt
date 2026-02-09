@@ -439,19 +439,22 @@ fn flow_non_state_label_anchor_from_points(
   let mut best_start = points[0]
   let mut best_end = points[1]
   let mut best_span = flow_non_state_edge_span(best_start, best_end)
-  let mut found_label_fit = best_span >= label_len
+  let mut found_label_fit = false
+  if best_span >= label_len {
+    found_label_fit = true
+  }
 
   for i in 1..<points.length() {
     let start = points[i - 1]
     let ending = points[i]
     let span = flow_non_state_edge_span(start, ending)
     if span >= label_len {
-      if !found_label_fit || span > best_span {
+      if !found_label_fit {
         best_start = start
         best_end = ending
-        best_span = span
         found_label_fit = true
       }
+      break
     } else if !found_label_fit && span > best_span {
       best_start = start
       best_end = ending
