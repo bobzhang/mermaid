@@ -2768,6 +2768,77 @@ fn sequence_opt_block_expected_unicode() -> String {
 }
 
 ///|
+fn sequence_par_block_source() -> String {
+  "sequenceDiagram\n  participant C as Client\n  participant A as AuthService\n  participant U as UserService\n  participant O as OrderService\n  C->>A: Authenticate\n  par Fetch user data\n    A->>U: Get profile\n  and Fetch orders\n    A->>O: Get orders\n  end\n  A-->>C: Combined response"
+}
+
+///|
+fn sequence_par_block_expected_ascii() -> String {
+  [
+    "+--------+           +-------------+   +-------------+  +--------------+   ",
+    "| Client |           | AuthService |   | UserService |  | OrderService |   ",
+    "+--------+           +-------------+   +-------------+  +--------------+   ",
+    "     |                      |                 |                 |          ",
+    "     |    Authenticate      |                 |                 |          ",
+    "     |---------------------->                 |                 |          ",
+    "     |                      |                 |                 |          ",
+    "     |                  +par [Fetch user data]----------------------+      ",
+    "     |                  |   |                 |                 |   |      ",
+    "     |                  |   |   Get profile   |                 |   |      ",
+    "     |                  |   |----------------->                 |   |      ",
+    "     |                  |   |                 |                 |   |      ",
+    "     |                  +[Fetch orders]-----------------------------+      ",
+    "     |                  |   |                 |                 |   |      ",
+    "     |                  |   |            Get orders             |   |      ",
+    "     |                  |   |----------------------------------->   |      ",
+    "     |                  |   |                 |                 |   |      ",
+    "     |                  +-------------------------------------------+      ",
+    "     |                      |                 |                 |          ",
+    "     |  Combined response   |                 |                 |          ",
+    "     <......................|                 |                 |          ",
+    "     |                      |                 |                 |          ",
+    "+--------+           +-------------+   +-------------+  +--------------+   ",
+    "| Client |           | AuthService |   | UserService |  | OrderService |   ",
+    "+--------+           +-------------+   +-------------+  +--------------+   ",
+  ]
+  .iter()
+  .join("\n")
+}
+
+///|
+fn sequence_par_block_expected_unicode() -> String {
+  [
+    "┌────────┐           ┌─────────────┐   ┌─────────────┐  ┌──────────────┐   ",
+    "│ Client │           │ AuthService │   │ UserService │  │ OrderService │   ",
+    "└────┬───┘           └──────┬──────┘   └──────┬──────┘  └───────┬──────┘   ",
+    "     │                      │                 │                 │          ",
+    "     │    Authenticate      │                 │                 │          ",
+    "     │──────────────────────▶                 │                 │          ",
+    "     │                      │                 │                 │          ",
+    "     │                  ┌par [Fetch user data]──────────────────────┐      ",
+    "     │                  │   │                 │                 │   │      ",
+    "     │                  │   │   Get profile   │                 │   │      ",
+    "     │                  │   │─────────────────▶                 │   │      ",
+    "     │                  │   │                 │                 │   │      ",
+    "     │                  ├[Fetch orders]╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┤      ",
+    "     │                  │   │                 │                 │   │      ",
+    "     │                  │   │            Get orders             │   │      ",
+    "     │                  │   │───────────────────────────────────▶   │      ",
+    "     │                  │   │                 │                 │   │      ",
+    "     │                  └───────────────────────────────────────────┘      ",
+    "     │                      │                 │                 │          ",
+    "     │  Combined response   │                 │                 │          ",
+    "     ◀╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌│                 │                 │          ",
+    "     │                      │                 │                 │          ",
+    "┌────┴───┐           ┌──────┴──────┐   ┌──────┴──────┐  ┌───────┴──────┐   ",
+    "│ Client │           │ AuthService │   │ UserService │  │ OrderService │   ",
+    "└────────┘           └─────────────┘   └─────────────┘  └──────────────┘   ",
+  ]
+  .iter()
+  .join("\n")
+}
+
+///|
 test "ASCII/Unicode parity regression: Beautiful Mermaid sample" {
   assert_text_parity(
     beautiful_mermaid_source(),
@@ -3124,5 +3195,14 @@ test "ASCII/Unicode parity regression: Sequence: Opt Block sample" {
     sequence_opt_block_source(),
     sequence_opt_block_expected_ascii(),
     sequence_opt_block_expected_unicode(),
+  )
+}
+
+///|
+test "ASCII/Unicode parity regression: Sequence: Par Block sample" {
+  assert_text_parity(
+    sequence_par_block_source(),
+    sequence_par_block_expected_ascii(),
+    sequence_par_block_expected_unicode(),
   )
 }
