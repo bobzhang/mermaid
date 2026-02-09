@@ -2839,6 +2839,73 @@ fn sequence_par_block_expected_unicode() -> String {
 }
 
 ///|
+fn sequence_critical_block_source() -> String {
+  "sequenceDiagram\n  participant A as App\n  participant DB as Database\n  A->>DB: BEGIN\n  critical Transaction\n    A->>DB: UPDATE accounts\n    A->>DB: INSERT log\n  end\n  A->>DB: COMMIT"
+}
+
+///|
+fn sequence_critical_block_expected_ascii() -> String {
+  [
+    " +-----+           +----------+   ",
+    " | App |           | Database |   ",
+    " +-----+           +----------+   ",
+    "    |                    |        ",
+    "    |       BEGIN        |        ",
+    "    |-------------------->        ",
+    "    |                    |        ",
+    "+critical [Transaction]------+    ",
+    "|   |                    |   |    ",
+    "|   |  UPDATE accounts   |   |    ",
+    "|   |-------------------->   |    ",
+    "|   |                    |   |    ",
+    "|   |    INSERT log      |   |    ",
+    "|   |-------------------->   |    ",
+    "|   |                    |   |    ",
+    "+----------------------------+    ",
+    "    |                    |        ",
+    "    |      COMMIT        |        ",
+    "    |-------------------->        ",
+    "    |                    |        ",
+    " +-----+           +----------+   ",
+    " | App |           | Database |   ",
+    " +-----+           +----------+   ",
+  ]
+  .iter()
+  .join("\n")
+}
+
+///|
+fn sequence_critical_block_expected_unicode() -> String {
+  [
+    " ┌─────┐           ┌──────────┐   ",
+    " │ App │           │ Database │   ",
+    " └──┬──┘           └─────┬────┘   ",
+    "    │                    │        ",
+    "    │       BEGIN        │        ",
+    "    │────────────────────▶        ",
+    "    │                    │        ",
+    "┌critical [Transaction]──────┐    ",
+    "│   │                    │   │    ",
+    "│   │  UPDATE accounts   │   │    ",
+    "│   │────────────────────▶   │    ",
+    "│   │                    │   │    ",
+    "│   │    INSERT log      │   │    ",
+    "│   │────────────────────▶   │    ",
+    "│   │                    │   │    ",
+    "└────────────────────────────┘    ",
+    "    │                    │        ",
+    "    │      COMMIT        │        ",
+    "    │────────────────────▶        ",
+    "    │                    │        ",
+    " ┌──┴──┐           ┌─────┴────┐   ",
+    " │ App │           │ Database │   ",
+    " └─────┘           └──────────┘   ",
+  ]
+  .iter()
+  .join("\n")
+}
+
+///|
 test "ASCII/Unicode parity regression: Beautiful Mermaid sample" {
   assert_text_parity(
     beautiful_mermaid_source(),
@@ -3204,5 +3271,14 @@ test "ASCII/Unicode parity regression: Sequence: Par Block sample" {
     sequence_par_block_source(),
     sequence_par_block_expected_ascii(),
     sequence_par_block_expected_unicode(),
+  )
+}
+
+///|
+test "ASCII/Unicode parity regression: Sequence: Critical Block sample" {
+  assert_text_parity(
+    sequence_critical_block_source(),
+    sequence_critical_block_expected_ascii(),
+    sequence_critical_block_expected_unicode(),
   )
 }
