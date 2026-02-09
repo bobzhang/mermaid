@@ -13,8 +13,9 @@ test "Public API smoke test" {
       box_border_padding: 1,
     },
   )
-  assert_true(ascii.contains("[A]"))
-  assert_true(ascii.contains("[B]"))
+  assert_true(ascii.contains("+---+"))
+  assert_true(ascii.contains("| A |"))
+  assert_true(ascii.contains("| B |"))
 }
 
 ///|
