@@ -718,6 +718,39 @@ test "Sequence alt/else block renders across text and SVG modes" {
 }
 
 ///|
+test "Sequence loop block renders across text and SVG modes" {
+  let input = "sequenceDiagram\nparticipant W as Worker\nparticipant Q as Queue\nloop Retry every 5s\nW->>Q: Poll\nQ-->>W: Empty\nend"
+
+  let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
+    use_ascii: true,
+    padding_x: 5,
+    padding_y: 5,
+    box_border_padding: 1,
+  })
+  let unicode = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
+    use_ascii: false,
+    padding_x: 5,
+    padding_y: 5,
+    box_border_padding: 1,
+  })
+  let svg = try! @beautiful_mermaid.render_mermaid(input)
+
+  assert_true(ascii.contains("Worker"))
+  assert_true(ascii.contains("Queue"))
+  assert_true(ascii.contains("Poll"))
+  assert_true(ascii.contains("Empty"))
+  assert_true(unicode.contains("Worker"))
+  assert_true(unicode.contains("Queue"))
+  assert_true(unicode.contains("Poll"))
+  assert_true(unicode.contains("Empty"))
+  assert_true(svg.contains(">Worker</text>"))
+  assert_true(svg.contains(">Queue</text>"))
+  assert_true(svg.contains(">Poll</text>"))
+  assert_true(svg.contains(">Empty</text>"))
+  assert_true(svg.contains("class=\"sequence-block\""))
+}
+
+///|
 test "Sequence note-over renders across text and SVG modes" {
   let input = "sequenceDiagram\nparticipant A as API\nparticipant B as DB\nA->>B: Query\nNote over A,B: cache miss\nB-->>A: Result"
 
