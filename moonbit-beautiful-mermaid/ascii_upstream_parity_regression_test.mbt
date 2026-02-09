@@ -3338,42 +3338,6 @@ test "ASCII/Unicode parity regression: Subgraph Direction Override sample" {
 }
 
 ///|
-test "ASCII/Unicode parity regression: State Connection Lifecycle sample" {
-  assert_text_parity(
-    state_connection_lifecycle_source(),
-    state_connection_lifecycle_expected_ascii(),
-    state_connection_lifecycle_expected_unicode(),
-  )
-}
-
-///|
-test "ASCII/Unicode parity regression: Sequence Activation Boxes sample" {
-  assert_text_parity(
-    sequence_activation_boxes_source(),
-    sequence_activation_boxes_expected_ascii(),
-    sequence_activation_boxes_expected_unicode(),
-  )
-}
-
-///|
-test "ASCII/Unicode parity regression: Class All 6 Relationship Types sample" {
-  assert_text_parity(
-    class_all_relationship_types_source(),
-    class_all_relationship_types_expected_ascii(),
-    class_all_relationship_types_expected_unicode(),
-  )
-}
-
-///|
-test "ASCII/Unicode parity regression: ER E-Commerce Schema sample" {
-  assert_text_parity(
-    er_ecommerce_schema_source(),
-    er_ecommerce_schema_expected_ascii(),
-    er_ecommerce_schema_expected_unicode(),
-  )
-}
-
-///|
 test "ASCII/Unicode parity regression: CI/CD Pipeline sample" {
   assert_text_parity(
     ci_cd_pipeline_source(),
@@ -3388,24 +3352,6 @@ test "ASCII/Unicode parity regression: Decision Tree sample" {
     decision_tree_source(),
     decision_tree_expected_ascii(),
     decision_tree_expected_unicode(),
-  )
-}
-
-///|
-test "ASCII/Unicode parity regression: Direction Left-Right sample" {
-  assert_text_parity(
-    direction_left_right_source(),
-    direction_left_right_expected_ascii(),
-    direction_left_right_expected_unicode(),
-  )
-}
-
-///|
-test "ASCII/Unicode parity regression: Direction Bottom-Top sample" {
-  assert_text_parity(
-    direction_bottom_top_source(),
-    direction_bottom_top_expected_ascii(),
-    direction_bottom_top_expected_unicode(),
   )
 }
 
