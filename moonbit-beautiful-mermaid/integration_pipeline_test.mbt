@@ -362,6 +362,15 @@ test "SVG renders basic state diagram labels" {
 }
 
 ///|
+test "SVG renders state start pseudostate as filled circle" {
+  let svg = try! @beautiful_mermaid.render_mermaid(
+    "stateDiagram-v2\n[*] --> Ready",
+  )
+  assert_true(svg.contains("stroke=\"none\""))
+  assert_true(svg.contains("<circle"))
+}
+
+///|
 test "ASCII and Unicode modes differ" {
   let ascii_options = @beautiful_mermaid.AsciiRenderOptions::{
     use_ascii: true,
