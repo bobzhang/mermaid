@@ -2372,6 +2372,65 @@ fn sequence_actor_stick_figures_expected_unicode() -> String {
 }
 
 ///|
+fn sequence_arrow_types_source() -> String {
+  "sequenceDiagram\n  A->>B: Solid arrow (sync)\n  B-->>A: Dashed arrow (return)\n  A-)B: Open arrow (async)\n  B--)A: Open dashed arrow"
+}
+
+///|
+fn sequence_arrow_types_expected_ascii() -> String {
+  [
+    " +---+                      +---+   ",
+    " | A |                      | B |   ",
+    " +---+                      +---+   ",
+    "   |                          |     ",
+    "   |   Solid arrow (sync)     |     ",
+    "   |-------------------------->     ",
+    "   |                          |     ",
+    "   |  Dashed arrow (return)   |     ",
+    "   <..........................|     ",
+    "   |                          |     ",
+    "   |   Open arrow (async)     |     ",
+    "   |-------------------------->     ",
+    "   |                          |     ",
+    "   |    Open dashed arrow     |     ",
+    "   <..........................|     ",
+    "   |                          |     ",
+    " +---+                      +---+   ",
+    " | A |                      | B |   ",
+    " +---+                      +---+   ",
+  ]
+  .iter()
+  .join("\n")
+}
+
+///|
+fn sequence_arrow_types_expected_unicode() -> String {
+  [
+    " ┌───┐                      ┌───┐   ",
+    " │ A │                      │ B │   ",
+    " └─┬─┘                      └─┬─┘   ",
+    "   │                          │     ",
+    "   │   Solid arrow (sync)     │     ",
+    "   │──────────────────────────▶     ",
+    "   │                          │     ",
+    "   │  Dashed arrow (return)   │     ",
+    "   ◀╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌│     ",
+    "   │                          │     ",
+    "   │   Open arrow (async)     │     ",
+    "   │──────────────────────────▷     ",
+    "   │                          │     ",
+    "   │    Open dashed arrow     │     ",
+    "   ◁╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌│     ",
+    "   │                          │     ",
+    " ┌─┴─┐                      ┌─┴─┐   ",
+    " │ A │                      │ B │   ",
+    " └───┘                      └───┘   ",
+  ]
+  .iter()
+  .join("\n")
+}
+
+///|
 test "ASCII/Unicode parity regression: Beautiful Mermaid sample" {
   assert_text_parity(
     beautiful_mermaid_source(),
@@ -2674,5 +2733,14 @@ test "ASCII/Unicode parity regression: Sequence: Actor Stick Figures sample" {
     sequence_actor_stick_figures_source(),
     sequence_actor_stick_figures_expected_ascii(),
     sequence_actor_stick_figures_expected_unicode(),
+  )
+}
+
+///|
+test "ASCII/Unicode parity regression: Sequence: Arrow Types sample" {
+  assert_text_parity(
+    sequence_arrow_types_source(),
+    sequence_arrow_types_expected_ascii(),
+    sequence_arrow_types_expected_unicode(),
   )
 }
