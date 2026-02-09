@@ -2553,6 +2553,73 @@ fn sequence_self_messages_expected_unicode() -> String {
 }
 
 ///|
+fn sequence_loop_block_source() -> String {
+  "sequenceDiagram\n  participant C as Client\n  participant S as Server\n  C->>S: Connect\n  loop Every 30s\n    C->>S: Heartbeat\n    S-->>C: Ack\n  end\n  C->>S: Disconnect"
+}
+
+///|
+fn sequence_loop_block_expected_ascii() -> String {
+  [
+    "+--------+      +--------+   ",
+    "| Client |      | Server |   ",
+    "+--------+      +--------+   ",
+    "     |               |       ",
+    "     |    Connect    |       ",
+    "     |--------------->       ",
+    "     |               |       ",
+    " +loop [Every 30s]-------+   ",
+    " |   |               |   |   ",
+    " |   |   Heartbeat   |   |   ",
+    " |   |--------------->   |   ",
+    " |   |               |   |   ",
+    " |   |      Ack      |   |   ",
+    " |   <...............|   |   ",
+    " |   |               |   |   ",
+    " +-----------------------+   ",
+    "     |               |       ",
+    "     |  Disconnect   |       ",
+    "     |--------------->       ",
+    "     |               |       ",
+    "+--------+      +--------+   ",
+    "| Client |      | Server |   ",
+    "+--------+      +--------+   ",
+  ]
+  .iter()
+  .join("\n")
+}
+
+///|
+fn sequence_loop_block_expected_unicode() -> String {
+  [
+    "┌────────┐      ┌────────┐   ",
+    "│ Client │      │ Server │   ",
+    "└────┬───┘      └────┬───┘   ",
+    "     │               │       ",
+    "     │    Connect    │       ",
+    "     │───────────────▶       ",
+    "     │               │       ",
+    " ┌loop [Every 30s]───────┐   ",
+    " │   │               │   │   ",
+    " │   │   Heartbeat   │   │   ",
+    " │   │───────────────▶   │   ",
+    " │   │               │   │   ",
+    " │   │      Ack      │   │   ",
+    " │   ◀╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌│   │   ",
+    " │   │               │   │   ",
+    " └───────────────────────┘   ",
+    "     │               │       ",
+    "     │  Disconnect   │       ",
+    "     │───────────────▶       ",
+    "     │               │       ",
+    "┌────┴───┐      ┌────┴───┐   ",
+    "│ Client │      │ Server │   ",
+    "└────────┘      └────────┘   ",
+  ]
+  .iter()
+  .join("\n")
+}
+
+///|
 test "ASCII/Unicode parity regression: Beautiful Mermaid sample" {
   assert_text_parity(
     beautiful_mermaid_source(),
@@ -2882,5 +2949,14 @@ test "ASCII/Unicode parity regression: Sequence: Self-Messages sample" {
     sequence_self_messages_source(),
     sequence_self_messages_expected_ascii(),
     sequence_self_messages_expected_unicode(),
+  )
+}
+
+///|
+test "ASCII/Unicode parity regression: Sequence: Loop Block sample" {
+  assert_text_parity(
+    sequence_loop_block_source(),
+    sequence_loop_block_expected_ascii(),
+    sequence_loop_block_expected_unicode(),
   )
 }
