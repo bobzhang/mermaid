@@ -2335,26 +2335,26 @@ fn render_ascii_flow_subgraphs(
   let scale_x = if state_layout_mode { 9 } else { flow_scale_x() }
   let scale_y = if state_layout_mode { 10 } else { flow_scale_y() }
   let column_width_by_x : Map[Int, Int] = {}
-  if state_layout_mode || !flow_direction_horizontal || flow_with_subgraphs {
-    for node in positioned.nodes {
-      let label = flow_node_label(node)
-      let column_key = if !state_layout_mode && flow_direction_horizontal {
-        node.x - node.width / 2
-      } else {
-        node.x
+  for node in positioned.nodes {
+    let label = flow_node_label(node)
+    let column_key = if !state_layout_mode && flow_direction_horizontal {
+      node.x - node.width / 2
+    } else {
+      node.x
+    }
+    let base_width = if state_layout_mode {
+      match node.shape {
+        NodeShape::StateStart | NodeShape::StateEnd => 12
+        _ => (label.length() + 4).max(12)
       }
-      let base_width = if state_layout_mode {
-        match node.shape {
-          NodeShape::StateStart | NodeShape::StateEnd => 12
-          _ => (label.length() + 4).max(12)
-        }
-      } else {
-        (label.length() + 4).max(flow_vertical_min_node_width)
-      }
-      let current = option_int_or(column_width_by_x.get(column_key), 0)
-      if base_width > current {
-        column_width_by_x[column_key] = base_width
-      }
+    } else if flow_direction_horizontal && !flow_with_subgraphs {
+      (label.length() + 4).max(5)
+    } else {
+      (label.length() + 4).max(flow_vertical_min_node_width)
+    }
+    let current = option_int_or(column_width_by_x.get(column_key), 0)
+    if base_width > current {
+      column_width_by_x[column_key] = base_width
     }
   }
 
@@ -2385,17 +2385,12 @@ fn render_ascii_flow_subgraphs(
     let (min_width, min_height) = if state_layout_mode {
       (option_int_or(column_width_by_x.get(column_key), 12), 5)
     } else {
-      (
-        if flow_direction_horizontal && !flow_with_subgraphs {
-          (label.length() + 4).max(5)
-        } else {
-          option_int_or(
-            column_width_by_x.get(column_key),
-            (label.length() + 4).max(flow_vertical_min_node_width),
-          )
-        },
-        5,
-      )
+      let fallback_width = if flow_direction_horizontal && !flow_with_subgraphs {
+        (label.length() + 4).max(5)
+      } else {
+        (label.length() + 4).max(flow_vertical_min_node_width)
+      }
+      (option_int_or(column_width_by_x.get(column_key), fallback_width), 5)
     }
     let width = if state_layout_mode {
       scale_size(node.width, scale_x, min_width)
