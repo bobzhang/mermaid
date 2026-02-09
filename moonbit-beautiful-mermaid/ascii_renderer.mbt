@@ -1218,9 +1218,20 @@ fn flow_expand_group_side_padding_for_nodes(
 
   let mut left = group.left
   let mut right = flow_group_right(group)
+  let mut has_content = false
+  let mut content_left = 0
+  let mut content_right = 0
   for child in adjusted_children {
     let child_left = child.left
     let child_right = flow_group_right(child)
+    if !has_content {
+      content_left = child_left
+      content_right = child_right
+      has_content = true
+    } else {
+      content_left = content_left.min(child_left)
+      content_right = content_right.max(child_right)
+    }
     if child_left <= left + 1 {
       left = child_left - 2
     }
@@ -1235,11 +1246,29 @@ fn flow_expand_group_side_padding_for_nodes(
     }
     let node_left = node.left
     let node_right = node.left + node.width - 1
+    if !has_content {
+      content_left = node_left
+      content_right = node_right
+      has_content = true
+    } else {
+      content_left = content_left.min(node_left)
+      content_right = content_right.max(node_right)
+    }
     if node_left <= left + 1 {
       left = node_left - 2
     }
     if node_right >= right - 1 {
       right = node_right + 2
+    }
+  }
+  if has_content {
+    let desired_left = content_left - 2
+    let desired_right = content_right + 2
+    if desired_left > left {
+      left = desired_left
+    }
+    if desired_right < right {
+      right = desired_right
     }
   }
 
