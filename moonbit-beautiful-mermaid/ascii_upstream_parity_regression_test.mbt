@@ -3896,3 +3896,55 @@ test "ASCII/Unicode parity regression: Class: Abstract Annotation sample" {
     class_abstract_annotation_sample_expected_unicode(),
   )
 }
+
+///|
+fn class_enum_annotation_sample_source() -> String {
+  "classDiagram\n  class Status {\n    <<enumeration>>\n    ACTIVE\n    INACTIVE\n    PENDING\n    DELETED\n  }"
+}
+
+///|
+fn class_enum_annotation_sample_expected_ascii() -> String {
+  [
+    "+-----------------+    ",
+    "| <<enumeration>> |    ",
+    "| Status          |    ",
+    "+-----------------+    ",
+    "| ACTIVE          |    ",
+    "| INACTIVE        |    ",
+    "| PENDING         |    ",
+    "| DELETED         |    ",
+    "+-----------------+    ",
+    "                       ",
+    "                       ",
+  ]
+  .iter()
+  .join("\n")
+}
+
+///|
+fn class_enum_annotation_sample_expected_unicode() -> String {
+  [
+    "┌─────────────────┐    ",
+    "│ <<enumeration>> │    ",
+    "│ Status          │    ",
+    "├─────────────────┤    ",
+    "│ ACTIVE          │    ",
+    "│ INACTIVE        │    ",
+    "│ PENDING         │    ",
+    "│ DELETED         │    ",
+    "└─────────────────┘    ",
+    "                       ",
+    "                       ",
+  ]
+  .iter()
+  .join("\n")
+}
+
+///|
+test "ASCII/Unicode parity regression: Class: Enum Annotation sample" {
+  assert_text_parity(
+    class_enum_annotation_sample_source(),
+    class_enum_annotation_sample_expected_ascii(),
+    class_enum_annotation_sample_expected_unicode(),
+  )
+}
