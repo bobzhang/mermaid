@@ -2213,6 +2213,53 @@ fn state_connection_lifecycle_sample_expected_unicode() -> String {
 }
 
 ///|
+fn sequence_basic_messages_source() -> String {
+  "sequenceDiagram\n  Alice->>Bob: Hello Bob!\n  Bob-->>Alice: Hi Alice!"
+}
+
+///|
+fn sequence_basic_messages_expected_ascii() -> String {
+  [
+    " +-------+        +-----+   ",
+    " | Alice |        | Bob |   ",
+    " +-------+        +-----+   ",
+    "     |               |      ",
+    "     |  Hello Bob!   |      ",
+    "     |--------------->      ",
+    "     |               |      ",
+    "     |   Hi Alice!   |      ",
+    "     <...............|      ",
+    "     |               |      ",
+    " +-------+        +-----+   ",
+    " | Alice |        | Bob |   ",
+    " +-------+        +-----+   ",
+  ]
+  .iter()
+  .join("\n")
+}
+
+///|
+fn sequence_basic_messages_expected_unicode() -> String {
+  [
+    " ┌───────┐        ┌─────┐   ",
+    " │ Alice │        │ Bob │   ",
+    " └───┬───┘        └──┬──┘   ",
+    "     │               │      ",
+    "     │  Hello Bob!   │      ",
+    "     │───────────────▶      ",
+    "     │               │      ",
+    "     │   Hi Alice!   │      ",
+    "     ◀╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌│      ",
+    "     │               │      ",
+    " ┌───┴───┐        ┌──┴──┐   ",
+    " │ Alice │        │ Bob │   ",
+    " └───────┘        └─────┘   ",
+  ]
+  .iter()
+  .join("\n")
+}
+
+///|
 test "ASCII/Unicode parity regression: Beautiful Mermaid sample" {
   assert_text_parity(
     beautiful_mermaid_source(),
@@ -2488,5 +2535,14 @@ test "ASCII/Unicode parity regression: State: Connection Lifecycle sample" {
     state_connection_lifecycle_sample_source(),
     state_connection_lifecycle_sample_expected_ascii(),
     state_connection_lifecycle_sample_expected_unicode(),
+  )
+}
+
+///|
+test "ASCII/Unicode parity regression: Sequence: Basic Messages sample" {
+  assert_text_parity(
+    sequence_basic_messages_source(),
+    sequence_basic_messages_expected_ascii(),
+    sequence_basic_messages_expected_unicode(),
   )
 }
