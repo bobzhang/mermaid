@@ -1,3 +1,3 @@
 import {
-  "hongbozhang/beautiful_mermaid/test_support" @test_support,
+  "bobzhang/beautiful_mermaid/test_support" @test_support,
 } for "test"

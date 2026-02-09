@@ -1,5 +1,5 @@
 import {
-  "hongbozhang/beautiful_mermaid" @beautiful_mermaid,
+  "bobzhang/beautiful_mermaid" @beautiful_mermaid,
   "moonbitlang/core/env" @env,
   "moonbitlang/core/strconv" @strconv,
 }
