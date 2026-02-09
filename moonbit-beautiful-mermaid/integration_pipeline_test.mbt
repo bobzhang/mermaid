@@ -222,6 +222,20 @@ test "SVG renders subgraph labels and nodes" {
 }
 
 ///|
+test "SVG renders complex CI pipeline diagram" {
+  let svg = try! @beautiful_mermaid.render_mermaid(
+    "graph TD\nsubgraph ci [CI Pipeline]\nA[Push Code] --> B{Tests Pass?}\nB -->|Yes| C[Build Docker]\nB -->|No| D[Fix & Retry]\nD --> A\nend\nC --> E([Deploy to Staging])\nE --> F{QA Approved?}\nF -->|Yes| G((Production))\nF -->|No| D",
+  )
+
+  assert_true(svg.contains(">CI Pipeline</text>"))
+  assert_true(svg.contains(">Push Code</text>"))
+  assert_true(svg.contains(">Tests Pass?</text>"))
+  assert_true(svg.contains(">Yes</text>"))
+  assert_true(svg.contains(">No</text>"))
+  assert_true(svg.contains(">Production</text>"))
+}
+
+///|
 test "ASCII and Unicode modes differ" {
   let ascii_options = @beautiful_mermaid.AsciiRenderOptions::{
     use_ascii: true,
