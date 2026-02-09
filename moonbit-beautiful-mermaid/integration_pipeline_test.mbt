@@ -769,6 +769,44 @@ test "State direction LR renders across text and SVG modes" {
 }
 
 ///|
+test "State transition labels render across text and SVG modes" {
+  let input = "stateDiagram-v2\nIdle --> Active : start\nActive --> Busy : process\nBusy --> Done : finish"
+
+  let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
+    use_ascii: true,
+    padding_x: 5,
+    padding_y: 5,
+    box_border_padding: 1,
+  })
+  let unicode = try! @beautiful_mermaid.render_mermaid_ascii(input, options=@beautiful_mermaid.AsciiRenderOptions::{
+    use_ascii: false,
+    padding_x: 5,
+    padding_y: 5,
+    box_border_padding: 1,
+  })
+  let svg = try! @beautiful_mermaid.render_mermaid(input)
+
+  assert_true(ascii.contains("Idle"))
+  assert_true(ascii.contains("Busy"))
+  assert_true(ascii.contains("Done"))
+  assert_true(ascii.contains("start"))
+  assert_true(ascii.contains("process"))
+  assert_true(ascii.contains("finish"))
+  assert_true(unicode.contains("Idle"))
+  assert_true(unicode.contains("Busy"))
+  assert_true(unicode.contains("Done"))
+  assert_true(unicode.contains("start"))
+  assert_true(unicode.contains("process"))
+  assert_true(unicode.contains("finish"))
+  assert_true(svg.contains(">Idle</text>"))
+  assert_true(svg.contains(">Busy</text>"))
+  assert_true(svg.contains(">Done</text>"))
+  assert_true(svg.contains(">start</text>"))
+  assert_true(svg.contains(">process</text>"))
+  assert_true(svg.contains(">finish</text>"))
+}
+
+///|
 test "State composite direction override renders across text and SVG modes" {
   let input = "stateDiagram-v2\n[*] --> Processing\nstate Processing {\n  direction LR\n  parse --> validate\n  validate --> execute\n}\nProcessing --> Done"
 
