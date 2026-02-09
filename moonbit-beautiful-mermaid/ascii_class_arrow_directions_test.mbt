@@ -70,6 +70,25 @@ test "Class association and dependency arrows point toward targets" {
 }
 
 ///|
+test "Multiple class dependencies keep source above all targets" {
+  let diagram = "classDiagram\nClient ..> Server\nClient ..> Database"
+  let unicode = class_render(diagram, false)
+  assert_true(unicode.contains("▼"))
+
+  let client_line = line_index(unicode, "Client")
+  let server_line = line_index(unicode, "Server")
+  let database_line = line_index(unicode, "Database")
+  assert_true(client_line >= 0)
+  assert_true(server_line >= 0)
+  assert_true(database_line >= 0)
+  assert_true(client_line < server_line)
+  assert_true(client_line < database_line)
+
+  let ascii = class_render(diagram, true)
+  assert_true(ascii.contains("v"))
+}
+
+///|
 test "Class realization arrows stay compatible across syntax variants" {
   let forward = class_render("classDiagram\nCircle ..|> Shape", false)
   assert_true(forward.contains("△"))
