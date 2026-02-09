@@ -5090,3 +5090,72 @@ test "ASCII/Unicode parity regression: ER: One-or-More to Zero-or-Many (}|--o{) 
     er_one_or_more_to_zero_or_many_o_sample_expected_unicode(),
   )
 }
+
+
+///|
+fn er_all_cardinality_types_sample_source() -> String {
+  "erDiagram\n  A ||--|| B : one-to-one\n  C ||--o{ D : one-to-many\n  E |o--|{ F : opt-to-many\n  G }|--o{ H : many-to-many"
+}
+
+///|
+fn er_all_cardinality_types_sample_expected_ascii() -> String {
+  [
+    "+---+one-to+---+      +---+           ",
+    "| A |||--||| B |      | C |           ",
+    "+---+      +---+      +---+           ",
+    "                       ||             ",
+    "  ----------------------- one-to-many ",
+    "  |                     |             ",
+    " o{                     |             ",
+    "+---+      +---+opt-to+---+           ",
+    "| D |      | E |o|--}|| F |           ",
+    "+---+      +---+      +---+           ",
+    "                                      ",
+    "                                      ",
+    "                                      ",
+    "                                      ",
+    "+---+many-t+---+                      ",
+    "| G |}|--o{| H |                      ",
+    "+---+      +---+                      ",
+    "                                      ",
+    "                                      ",
+  ]
+  .iter()
+  .join("\n")
+}
+
+///|
+fn er_all_cardinality_types_sample_expected_unicode() -> String {
+  [
+    "┌───┐one-to┌───┐      ┌───┐           ",
+    "│ A │║────║│ B │      │ C │           ",
+    "└───┘      └───┘      └───┘           ",
+    "                        ║             ",
+    "  ─────────────────────── one-to-many ",
+    "  │                     │             ",
+    " o╟                     │             ",
+    "┌───┐      ┌───┐opt-to┌───┐           ",
+    "│ D │      │ E │o║───╟│ F │           ",
+    "└───┘      └───┘      └───┘           ",
+    "                                      ",
+    "                                      ",
+    "                                      ",
+    "                                      ",
+    "┌───┐many-t┌───┐                      ",
+    "│ G │╟───o╟│ H │                      ",
+    "└───┘      └───┘                      ",
+    "                                      ",
+    "                                      ",
+  ]
+  .iter()
+  .join("\n")
+}
+
+///|
+test "ASCII/Unicode parity regression: ER: All Cardinality Types sample" {
+  assert_text_parity(
+    er_all_cardinality_types_sample_source(),
+    er_all_cardinality_types_sample_expected_ascii(),
+    er_all_cardinality_types_sample_expected_unicode(),
+  )
+}
