@@ -1185,8 +1185,7 @@ fn flow_draw_group_labels(
     group.label
   }
   let label_x = (group.left +
-  ((group.width - label.length()) / 2).max(1) -
-  1).max(group.left + 1)
+  (group.width - label.length()) / 2).max(group.left + 1)
   let label_y = group.top + 1
   write_canvas_text(canvas, label_x, label_y, label)
   for child in group.children {
