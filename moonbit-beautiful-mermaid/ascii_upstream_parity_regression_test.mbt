@@ -2102,6 +2102,117 @@ fn state_composite_states_expected_unicode() -> String {
 }
 
 ///|
+fn state_connection_lifecycle_sample_source() -> String {
+  "stateDiagram-v2\n  [*] --> Closed\n  Closed --> Connecting : connect\n  Connecting --> Connected : success\n  Connecting --> Closed : timeout\n  Connected --> Disconnecting : close\n  Connected --> Reconnecting : error\n  Reconnecting --> Connected : success\n  Reconnecting --> Closed : max_retries\n  Disconnecting --> Closed : done\n  Closed --> [*]"
+}
+
+///|
+fn state_connection_lifecycle_sample_expected_ascii() -> String {
+  [
+    "+---------------+                            ",
+    "|               |                            ",
+    "|               |                            ",
+    "|               |                            ",
+    "+---------------+                            ",
+    "        |                                    ",
+    "        |                                    ",
+    "        |                                    ",
+    "        |                                    ",
+    "        v                                    ",
+    "+---------------+                            ",
+    "|               |                            ",
+    "|     Closed    |   <----+-----------+       ",
+    "|               |        |           |       ",
+    "+---------------+        |           |       ",
+    "        ^                |           |       ",
+    "        |                |           |       ",
+    "     timeout             |           |       ",
+    "        |                |           |       ",
+    "        v                |           v       ",
+    "+---------------+        |   +--------------+",
+    "|               |        |   |              |",
+    "|   Connecting  |        |   |              |",
+    "|               |        |   |              |",
+    "+---------------+        |   +--------------+",
+    "        |                |                   ",
+    "        |                |                   ",
+    "     success             |                   ",
+    "        |                |                   ",
+    "        v                |                   ",
+    "+---------------+        +---+               ",
+    "|               |        |   |               ",
+    "|   Connected   |   <----|error------+       ",
+    "|               |        |   |       |       ",
+    "+---------------+        |   |       |       ",
+    "        |                |   |       |       ",
+    "        |                |   |    success    ",
+    "      close              |   +-------+       ",
+    "        |                |      max_retries  ",
+    "        v                |           v       ",
+    "+---------------+        |   +--------------+",
+    "|               |        |   |              |",
+    "| Disconnecting |   done-+   | Reconnecting |",
+    "|               |            |              |",
+    "+---------------+            +--------------+",
+  ]
+  .iter()
+  .join("\n")
+}
+
+///|
+fn state_connection_lifecycle_sample_expected_unicode() -> String {
+  [
+    "┌───────────────┐                            ",
+    "│               │                            ",
+    "│               │                            ",
+    "│               │                            ",
+    "└───────┬───────┘                            ",
+    "        │                                    ",
+    "        │                                    ",
+    "        │                                    ",
+    "        │                                    ",
+    "        ▼                                    ",
+    "┌───────────────┐                            ",
+    "│               │                            ",
+    "│     Closed    │  ├◄────┬───────────┐       ",
+    "│               │        │           │       ",
+    "└───────┬───────┘        │           │       ",
+    "        ▲                │           │       ",
+    "        │                │           │       ",
+    "     timeout             │           │       ",
+    "        │                │           │       ",
+    "        ▼                │           ▼       ",
+    "┌───────┴───────┐        │   ┌──────────────┐",
+    "│               │        │   │              │",
+    "│   Connecting  │        │   │              │",
+    "│               │        │   │              │",
+    "└───────┬───────┘        │   └──────────────┘",
+    "        │                │                   ",
+    "        │                │                   ",
+    "     success             │                   ",
+    "        │                │                   ",
+    "        ▼                │                   ",
+    "┌───────────────┐        ├───┐               ",
+    "│               │        │   │               ",
+    "│   Connected   │  ├◄────┼error──────┐       ",
+    "│               │        │   │       │       ",
+    "└───────┬───────┘        │   │       │       ",
+    "        │                │   │       │       ",
+    "        │                │   │    success    ",
+    "      close              │   └───────┤       ",
+    "        │                │      max_retries  ",
+    "        ▼                │           ▼       ",
+    "┌───────────────┐        │   ┌───────┴──────┐",
+    "│               │        │   │              │",
+    "│ Disconnecting │  ├done─┘   │ Reconnecting │",
+    "│               │            │              │",
+    "└───────────────┘            └──────────────┘",
+  ]
+  .iter()
+  .join("\n")
+}
+
+///|
 test "ASCII/Unicode parity regression: Beautiful Mermaid sample" {
   assert_text_parity(
     beautiful_mermaid_source(),
@@ -2368,5 +2479,14 @@ test "ASCII/Unicode parity regression: State: Composite States sample" {
     state_composite_states_source(),
     state_composite_states_expected_ascii(),
     state_composite_states_expected_unicode(),
+  )
+}
+
+///|
+test "ASCII/Unicode parity regression: State: Connection Lifecycle sample" {
+  assert_text_parity(
+    state_connection_lifecycle_sample_source(),
+    state_connection_lifecycle_sample_expected_ascii(),
+    state_connection_lifecycle_sample_expected_unicode(),
   )
 }
