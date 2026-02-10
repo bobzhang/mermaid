@@ -30,7 +30,9 @@ fn count_occurrences(haystack : String, needle : String) -> Int {
 
 ///|
 test "Class inheritance arrow points toward parent" {
-  let diagram = "classDiagram\nAnimal <|-- Dog"
+  let diagram =
+    #|classDiagram
+    #|Animal <|-- Dog
   let unicode = class_render(diagram, false)
   assert_true(unicode.contains("△"))
   assert_true(!unicode.contains("▽"))
@@ -48,7 +50,10 @@ test "Class inheritance arrow points toward parent" {
 
 ///|
 test "Class association and dependency arrows point toward targets" {
-  let association = class_render("classDiagram\nPerson --> Address", false)
+  let association_diagram =
+    #|classDiagram
+    #|Person --> Address
+  let association = class_render(association_diagram, false)
   assert_true(association.contains("▼"))
   let person_line = line_index(association, "Person")
   let address_line = line_index(association, "Address")
@@ -56,7 +61,10 @@ test "Class association and dependency arrows point toward targets" {
   assert_true(address_line >= 0)
   assert_true(person_line < address_line)
 
-  let dependency = class_render("classDiagram\nClient ..> Server", false)
+  let dependency_diagram =
+    #|classDiagram
+    #|Client ..> Server
+  let dependency = class_render(dependency_diagram, false)
   assert_true(dependency.contains("▼"))
   let client_line = line_index(dependency, "Client")
   let server_line = line_index(dependency, "Server")
@@ -64,14 +72,17 @@ test "Class association and dependency arrows point toward targets" {
   assert_true(server_line >= 0)
   assert_true(client_line < server_line)
 
-  let ascii = class_render("classDiagram\nPerson --> Address", true)
+  let ascii = class_render(association_diagram, true)
   assert_true(ascii.contains("v"))
   assert_true(!ascii.contains("^"))
 }
 
 ///|
 test "Multiple class associations keep source above all targets" {
-  let diagram = "classDiagram\nPerson --> Address\nPerson --> Phone"
+  let diagram =
+    #|classDiagram
+    #|Person --> Address
+    #|Person --> Phone
   let unicode = class_render(diagram, false)
   assert_true(unicode.contains("▼"))
 
@@ -90,7 +101,10 @@ test "Multiple class associations keep source above all targets" {
 
 ///|
 test "Multiple class dependencies keep source above all targets" {
-  let diagram = "classDiagram\nClient ..> Server\nClient ..> Database"
+  let diagram =
+    #|classDiagram
+    #|Client ..> Server
+    #|Client ..> Database
   let unicode = class_render(diagram, false)
   assert_true(unicode.contains("▼"))
 
@@ -109,7 +123,10 @@ test "Multiple class dependencies keep source above all targets" {
 
 ///|
 test "Class association chain keeps top-to-bottom ordering" {
-  let diagram = "classDiagram\nA --> B\nB --> C"
+  let diagram =
+    #|classDiagram
+    #|A --> B
+    #|B --> C
   let unicode = class_render(diagram, false)
 
   let a_line = line_index(unicode, " A ")
@@ -125,7 +142,10 @@ test "Class association chain keeps top-to-bottom ordering" {
 
 ///|
 test "Class layout ordering stays consistent across unicode and ascii modes" {
-  let diagram = "classDiagram\nAnimal <|-- Dog\nDog --> Toy"
+  let diagram =
+    #|classDiagram
+    #|Animal <|-- Dog
+    #|Dog --> Toy
   let unicode = class_render(diagram, false)
   let ascii = class_render(diagram, true)
 
@@ -152,7 +172,17 @@ test "Class layout ordering stays consistent across unicode and ascii modes" {
 
 ///|
 test "Class inheritance with members keeps parent above child" {
-  let diagram = "classDiagram\nclass Animal {\n  +String name\n  +eat() void\n}\nclass Dog {\n  +String breed\n  +bark() void\n}\nAnimal <|-- Dog"
+  let diagram =
+    #|classDiagram
+    #|class Animal {
+    #|  +String name
+    #|  +eat() void
+    #|}
+    #|class Dog {
+    #|  +String breed
+    #|  +bark() void
+    #|}
+    #|Animal <|-- Dog
   let unicode = class_render(diagram, false)
 
   let animal_line = line_index(unicode, "Animal")
@@ -168,7 +198,10 @@ test "Class inheritance with members keeps parent above child" {
 
 ///|
 test "Class realization arrows stay compatible across syntax variants" {
-  let forward = class_render("classDiagram\nCircle ..|> Shape", false)
+  let forward_diagram =
+    #|classDiagram
+    #|Circle ..|> Shape
+  let forward = class_render(forward_diagram, false)
   assert_true(forward.contains("△"))
   let shape_forward = line_index(forward, "Shape")
   let circle_forward = line_index(forward, "Circle")
@@ -176,7 +209,10 @@ test "Class realization arrows stay compatible across syntax variants" {
   assert_true(circle_forward >= 0)
   assert_true(shape_forward < circle_forward)
 
-  let reverse = class_render("classDiagram\nShape <|.. Circle", false)
+  let reverse_diagram =
+    #|classDiagram
+    #|Shape <|.. Circle
+  let reverse = class_render(reverse_diagram, false)
   assert_true(reverse.contains("△"))
   let shape_reverse = line_index(reverse, "Shape")
   let circle_reverse = line_index(reverse, "Circle")
@@ -187,7 +223,10 @@ test "Class realization arrows stay compatible across syntax variants" {
 
 ///|
 test "Multiple realizations keep interface above implementations" {
-  let diagram = "classDiagram\nCircle ..|> Shape\nSquare ..|> Shape"
+  let diagram =
+    #|classDiagram
+    #|Circle ..|> Shape
+    #|Square ..|> Shape
   let unicode = class_render(diagram, false)
   assert_true(unicode.contains("△"))
 
@@ -206,7 +245,10 @@ test "Multiple realizations keep interface above implementations" {
 
 ///|
 test "Multiple inheritance from one parent keeps upward markers" {
-  let diagram = "classDiagram\nAnimal <|-- Dog\nAnimal <|-- Cat"
+  let diagram =
+    #|classDiagram
+    #|Animal <|-- Dog
+    #|Animal <|-- Cat
   let unicode = class_render(diagram, false)
   // Two upward markers may merge visually at shared connection points.
   assert_true(unicode.contains("△"))
@@ -226,7 +268,11 @@ test "Multiple inheritance from one parent keeps upward markers" {
 
 ///|
 test "Combined sibling and multi-level inheritance keeps hierarchy ordering" {
-  let diagram = "classDiagram\nAnimal <|-- Dog\nAnimal <|-- Cat\nDog <|-- Puppy"
+  let diagram =
+    #|classDiagram
+    #|Animal <|-- Dog
+    #|Animal <|-- Cat
+    #|Dog <|-- Puppy
   let unicode = class_render(diagram, false)
 
   let animal_line = line_index(unicode, "Animal")
@@ -245,7 +291,10 @@ test "Combined sibling and multi-level inheritance keeps hierarchy ordering" {
 
 ///|
 test "Multi-level class inheritance keeps parent-first ordering" {
-  let diagram = "classDiagram\nAnimal <|-- Mammal\nMammal <|-- Dog"
+  let diagram =
+    #|classDiagram
+    #|Animal <|-- Mammal
+    #|Mammal <|-- Dog
   let unicode = class_render(diagram, false)
 
   let animal = line_index(unicode, "Animal")
