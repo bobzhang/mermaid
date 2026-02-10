@@ -5,6 +5,40 @@ struct StateGridCoord {
 } derive(Eq, Show)
 
 ///|
+fn state_grid_lifecycle_source() -> String {
+  (
+    #|stateDiagram-v2
+    #|  [*] --> Closed
+    #|  Closed --> Connecting : connect
+    #|  Connecting --> Connected : success
+    #|  Connecting --> Closed : timeout
+    #|  Connected --> Disconnecting : close
+    #|  Connected --> Reconnecting : error
+    #|  Reconnecting --> Connected : success
+    #|  Reconnecting --> Closed : max_retries
+    #|  Disconnecting --> Closed : done
+    #|  Closed --> [*]
+  )
+}
+
+///|
+fn state_grid_composite_source() -> String {
+  (
+    #|stateDiagram-v2
+    #|  [*] --> Idle
+    #|  Idle --> Processing : submit
+    #|  state Processing {
+    #|    parse --> validate
+    #|    validate --> execute
+    #|  }
+    #|  Processing --> Complete : done
+    #|  Processing --> Error : fail
+    #|  Error --> Idle : retry
+    #|  Complete --> [*]
+  )
+}
+
+///|
 fn state_grid_target_ids(graph : MermaidGraph) -> Map[String, Bool] {
   let target_ids : Map[String, Bool] = {}
   for edge in graph.edges {
@@ -100,7 +134,7 @@ fn state_nodes_in_definition_order(graph : MermaidGraph) -> Array[MermaidNode] {
 
 ///|
 test "state_grid_positions matches lifecycle sample topology" {
-  let source = "stateDiagram-v2\n  [*] --> Closed\n  Closed --> Connecting : connect\n  Connecting --> Connected : success\n  Connecting --> Closed : timeout\n  Connected --> Disconnecting : close\n  Connected --> Reconnecting : error\n  Reconnecting --> Connected : success\n  Reconnecting --> Closed : max_retries\n  Disconnecting --> Closed : done\n  Closed --> [*]"
+  let source = state_grid_lifecycle_source()
   let graph = parse_mermaid(source)
   let positions = state_grid_positions(
     graph,
@@ -118,7 +152,7 @@ test "state_grid_positions matches lifecycle sample topology" {
 
 ///|
 test "state_grid_positions matches composite sample topology" {
-  let source = "stateDiagram-v2\n  [*] --> Idle\n  Idle --> Processing : submit\n  state Processing {\n    parse --> validate\n    validate --> execute\n  }\n  Processing --> Complete : done\n  Processing --> Error : fail\n  Error --> Idle : retry\n  Complete --> [*]"
+  let source = state_grid_composite_source()
   let graph = parse_mermaid(source)
   let positions = state_grid_positions(
     graph,
@@ -405,7 +439,7 @@ fn state_edge_path_text_td(
 
 ///|
 test "state edge path prototype matches key lifecycle routes" {
-  let source = "stateDiagram-v2\n  [*] --> Closed\n  Closed --> Connecting : connect\n  Connecting --> Connected : success\n  Connecting --> Closed : timeout\n  Connected --> Disconnecting : close\n  Connected --> Reconnecting : error\n  Reconnecting --> Connected : success\n  Reconnecting --> Closed : max_retries\n  Disconnecting --> Closed : done\n  Closed --> [*]"
+  let source = state_grid_lifecycle_source()
   let graph = parse_mermaid(source)
   let positions = state_grid_positions(
     graph,
@@ -431,7 +465,7 @@ test "state edge path prototype matches key lifecycle routes" {
 
 ///|
 test "state flat layout reroutes diagonal reverse edge pair" {
-  let source = "stateDiagram-v2\n  [*] --> Closed\n  Closed --> Connecting : connect\n  Connecting --> Connected : success\n  Connecting --> Closed : timeout\n  Connected --> Disconnecting : close\n  Connected --> Reconnecting : error\n  Reconnecting --> Connected : success\n  Reconnecting --> Closed : max_retries\n  Disconnecting --> Closed : done\n  Closed --> [*]"
+  let source = state_grid_lifecycle_source()
   let graph = parse_mermaid(source)
   let positioned = layout_flat_state_graph_for_ascii_grid(
     graph,
@@ -456,7 +490,7 @@ test "state flat layout reroutes diagonal reverse edge pair" {
 
 ///|
 test "state flat layout places reverse-pair labels near source segments" {
-  let source = "stateDiagram-v2\n  [*] --> Closed\n  Closed --> Connecting : connect\n  Connecting --> Connected : success\n  Connecting --> Closed : timeout\n  Connected --> Disconnecting : close\n  Connected --> Reconnecting : error\n  Reconnecting --> Connected : success\n  Reconnecting --> Closed : max_retries\n  Disconnecting --> Closed : done\n  Closed --> [*]"
+  let source = state_grid_lifecycle_source()
   let graph = parse_mermaid(source)
   let positioned = layout_flat_state_graph_for_ascii_grid(
     graph,
@@ -489,7 +523,7 @@ test "state flat layout places reverse-pair labels near source segments" {
 
 ///|
 test "state flat layout anchors diagonal back-edge label near source side" {
-  let source = "stateDiagram-v2\n  [*] --> Closed\n  Closed --> Connecting : connect\n  Connecting --> Connected : success\n  Connecting --> Closed : timeout\n  Connected --> Disconnecting : close\n  Connected --> Reconnecting : error\n  Reconnecting --> Connected : success\n  Reconnecting --> Closed : max_retries\n  Disconnecting --> Closed : done\n  Closed --> [*]"
+  let source = state_grid_lifecycle_source()
   let graph = parse_mermaid(source)
   let positioned = layout_flat_state_graph_for_ascii_grid(
     graph,
