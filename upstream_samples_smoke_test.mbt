@@ -10,22 +10,47 @@ fn upstream_samples() -> Array[UpstreamSample] {
   [
     {
       title: "Beautiful Mermaid",
-      source: "stateDiagram-v2\n    direction LR\n    [*] --> Input\n    Input --> Parse: DSL\n    Parse --> Layout: AST\n    Layout --> SVG: Vector\n    Layout --> ASCII: Text\n    SVG --> Theme\n    ASCII --> Theme\n    Theme --> Output\n    Output --> [*]",
+      source: (
+        #|stateDiagram-v2
+        #|    direction LR
+        #|    [*] --> Input
+        #|    Input --> Parse: DSL
+        #|    Parse --> Layout: AST
+        #|    Layout --> SVG: Vector
+        #|    Layout --> ASCII: Text
+        #|    SVG --> Theme
+        #|    ASCII --> Theme
+        #|    Theme --> Output
+        #|    Output --> [*]
+      ),
       transparent: true,
     },
     {
       title: "Simple Flow",
-      source: "graph TD\n  A[Start] --> B[Process] --> C[End]",
+      source: (
+        #|graph TD
+        #|  A[Start] --> B[Process] --> C[End]
+      ),
       transparent: false,
     },
     {
       title: "Original Node Shapes",
-      source: "graph LR\n  A[Rectangle] --> B(Rounded)\n  B --> C{Diamond}\n  C --> D([Stadium])\n  D --> E((Circle))",
+      source: (
+        #|graph LR
+        #|  A[Rectangle] --> B(Rounded)
+        #|  B --> C{Diamond}
+        #|  C --> D([Stadium])
+        #|  D --> E((Circle))
+      ),
       transparent: false,
     },
     {
       title: "Batch 1 Shapes",
-      source: "graph LR\n  A[[Subroutine]] --> B(((Double Circle)))\n  B --> C{{Hexagon}}",
+      source: (
+        #|graph LR
+        #|  A[[Subroutine]] --> B(((Double Circle)))
+        #|  B --> C{{Hexagon}}
+      ),
       transparent: false,
     },
     {
@@ -40,22 +65,41 @@ fn upstream_samples() -> Array[UpstreamSample] {
     },
     {
       title: "All Edge Styles",
-      source: "graph TD\n  A[Source] -->|solid| B[Target 1]\n  A -.->|dotted| C[Target 2]\n  A ==>|thick| D[Target 3]",
+      source: (
+        #|graph TD
+        #|  A[Source] -->|solid| B[Target 1]
+        #|  A -.->|dotted| C[Target 2]
+        #|  A ==>|thick| D[Target 3]
+      ),
       transparent: false,
     },
     {
       title: "No-Arrow Edges",
-      source: "graph TD\n  A[Node 1] ---|related| B[Node 2]\n  B -.- C[Node 3]\n  C === D[Node 4]",
+      source: (
+        #|graph TD
+        #|  A[Node 1] ---|related| B[Node 2]
+        #|  B -.- C[Node 3]
+        #|  C === D[Node 4]
+      ),
       transparent: false,
     },
     {
       title: "Bidirectional Arrows",
-      source: "graph LR\n  A[Client] <-->|sync| B[Server]\n  B <-.->|heartbeat| C[Monitor]\n  C <==>|data| D[Storage]",
+      source: (
+        #|graph LR
+        #|  A[Client] <-->|sync| B[Server]
+        #|  B <-.->|heartbeat| C[Monitor]
+        #|  C <==>|data| D[Storage]
+      ),
       transparent: false,
     },
     {
       title: "Parallel Links (&)",
-      source: "graph TD\n  A[Input] & B[Config] --> C[Processor]\n  C --> D[Output] & E[Log]",
+      source: (
+        #|graph TD
+        #|  A[Input] & B[Config] --> C[Processor]
+        #|  C --> D[Output] & E[Log]
+      ),
       transparent: false,
     },
     {
