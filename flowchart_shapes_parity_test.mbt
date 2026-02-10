@@ -12,7 +12,20 @@ fn assert_node_shape(
 
 ///|
 fn all_shapes_diagram() -> String {
-  "graph LR\nA[Rectangle] --> B(Rounded)\nB --> C{Diamond}\nC --> D([Stadium])\nD --> E((Circle))\nE --> F[[Subroutine]]\nF --> G(((DoubleCircle)))\nG --> H{{Hexagon}}\nH --> I[(Cylinder)]\nI --> J>Flag]\nJ --> K[/Trapezoid\\]\nK --> L[\\TrapAlt/]"
+  (
+    #|graph LR
+    #|A[Rectangle] --> B(Rounded)
+    #|B --> C{Diamond}
+    #|C --> D([Stadium])
+    #|D --> E((Circle))
+    #|E --> F[[Subroutine]]
+    #|F --> G(((DoubleCircle)))
+    #|G --> H{{Hexagon}}
+    #|H --> I[(Cylinder)]
+    #|I --> J>Flag]
+    #|J --> K[/Trapezoid\]
+    #|K --> L[\TrapAlt/]
+  )
 }
 
 ///|
