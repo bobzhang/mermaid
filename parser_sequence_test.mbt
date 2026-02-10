@@ -1,7 +1,11 @@
 ///|
 test "Parser supports basic sequence messages" {
   let graph = try! @beautiful_mermaid.parse_mermaid(
-    "sequenceDiagram\n  Alice->>Bob: Hello Bob\n  Bob-->>Alice: Hi Alice",
+    (
+      #|sequenceDiagram
+      #|  Alice->>Bob: Hello Bob
+      #|  Bob-->>Alice: Hi Alice
+    ),
   )
 
   assert_eq(graph.direction.to_string(), "LR")
@@ -28,7 +32,11 @@ test "Parser supports basic sequence messages" {
 ///|
 test "Parser keeps sequence self messages" {
   let graph = try! @beautiful_mermaid.parse_mermaid(
-    "sequenceDiagram\n  Alice->>Alice: Think\n  Alice->>Bob: Result",
+    (
+      #|sequenceDiagram
+      #|  Alice->>Alice: Think
+      #|  Alice->>Bob: Result
+    ),
   )
 
   assert_eq(graph.direction.to_string(), "LR")
@@ -46,7 +54,12 @@ test "Parser keeps sequence self messages" {
 ///|
 test "Parser supports additional sequence arrow operators" {
   let graph = try! @beautiful_mermaid.parse_mermaid(
-    "sequenceDiagram\nA->B: open\nB--)A: dotted open\nA-xB: stop",
+    (
+      #|sequenceDiagram
+      #|A->B: open
+      #|B--)A: dotted open
+      #|A-xB: stop
+    ),
   )
 
   assert_eq(graph.nodes.length(), 2)
@@ -68,7 +81,11 @@ test "Parser supports additional sequence arrow operators" {
 ///|
 test "Parser supports sequence activation marker targets" {
   let graph = try! @beautiful_mermaid.parse_mermaid(
-    "sequenceDiagram\nA->>+B: Activate target\nB-->>-A: Deactivate source",
+    (
+      #|sequenceDiagram
+      #|A->>+B: Activate target
+      #|B-->>-A: Deactivate source
+    ),
   )
 
   assert_eq(graph.nodes.length(), 2)
@@ -86,7 +103,15 @@ test "Parser supports sequence activation marker targets" {
 ///|
 test "Parser captures sequence blocks and dividers" {
   let graph = try! @beautiful_mermaid.parse_mermaid(
-    "sequenceDiagram\nA->>B: Request\nalt Success\nB-->>A: 200 OK\nelse Failure\nB-->>A: 500 Error\nend",
+    (
+      #|sequenceDiagram
+      #|A->>B: Request
+      #|alt Success
+      #|B-->>A: 200 OK
+      #|else Failure
+      #|B-->>A: 500 Error
+      #|end
+    ),
   )
 
   assert_eq(graph.edges.length(), 3)
@@ -104,7 +129,14 @@ test "Parser captures sequence blocks and dividers" {
 ///|
 test "Parser captures sequence notes and actor declarations" {
   let graph = try! @beautiful_mermaid.parse_mermaid(
-    "sequenceDiagram\nactor U as User\nparticipant S as Server\nU->>S: Login\nNote right of S: Validate credentials\nNote over U,S: Shared state",
+    (
+      #|sequenceDiagram
+      #|actor U as User
+      #|participant S as Server
+      #|U->>S: Login
+      #|Note right of S: Validate credentials
+      #|Note over U,S: Shared state
+    ),
   )
 
   assert_eq(graph.sequence_actor_order, ["U", "S"])
@@ -128,7 +160,13 @@ test "Parser captures sequence notes and actor declarations" {
 ///|
 test "Parser ignores standalone activate/deactivate commands" {
   let graph = try! @beautiful_mermaid.parse_mermaid(
-    "sequenceDiagram\nparticipant A\nactivate A\nA->>B: Work\ndeactivate A",
+    (
+      #|sequenceDiagram
+      #|participant A
+      #|activate A
+      #|A->>B: Work
+      #|deactivate A
+    ),
   )
 
   assert_eq(graph.nodes.length(), 2)
@@ -139,7 +177,30 @@ test "Parser ignores standalone activate/deactivate commands" {
 ///|
 test "Parser supports all sequence block keywords" {
   let graph = try! @beautiful_mermaid.parse_mermaid(
-    "sequenceDiagram\nA->>B: Start\nloop Retry\nA->>B: Loop call\nend\nopt Cache\nA->>B: Opt call\nend\npar Left\nA->>B: Left call\nand Right\nB->>A: Right call\nend\ncritical Txn\nA->>B: Critical call\nend\nbreak Stop\nA->>B: Break call\nend\nrect Highlight\nA->>B: Rect call\nend",
+    (
+      #|sequenceDiagram
+      #|A->>B: Start
+      #|loop Retry
+      #|A->>B: Loop call
+      #|end
+      #|opt Cache
+      #|A->>B: Opt call
+      #|end
+      #|par Left
+      #|A->>B: Left call
+      #|and Right
+      #|B->>A: Right call
+      #|end
+      #|critical Txn
+      #|A->>B: Critical call
+      #|end
+      #|break Stop
+      #|A->>B: Break call
+      #|end
+      #|rect Highlight
+      #|A->>B: Rect call
+      #|end
+    ),
   )
 
   assert_eq(graph.sequence_blocks.length(), 6)
@@ -168,7 +229,10 @@ test "Parser supports all sequence block keywords" {
 ///|
 test "Parser auto-creates sequence participants from messages" {
   let graph = try! @beautiful_mermaid.parse_mermaid(
-    "sequenceDiagram\nAlice->>Bob: Hello",
+    (
+      #|sequenceDiagram
+      #|Alice->>Bob: Hello
+    ),
   )
 
   assert_eq(graph.nodes.length(), 2)
@@ -186,7 +250,12 @@ test "Parser auto-creates sequence participants from messages" {
 ///|
 test "Parser avoids duplicate declared participants used in messages" {
   let graph = try! @beautiful_mermaid.parse_mermaid(
-    "sequenceDiagram\nparticipant A as Alice\nA->>B: Hello\nB->>A: Hi",
+    (
+      #|sequenceDiagram
+      #|participant A as Alice
+      #|A->>B: Hello
+      #|B->>A: Hi
+    ),
   )
 
   assert_eq(graph.nodes.length(), 2)
@@ -202,7 +271,11 @@ test "Parser avoids duplicate declared participants used in messages" {
 ///|
 test "Parser participant without alias uses id as label" {
   let graph = try! @beautiful_mermaid.parse_mermaid(
-    "sequenceDiagram\nparticipant Server\nServer->>Server: Ping",
+    (
+      #|sequenceDiagram
+      #|participant Server
+      #|Server->>Server: Ping
+    ),
   )
 
   assert_eq(graph.nodes.length(), 1)
@@ -218,7 +291,11 @@ test "Parser participant without alias uses id as label" {
 ///|
 test "Parser captures left sequence notes" {
   let graph = try! @beautiful_mermaid.parse_mermaid(
-    "sequenceDiagram\nA->>B: Hello\nNote left of A: Important note",
+    (
+      #|sequenceDiagram
+      #|A->>B: Hello
+      #|Note left of A: Important note
+    ),
   )
 
   assert_eq(graph.sequence_notes.length(), 1)
@@ -232,7 +309,12 @@ test "Parser captures left sequence notes" {
 ///|
 test "Parser keeps sequence message order" {
   let graph = try! @beautiful_mermaid.parse_mermaid(
-    "sequenceDiagram\nA->>B: First\nB->>C: Second\nC->>A: Third",
+    (
+      #|sequenceDiagram
+      #|A->>B: First
+      #|B->>C: Second
+      #|C->>A: Third
+    ),
   )
 
   assert_eq(graph.edges.length(), 3)
@@ -244,7 +326,21 @@ test "Parser keeps sequence message order" {
 ///|
 test "Parser handles full authentication sequence flow" {
   let graph = try! @beautiful_mermaid.parse_mermaid(
-    "sequenceDiagram\nparticipant C as Client\nparticipant S as Server\nparticipant DB as Database\nC->>S: POST /login\nS->>DB: SELECT user\nalt User found\nDB-->>S: User record\nS-->>C: 200 OK + token\nelse Not found\nDB-->>S: null\nS-->>C: 401 Unauthorized\nend",
+    (
+      #|sequenceDiagram
+      #|participant C as Client
+      #|participant S as Server
+      #|participant DB as Database
+      #|C->>S: POST /login
+      #|S->>DB: SELECT user
+      #|alt User found
+      #|DB-->>S: User record
+      #|S-->>C: 200 OK + token
+      #|else Not found
+      #|DB-->>S: null
+      #|S-->>C: 401 Unauthorized
+      #|end
+    ),
   )
 
   assert_eq(graph.nodes.length(), 3)
