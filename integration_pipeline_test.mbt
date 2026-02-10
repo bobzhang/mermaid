@@ -909,7 +909,12 @@ test "Flowchart classDef shorthand renders across text and SVG modes" (
 ///|
 test "SVG renders basic state diagram labels" (it : @test.Test) {
   let svg = try! @beautiful_mermaid.render_mermaid(
-    "stateDiagram-v2\n[*] --> Idle\nIdle --> Active : start\nActive --> Done",
+    (
+      #|stateDiagram-v2
+      #|[*] --> Idle
+      #|Idle --> Active : start
+      #|Active --> Done
+    ),
   )
   snapshot_svg(it, "integration_state_basic.svg", svg)
 
@@ -944,7 +949,12 @@ test "SVG renders state end pseudostate as bullseye" (it : @test.Test) {
 test "State multiple pseudostates render across text and SVG modes" (
   it : @test.Test,
 ) {
-  let input = "stateDiagram-v2\n[*] --> A\n[*] --> B\nA --> [*]\nB --> [*]"
+  let input =
+    #|stateDiagram-v2
+    #|[*] --> A
+    #|[*] --> B
+    #|A --> [*]
+    #|B --> [*]
 
   let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: true,
@@ -973,7 +983,14 @@ test "State multiple pseudostates render across text and SVG modes" (
 ///|
 test "SVG renders composite state with inner nodes" (it : @test.Test) {
   let svg = try! @beautiful_mermaid.render_mermaid(
-    "stateDiagram-v2\nstate Processing {\n  parse --> validate\n  validate --> execute\n}\n[*] --> Processing",
+    (
+      #|stateDiagram-v2
+      #|state Processing {
+      #|  parse --> validate
+      #|  validate --> execute
+      #|}
+      #|[*] --> Processing
+    ),
   )
   snapshot_svg(it, "integration_state_composite.svg", svg)
 
@@ -986,7 +1003,17 @@ test "SVG renders composite state with inner nodes" (it : @test.Test) {
 ///|
 test "SVG renders full state lifecycle with labels" (it : @test.Test) {
   let svg = try! @beautiful_mermaid.render_mermaid(
-    "stateDiagram-v2\n[*] --> Idle\nIdle --> Processing : submit\nstate Processing {\n  parse --> validate\n  validate --> execute\n}\nProcessing --> Complete : done\nComplete --> [*]",
+    (
+      #|stateDiagram-v2
+      #|[*] --> Idle
+      #|Idle --> Processing : submit
+      #|state Processing {
+      #|  parse --> validate
+      #|  validate --> execute
+      #|}
+      #|Processing --> Complete : done
+      #|Complete --> [*]
+    ),
   )
   snapshot_svg(it, "integration_state_full_lifecycle.svg", svg)
 
@@ -1003,7 +1030,10 @@ test "SVG renders full state lifecycle with labels" (it : @test.Test) {
 test "State description lines render across text and SVG modes" (
   it : @test.Test,
 ) {
-  let input = "stateDiagram-v2\ns1 : Idle State\ns1 --> s2 : proceed"
+  let input =
+    #|stateDiagram-v2
+    #|s1 : Idle State
+    #|s1 --> s2 : proceed
 
   let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: true,
@@ -1030,7 +1060,11 @@ test "State description lines render across text and SVG modes" (
 
 ///|
 test "State direction LR renders across text and SVG modes" (it : @test.Test) {
-  let input = "stateDiagram-v2\ndirection LR\nIdle --> Active\nActive --> Done"
+  let input =
+    #|stateDiagram-v2
+    #|direction LR
+    #|Idle --> Active
+    #|Active --> Done
 
   let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: true,
@@ -1062,7 +1096,11 @@ test "State direction LR renders across text and SVG modes" (it : @test.Test) {
 test "State transition labels render across text and SVG modes" (
   it : @test.Test,
 ) {
-  let input = "stateDiagram-v2\nIdle --> Active : start\nActive --> Busy : process\nBusy --> Done : finish"
+  let input =
+    #|stateDiagram-v2
+    #|Idle --> Active : start
+    #|Active --> Busy : process
+    #|Busy --> Done : finish
 
   let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: true,
@@ -1103,7 +1141,15 @@ test "State transition labels render across text and SVG modes" (
 test "State composite direction override renders across text and SVG modes" (
   it : @test.Test,
 ) {
-  let input = "stateDiagram-v2\n[*] --> Processing\nstate Processing {\n  direction LR\n  parse --> validate\n  validate --> execute\n}\nProcessing --> Done"
+  let input =
+    #|stateDiagram-v2
+    #|[*] --> Processing
+    #|state Processing {
+    #|  direction LR
+    #|  parse --> validate
+    #|  validate --> execute
+    #|}
+    #|Processing --> Done
 
   let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: true,
@@ -1141,7 +1187,10 @@ test "State composite direction override renders across text and SVG modes" (
 test "State alias declarations render across text and SVG modes" (
   it : @test.Test,
 ) {
-  let input = "stateDiagram-v2\nstate \"Waiting for input\" as waiting\nwaiting --> active : trigger"
+  let input =
+    #|stateDiagram-v2
+    #|state "Waiting for input" as waiting
+    #|waiting --> active : trigger
 
   let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: true,
@@ -1173,7 +1222,12 @@ test "State alias declarations render across text and SVG modes" (
 test "State composite alias blocks render across text and SVG modes" (
   it : @test.Test,
 ) {
-  let input = "stateDiagram-v2\nstate \"Active Processing\" as AP {\n  parse --> validate\n}\nAP --> Done : finish"
+  let input =
+    #|stateDiagram-v2
+    #|state "Active Processing" as AP {
+    #|  parse --> validate
+    #|}
+    #|AP --> Done : finish
 
   let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: true,
@@ -1208,7 +1262,17 @@ test "State composite alias blocks render across text and SVG modes" (
 ///|
 test "SVG does not duplicate composite state labels" (it : @test.Test) {
   let svg = try! @beautiful_mermaid.render_mermaid(
-    "stateDiagram-v2\n[*] --> Idle\nIdle --> Processing : submit\nstate Processing {\n  parse --> validate\n  validate --> execute\n}\nProcessing --> Complete : done\nComplete --> [*]",
+    (
+      #|stateDiagram-v2
+      #|[*] --> Idle
+      #|Idle --> Processing : submit
+      #|state Processing {
+      #|  parse --> validate
+      #|  validate --> execute
+      #|}
+      #|Processing --> Complete : done
+      #|Complete --> [*]
+    ),
   )
   snapshot_svg(it, "integration_state_composite_dedup.svg", svg)
   assert_eq(integration_count_occurrences(svg, ">Processing</text>"), 1)
@@ -1219,7 +1283,16 @@ test "SVG renders subgraph-first TD diagrams without ordering regressions" (
   it : @test.Test,
 ) {
   let svg = try! @beautiful_mermaid.render_mermaid(
-    "graph TD\nsubgraph ci [CI Pipeline]\nA[Push Code] --> B{Tests Pass?}\nB -->|Yes| C[Build Image]\nend\nC --> D([Deploy])\nD --> E{QA?}\nE -->|Yes| F((Production))",
+    (
+      #|graph TD
+      #|subgraph ci [CI Pipeline]
+      #|A[Push Code] --> B{Tests Pass?}
+      #|B -->|Yes| C[Build Image]
+      #|end
+      #|C --> D([Deploy])
+      #|D --> E{QA?}
+      #|E -->|Yes| F((Production))
+    ),
   )
   snapshot_svg(it, "integration_flowchart_subgraph_first_order.svg", svg)
 
@@ -1231,7 +1304,12 @@ test "SVG renders subgraph-first TD diagrams without ordering regressions" (
 
 ///|
 test "SVG renders flowchart self-loop edges" (it : @test.Test) {
-  let svg = try! @beautiful_mermaid.render_mermaid("graph TD\nA[Node] --> A")
+  let svg = try! @beautiful_mermaid.render_mermaid(
+    (
+      #|graph TD
+      #|A[Node] --> A
+    ),
+  )
   snapshot_svg(it, "integration_flowchart_self_loop.svg", svg)
   assert_true(svg.contains("<svg"))
   assert_true(svg.contains(">Node</text>"))
@@ -1241,7 +1319,10 @@ test "SVG renders flowchart self-loop edges" (it : @test.Test) {
 ///|
 test "SVG renders self-loop labels" (it : @test.Test) {
   let svg = try! @beautiful_mermaid.render_mermaid(
-    "graph TD\nA[Retry] -->|again| A",
+    (
+      #|graph TD
+      #|A[Retry] -->|again| A
+    ),
   )
   snapshot_svg(it, "integration_flowchart_self_loop_label.svg", svg)
   assert_true(svg.contains(">Retry</text>"))
