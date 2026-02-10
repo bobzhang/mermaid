@@ -10,13 +10,14 @@ fn class_render(diagram : String, use_ascii : Bool) -> String {
 
 ///|
 fn line_index(haystack : String, needle : String) -> Int {
-  let lines = haystack.split("\n").map(line => line.to_string()).to_array()
-  for i in 0..<lines.length() {
-    if lines[i].contains(needle) {
-      return i
+  let lines = haystack.split("\n")
+  for i, line in lines {
+    if line.contains(needle) {
+      break i
     }
+  } nobreak {
+    -1
   }
-  -1
 }
 
 ///|

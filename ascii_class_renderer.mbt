@@ -1,5 +1,5 @@
 ///|
-fn class_is_method_detail(detail : String) -> Bool {
+fn class_is_method_detail(detail : StringView) -> Bool {
   if detail.has_suffix(" ()") {
     return true
   }
@@ -10,9 +10,9 @@ fn class_is_method_detail(detail : String) -> Bool {
 }
 
 ///|
-fn class_strip_method_marker(detail : String) -> String {
-  if detail.has_suffix(" ()") {
-    trim_owned((try! detail[:detail.length() - 3]).to_string())
+fn class_strip_method_marker(detail : StringView) -> StringView {
+  if detail.strip_suffix(" ()") is Some(a) {
+    a.trim()
   } else {
     detail
   }
@@ -30,17 +30,17 @@ fn class_sections(node : MermaidNode) -> Array[Array[String]] {
   let methods : Array[String] = []
 
   for i in 1..<lines.length() {
-    let detail = trim_owned(lines[i])
-    let rendered = class_strip_method_marker(detail)
+    let detail = lines[i].trim()
     if detail == "" {
       continue
     }
+    let rendered = class_strip_method_marker(detail)
     if detail.has_prefix("<<") && detail.has_suffix(">>") {
-      header.push(rendered)
+      header.push(rendered.to_string())
     } else if class_is_method_detail(detail) {
-      methods.push(rendered)
+      methods.push(rendered.to_string())
     } else {
-      attributes.push(rendered)
+      attributes.push(rendered.to_string())
     }
   }
   header.push(lines[0])
