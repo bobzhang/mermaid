@@ -1,7 +1,13 @@
 ///|
 test "Parser captures classDef/class/style metadata" {
   let graph = try! @beautiful_mermaid.parse_mermaid(
-    "graph TD\nA[Start]:::entry --> B[End]\nclassDef entry fill:#f9f,stroke:#333\nclass B finish\nstyle A fill:#fff,stroke:#000",
+    (
+      #|graph TD
+      #|A[Start]:::entry --> B[End]
+      #|classDef entry fill:#f9f,stroke:#333
+      #|class B finish
+      #|style A fill:#fff,stroke:#000
+    ),
   )
 
   assert_eq(graph.class_defs.length(), 1)
@@ -29,7 +35,11 @@ test "Parser captures classDef/class/style metadata" {
 ///|
 test "Parser applies style to multiple nodes" {
   let graph = try! @beautiful_mermaid.parse_mermaid(
-    "graph LR\nA --> B\nstyle A,B fill:#111,stroke:#222",
+    (
+      #|graph LR
+      #|A --> B
+      #|style A,B fill:#111,stroke:#222
+    ),
   )
 
   assert_eq(graph.node_styles.length(), 2)
