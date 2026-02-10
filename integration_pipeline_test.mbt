@@ -1394,7 +1394,13 @@ test "Unicode mode emits box drawing glyphs" {
 test "Standalone sequence activate/deactivate lines are ignored for rendering parity" (
   it : @test.Test,
 ) {
-  let input = "sequenceDiagram\nparticipant A\nparticipant B\nactivate A\nA->>B: Work\ndeactivate A"
+  let input =
+    #|sequenceDiagram
+    #|participant A
+    #|participant B
+    #|activate A
+    #|A->>B: Work
+    #|deactivate A
 
   let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: true,
@@ -1424,7 +1430,10 @@ test "Standalone sequence activate/deactivate lines are ignored for rendering pa
 test "SVG renders sequence self-message labels with participant aliases" (
   it : @test.Test,
 ) {
-  let input = "sequenceDiagram\nparticipant A as App\nA->>A: Retry"
+  let input =
+    #|sequenceDiagram
+    #|participant A as App
+    #|A->>A: Retry
 
   let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: true,
@@ -1453,7 +1462,16 @@ test "SVG renders sequence self-message labels with participant aliases" (
 test "Sequence alt/else block renders across text and SVG modes" (
   it : @test.Test,
 ) {
-  let input = "sequenceDiagram\nparticipant C as Client\nparticipant S as Server\nC->>S: Request\nalt OK\nS-->>C: 200\nelse Fail\nS-->>C: 500\nend"
+  let input =
+    #|sequenceDiagram
+    #|participant C as Client
+    #|participant S as Server
+    #|C->>S: Request
+    #|alt OK
+    #|S-->>C: 200
+    #|else Fail
+    #|S-->>C: 500
+    #|end
 
   let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: true,
@@ -1489,7 +1507,14 @@ test "Sequence alt/else block renders across text and SVG modes" (
 
 ///|
 test "Sequence loop block renders across text and SVG modes" (it : @test.Test) {
-  let input = "sequenceDiagram\nparticipant W as Worker\nparticipant Q as Queue\nloop Retry every 5s\nW->>Q: Poll\nQ-->>W: Empty\nend"
+  let input =
+    #|sequenceDiagram
+    #|participant W as Worker
+    #|participant Q as Queue
+    #|loop Retry every 5s
+    #|W->>Q: Poll
+    #|Q-->>W: Empty
+    #|end
 
   let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: true,
@@ -1525,7 +1550,12 @@ test "Sequence loop block renders across text and SVG modes" (it : @test.Test) {
 test "Sequence self-message loop renders across text and SVG modes" (
   it : @test.Test,
 ) {
-  let input = "sequenceDiagram\nparticipant W as Worker\nloop Retry\nW->>W: Check cache\nend"
+  let input =
+    #|sequenceDiagram
+    #|participant W as Worker
+    #|loop Retry
+    #|W->>W: Check cache
+    #|end
 
   let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: true,
@@ -1553,7 +1583,14 @@ test "Sequence self-message loop renders across text and SVG modes" (
 
 ///|
 test "Sequence opt block renders across text and SVG modes" (it : @test.Test) {
-  let input = "sequenceDiagram\nparticipant C as Client\nparticipant API\nC->>API: Fetch profile\nopt Cache hit\nAPI-->>C: 304 Not Modified\nend"
+  let input =
+    #|sequenceDiagram
+    #|participant C as Client
+    #|participant API
+    #|C->>API: Fetch profile
+    #|opt Cache hit
+    #|API-->>C: 304 Not Modified
+    #|end
 
   let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: true,
@@ -1587,7 +1624,13 @@ test "Sequence opt block renders across text and SVG modes" (it : @test.Test) {
 
 ///|
 test "Sequence note-over renders across text and SVG modes" (it : @test.Test) {
-  let input = "sequenceDiagram\nparticipant A as API\nparticipant B as DB\nA->>B: Query\nNote over A,B: cache miss\nB-->>A: Result"
+  let input =
+    #|sequenceDiagram
+    #|participant A as API
+    #|participant B as DB
+    #|A->>B: Query
+    #|Note over A,B: cache miss
+    #|B-->>A: Result
 
   let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: true,
