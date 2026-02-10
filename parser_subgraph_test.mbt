@@ -8,7 +8,12 @@ fn assert_contains_id(ids : Array[String], expected : String) -> Unit raise {
 ///|
 test "Parser parses a basic flowchart subgraph" {
   let graph = try! @beautiful_mermaid.parse_mermaid(
-    "graph TD\nsubgraph Backend\nA --> B\nend",
+    (
+      #|graph TD
+      #|subgraph Backend
+      #|A --> B
+      #|end
+    ),
   )
 
   assert_eq(graph.subgraphs.length(), 1)
@@ -23,7 +28,12 @@ test "Parser parses a basic flowchart subgraph" {
 ///|
 test "Parser parses subgraph id and label in bracket form" {
   let graph = try! @beautiful_mermaid.parse_mermaid(
-    "graph TD\nsubgraph us-east [US East Region]\nA --> B\nend",
+    (
+      #|graph TD
+      #|subgraph us-east [US East Region]
+      #|A --> B
+      #|end
+    ),
   )
 
   assert_eq(graph.subgraphs.length(), 1)
@@ -35,7 +45,15 @@ test "Parser parses subgraph id and label in bracket form" {
 ///|
 test "Parser keeps nested subgraph nodes scoped to their direct owner" {
   let graph = try! @beautiful_mermaid.parse_mermaid(
-    "graph TD\nsubgraph Outer\nsubgraph Inner\nA --> B\nend\nC --> D\nend",
+    (
+      #|graph TD
+      #|subgraph Outer
+      #|subgraph Inner
+      #|A --> B
+      #|end
+      #|C --> D
+      #|end
+    ),
   )
 
   assert_eq(graph.subgraphs.length(), 1)
@@ -55,7 +73,15 @@ test "Parser keeps nested subgraph nodes scoped to their direct owner" {
 ///|
 test "Parser keeps subgraph membership at first node definition" {
   let graph = try! @beautiful_mermaid.parse_mermaid(
-    "graph TD\nsubgraph Clients\nA --> B\nend\nsubgraph Services\nB --> C\nend",
+    (
+      #|graph TD
+      #|subgraph Clients
+      #|A --> B
+      #|end
+      #|subgraph Services
+      #|B --> C
+      #|end
+    ),
   )
 
   assert_eq(graph.subgraphs.length(), 2)
@@ -71,7 +97,13 @@ test "Parser keeps subgraph membership at first node definition" {
 ///|
 test "Parser captures direction override inside subgraph only" {
   let graph = try! @beautiful_mermaid.parse_mermaid(
-    "graph TD\nsubgraph sub1 [Left Right Group]\ndirection LR\nA --> B\nend",
+    (
+      #|graph TD
+      #|subgraph sub1 [Left Right Group]
+      #|direction LR
+      #|A --> B
+      #|end
+    ),
   )
 
   assert_eq(graph.direction.to_string(), "TD")
@@ -85,7 +117,11 @@ test "Parser captures direction override inside subgraph only" {
 ///|
 test "Parser ignores root flowchart direction lines after header" {
   let graph = try! @beautiful_mermaid.parse_mermaid(
-    "graph TD\ndirection LR\nA --> B",
+    (
+      #|graph TD
+      #|direction LR
+      #|A --> B
+    ),
   )
 
   assert_eq(graph.direction.to_string(), "TD")
@@ -96,7 +132,13 @@ test "Parser ignores root flowchart direction lines after header" {
 ///|
 test "Parser ignores invalid direction override inside subgraph" {
   let graph = try! @beautiful_mermaid.parse_mermaid(
-    "graph LR\nsubgraph Sub\ndirection XX\nA --> B\nend",
+    (
+      #|graph LR
+      #|subgraph Sub
+      #|direction XX
+      #|A --> B
+      #|end
+    ),
   )
 
   assert_eq(graph.direction.to_string(), "LR")
