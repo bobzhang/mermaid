@@ -1,7 +1,11 @@
 ///|
 test "Parser supports class diagram relationships" {
   let graph = try! @beautiful_mermaid.parse_mermaid(
-    "classDiagram\nA <|-- B : inherits\nC ..> D : uses",
+    (
+      #|classDiagram
+      #|A <|-- B : inherits
+      #|C ..> D : uses
+    ),
   )
 
   assert_eq(graph.direction.to_string(), "TD")
@@ -19,7 +23,12 @@ test "Parser supports class diagram relationships" {
 ///|
 test "Parser supports reversed class relationship operators" {
   let graph = try! @beautiful_mermaid.parse_mermaid(
-    "classDiagram\nFlyable <|.. Bird\nEngine --* Car\nDepartment --o University",
+    (
+      #|classDiagram
+      #|Flyable <|.. Bird
+      #|Engine --* Car
+      #|Department --o University
+    ),
   )
 
   assert_eq(graph.edges.length(), 3)
@@ -49,7 +58,10 @@ test "Parser supports reversed class relationship operators" {
 ///|
 test "Parser accepts class relationships with cardinality tokens" {
   let graph = try! @beautiful_mermaid.parse_mermaid(
-    "classDiagram\nCustomer \"1\" --> \"*\" Order : places",
+    (
+      #|classDiagram
+      #|Customer "1" --> "*" Order : places
+    ),
   )
 
   assert_eq(graph.nodes.length(), 2)
@@ -64,7 +76,10 @@ test "Parser accepts class relationships with cardinality tokens" {
 ///|
 test "Parser accepts class relationships with range cardinality tokens" {
   let graph = try! @beautiful_mermaid.parse_mermaid(
-    "classDiagram\nService \"0..1\" ..> \"1..*\" Repository : depends",
+    (
+      #|classDiagram
+      #|Service "0..1" ..> "1..*" Repository : depends
+    ),
   )
 
   assert_eq(graph.nodes.length(), 2)
@@ -80,7 +95,14 @@ test "Parser accepts class relationships with range cardinality tokens" {
 ///|
 test "Parser captures class members from blocks and property lines" {
   let graph = try! @beautiful_mermaid.parse_mermaid(
-    "classDiagram\nclass Animal {\n  +String name\n  +eat() void\n}\nAnimal : +weight int",
+    (
+      #|classDiagram
+      #|class Animal {
+      #|  +String name
+      #|  +eat() void
+      #|}
+      #|Animal : +weight int
+    ),
   )
 
   assert_eq(graph.nodes.length(), 1)
@@ -99,7 +121,12 @@ test "Parser captures class members from blocks and property lines" {
 ///|
 test "Parser parses inline class attributes in Type Name form" {
   let graph = try! @beautiful_mermaid.parse_mermaid(
-    "classDiagram\nclass Animal\nAnimal : +String name\nAnimal : +int age",
+    (
+      #|classDiagram
+      #|class Animal
+      #|Animal : +String name
+      #|Animal : +int age
+    ),
   )
 
   match graph.nodes.get("Animal") {
@@ -115,7 +142,10 @@ test "Parser parses inline class attributes in Type Name form" {
 ///|
 test "Parser captures inline class annotation declarations" {
   let graph = try! @beautiful_mermaid.parse_mermaid(
-    "classDiagram\nclass Shape { <<abstract>> }",
+    (
+      #|classDiagram
+      #|class Shape { <<abstract>> }
+    ),
   )
 
   assert_eq(graph.nodes.length(), 1)
@@ -132,7 +162,15 @@ test "Parser captures inline class annotation declarations" {
 ///|
 test "Parser normalizes class member visibilities including package scope" {
   let graph = try! @beautiful_mermaid.parse_mermaid(
-    "classDiagram\nclass MyClass {\n  +String publicField\n  -int privateField\n  #double protectedField\n  ~bool packageField\n}",
+    (
+      #|classDiagram
+      #|class MyClass {
+      #|  +String publicField
+      #|  -int privateField
+      #|  #double protectedField
+      #|  ~bool packageField
+      #|}
+    ),
   )
 
   match graph.nodes.get("MyClass") {
@@ -149,7 +187,10 @@ test "Parser normalizes class member visibilities including package scope" {
 ///|
 test "Parser supports ER diagram relationships" {
   let graph = try! @beautiful_mermaid.parse_mermaid(
-    "erDiagram\nCUSTOMER ||--o{ ORDER : places",
+    (
+      #|erDiagram
+      #|CUSTOMER ||--o{ ORDER : places
+    ),
   )
 
   assert_eq(graph.direction.to_string(), "TD")
@@ -167,7 +208,13 @@ test "Parser supports ER diagram relationships" {
 ///|
 test "Parser captures ER attributes from entity blocks" {
   let graph = try! @beautiful_mermaid.parse_mermaid(
-    "erDiagram\nCUSTOMER {\n  string name PK\n  int age\n}",
+    (
+      #|erDiagram
+      #|CUSTOMER {
+      #|  string name PK
+      #|  int age
+      #|}
+    ),
   )
 
   match graph.nodes.get("CUSTOMER") {
@@ -183,7 +230,10 @@ test "Parser captures ER attributes from entity blocks" {
 ///|
 test "Parser captures non-identifying ER relationships as dotted" {
   let graph = try! @beautiful_mermaid.parse_mermaid(
-    "erDiagram\nUSER ||..o{ LOG : generates",
+    (
+      #|erDiagram
+      #|USER ||..o{ LOG : generates
+    ),
   )
 
   assert_eq(graph.edges.length(), 1)
@@ -198,7 +248,33 @@ test "Parser captures non-identifying ER relationships as dotted" {
 ///|
 test "Parser handles complete ER e-commerce schema" {
   let graph = try! @beautiful_mermaid.parse_mermaid(
-    "erDiagram\nCUSTOMER {\n  int id PK\n  string name\n  string email UK\n}\nORDER {\n  int id PK\n  date created\n  int customer_id FK\n}\nLINE_ITEM {\n  int id PK\n  int quantity\n  int order_id FK\n  int product_id FK\n}\nPRODUCT {\n  int id PK\n  string name\n  float price\n}\nCUSTOMER ||--o{ ORDER : places\nORDER ||--|{ LINE_ITEM : contains\nPRODUCT ||--o{ LINE_ITEM : includes",
+    (
+      #|erDiagram
+      #|CUSTOMER {
+      #|  int id PK
+      #|  string name
+      #|  string email UK
+      #|}
+      #|ORDER {
+      #|  int id PK
+      #|  date created
+      #|  int customer_id FK
+      #|}
+      #|LINE_ITEM {
+      #|  int id PK
+      #|  int quantity
+      #|  int order_id FK
+      #|  int product_id FK
+      #|}
+      #|PRODUCT {
+      #|  int id PK
+      #|  string name
+      #|  float price
+      #|}
+      #|CUSTOMER ||--o{ ORDER : places
+      #|ORDER ||--|{ LINE_ITEM : contains
+      #|PRODUCT ||--o{ LINE_ITEM : includes
+    ),
   )
 
   assert_eq(graph.nodes.length(), 4)
@@ -226,7 +302,12 @@ test "Parser handles complete ER e-commerce schema" {
 ///|
 test "Parser normalizes ER attributes with keys and quoted comments" {
   let graph = try! @beautiful_mermaid.parse_mermaid(
-    "erDiagram\nUSER {\n  string email UK \"user email address\"\n}",
+    (
+      #|erDiagram
+      #|USER {
+      #|  string email UK "user email address"
+      #|}
+    ),
   )
 
   match graph.nodes.get("USER") {
@@ -239,7 +320,12 @@ test "Parser normalizes ER attributes with keys and quoted comments" {
 ///|
 test "Parser preserves ER attribute quoted comments" {
   let graph = try! @beautiful_mermaid.parse_mermaid(
-    "erDiagram\nUSER {\n  string email \"contact address\"\n}",
+    (
+      #|erDiagram
+      #|USER {
+      #|  string email "contact address"
+      #|}
+    ),
   )
 
   match graph.nodes.get("USER") {
@@ -251,7 +337,10 @@ test "Parser preserves ER attribute quoted comments" {
 ///|
 test "Parser supports mixed ER cardinality operators" {
   let graph = try! @beautiful_mermaid.parse_mermaid(
-    "erDiagram\nA |o--|{ B : connects",
+    (
+      #|erDiagram
+      #|A |o--|{ B : connects
+    ),
   )
 
   assert_eq(graph.nodes.length(), 2)
@@ -266,7 +355,10 @@ test "Parser supports mixed ER cardinality operators" {
 ///|
 test "Parser supports one-to-one ER cardinality operator" {
   let graph = try! @beautiful_mermaid.parse_mermaid(
-    "erDiagram\nPERSON ||--|| PASSPORT : has",
+    (
+      #|erDiagram
+      #|PERSON ||--|| PASSPORT : has
+    ),
   )
 
   assert_eq(graph.nodes.length(), 2)
@@ -282,7 +374,10 @@ test "Parser supports one-to-one ER cardinality operator" {
 ///|
 test "Parser supports many-to-zero-many ER cardinality operator" {
   let graph = try! @beautiful_mermaid.parse_mermaid(
-    "erDiagram\nPRODUCT }|--o{ TAG : has",
+    (
+      #|erDiagram
+      #|PRODUCT }|--o{ TAG : has
+    ),
   )
 
   assert_eq(graph.nodes.length(), 2)
