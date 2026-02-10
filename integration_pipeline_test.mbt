@@ -75,9 +75,77 @@ fn snapshot_svg(it : @test.Test, filename : String, svg : String) -> Unit raise 
 }
 
 ///|
+fn integration_input_graph_lr_abc_chain() -> String {
+  (
+    #|graph LR
+    #|A --> B --> C
+  )
+}
+
+///|
+fn integration_input_graph_td_abc_chain() -> String {
+  (
+    #|graph TD
+    #|A --> B --> C
+  )
+}
+
+///|
+fn integration_input_graph_td_ab() -> String {
+  (
+    #|graph TD
+    #|A --> B
+  )
+}
+
+///|
+fn integration_input_graph_td_start_end() -> String {
+  (
+    #|graph TD
+    #|A[Start] --> B[End]
+  )
+}
+
+///|
+fn integration_input_graph_td_yes_label() -> String {
+  (
+    #|graph TD
+    #|A -->|Yes| B
+  )
+}
+
+///|
+fn integration_input_graph_lr_ab() -> String {
+  (
+    #|graph LR
+    #|A --> B
+  )
+}
+
+///|
+fn integration_input_state_start_ready() -> String {
+  (
+    #|stateDiagram-v2
+    #|[*] --> Ready
+  )
+}
+
+///|
+fn integration_input_state_done_end() -> String {
+  (
+    #|stateDiagram-v2
+    #|Done --> [*]
+  )
+}
+
+///|
 test "Pipeline dimensions honor direction" (it : @test.Test) {
-  let lr_svg = try! @beautiful_mermaid.render_mermaid("graph LR\nA --> B --> C")
-  let td_svg = try! @beautiful_mermaid.render_mermaid("graph TD\nA --> B --> C")
+  let lr_svg = try! @beautiful_mermaid.render_mermaid(
+    integration_input_graph_lr_abc_chain(),
+  )
+  let td_svg = try! @beautiful_mermaid.render_mermaid(
+    integration_input_graph_td_abc_chain(),
+  )
 
   snapshot_svg(it, "integration_pipeline_direction_lr.svg", lr_svg)
 
@@ -94,7 +162,9 @@ test "Pipeline dimensions honor direction" (it : @test.Test) {
 test "Flowchart BT direction renders across text and SVG modes" (
   it : @test.Test,
 ) {
-  let input = "graph BT\nA[Start] --> B[Middle] --> C[End]"
+  let input =
+    #|graph BT
+    #|A[Start] --> B[Middle] --> C[End]
 
   let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: true,
@@ -126,7 +196,9 @@ test "Flowchart BT direction renders across text and SVG modes" (
 test "Flowchart RL direction renders across text and SVG modes" (
   it : @test.Test,
 ) {
-  let input = "graph RL\nA[Origin] --> B[Pivot] --> C[Target]"
+  let input =
+    #|graph RL
+    #|A[Origin] --> B[Pivot] --> C[Target]
 
   let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: true,
@@ -156,7 +228,9 @@ test "Flowchart RL direction renders across text and SVG modes" (
 
 ///|
 test "SVG simple flow keeps valid svg envelope" (it : @test.Test) {
-  let svg = try! @beautiful_mermaid.render_mermaid("graph TD\nA --> B")
+  let svg = try! @beautiful_mermaid.render_mermaid(
+    integration_input_graph_td_ab(),
+  )
   snapshot_svg(it, "integration_flowchart_simple.svg", svg)
   assert_true(svg.has_prefix("<svg "))
   assert_true(svg.has_suffix("</svg>"))
@@ -194,11 +268,11 @@ test "SVG dimensions expand with padding option" (it : @test.Test) {
   }
 
   let small_svg = try! @beautiful_mermaid.render_mermaid(
-    "graph TD\nA --> B",
+    integration_input_graph_td_ab(),
     options=small_options,
   )
   let large_svg = try! @beautiful_mermaid.render_mermaid(
-    "graph TD\nA --> B",
+    integration_input_graph_td_ab(),
     options=large_options,
   )
   snapshot_svg(it, "integration_flowchart_padding_small.svg", small_svg)
@@ -223,7 +297,7 @@ test "SVG dimensions expand with padding option" (it : @test.Test) {
 ///|
 test "SVG renders labeled nodes for simple flow" (it : @test.Test) {
   let svg = try! @beautiful_mermaid.render_mermaid(
-    "graph TD\nA[Start] --> B[End]",
+    integration_input_graph_td_start_end(),
   )
   snapshot_svg(it, "integration_flowchart_labeled_nodes.svg", svg)
   assert_true(svg.contains(">Start</text>"))
@@ -232,7 +306,9 @@ test "SVG renders labeled nodes for simple flow" (it : @test.Test) {
 
 ///|
 test "SVG renders edge labels for simple flow" (it : @test.Test) {
-  let svg = try! @beautiful_mermaid.render_mermaid("graph TD\nA -->|Yes| B")
+  let svg = try! @beautiful_mermaid.render_mermaid(
+    integration_input_graph_td_yes_label(),
+  )
   snapshot_svg(it, "integration_flowchart_edge_label.svg", svg)
   assert_true(svg.contains(">Yes</text>"))
 }
@@ -241,7 +317,9 @@ test "SVG renders edge labels for simple flow" (it : @test.Test) {
 test "Flowchart chained labeled edges render across text and SVG modes" (
   it : @test.Test,
 ) {
-  let input = "graph LR\nA[One] -->|first| B[Two] -->|second| C[Three] -->|third| D[Four]"
+  let input =
+    #|graph LR
+    #|A[One] -->|first| B[Two] -->|second| C[Three] -->|third| D[Four]
 
   let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: true,
@@ -292,7 +370,7 @@ test "SVG applies custom font option" (it : @test.Test) {
     transparent: None,
   }
   let svg = try! @beautiful_mermaid.render_mermaid(
-    "graph TD\nA --> B",
+    integration_input_graph_td_ab(),
     options~,
   )
   snapshot_svg(it, "integration_flowchart_custom_font.svg", svg)
@@ -302,7 +380,9 @@ test "SVG applies custom font option" (it : @test.Test) {
 
 ///|
 test "SVG defaults to light theme colors" (it : @test.Test) {
-  let svg = try! @beautiful_mermaid.render_mermaid("graph TD\nA --> B")
+  let svg = try! @beautiful_mermaid.render_mermaid(
+    integration_input_graph_td_ab(),
+  )
   snapshot_svg(it, "integration_flowchart_default_light.svg", svg)
   assert_true(svg.contains("--bg:#FFFFFF"))
   assert_true(svg.contains("--fg:#27272A"))
@@ -325,7 +405,7 @@ test "SVG applies explicit dark colors" (it : @test.Test) {
     transparent: None,
   }
   let svg = try! @beautiful_mermaid.render_mermaid(
-    "graph TD\nA --> B",
+    integration_input_graph_td_ab(),
     options~,
   )
   snapshot_svg(it, "integration_flowchart_explicit_dark.svg", svg)
@@ -751,7 +831,7 @@ test "SVG renders basic state diagram labels" (it : @test.Test) {
 ///|
 test "SVG renders state start pseudostate as filled circle" (it : @test.Test) {
   let svg = try! @beautiful_mermaid.render_mermaid(
-    "stateDiagram-v2\n[*] --> Ready",
+    integration_input_state_start_ready(),
   )
   snapshot_svg(it, "integration_state_start_pseudostate.svg", svg)
   assert_true(svg.contains("stroke=\"none\""))
@@ -761,7 +841,7 @@ test "SVG renders state start pseudostate as filled circle" (it : @test.Test) {
 ///|
 test "SVG renders state end pseudostate as bullseye" (it : @test.Test) {
   let svg = try! @beautiful_mermaid.render_mermaid(
-    "stateDiagram-v2\nDone --> [*]",
+    integration_input_state_done_end(),
   )
   snapshot_svg(it, "integration_state_end_pseudostate.svg", svg)
   assert_true(integration_count_occurrences(svg, "<circle") >= 2)
@@ -1090,7 +1170,7 @@ test "ASCII and Unicode modes differ" {
     box_border_padding: 1,
   }
 
-  let input = "graph LR\nA --> B"
+  let input = integration_input_graph_lr_ab()
   let ascii_output = try! @beautiful_mermaid.render_mermaid_ascii(
     input,
     options=ascii_options,
@@ -1105,7 +1185,7 @@ test "ASCII and Unicode modes differ" {
 ///|
 test "ASCII mode avoids Unicode box drawing glyphs" {
   let output = try! @beautiful_mermaid.render_mermaid_ascii(
-    "graph LR\nA --> B",
+    integration_input_graph_lr_ab(),
     options={
       use_ascii: true,
       padding_x: 5,
@@ -1122,7 +1202,7 @@ test "ASCII mode avoids Unicode box drawing glyphs" {
 ///|
 test "Unicode mode emits box drawing glyphs" {
   let output = try! @beautiful_mermaid.render_mermaid_ascii(
-    "graph LR\nA --> B",
+    integration_input_graph_lr_ab(),
     options={
       use_ascii: false,
       padding_x: 5,
