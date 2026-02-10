@@ -9,21 +9,26 @@ fn snapshot_public_api_svg(
 }
 
 ///|
+fn simple_graph_ab() -> String {
+  (
+    #|graph TD
+    #|A --> B
+  )
+}
+
+///|
 test "Public API smoke test" (it : @test.Test) {
-  let svg = try! @beautiful_mermaid.render_mermaid("graph TD\nA --> B")
+  let svg = try! @beautiful_mermaid.render_mermaid(simple_graph_ab())
   snapshot_public_api_svg(it, "public_api_smoke.svg", svg)
   assert_true(svg.contains("<svg"))
   assert_true(svg.contains("</svg>"))
 
-  let ascii = try! @beautiful_mermaid.render_mermaid_ascii(
-    "graph TD\nA --> B",
-    options={
-      use_ascii: true,
-      padding_x: 5,
-      padding_y: 5,
-      box_border_padding: 1,
-    },
-  )
+  let ascii = try! @beautiful_mermaid.render_mermaid_ascii(simple_graph_ab(), options={
+    use_ascii: true,
+    padding_x: 5,
+    padding_y: 5,
+    box_border_padding: 1,
+  })
   assert_true(ascii.contains("+---+"))
   assert_true(ascii.contains("| A |"))
   assert_true(ascii.contains("| B |"))
@@ -46,7 +51,8 @@ test "render_mermaid_with_colors applies theme colors by default" (
     None => fail("missing tokyo-night theme")
   }
   let svg = try! @beautiful_mermaid.render_mermaid_with_colors(
-    "graph TD\nA --> B", colors,
+    simple_graph_ab(),
+    colors,
   )
   snapshot_public_api_svg(it, "public_api_with_colors_default.svg", svg)
 
@@ -126,7 +132,7 @@ test "render_mermaid_with_colors keeps explicit option overrides" (
     transparent: None,
   }
   let svg = try! @beautiful_mermaid.render_mermaid_with_colors(
-    "graph TD\nA --> B",
+    simple_graph_ab(),
     colors,
     options~,
   )
@@ -141,7 +147,8 @@ test "render_mermaid_with_colors keeps explicit option overrides" (
 ///|
 test "render_mermaid_with_theme_name applies built-in theme" (it : @test.Test) {
   let svg = try! @beautiful_mermaid.render_mermaid_with_theme_name(
-    "graph TD\nA --> B", "github-dark",
+    simple_graph_ab(),
+    "github-dark",
   )
   snapshot_public_api_svg(it, "public_api_theme_name_github_dark.svg", svg)
   assert_true(svg.contains("--bg:#0d1117"))
@@ -153,7 +160,8 @@ test "render_mermaid_with_theme_name normalizes user theme input" (
   it : @test.Test,
 ) {
   let svg = try! @beautiful_mermaid.render_mermaid_with_theme_name(
-    "graph TD\nA --> B", "TOKYO   NIGHT",
+    simple_graph_ab(),
+    "TOKYO   NIGHT",
   )
   snapshot_public_api_svg(
     it, "public_api_theme_name_normalized_tokyo_night.svg", svg,
@@ -165,7 +173,8 @@ test "render_mermaid_with_theme_name normalizes user theme input" (
 ///|
 test "render_mermaid_with_theme_name accepts default alias" (it : @test.Test) {
   let svg = try! @beautiful_mermaid.render_mermaid_with_theme_name(
-    "graph TD\nA --> B", "default",
+    simple_graph_ab(),
+    "default",
   )
   snapshot_public_api_svg(it, "public_api_theme_name_default_alias.svg", svg)
   assert_true(svg.contains("--bg:#FFFFFF"))
@@ -179,7 +188,8 @@ test "render_mermaid_with_theme applies enum theme directly" (it : @test.Test) {
     None => fail("failed to parse tokyo-night theme")
   }
   let svg = try! @beautiful_mermaid.render_mermaid_with_theme(
-    "graph TD\nA --> B", theme,
+    simple_graph_ab(),
+    theme,
   )
   snapshot_public_api_svg(it, "public_api_theme_enum_tokyo_night.svg", svg)
   assert_true(svg.contains("--bg:#1a1b26"))
@@ -190,7 +200,8 @@ test "render_mermaid_with_theme applies enum theme directly" (it : @test.Test) {
 ///|
 test "render_mermaid_with_theme_name rejects unknown theme" {
   let rendered = try? @beautiful_mermaid.render_mermaid_with_theme_name(
-    "graph TD\nA --> B", "moonbit-neon",
+    simple_graph_ab(),
+    "moonbit-neon",
   )
   match rendered {
     Ok(_) => fail("expected unknown theme to fail")
@@ -205,7 +216,8 @@ test "render_mermaid_with_theme_name rejects unknown theme" {
 ///|
 test "render_mermaid_with_theme_name unknown error keeps original input" {
   let rendered = try? @beautiful_mermaid.render_mermaid_with_theme_name(
-    "graph TD\nA --> B", "  moonbit   neon  ",
+    simple_graph_ab(),
+    "  moonbit   neon  ",
   )
   match rendered {
     Ok(_) => fail("expected unknown theme to fail")
