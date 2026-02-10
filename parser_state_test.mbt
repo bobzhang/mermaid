@@ -24,17 +24,31 @@ fn assert_state_shape(
 
 ///|
 test "Parser detects state diagram headers and default direction" {
-  let v2 = try! @beautiful_mermaid.parse_mermaid("stateDiagram-v2\ns1 --> s2")
+  let v2 = try! @beautiful_mermaid.parse_mermaid(
+    (
+      #|stateDiagram-v2
+      #|s1 --> s2
+    ),
+  )
   assert_eq(v2.direction.to_string(), "TD")
 
-  let legacy = try! @beautiful_mermaid.parse_mermaid("stateDiagram\ns1 --> s2")
+  let legacy = try! @beautiful_mermaid.parse_mermaid(
+    (
+      #|stateDiagram
+      #|s1 --> s2
+    ),
+  )
   assert_eq(legacy.direction.to_string(), "TD")
 }
 
 ///|
 test "Parser parses state transitions and transition labels" {
   let graph = try! @beautiful_mermaid.parse_mermaid(
-    "stateDiagram-v2\nIdle --> Active\nActive --> Done : complete",
+    (
+      #|stateDiagram-v2
+      #|Idle --> Active
+      #|Active --> Done : complete
+    ),
   )
 
   assert_eq(graph.edges.length(), 2)
@@ -52,7 +66,13 @@ test "Parser parses state transitions and transition labels" {
 ///|
 test "Parser parses start and end state pseudostates with unique ids" {
   let graph = try! @beautiful_mermaid.parse_mermaid(
-    "stateDiagram-v2\n[*] --> A\n[*] --> B\nA --> [*]\nB --> [*]",
+    (
+      #|stateDiagram-v2
+      #|[*] --> A
+      #|[*] --> B
+      #|A --> [*]
+      #|B --> [*]
+    ),
   )
 
   assert_true(graph.nodes.get("state_start_1") is Some(_))
@@ -73,7 +93,11 @@ test "Parser parses start and end state pseudostates with unique ids" {
 ///|
 test "Parser parses state alias declarations" {
   let graph = try! @beautiful_mermaid.parse_mermaid(
-    "stateDiagram-v2\nstate \"Waiting for input\" as waiting\nwaiting --> active",
+    (
+      #|stateDiagram-v2
+      #|state "Waiting for input" as waiting
+      #|waiting --> active
+    ),
   )
 
   assert_state_label(graph, "waiting", "Waiting for input")
@@ -85,7 +109,11 @@ test "Parser parses state alias declarations" {
 ///|
 test "Parser applies state direction override" {
   let graph = try! @beautiful_mermaid.parse_mermaid(
-    "stateDiagram-v2\ndirection LR\ns1 --> s2",
+    (
+      #|stateDiagram-v2
+      #|direction LR
+      #|s1 --> s2
+    ),
   )
   assert_eq(graph.direction.to_string(), "LR")
 }
@@ -93,7 +121,12 @@ test "Parser applies state direction override" {
 ///|
 test "Parser ignores invalid state direction token" {
   let graph = try! @beautiful_mermaid.parse_mermaid(
-    "stateDiagram-v2\ndirection LR\ndirection XX\ns1 --> s2",
+    (
+      #|stateDiagram-v2
+      #|direction LR
+      #|direction XX
+      #|s1 --> s2
+    ),
   )
   assert_eq(graph.direction.to_string(), "LR")
 }
@@ -101,7 +134,11 @@ test "Parser ignores invalid state direction token" {
 ///|
 test "Parser supports state description lines" {
   let graph = try! @beautiful_mermaid.parse_mermaid(
-    "stateDiagram-v2\ns1 : Idle State\ns1 --> s2",
+    (
+      #|stateDiagram-v2
+      #|s1 : Idle State
+      #|s1 --> s2
+    ),
   )
 
   assert_state_label(graph, "s1", "Idle State")
@@ -114,7 +151,13 @@ test "Parser supports state description lines" {
 ///|
 test "Parser captures state composite blocks as subgraphs" {
   let graph = try! @beautiful_mermaid.parse_mermaid(
-    "stateDiagram-v2\nstate Processing {\n  parse --> validate\n  validate --> execute\n}",
+    (
+      #|stateDiagram-v2
+      #|state Processing {
+      #|  parse --> validate
+      #|  validate --> execute
+      #|}
+    ),
   )
 
   assert_eq(graph.subgraphs.length(), 1)
@@ -129,7 +172,12 @@ test "Parser captures state composite blocks as subgraphs" {
 ///|
 test "Parser captures state composite alias blocks as subgraphs" {
   let graph = try! @beautiful_mermaid.parse_mermaid(
-    "stateDiagram-v2\nstate \"Active Processing\" as AP {\n  inner1 --> inner2\n}",
+    (
+      #|stateDiagram-v2
+      #|state "Active Processing" as AP {
+      #|  inner1 --> inner2
+      #|}
+    ),
   )
 
   assert_eq(graph.subgraphs.length(), 1)
@@ -143,7 +191,13 @@ test "Parser captures state composite alias blocks as subgraphs" {
 ///|
 test "Parser captures direction override inside state composite" {
   let graph = try! @beautiful_mermaid.parse_mermaid(
-    "stateDiagram-v2\nstate Processing {\n  direction LR\n  parse --> validate\n}",
+    (
+      #|stateDiagram-v2
+      #|state Processing {
+      #|  direction LR
+      #|  parse --> validate
+      #|}
+    ),
   )
 
   assert_eq(graph.direction.to_string(), "TD")
@@ -157,7 +211,17 @@ test "Parser captures direction override inside state composite" {
 ///|
 test "Parser handles state diagrams with composite declaration and outer transitions" {
   let graph = try! @beautiful_mermaid.parse_mermaid(
-    "stateDiagram-v2\n[*] --> Idle\nIdle --> Processing : submit\nstate Processing {\n  parse --> validate\n  validate --> execute\n}\nProcessing --> Complete : done\nComplete --> [*]",
+    (
+      #|stateDiagram-v2
+      #|[*] --> Idle
+      #|Idle --> Processing : submit
+      #|state Processing {
+      #|  parse --> validate
+      #|  validate --> execute
+      #|}
+      #|Processing --> Complete : done
+      #|Complete --> [*]
+    ),
   )
 
   assert_true(graph.nodes.get("Idle") is Some(_))
