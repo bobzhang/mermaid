@@ -310,22 +310,31 @@ test "Multi-level class inheritance keeps parent-first ordering" {
 
 ///|
 test "Class composition and aggregation keep diamond markers" {
-  let composition = class_render("classDiagram\nCar *-- Engine", false)
+  let composition_diagram =
+    #|classDiagram
+    #|Car *-- Engine
+  let composition = class_render(composition_diagram, false)
   assert_true(composition.contains("◆"))
 
-  let aggregation = class_render("classDiagram\nTeam o-- Player", false)
+  let aggregation_diagram =
+    #|classDiagram
+    #|Team o-- Player
+  let aggregation = class_render(aggregation_diagram, false)
   assert_true(aggregation.contains("◇"))
 
-  let ascii_composition = class_render("classDiagram\nCar *-- Engine", true)
+  let ascii_composition = class_render(composition_diagram, true)
   assert_true(ascii_composition.contains("*"))
 
-  let ascii_aggregation = class_render("classDiagram\nTeam o-- Player", true)
+  let ascii_aggregation = class_render(aggregation_diagram, true)
   assert_true(ascii_aggregation.contains("o"))
 }
 
 ///|
 test "Mixed inheritance and association keep distinct arrow directions" {
-  let diagram = "classDiagram\nAnimal <|-- Dog\nDog --> Owner"
+  let diagram =
+    #|classDiagram
+    #|Animal <|-- Dog
+    #|Dog --> Owner
   let unicode = class_render(diagram, false)
   assert_true(unicode.contains("△"))
   assert_true(unicode.contains("▼"))
@@ -342,7 +351,14 @@ test "Mixed inheritance and association keep distinct arrow directions" {
 
 ///|
 test "Mixed class relationships preserve marker families" {
-  let diagram = "classDiagram\nA <|-- B : inheritance\nC *-- D : composition\nE o-- F : aggregation\nG --> H : association\nI ..> J : dependency\nK ..|> L : realization"
+  let diagram =
+    #|classDiagram
+    #|A <|-- B : inheritance
+    #|C *-- D : composition
+    #|E o-- F : aggregation
+    #|G --> H : association
+    #|I ..> J : dependency
+    #|K ..|> L : realization
   let unicode = class_render(diagram, false)
   assert_true(unicode.contains("△"))
   assert_true(unicode.contains("◆"))
@@ -358,7 +374,11 @@ test "Mixed class relationships preserve marker families" {
 
 ///|
 test "Cyclic class references still render directional arrows" {
-  let diagram = "classDiagram\nA --> B\nB --> C\nC ..> A"
+  let diagram =
+    #|classDiagram
+    #|A --> B
+    #|B --> C
+    #|C ..> A
   let unicode = class_render(diagram, false)
   assert_true(unicode.contains("A"))
   assert_true(unicode.contains("B"))
