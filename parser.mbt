@@ -32,16 +32,10 @@ fn parse_direction_token_strict(token : String) -> Direction? {
 ///|
 fn parse_flow_direction(header : String) -> Direction? {
   let normalized = header.replace_all(old="\t", new=" ")
-  let words = normalized
-    .split(" ")
-    .map(part => part.to_string())
-    .filter(part => part != "")
-    .to_array()
-  if words.length() == 2 &&
-    (words[0].to_lower() == "graph" || words[0].to_lower() == "flowchart") {
-    parse_direction_token_strict(words[1])
-  } else {
-    None
+  lexmatch normalized[:] {
+    ("[[:space:]]*" "(?i:graph|flowchart)" "[[:space:]]+" ("[^[:space:]]+" as dir) "[[:space:]]*") =>
+      parse_direction_token_strict(dir.to_string())
+    _ => None
   }
 }
 
@@ -193,17 +187,17 @@ fn parse_node_token(raw_token : String) -> MermaidNode {
 
 ///|
 fn split_node_and_class(raw_token : String) -> (String, String?) {
-  match raw_token.find(":::") {
-    Some(idx) => {
-      let token = trim_owned((try! raw_token[:idx]).to_string())
-      let class_name = trim_owned((try! raw_token[idx + 3:]).to_string())
-      if class_name == "" {
-        (token, None)
+  lexmatch raw_token[:] {
+    (token, ":::", class_name) => {
+      let t = token.trim().to_string()
+      let c = class_name.trim().to_string()
+      if c == "" {
+        (t, None)
       } else {
-        (token, Some(class_name))
+        (t, Some(c))
       }
     }
-    None => (trim_owned(raw_token), None)
+    _ => (raw_token.trim().to_string(), None)
   }
 }
 
@@ -494,6 +488,40 @@ test "parse_label_and_target" {
 }
 
 ///|
+test "split_node_and_class" {
+  debug_inspect(
+    split_node_and_class("A:::myClass"),
+    content=(
+      #|("A", Some("myClass"))
+    ),
+  )
+  debug_inspect(
+    split_node_and_class("A"),
+    content=(
+      #|("A", None)
+    ),
+  )
+  debug_inspect(
+    split_node_and_class("A[Label]:::cls"),
+    content=(
+      #|("A[Label]", Some("cls"))
+    ),
+  )
+  debug_inspect(
+    split_node_and_class("A:::"),
+    content=(
+      #|("A", None)
+    ),
+  )
+  debug_inspect(
+    split_node_and_class("  B  ::: highlight "),
+    content=(
+      #|("B", Some("highlight"))
+    ),
+  )
+}
+
+///|
 fn ensure_node(nodes : Map[String, MermaidNode], node : MermaidNode) -> Unit {
   if !nodes.contains(node.id) {
     nodes[node.id] = node
@@ -532,19 +560,19 @@ fn ensure_nodes_from_entries(
 fn parse_style_properties(text : String) -> Map[String, String] {
   let props : Map[String, String] = {}
   for part in text.split(",") {
-    let normalized = trim_owned(part.to_string())
-    if normalized == "" {
+    let normalized = part.trim()
+    if normalized.length() == 0 {
       continue
     }
-    match normalized.find(":") {
-      Some(idx) => {
-        let key = trim_owned((try! normalized[:idx]).to_string())
-        let value = trim_owned((try! normalized[idx + 1:]).to_string())
-        if key != "" && value != "" {
-          props[key] = value
+    lexmatch normalized {
+      (key, ":", value) => {
+        let k = key.trim().to_string()
+        let v = value.trim().to_string()
+        if k != "" && v != "" {
+          props[k] = v
         }
       }
-      None => ()
+      _ => ()
     }
   }
   props
@@ -555,16 +583,15 @@ fn parse_class_def_line(
   line : String,
   class_defs : Map[String, Map[String, String]],
 ) -> Unit {
-  let rest = trim_owned((try! line[9:]).to_string())
-  match rest.find(" ") {
-    Some(idx) => {
-      let class_name = trim_owned((try! rest[:idx]).to_string())
-      let style_text = trim_owned((try! rest[idx + 1:]).to_string())
-      if class_name != "" {
-        class_defs[class_name] = parse_style_properties(style_text)
+  let rest = (try! line[9:]).trim()
+  lexmatch rest {
+    ("[^[:space:]]+" as class_name, tail) => {
+      let cn = class_name.to_string()
+      if cn != "" {
+        class_defs[cn] = parse_style_properties(tail.trim().to_string())
       }
     }
-    None => ()
+    _ => ()
   }
 }
 
@@ -597,20 +624,18 @@ fn parse_style_line(
   line : String,
   node_styles : Map[String, Map[String, String]],
 ) -> Unit {
-  let rest = trim_owned((try! line[6:]).to_string())
-  match rest.find(" ") {
-    Some(idx) => {
-      let node_list = trim_owned((try! rest[:idx]).to_string())
-      let style_text = trim_owned((try! rest[idx + 1:]).to_string())
-      let style_map = parse_style_properties(style_text)
-      for node_part in node_list.split(",") {
-        let node_id = trim_owned(node_part.to_string())
+  let rest = (try! line[6:]).trim()
+  lexmatch rest {
+    ("[^[:space:]]+" as node_list, tail) => {
+      let style_map = parse_style_properties(tail.trim().to_string())
+      for node_part in node_list.to_string().split(",") {
+        let node_id = node_part.trim().to_string()
         if node_id != "" {
           node_styles[node_id] = style_map.copy()
         }
       }
     }
-    None => ()
+    _ => ()
   }
 }
 
@@ -655,15 +680,6 @@ fn push_unique_node_ids(
 }
 
 ///|
-fn is_subgraph_id_char(unit : UInt16) -> Bool {
-  unit is ('a'..='z') ||
-  unit is ('A'..='Z') ||
-  unit is ('0'..='9') ||
-  unit == '_' ||
-  unit == '-'
-}
-
-///|
 fn is_subgraph_slug_char(unit : UInt16) -> Bool {
   unit is ('a'..='z') ||
   unit is ('A'..='Z') ||
@@ -673,15 +689,7 @@ fn is_subgraph_slug_char(unit : UInt16) -> Bool {
 
 ///|
 fn is_subgraph_id_token(token : String) -> Bool {
-  if token == "" {
-    return false
-  }
-  for i in 0..<token.length() {
-    if !is_subgraph_id_char(token[i]) {
-      return false
-    }
-  }
-  true
+  token[:] lexmatch? "[a-zA-Z0-9_\-]+"
 }
 
 ///|
@@ -945,6 +953,14 @@ fn parse_state_token(
 }
 
 ///|
+fn strip_quotes(s : StringView) -> String {
+  lexmatch s {
+    ("\"" (".*" as content) "\"") => content.to_string()
+    _ => s.to_string()
+  }
+}
+
+///|
 fn parse_state_declaration(
   line : String,
   nodes : Map[String, MermaidNode],
@@ -953,40 +969,32 @@ fn parse_state_declaration(
   if !line.has_prefix("state ") {
     return
   }
-  let rest = trim_owned((try! line[6:]).to_string())
-  if rest.contains(" as ") {
-    match rest.find(" as ") {
-      Some(idx) => {
-        let raw_label = trim_owned((try! rest[:idx]).to_string())
-        let id = trim_owned((try! rest[idx + 4:]).to_string())
-        let label = if raw_label.has_prefix("\"") &&
-          raw_label.has_suffix("\"") &&
-          raw_label.length() >= 2 {
-          (try! raw_label[1:raw_label.length() - 1]).to_string()
-        } else {
-          raw_label
-        }
-        if id != "" {
-          ensure_node(nodes, { id, label, shape: Rounded })
-          append_nodes_to_current_subgraph(composite_stack, [id])
-        }
+  let rest = (try! line[6:]).trim()
+  lexmatch rest {
+    (raw_label, " as ", id_part) => {
+      let id = id_part.trim().to_string()
+      let label = strip_quotes(raw_label.trim())
+      if id != "" {
+        ensure_node(nodes, { id, label, shape: Rounded })
+        append_nodes_to_current_subgraph(composite_stack, [id])
       }
-      None => ()
     }
-    return
+    _ => {
+      let rest_str = rest.to_string()
+      let parsed = parse_node_token(rest_str)
+      let node = MermaidNode::{
+        id: parsed.id,
+        label: parsed.label,
+        shape: if parsed.shape == Rectangle {
+          Rounded
+        } else {
+          parsed.shape
+        },
+      }
+      ensure_node(nodes, node)
+      append_nodes_to_current_subgraph(composite_stack, [node.id])
+    }
   }
-  let parsed = parse_node_token(rest)
-  let node = MermaidNode::{
-    id: parsed.id,
-    label: parsed.label,
-    shape: if parsed.shape == Rectangle {
-      Rounded
-    } else {
-      parsed.shape
-    },
-  }
-  ensure_node(nodes, node)
-  append_nodes_to_current_subgraph(composite_stack, [node.id])
 }
 
 ///|
@@ -994,25 +1002,18 @@ fn parse_state_composite_start_line(line : String) -> MermaidSubgraph? {
   if !line.has_prefix("state ") || !line.has_suffix("{") {
     return None
   }
-  let rest = trim_owned((try! line[6:line.length() - 1]).to_string())
-  if rest == "" {
+  let rest = (try! line[6:line.length() - 1]).trim()
+  if rest.length() == 0 {
     return None
   }
 
-  match rest.find(" as ") {
-    Some(idx) => {
-      let raw_label = trim_owned((try! rest[:idx]).to_string())
-      let id = trim_owned((try! rest[idx + 4:]).to_string())
+  lexmatch rest {
+    (raw_label, " as ", id_part) => {
+      let id = id_part.trim().to_string()
       if id == "" || !is_plain_identifier(id) {
         return None
       }
-      let label = if raw_label.has_prefix("\"") &&
-        raw_label.has_suffix("\"") &&
-        raw_label.length() >= 2 {
-        trim_owned((try! raw_label[1:raw_label.length() - 1]).to_string())
-      } else {
-        raw_label
-      }
+      let label = strip_quotes(raw_label.trim())
       return Some({
         id,
         label: if label == "" {
@@ -1025,13 +1026,20 @@ fn parse_state_composite_start_line(line : String) -> MermaidSubgraph? {
         direction: None,
       })
     }
-    None => ()
+    _ => ()
   }
 
-  if !is_plain_identifier(rest) {
+  let rest_str = rest.to_string()
+  if !is_plain_identifier(rest_str) {
     return None
   }
-  Some({ id: rest, label: rest, node_ids: [], children: [], direction: None })
+  Some({
+    id: rest_str,
+    label: rest_str,
+    node_ids: [],
+    children: [],
+    direction: None,
+  })
 }
 
 ///|
@@ -1126,13 +1134,10 @@ fn parse_state_diagram(lines : Array[String]) -> MermaidGraph {
       continue
     }
 
-    let (transition_line, edge_label) = match line.find(":") {
-      Some(idx) => {
-        let lhs = trim_owned((try! line[:idx]).to_string())
-        let rhs = trim_owned((try! line[idx + 1:]).to_string())
-        (lhs, Some(rhs))
-      }
-      None => (line, None)
+    let (transition_line, edge_label) = lexmatch line[:] {
+      (lhs, ":", rhs) =>
+        (lhs.trim().to_string(), Some(rhs.trim().to_string()))
+      _ => (line, None)
     }
 
     match find_edge_operator(transition_line) {
@@ -1215,11 +1220,10 @@ fn parse_sequence_participant_declaration(
     return true
   }
 
-  let lower_rest = rest.to_lower()
-  match lower_rest.find(" as ") {
-    Some(idx) => {
-      let id = trim_owned((try! rest[:idx]).to_string())
-      let label = trim_owned((try! rest[idx + 4:]).to_string())
+  lexmatch rest[:] {
+    (id_part, " (?i:as) ", label_part) => {
+      let id = id_part.trim().to_string()
+      let label = label_part.trim().to_string()
       if id != "" {
         if !nodes.contains(id) {
           actor_order.push(id)
@@ -1236,7 +1240,7 @@ fn parse_sequence_participant_declaration(
         actor_kinds[id] = kind
       }
     }
-    None => {
+    _ => {
       if !nodes.contains(rest) {
         actor_order.push(rest)
       }
@@ -1339,26 +1343,21 @@ fn parse_sequence_note_line(
     return false
   }
 
-  match line.find(":") {
-    Some(colon_idx) => {
-      let placement = trim_owned((try! line[5:colon_idx]).to_string())
-      let placement_lower = placement.to_lower()
-      let (position, raw_actors) = if placement_lower.has_prefix("left of ") {
-        (
-          SequenceNotePosition::Left,
-          trim_owned((try! placement[8:]).to_string()),
-        )
-      } else if placement_lower.has_prefix("right of ") {
-        (Right, trim_owned((try! placement[9:]).to_string()))
-      } else if placement_lower.has_prefix("over ") {
-        (Over, trim_owned((try! placement[5:]).to_string()))
-      } else {
-        return true
+  lexmatch (try! line[5:]) {
+    (placement_part, ":", text_part) => {
+      let placement = placement_part.trim()
+      let (position, raw_actors) = lexmatch placement {
+        ("(?i:left of) ", rest) =>
+          (SequenceNotePosition::Left, rest.trim().to_string())
+        ("(?i:right of) ", rest) =>
+          (Right, rest.trim().to_string())
+        ("(?i:over) ", rest) => (Over, rest.trim().to_string())
+        _ => return true
       }
-      let text = trim_owned((try! line[colon_idx + 1:]).to_string())
+      let text = text_part.trim().to_string()
       let actor_ids : Array[String] = []
       for raw_actor in raw_actors.split(",") {
-        let actor_id = trim_owned(raw_actor.to_string())
+        let actor_id = raw_actor.trim().to_string()
         if actor_id != "" {
           ensure_sequence_participant(nodes, actor_order, actor_kinds, actor_id)
           actor_ids.push(actor_id)
@@ -1369,7 +1368,7 @@ fn parse_sequence_note_line(
       }
       true
     }
-    None => true
+    _ => true
   }
 }
 
@@ -1408,14 +1407,13 @@ fn parse_sequence_message_line(
       let rhs = trim_owned(
         (try! line[found.index + found.op.symbol.length():]).to_string(),
       )
-      let (raw_target, label) = match rhs.find(":") {
-        Some(idx) => {
-          let target = trim_owned((try! rhs[:idx]).to_string())
-          let raw_label = trim_owned((try! rhs[idx + 1:]).to_string())
-          let label = if raw_label == "" { None } else { Some(raw_label) }
-          (target, label)
+      let (raw_target, label) = lexmatch rhs[:] {
+        (target_part, ":", label_part) => {
+          let target = target_part.trim().to_string()
+          let raw_label = label_part.trim().to_string()
+          (target, if raw_label == "" { None } else { Some(raw_label) })
         }
-        None => (rhs, None)
+        _ => (rhs, None)
       }
       let activation_mark = if raw_target.has_prefix("+") {
         "+"
@@ -1569,14 +1567,13 @@ fn parse_sequence_diagram(lines : Array[String]) -> MermaidGraph {
 
 ///|
 fn parse_relation_parts(line : String) -> (String, String, String, String?)? {
-  let (body, label) = match line.find(":") {
-    Some(idx) => {
-      let head = trim_owned((try! line[:idx]).to_string())
-      let raw_label = trim_owned((try! line[idx + 1:]).to_string())
-      let label = if raw_label == "" { None } else { Some(raw_label) }
-      (head, label)
+  let (body, label) = lexmatch line[:] {
+    (head, ":", raw_label) => {
+      let h = head.trim().to_string()
+      let rl = raw_label.trim().to_string()
+      (h, if rl == "" { None } else { Some(rl) })
     }
-    None => (line, None)
+    _ => (line, None)
   }
   let parts = body
     .split(" ")
@@ -1923,12 +1920,10 @@ fn parse_class_diagram(lines : Array[String]) -> MermaidGraph {
       None => ()
     }
 
-    match line.find(":") {
-      Some(idx) => {
-        let candidate = trim_owned((try! line[:idx]).to_string())
-        let detail = normalize_class_member(
-          trim_owned((try! line[idx + 1:]).to_string()),
-        )
+    lexmatch line[:] {
+      (candidate_part, ":", detail_part) => {
+        let candidate = candidate_part.trim().to_string()
+        let detail = normalize_class_member(detail_part.trim().to_string())
         if is_plain_identifier(candidate) {
           ensure_node(nodes, {
             id: candidate,
@@ -1938,7 +1933,7 @@ fn parse_class_diagram(lines : Array[String]) -> MermaidGraph {
           append_detail(details, candidate, detail)
         }
       }
-      None => ()
+      _ => ()
     }
   }
 
