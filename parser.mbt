@@ -522,6 +522,177 @@ test "split_node_and_class" {
 }
 
 ///|
+test "parse_flow_direction" {
+  // basic flowchart + direction
+  assert_eq(parse_flow_direction("flowchart LR"), Some(LR))
+  assert_eq(parse_flow_direction("graph TD"), Some(TD))
+  // case-insensitive keyword
+  assert_eq(parse_flow_direction("Flowchart TB"), Some(TB))
+  assert_eq(parse_flow_direction("GRAPH RL"), Some(RL))
+  // extra whitespace
+  assert_eq(parse_flow_direction("  flowchart   BT  "), Some(BT))
+  // tab replaced
+  assert_eq(parse_flow_direction("flowchart\tLR"), Some(LR))
+  // missing direction
+  assert_eq(parse_flow_direction("flowchart"), None)
+  assert_eq(parse_flow_direction("flowchart "), None)
+  // invalid direction token
+  assert_eq(parse_flow_direction("flowchart XX"), None)
+  // unrelated string
+  assert_eq(parse_flow_direction("sequenceDiagram"), None)
+}
+
+///|
+test "parse_style_properties" {
+  // basic key:value
+  let props = parse_style_properties("fill: red, stroke: blue")
+  assert_eq(props.get("fill"), Some("red"))
+  assert_eq(props.get("stroke"), Some("blue"))
+  // single property
+  let props2 = parse_style_properties("color: green")
+  assert_eq(props2.get("color"), Some("green"))
+  // empty string
+  let props3 = parse_style_properties("")
+  assert_eq(props3.length(), 0)
+  // trailing comma (empty part ignored)
+  let props4 = parse_style_properties("fill: red,")
+  assert_eq(props4.length(), 1)
+  // no colon (no match, skipped)
+  let props5 = parse_style_properties("invalidprop")
+  assert_eq(props5.length(), 0)
+  // whitespace around key/value
+  let props6 = parse_style_properties("  fill :  red  ")
+  assert_eq(props6.get("fill"), Some("red"))
+}
+
+///|
+test "is_subgraph_id_token" {
+  assert_true(is_subgraph_id_token("abc"))
+  assert_true(is_subgraph_id_token("ABC123"))
+  assert_true(is_subgraph_id_token("my_id"))
+  assert_true(is_subgraph_id_token("a-b"))
+  assert_true(is_subgraph_id_token("A"))
+  assert_false(is_subgraph_id_token(""))
+  assert_false(is_subgraph_id_token("has space"))
+  assert_false(is_subgraph_id_token("a.b"))
+  assert_false(is_subgraph_id_token("a:b"))
+  assert_false(is_subgraph_id_token("a[b]"))
+}
+
+///|
+test "strip_quotes" {
+  assert_eq(strip_quotes("\"hello\""), "hello")
+  assert_eq(strip_quotes("\"\""), "")
+  assert_eq(strip_quotes("noquotes"), "noquotes")
+  assert_eq(strip_quotes("\"partial"), "\"partial")
+  assert_eq(strip_quotes(""), "")
+}
+
+///|
+test "parse_sequence_block_header" {
+  // exact keyword, no label
+  assert_eq(parse_sequence_block_header("loop"), Some((Loop, "")))
+  assert_eq(parse_sequence_block_header("alt"), Some((Alt, "")))
+  assert_eq(parse_sequence_block_header("opt"), Some((Opt, "")))
+  assert_eq(parse_sequence_block_header("par"), Some((Par, "")))
+  assert_eq(parse_sequence_block_header("critical"), Some((Critical, "")))
+  assert_eq(parse_sequence_block_header("break"), Some((Break, "")))
+  assert_eq(parse_sequence_block_header("rect"), Some((Rect, "")))
+  // keyword with label
+  assert_eq(
+    parse_sequence_block_header("loop Every minute"),
+    Some((Loop, "Every minute")),
+  )
+  assert_eq(
+    parse_sequence_block_header("alt Successful case"),
+    Some((Alt, "Successful case")),
+  )
+  assert_eq(
+    parse_sequence_block_header("opt Optional path"),
+    Some((Opt, "Optional path")),
+  )
+  // case-insensitive
+  assert_eq(
+    parse_sequence_block_header("LOOP big loop"),
+    Some((Loop, "big loop")),
+  )
+  assert_eq(parse_sequence_block_header("Loop"), Some((Loop, "")))
+  assert_eq(parse_sequence_block_header("ALT"), Some((Alt, "")))
+  assert_eq(
+    parse_sequence_block_header("Critical critical section"),
+    Some((Critical, "critical section")),
+  )
+  assert_eq(
+    parse_sequence_block_header("BREAK when error"),
+    Some((Break, "when error")),
+  )
+  assert_eq(
+    parse_sequence_block_header("Rect rgb(200,150,255)"),
+    Some((Rect, "rgb(200,150,255)")),
+  )
+  // label with extra spaces trimmed
+  assert_eq(
+    parse_sequence_block_header("par   parallel task  "),
+    Some((Par, "parallel task")),
+  )
+  // not a keyword
+  assert_eq(parse_sequence_block_header("looping"), None)
+  assert_eq(parse_sequence_block_header("alternative"), None)
+  assert_eq(parse_sequence_block_header("something else"), None)
+  assert_eq(parse_sequence_block_header(""), None)
+}
+
+///|
+test "parse_sequence_divider_label" {
+  // exact keyword, no label
+  assert_eq(parse_sequence_divider_label("else"), Some(""))
+  assert_eq(parse_sequence_divider_label("and"), Some(""))
+  // keyword with label
+  assert_eq(
+    parse_sequence_divider_label("else Error case"),
+    Some("Error case"),
+  )
+  assert_eq(
+    parse_sequence_divider_label("and Another parallel"),
+    Some("Another parallel"),
+  )
+  // case-insensitive
+  assert_eq(parse_sequence_divider_label("ELSE"), Some(""))
+  assert_eq(parse_sequence_divider_label("Else fallback"), Some("fallback"))
+  assert_eq(parse_sequence_divider_label("AND"), Some(""))
+  assert_eq(parse_sequence_divider_label("And second"), Some("second"))
+  // extra spaces in label trimmed
+  assert_eq(parse_sequence_divider_label("else   spaced  "), Some("spaced"))
+  // not a keyword
+  assert_eq(parse_sequence_divider_label("otherwise"), None)
+  assert_eq(parse_sequence_divider_label(""), None)
+  assert_eq(parse_sequence_divider_label("elseif"), None)
+  assert_eq(parse_sequence_divider_label("android"), None)
+}
+
+///|
+test "parse_relation_parts" {
+  // basic relation: A -- B
+  let r1 = parse_relation_parts("A -- B")
+  assert_eq(r1, Some(("A", "--", "B", None)))
+  // relation with label
+  let r2 = parse_relation_parts("A -- B : label text")
+  assert_eq(r2, Some(("A", "--", "B", Some("label text"))))
+  // dotted relation
+  let r3 = parse_relation_parts("A .. B")
+  assert_eq(r3, Some(("A", "..", "B", None)))
+  // arrow relation
+  let r4 = parse_relation_parts("A --> B")
+  assert_eq(r4, Some(("A", "-->", "B", None)))
+  // too few parts
+  assert_eq(parse_relation_parts("A B"), None)
+  assert_eq(parse_relation_parts("A"), None)
+  // empty label after colon is None
+  let r5 = parse_relation_parts("A -- B :")
+  assert_eq(r5, Some(("A", "--", "B", None)))
+}
+
+///|
 fn ensure_node(nodes : Map[String, MermaidNode], node : MermaidNode) -> Unit {
   if !nodes.contains(node.id) {
     nodes[node.id] = node
@@ -1272,60 +1443,34 @@ fn ensure_sequence_participant(
 }
 
 ///|
-fn sequence_label_for_keyword(
-  line : String,
-  lower_line : String,
-  keyword : String,
-) -> String? {
-  if lower_line == keyword {
-    return Some("")
-  }
-  if lower_line.has_prefix("\{keyword} ") {
-    return Some(trim_owned((try! line[keyword.length():]).to_string()))
-  }
-  None
-}
-
-///|
 fn parse_sequence_block_header(line : String) -> (SequenceBlockType, String)? {
-  let lower_line = line.to_lower()
-  match sequence_label_for_keyword(line, lower_line, "loop") {
-    Some(label) => return Some((Loop, label))
-    None => ()
+  lexmatch line[:] {
+    "(?i:loop)" => Some((Loop, ""))
+    ("(?i:loop) ", rest) => Some((Loop, rest.trim().to_string()))
+    "(?i:alt)" => Some((Alt, ""))
+    ("(?i:alt) ", rest) => Some((Alt, rest.trim().to_string()))
+    "(?i:opt)" => Some((Opt, ""))
+    ("(?i:opt) ", rest) => Some((Opt, rest.trim().to_string()))
+    "(?i:par)" => Some((Par, ""))
+    ("(?i:par) ", rest) => Some((Par, rest.trim().to_string()))
+    "(?i:critical)" => Some((Critical, ""))
+    ("(?i:critical) ", rest) => Some((Critical, rest.trim().to_string()))
+    "(?i:break)" => Some((Break, ""))
+    ("(?i:break) ", rest) => Some((Break, rest.trim().to_string()))
+    "(?i:rect)" => Some((Rect, ""))
+    ("(?i:rect) ", rest) => Some((Rect, rest.trim().to_string()))
+    _ => None
   }
-  match sequence_label_for_keyword(line, lower_line, "alt") {
-    Some(label) => return Some((Alt, label))
-    None => ()
-  }
-  match sequence_label_for_keyword(line, lower_line, "opt") {
-    Some(label) => return Some((Opt, label))
-    None => ()
-  }
-  match sequence_label_for_keyword(line, lower_line, "par") {
-    Some(label) => return Some((Par, label))
-    None => ()
-  }
-  match sequence_label_for_keyword(line, lower_line, "critical") {
-    Some(label) => return Some((Critical, label))
-    None => ()
-  }
-  match sequence_label_for_keyword(line, lower_line, "break") {
-    Some(label) => return Some((Break, label))
-    None => ()
-  }
-  match sequence_label_for_keyword(line, lower_line, "rect") {
-    Some(label) => return Some((Rect, label))
-    None => ()
-  }
-  None
 }
 
 ///|
 fn parse_sequence_divider_label(line : String) -> String? {
-  let lower_line = line.to_lower()
-  match sequence_label_for_keyword(line, lower_line, "else") {
-    Some(label) => Some(label)
-    None => sequence_label_for_keyword(line, lower_line, "and")
+  lexmatch line[:] {
+    "(?i:else)" => Some("")
+    ("(?i:else) ", rest) => Some(rest.trim().to_string())
+    "(?i:and)" => Some("")
+    ("(?i:and) ", rest) => Some(rest.trim().to_string())
+    _ => None
   }
 }
 
