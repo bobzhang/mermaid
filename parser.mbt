@@ -420,19 +420,77 @@ fn find_sequence_operator(line : String) -> FoundEdgeOp? {
 
 ///|
 fn parse_label_and_target(raw_rhs : String) -> (String?, String) {
-  let rhs = trim_owned(raw_rhs)
-  if !rhs.has_prefix("|") {
-    return (None, rhs)
-  }
-  let tail = (try! rhs[1:]).to_string()
-  match tail.find("|") {
-    Some(close_idx) => {
-      let label = trim_owned((try! tail[:close_idx]).to_string())
-      let target = trim_owned((try! tail[close_idx + 1:]).to_string())
-      (Some(label), target)
+  let rhs = raw_rhs.trim()
+  if rhs lexmatch? ("\|", tail) {
+    lexmatch tail {
+      (label, "\|", target) =>
+        // FIXME: why `\|` needed here, otherwise warning reported?
+        (Some(label.trim().to_string()), target.trim().to_string())
+      _ => (None, rhs.to_string())
     }
-    None => (None, rhs)
+  } else {
+    (None, rhs.to_string())
   }
+}
+
+///|
+test "parse_label_and_target" {
+  // label between pipes, target after
+  debug_inspect(
+    parse_label_and_target("| b | c"),
+    content=(
+      #|(Some("b"), "c")
+    ),
+  )
+  // no pipe prefix → no label
+  debug_inspect(
+    parse_label_and_target("hello"),
+    content=(
+      #|(None, "hello")
+    ),
+  )
+  // empty string
+  debug_inspect(
+    parse_label_and_target(""),
+    content=(
+      #|(None, "")
+    ),
+  )
+  // leading pipe but no closing pipe → no label, original returned
+  debug_inspect(
+    parse_label_and_target("| no close"),
+    content=(
+      #|(None, "| no close")
+    ),
+  )
+  // empty label between pipes
+  debug_inspect(
+    parse_label_and_target("|| target"),
+    content=(
+      #|(Some(""), "target")
+    ),
+  )
+  // whitespace-only input
+  debug_inspect(
+    parse_label_and_target("   "),
+    content=(
+      #|(None, "")
+    ),
+  )
+  // pipe with spaces around label and target
+  debug_inspect(
+    parse_label_and_target("  | yes |  B[Node]  "),
+    content=(
+      #|(Some("yes"), "B[Node]")
+    ),
+  )
+  // no pipe, input has leading/trailing spaces
+  debug_inspect(
+    parse_label_and_target("  A[Start]  "),
+    content=(
+      #|(None, "A[Start]")
+    ),
+  )
 }
 
 ///|
