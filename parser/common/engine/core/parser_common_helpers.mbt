@@ -207,6 +207,23 @@ pub fn find_first_operator_indices(
 }
 
 ///|
+pub fn flow_edge_operator_specs() -> Array[
+  (String, @model.EdgeStyle, Bool, Bool),
+] {
+  [
+    ("<==>", Thick, true, true),
+    ("<-.->", Dotted, true, true),
+    ("<-->", Solid, true, true),
+    ("==>", Thick, false, true),
+    ("-.->", Dotted, false, true),
+    ("-->", Solid, false, true),
+    ("===", Thick, false, false),
+    ("-.-", Dotted, false, false),
+    ("---", Solid, false, false),
+  ]
+}
+
+///|
 pub fn push_unique_id(ids : Array[String], id : String) -> Unit {
   if !ids.any(found => found == id) {
     ids.push(id)
@@ -325,5 +342,18 @@ test "find_first_operator_indices" {
     content=(
       #|None
     ),
+  )
+}
+
+///|
+test "flow_edge_operator_specs" {
+  let specs = flow_edge_operator_specs()
+  inspect(specs.length(), content="9")
+  inspect(
+    specs.any(spec => {
+      let (symbol, _, _, _) = spec
+      symbol == "<==>"
+    }),
+    content="true",
   )
 }

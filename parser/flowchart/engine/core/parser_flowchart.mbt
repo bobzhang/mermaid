@@ -121,42 +121,12 @@ fn split_parallel_nodes_with_classes(
 
 ///|
 fn edge_operators() -> Array[EdgeOp] {
-  [
-    { symbol: "<==>", style: Thick, has_arrow_start: true, has_arrow_end: true },
-    {
-      symbol: "<-.->",
-      style: Dotted,
-      has_arrow_start: true,
-      has_arrow_end: true,
-    },
-    { symbol: "<-->", style: Solid, has_arrow_start: true, has_arrow_end: true },
-    { symbol: "==>", style: Thick, has_arrow_start: false, has_arrow_end: true },
-    {
-      symbol: "-.->",
-      style: Dotted,
-      has_arrow_start: false,
-      has_arrow_end: true,
-    },
-    { symbol: "-->", style: Solid, has_arrow_start: false, has_arrow_end: true },
-    {
-      symbol: "===",
-      style: Thick,
-      has_arrow_start: false,
-      has_arrow_end: false,
-    },
-    {
-      symbol: "-.-",
-      style: Dotted,
-      has_arrow_start: false,
-      has_arrow_end: false,
-    },
-    {
-      symbol: "---",
-      style: Solid,
-      has_arrow_start: false,
-      has_arrow_end: false,
-    },
-  ]
+  let operators : Array[EdgeOp] = []
+  for spec in @parser_common_engine_core.flow_edge_operator_specs() {
+    let (symbol, style, has_arrow_start, has_arrow_end) = spec
+    operators.push({ symbol, style, has_arrow_start, has_arrow_end })
+  }
+  operators
 }
 
 ///|
