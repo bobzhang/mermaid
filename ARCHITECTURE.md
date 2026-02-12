@@ -34,7 +34,8 @@ Mermaid source text
 ## Parse Layer
 
 - `parser/core` package
-  - Core implementation files: `parser/core/parser.mbt`, `parser/core/parser_flowchart.mbt`.
+  - Core implementation file: `parser/core/parser.mbt` (header dispatch).
+  - Flowchart parsing implementation is in `parser/flowchart/core/parser_flowchart.mbt`, re-exported via `parser/core/parser_flowchart.mbt` bridge functions.
   - State parsing implementation is in `parser/state/core/parser_state.mbt`, re-exported via `parser/core/parser_state.mbt` bridge functions.
   - Sequence parsing implementation is in `parser/sequence/core/parser_sequence.mbt`, re-exported via `parser/core/parser_sequence.mbt` bridge functions.
   - Class/ER parsing implementation is in `parser/class_er/core/parser_class_er.mbt`, re-exported via `parser/core/parser_class_er.mbt` bridge functions.
