@@ -1,0 +1,63 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "bobzhang/beautiful_mermaid/test_support/core"
+
+// Values
+pub fn contains_all(String, Array[String]) -> Bool
+
+pub fn corpus_cases() -> Array[CorpusCase]
+
+pub fn count_occurrences(String, String) -> Int
+
+pub fn gate_cases() -> Array[GateCase]
+
+pub fn normalize_whitespace(String) -> String
+
+pub fn supported_ascii_cases() -> Array[CorpusCase]
+
+pub fn supported_cases() -> Array[CorpusCase]
+
+pub fn supported_unicode_cases() -> Array[CorpusCase]
+
+pub fn svg_attr_int(String, String) -> Int?
+
+// Errors
+
+// Types and methods
+pub struct CorpusCase {
+  name : String
+  input : String
+  header : String
+  supported_by_moonbit : Bool
+  padding_x : Int
+  padding_y : Int
+  direction : String?
+  expected_node_count : Int?
+  expected_edge_count : Int?
+  expected_ascii : String?
+  expected_unicode : String?
+  expected_svg_fragments : Array[String]
+}
+pub impl Eq for CorpusCase
+pub impl Show for CorpusCase
+pub impl ToJson for CorpusCase
+
+pub struct GateCase {
+  name : String
+  input : String
+  direction : String
+  expected_node_count : Int
+  expected_edge_count : Int
+  padding_x : Int
+  padding_y : Int
+  expected_ascii : String
+  expected_unicode : String
+  expected_svg_fragments : Array[String]
+}
+pub impl Eq for GateCase
+pub impl Show for GateCase
+pub impl ToJson for GateCase
+
+// Type aliases
+
+// Traits
+

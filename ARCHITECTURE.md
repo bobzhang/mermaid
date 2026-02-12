@@ -111,7 +111,8 @@ The suite is intentionally layered to catch regressions at different levels:
 - Upstream parity coverage:
   - `upstream_samples_smoke_test.mbt` generated from upstream corpus.
 - Test fixtures and helpers:
-  - `test_support/fixtures.mbt`, `test_support/normalize.mbt`, `test_support/gate_cases.mbt`.
+  - `test_support/core/fixtures.mbt`, `test_support/core/normalize.mbt`, `test_support/core/gate_cases.mbt` hold fixture and normalization implementation.
+  - `test_support/test_support.mbt` is the public bridge package entrypoint used by tests.
 
 ## Extension Points
 
