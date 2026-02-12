@@ -18,27 +18,26 @@ fn trim_owned(s : String) -> String {
 }
 
 ///|
+fn edge_operator_symbols(operators : Array[EdgeOp]) -> Array[String] {
+  let symbols : Array[String] = []
+  for op in operators {
+    symbols.push(op.symbol)
+  }
+  symbols
+}
+
+///|
 fn find_earliest_operator(
   line : String,
   operators : Array[EdgeOp],
 ) -> FoundEdgeOp? {
-  let mut best : FoundEdgeOp? = None
-  for op in operators {
-    match line.find(op.symbol) {
-      Some(index) =>
-        match best {
-          None => best = Some({ op, index })
-          Some(current_best) =>
-            if index < current_best.index ||
-              (
-                index == current_best.index &&
-                op.symbol.length() > current_best.op.symbol.length()
-              ) {
-              best = Some({ op, index })
-            }
-        }
-      None => ()
-    }
+  match
+    @parser_common_engine_core.find_earliest_operator_indices(
+      line,
+      edge_operator_symbols(operators),
+    ) {
+    Some((operator_index, index)) =>
+      Some({ op: operators[operator_index], index })
+    None => None
   }
-  best
 }

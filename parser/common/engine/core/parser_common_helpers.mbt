@@ -166,6 +166,47 @@ pub fn parse_node_token(raw_token : String) -> @model.MermaidNode {
 }
 
 ///|
+pub fn find_earliest_operator_indices(
+  line : String,
+  operator_symbols : Array[String],
+) -> (Int, Int)? {
+  let mut best : (Int, Int)? = None
+  for i in 0..<operator_symbols.length() {
+    let symbol = operator_symbols[i]
+    match line.find(symbol) {
+      Some(index) =>
+        match best {
+          None => best = Some((i, index))
+          Some((best_operator_index, best_index)) =>
+            if index < best_index ||
+              (
+                index == best_index &&
+                symbol.length() > operator_symbols[best_operator_index].length()
+              ) {
+              best = Some((i, index))
+            }
+        }
+      None => ()
+    }
+  }
+  best
+}
+
+///|
+pub fn find_first_operator_indices(
+  line : String,
+  operator_symbols : Array[String],
+) -> (Int, Int)? {
+  for i in 0..<operator_symbols.length() {
+    match line.find(operator_symbols[i]) {
+      Some(index) => return Some((i, index))
+      None => ()
+    }
+  }
+  None
+}
+
+///|
 pub fn push_unique_id(ids : Array[String], id : String) -> Unit {
   if !ids.any(found => found == id) {
     ids.push(id)
@@ -233,4 +274,56 @@ pub fn set_current_subgraph_direction(
     children: current.children,
     direction: Some(direction),
   }
+}
+
+///|
+test "find_earliest_operator_indices" {
+  let operators = ["-->", "---", "==>"]
+  debug_inspect(
+    find_earliest_operator_indices("A --> B", operators),
+    content=(
+      #|Some((0, 2))
+    ),
+  )
+  debug_inspect(
+    find_earliest_operator_indices("A --- B --> C", operators),
+    content=(
+      #|Some((1, 2))
+    ),
+  )
+  debug_inspect(
+    find_earliest_operator_indices("A ==>", operators),
+    content=(
+      #|Some((2, 2))
+    ),
+  )
+  debug_inspect(
+    find_earliest_operator_indices("A ~~ B", operators),
+    content=(
+      #|None
+    ),
+  )
+}
+
+///|
+test "find_first_operator_indices" {
+  let operators = ["-->", "---", "==>"]
+  debug_inspect(
+    find_first_operator_indices("A --- B --> C", operators),
+    content=(
+      #|Some((0, 8))
+    ),
+  )
+  debug_inspect(
+    find_first_operator_indices("A ==>", operators),
+    content=(
+      #|Some((2, 2))
+    ),
+  )
+  debug_inspect(
+    find_first_operator_indices("A ~~ B", operators),
+    content=(
+      #|None
+    ),
+  )
 }

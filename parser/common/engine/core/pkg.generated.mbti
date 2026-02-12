@@ -12,6 +12,10 @@ pub fn append_nodes_to_current_subgraph(Array[@model.MermaidSubgraph], Array[Str
 
 pub fn ensure_node(Map[String, @model.MermaidNode], @model.MermaidNode) -> Unit
 
+pub fn find_earliest_operator_indices(String, Array[String]) -> (Int, Int)?
+
+pub fn find_first_operator_indices(String, Array[String]) -> (Int, Int)?
+
 pub fn is_plain_identifier(String) -> Bool
 
 pub fn parse_delimited_token(String, String, String, @model.NodeShape) -> @model.MermaidNode?
