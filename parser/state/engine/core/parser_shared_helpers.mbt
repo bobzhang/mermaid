@@ -14,7 +14,7 @@ priv struct FoundEdgeOp {
 
 ///|
 fn trim_owned(s : String) -> String {
-  s.trim().to_string()
+  @parser_common_engine_core.trim_owned(s)
 }
 
 ///|
@@ -163,9 +163,7 @@ fn parse_node_token(raw_token : String) -> MermaidNode {
 
 ///|
 fn ensure_node(nodes : Map[String, MermaidNode], node : MermaidNode) -> Unit {
-  if !nodes.contains(node.id) {
-    nodes[node.id] = node
-  }
+  @parser_common_engine_core.ensure_node(nodes, node)
 }
 
 ///|
@@ -240,10 +238,7 @@ fn set_current_subgraph_direction(
 
 ///|
 fn is_plain_identifier(text : String) -> Bool {
-  text != "" &&
-  !text.contains(" ") &&
-  !text.has_prefix("+") &&
-  !text.has_prefix("-")
+  @parser_common_engine_core.is_plain_identifier(text)
 }
 
 ///|

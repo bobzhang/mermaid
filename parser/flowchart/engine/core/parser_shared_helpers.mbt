@@ -14,7 +14,7 @@ priv struct FoundEdgeOp {
 
 ///|
 fn trim_owned(s : String) -> String {
-  s.trim().to_string()
+  @parser_common_engine_core.trim_owned(s)
 }
 
 ///|
@@ -189,9 +189,7 @@ fn find_earliest_operator(
 
 ///|
 fn ensure_node(nodes : Map[String, MermaidNode], node : MermaidNode) -> Unit {
-  if !nodes.contains(node.id) {
-    nodes[node.id] = node
-  }
+  @parser_common_engine_core.ensure_node(nodes, node)
 }
 
 ///|

@@ -39,6 +39,8 @@ Mermaid source text
   - State parsing implementation is in `parser/state/engine/core/parser_state.mbt`, re-exported via `parser/state/core/parser_state.mbt` and `parser/header/core/parser_state.mbt` bridge functions.
   - Sequence parsing implementation is in `parser/sequence/engine/core/parser_sequence.mbt`, re-exported via `parser/sequence/core/parser_sequence.mbt` and `parser/header/core/parser_sequence.mbt` bridge functions.
   - Class/ER parsing implementation is in `parser/class_er/engine/core/parser_class_er.mbt`, re-exported via `parser/class_er/core/parser_class_er.mbt` and `parser/header/core/parser_class_er.mbt` bridge functions.
+- `parser/common/engine/core` package
+  - Shared parser helper implementation (`parser/common/engine/core/parser_common_helpers.mbt`) used by flowchart/state/sequence/class_er parser engines.
 - `parser/flowchart/core` bridge package (`parser/flowchart/core/parser_flowchart.mbt`)
   - Re-exports flowchart parsing implementation from `parser/flowchart/engine/core`.
 - `parser/state/core` bridge package (`parser/state/core/parser_state.mbt`)

@@ -14,7 +14,7 @@ priv struct FoundEdgeOp {
 
 ///|
 fn trim_owned(s : String) -> String {
-  s.trim().to_string()
+  @parser_common_engine_core.trim_owned(s)
 }
 
 ///|
