@@ -14,7 +14,7 @@ Mermaid source text
   -> PositionedGraph (geometry model in types.mbt)
   -> renderer
      - renderer/svg/core/svg_renderer.mbt + root renderer/svg bridge package (SVG output)
-     - renderer/ascii/flow_state package + renderer/ascii/sequence package + renderer/ascii/class_er package + root renderer/ascii bridge package (text output)
+     - renderer/ascii/flow_state/core + renderer/ascii/flow_state/engine/core + renderer/ascii/sequence package + renderer/ascii/class_er package + root renderer/ascii bridge package (text output)
   -> final SVG / ASCII / Unicode string
 ```
 
@@ -74,9 +74,11 @@ Mermaid source text
   - Bridge package entrypoint that re-exports SVG rendering from `renderer/svg/engine/core` for downstream callers.
 - `renderer/svg/svg_renderer.mbt`
   - Public bridge package entrypoint that re-exports SVG rendering for downstream callers.
-- `renderer/ascii/flow_state/core/ascii_renderer.mbt`
+- `renderer/ascii/flow_state/engine/core/ascii_renderer.mbt`
   - Core ASCII/Unicode flowchart/state rendering path and dispatch glue.
-  - Includes grid/pathfinding support through `renderer/ascii/flow_state/core/ascii_grid_pathfinder.mbt`.
+  - Includes grid/pathfinding support through `renderer/ascii/flow_state/engine/core/ascii_grid_pathfinder.mbt`.
+- `renderer/ascii/flow_state/core/ascii_renderer.mbt`
+  - Bridge package entrypoint that re-exports ASCII flow/state rendering from `renderer/ascii/flow_state/engine/core`.
 - `renderer/ascii/flow_state/ascii_renderer.mbt`
   - Public bridge package entrypoint that re-exports flow/state ASCII rendering for downstream callers.
 - `renderer/ascii/ascii_renderer.mbt`
