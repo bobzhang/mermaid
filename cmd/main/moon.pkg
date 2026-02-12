@@ -1,7 +1,5 @@
 import {
-  "bobzhang/beautiful_mermaid" @beautiful_mermaid,
-  "moonbitlang/core/env" @env,
-  "moonbitlang/core/strconv" @strconv,
+  "bobzhang/beautiful_mermaid/cmd/main/core" @cmd_main_core,
 }
 
 options(

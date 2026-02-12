@@ -90,10 +90,10 @@ Mermaid source text
 
 ## CLI Layer
 
+- `cmd/main/core/main.mbt`
+  - CLI implementation: argument parsing, mode validation, and render invocation.
 - `cmd/main/main.mbt`
-  - Thin wrapper over public APIs.
-  - Parses flags for output mode and styling.
-  - Keeps behavior close to library APIs to avoid drift.
+  - Thin executable bridge (`is-main`) that delegates to `cmd/main/core`.
 
 ## Test Architecture
 
