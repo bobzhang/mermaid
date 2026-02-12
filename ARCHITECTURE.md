@@ -13,7 +13,7 @@ Mermaid source text
   -> PositionedGraph (geometry model in types.mbt)
   -> renderer
      - svg_renderer.mbt (SVG output)
-     - ascii_renderer package + renderer/ascii/sequence package + renderer/ascii/class_er package (text output)
+     - renderer/ascii/flow_state package + renderer/ascii/sequence package + renderer/ascii/class_er package + root renderer/ascii bridge package (text output)
   -> final SVG / ASCII / Unicode string
 ```
 
@@ -54,9 +54,11 @@ Mermaid source text
   - Converts `PositionedGraph` to SVG.
   - Applies colors/font/spacing/transparent behavior from options.
   - Uses CSS variables to keep theming composable.
-- `ascii_renderer.mbt`
-  - Core ASCII/Unicode flowchart/state rendering path.
-  - Includes grid/pathfinding support through `ascii_grid_pathfinder.mbt`.
+- `renderer/ascii/flow_state/ascii_renderer.mbt`
+  - Core ASCII/Unicode flowchart/state rendering path and dispatch glue.
+  - Includes grid/pathfinding support through `renderer/ascii/flow_state/ascii_grid_pathfinder.mbt`.
+- `renderer/ascii/ascii_renderer.mbt`
+  - Public bridge package entrypoint that re-exports ASCII rendering for downstream callers.
 - `renderer/ascii/sequence/ascii_sequence_renderer.mbt`
   - Specialized sequence diagram text rendering extracted as a dedicated renderer package.
 - `renderer/ascii/class_er/ascii_class_renderer.mbt`

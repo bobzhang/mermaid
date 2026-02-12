@@ -1,11 +1,4 @@
 import {
-  "bobzhang/beautiful_mermaid/layout" @layout,
   "bobzhang/beautiful_mermaid/model" @model,
-  "bobzhang/beautiful_mermaid/parser" @parser,
-  "bobzhang/beautiful_mermaid/renderer/ascii/class_er" @renderer_ascii_class_er,
-  "bobzhang/beautiful_mermaid/renderer/ascii/sequence" @renderer_ascii_sequence,
+  "bobzhang/beautiful_mermaid/renderer/ascii/flow_state" @renderer_ascii_flow_state,
 }
-
-import {
-  "moonbitlang/core/test",
-} for "test"
