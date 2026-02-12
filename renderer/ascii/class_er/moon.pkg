@@ -1,7 +1,4 @@
 import {
   "bobzhang/beautiful_mermaid/model" @model,
+  "bobzhang/beautiful_mermaid/renderer/ascii/class_er/core" @renderer_ascii_class_er_core,
 }
-
-import {
-  "moonbitlang/core/test",
-} for "test"

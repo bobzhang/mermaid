@@ -69,10 +69,12 @@ Mermaid source text
   - Specialized sequence diagram text rendering implementation.
 - `renderer/ascii/sequence/ascii_sequence_renderer.mbt`
   - Public bridge package entrypoint that re-exports sequence ASCII rendering for downstream callers.
-- `renderer/ascii/class_er/ascii_class_renderer.mbt`
-  - Class diagram text rendering and relationship markers.
-- `renderer/ascii/class_er/ascii_er_renderer.mbt`
-  - ER diagram text rendering and cardinality/operator display.
+- `renderer/ascii/class_er/core/ascii_class_renderer.mbt`
+  - Class diagram text rendering and relationship markers implementation.
+- `renderer/ascii/class_er/core/ascii_er_renderer.mbt`
+  - ER diagram text rendering and cardinality/operator display implementation.
+- `renderer/ascii/class_er/ascii_class_renderer.mbt`, `renderer/ascii/class_er/ascii_er_renderer.mbt`
+  - Public bridge package entrypoints that re-export class/ER ASCII rendering for downstream callers.
 
 ## Theme and Styling
 
