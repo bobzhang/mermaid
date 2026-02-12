@@ -236,3 +236,87 @@ test "Parser handles state diagrams with composite declaration and outer transit
   assert_eq(graph.subgraphs.length(), 1)
   assert_eq(graph.subgraphs[0].id, "Processing")
 }
+
+///|
+test "Parser keeps state edge operator semantics across all flow-style operators" {
+  let graph = try! @beautiful_mermaid.parse_mermaid(
+    (
+      #|stateDiagram-v2
+      #|A <==> B
+      #|B <-.-> C
+      #|C <--> D
+      #|D ==> E
+      #|E -.-> F
+      #|F --> G
+      #|G === H
+      #|H -.- I
+      #|I --- J
+    ),
+  )
+
+  assert_eq(graph.edges.length(), 9)
+
+  let e1 = graph.edges[0]
+  assert_eq(e1.style.to_string(), "Thick")
+  assert_true(e1.has_arrow_start)
+  assert_true(e1.has_arrow_end)
+
+  let e2 = graph.edges[1]
+  assert_eq(e2.style.to_string(), "Dotted")
+  assert_true(e2.has_arrow_start)
+  assert_true(e2.has_arrow_end)
+
+  let e3 = graph.edges[2]
+  assert_eq(e3.style.to_string(), "Solid")
+  assert_true(e3.has_arrow_start)
+  assert_true(e3.has_arrow_end)
+
+  let e4 = graph.edges[3]
+  assert_eq(e4.style.to_string(), "Thick")
+  assert_true(!e4.has_arrow_start)
+  assert_true(e4.has_arrow_end)
+
+  let e5 = graph.edges[4]
+  assert_eq(e5.style.to_string(), "Dotted")
+  assert_true(!e5.has_arrow_start)
+  assert_true(e5.has_arrow_end)
+
+  let e6 = graph.edges[5]
+  assert_eq(e6.style.to_string(), "Solid")
+  assert_true(!e6.has_arrow_start)
+  assert_true(e6.has_arrow_end)
+
+  let e7 = graph.edges[6]
+  assert_eq(e7.style.to_string(), "Thick")
+  assert_true(!e7.has_arrow_start)
+  assert_true(!e7.has_arrow_end)
+
+  let e8 = graph.edges[7]
+  assert_eq(e8.style.to_string(), "Dotted")
+  assert_true(!e8.has_arrow_start)
+  assert_true(!e8.has_arrow_end)
+
+  let e9 = graph.edges[8]
+  assert_eq(e9.style.to_string(), "Solid")
+  assert_true(!e9.has_arrow_start)
+  assert_true(!e9.has_arrow_end)
+}
+
+///|
+test "Parser parses state labels on bidirectional thick edges" {
+  let graph = try! @beautiful_mermaid.parse_mermaid(
+    (
+      #|stateDiagram-v2
+      #|A <==> B : sync
+    ),
+  )
+
+  assert_eq(graph.edges.length(), 1)
+  let edge = graph.edges[0]
+  assert_eq(edge.source, "A")
+  assert_eq(edge.target, "B")
+  assert_eq(edge.label, Some("sync"))
+  assert_eq(edge.style.to_string(), "Thick")
+  assert_true(edge.has_arrow_start)
+  assert_true(edge.has_arrow_end)
+}
