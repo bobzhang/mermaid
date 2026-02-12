@@ -1,161 +1,190 @@
 # Architecture
 
-This document describes how the MoonBit port of `beautiful-mermaid` is structured and how data flows through the system.
+This document describes the current MoonBit architecture of `bobzhang/beautiful_mermaid`, including package boundaries, data flow, and test strategy.
 
 ## High-Level Pipeline
 
 ```text
 Mermaid source text
-  -> parser package (`parser/parser.mbt`, exported as `@beautiful_mermaid/parser.parse_mermaid`)
-  -> root bridge (`parser.mbt`, converts parser package types to root package types)
-  -> MermaidGraph (AST-like model in types.mbt)
-  -> layout bridge package (`layout/layout.mbt`)
-  -> layout/core bridge package (`layout/core/layout.mbt`, `layout/core/types.mbt`) + layout/engine/core bridge package (`layout/engine/core/layout.mbt`, `layout/engine/core/ascii_grid_pathfinder.mbt`) + layout/engine/graph/core implementation (`layout/engine/graph/core/layout.mbt`, `layout/engine/graph/core/layout_state_ascii_grid.mbt`) + layout/engine/pathfinder/core implementation (`layout/engine/pathfinder/core/ascii_grid_pathfinder.mbt`) + layout/engine/sequence/core implementation (`layout/engine/sequence/core/layout_sequence.mbt`)
-  -> PositionedGraph (geometry model in types.mbt)
-  -> renderer
-     - renderer/svg/core/svg_renderer.mbt + root renderer/svg bridge package (SVG output)
-     - renderer/ascii/flow_state/core + renderer/ascii/flow_state/engine/core + renderer/ascii/sequence package + renderer/ascii/class_er package + root renderer/ascii bridge package (text output)
-  -> final SVG / ASCII / Unicode string
+  -> parser facade (`parser.mbt`)
+  -> parser package stack (`parser/*`)
+  -> MermaidGraph (normalized semantic graph)
+  -> layout package stack (`layout/*`)
+  -> PositionedGraph (geometry + routed edges)
+  -> renderer package stack (`renderer/svg/*`, `renderer/ascii/*`)
+  -> SVG or ASCII/Unicode output
 ```
 
 `beautiful_mermaid.mbt` is the public facade that wires parser, layout, themes, and renderers into stable API functions.
 
-## Core Modules
+## Design Pattern Used Across Packages
+
+The project uses a consistent 3-layer package pattern in most subsystems:
+
+1. `engine/core` packages: implementation.
+2. `core` packages: stable bridge/re-export surface.
+3. top-level package bridge: public subsystem entrypoint.
+
+This keeps implementation internals movable while preserving clean public import paths.
 
 ## Data Model and Contracts
 
+- `model/types.mbt`
+  - Source-of-truth domain types: parser graph, layout graph, options, themes.
 - `types.mbt`
-  - Defines public domain types:
-    - Parse layer: `MermaidGraph`, `MermaidNode`, `MermaidEdge`, `MermaidSubgraph`, sequence-specific types.
-    - Layout layer: `PositionedGraph`, `PositionedNode`, `PositionedEdge`, `PositionedGroup`, sequence positioned types.
-    - Config layer: `RenderOptions`, `AsciiRenderOptions`, `DiagramColors`.
-  - Keeps parser/layout/renderer boundaries explicit through shared types.
+  - Public re-export layer for root consumers.
+
+Key models:
+
+- Parse model: `MermaidGraph`, `MermaidNode`, `MermaidEdge`, `MermaidSubgraph`, sequence metadata types.
+- Layout model: `PositionedGraph`, `PositionedNode`, `PositionedEdge`, grouped and sequence positioned types.
+- Render config: `RenderOptions`, `AsciiRenderOptions`, `DiagramColors`.
 
 ## Parse Layer
 
-- `parser/header/core` package
-  - Core header-dispatch implementation: `parser/header/core/parser.mbt`.
-  - Flowchart parsing implementation is in `parser/flowchart/engine/core/parser_flowchart.mbt`, re-exported via `parser/flowchart/core/parser_flowchart.mbt` and `parser/header/core/parser_flowchart.mbt` bridge functions.
-  - State parsing implementation is in `parser/state/engine/core/parser_state.mbt`, re-exported via `parser/state/core/parser_state.mbt` and `parser/header/core/parser_state.mbt` bridge functions.
-  - Sequence parsing implementation is in `parser/sequence/engine/core/parser_sequence.mbt`, re-exported via `parser/sequence/core/parser_sequence.mbt` and `parser/header/core/parser_sequence.mbt` bridge functions.
-  - Class/ER parsing implementation is in `parser/class_er/engine/core/parser_class_er.mbt`, re-exported via `parser/class_er/core/parser_class_er.mbt` and `parser/header/core/parser_class_er.mbt` bridge functions.
-- `parser/common/engine/core` package
-  - Shared parser helper implementation (`parser/common/engine/core/parser_common_helpers.mbt`) used by flowchart/state/sequence/class_er parser engines for trimming, node parsing, and subgraph stack updates.
-- `parser/flowchart/core` bridge package (`parser/flowchart/core/parser_flowchart.mbt`)
-  - Re-exports flowchart parsing implementation from `parser/flowchart/engine/core`.
-- `parser/state/core` bridge package (`parser/state/core/parser_state.mbt`)
-  - Re-exports state parsing implementation from `parser/state/engine/core`.
-- `parser/sequence/core` bridge package (`parser/sequence/core/parser_sequence.mbt`)
-  - Re-exports sequence parsing implementation from `parser/sequence/engine/core`.
-- `parser/class_er/core` bridge package (`parser/class_er/core/parser_class_er.mbt`)
-  - Re-exports class/ER parsing implementation from `parser/class_er/engine/core`.
-- `parser/core` bridge package (`parser/core/parser.mbt`)
-  - Re-exports `parse_mermaid` by delegating to `parser/header/core`.
-- `parser` package bridge (`parser/parser.mbt`)
-  - Exposes `/parser.parse_mermaid` while delegating to `parser/core`.
-  - Entry: `@beautiful_mermaid/parser.parse_mermaid(text)`.
-  - Dispatches by Mermaid header (`graph`, `flowchart`, `stateDiagram`, `sequenceDiagram`, `classDiagram`, `erDiagram`).
-  - Produces a parser-package `MermaidGraph` independent of output format.
-- Root bridge `parser.mbt`
-  - Calls parser package entrypoint and converts parser-package graph/error values into root package public types (`types.mbt`).
+### Entry and Dispatch
+
+- Root facade: `parser.mbt`
+  - `parse_mermaid(text)` delegates to parser package.
+- Parser package bridge: `parser/parser.mbt`
+- Parser core bridge: `parser/core/parser.mbt`
+- Header dispatcher implementation: `parser/header/core/parser.mbt`
+  - Handles normalization, preprocessing, header detection, and dispatch.
+
+Supported headers:
+
+- `graph` / `flowchart`
+- `stateDiagram` / `stateDiagram-v2`
+- `sequenceDiagram`
+- `classDiagram`
+- `erDiagram`
+
+### Diagram Parser Packages
+
+Each diagram parser follows `core -> engine/core`:
+
+- Flowchart:
+  - Bridge: `parser/flowchart/core/parser_flowchart.mbt`
+  - Implementation: `parser/flowchart/engine/core/parser_flowchart.mbt`
+- State:
+  - Bridge: `parser/state/core/parser_state.mbt`
+  - Implementation: `parser/state/engine/core/parser_state.mbt`
+- Sequence:
+  - Bridge: `parser/sequence/core/parser_sequence.mbt`
+  - Implementation: `parser/sequence/engine/core/parser_sequence.mbt`
+- Class/ER:
+  - Bridge: `parser/class_er/core/parser_class_er.mbt`
+  - Implementation: `parser/class_er/engine/core/parser_class_er.mbt`
+
+### Shared Parser Engine (`parser/common/engine/core`)
+
+- Implementation file: `parser/common/engine/core/parser_common_helpers.mbt`
+- Shared responsibilities now include:
+  - token trimming and direction parsing,
+  - common node token parsing,
+  - edge-operator scanning algorithms:
+    - `find_earliest_operator_indices`
+    - `find_first_operator_indices`
+  - canonical flow/state edge operator specs:
+    - `flow_edge_operator_specs`
+  - subgraph stack mutation helpers:
+    - append nodes,
+    - append child subgraphs,
+    - set local subgraph direction.
+
+Important design detail:
+
+- Flowchart/state/sequence parser engines keep local `EdgeOp` structs and map shared operator specs/index results into local types.
+- This avoids cross-package record-construction coupling while still centralizing parsing semantics.
 
 ## Layout Layer
 
-- `layout/engine/graph/core` package
-  - Core flow/state/class/er layout implementation and routing orchestration (`layout/engine/graph/core/layout.mbt`, `layout/engine/graph/core/layout_state_ascii_grid.mbt`).
-- `layout/engine/core` package bridge (`layout/engine/core/layout.mbt`, `layout/engine/core/ascii_grid_pathfinder.mbt`)
-  - Re-exports graph/pathfinder/sequence layout engine APIs for downstream packages (`/layout/engine/core`).
-- `layout/engine/pathfinder/core` package
-  - Core ASCII grid pathfinding implementation (`layout/engine/pathfinder/core/ascii_grid_pathfinder.mbt`).
-  - Consumed by `layout/engine/graph/core` for state edge routing.
-- `layout/engine/sequence/core` package
-  - Core sequence layout implementation (`layout/engine/sequence/core/layout_sequence.mbt`).
-  - Consumed by `layout/engine/graph/core` for sequence diagram positioning.
-- `layout/core` package bridge (`layout/core/layout.mbt`, `layout/core/types.mbt`)
-  - Re-exports layout/engine/core public APIs for downstream packages (`@beautiful_mermaid/layout/core`).
-- `layout` package bridge (`layout/layout.mbt`, `layout/types.mbt`)
-  - Re-exports layout/core public APIs for downstream packages (`@beautiful_mermaid/layout`).
+### Package Topology
+
+- Public bridge: `layout/layout.mbt`, `layout/types.mbt`
+- Bridge layer: `layout/core/layout.mbt`, `layout/core/types.mbt`
+- Engine bridge: `layout/engine/core/layout.mbt`, `layout/engine/core/ascii_grid_pathfinder.mbt`
+
+Implementations:
+
+- Graph/state/class/ER layout:
+  - `layout/engine/graph/core/layout.mbt`
+  - `layout/engine/graph/core/layout_state_ascii_grid.mbt`
+- Pathfinder:
+  - `layout/engine/pathfinder/core/ascii_grid_pathfinder.mbt`
+- Sequence layout:
+  - `layout/engine/sequence/core/layout_sequence.mbt`
+
+Output: `PositionedGraph`.
 
 ## Render Layer
 
-- `renderer/svg/engine/core/svg_renderer.mbt`
-  - Core SVG implementation: converts `PositionedGraph` to SVG.
-  - Applies colors/font/spacing/transparent behavior from options.
-  - Uses CSS variables to keep theming composable.
-- `renderer/svg/core/svg_renderer.mbt`
-  - Bridge package entrypoint that re-exports SVG rendering from `renderer/svg/engine/core` for downstream callers.
-- `renderer/svg/svg_renderer.mbt`
-  - Public bridge package entrypoint that re-exports SVG rendering for downstream callers.
-- `renderer/ascii/flow_state/engine/core/ascii_renderer.mbt`
-  - Core ASCII/Unicode flowchart/state rendering path and dispatch glue.
-  - Includes grid/pathfinding support through `renderer/ascii/flow_state/engine/core/ascii_grid_pathfinder.mbt`.
-- `renderer/ascii/flow_state/core/ascii_renderer.mbt`
-  - Bridge package entrypoint that re-exports ASCII flow/state rendering from `renderer/ascii/flow_state/engine/core`.
-- `renderer/ascii/flow_state/ascii_renderer.mbt`
-  - Public bridge package entrypoint that re-exports flow/state ASCII rendering for downstream callers.
-- `renderer/ascii/ascii_renderer.mbt`
-  - Public bridge package entrypoint that re-exports ASCII rendering for downstream callers.
-- `renderer/ascii/sequence/engine/core/ascii_sequence_renderer.mbt`
-  - Specialized sequence diagram text rendering implementation.
-- `renderer/ascii/sequence/core/ascii_sequence_renderer.mbt`
-  - Bridge package entrypoint that re-exports sequence ASCII rendering from `renderer/ascii/sequence/engine/core`.
-- `renderer/ascii/sequence/ascii_sequence_renderer.mbt`
-  - Public bridge package entrypoint that re-exports sequence ASCII rendering for downstream callers.
-- `renderer/ascii/class_er/engine/core/ascii_class_renderer.mbt`
-  - Class diagram text rendering and relationship markers implementation.
-- `renderer/ascii/class_er/engine/core/ascii_er_renderer.mbt`
-  - ER diagram text rendering and cardinality/operator display implementation.
-- `renderer/ascii/class_er/core/ascii_class_renderer.mbt`, `renderer/ascii/class_er/core/ascii_er_renderer.mbt`
-  - Bridge package entrypoints that re-export class/ER ASCII rendering from `renderer/ascii/class_er/engine/core`.
-- `renderer/ascii/class_er/ascii_class_renderer.mbt`, `renderer/ascii/class_er/ascii_er_renderer.mbt`
-  - Public bridge package entrypoints that re-export class/ER ASCII rendering for downstream callers.
+### SVG
+
+- Public bridge: `renderer/svg/svg_renderer.mbt`
+- Bridge layer: `renderer/svg/core/svg_renderer.mbt`
+- Implementation: `renderer/svg/engine/core/svg_renderer.mbt`
+
+### ASCII / Unicode
+
+- Public umbrella: `renderer/ascii/ascii_renderer.mbt`
+- Flow/state:
+  - Bridge: `renderer/ascii/flow_state/core/ascii_renderer.mbt`
+  - Implementation: `renderer/ascii/flow_state/engine/core/ascii_renderer.mbt`
+- Sequence:
+  - Bridge: `renderer/ascii/sequence/core/ascii_sequence_renderer.mbt`
+  - Implementation: `renderer/ascii/sequence/engine/core/ascii_sequence_renderer.mbt`
+- Class/ER:
+  - Bridge: `renderer/ascii/class_er/core/ascii_class_renderer.mbt`, `renderer/ascii/class_er/core/ascii_er_renderer.mbt`
+  - Implementations: `renderer/ascii/class_er/engine/core/ascii_class_renderer.mbt`, `renderer/ascii/class_er/engine/core/ascii_er_renderer.mbt`
 
 ## Theme and Styling
 
-- `themes/core/themes.mbt`
-  - Theme implementation: built-in palettes, slug normalization/parsing, and Shiki-to-diagram color conversion.
-- `themes/themes.mbt`
-  - Public bridge package entrypoint that re-exports theme APIs and types for downstream callers.
-- `beautiful_mermaid.mbt`
-  - Exposes:
-    - `render_mermaid` (SVG)
-    - `render_mermaid_ascii` (ASCII/Unicode)
-    - theme/color convenience wrappers.
+- Theme implementation: `themes/core/themes.mbt`
+- Theme bridge: `themes/themes.mbt`
+
+The renderers consume resolved diagram colors/options and do not own theme canonicalization logic.
 
 ## CLI Layer
 
-- `cmd/main/app/core/main.mbt`
-  - CLI implementation: argument parsing, mode validation, and render invocation.
-- `cmd/main/core/main.mbt`
-  - Bridge package entrypoint that re-exports CLI run from `cmd/main/app/core`.
-- `cmd/main/main.mbt`
-  - Thin executable bridge (`is-main`) that delegates to `cmd/main/core`.
+- Executable bridge: `cmd/main/main.mbt`
+- Core bridge: `cmd/main/core/main.mbt`
+- Implementation: `cmd/main/app/core/main.mbt`
+
+CLI focuses on argument parsing, mode validation, and calling the facade APIs.
 
 ## Test Architecture
 
-The suite is intentionally layered to catch regressions at different levels:
+The test suite is intentionally layered.
 
-- Parser correctness:
-  - `parser_*_test.mbt`, `parser_parity_test.mbt`, `parser_supported_corpus_test.mbt`.
-- Layout/renderer invariants (white-box):
-  - `*_wbtest.mbt` files (for internal geometry/routing behavior).
-- Semantic parity tests:
-  - `svg_semantic_parity_test.mbt`, `svg_state_semantic_parity_test.mbt`, `ascii_semantic_parity_test.mbt`, diagram-specific corpus tests.
-- Snapshot/regression tests:
-  - `supported_svg_snapshot_test.mbt`, `upstream_svg_snapshot_test.mbt`, `supported_render_smoke_test.mbt`.
-  - Snapshots are stored in `__snapshot__/` with external SVG files for visual diffing.
-- Upstream parity coverage:
-  - `upstream_samples_smoke_test.mbt` generated from upstream corpus.
-- Test fixtures and helpers:
-  - `test_support/core/fixtures.mbt`, `test_support/core/normalize.mbt`, `test_support/core/gate_cases.mbt` hold fixture and normalization implementation.
-  - `test_support/test_support.mbt` is the public bridge package entrypoint used by tests.
+### Black-box parser and integration tests
 
-## Extension Points
+- Parser behavior:
+  - `parser_parity_test.mbt`
+  - `parser_sequence_test.mbt`
+  - `parser_state_test.mbt`
+  - `parser_class_er_test.mbt`
+  - `parser_subgraph_test.mbt`
+  - `parser_supported_corpus_test.mbt`
+- Full pipeline:
+  - `integration_pipeline_test.mbt`
 
-When adding a new Mermaid feature/category, follow this order:
+Recent parser black-box additions specifically validate shared edge-operator behavior across flowchart and state parsing.
 
-1. Extend parse model and parser branch in `parser/` package.
-2. Extend layout contracts/positioning in `layout/engine/core` or `layout/engine/sequence/core` (and update `layout/core` + `layout` bridge exports as needed).
-3. Implement renderer support in `svg_renderer.mbt` and/or text renderers.
-4. Add semantic parity tests and snapshot coverage.
-5. Update CLI/docs only after API behavior is validated.
+### White-box/internal behavior tests
+
+- `*_wbtest.mbt` packages (layout and renderer internals, routing, invariants).
+
+### Snapshot and corpus parity tests
+
+- SVG/ASCII snapshots and upstream corpus parity tests under root test files and `__snapshot__/`.
+
+## Extension Guidelines
+
+When adding a new diagram feature, follow this order:
+
+1. Extend parser model/behavior in `parser/*` (prefer shared logic in `parser/common/engine/core` when reusable).
+2. Extend layout contracts and placement logic in `layout/*`.
+3. Extend SVG and/or ASCII renderers.
+4. Add black-box parser tests plus integration/snapshot coverage.
+5. Update docs and CLI surface after behavior is validated.
