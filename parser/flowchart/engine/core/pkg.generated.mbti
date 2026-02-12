@@ -1,0 +1,18 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "bobzhang/beautiful_mermaid/parser/flowchart/engine/core"
+
+import {
+  "bobzhang/beautiful_mermaid/model",
+}
+
+// Values
+pub fn parse_flowchart(Array[String]) -> @model.MermaidGraph raise @model.MermaidError
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits
+
