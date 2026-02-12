@@ -27,6 +27,14 @@ fn ascii_sequence_operator_has_suffix(
 }
 
 ///|
+fn option_int_or(value : Int?, fallback : Int) -> Int {
+  match value {
+    Some(found) => found
+    None => fallback
+  }
+}
+
+///|
 fn make_canvas(width : Int, height : Int) -> Array[Array[String]] {
   let canvas : Array[Array[String]] = []
   for _ in 0..<height {
@@ -208,7 +216,7 @@ fn ascii_sequence_apply_activation_command(
 }
 
 ///|
-fn render_ascii_sequence(
+pub fn render_ascii_sequence(
   graph : MermaidGraph,
   options : AsciiRenderOptions,
 ) -> String {
