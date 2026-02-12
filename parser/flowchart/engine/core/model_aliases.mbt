@@ -5,9 +5,6 @@ type MermaidError = @model.MermaidError
 type Direction = @model.Direction
 
 ///|
-type NodeShape = @model.NodeShape
-
-///|
 type EdgeStyle = @model.EdgeStyle
 
 ///|
