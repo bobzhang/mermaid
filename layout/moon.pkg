@@ -1,8 +1,4 @@
 import {
   "bobzhang/beautiful_mermaid/model" @model,
-  "bobzhang/beautiful_mermaid/parser" @parser,
+  "bobzhang/beautiful_mermaid/layout/core" @layout_core,
 }
-
-import {
-  "moonbitlang/core/test",
-} for "test"

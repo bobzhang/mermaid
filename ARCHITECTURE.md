@@ -9,7 +9,8 @@ Mermaid source text
   -> parser package (`parser/parser.mbt`, exported as `@beautiful_mermaid/parser.parse_mermaid`)
   -> root bridge (`parser.mbt`, converts parser package types to root package types)
   -> MermaidGraph (AST-like model in types.mbt)
-  -> layout.mbt / layout_state_ascii_grid.mbt
+  -> layout bridge package (`layout/layout.mbt`)
+  -> layout/core implementation (`layout/core/layout.mbt`, `layout/core/layout_state_ascii_grid.mbt`, `layout/core/ascii_grid_pathfinder.mbt`)
   -> PositionedGraph (geometry model in types.mbt)
   -> renderer
      - renderer/svg/core/svg_renderer.mbt + root renderer/svg bridge package (SVG output)
@@ -44,11 +45,10 @@ Mermaid source text
 
 ## Layout Layer
 
-- `layout.mbt`
-  - General graph layout and geometry for SVG and text renderers.
-  - Computes node positions, edge routes, subgraph/group bounds, and sequence placement primitives.
-- `layout_state_ascii_grid.mbt`
-  - State-diagram-specific grid logic used by ASCII routing/placement.
+- `layout/core` package
+  - Core layout implementation: graph geometry, state-grid helpers, and pathfinding (`layout/core/layout.mbt`, `layout/core/layout_state_ascii_grid.mbt`, `layout/core/ascii_grid_pathfinder.mbt`).
+- `layout` package bridge (`layout/layout.mbt`, `layout/types.mbt`)
+  - Re-exports layout/core public APIs for downstream packages (`@beautiful_mermaid/layout`).
 
 ## Render Layer
 
@@ -112,7 +112,7 @@ The suite is intentionally layered to catch regressions at different levels:
 When adding a new Mermaid feature/category, follow this order:
 
 1. Extend parse model and parser branch in `parser/` package.
-2. Extend layout contracts/positioning in `layout.mbt` (and state grid helpers if needed).
+2. Extend layout contracts/positioning in `layout/core` (and update `layout` bridge exports as needed).
 3. Implement renderer support in `svg_renderer.mbt` and/or text renderers.
 4. Add semantic parity tests and snapshot coverage.
 5. Update CLI/docs only after API behavior is validated.
