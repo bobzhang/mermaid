@@ -83,8 +83,10 @@ Mermaid source text
   - Public bridge package entrypoint that re-exports flow/state ASCII rendering for downstream callers.
 - `renderer/ascii/ascii_renderer.mbt`
   - Public bridge package entrypoint that re-exports ASCII rendering for downstream callers.
-- `renderer/ascii/sequence/core/ascii_sequence_renderer.mbt`
+- `renderer/ascii/sequence/engine/core/ascii_sequence_renderer.mbt`
   - Specialized sequence diagram text rendering implementation.
+- `renderer/ascii/sequence/core/ascii_sequence_renderer.mbt`
+  - Bridge package entrypoint that re-exports sequence ASCII rendering from `renderer/ascii/sequence/engine/core`.
 - `renderer/ascii/sequence/ascii_sequence_renderer.mbt`
   - Public bridge package entrypoint that re-exports sequence ASCII rendering for downstream callers.
 - `renderer/ascii/class_er/core/ascii_class_renderer.mbt`

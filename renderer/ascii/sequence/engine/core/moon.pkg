@@ -1,0 +1,3 @@
+import {
+  "bobzhang/beautiful_mermaid/model" @model,
+}
