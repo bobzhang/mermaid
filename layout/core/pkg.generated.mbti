@@ -14,13 +14,13 @@ pub fn layout_graph(@model.MermaidGraph, @model.RenderOptions) -> @model.Positio
 
 pub fn layout_graph_for_ascii(@model.MermaidGraph, @model.RenderOptions) -> @model.PositionedGraph
 
-pub fn layout_state_edge_grid_path_td(Map[String, @bobzhang/beautiful_mermaid/layout/engine/core.LayoutStateGridCoord], Map[String, Bool], Int, Int, String, String) -> Array[@bobzhang/beautiful_mermaid/layout/engine/pathfinder/core.AsciiGridCoord]?
+pub fn layout_state_edge_grid_path_td(Map[String, @bobzhang/beautiful_mermaid/layout/engine/graph/core.LayoutStateGridCoord], Map[String, Bool], Int, Int, String, String) -> Array[@bobzhang/beautiful_mermaid/layout/engine/pathfinder/core.AsciiGridCoord]?
 
-pub fn layout_state_grid_blocked_cells(Map[String, @bobzhang/beautiful_mermaid/layout/engine/core.LayoutStateGridCoord]) -> Map[String, Bool]
+pub fn layout_state_grid_blocked_cells(Map[String, @bobzhang/beautiful_mermaid/layout/engine/graph/core.LayoutStateGridCoord]) -> Map[String, Bool]
 
-pub fn layout_state_grid_bounds(Map[String, @bobzhang/beautiful_mermaid/layout/engine/core.LayoutStateGridCoord]) -> (Int, Int)
+pub fn layout_state_grid_bounds(Map[String, @bobzhang/beautiful_mermaid/layout/engine/graph/core.LayoutStateGridCoord]) -> (Int, Int)
 
-pub fn layout_state_grid_positions(@model.MermaidGraph, Array[@model.MermaidNode]) -> Map[String, @bobzhang/beautiful_mermaid/layout/engine/core.LayoutStateGridCoord]
+pub fn layout_state_grid_positions(@model.MermaidGraph, Array[@model.MermaidNode]) -> Map[String, @bobzhang/beautiful_mermaid/layout/engine/graph/core.LayoutStateGridCoord]
 
 pub fn layout_state_nodes_in_definition_order(@model.MermaidGraph) -> Array[@model.MermaidNode]
 
@@ -31,7 +31,7 @@ pub fn layout_state_nodes_in_definition_order(@model.MermaidGraph) -> Array[@mod
 // Type aliases
 pub using @bobzhang/beautiful_mermaid/layout/engine/pathfinder/core {type AsciiGridCoord}
 
-pub using @bobzhang/beautiful_mermaid/layout/engine/core {type LayoutStateGridCoord}
+pub using @bobzhang/beautiful_mermaid/layout/engine/graph/core {type LayoutStateGridCoord}
 
 // Traits
 
