@@ -47,6 +47,8 @@ Key models:
 - Root facade: `parser.mbt`
   - `parse_mermaid(text)` delegates to parser package.
 - Parser package bridge: `parser/parser.mbt`
+  - Public API is intentionally parse-only: `parse_mermaid(String) -> .MermaidGraph raise .MermaidError`.
+  - Model types are owned by `model/types.mbt` and are not re-exported from the parser package.
 - Parser core bridge: `parser/core/parser.mbt`
 - Header dispatcher implementation: `parser/header/core/parser.mbt`
   - Handles normalization, preprocessing, header detection, and dispatch.

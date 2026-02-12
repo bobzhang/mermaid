@@ -13,35 +13,6 @@ pub fn parse_mermaid(String) -> @model.MermaidGraph raise @model.MermaidError
 // Types and methods
 
 // Type aliases
-pub using @model {type Direction}
-
-pub using @model {type EdgeStyle}
-
-pub using @model {type MermaidEdge}
-
-pub using @model {type MermaidError}
-
-pub using @model {type MermaidGraph}
-
-pub using @model {type MermaidNode}
-
-pub using @model {type MermaidSubgraph}
-
-pub using @model {type NodeShape}
-
-pub using @model {type SequenceActivationCommand}
-
-pub using @model {type SequenceBlock}
-
-pub using @model {type SequenceBlockDivider}
-
-pub using @model {type SequenceBlockType}
-
-pub using @model {type SequenceNote}
-
-pub using @model {type SequenceNotePosition}
-
-pub using @model {type SequenceParticipantKind}
 
 // Traits
 
