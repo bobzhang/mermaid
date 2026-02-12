@@ -1,5 +1,5 @@
 ///|
-struct LayoutStateGridCoord {
+pub(all) struct LayoutStateGridCoord {
   x : Int
   y : Int
 } derive(Eq, Show)
@@ -34,7 +34,7 @@ fn layout_state_children_in_order(
 }
 
 ///|
-fn layout_state_nodes_in_definition_order(
+pub fn layout_state_nodes_in_definition_order(
   graph : MermaidGraph,
 ) -> Array[MermaidNode] {
   let nodes : Array[MermaidNode] = []
@@ -45,7 +45,7 @@ fn layout_state_nodes_in_definition_order(
 }
 
 ///|
-fn layout_state_grid_positions(
+pub fn layout_state_grid_positions(
   graph : MermaidGraph,
   nodes_in_order : Array[MermaidNode],
 ) -> Map[String, LayoutStateGridCoord] {
@@ -106,7 +106,7 @@ fn layout_state_grid_positions(
 }
 
 ///|
-fn layout_state_grid_bounds(
+pub fn layout_state_grid_bounds(
   positions : Map[String, LayoutStateGridCoord],
 ) -> (Int, Int) {
   let mut max_x = 0
@@ -119,7 +119,7 @@ fn layout_state_grid_bounds(
 }
 
 ///|
-fn layout_state_grid_blocked_cells(
+pub fn layout_state_grid_blocked_cells(
   positions : Map[String, LayoutStateGridCoord],
 ) -> Map[String, Bool] {
   let blocked : Map[String, Bool] = {}
@@ -393,7 +393,7 @@ fn layout_state_pick_shorter_path(
 }
 
 ///|
-fn layout_state_edge_grid_path_td(
+pub fn layout_state_edge_grid_path_td(
   positions : Map[String, LayoutStateGridCoord],
   blocked : Map[String, Bool],
   max_x : Int,

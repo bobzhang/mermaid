@@ -6,21 +6,41 @@ import {
 }
 
 // Values
+pub fn ascii_grid_merge_path(Array[AsciiGridCoord]) -> Array[AsciiGridCoord]
+
+pub fn ascii_grid_pathfind(AsciiGridCoord, AsciiGridCoord, Map[String, Bool], Int, Int, Int, Int) -> Array[AsciiGridCoord]?
+
 pub fn layout_graph(@model.MermaidGraph, @model.RenderOptions) -> @model.PositionedGraph
 
 pub fn layout_graph_for_ascii(@model.MermaidGraph, @model.RenderOptions) -> @model.PositionedGraph
 
+pub fn layout_state_edge_grid_path_td(Map[String, LayoutStateGridCoord], Map[String, Bool], Int, Int, String, String) -> Array[AsciiGridCoord]?
+
+pub fn layout_state_grid_blocked_cells(Map[String, LayoutStateGridCoord]) -> Map[String, Bool]
+
+pub fn layout_state_grid_bounds(Map[String, LayoutStateGridCoord]) -> (Int, Int)
+
+pub fn layout_state_grid_positions(@model.MermaidGraph, Array[@model.MermaidNode]) -> Map[String, LayoutStateGridCoord]
+
+pub fn layout_state_nodes_in_definition_order(@model.MermaidGraph) -> Array[@model.MermaidNode]
+
 // Errors
 
 // Types and methods
-type AsciiGridCoord
+pub(all) struct AsciiGridCoord {
+  x : Int
+  y : Int
+}
 pub impl Eq for AsciiGridCoord
 pub impl Show for AsciiGridCoord
 
 type LayoutStateEdgeDir
 pub impl Eq for LayoutStateEdgeDir
 
-type LayoutStateGridCoord
+pub(all) struct LayoutStateGridCoord {
+  x : Int
+  y : Int
+}
 pub impl Eq for LayoutStateGridCoord
 pub impl Show for LayoutStateGridCoord
 

@@ -1,5 +1,5 @@
 ///|
-struct AsciiGridCoord {
+pub(all) struct AsciiGridCoord {
   x : Int
   y : Int
 } derive(Eq, Show)
@@ -139,7 +139,7 @@ fn ascii_grid_heap_pop(
 }
 
 ///|
-fn ascii_grid_pathfind(
+pub fn ascii_grid_pathfind(
   start : AsciiGridCoord,
   end : AsciiGridCoord,
   blocked : Map[String, Bool],
@@ -204,7 +204,9 @@ fn ascii_grid_pathfind(
 }
 
 ///|
-fn ascii_grid_merge_path(path : Array[AsciiGridCoord]) -> Array[AsciiGridCoord] {
+pub fn ascii_grid_merge_path(
+  path : Array[AsciiGridCoord],
+) -> Array[AsciiGridCoord] {
   if path.length() <= 2 {
     return path
   }

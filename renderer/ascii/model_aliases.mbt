@@ -75,3 +75,9 @@ type SequenceNote = @model.SequenceNote
 
 ///|
 type SequenceActivationCommand = @model.SequenceActivationCommand
+
+///|
+type AsciiGridCoord = @layout.AsciiGridCoord
+
+///|
+type LayoutStateGridCoord = @layout.LayoutStateGridCoord
