@@ -78,10 +78,10 @@ Mermaid source text
 
 ## Theme and Styling
 
-- `themes.mbt`
-  - Built-in themes (`ThemeName`) and slug normalization/parsing.
-  - Theme lookup helpers and canonicalization.
-  - Conversion from Shiki-like token themes into `DiagramColors`.
+- `themes/core/themes.mbt`
+  - Theme implementation: built-in palettes, slug normalization/parsing, and Shiki-to-diagram color conversion.
+- `themes/themes.mbt`
+  - Public bridge package entrypoint that re-exports theme APIs and types for downstream callers.
 - `beautiful_mermaid.mbt`
   - Exposes:
     - `render_mermaid` (SVG)

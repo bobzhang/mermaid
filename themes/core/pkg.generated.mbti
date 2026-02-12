@@ -1,0 +1,87 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "bobzhang/beautiful_mermaid/themes/core"
+
+import {
+  "bobzhang/beautiful_mermaid/model",
+}
+
+// Values
+pub fn built_in_theme_colors() -> Map[String, @model.DiagramColors]
+
+pub fn built_in_theme_slugs() -> Array[String]
+
+pub fn built_in_theme_slugs_csv() -> String
+
+pub fn built_in_themes() -> Array[ThemeName]
+
+pub fn canonical_theme_slug(String) -> String?
+
+pub fn from_shiki_theme(ShikiTheme) -> @model.DiagramColors
+
+pub fn normalize_theme_name(String) -> String
+
+pub fn parse_theme_name(String) -> ThemeName?
+
+pub fn shiki_dark_theme(Map[String, String]?, Array[ShikiTokenColor]?) -> ShikiTheme
+
+pub fn shiki_light_theme(Map[String, String]?, Array[ShikiTokenColor]?) -> ShikiTheme
+
+pub fn shiki_theme(String?, Map[String, String]?, Array[ShikiTokenColor]?) -> ShikiTheme
+
+pub fn shiki_token_color(String, String?) -> ShikiTokenColor
+
+pub fn shiki_token_color_many(Array[String], String?) -> ShikiTokenColor
+
+pub fn theme_by_name(String) -> @model.DiagramColors?
+
+pub fn theme_colors(ThemeName) -> @model.DiagramColors
+
+pub fn theme_exists(String) -> Bool
+
+pub fn theme_slug(ThemeName) -> String
+
+// Errors
+
+// Types and methods
+pub(all) struct ShikiTheme {
+  theme_type : String?
+  colors : Map[String, String]?
+  token_colors : Array[ShikiTokenColor]?
+}
+pub impl Eq for ShikiTheme
+pub impl Show for ShikiTheme
+pub impl ToJson for ShikiTheme
+
+pub(all) struct ShikiTokenColor {
+  scopes : Array[String]
+  foreground : String?
+}
+pub impl Eq for ShikiTokenColor
+pub impl Show for ShikiTokenColor
+pub impl ToJson for ShikiTokenColor
+
+pub enum ThemeName {
+  ZincLight
+  ZincDark
+  TokyoNight
+  TokyoNightStorm
+  TokyoNightLight
+  CatppuccinMocha
+  CatppuccinLatte
+  Nord
+  NordLight
+  Dracula
+  GithubLight
+  GithubDark
+  SolarizedLight
+  SolarizedDark
+  OneDark
+}
+pub impl Eq for ThemeName
+pub impl Show for ThemeName
+pub impl ToJson for ThemeName
+
+// Type aliases
+
+// Traits
+
