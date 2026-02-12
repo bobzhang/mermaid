@@ -1,7 +1,4 @@
 import {
   "bobzhang/beautiful_mermaid/model" @model,
+  "bobzhang/beautiful_mermaid/renderer/svg/engine/core" @renderer_svg_engine_core,
 }
-
-import {
-  "moonbitlang/core/test",
-} for "test"

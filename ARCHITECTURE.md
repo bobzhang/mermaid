@@ -66,10 +66,12 @@ Mermaid source text
 
 ## Render Layer
 
-- `renderer/svg/core/svg_renderer.mbt`
-  - Converts `PositionedGraph` to SVG.
+- `renderer/svg/engine/core/svg_renderer.mbt`
+  - Core SVG implementation: converts `PositionedGraph` to SVG.
   - Applies colors/font/spacing/transparent behavior from options.
   - Uses CSS variables to keep theming composable.
+- `renderer/svg/core/svg_renderer.mbt`
+  - Bridge package entrypoint that re-exports SVG rendering from `renderer/svg/engine/core` for downstream callers.
 - `renderer/svg/svg_renderer.mbt`
   - Public bridge package entrypoint that re-exports SVG rendering for downstream callers.
 - `renderer/ascii/flow_state/core/ascii_renderer.mbt`
