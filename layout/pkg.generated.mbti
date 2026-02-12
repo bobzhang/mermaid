@@ -2,26 +2,25 @@
 package "bobzhang/beautiful_mermaid/layout"
 
 import {
-  "bobzhang/beautiful_mermaid/layout/engine/core",
   "bobzhang/beautiful_mermaid/model",
 }
 
 // Values
-pub fn ascii_grid_merge_path(Array[@core.AsciiGridCoord]) -> Array[@core.AsciiGridCoord]
+pub fn ascii_grid_merge_path(Array[@bobzhang/beautiful_mermaid/layout/engine/pathfinder/core.AsciiGridCoord]) -> Array[@bobzhang/beautiful_mermaid/layout/engine/pathfinder/core.AsciiGridCoord]
 
-pub fn ascii_grid_pathfind(@core.AsciiGridCoord, @core.AsciiGridCoord, Map[String, Bool], Int, Int, Int, Int) -> Array[@core.AsciiGridCoord]?
+pub fn ascii_grid_pathfind(@bobzhang/beautiful_mermaid/layout/engine/pathfinder/core.AsciiGridCoord, @bobzhang/beautiful_mermaid/layout/engine/pathfinder/core.AsciiGridCoord, Map[String, Bool], Int, Int, Int, Int) -> Array[@bobzhang/beautiful_mermaid/layout/engine/pathfinder/core.AsciiGridCoord]?
 
 pub fn layout_graph(@model.MermaidGraph, @model.RenderOptions) -> @model.PositionedGraph
 
 pub fn layout_graph_for_ascii(@model.MermaidGraph, @model.RenderOptions) -> @model.PositionedGraph
 
-pub fn layout_state_edge_grid_path_td(Map[String, @core.LayoutStateGridCoord], Map[String, Bool], Int, Int, String, String) -> Array[@core.AsciiGridCoord]?
+pub fn layout_state_edge_grid_path_td(Map[String, @bobzhang/beautiful_mermaid/layout/engine/core.LayoutStateGridCoord], Map[String, Bool], Int, Int, String, String) -> Array[@bobzhang/beautiful_mermaid/layout/engine/pathfinder/core.AsciiGridCoord]?
 
-pub fn layout_state_grid_blocked_cells(Map[String, @core.LayoutStateGridCoord]) -> Map[String, Bool]
+pub fn layout_state_grid_blocked_cells(Map[String, @bobzhang/beautiful_mermaid/layout/engine/core.LayoutStateGridCoord]) -> Map[String, Bool]
 
-pub fn layout_state_grid_bounds(Map[String, @core.LayoutStateGridCoord]) -> (Int, Int)
+pub fn layout_state_grid_bounds(Map[String, @bobzhang/beautiful_mermaid/layout/engine/core.LayoutStateGridCoord]) -> (Int, Int)
 
-pub fn layout_state_grid_positions(@model.MermaidGraph, Array[@model.MermaidNode]) -> Map[String, @core.LayoutStateGridCoord]
+pub fn layout_state_grid_positions(@model.MermaidGraph, Array[@model.MermaidNode]) -> Map[String, @bobzhang/beautiful_mermaid/layout/engine/core.LayoutStateGridCoord]
 
 pub fn layout_state_nodes_in_definition_order(@model.MermaidGraph) -> Array[@model.MermaidNode]
 
@@ -30,9 +29,9 @@ pub fn layout_state_nodes_in_definition_order(@model.MermaidGraph) -> Array[@mod
 // Types and methods
 
 // Type aliases
-pub using @core {type AsciiGridCoord}
+pub using @bobzhang/beautiful_mermaid/layout/engine/pathfinder/core {type AsciiGridCoord}
 
-pub using @core {type LayoutStateGridCoord}
+pub using @bobzhang/beautiful_mermaid/layout/engine/core {type LayoutStateGridCoord}
 
 // Traits
 

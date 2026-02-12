@@ -10,7 +10,7 @@ Mermaid source text
   -> root bridge (`parser.mbt`, converts parser package types to root package types)
   -> MermaidGraph (AST-like model in types.mbt)
   -> layout bridge package (`layout/layout.mbt`)
-  -> layout/core bridge package (`layout/core/layout.mbt`, `layout/core/types.mbt`) + layout/engine/core implementation (`layout/engine/core/layout.mbt`, `layout/engine/core/layout_state_ascii_grid.mbt`, `layout/engine/core/ascii_grid_pathfinder.mbt`) + layout/engine/sequence/core implementation (`layout/engine/sequence/core/layout_sequence.mbt`)
+  -> layout/core bridge package (`layout/core/layout.mbt`, `layout/core/types.mbt`) + layout/engine/core implementation (`layout/engine/core/layout.mbt`, `layout/engine/core/layout_state_ascii_grid.mbt`) + layout/engine/pathfinder/core implementation (`layout/engine/pathfinder/core/ascii_grid_pathfinder.mbt`) + layout/engine/sequence/core implementation (`layout/engine/sequence/core/layout_sequence.mbt`)
   -> PositionedGraph (geometry model in types.mbt)
   -> renderer
      - renderer/svg/core/svg_renderer.mbt + root renderer/svg bridge package (SVG output)
@@ -50,7 +50,10 @@ Mermaid source text
 ## Layout Layer
 
 - `layout/engine/core` package
-  - Core flow/state/class/er layout implementation: graph geometry, state-grid helpers, and pathfinding (`layout/engine/core/layout.mbt`, `layout/engine/core/layout_state_ascii_grid.mbt`, `layout/engine/core/ascii_grid_pathfinder.mbt`).
+  - Core flow/state/class/er layout implementation and routing orchestration (`layout/engine/core/layout.mbt`, `layout/engine/core/layout_state_ascii_grid.mbt`).
+- `layout/engine/pathfinder/core` package
+  - Core ASCII grid pathfinding implementation (`layout/engine/pathfinder/core/ascii_grid_pathfinder.mbt`).
+  - Consumed by `layout/engine/core` for state edge routing.
 - `layout/engine/sequence/core` package
   - Core sequence layout implementation (`layout/engine/sequence/core/layout_sequence.mbt`).
   - Consumed by `layout/engine/core` for sequence diagram positioning.

@@ -1,0 +1,22 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "bobzhang/beautiful_mermaid/layout/engine/pathfinder/core"
+
+// Values
+pub fn ascii_grid_merge_path(Array[AsciiGridCoord]) -> Array[AsciiGridCoord]
+
+pub fn ascii_grid_pathfind(AsciiGridCoord, AsciiGridCoord, Map[String, Bool], Int, Int, Int, Int) -> Array[AsciiGridCoord]?
+
+// Errors
+
+// Types and methods
+pub(all) struct AsciiGridCoord {
+  x : Int
+  y : Int
+}
+pub impl Eq for AsciiGridCoord
+pub impl Show for AsciiGridCoord
+
+// Type aliases
+
+// Traits
+
