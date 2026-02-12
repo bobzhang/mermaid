@@ -10,7 +10,7 @@ Mermaid source text
   -> root bridge (`parser.mbt`, converts parser package types to root package types)
   -> MermaidGraph (AST-like model in types.mbt)
   -> layout bridge package (`layout/layout.mbt`)
-  -> layout/core implementation (`layout/core/layout.mbt`, `layout/core/layout_state_ascii_grid.mbt`, `layout/core/ascii_grid_pathfinder.mbt`)
+  -> layout/core bridge package (`layout/core/layout.mbt`, `layout/core/types.mbt`) + layout/engine/core implementation (`layout/engine/core/layout.mbt`, `layout/engine/core/layout_state_ascii_grid.mbt`, `layout/engine/core/ascii_grid_pathfinder.mbt`)
   -> PositionedGraph (geometry model in types.mbt)
   -> renderer
      - renderer/svg/core/svg_renderer.mbt + root renderer/svg bridge package (SVG output)
@@ -49,8 +49,10 @@ Mermaid source text
 
 ## Layout Layer
 
-- `layout/core` package
-  - Core layout implementation: graph geometry, state-grid helpers, and pathfinding (`layout/core/layout.mbt`, `layout/core/layout_state_ascii_grid.mbt`, `layout/core/ascii_grid_pathfinder.mbt`).
+- `layout/engine/core` package
+  - Core layout implementation: graph geometry, state-grid helpers, and pathfinding (`layout/engine/core/layout.mbt`, `layout/engine/core/layout_state_ascii_grid.mbt`, `layout/engine/core/ascii_grid_pathfinder.mbt`).
+- `layout/core` package bridge (`layout/core/layout.mbt`, `layout/core/types.mbt`)
+  - Re-exports layout/engine/core public APIs for downstream packages (`@beautiful_mermaid/layout/core`).
 - `layout` package bridge (`layout/layout.mbt`, `layout/types.mbt`)
   - Re-exports layout/core public APIs for downstream packages (`@beautiful_mermaid/layout`).
 
@@ -123,7 +125,7 @@ The suite is intentionally layered to catch regressions at different levels:
 When adding a new Mermaid feature/category, follow this order:
 
 1. Extend parse model and parser branch in `parser/` package.
-2. Extend layout contracts/positioning in `layout/core` (and update `layout` bridge exports as needed).
+2. Extend layout contracts/positioning in `layout/engine/core` (and update `layout/core` + `layout` bridge exports as needed).
 3. Implement renderer support in `svg_renderer.mbt` and/or text renderers.
 4. Add semantic parity tests and snapshot coverage.
 5. Update CLI/docs only after API behavior is validated.

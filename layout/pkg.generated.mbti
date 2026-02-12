@@ -2,7 +2,7 @@
 package "bobzhang/beautiful_mermaid/layout"
 
 import {
-  "bobzhang/beautiful_mermaid/layout/core",
+  "bobzhang/beautiful_mermaid/layout/engine/core",
   "bobzhang/beautiful_mermaid/model",
 }
 
