@@ -114,8 +114,10 @@ Mermaid source text
 
 ## CLI Layer
 
-- `cmd/main/core/main.mbt`
+- `cmd/main/app/core/main.mbt`
   - CLI implementation: argument parsing, mode validation, and render invocation.
+- `cmd/main/core/main.mbt`
+  - Bridge package entrypoint that re-exports CLI run from `cmd/main/app/core`.
 - `cmd/main/main.mbt`
   - Thin executable bridge (`is-main`) that delegates to `cmd/main/core`.
 

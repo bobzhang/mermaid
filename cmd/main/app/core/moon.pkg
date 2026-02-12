@@ -1,0 +1,9 @@
+import {
+  "bobzhang/beautiful_mermaid" @beautiful_mermaid,
+  "moonbitlang/core/env" @env,
+  "moonbitlang/core/strconv" @strconv,
+}
+
+import {
+  "moonbitlang/core/test",
+} for "test"
