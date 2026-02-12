@@ -33,12 +33,14 @@ Mermaid source text
 
 ## Parse Layer
 
-- `parser/core` package
-  - Core implementation file: `parser/core/parser.mbt` (header dispatch).
-  - Flowchart parsing implementation is in `parser/flowchart/core/parser_flowchart.mbt`, re-exported via `parser/core/parser_flowchart.mbt` bridge functions.
-  - State parsing implementation is in `parser/state/core/parser_state.mbt`, re-exported via `parser/core/parser_state.mbt` bridge functions.
-  - Sequence parsing implementation is in `parser/sequence/core/parser_sequence.mbt`, re-exported via `parser/core/parser_sequence.mbt` bridge functions.
-  - Class/ER parsing implementation is in `parser/class_er/core/parser_class_er.mbt`, re-exported via `parser/core/parser_class_er.mbt` bridge functions.
+- `parser/header/core` package
+  - Core header-dispatch implementation: `parser/header/core/parser.mbt`.
+  - Flowchart parsing implementation is in `parser/flowchart/core/parser_flowchart.mbt`, re-exported via `parser/header/core/parser_flowchart.mbt` bridge functions.
+  - State parsing implementation is in `parser/state/core/parser_state.mbt`, re-exported via `parser/header/core/parser_state.mbt` bridge functions.
+  - Sequence parsing implementation is in `parser/sequence/core/parser_sequence.mbt`, re-exported via `parser/header/core/parser_sequence.mbt` bridge functions.
+  - Class/ER parsing implementation is in `parser/class_er/core/parser_class_er.mbt`, re-exported via `parser/header/core/parser_class_er.mbt` bridge functions.
+- `parser/core` bridge package (`parser/core/parser.mbt`)
+  - Re-exports `parse_mermaid` by delegating to `parser/header/core`.
 - `parser` package bridge (`parser/parser.mbt`)
   - Exposes `/parser.parse_mermaid` while delegating to `parser/core`.
   - Entry: `@beautiful_mermaid/parser.parse_mermaid(text)`.
