@@ -1,327 +1,288 @@
 ///|
-priv struct EdgeOp {
-  symbol : String
-  style : EdgeStyle
-  has_arrow_start : Bool
-  has_arrow_end : Bool
-}
-
-///|
-priv struct FoundEdgeOp {
-  op : EdgeOp
-  index : Int
-}
-
-///|
-fn trim_owned(s : String) -> String {
-  s.trim().to_string()
-}
-
-///|
-fn parse_direction_token_strict(token : String) -> Direction? {
-  match token.to_upper() {
-    "TD" => Some(TD)
-    "TB" => Some(TB)
-    "LR" => Some(LR)
-    "BT" => Some(BT)
-    "RL" => Some(RL)
-    _ => None
+fn convert_direction(direction : @parser.Direction) -> Direction {
+  match direction {
+    TD => TD
+    TB => TB
+    LR => LR
+    BT => BT
+    RL => RL
   }
 }
 
 ///|
-fn preprocess_lines(text : String) -> Array[String] {
-  let normalized = text.replace_all(old=";", new="\n")
-  let lines : Array[String] = []
-  for raw in normalized.split("\n") {
-    let line = trim_owned(raw.to_string())
-    if line == "" || line.has_prefix("%%") {
-      continue
-    }
-    lines.push(line)
-  }
-  lines
-}
-
-///|
-fn parse_delimited_token(
-  token : String,
-  open : String,
-  close : String,
-  shape : NodeShape,
-) -> MermaidNode? {
-  match token.find(open) {
-    Some(start) =>
-      if !token.has_suffix(close) {
-        None
-      } else {
-        let close_offset = token.length() - close.length()
-        if close_offset < start + open.length() {
-          None
-        } else {
-          let raw_id = trim_owned((try! token[:start]).to_string())
-          let raw_label = trim_owned(
-            (try! token[start + open.length():close_offset]).to_string(),
-          )
-          let id = if raw_id == "" {
-            raw_label.to_lower().replace_all(old=" ", new="_")
-          } else {
-            raw_id
-          }
-          Some({ id, label: raw_label, shape })
-        }
-      }
+fn convert_direction_opt(direction : @parser.Direction?) -> Direction? {
+  match direction {
+    Some(value) => Some(convert_direction(value))
     None => None
   }
 }
 
 ///|
-fn parse_node_token(raw_token : String) -> MermaidNode {
-  let token = trim_owned(raw_token)
-
-  if token == "" {
-    return { id: "unnamed", label: "unnamed", shape: Rectangle }
-  }
-
-  match parse_delimited_token(token, "(((", ")))", DoubleCircle) {
-    Some(node) => node
-    None =>
-      match parse_delimited_token(token, "[[", "]]", Subroutine) {
-        Some(node) => node
-        None =>
-          match parse_delimited_token(token, "{{", "}}", Hexagon) {
-            Some(node) => node
-            None =>
-              match parse_delimited_token(token, "([", "])", Stadium) {
-                Some(node) => node
-                None =>
-                  match parse_delimited_token(token, "[(", ")]", Cylinder) {
-                    Some(node) => node
-                    None =>
-                      match
-                        parse_delimited_token(token, "[/", "\\]", Trapezoid) {
-                        Some(node) => node
-                        None =>
-                          match
-                            parse_delimited_token(
-                              token,
-                              "[\\",
-                              "/]",
-                              TrapezoidAlt,
-                            ) {
-                            Some(node) => node
-                            None =>
-                              match
-                                parse_delimited_token(
-                                  token,
-                                  ">",
-                                  "]",
-                                  Asymmetric,
-                                ) {
-                                Some(node) => node
-                                None =>
-                                  match
-                                    parse_delimited_token(
-                                      token,
-                                      "((",
-                                      "))",
-                                      Circle,
-                                    ) {
-                                    Some(node) => node
-                                    None =>
-                                      match
-                                        parse_delimited_token(
-                                          token,
-                                          "[",
-                                          "]",
-                                          Rectangle,
-                                        ) {
-                                        Some(node) => node
-                                        None =>
-                                          match
-                                            parse_delimited_token(
-                                              token,
-                                              "(",
-                                              ")",
-                                              Rounded,
-                                            ) {
-                                            Some(node) => node
-                                            None =>
-                                              match
-                                                parse_delimited_token(
-                                                  token,
-                                                  "{",
-                                                  "}",
-                                                  Diamond,
-                                                ) {
-                                                Some(node) => node
-                                                None =>
-                                                  {
-                                                    id: token,
-                                                    label: token,
-                                                    shape: Rectangle,
-                                                  }
-                                              }
-                                          }
-                                      }
-                                  }
-                              }
-                          }
-                      }
-                  }
-              }
-          }
-      }
+fn convert_node_shape(shape : @parser.NodeShape) -> NodeShape {
+  match shape {
+    Rectangle => Rectangle
+    Rounded => Rounded
+    Diamond => Diamond
+    Stadium => Stadium
+    Circle => Circle
+    Subroutine => Subroutine
+    DoubleCircle => DoubleCircle
+    Hexagon => Hexagon
+    Cylinder => Cylinder
+    Asymmetric => Asymmetric
+    Trapezoid => Trapezoid
+    TrapezoidAlt => TrapezoidAlt
+    StateStart => StateStart
+    StateEnd => StateEnd
+    ClassEntity => ClassEntity
+    ErEntity => ErEntity
+    SequenceParticipant => SequenceParticipant
   }
 }
 
 ///|
-fn find_earliest_operator(
-  line : String,
-  operators : Array[EdgeOp],
-) -> FoundEdgeOp? {
-  let mut best : FoundEdgeOp? = None
-  for op in operators {
-    match line.find(op.symbol) {
-      Some(index) =>
-        match best {
-          None => best = Some({ op, index })
-          Some(current_best) =>
-            if index < current_best.index ||
-              (
-                index == current_best.index &&
-                op.symbol.length() > current_best.op.symbol.length()
-              ) {
-              best = Some({ op, index })
-            }
-        }
-      None => ()
-    }
-  }
-  best
-}
-
-///|
-fn ensure_node(nodes : Map[String, MermaidNode], node : MermaidNode) -> Unit {
-  if !nodes.contains(node.id) {
-    nodes[node.id] = node
+fn convert_edge_style(style : @parser.EdgeStyle) -> EdgeStyle {
+  match style {
+    Solid => Solid
+    Dotted => Dotted
+    Thick => Thick
   }
 }
 
 ///|
-fn apply_class_assignment(
-  class_assignments : Map[String, String],
-  node : MermaidNode,
-  class_name : String?,
-) -> Unit {
-  match class_name {
-    Some(name) => class_assignments[node.id] = name
-    None => ()
+fn convert_node(node : @parser.MermaidNode) -> MermaidNode {
+  { id: node.id, label: node.label, shape: convert_node_shape(node.shape) }
+}
+
+///|
+fn convert_edge(edge : @parser.MermaidEdge) -> MermaidEdge {
+  {
+    source: edge.source,
+    target: edge.target,
+    label: edge.label,
+    style: convert_edge_style(edge.style),
+    has_arrow_start: edge.has_arrow_start,
+    has_arrow_end: edge.has_arrow_end,
+    relation_operator: edge.relation_operator,
   }
 }
 
 ///|
-fn ensure_nodes_from_entries(
-  nodes : Map[String, MermaidNode],
-  class_assignments : Map[String, String],
-  entries : Array[(MermaidNode, String?)],
-) -> Array[MermaidNode] {
-  let resolved : Array[MermaidNode] = []
-  for entry in entries {
-    let (node, class_name) = entry
-    ensure_node(nodes, node)
-    apply_class_assignment(class_assignments, node, class_name)
-    resolved.push(node)
+fn convert_subgraph(subgraph : @parser.MermaidSubgraph) -> MermaidSubgraph {
+  let children : Array[MermaidSubgraph] = []
+  for child in subgraph.children {
+    children.push(convert_subgraph(child))
   }
-  resolved
-}
-
-///|
-fn push_unique_id(ids : Array[String], id : String) -> Unit {
-  if !ids.any(found => found == id) {
-    ids.push(id)
-  }
-}
-
-///|
-fn push_unique_node_ids(
-  ids : Array[String],
-  nodes : Array[MermaidNode],
-) -> Unit {
-  for node in nodes {
-    push_unique_id(ids, node.id)
-  }
-}
-
-///|
-fn append_nodes_to_current_subgraph(
-  subgraph_stack : Array[MermaidSubgraph],
-  touched_node_ids : Array[String],
-) -> Unit {
-  if subgraph_stack.length() == 0 || touched_node_ids.length() == 0 {
-    return
-  }
-  let last_index = subgraph_stack.length() - 1
-  let current = subgraph_stack[last_index]
-  let node_ids = current.node_ids.copy()
-  for node_id in touched_node_ids {
-    push_unique_id(node_ids, node_id)
-  }
-  subgraph_stack[last_index] = {
-    id: current.id,
-    label: current.label,
-    node_ids,
-    children: current.children,
-    direction: current.direction,
-  }
-}
-
-///|
-fn append_child_subgraph(
-  subgraph_stack : Array[MermaidSubgraph],
-  child : MermaidSubgraph,
-) -> Unit {
-  if subgraph_stack.length() == 0 {
-    return
-  }
-  let last_index = subgraph_stack.length() - 1
-  let current = subgraph_stack[last_index]
-  let children = current.children.copy()
-  children.push(child)
-  subgraph_stack[last_index] = {
-    id: current.id,
-    label: current.label,
-    node_ids: current.node_ids,
+  {
+    id: subgraph.id,
+    label: subgraph.label,
+    node_ids: subgraph.node_ids.copy(),
     children,
-    direction: current.direction,
+    direction: convert_direction_opt(subgraph.direction),
   }
 }
 
 ///|
-fn set_current_subgraph_direction(
-  subgraph_stack : Array[MermaidSubgraph],
-  direction : Direction,
-) -> Unit {
-  if subgraph_stack.length() == 0 {
-    return
+fn convert_string_map(values : Map[String, String]) -> Map[String, String] {
+  let converted : Map[String, String] = {}
+  for key, value in values {
+    converted[key] = value
   }
-  let last_index = subgraph_stack.length() - 1
-  let current = subgraph_stack[last_index]
-  subgraph_stack[last_index] = {
-    id: current.id,
-    label: current.label,
-    node_ids: current.node_ids,
-    children: current.children,
-    direction: Some(direction),
+  converted
+}
+
+///|
+fn convert_nested_string_map(
+  values : Map[String, Map[String, String]],
+) -> Map[String, Map[String, String]] {
+  let converted : Map[String, Map[String, String]] = {}
+  for key, value in values {
+    converted[key] = convert_string_map(value)
+  }
+  converted
+}
+
+///|
+fn convert_nodes(
+  nodes : Map[String, @parser.MermaidNode],
+) -> Map[String, MermaidNode] {
+  let converted : Map[String, MermaidNode] = {}
+  for key, value in nodes {
+    converted[key] = convert_node(value)
+  }
+  converted
+}
+
+///|
+fn convert_edges(edges : Array[@parser.MermaidEdge]) -> Array[MermaidEdge] {
+  let converted : Array[MermaidEdge] = []
+  for edge in edges {
+    converted.push(convert_edge(edge))
+  }
+  converted
+}
+
+///|
+fn convert_subgraphs(
+  subgraphs : Array[@parser.MermaidSubgraph],
+) -> Array[MermaidSubgraph] {
+  let converted : Array[MermaidSubgraph] = []
+  for subgraph in subgraphs {
+    converted.push(convert_subgraph(subgraph))
+  }
+  converted
+}
+
+///|
+fn convert_sequence_participant_kind(
+  kind : @parser.SequenceParticipantKind,
+) -> SequenceParticipantKind {
+  match kind {
+    Participant => Participant
+    Actor => Actor
   }
 }
 
 ///|
-fn is_plain_identifier(text : String) -> Bool {
-  text != "" &&
-  !text.contains(" ") &&
-  !text.has_prefix("+") &&
-  !text.has_prefix("-")
+fn convert_sequence_block_type(
+  block_type : @parser.SequenceBlockType,
+) -> SequenceBlockType {
+  match block_type {
+    Loop => Loop
+    Alt => Alt
+    Opt => Opt
+    Par => Par
+    Critical => Critical
+    Break => Break
+    Rect => Rect
+  }
+}
+
+///|
+fn convert_sequence_note_position(
+  position : @parser.SequenceNotePosition,
+) -> SequenceNotePosition {
+  match position {
+    Left => Left
+    Right => Right
+    Over => Over
+  }
+}
+
+///|
+fn convert_sequence_block_divider(
+  divider : @parser.SequenceBlockDivider,
+) -> SequenceBlockDivider {
+  { index: divider.index, label: divider.label }
+}
+
+///|
+fn convert_sequence_block(block : @parser.SequenceBlock) -> SequenceBlock {
+  let dividers : Array[SequenceBlockDivider] = []
+  for divider in block.dividers {
+    dividers.push(convert_sequence_block_divider(divider))
+  }
+  {
+    block_type: convert_sequence_block_type(block.block_type),
+    label: block.label,
+    start_index: block.start_index,
+    end_index: block.end_index,
+    dividers,
+  }
+}
+
+///|
+fn convert_sequence_note(note : @parser.SequenceNote) -> SequenceNote {
+  {
+    actor_ids: note.actor_ids.copy(),
+    text: note.text,
+    position: convert_sequence_note_position(note.position),
+    after_index: note.after_index,
+  }
+}
+
+///|
+fn convert_sequence_activation_command(
+  command : @parser.SequenceActivationCommand,
+) -> SequenceActivationCommand {
+  {
+    actor_id: command.actor_id,
+    activate: command.activate,
+    after_index: command.after_index,
+  }
+}
+
+///|
+fn convert_sequence_actor_kinds(
+  kinds : Map[String, @parser.SequenceParticipantKind],
+) -> Map[String, SequenceParticipantKind] {
+  let converted : Map[String, SequenceParticipantKind] = {}
+  for key, value in kinds {
+    converted[key] = convert_sequence_participant_kind(value)
+  }
+  converted
+}
+
+///|
+fn convert_sequence_blocks(
+  blocks : Array[@parser.SequenceBlock],
+) -> Array[SequenceBlock] {
+  let converted : Array[SequenceBlock] = []
+  for block in blocks {
+    converted.push(convert_sequence_block(block))
+  }
+  converted
+}
+
+///|
+fn convert_sequence_notes(
+  notes : Array[@parser.SequenceNote],
+) -> Array[SequenceNote] {
+  let converted : Array[SequenceNote] = []
+  for note in notes {
+    converted.push(convert_sequence_note(note))
+  }
+  converted
+}
+
+///|
+fn convert_sequence_activation_commands(
+  commands : Array[@parser.SequenceActivationCommand],
+) -> Array[SequenceActivationCommand] {
+  let converted : Array[SequenceActivationCommand] = []
+  for command in commands {
+    converted.push(convert_sequence_activation_command(command))
+  }
+  converted
+}
+
+///|
+fn convert_graph(graph : @parser.MermaidGraph) -> MermaidGraph {
+  {
+    direction: convert_direction(graph.direction),
+    nodes: convert_nodes(graph.nodes),
+    edges: convert_edges(graph.edges),
+    subgraphs: convert_subgraphs(graph.subgraphs),
+    class_defs: convert_nested_string_map(graph.class_defs),
+    class_assignments: convert_string_map(graph.class_assignments),
+    node_styles: convert_nested_string_map(graph.node_styles),
+    sequence_actor_order: graph.sequence_actor_order.copy(),
+    sequence_actor_kinds: convert_sequence_actor_kinds(
+      graph.sequence_actor_kinds,
+    ),
+    sequence_blocks: convert_sequence_blocks(graph.sequence_blocks),
+    sequence_notes: convert_sequence_notes(graph.sequence_notes),
+    sequence_activation_commands: convert_sequence_activation_commands(
+      graph.sequence_activation_commands,
+    ),
+  }
+}
+
+///|
+fn convert_parser_error(error : @parser.MermaidError) -> MermaidError {
+  match error {
+    ParseFailure(message) => ParseFailure(message)
+  }
 }
 
 ///|
@@ -335,25 +296,11 @@ fn is_plain_identifier(text : String) -> Bool {
 /// - `classDiagram`
 /// - `erDiagram`
 pub fn parse_mermaid(text : String) -> MermaidGraph raise MermaidError {
-  let lines = preprocess_lines(text)
-  if lines.length() == 0 {
-    raise ParseFailure("Mermaid input is empty")
+  let parsed : Result[@parser.MermaidGraph, @parser.MermaidError] = try? @parser.parse_mermaid(
+    text,
+  )
+  match parsed {
+    Ok(graph) => convert_graph(graph)
+    Err(error) => raise convert_parser_error(error)
   }
-  let header = lines[0].replace_all(old="\t", new=" ").to_lower()
-  if header.has_prefix("graph ") || header.has_prefix("flowchart ") {
-    return parse_flowchart(lines)
-  }
-  if header == "statediagram" || header == "statediagram-v2" {
-    return parse_state_diagram(lines)
-  }
-  if header == "sequencediagram" {
-    return parse_sequence_diagram(lines)
-  }
-  if header == "classdiagram" {
-    return parse_class_diagram(lines)
-  }
-  if header == "erdiagram" {
-    return parse_er_diagram(lines)
-  }
-  raise ParseFailure("Unsupported Mermaid header: \{lines[0]}")
 }

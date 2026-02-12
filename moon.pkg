@@ -1,4 +1,8 @@
 import {
+  "bobzhang/beautiful_mermaid/parser" @parser,
+}
+
+import {
   "bobzhang/beautiful_mermaid/test_support" @test_support,
   "moonbitlang/core/test",
 } for "test"

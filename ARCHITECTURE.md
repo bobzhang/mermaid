@@ -6,7 +6,8 @@ This document describes how the MoonBit port of `beautiful-mermaid` is structure
 
 ```text
 Mermaid source text
-  -> parser.mbt (`parse_mermaid`)
+  -> parser package (`parser/parser.mbt`, exported as `@beautiful_mermaid/parser.parse_mermaid`)
+  -> root bridge (`parser.mbt`, converts parser package types to root package types)
   -> MermaidGraph (AST-like model in types.mbt)
   -> layout.mbt / layout_state_ascii_grid.mbt
   -> PositionedGraph (geometry model in types.mbt)
@@ -31,10 +32,13 @@ Mermaid source text
 
 ## Parse Layer
 
-- `parser.mbt`
-  - Entry: `parse_mermaid(text)`.
+- `parser/` package
+  - Core implementation files: `parser/parser.mbt`, `parser/parser_flowchart.mbt`, `parser/parser_state.mbt`, `parser/parser_sequence.mbt`, `parser/parser_class_er.mbt`.
+  - Entry: `@beautiful_mermaid/parser.parse_mermaid(text)`.
   - Dispatches by Mermaid header (`graph`, `flowchart`, `stateDiagram`, `sequenceDiagram`, `classDiagram`, `erDiagram`).
-  - Produces a normalized `MermaidGraph` independent of output format.
+  - Produces a parser-package `MermaidGraph` independent of output format.
+- Root bridge `parser.mbt`
+  - Calls parser package entrypoint and converts parser-package graph/error values into root package public types (`types.mbt`).
 
 ## Layout Layer
 
@@ -101,7 +105,7 @@ The suite is intentionally layered to catch regressions at different levels:
 
 When adding a new Mermaid feature/category, follow this order:
 
-1. Extend parse model and parser branch in `parser.mbt`.
+1. Extend parse model and parser branch in `parser/` package.
 2. Extend layout contracts/positioning in `layout.mbt` (and state grid helpers if needed).
 3. Implement renderer support in `svg_renderer.mbt` and/or text renderers.
 4. Add semantic parity tests and snapshot coverage.
