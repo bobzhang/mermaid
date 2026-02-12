@@ -135,7 +135,7 @@ fn state_nodes_in_definition_order(graph : MermaidGraph) -> Array[MermaidNode] {
 ///|
 test "state_grid_positions matches lifecycle sample topology" {
   let source = state_grid_lifecycle_source()
-  let graph = parse_mermaid(source)
+  let graph = @parser.parse_mermaid(source)
   let positions = state_grid_positions(
     graph,
     state_nodes_in_definition_order(graph),
@@ -153,7 +153,7 @@ test "state_grid_positions matches lifecycle sample topology" {
 ///|
 test "state_grid_positions matches composite sample topology" {
   let source = state_grid_composite_source()
-  let graph = parse_mermaid(source)
+  let graph = @parser.parse_mermaid(source)
   let positions = state_grid_positions(
     graph,
     state_nodes_in_definition_order(graph),
@@ -440,7 +440,7 @@ fn state_edge_path_text_td(
 ///|
 test "state edge path prototype matches key lifecycle routes" {
   let source = state_grid_lifecycle_source()
-  let graph = parse_mermaid(source)
+  let graph = @parser.parse_mermaid(source)
   let positions = state_grid_positions(
     graph,
     state_nodes_in_definition_order(graph),
@@ -466,7 +466,7 @@ test "state edge path prototype matches key lifecycle routes" {
 ///|
 test "state flat layout reroutes diagonal reverse edge pair" {
   let source = state_grid_lifecycle_source()
-  let graph = parse_mermaid(source)
+  let graph = @parser.parse_mermaid(source)
   let positioned = layout_flat_state_graph_for_ascii_grid(
     graph,
     RenderOptions::default(),
@@ -491,7 +491,7 @@ test "state flat layout reroutes diagonal reverse edge pair" {
 ///|
 test "state flat layout places reverse-pair labels near source segments" {
   let source = state_grid_lifecycle_source()
-  let graph = parse_mermaid(source)
+  let graph = @parser.parse_mermaid(source)
   let positioned = layout_flat_state_graph_for_ascii_grid(
     graph,
     RenderOptions::default(),
@@ -524,7 +524,7 @@ test "state flat layout places reverse-pair labels near source segments" {
 ///|
 test "state flat layout anchors diagonal back-edge label near source side" {
   let source = state_grid_lifecycle_source()
-  let graph = parse_mermaid(source)
+  let graph = @parser.parse_mermaid(source)
   let positioned = layout_flat_state_graph_for_ascii_grid(
     graph,
     RenderOptions::default(),

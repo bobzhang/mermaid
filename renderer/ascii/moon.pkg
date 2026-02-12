@@ -1,5 +1,7 @@
 import {
+  "bobzhang/beautiful_mermaid/layout" @layout,
   "bobzhang/beautiful_mermaid/model" @model,
+  "bobzhang/beautiful_mermaid/parser" @parser,
 }
 
 import {

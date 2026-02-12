@@ -1,445 +1,130 @@
 // Generated using `moon info`, DON'T EDIT IT
 package "bobzhang/beautiful_mermaid"
 
-// Values
-pub fn build_colors(RenderOptions) -> DiagramColors
+import {
+  "bobzhang/beautiful_mermaid/model",
+  "bobzhang/beautiful_mermaid/themes",
+}
 
-pub fn built_in_theme_colors() -> Map[String, DiagramColors]
+// Values
+pub fn build_colors(@model.RenderOptions) -> @model.DiagramColors
+
+pub fn built_in_theme_colors() -> Map[String, @model.DiagramColors]
 
 pub fn built_in_theme_slugs() -> Array[String]
 
 pub fn built_in_theme_slugs_csv() -> String
 
-pub fn built_in_themes() -> Array[ThemeName]
+pub fn built_in_themes() -> Array[@themes.ThemeName]
 
 pub fn canonical_theme_slug(String) -> String?
 
-pub fn default_colors() -> DiagramColors
+pub fn default_colors() -> @model.DiagramColors
 
-pub fn from_shiki_theme(ShikiTheme) -> DiagramColors
+pub fn from_shiki_theme(@themes.ShikiTheme) -> @model.DiagramColors
 
-pub fn merge_options_with_colors(RenderOptions, DiagramColors) -> RenderOptions
+pub fn merge_options_with_colors(@model.RenderOptions, @model.DiagramColors) -> @model.RenderOptions
 
 pub fn normalize_theme_name(String) -> String
 
-pub fn parse_mermaid(String) -> MermaidGraph raise MermaidError
+pub fn parse_mermaid(String) -> @model.MermaidGraph raise @model.MermaidError
 
-pub fn parse_theme_name(String) -> ThemeName?
+pub fn parse_theme_name(String) -> @themes.ThemeName?
 
-pub fn render_mermaid(String, options? : RenderOptions) -> String raise MermaidError
+pub fn render_mermaid(String, options? : @model.RenderOptions) -> String raise @model.MermaidError
 
-pub fn render_mermaid_ascii(String, options? : AsciiRenderOptions) -> String raise MermaidError
+pub fn render_mermaid_ascii(String, options? : @model.AsciiRenderOptions) -> String raise @model.MermaidError
 
-pub fn render_mermaid_with_colors(String, DiagramColors, options? : RenderOptions) -> String raise MermaidError
+pub fn render_mermaid_with_colors(String, @model.DiagramColors, options? : @model.RenderOptions) -> String raise @model.MermaidError
 
-pub fn render_mermaid_with_theme(String, ThemeName, options? : RenderOptions) -> String raise MermaidError
+pub fn render_mermaid_with_theme(String, @themes.ThemeName, options? : @model.RenderOptions) -> String raise @model.MermaidError
 
-pub fn render_mermaid_with_theme_name(String, String, options? : RenderOptions) -> String raise MermaidError
+pub fn render_mermaid_with_theme_name(String, String, options? : @model.RenderOptions) -> String raise @model.MermaidError
 
-pub fn shiki_dark_theme(Map[String, String]?, Array[ShikiTokenColor]?) -> ShikiTheme
+pub fn shiki_dark_theme(Map[String, String]?, Array[@themes.ShikiTokenColor]?) -> @themes.ShikiTheme
 
-pub fn shiki_light_theme(Map[String, String]?, Array[ShikiTokenColor]?) -> ShikiTheme
+pub fn shiki_light_theme(Map[String, String]?, Array[@themes.ShikiTokenColor]?) -> @themes.ShikiTheme
 
-pub fn shiki_theme(String?, Map[String, String]?, Array[ShikiTokenColor]?) -> ShikiTheme
+pub fn shiki_theme(String?, Map[String, String]?, Array[@themes.ShikiTokenColor]?) -> @themes.ShikiTheme
 
-pub fn shiki_token_color(String, String?) -> ShikiTokenColor
+pub fn shiki_token_color(String, String?) -> @themes.ShikiTokenColor
 
-pub fn shiki_token_color_many(Array[String], String?) -> ShikiTokenColor
+pub fn shiki_token_color_many(Array[String], String?) -> @themes.ShikiTokenColor
 
-pub fn theme_by_name(String) -> DiagramColors?
+pub fn theme_by_name(String) -> @model.DiagramColors?
 
-pub fn theme_colors(ThemeName) -> DiagramColors
+pub fn theme_colors(@themes.ThemeName) -> @model.DiagramColors
 
 pub fn theme_exists(String) -> Bool
 
-pub fn theme_slug(ThemeName) -> String
+pub fn theme_slug(@themes.ThemeName) -> String
 
 // Errors
-pub(all) suberror MermaidError {
-  ParseFailure(String)
-  UnknownTheme(String)
-}
-pub impl Eq for MermaidError
-pub impl Show for MermaidError
-pub impl ToJson for MermaidError
 
 // Types and methods
-type AsciiGridCoord
-pub impl Eq for AsciiGridCoord
-pub impl Show for AsciiGridCoord
-
-pub(all) struct AsciiRenderOptions {
-  use_ascii : Bool
-  padding_x : Int
-  padding_y : Int
-  box_border_padding : Int
-}
-pub fn AsciiRenderOptions::default() -> Self
-pub impl Eq for AsciiRenderOptions
-pub impl Show for AsciiRenderOptions
-pub impl ToJson for AsciiRenderOptions
-
-pub struct DiagramColors {
-  bg : String
-  fg : String
-  line : String?
-  accent : String?
-  muted : String?
-  surface : String?
-  border : String?
-}
-pub fn DiagramColors::default() -> Self
-pub impl Eq for DiagramColors
-pub impl Show for DiagramColors
-pub impl ToJson for DiagramColors
-
-pub enum Direction {
-  TD
-  TB
-  LR
-  BT
-  RL
-}
-pub impl Eq for Direction
-pub impl Show for Direction
-pub impl ToJson for Direction
-
-pub enum EdgeStyle {
-  Solid
-  Dotted
-  Thick
-}
-pub impl Eq for EdgeStyle
-pub impl Show for EdgeStyle
-pub impl ToJson for EdgeStyle
-
-type LayoutStateEdgeDir
-pub impl Eq for LayoutStateEdgeDir
-
-type LayoutStateGridCoord
-pub impl Eq for LayoutStateGridCoord
-pub impl Show for LayoutStateGridCoord
-
-pub struct MermaidEdge {
-  source : String
-  target : String
-  label : String?
-  style : EdgeStyle
-  has_arrow_start : Bool
-  has_arrow_end : Bool
-  relation_operator : String?
-}
-pub impl Eq for MermaidEdge
-pub impl Show for MermaidEdge
-pub impl ToJson for MermaidEdge
-
-pub struct MermaidGraph {
-  direction : Direction
-  nodes : Map[String, MermaidNode]
-  edges : Array[MermaidEdge]
-  subgraphs : Array[MermaidSubgraph]
-  class_defs : Map[String, Map[String, String]]
-  class_assignments : Map[String, String]
-  node_styles : Map[String, Map[String, String]]
-  sequence_actor_order : Array[String]
-  sequence_actor_kinds : Map[String, SequenceParticipantKind]
-  sequence_blocks : Array[SequenceBlock]
-  sequence_notes : Array[SequenceNote]
-  sequence_activation_commands : Array[SequenceActivationCommand]
-}
-pub impl Eq for MermaidGraph
-pub impl Show for MermaidGraph
-pub impl ToJson for MermaidGraph
-
-pub struct MermaidNode {
-  id : String
-  label : String
-  shape : NodeShape
-}
-pub impl Eq for MermaidNode
-pub impl Show for MermaidNode
-pub impl ToJson for MermaidNode
-
-pub struct MermaidSubgraph {
-  id : String
-  label : String
-  node_ids : Array[String]
-  children : Array[MermaidSubgraph]
-  direction : Direction?
-}
-pub fn MermaidSubgraph::new(String, String, Array[String], children? : Array[Self], direction? : Direction) -> Self
-pub impl Eq for MermaidSubgraph
-pub impl Show for MermaidSubgraph
-pub impl ToJson for MermaidSubgraph
-
-pub enum NodeShape {
-  Rectangle
-  Rounded
-  Diamond
-  Stadium
-  Circle
-  Subroutine
-  DoubleCircle
-  Hexagon
-  Cylinder
-  Asymmetric
-  Trapezoid
-  TrapezoidAlt
-  StateStart
-  StateEnd
-  ClassEntity
-  ErEntity
-  SequenceParticipant
-}
-pub impl Eq for NodeShape
-pub impl Show for NodeShape
-pub impl ToJson for NodeShape
-
-pub struct Point {
-  x : Int
-  y : Int
-}
-pub impl Eq for Point
-pub impl Show for Point
-pub impl ToJson for Point
-
-pub struct PositionedEdge {
-  source : String
-  target : String
-  label : String?
-  style : EdgeStyle
-  has_arrow_start : Bool
-  has_arrow_end : Bool
-  relation_operator : String?
-  points : Array[Point]
-  label_position : Point?
-}
-pub impl Eq for PositionedEdge
-pub impl Show for PositionedEdge
-pub impl ToJson for PositionedEdge
-
-pub struct PositionedGraph {
-  width : Int
-  height : Int
-  nodes : Array[PositionedNode]
-  edges : Array[PositionedEdge]
-  groups : Array[PositionedGroup]
-  sequence_lifelines : Array[PositionedSequenceLifeline]
-  sequence_activations : Array[PositionedSequenceActivation]
-  sequence_blocks : Array[PositionedSequenceBlock]
-  sequence_notes : Array[PositionedSequenceNote]
-}
-pub impl Eq for PositionedGraph
-pub impl Show for PositionedGraph
-pub impl ToJson for PositionedGraph
-
-pub struct PositionedGroup {
-  id : String
-  label : String
-  x : Int
-  y : Int
-  width : Int
-  height : Int
-  children : Array[PositionedGroup]
-}
-pub fn PositionedGroup::new(String, String, Int, Int, Int, Int, children? : Array[Self]) -> Self
-pub impl Eq for PositionedGroup
-pub impl Show for PositionedGroup
-pub impl ToJson for PositionedGroup
-
-pub struct PositionedNode {
-  id : String
-  label : String
-  shape : NodeShape
-  x : Int
-  y : Int
-  width : Int
-  height : Int
-  inline_style : Map[String, String]?
-}
-pub impl Eq for PositionedNode
-pub impl Show for PositionedNode
-pub impl ToJson for PositionedNode
-
-pub struct PositionedSequenceActivation {
-  actor_id : String
-  x : Int
-  top_y : Int
-  bottom_y : Int
-  width : Int
-}
-pub impl Eq for PositionedSequenceActivation
-pub impl Show for PositionedSequenceActivation
-pub impl ToJson for PositionedSequenceActivation
-
-pub struct PositionedSequenceBlock {
-  block_type : SequenceBlockType
-  label : String
-  x : Int
-  y : Int
-  width : Int
-  height : Int
-  dividers : Array[PositionedSequenceBlockDivider]
-}
-pub impl Eq for PositionedSequenceBlock
-pub impl Show for PositionedSequenceBlock
-pub impl ToJson for PositionedSequenceBlock
-
-pub struct PositionedSequenceBlockDivider {
-  y : Int
-  label : String
-}
-pub impl Eq for PositionedSequenceBlockDivider
-pub impl Show for PositionedSequenceBlockDivider
-pub impl ToJson for PositionedSequenceBlockDivider
-
-pub struct PositionedSequenceLifeline {
-  actor_id : String
-  x : Int
-  top_y : Int
-  bottom_y : Int
-}
-pub impl Eq for PositionedSequenceLifeline
-pub impl Show for PositionedSequenceLifeline
-pub impl ToJson for PositionedSequenceLifeline
-
-pub struct PositionedSequenceNote {
-  text : String
-  x : Int
-  y : Int
-  width : Int
-  height : Int
-}
-pub impl Eq for PositionedSequenceNote
-pub impl Show for PositionedSequenceNote
-pub impl ToJson for PositionedSequenceNote
-
-pub(all) struct RenderOptions {
-  bg : String?
-  fg : String?
-  line : String?
-  accent : String?
-  muted : String?
-  surface : String?
-  border : String?
-  font : String?
-  padding : Int?
-  node_spacing : Int?
-  layer_spacing : Int?
-  transparent : Bool?
-}
-pub fn RenderOptions::default() -> Self
-pub impl Eq for RenderOptions
-pub impl Show for RenderOptions
-pub impl ToJson for RenderOptions
-
-pub struct SequenceActivationCommand {
-  actor_id : String
-  activate : Bool
-  after_index : Int
-}
-pub impl Eq for SequenceActivationCommand
-pub impl Show for SequenceActivationCommand
-pub impl ToJson for SequenceActivationCommand
-
-pub struct SequenceBlock {
-  block_type : SequenceBlockType
-  label : String
-  start_index : Int
-  end_index : Int
-  dividers : Array[SequenceBlockDivider]
-}
-pub impl Eq for SequenceBlock
-pub impl Show for SequenceBlock
-pub impl ToJson for SequenceBlock
-
-pub struct SequenceBlockDivider {
-  index : Int
-  label : String
-}
-pub impl Eq for SequenceBlockDivider
-pub impl Show for SequenceBlockDivider
-pub impl ToJson for SequenceBlockDivider
-
-pub enum SequenceBlockType {
-  Loop
-  Alt
-  Opt
-  Par
-  Critical
-  Break
-  Rect
-}
-pub impl Eq for SequenceBlockType
-pub impl Show for SequenceBlockType
-pub impl ToJson for SequenceBlockType
-
-pub struct SequenceNote {
-  actor_ids : Array[String]
-  text : String
-  position : SequenceNotePosition
-  after_index : Int
-}
-pub impl Eq for SequenceNote
-pub impl Show for SequenceNote
-pub impl ToJson for SequenceNote
-
-pub enum SequenceNotePosition {
-  Left
-  Right
-  Over
-}
-pub impl Eq for SequenceNotePosition
-pub impl Show for SequenceNotePosition
-pub impl ToJson for SequenceNotePosition
-
-pub enum SequenceParticipantKind {
-  Participant
-  Actor
-}
-pub impl Eq for SequenceParticipantKind
-pub impl Show for SequenceParticipantKind
-pub impl ToJson for SequenceParticipantKind
-
-pub(all) struct ShikiTheme {
-  theme_type : String?
-  colors : Map[String, String]?
-  token_colors : Array[ShikiTokenColor]?
-}
-pub impl Eq for ShikiTheme
-pub impl Show for ShikiTheme
-pub impl ToJson for ShikiTheme
-
-pub(all) struct ShikiTokenColor {
-  scopes : Array[String]
-  foreground : String?
-}
-pub impl Eq for ShikiTokenColor
-pub impl Show for ShikiTokenColor
-pub impl ToJson for ShikiTokenColor
-
-pub enum ThemeName {
-  ZincLight
-  ZincDark
-  TokyoNight
-  TokyoNightStorm
-  TokyoNightLight
-  CatppuccinMocha
-  CatppuccinLatte
-  Nord
-  NordLight
-  Dracula
-  GithubLight
-  GithubDark
-  SolarizedLight
-  SolarizedDark
-  OneDark
-}
-pub impl Eq for ThemeName
-pub impl Show for ThemeName
-pub impl ToJson for ThemeName
 
 // Type aliases
+pub using @model {type AsciiRenderOptions}
+
+pub using @model {type DiagramColors}
+
+pub using @model {type Direction}
+
+pub using @model {type EdgeStyle}
+
+pub using @model {type MermaidEdge}
+
+pub using @model {type MermaidError}
+
+pub using @model {type MermaidGraph}
+
+pub using @model {type MermaidNode}
+
+pub using @model {type MermaidSubgraph}
+
+pub using @model {type NodeShape}
+
+pub using @model {type Point}
+
+pub using @model {type PositionedEdge}
+
+pub using @model {type PositionedGraph}
+
+pub using @model {type PositionedGroup}
+
+pub using @model {type PositionedNode}
+
+pub using @model {type PositionedSequenceActivation}
+
+pub using @model {type PositionedSequenceBlock}
+
+pub using @model {type PositionedSequenceBlockDivider}
+
+pub using @model {type PositionedSequenceLifeline}
+
+pub using @model {type PositionedSequenceNote}
+
+pub using @model {type RenderOptions}
+
+pub using @model {type SequenceActivationCommand}
+
+pub using @model {type SequenceBlock}
+
+pub using @model {type SequenceBlockDivider}
+
+pub using @model {type SequenceBlockType}
+
+pub using @model {type SequenceNote}
+
+pub using @model {type SequenceNotePosition}
+
+pub using @model {type SequenceParticipantKind}
+
+pub using @themes {type ShikiTheme}
+
+pub using @themes {type ShikiTokenColor}
+
+pub using @themes {type ThemeName}
 
 // Traits
 

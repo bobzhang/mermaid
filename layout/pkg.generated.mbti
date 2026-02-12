@@ -1,0 +1,30 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "bobzhang/beautiful_mermaid/layout"
+
+import {
+  "bobzhang/beautiful_mermaid/model",
+}
+
+// Values
+pub fn layout_graph(@model.MermaidGraph, @model.RenderOptions) -> @model.PositionedGraph
+
+pub fn layout_graph_for_ascii(@model.MermaidGraph, @model.RenderOptions) -> @model.PositionedGraph
+
+// Errors
+
+// Types and methods
+type AsciiGridCoord
+pub impl Eq for AsciiGridCoord
+pub impl Show for AsciiGridCoord
+
+type LayoutStateEdgeDir
+pub impl Eq for LayoutStateEdgeDir
+
+type LayoutStateGridCoord
+pub impl Eq for LayoutStateGridCoord
+pub impl Show for LayoutStateGridCoord
+
+// Type aliases
+
+// Traits
+

@@ -62,7 +62,7 @@ test "flow_node_label hides state pseudo-state labels" {
 
 ///|
 test "plain flowchart edges render as boxed diagrams instead of inline edges" {
-  let graph = parse_mermaid(
+  let graph = @parser.parse_mermaid(
     (
       #|graph LR
       #|A --> B
@@ -81,7 +81,7 @@ test "plain flowchart edges render as boxed diagrams instead of inline edges" {
 
 ///|
 test "non-state vertical flow normalizes column width to widest label" {
-  let graph = parse_mermaid(
+  let graph = @parser.parse_mermaid(
     (
       #|graph TD
       #|A[Normal] --> B[Highlighted] --> C[Error]
@@ -102,7 +102,7 @@ test "non-state vertical flow normalizes column width to widest label" {
 
 ///|
 test "non-state bidirectional flow suppresses start arrowheads" {
-  let graph = parse_mermaid(
+  let graph = @parser.parse_mermaid(
     (
       #|graph LR
       #|A[Client] <-->|sync| B[Server]
@@ -121,7 +121,7 @@ test "non-state bidirectional flow suppresses start arrowheads" {
 
 ///|
 test "non-state chained labels stay on horizontal edge runs" {
-  let graph = parse_mermaid(
+  let graph = @parser.parse_mermaid(
     (
       #|graph LR
       #|A[Client] <-->|sync| B[Server]
@@ -143,7 +143,7 @@ test "non-state chained labels stay on horizontal edge runs" {
 
 ///|
 test "non-state vertical fan-in avoids source-row cross-links" {
-  let graph = parse_mermaid(
+  let graph = @parser.parse_mermaid(
     (
       #|graph TD
       #|A[Input] & B[Config] --> C[Processor]
@@ -163,7 +163,7 @@ test "non-state vertical fan-in avoids source-row cross-links" {
 
 ///|
 test "non-state subgraph override keeps border crossings clean" {
-  let graph = parse_mermaid(
+  let graph = @parser.parse_mermaid(
     (
       #|graph TD
       #|subgraph pipeline [Processing Pipeline]
@@ -189,7 +189,7 @@ test "non-state subgraph override keeps border crossings clean" {
 ///|
 test "state lifecycle ascii keeps compact right lane width" {
   let source = state_lifecycle_source()
-  let graph = parse_mermaid(source)
+  let graph = @parser.parse_mermaid(source)
   let output = render_ascii(graph, {
     use_ascii: true,
     padding_x: 5,
@@ -205,7 +205,7 @@ test "state lifecycle ascii keeps compact right lane width" {
 ///|
 test "state lifecycle ascii centers even-length labels with parity bias" {
   let source = state_lifecycle_source()
-  let graph = parse_mermaid(source)
+  let graph = @parser.parse_mermaid(source)
   let output = render_ascii(graph, {
     use_ascii: true,
     padding_x: 5,
@@ -219,7 +219,7 @@ test "state lifecycle ascii centers even-length labels with parity bias" {
 ///|
 test "state lifecycle ascii anchors done label near disconnecting source" {
   let source = state_lifecycle_source()
-  let graph = parse_mermaid(source)
+  let graph = @parser.parse_mermaid(source)
   let output = render_ascii(graph, {
     use_ascii: true,
     padding_x: 5,
@@ -233,7 +233,7 @@ test "state lifecycle ascii anchors done label near disconnecting source" {
 ///|
 test "state lifecycle ascii keeps leftward back-edge arrow off closed border" {
   let source = state_lifecycle_source()
-  let graph = parse_mermaid(source)
+  let graph = @parser.parse_mermaid(source)
   let output = render_ascii(graph, {
     use_ascii: true,
     padding_x: 5,
