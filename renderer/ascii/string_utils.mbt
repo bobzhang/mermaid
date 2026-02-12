@@ -1,9 +1,4 @@
 ///|
-fn trim_owned(s : String) -> String {
-  s.trim().to_string()
-}
-
-///|
 fn option_int_or(value : Int?, fallback : Int) -> Int {
   match value {
     Some(found) => found

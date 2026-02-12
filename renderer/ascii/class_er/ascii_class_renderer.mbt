@@ -258,7 +258,7 @@ fn class_draw_marker(
 }
 
 ///|
-fn render_ascii_class(
+pub fn render_ascii_class(
   graph : MermaidGraph,
   options : AsciiRenderOptions,
 ) -> String {

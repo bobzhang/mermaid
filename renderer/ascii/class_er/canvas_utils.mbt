@@ -41,3 +41,12 @@ fn write_canvas_text(
     }
   }
 }
+
+///|
+fn canvas_to_output(canvas : Array[Array[String]]) -> String {
+  let lines : Array[String] = []
+  for row in canvas {
+    lines.push(row.iter().join(""))
+  }
+  lines.iter().join("\n")
+}

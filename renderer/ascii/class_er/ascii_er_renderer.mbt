@@ -119,7 +119,7 @@ fn er_ensure_canvas_size(
 }
 
 ///|
-fn render_ascii_er(
+pub fn render_ascii_er(
   graph : MermaidGraph,
   options : AsciiRenderOptions,
 ) -> String {
