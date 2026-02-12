@@ -58,9 +58,11 @@ Mermaid source text
   - Uses CSS variables to keep theming composable.
 - `renderer/svg/svg_renderer.mbt`
   - Public bridge package entrypoint that re-exports SVG rendering for downstream callers.
-- `renderer/ascii/flow_state/ascii_renderer.mbt`
+- `renderer/ascii/flow_state/core/ascii_renderer.mbt`
   - Core ASCII/Unicode flowchart/state rendering path and dispatch glue.
-  - Includes grid/pathfinding support through `renderer/ascii/flow_state/ascii_grid_pathfinder.mbt`.
+  - Includes grid/pathfinding support through `renderer/ascii/flow_state/core/ascii_grid_pathfinder.mbt`.
+- `renderer/ascii/flow_state/ascii_renderer.mbt`
+  - Public bridge package entrypoint that re-exports flow/state ASCII rendering for downstream callers.
 - `renderer/ascii/ascii_renderer.mbt`
   - Public bridge package entrypoint that re-exports ASCII rendering for downstream callers.
 - `renderer/ascii/sequence/ascii_sequence_renderer.mbt`
