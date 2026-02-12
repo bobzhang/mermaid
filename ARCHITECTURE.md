@@ -32,8 +32,10 @@ Mermaid source text
 
 ## Parse Layer
 
-- `parser/` package
-  - Core implementation files: `parser/parser.mbt`, `parser/parser_flowchart.mbt`, `parser/parser_state.mbt`, `parser/parser_sequence.mbt`, `parser/parser_class_er.mbt`.
+- `parser/core` package
+  - Core implementation files: `parser/core/parser.mbt`, `parser/core/parser_flowchart.mbt`, `parser/core/parser_state.mbt`, `parser/core/parser_sequence.mbt`, `parser/core/parser_class_er.mbt`.
+- `parser` package bridge (`parser/parser.mbt`)
+  - Exposes `/parser.parse_mermaid` while delegating to `parser/core`.
   - Entry: `@beautiful_mermaid/parser.parse_mermaid(text)`.
   - Dispatches by Mermaid header (`graph`, `flowchart`, `stateDiagram`, `sequenceDiagram`, `classDiagram`, `erDiagram`).
   - Produces a parser-package `MermaidGraph` independent of output format.
