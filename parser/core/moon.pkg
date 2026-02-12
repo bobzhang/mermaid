@@ -1,4 +1,5 @@
 import {
   "bobzhang/beautiful_mermaid/model" @model,
   "bobzhang/beautiful_mermaid/parser/class_er/core" @parser_class_er_core,
+  "bobzhang/beautiful_mermaid/parser/sequence/core" @parser_sequence_core,
 }
