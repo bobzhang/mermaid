@@ -248,7 +248,22 @@ test "Layout state composite direction override changes internal axis" {
 ///|
 test "Layout ascii state composite keeps node edge targets over group anchors" {
   let graph = try! @parser.parse_mermaid(
-    "stateDiagram-v2\n  [*] --> Idle\n  Idle --> Processing : submit\n  state Processing {\n    parse --> validate\n    validate --> execute\n  }\n  Processing --> Complete : done\n  Processing --> Error : fail\n  Error --> Idle : retry\n  Complete --> [*]",
+    (
+      #|stateDiagram-v2
+      #|  [*] --> Idle
+      #|  Idle --> Processing : submit
+      #|  state Processing {
+      #|    parse --> validate
+      #|    validate --> execute
+      #|  }
+      #|  Processing --> Complete : done
+      #|  Processing --> Error : fail
+      #|  Error --> Idle : retry
+      #|  Complete --> [*]
+      #|
+    )
+    .trim_end()
+    .to_string(),
   )
   let positioned = layout_graph_for_ascii(graph, RenderOptions::default())
 
@@ -274,7 +289,19 @@ test "Layout ascii state composite keeps node edge targets over group anchors" {
 ///|
 test "Layout keeps subgraph-defined-first content near top in TD" {
   let graph = try! @parser.parse_mermaid(
-    "graph TD\nsubgraph Pipeline\nZZ1[Push Code] --> ZZ2{Tests Pass?}\nZZ2 -->|Yes| ZZ3[Build Image]\nend\nZZ3 --> AA([Deploy])\nAA --> BB{QA?}\nBB -->|Yes| CC((Production))",
+    (
+      #|graph TD
+      #|subgraph Pipeline
+      #|ZZ1[Push Code] --> ZZ2{Tests Pass?}
+      #|ZZ2 -->|Yes| ZZ3[Build Image]
+      #|end
+      #|ZZ3 --> AA([Deploy])
+      #|AA --> BB{QA?}
+      #|BB -->|Yes| CC((Production))
+      #|
+    )
+    .trim_end()
+    .to_string(),
   )
   let positioned = layout_graph(graph, RenderOptions::default())
 
@@ -290,7 +317,21 @@ test "Layout keeps subgraph-defined-first content near top in TD" {
 ///|
 test "Layout subgraph direction override arranges child subgraphs horizontally" {
   let graph = try! @parser.parse_mermaid(
-    "graph TD\nsubgraph Outer\ndirection LR\nsubgraph Left\nA --> B\nend\nsubgraph Right\nC --> D\nend\nend",
+    (
+      #|graph TD
+      #|subgraph Outer
+      #|direction LR
+      #|subgraph Left
+      #|A --> B
+      #|end
+      #|subgraph Right
+      #|C --> D
+      #|end
+      #|end
+      #|
+    )
+    .trim_end()
+    .to_string(),
   )
   let positioned = layout_graph(graph, RenderOptions::default())
 
@@ -307,7 +348,19 @@ test "Layout subgraph direction override arranges child subgraphs horizontally" 
 ///|
 test "Layout subgraph direction override arranges empty child subgraphs horizontally" {
   let graph = try! @parser.parse_mermaid(
-    "graph TD\nsubgraph Outer\ndirection LR\nsubgraph Left\nend\nsubgraph Right\nend\nend",
+    (
+      #|graph TD
+      #|subgraph Outer
+      #|direction LR
+      #|subgraph Left
+      #|end
+      #|subgraph Right
+      #|end
+      #|end
+      #|
+    )
+    .trim_end()
+    .to_string(),
   )
   let positioned = layout_graph(graph, RenderOptions::default())
 
@@ -323,7 +376,16 @@ test "Layout subgraph direction override arranges empty child subgraphs horizont
 
 ///|
 test "Layout invariants: edges have endpoints and labels have positions" {
-  let graph = try! @parser.parse_mermaid("graph LR\nA -->|yes| B\nB -.- C")
+  let graph = try! @parser.parse_mermaid(
+    (
+      #|graph LR
+      #|A -->|yes| B
+      #|B -.- C
+      #|
+    )
+    .trim_end()
+    .to_string(),
+  )
   let positioned = layout_graph(graph, RenderOptions::default())
 
   for edge in positioned.edges {
@@ -337,8 +399,24 @@ test "Layout invariants: edges have endpoints and labels have positions" {
 
 ///|
 test "Layout invariants: LR is wider, TD is taller" {
-  let lr_graph = try! @parser.parse_mermaid("graph LR\nA --> B --> C")
-  let td_graph = try! @parser.parse_mermaid("graph TD\nA --> B --> C")
+  let lr_graph = try! @parser.parse_mermaid(
+    (
+      #|graph LR
+      #|A --> B --> C
+      #|
+    )
+    .trim_end()
+    .to_string(),
+  )
+  let td_graph = try! @parser.parse_mermaid(
+    (
+      #|graph TD
+      #|A --> B --> C
+      #|
+    )
+    .trim_end()
+    .to_string(),
+  )
 
   let lr_layout = layout_graph(lr_graph, RenderOptions::default())
   let td_layout = layout_graph(td_graph, RenderOptions::default())
@@ -349,7 +427,15 @@ test "Layout invariants: LR is wider, TD is taller" {
 
 ///|
 test "Layout RL reverses horizontal node ordering and edge direction" {
-  let rl_graph = try! @parser.parse_mermaid("graph RL\nA --> B --> C")
+  let rl_graph = try! @parser.parse_mermaid(
+    (
+      #|graph RL
+      #|A --> B --> C
+      #|
+    )
+    .trim_end()
+    .to_string(),
+  )
   let positioned = layout_graph(rl_graph, RenderOptions::default())
 
   let node_a = find_positioned_node(positioned.nodes, "A")
