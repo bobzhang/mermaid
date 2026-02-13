@@ -1,3 +1,0 @@
-import {
-  "bobzhang/beautiful_mermaid/cmd/main/app/core" @cmd_main_app_core,
-}

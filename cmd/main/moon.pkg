@@ -1,5 +1,5 @@
 import {
-  "bobzhang/beautiful_mermaid/cmd/main/core" @cmd_main_core,
+  "bobzhang/beautiful_mermaid/cmd/main/app/core" @cmd_main_app_core,
 }
 
 options(
