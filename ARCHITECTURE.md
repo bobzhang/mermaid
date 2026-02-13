@@ -46,11 +46,10 @@ Key models:
 ### Entry and Dispatch
 
 - Root facade: `parser.mbt`
-  - `parse_mermaid(text)` delegates to parser package.
+  - `parse_mermaid(text)` delegates to the header dispatcher.
 - Parser package bridge: `parser/parser.mbt`
   - Public API is intentionally parse-only: `parse_mermaid(String) -> @model.MermaidGraph raise @model.MermaidError`.
   - Model types are owned by `model/types.mbt` and are not re-exported from the parser package.
-- Parser core bridge: `parser/core/parser.mbt`
 - Header dispatcher implementation: `parser/header/core/parser.mbt`
   - Handles normalization, preprocessing, header detection, and dispatch.
 
@@ -64,20 +63,12 @@ Supported headers:
 
 ### Diagram Parser Packages
 
-Each diagram parser follows `core -> engine/core`:
+Diagram parsers are implemented directly in engine packages:
 
-- Flowchart:
-  - Bridge: `parser/flowchart/core/parser_flowchart.mbt`
-  - Implementation: `parser/flowchart/engine/core/parser_flowchart.mbt`
-- State:
-  - Bridge: `parser/state/core/parser_state.mbt`
-  - Implementation: `parser/state/engine/core/parser_state.mbt`
-- Sequence:
-  - Bridge: `parser/sequence/core/parser_sequence.mbt`
-  - Implementation: `parser/sequence/engine/core/parser_sequence.mbt`
-- Class/ER:
-  - Bridge: `parser/class_er/core/parser_class_er.mbt`
-  - Implementation: `parser/class_er/engine/core/parser_class_er.mbt`
+- Flowchart: `parser/flowchart/engine/core/parser_flowchart.mbt`
+- State: `parser/state/engine/core/parser_state.mbt`
+- Sequence: `parser/sequence/engine/core/parser_sequence.mbt`
+- Class/ER: `parser/class_er/engine/core/parser_class_er.mbt`
 
 ### Shared Parser Engine (`parser/common/engine/core`)
 
@@ -105,8 +96,7 @@ Important design detail:
 ### Package Topology
 
 - Public bridge: `layout/layout.mbt`, `layout/types.mbt`
-- Bridge layer: `layout/core/layout.mbt`, `layout/core/types.mbt`
-- Engine bridge: `layout/engine/core/layout.mbt`, `layout/engine/core/ascii_grid_pathfinder.mbt`
+- Implementation entry: `layout/engine/graph/core`
 
 Implementations:
 
@@ -125,7 +115,6 @@ Output: `PositionedGraph`.
 ### SVG
 
 - Public bridge: `renderer/svg/svg_renderer.mbt`
-- Bridge layer: `renderer/svg/core/svg_renderer.mbt`
 - Implementation: `renderer/svg/engine/core/svg_renderer.mbt`
 
 ### ASCII / Unicode
@@ -140,15 +129,12 @@ Output: `PositionedGraph`.
     - state flat-grid routing, and
     - flow subgraph positioned geometry.
 - Flow/state renderer:
-  - Bridge: `renderer/ascii/flow_state/core/ascii_renderer.mbt`
   - Implementation: `renderer/ascii/flow_state/engine/core/ascii_renderer.mbt`
   - Dispatches by plan kind and delegates rendering to family renderers with precomputed plan data.
 - Sequence renderer:
-  - Bridge: `renderer/ascii/sequence/core/ascii_sequence_renderer.mbt`
   - Implementation: `renderer/ascii/sequence/engine/core/ascii_sequence_renderer.mbt`
   - Consumes `AsciiSequenceLayout` from the plan stage.
 - Class/ER renderer:
-  - Bridge: `renderer/ascii/class_er/core/ascii_class_renderer.mbt`, `renderer/ascii/class_er/core/ascii_er_renderer.mbt`
   - Implementations: `renderer/ascii/class_er/engine/core/ascii_class_renderer.mbt`, `renderer/ascii/class_er/engine/core/ascii_er_renderer.mbt`
   - Consume `AsciiClassLayout` and `AsciiErLayout` from the plan stage.
 
@@ -162,7 +148,6 @@ The renderers consume resolved diagram colors/options and do not own theme canon
 ## CLI Layer
 
 - Executable bridge: `cmd/main/main.mbt`
-- Core bridge: `cmd/main/core/main.mbt`
 - Implementation: `cmd/main/app/core/main.mbt`
 
 CLI focuses on argument parsing, mode validation, and calling the facade APIs.
