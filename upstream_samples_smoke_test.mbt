@@ -1064,11 +1064,6 @@ fn upstream_samples() -> Array[UpstreamSample] {
 }
 
 ///|
-fn non_empty_output(value : String) -> Bool {
-  @test_support.normalize_whitespace(value) != ""
-}
-
-///|
 test "Render smoke for upstream samples-data corpus" (it : @test.Test) {
   let svg_sections : Array[String] = []
   for sample in upstream_samples() {
@@ -1112,7 +1107,7 @@ test "Render smoke for upstream samples-data corpus" (it : @test.Test) {
       padding_y: 5,
       box_border_padding: 1,
     })
-    if !non_empty_output(ascii) {
+    if @test_support.normalize_whitespace(ascii) == "" {
       fail("empty ascii output for sample: \{sample.title}")
     }
 
@@ -1122,7 +1117,7 @@ test "Render smoke for upstream samples-data corpus" (it : @test.Test) {
       padding_y: 5,
       box_border_padding: 1,
     })
-    if !non_empty_output(unicode) {
+    if @test_support.normalize_whitespace(unicode) == "" {
       fail("empty unicode output for sample: \{sample.title}")
     }
   }

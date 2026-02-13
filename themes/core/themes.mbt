@@ -323,7 +323,9 @@ pub fn theme_slug(theme : ThemeName) -> String {
 }
 
 ///|
-fn normalize_theme_name_input(name : String) -> String {
+/// Normalize user theme input:
+/// lowercase, spaces/underscores to `-`, collapse repeated separators.
+pub fn normalize_theme_name(name : String) -> String {
   let normalized = name
     .trim()
     .to_string()
@@ -350,13 +352,6 @@ fn normalize_theme_name_input(name : String) -> String {
 }
 
 ///|
-/// Normalize user theme input:
-/// lowercase, spaces/underscores to `-`, collapse repeated separators.
-pub fn normalize_theme_name(name : String) -> String {
-  normalize_theme_name_input(name)
-}
-
-///|
 /// Parse a user-supplied theme name to a `ThemeName`.
 /// Accepts `default` as an alias for `zinc-light`.
 ///
@@ -375,7 +370,7 @@ pub fn normalize_theme_name(name : String) -> String {
 /// }
 /// ```
 pub fn parse_theme_name(name : String) -> ThemeName? {
-  match normalize_theme_name_input(name) {
+  match normalize_theme_name(name) {
     "default" => Some(ZincLight)
     "zinc-light" => Some(ZincLight)
     "zinc-dark" => Some(ZincDark)

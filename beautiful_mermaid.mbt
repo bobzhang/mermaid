@@ -55,16 +55,6 @@ pub fn build_colors(options : RenderOptions) -> DiagramColors {
 }
 
 ///|
-fn resolve_font(options : RenderOptions) -> String {
-  option_string_or(options.font, "Inter")
-}
-
-///|
-fn resolve_transparent(options : RenderOptions) -> Bool {
-  option_bool_or(options.transparent, false)
-}
-
-///|
 /// Merge user `options` with an explicit color palette.
 /// Explicit values in `options` win; missing color fields are filled from `colors`.
 pub fn merge_options_with_colors(
@@ -113,8 +103,8 @@ pub fn render_mermaid(
   @renderer_svg.render_svg(
     positioned,
     build_colors(options),
-    resolve_font(options),
-    resolve_transparent(options),
+    option_string_or(options.font, "Inter"),
+    option_bool_or(options.transparent, false),
   )
 }
 

@@ -33,11 +33,6 @@ fn sequence_edge_operators() -> Array[EdgeOp] {
 }
 
 ///|
-fn find_sequence_operator(line : String) -> FoundEdgeOp? {
-  find_earliest_operator(line, sequence_edge_operators())
-}
-
-///|
 fn parse_sequence_participant_declaration(
   line : String,
   nodes : Map[String, MermaidNode],
@@ -214,7 +209,7 @@ fn parse_sequence_message_line(
   actor_kinds : Map[String, SequenceParticipantKind],
   edges : Array[MermaidEdge],
 ) -> Bool {
-  match find_sequence_operator(line) {
+  match find_earliest_operator(line, sequence_edge_operators()) {
     Some(found) => {
       let source = @parser_common_engine_core.trim_owned(
         (try! line[:found.index]).to_string(),

@@ -7,11 +7,6 @@ fn option_int_or(value : Int?, fallback : Int) -> Int {
 }
 
 ///|
-fn resolve_padding(options : RenderOptions) -> Int {
-  option_int_or(options.padding, 40)
-}
-
-///|
 fn merge_style(
   target : Map[String, String],
   style : Map[String, String]?,
@@ -269,7 +264,7 @@ pub fn layout_sequence_graph(
   graph : MermaidGraph,
   options : RenderOptions,
 ) -> PositionedGraph {
-  let padding = resolve_padding(options)
+  let padding = option_int_or(options.padding, 40)
   let actor_gap = 140
   let actor_height = 40
   let actor_pad_x = 16
