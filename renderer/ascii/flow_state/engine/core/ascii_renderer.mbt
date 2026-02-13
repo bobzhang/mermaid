@@ -1,17 +1,4 @@
 ///|
-fn graph_is_shape(graph : MermaidGraph, expected : NodeShape) -> Bool {
-  if graph.nodes.length() == 0 {
-    return false
-  }
-  for _, node in graph.nodes {
-    if node.shape != expected {
-      return false
-    }
-  }
-  true
-}
-
-///|
 fn graph_has_shape(graph : MermaidGraph, expected : NodeShape) -> Bool {
   for _, node in graph.nodes {
     if node.shape == expected {
@@ -1905,10 +1892,11 @@ fn state_ascii_draw_segment_simple(
 ///|
 fn render_ascii_state_flat_grid(
   graph : MermaidGraph,
+  layout_plan : @renderer_ascii_layout_plan.AsciiStateFlatGridLayout,
   options : AsciiRenderOptions,
 ) -> String {
-  let nodes_in_order = layout_state_nodes_in_definition_order(graph)
-  let grid_positions = layout_state_grid_positions(graph, nodes_in_order)
+  let nodes_in_order = layout_plan.nodes_in_order
+  let grid_positions = layout_plan.grid_positions
   let state_layout_mode = graph_has_shape(graph, StateStart) ||
     graph_has_shape(graph, StateEnd)
   if grid_positions.length() == 0 {
@@ -1967,22 +1955,10 @@ fn render_ascii_state_flat_grid(
     }
   }
 
-  let blocked = layout_state_grid_blocked_cells(grid_positions)
-  let (max_grid_x, max_grid_y) = layout_state_grid_bounds(grid_positions)
   let edge_layouts : Array[StateAsciiEdgeLayout] = []
-  for edge in graph.edges {
-    let path = match
-      layout_state_edge_grid_path_td(
-        grid_positions,
-        blocked,
-        max_grid_x,
-        max_grid_y,
-        edge.source,
-        edge.target,
-      ) {
-      Some(found) => found
-      None => []
-    }
+  let edge_paths = layout_plan.edge_paths
+  for i, edge in graph.edges {
+    let path = if i < edge_paths.length() { edge_paths[i] } else { [] }
 
     for coord in path {
       if !column_width.contains(coord.x) {
@@ -2406,9 +2382,9 @@ fn render_ascii_state_flat_grid(
 ///|
 fn render_ascii_flow_subgraphs(
   graph : MermaidGraph,
+  positioned : PositionedGraph,
   options : AsciiRenderOptions,
 ) -> String {
-  let positioned = layout_graph_for_ascii(graph, RenderOptions::default())
   let flow_direction_horizontal = graph.direction is (LR | RL)
   let state_graph_mode = graph_has_shape(graph, StateStart) ||
     graph_has_shape(graph, StateEnd)
@@ -3412,47 +3388,46 @@ fn render_ascii_flow_subgraphs(
 }
 
 ///|
+fn render_ascii_nodes_only(graph : MermaidGraph) -> String {
+  let lines : Array[String] = []
+  for _, node in graph.nodes {
+    let label = if node.label == "" { node.id } else { node.label }
+    lines.push("[\{label}]")
+  }
+  lines.iter().join("\n")
+}
+
+///|
+fn render_ascii_plan(
+  plan : @renderer_ascii_layout_plan.AsciiLayoutPlan,
+  options : AsciiRenderOptions,
+) -> String {
+  let graph = plan.graph
+  match plan.kind {
+    Sequence => render_ascii_sequence(graph, options)
+    Class => render_ascii_class(graph, options)
+    Er => render_ascii_er(graph, options)
+    StateFlatGrid =>
+      match plan.state_flat_grid {
+        Some(layout_plan) =>
+          render_ascii_state_flat_grid(graph, layout_plan, options)
+        None => ""
+      }
+    FlowSubgraph =>
+      match plan.flow_subgraph {
+        Some(flow_layout) =>
+          render_ascii_flow_subgraphs(graph, flow_layout.positioned, options)
+        None => ""
+      }
+    NodesOnly => render_ascii_nodes_only(graph)
+  }
+}
+
+///|
 pub fn render_ascii(
   graph : MermaidGraph,
   options : AsciiRenderOptions,
 ) -> String {
-  let lines : Array[String] = []
-  let sequence_mode = graph_is_shape(graph, SequenceParticipant)
-  if sequence_mode {
-    return render_ascii_sequence(graph, options)
-  }
-  let class_mode = graph_is_shape(graph, ClassEntity)
-  if class_mode {
-    return render_ascii_class(graph, options)
-  }
-  let er_mode = graph_is_shape(graph, ErEntity)
-  if er_mode {
-    return render_ascii_er(graph, options)
-  }
-  let state_mode = graph_has_shape(graph, StateStart) ||
-    graph_has_shape(graph, StateEnd)
-  if state_mode {
-    let td_like_direction = graph.direction is (TD | TB)
-    if td_like_direction {
-      return render_ascii_state_flat_grid(graph, options)
-    }
-    return render_ascii_flow_subgraphs(graph, options)
-  }
-  let td_like_direction = graph.direction is (TD | TB)
-  if graph.subgraphs.length() == 0 && td_like_direction {
-    return render_ascii_state_flat_grid(graph, options)
-  }
-  if graph.subgraphs.length() > 0 {
-    return render_ascii_flow_subgraphs(graph, options)
-  }
-
-  if graph.edges.length() == 0 {
-    for _, node in graph.nodes {
-      let label = if node.label == "" { node.id } else { node.label }
-      lines.push("[\{label}]")
-    }
-    return lines.iter().join("\n")
-  }
-
-  render_ascii_flow_subgraphs(graph, options)
+  let plan = @renderer_ascii_layout_plan.build_plan(graph)
+  render_ascii_plan(plan, options)
 }

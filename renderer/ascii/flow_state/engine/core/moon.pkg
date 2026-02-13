@@ -3,6 +3,7 @@ import {
   "bobzhang/beautiful_mermaid/model" @model,
   "bobzhang/beautiful_mermaid/parser" @parser,
   "bobzhang/beautiful_mermaid/renderer/ascii/class_er" @renderer_ascii_class_er,
+  "bobzhang/beautiful_mermaid/renderer/ascii/layout_plan" @renderer_ascii_layout_plan,
   "bobzhang/beautiful_mermaid/renderer/ascii/sequence" @renderer_ascii_sequence,
 }
 

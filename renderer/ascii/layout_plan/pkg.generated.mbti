@@ -1,0 +1,43 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "bobzhang/beautiful_mermaid/renderer/ascii/layout_plan"
+
+import {
+  "bobzhang/beautiful_mermaid/model",
+}
+
+// Values
+pub fn build_plan(@model.MermaidGraph) -> AsciiLayoutPlan
+
+// Errors
+
+// Types and methods
+pub struct AsciiFlowSubgraphLayout {
+  positioned : @model.PositionedGraph
+}
+
+pub struct AsciiLayoutPlan {
+  kind : AsciiPlanKind
+  graph : @model.MermaidGraph
+  state_flat_grid : AsciiStateFlatGridLayout?
+  flow_subgraph : AsciiFlowSubgraphLayout?
+}
+
+pub enum AsciiPlanKind {
+  Sequence
+  Class
+  Er
+  StateFlatGrid
+  FlowSubgraph
+  NodesOnly
+}
+
+pub struct AsciiStateFlatGridLayout {
+  nodes_in_order : Array[@model.MermaidNode]
+  grid_positions : Map[String, @bobzhang/beautiful_mermaid/layout/engine/graph/core.LayoutStateGridCoord]
+  edge_paths : Array[Array[@bobzhang/beautiful_mermaid/layout/engine/pathfinder/core.AsciiGridCoord]]
+}
+
+// Type aliases
+
+// Traits
+

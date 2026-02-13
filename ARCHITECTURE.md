@@ -11,6 +11,7 @@ Mermaid source text
   -> MermaidGraph (normalized semantic graph)
   -> layout package stack (`layout/*`)
   -> PositionedGraph (geometry + routed edges)
+  -> ASCII layout-plan stage (`renderer/ascii/layout_plan/*`) for text-mode routing/packing
   -> renderer package stack (`renderer/svg/*`, `renderer/ascii/*`)
   -> SVG or ASCII/Unicode output
 ```
@@ -130,13 +131,17 @@ Output: `PositionedGraph`.
 ### ASCII / Unicode
 
 - Public umbrella: `renderer/ascii/ascii_renderer.mbt`
-- Flow/state:
+- Internal layout-plan stage:
+  - Package: `renderer/ascii/layout_plan/layout_plan.mbt`
+  - Produces `AsciiLayoutPlan` with family dispatch + precomputed flow/state layout data.
+- Flow/state renderer:
   - Bridge: `renderer/ascii/flow_state/core/ascii_renderer.mbt`
   - Implementation: `renderer/ascii/flow_state/engine/core/ascii_renderer.mbt`
-- Sequence:
+  - Consumes `AsciiLayoutPlan` and renders from plan data (instead of calling layout APIs inline).
+- Sequence renderer:
   - Bridge: `renderer/ascii/sequence/core/ascii_sequence_renderer.mbt`
   - Implementation: `renderer/ascii/sequence/engine/core/ascii_sequence_renderer.mbt`
-- Class/ER:
+- Class/ER renderer:
   - Bridge: `renderer/ascii/class_er/core/ascii_class_renderer.mbt`, `renderer/ascii/class_er/core/ascii_er_renderer.mbt`
   - Implementations: `renderer/ascii/class_er/engine/core/ascii_class_renderer.mbt`, `renderer/ascii/class_er/engine/core/ascii_er_renderer.mbt`
 
@@ -180,6 +185,7 @@ Recent parser black-box additions specifically validate shared edge-operator beh
 ### Snapshot and corpus parity tests
 
 - SVG/ASCII snapshots and upstream corpus parity tests under root test files and `__snapshot__/`.
+- Added ASCII pipeline lock snapshots: `ascii_pipeline_lock_snapshot_test.mbt` (ASCII + Unicode golden baselines for flow/state/sequence/class/ER).
 
 ## Extension Guidelines
 
