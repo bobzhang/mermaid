@@ -1,4 +1,4 @@
 import {
   "bobzhang/beautiful_mermaid/model" @model,
-  "bobzhang/beautiful_mermaid/renderer/svg/core" @renderer_svg_core,
+  "bobzhang/beautiful_mermaid/renderer/svg/engine/core" @renderer_svg_core,
 }
