@@ -40,7 +40,7 @@ fn find_positioned_edge(
 
 ///|
 test "Layout invariants: nodes stay inside canvas" {
-  let graph = try! @parser.parse_mermaid(
+  let graph = @parser.parse_mermaid(
     (
       #|graph TD
       #|A[Start] --> B{Check} --> C((Done))
@@ -61,7 +61,7 @@ test "Layout invariants: nodes stay inside canvas" {
 
 ///|
 test "Layout builds positioned groups for flowchart subgraphs" {
-  let graph = try! @parser.parse_mermaid(
+  let graph = @parser.parse_mermaid(
     (
       #|graph TD
       #|subgraph Backend
@@ -89,7 +89,7 @@ test "Layout builds positioned groups for flowchart subgraphs" {
 
 ///|
 test "Layout keeps nested positioned groups inside parent group" {
-  let graph = try! @parser.parse_mermaid(
+  let graph = @parser.parse_mermaid(
     (
       #|graph TD
       #|subgraph Outer
@@ -120,7 +120,7 @@ test "Layout keeps nested positioned groups inside parent group" {
 
 ///|
 test "Layout flowchart subgraph direction override keeps single-edge axis stable" {
-  let base_graph = try! @parser.parse_mermaid(
+  let base_graph = @parser.parse_mermaid(
     (
       #|graph TD
       #|subgraph one
@@ -131,7 +131,7 @@ test "Layout flowchart subgraph direction override keeps single-edge axis stable
     .trim_end()
     .to_string(),
   )
-  let override_graph = try! @parser.parse_mermaid(
+  let override_graph = @parser.parse_mermaid(
     (
       #|graph TD
       #|subgraph one
@@ -176,7 +176,7 @@ test "Layout flowchart subgraph direction override keeps single-edge axis stable
 
 ///|
 test "Layout state composite direction override changes internal axis" {
-  let base_graph = try! @parser.parse_mermaid(
+  let base_graph = @parser.parse_mermaid(
     (
       #|stateDiagram-v2
       #|state Processing {
@@ -189,7 +189,7 @@ test "Layout state composite direction override changes internal axis" {
     .trim_end()
     .to_string(),
   )
-  let override_graph = try! @parser.parse_mermaid(
+  let override_graph = @parser.parse_mermaid(
     (
       #|stateDiagram-v2
       #|state Processing {
@@ -247,7 +247,7 @@ test "Layout state composite direction override changes internal axis" {
 
 ///|
 test "Layout ascii state composite keeps node edge targets over group anchors" {
-  let graph = try! @parser.parse_mermaid(
+  let graph = @parser.parse_mermaid(
     (
       #|stateDiagram-v2
       #|  [*] --> Idle
@@ -288,7 +288,7 @@ test "Layout ascii state composite keeps node edge targets over group anchors" {
 
 ///|
 test "Layout keeps subgraph-defined-first content near top in TD" {
-  let graph = try! @parser.parse_mermaid(
+  let graph = @parser.parse_mermaid(
     (
       #|graph TD
       #|subgraph Pipeline
@@ -316,7 +316,7 @@ test "Layout keeps subgraph-defined-first content near top in TD" {
 
 ///|
 test "Layout subgraph direction override arranges child subgraphs horizontally" {
-  let graph = try! @parser.parse_mermaid(
+  let graph = @parser.parse_mermaid(
     (
       #|graph TD
       #|subgraph Outer
@@ -347,7 +347,7 @@ test "Layout subgraph direction override arranges child subgraphs horizontally" 
 
 ///|
 test "Layout subgraph direction override arranges empty child subgraphs horizontally" {
-  let graph = try! @parser.parse_mermaid(
+  let graph = @parser.parse_mermaid(
     (
       #|graph TD
       #|subgraph Outer
@@ -376,7 +376,7 @@ test "Layout subgraph direction override arranges empty child subgraphs horizont
 
 ///|
 test "Layout invariants: edges have endpoints and labels have positions" {
-  let graph = try! @parser.parse_mermaid(
+  let graph = @parser.parse_mermaid(
     (
       #|graph LR
       #|A -->|yes| B
@@ -399,7 +399,7 @@ test "Layout invariants: edges have endpoints and labels have positions" {
 
 ///|
 test "Layout invariants: LR is wider, TD is taller" {
-  let lr_graph = try! @parser.parse_mermaid(
+  let lr_graph = @parser.parse_mermaid(
     (
       #|graph LR
       #|A --> B --> C
@@ -408,7 +408,7 @@ test "Layout invariants: LR is wider, TD is taller" {
     .trim_end()
     .to_string(),
   )
-  let td_graph = try! @parser.parse_mermaid(
+  let td_graph = @parser.parse_mermaid(
     (
       #|graph TD
       #|A --> B --> C
@@ -427,7 +427,7 @@ test "Layout invariants: LR is wider, TD is taller" {
 
 ///|
 test "Layout RL reverses horizontal node ordering and edge direction" {
-  let rl_graph = try! @parser.parse_mermaid(
+  let rl_graph = @parser.parse_mermaid(
     (
       #|graph RL
       #|A --> B --> C
@@ -453,7 +453,7 @@ test "Layout RL reverses horizontal node ordering and edge direction" {
 
 ///|
 test "Layout BT reverses vertical node ordering and edge direction" {
-  let bt_graph = try! @parser.parse_mermaid(
+  let bt_graph = @parser.parse_mermaid(
     (
       #|graph BT
       #|A --> B --> C
@@ -479,7 +479,7 @@ test "Layout BT reverses vertical node ordering and edge direction" {
 
 ///|
 test "Layout resolves inline styles with node override precedence" {
-  let graph = try! @parser.parse_mermaid(
+  let graph = @parser.parse_mermaid(
     (
       #|graph TD
       #|A[Start]:::entry --> B[End]
@@ -517,7 +517,7 @@ test "Layout resolves inline styles with node override precedence" {
 
 ///|
 test "Layout sequence messages are vertically separated" {
-  let graph = try! @parser.parse_mermaid(
+  let graph = @parser.parse_mermaid(
     (
       #|sequenceDiagram
       #|Alice->>Bob: Hello
@@ -537,7 +537,7 @@ test "Layout sequence messages are vertically separated" {
 
 ///|
 test "Layout sequence adds block and divider spacing" {
-  let graph = try! @parser.parse_mermaid(
+  let graph = @parser.parse_mermaid(
     (
       #|sequenceDiagram
       #|A->>B: Login
@@ -565,7 +565,7 @@ test "Layout sequence adds block and divider spacing" {
 
 ///|
 test "Layout sequence includes notes and activation bars" {
-  let graph = try! @parser.parse_mermaid(
+  let graph = @parser.parse_mermaid(
     (
       #|sequenceDiagram
       #|actor U as User
@@ -591,7 +591,7 @@ test "Layout sequence includes notes and activation bars" {
 
 ///|
 test "Layout sequence increases divider offset on horizontal label overlap" {
-  let graph = try! @parser.parse_mermaid(
+  let graph = @parser.parse_mermaid(
     (
       #|sequenceDiagram
       #|C->>S: Login
@@ -623,7 +623,7 @@ test "Layout sequence increases divider offset on horizontal label overlap" {
 
 ///|
 test "Layout sequence ignores standalone activate/deactivate commands" {
-  let graph = try! @parser.parse_mermaid(
+  let graph = @parser.parse_mermaid(
     (
       #|sequenceDiagram
       #|participant A
@@ -643,7 +643,7 @@ test "Layout sequence ignores standalone activate/deactivate commands" {
 
 ///|
 test "Layout sequence keeps block header tab above first in-block message label" {
-  let graph = try! @parser.parse_mermaid(
+  let graph = @parser.parse_mermaid(
     (
       #|sequenceDiagram
       #|A->>B: Before
@@ -671,7 +671,7 @@ test "Layout sequence keeps block header tab above first in-block message label"
 
 ///|
 test "Layout sequence keeps block header below previous message arrow" {
-  let graph = try! @parser.parse_mermaid(
+  let graph = @parser.parse_mermaid(
     (
       #|sequenceDiagram
       #|A->>B: Previous
@@ -697,7 +697,7 @@ test "Layout sequence keeps block header below previous message arrow" {
 
 ///|
 test "Layout sequence keeps divider label above following message label" {
-  let graph = try! @parser.parse_mermaid(
+  let graph = @parser.parse_mermaid(
     (
       #|sequenceDiagram
       #|A->>B: Login
@@ -729,7 +729,7 @@ test "Layout sequence keeps divider label above following message label" {
 
 ///|
 test "Layout sequence ignores activation commands with self messages" {
-  let graph = try! @parser.parse_mermaid(
+  let graph = @parser.parse_mermaid(
     (
       #|sequenceDiagram
       #|participant A
@@ -750,7 +750,7 @@ test "Layout sequence ignores activation commands with self messages" {
 
 ///|
 test "Layout sequence height increases with block header extra spacing" {
-  let plain_graph = try! @parser.parse_mermaid(
+  let plain_graph = @parser.parse_mermaid(
     (
       #|sequenceDiagram
       #|A->>B: One
@@ -761,7 +761,7 @@ test "Layout sequence height increases with block header extra spacing" {
     .trim_end()
     .to_string(),
   )
-  let block_graph = try! @parser.parse_mermaid(
+  let block_graph = @parser.parse_mermaid(
     (
       #|sequenceDiagram
       #|A->>B: One
@@ -784,7 +784,7 @@ test "Layout sequence height increases with block header extra spacing" {
 
 ///|
 test "Layout sequence height increases with divider extra spacing" {
-  let no_divider_graph = try! @parser.parse_mermaid(
+  let no_divider_graph = @parser.parse_mermaid(
     (
       #|sequenceDiagram
       #|A->>B: M1
@@ -796,7 +796,7 @@ test "Layout sequence height increases with divider extra spacing" {
     .trim_end()
     .to_string(),
   )
-  let with_divider_graph = try! @parser.parse_mermaid(
+  let with_divider_graph = @parser.parse_mermaid(
     (
       #|sequenceDiagram
       #|A->>B: M1
@@ -828,7 +828,7 @@ test "Layout sequence height increases with divider extra spacing" {
 
 ///|
 test "Layout sequence block top stays above first in-block message by pad" {
-  let graph = try! @parser.parse_mermaid(
+  let graph = @parser.parse_mermaid(
     (
       #|sequenceDiagram
       #|A->>B: Before
@@ -854,7 +854,7 @@ test "Layout sequence block top stays above first in-block message by pad" {
 
 ///|
 test "Layout sequence divider row is between adjacent messages" {
-  let graph = try! @parser.parse_mermaid(
+  let graph = @parser.parse_mermaid(
     (
       #|sequenceDiagram
       #|A->>B: Login
@@ -885,7 +885,7 @@ test "Layout sequence divider row is between adjacent messages" {
 
 ///|
 test "Layout sequence block height encloses in-block messages" {
-  let graph = try! @parser.parse_mermaid(
+  let graph = @parser.parse_mermaid(
     (
       #|sequenceDiagram
       #|A->>B: Before
@@ -914,7 +914,7 @@ test "Layout sequence block height encloses in-block messages" {
 
 ///|
 test "Layout sequence base spacing is uniform without blocks" {
-  let graph = try! @parser.parse_mermaid(
+  let graph = @parser.parse_mermaid(
     (
       #|sequenceDiagram
       #|A->>B: First
@@ -937,7 +937,7 @@ test "Layout sequence base spacing is uniform without blocks" {
 
 ///|
 test "Layout sequence spacing after block returns to base row height" {
-  let graph = try! @parser.parse_mermaid(
+  let graph = @parser.parse_mermaid(
     (
       #|sequenceDiagram
       #|A->>B: Before
@@ -962,7 +962,7 @@ test "Layout sequence spacing after block returns to base row height" {
 
 ///|
 test "Layout sequence multiple dividers each add divider extra spacing" {
-  let graph = try! @parser.parse_mermaid(
+  let graph = @parser.parse_mermaid(
     (
       #|sequenceDiagram
       #|C->>S: Login
@@ -992,7 +992,7 @@ test "Layout sequence multiple dividers each add divider extra spacing" {
 
 ///|
 test "Layout sequence par divider spacing matches alt divider spacing" {
-  let graph = try! @parser.parse_mermaid(
+  let graph = @parser.parse_mermaid(
     (
       #|sequenceDiagram
       #|G->>A: Validate
@@ -1018,7 +1018,7 @@ test "Layout sequence par divider spacing matches alt divider spacing" {
 
 ///|
 test "Layout sequence note right of last actor stays within diagram bounds" {
-  let graph = try! @parser.parse_mermaid(
+  let graph = @parser.parse_mermaid(
     (
       #|sequenceDiagram
       #|A->>B: Hello
@@ -1039,7 +1039,7 @@ test "Layout sequence note right of last actor stays within diagram bounds" {
 
 ///|
 test "Layout sequence note left of first actor stays within diagram bounds" {
-  let graph = try! @parser.parse_mermaid(
+  let graph = @parser.parse_mermaid(
     (
       #|sequenceDiagram
       #|A->>B: Hello
@@ -1060,7 +1060,7 @@ test "Layout sequence note left of first actor stays within diagram bounds" {
 
 ///|
 test "Layout sequence notes on both sides stay within diagram bounds" {
-  let graph = try! @parser.parse_mermaid(
+  let graph = @parser.parse_mermaid(
     (
       #|sequenceDiagram
       #|A->>B: Hello
@@ -1083,7 +1083,7 @@ test "Layout sequence notes on both sides stay within diagram bounds" {
 
 ///|
 test "Layout state cycle offsets opposite-direction edge labels" {
-  let graph = try! @parser.parse_mermaid(
+  let graph = @parser.parse_mermaid(
     (
       #|stateDiagram-v2
       #|[*] --> Ready
@@ -1115,7 +1115,7 @@ test "Layout state cycle offsets opposite-direction edge labels" {
 
 ///|
 test "Layout sequence note over actor stays within diagram bounds" {
-  let graph = try! @parser.parse_mermaid(
+  let graph = @parser.parse_mermaid(
     (
       #|sequenceDiagram
       #|A->>B: Hello
@@ -1136,7 +1136,7 @@ test "Layout sequence note over actor stays within diagram bounds" {
 
 ///|
 test "Layout sequence shift preserves actor message and lifeline alignment" {
-  let graph = try! @parser.parse_mermaid(
+  let graph = @parser.parse_mermaid(
     (
       #|sequenceDiagram
       #|A->>B: Hello
@@ -1186,7 +1186,7 @@ test "Layout sequence shift preserves actor message and lifeline alignment" {
 
 ///|
 test "Layout sequence without notes has no extra horizontal shift" {
-  let graph = try! @parser.parse_mermaid(
+  let graph = @parser.parse_mermaid(
     (
       #|sequenceDiagram
       #|A->>B: Hello
@@ -1206,7 +1206,7 @@ test "Layout sequence without notes has no extra horizontal shift" {
 
 ///|
 test "Layout sequence right-side note expands diagram width" {
-  let without_note_graph = try! @parser.parse_mermaid(
+  let without_note_graph = @parser.parse_mermaid(
     (
       #|sequenceDiagram
       #|A->>B: Hello
@@ -1216,7 +1216,7 @@ test "Layout sequence right-side note expands diagram width" {
     .trim_end()
     .to_string(),
   )
-  let with_note_graph = try! @parser.parse_mermaid(
+  let with_note_graph = @parser.parse_mermaid(
     (
       #|sequenceDiagram
       #|A->>B: Hello
@@ -1236,7 +1236,7 @@ test "Layout sequence right-side note expands diagram width" {
 
 ///|
 test "Layout sequence left-side note shifts actors right" {
-  let without_note_graph = try! @parser.parse_mermaid(
+  let without_note_graph = @parser.parse_mermaid(
     (
       #|sequenceDiagram
       #|A->>B: Hello
@@ -1246,7 +1246,7 @@ test "Layout sequence left-side note shifts actors right" {
     .trim_end()
     .to_string(),
   )
-  let with_note_graph = try! @parser.parse_mermaid(
+  let with_note_graph = @parser.parse_mermaid(
     (
       #|sequenceDiagram
       #|A->>B: Hello
@@ -1270,7 +1270,7 @@ test "Layout sequence left-side note shifts actors right" {
 
 ///|
 test "Layout sequence opt block header adds extra spacing" {
-  let graph = try! @parser.parse_mermaid(
+  let graph = @parser.parse_mermaid(
     (
       #|sequenceDiagram
       #|A->>B: Request
@@ -1292,7 +1292,7 @@ test "Layout sequence opt block header adds extra spacing" {
 
 ///|
 test "Layout sequence critical block header adds extra spacing" {
-  let graph = try! @parser.parse_mermaid(
+  let graph = @parser.parse_mermaid(
     (
       #|sequenceDiagram
       #|A->>DB: BEGIN
@@ -1314,7 +1314,7 @@ test "Layout sequence critical block header adds extra spacing" {
 
 ///|
 test "Layout sequence multiple dividers are between corresponding messages" {
-  let graph = try! @parser.parse_mermaid(
+  let graph = @parser.parse_mermaid(
     (
       #|sequenceDiagram
       #|C->>S: Login
@@ -1345,7 +1345,7 @@ test "Layout sequence multiple dividers are between corresponding messages" {
 
 ///|
 test "Layout sequence divider line stays below previous message arrow" {
-  let graph = try! @parser.parse_mermaid(
+  let graph = @parser.parse_mermaid(
     (
       #|sequenceDiagram
       #|A->>B: Login
@@ -1374,7 +1374,7 @@ test "Layout sequence divider line stays below previous message arrow" {
 
 ///|
 test "Layout sequence three-branch alt keeps header and divider clearance" {
-  let graph = try! @parser.parse_mermaid(
+  let graph = @parser.parse_mermaid(
     (
       #|sequenceDiagram
       #|C->>S: Login
@@ -1415,7 +1415,7 @@ test "Layout sequence three-branch alt keeps header and divider clearance" {
 
 ///|
 test "Layout sequence long divider labels trigger larger offset" {
-  let graph = try! @parser.parse_mermaid(
+  let graph = @parser.parse_mermaid(
     (
       #|sequenceDiagram
       #|participant C as Client
@@ -1449,7 +1449,7 @@ test "Layout sequence long divider labels trigger larger offset" {
 
 ///|
 test "Layout sequence short divider labels keep default offset" {
-  let graph = try! @parser.parse_mermaid(
+  let graph = @parser.parse_mermaid(
     (
       #|sequenceDiagram
       #|A->>B: Login
