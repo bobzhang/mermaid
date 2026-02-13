@@ -47,9 +47,6 @@ Key models:
 
 - Root facade: `parser.mbt`
   - `parse_mermaid(text)` delegates to the header dispatcher.
-- Parser package bridge: `parser/parser.mbt`
-  - Public API is intentionally parse-only: `parse_mermaid(String) -> @model.MermaidGraph raise @model.MermaidError`.
-  - Model types are owned by `model/types.mbt` and are not re-exported from the parser package.
 - Header dispatcher implementation: `parser/header/core/parser.mbt`
   - Handles normalization, preprocessing, header detection, and dispatch.
 
@@ -114,12 +111,10 @@ Output: `PositionedGraph`.
 
 ### SVG
 
-- Public bridge: `renderer/svg/svg_renderer.mbt`
 - Implementation: `renderer/svg/engine/core/svg_renderer.mbt`
 
 ### ASCII / Unicode
 
-- Public umbrella: `renderer/ascii/ascii_renderer.mbt`
 - Internal layout-plan stage:
   - Package: `renderer/ascii/layout_plan/layout_plan.mbt`
   - Produces `AsciiLayoutPlan` with family dispatch and precomputed layout payloads for:
@@ -141,7 +136,6 @@ Output: `PositionedGraph`.
 ## Theme and Styling
 
 - Theme implementation: `themes/core/themes.mbt`
-- Theme bridge: `themes/themes.mbt`
 
 The renderers consume resolved diagram colors/options and do not own theme canonicalization logic.
 

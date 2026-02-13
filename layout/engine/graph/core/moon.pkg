@@ -9,5 +9,5 @@ import {
 } for "test"
 
 import {
-  "bobzhang/beautiful_mermaid/parser" @parser,
+  "bobzhang/beautiful_mermaid/parser/header/core" @parser,
 } for "wbtest"

@@ -1,3 +1,0 @@
-import {
-  "bobzhang/beautiful_mermaid/test_support/core" @test_support_core,
-}

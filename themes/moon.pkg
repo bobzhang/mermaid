@@ -1,4 +1,0 @@
-import {
-  "bobzhang/beautiful_mermaid/model" @model,
-  "bobzhang/beautiful_mermaid/themes/core" @themes_core,
-}

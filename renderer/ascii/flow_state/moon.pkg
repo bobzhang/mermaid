@@ -1,4 +1,0 @@
-import {
-  "bobzhang/beautiful_mermaid/model" @model,
-  "bobzhang/beautiful_mermaid/renderer/ascii/flow_state/engine/core" @renderer_ascii_flow_state_core,
-}
