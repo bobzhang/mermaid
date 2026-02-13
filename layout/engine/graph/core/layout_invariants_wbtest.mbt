@@ -566,7 +566,17 @@ test "Layout sequence adds block and divider spacing" {
 ///|
 test "Layout sequence includes notes and activation bars" {
   let graph = try! @parser.parse_mermaid(
-    "sequenceDiagram\nactor U as User\nparticipant S as Server\nU->>+S: Request\nNote right of S: Process\nS-->>-U: Response",
+    (
+      #|sequenceDiagram
+      #|actor U as User
+      #|participant S as Server
+      #|U->>+S: Request
+      #|Note right of S: Process
+      #|S-->>-U: Response
+      #|
+    )
+    .trim_end()
+    .to_string(),
   )
   let positioned = layout_graph(graph, RenderOptions::default())
 
@@ -582,7 +592,20 @@ test "Layout sequence includes notes and activation bars" {
 ///|
 test "Layout sequence increases divider offset on horizontal label overlap" {
   let graph = try! @parser.parse_mermaid(
-    "sequenceDiagram\nC->>S: Login\nalt Valid credentials\nS-->>C: 200 OK\nelse Bad\nS-->>C: 401\nelse Account locked\nS-->>C: 403 Forbidden\nend",
+    (
+      #|sequenceDiagram
+      #|C->>S: Login
+      #|alt Valid credentials
+      #|S-->>C: 200 OK
+      #|else Bad
+      #|S-->>C: 401
+      #|else Account locked
+      #|S-->>C: 403 Forbidden
+      #|end
+      #|
+    )
+    .trim_end()
+    .to_string(),
   )
   let positioned = layout_graph(graph, RenderOptions::default())
 
@@ -601,7 +624,17 @@ test "Layout sequence increases divider offset on horizontal label overlap" {
 ///|
 test "Layout sequence ignores standalone activate/deactivate commands" {
   let graph = try! @parser.parse_mermaid(
-    "sequenceDiagram\nparticipant A\nparticipant B\nactivate A\nA->>B: Work\ndeactivate A",
+    (
+      #|sequenceDiagram
+      #|participant A
+      #|participant B
+      #|activate A
+      #|A->>B: Work
+      #|deactivate A
+      #|
+    )
+    .trim_end()
+    .to_string(),
   )
   let positioned = layout_graph(graph, RenderOptions::default())
 
@@ -611,7 +644,16 @@ test "Layout sequence ignores standalone activate/deactivate commands" {
 ///|
 test "Layout sequence keeps block header tab above first in-block message label" {
   let graph = try! @parser.parse_mermaid(
-    "sequenceDiagram\nA->>B: Before\nloop Repeat\nA->>B: Inside\nend",
+    (
+      #|sequenceDiagram
+      #|A->>B: Before
+      #|loop Repeat
+      #|A->>B: Inside
+      #|end
+      #|
+    )
+    .trim_end()
+    .to_string(),
   )
   let positioned = layout_graph(graph, RenderOptions::default())
 
@@ -630,7 +672,16 @@ test "Layout sequence keeps block header tab above first in-block message label"
 ///|
 test "Layout sequence keeps block header below previous message arrow" {
   let graph = try! @parser.parse_mermaid(
-    "sequenceDiagram\nA->>B: Previous\nalt Valid\nB->>A: Response\nend",
+    (
+      #|sequenceDiagram
+      #|A->>B: Previous
+      #|alt Valid
+      #|B->>A: Response
+      #|end
+      #|
+    )
+    .trim_end()
+    .to_string(),
   )
   let positioned = layout_graph(graph, RenderOptions::default())
 
@@ -647,7 +698,18 @@ test "Layout sequence keeps block header below previous message arrow" {
 ///|
 test "Layout sequence keeps divider label above following message label" {
   let graph = try! @parser.parse_mermaid(
-    "sequenceDiagram\nA->>B: Login\nalt Success\nB->>A: 200\nelse Failure\nB->>A: 500\nend",
+    (
+      #|sequenceDiagram
+      #|A->>B: Login
+      #|alt Success
+      #|B->>A: 200
+      #|else Failure
+      #|B->>A: 500
+      #|end
+      #|
+    )
+    .trim_end()
+    .to_string(),
   )
   let positioned = layout_graph(graph, RenderOptions::default())
 
@@ -668,7 +730,16 @@ test "Layout sequence keeps divider label above following message label" {
 ///|
 test "Layout sequence ignores activation commands with self messages" {
   let graph = try! @parser.parse_mermaid(
-    "sequenceDiagram\nparticipant A\nactivate A\nA->>A: Think\ndeactivate A",
+    (
+      #|sequenceDiagram
+      #|participant A
+      #|activate A
+      #|A->>A: Think
+      #|deactivate A
+      #|
+    )
+    .trim_end()
+    .to_string(),
   )
   let positioned = layout_graph(graph, RenderOptions::default())
 
@@ -680,10 +751,28 @@ test "Layout sequence ignores activation commands with self messages" {
 ///|
 test "Layout sequence height increases with block header extra spacing" {
   let plain_graph = try! @parser.parse_mermaid(
-    "sequenceDiagram\nA->>B: One\nB->>A: Two\nA->>B: Three",
+    (
+      #|sequenceDiagram
+      #|A->>B: One
+      #|B->>A: Two
+      #|A->>B: Three
+      #|
+    )
+    .trim_end()
+    .to_string(),
   )
   let block_graph = try! @parser.parse_mermaid(
-    "sequenceDiagram\nA->>B: One\nloop Repeat\nB->>A: Two\nend\nA->>B: Three",
+    (
+      #|sequenceDiagram
+      #|A->>B: One
+      #|loop Repeat
+      #|B->>A: Two
+      #|end
+      #|A->>B: Three
+      #|
+    )
+    .trim_end()
+    .to_string(),
   )
 
   let plain_positioned = layout_graph(plain_graph, RenderOptions::default())
@@ -696,10 +785,32 @@ test "Layout sequence height increases with block header extra spacing" {
 ///|
 test "Layout sequence height increases with divider extra spacing" {
   let no_divider_graph = try! @parser.parse_mermaid(
-    "sequenceDiagram\nA->>B: M1\nB->>A: M2\nA->>B: M3\nB->>A: M4",
+    (
+      #|sequenceDiagram
+      #|A->>B: M1
+      #|B->>A: M2
+      #|A->>B: M3
+      #|B->>A: M4
+      #|
+    )
+    .trim_end()
+    .to_string(),
   )
   let with_divider_graph = try! @parser.parse_mermaid(
-    "sequenceDiagram\nA->>B: M1\nalt Case1\nB->>A: M2\nelse Case2\nA->>B: M3\nelse Case3\nB->>A: M4\nend",
+    (
+      #|sequenceDiagram
+      #|A->>B: M1
+      #|alt Case1
+      #|B->>A: M2
+      #|else Case2
+      #|A->>B: M3
+      #|else Case3
+      #|B->>A: M4
+      #|end
+      #|
+    )
+    .trim_end()
+    .to_string(),
   )
 
   let no_divider_positioned = layout_graph(
@@ -718,7 +829,16 @@ test "Layout sequence height increases with divider extra spacing" {
 ///|
 test "Layout sequence block top stays above first in-block message by pad" {
   let graph = try! @parser.parse_mermaid(
-    "sequenceDiagram\nA->>B: Before\nloop Retry\nA->>B: Inside\nend",
+    (
+      #|sequenceDiagram
+      #|A->>B: Before
+      #|loop Retry
+      #|A->>B: Inside
+      #|end
+      #|
+    )
+    .trim_end()
+    .to_string(),
   )
   let positioned = layout_graph(graph, RenderOptions::default())
 
@@ -735,7 +855,18 @@ test "Layout sequence block top stays above first in-block message by pad" {
 ///|
 test "Layout sequence divider row is between adjacent messages" {
   let graph = try! @parser.parse_mermaid(
-    "sequenceDiagram\nA->>B: Login\nalt Success\nB->>A: 200\nelse Failure\nB->>A: 500\nend",
+    (
+      #|sequenceDiagram
+      #|A->>B: Login
+      #|alt Success
+      #|B->>A: 200
+      #|else Failure
+      #|B->>A: 500
+      #|end
+      #|
+    )
+    .trim_end()
+    .to_string(),
   )
   let positioned = layout_graph(graph, RenderOptions::default())
 
@@ -755,7 +886,18 @@ test "Layout sequence divider row is between adjacent messages" {
 ///|
 test "Layout sequence block height encloses in-block messages" {
   let graph = try! @parser.parse_mermaid(
-    "sequenceDiagram\nA->>B: Before\nalt Yes\nB->>A: Response 1\nelse No\nB->>A: Response 2\nend",
+    (
+      #|sequenceDiagram
+      #|A->>B: Before
+      #|alt Yes
+      #|B->>A: Response 1
+      #|else No
+      #|B->>A: Response 2
+      #|end
+      #|
+    )
+    .trim_end()
+    .to_string(),
   )
   let positioned = layout_graph(graph, RenderOptions::default())
 
