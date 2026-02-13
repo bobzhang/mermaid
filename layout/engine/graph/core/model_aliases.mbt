@@ -1,35 +1,47 @@
+///|
 /// The complete parsed mermaid diagram model.
 type MermaidGraph = @model.MermaidGraph
 
+///|
 /// A parsed node in a mermaid diagram.
 type MermaidNode = @model.MermaidNode
 
+///|
 /// A parsed edge connecting two nodes in a mermaid diagram.
 type MermaidEdge = @model.MermaidEdge
 
+///|
 /// A subgraph grouping nodes and child subgraphs.
 type MermaidSubgraph = @model.MermaidSubgraph
 
+///|
 /// Layout direction for flowchart and state diagrams.
 type Direction = @model.Direction
 
+///|
 /// Visual shape of a diagram node.
 type NodeShape = @model.NodeShape
 
+///|
 /// Configuration options for SVG rendering.
 type RenderOptions = @model.RenderOptions
 
+///|
 /// A 2D point used for edge routing.
 type Point = @model.Point
 
+///|
 /// A diagram node after layout positioning.
 type PositionedNode = @model.PositionedNode
 
+///|
 /// A diagram edge after layout positioning with route points.
 type PositionedEdge = @model.PositionedEdge
 
+///|
 /// A positioned subgraph group with bounding box.
 type PositionedGroup = @model.PositionedGroup
 
+///|
 /// The complete positioned diagram ready for rendering.
 type PositionedGraph = @model.PositionedGraph
