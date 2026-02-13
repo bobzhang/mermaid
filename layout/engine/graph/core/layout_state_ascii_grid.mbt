@@ -304,7 +304,7 @@ fn layout_state_grid_coord_with_dir(
 fn layout_state_merge_grid_path(
   path : Array[AsciiGridCoord],
 ) -> Array[AsciiGridCoord] {
-  ascii_grid_merge_path(path)
+  @layout_engine_pathfinder_core.ascii_grid_merge_path(path)
 }
 
 ///|
@@ -373,7 +373,10 @@ fn layout_state_preferred_path(
   max_x : Int,
   max_y : Int,
 ) -> Array[AsciiGridCoord]? {
-  match ascii_grid_pathfind(start, ending, blocked, 0, max_x, 0, max_y) {
+  match
+    @layout_engine_pathfinder_core.ascii_grid_pathfind(
+      start, ending, blocked, 0, max_x, 0, max_y,
+    ) {
     Some(path) => Some(layout_state_merge_grid_path(path))
     None => None
   }

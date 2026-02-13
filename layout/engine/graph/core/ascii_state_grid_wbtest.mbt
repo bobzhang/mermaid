@@ -398,7 +398,7 @@ fn state_edge_path_text_td(
       let preferred_start = state_grid_coord_with_dir(source_coord, preferred)
       let preferred_end = state_grid_coord_with_dir(target_coord, preferred_opp)
       let preferred_path = match
-        ascii_grid_pathfind(
+        @layout_engine_pathfinder_core.ascii_grid_pathfind(
           preferred_start, preferred_end, blocked, 0, max_x, 0, max_y,
         ) {
         Some(path) => Some(merge_state_grid_path(path))
@@ -412,7 +412,7 @@ fn state_edge_path_text_td(
         target_coord, alternative_opp,
       )
       let alternative_path = match
-        ascii_grid_pathfind(
+        @layout_engine_pathfinder_core.ascii_grid_pathfind(
           alternative_start, alternative_end, blocked, 0, max_x, 0, max_y,
         ) {
         Some(path) => Some(merge_state_grid_path(path))

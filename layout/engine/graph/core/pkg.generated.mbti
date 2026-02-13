@@ -6,10 +6,6 @@ import {
 }
 
 // Values
-pub fn ascii_grid_merge_path(Array[@bobzhang/beautiful_mermaid/layout/engine/pathfinder/core.AsciiGridCoord]) -> Array[@bobzhang/beautiful_mermaid/layout/engine/pathfinder/core.AsciiGridCoord]
-
-pub fn ascii_grid_pathfind(@bobzhang/beautiful_mermaid/layout/engine/pathfinder/core.AsciiGridCoord, @bobzhang/beautiful_mermaid/layout/engine/pathfinder/core.AsciiGridCoord, Map[String, Bool], Int, Int, Int, Int) -> Array[@bobzhang/beautiful_mermaid/layout/engine/pathfinder/core.AsciiGridCoord]?
-
 pub fn layout_graph(@model.MermaidGraph, @model.RenderOptions) -> @model.PositionedGraph
 
 pub fn layout_graph_for_ascii(@model.MermaidGraph, @model.RenderOptions) -> @model.PositionedGraph

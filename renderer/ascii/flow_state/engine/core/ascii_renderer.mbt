@@ -476,7 +476,7 @@ fn flow_non_state_route_points_with_pathfinder(
   let start = AsciiGridCoord::{ x: source_x, y: source_y }
   let ending = AsciiGridCoord::{ x: target_x, y: target_y }
   match
-    @layout.ascii_grid_pathfind(
+    @layout_engine_pathfinder_core.ascii_grid_pathfind(
       start,
       ending,
       blocked,
@@ -489,7 +489,9 @@ fn flow_non_state_route_points_with_pathfinder(
       if path.length() < 2 {
         return fallback
       }
-      let merged_path = @layout.ascii_grid_merge_path(path)
+      let merged_path = @layout_engine_pathfinder_core.ascii_grid_merge_path(
+        path,
+      )
       if merged_path.length() < 2 {
         return fallback
       }
@@ -1285,7 +1287,7 @@ fn flow_draw_routed_segment(
   let start = AsciiGridCoord::{ x: x1, y: y1 }
   let ending = AsciiGridCoord::{ x: x2, y: y2 }
   match
-    @layout.ascii_grid_pathfind(
+    @layout_engine_pathfinder_core.ascii_grid_pathfind(
       start,
       ending,
       blocked,
