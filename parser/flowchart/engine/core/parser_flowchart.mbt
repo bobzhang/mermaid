@@ -8,7 +8,8 @@ fn parse_flow_direction(header : String) -> Direction? {
       "[[:space:]]+"
       ("[^[:space:]]+" as dir)
       "[[:space:]]*"
-    ) => parse_direction_token_strict(dir.to_string())
+    ) =>
+      @parser_common_engine_core.parse_direction_token_strict(dir.to_string())
     _ => None
   }
 }
@@ -32,7 +33,7 @@ fn split_node_and_class(raw_token : String) -> (String, String?) {
 ///|
 fn parse_node_and_class(raw_token : String) -> (MermaidNode, String?) {
   let (token, class_name) = split_node_and_class(raw_token)
-  (parse_node_token(token), class_name)
+  (@parser_common_engine_core.parse_node_token(token), class_name)
 }
 
 ///|
@@ -89,7 +90,9 @@ fn split_parallel_node_segments(segment : String) -> Array[String] {
       continue
     }
     if unit == '&' && square_depth == 0 && round_depth == 0 && curly_depth == 0 {
-      let part = trim_owned((try! segment[start:i]).to_string())
+      let part = @parser_common_engine_core.trim_owned(
+        (try! segment[start:i]).to_string(),
+      )
       if part != "" {
         parts.push(part)
       }
@@ -98,7 +101,7 @@ fn split_parallel_node_segments(segment : String) -> Array[String] {
   }
 
   let tail = if start < segment.length() {
-    trim_owned((try! segment[start:]).to_string())
+    @parser_common_engine_core.trim_owned((try! segment[start:]).to_string())
   } else {
     ""
   }
@@ -345,16 +348,22 @@ fn parse_class_line(
   line : String,
   class_assignments : Map[String, String],
 ) -> Unit {
-  let rest = trim_owned((try! line[6:]).to_string())
+  let rest = @parser_common_engine_core.trim_owned((try! line[6:]).to_string())
   match rest.rev_find(" ") {
     Some(idx) => {
-      let node_list = trim_owned((try! rest[:idx]).to_string())
-      let class_name = trim_owned((try! rest[idx + 1:]).to_string())
+      let node_list = @parser_common_engine_core.trim_owned(
+        (try! rest[:idx]).to_string(),
+      )
+      let class_name = @parser_common_engine_core.trim_owned(
+        (try! rest[idx + 1:]).to_string(),
+      )
       if class_name == "" || node_list == "" {
         return
       }
       for node_part in node_list.split(",") {
-        let node_id = trim_owned(node_part.to_string())
+        let node_id = @parser_common_engine_core.trim_owned(
+          node_part.to_string(),
+        )
         if node_id != "" {
           class_assignments[node_id] = class_name
         }
@@ -424,7 +433,7 @@ fn is_subgraph_id_token(token : String) -> Bool {
 fn normalize_subgraph_id_from_label(label : String) -> String {
   let collapsed = label
     .split(" ")
-    .map(part => trim_owned(part.to_string()))
+    .map(part => @parser_common_engine_core.trim_owned(part.to_string()))
     .filter(part => part != "")
     .iter()
     .join("_")
@@ -447,7 +456,7 @@ fn parse_subgraph_start_line(line : String) -> MermaidSubgraph? {
   if !line.has_prefix("subgraph ") {
     return None
   }
-  let rest = trim_owned((try! line[9:]).to_string())
+  let rest = @parser_common_engine_core.trim_owned((try! line[9:]).to_string())
   if rest == "" {
     return None
   }
@@ -455,8 +464,10 @@ fn parse_subgraph_start_line(line : String) -> MermaidSubgraph? {
   match rest.find("[") {
     Some(open_idx) =>
       if rest.has_suffix("]") {
-        let raw_id = trim_owned((try! rest[:open_idx]).to_string())
-        let raw_label = trim_owned(
+        let raw_id = @parser_common_engine_core.trim_owned(
+          (try! rest[:open_idx]).to_string(),
+        )
+        let raw_label = @parser_common_engine_core.trim_owned(
           (try! rest[open_idx + 1:rest.length() - 1]).to_string(),
         )
         if raw_id != "" && raw_label != "" && is_subgraph_id_token(raw_id) {
@@ -506,7 +517,9 @@ fn parse_flow_line(
   match find_earliest_edge_operator(line) {
     Some(found) => {
       let touched_node_ids : Array[String] = []
-      let left_segment = trim_owned((try! line[:found.index]).to_string())
+      let left_segment = @parser_common_engine_core.trim_owned(
+        (try! line[:found.index]).to_string(),
+      )
       let mut current_sources = ensure_nodes_from_entries(
         nodes,
         class_assignments,
@@ -515,7 +528,7 @@ fn parse_flow_line(
       push_unique_node_ids(touched_node_ids, current_sources)
 
       let mut current_op = found.op
-      let mut rhs = trim_owned(
+      let mut rhs = @parser_common_engine_core.trim_owned(
         (try! line[found.index + found.op.symbol.length():]).to_string(),
       )
 
@@ -524,7 +537,7 @@ fn parse_flow_line(
         let (label, rhs_without_label) = parse_label_and_target(rhs)
         match find_earliest_edge_operator(rhs_without_label) {
           Some(next_found) => {
-            let target_segment = trim_owned(
+            let target_segment = @parser_common_engine_core.trim_owned(
               (try! rhs_without_label[:next_found.index]).to_string(),
             )
             let next_targets = ensure_nodes_from_entries(
@@ -538,7 +551,7 @@ fn parse_flow_line(
             )
             current_sources = next_targets
             current_op = next_found.op
-            rhs = trim_owned(
+            rhs = @parser_common_engine_core.trim_owned(
               (try! rhs_without_label[next_found.index +
               next_found.op.symbol.length():]).to_string(),
             )
@@ -606,10 +619,14 @@ pub fn parse_flowchart(
 
     if line.has_prefix("direction ") {
       if subgraph_stack.length() > 0 {
-        let token = trim_owned((try! line[10:]).to_string())
-        match parse_direction_token_strict(token) {
+        let token = @parser_common_engine_core.trim_owned(
+          (try! line[10:]).to_string(),
+        )
+        match @parser_common_engine_core.parse_direction_token_strict(token) {
           Some(parsed_direction) =>
-            set_current_subgraph_direction(subgraph_stack, parsed_direction)
+            @parser_common_engine_core.set_current_subgraph_direction(
+              subgraph_stack, parsed_direction,
+            )
           None => ()
         }
       }
@@ -628,7 +645,9 @@ pub fn parse_flowchart(
       match subgraph_stack.pop() {
         Some(completed) =>
           if subgraph_stack.length() > 0 {
-            append_child_subgraph(subgraph_stack, completed)
+            @parser_common_engine_core.append_child_subgraph(
+              subgraph_stack, completed,
+            )
           } else {
             subgraphs.push(completed)
           }
@@ -650,7 +669,9 @@ pub fn parse_flowchart(
         newly_defined_node_ids.push(node_id)
       }
     }
-    append_nodes_to_current_subgraph(subgraph_stack, newly_defined_node_ids)
+    @parser_common_engine_core.append_nodes_to_current_subgraph(
+      subgraph_stack, newly_defined_node_ids,
+    )
   }
 
   {

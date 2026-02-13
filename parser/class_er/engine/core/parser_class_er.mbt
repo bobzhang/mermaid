@@ -10,7 +10,7 @@ fn parse_relation_parts(line : String) -> (String, String, String, String?)? {
   }
   let parts = body
     .split(" ")
-    .map(part => trim_owned(part.to_string()))
+    .map(part => @parser_common_engine_core.trim_owned(part.to_string()))
     .filter(part => part != "")
     .to_array()
   if parts.length() < 3 {
@@ -61,7 +61,7 @@ fn edge_style_for_operator(operator : String) -> EdgeStyle {
 fn collapse_spaces(text : String) -> String {
   text
   .split(" ")
-  .map(part => trim_owned(part.to_string()))
+  .map(part => @parser_common_engine_core.trim_owned(part.to_string()))
   .filter(part => part != "")
   .iter()
   .join(" ")
@@ -78,15 +78,19 @@ fn normalize_er_attribute(raw : String) -> String {
   let mut comment = ""
   match normalized.find("\"") {
     Some(quote_idx) => {
-      body = trim_owned((try! normalized[:quote_idx]).to_string())
-      comment = trim_owned((try! normalized[quote_idx:]).to_string())
+      body = @parser_common_engine_core.trim_owned(
+        (try! normalized[:quote_idx]).to_string(),
+      )
+      comment = @parser_common_engine_core.trim_owned(
+        (try! normalized[quote_idx:]).to_string(),
+      )
     }
     None => ()
   }
 
   let parts = body
     .split(" ")
-    .map(part => trim_owned(part.to_string()))
+    .map(part => @parser_common_engine_core.trim_owned(part.to_string()))
     .filter(part => part != "")
     .to_array()
   if parts.length() < 2 {
@@ -135,7 +139,7 @@ fn normalize_class_member(raw : String) -> String {
   let body = if visibility == "" {
     trimmed
   } else {
-    trim_owned((try! trimmed[1:]).to_string())
+    @parser_common_engine_core.trim_owned((try! trimmed[1:]).to_string())
   }
   if body == "" {
     return trimmed
@@ -144,8 +148,12 @@ fn normalize_class_member(raw : String) -> String {
   if body.contains("(") && body.contains(")") {
     match (body.find("("), body.find(")")) {
       (Some(open_idx), Some(close_idx)) => {
-        let name = trim_owned((try! body[:open_idx]).to_string())
-        let return_type = trim_owned((try! body[close_idx + 1:]).to_string())
+        let name = @parser_common_engine_core.trim_owned(
+          (try! body[:open_idx]).to_string(),
+        )
+        let return_type = @parser_common_engine_core.trim_owned(
+          (try! body[close_idx + 1:]).to_string(),
+        )
         if name == "" {
           return trimmed
         }
@@ -163,7 +171,7 @@ fn normalize_class_member(raw : String) -> String {
 
   let parts = body
     .split(" ")
-    .map(part => trim_owned(part.to_string()))
+    .map(part => @parser_common_engine_core.trim_owned(part.to_string()))
     .filter(part => part != "")
     .to_array()
   if parts.length() >= 2 {
@@ -227,8 +235,16 @@ fn append_relation_edge(
   nodes : Map[String, MermaidNode],
   edges : Array[MermaidEdge],
 ) -> Unit {
-  ensure_node(nodes, { id: source, label: source, shape: default_shape })
-  ensure_node(nodes, { id: target, label: target, shape: default_shape })
+  @parser_common_engine_core.ensure_node(nodes, {
+    id: source,
+    label: source,
+    shape: default_shape,
+  })
+  @parser_common_engine_core.ensure_node(nodes, {
+    id: target,
+    label: target,
+    shape: default_shape,
+  })
   edges.push({
     source,
     target,
@@ -245,10 +261,14 @@ fn parse_class_declaration(line : String) -> (String, Bool)? {
   if !line.has_prefix("class ") {
     return None
   }
-  let mut rest = trim_owned((try! line[6:]).to_string())
+  let mut rest = @parser_common_engine_core.trim_owned(
+    (try! line[6:]).to_string(),
+  )
   let opens_block = rest.has_suffix("{")
   if rest.has_suffix("{") {
-    rest = trim_owned((try! rest[:rest.length() - 1]).to_string())
+    rest = @parser_common_engine_core.trim_owned(
+      (try! rest[:rest.length() - 1]).to_string(),
+    )
   }
   if rest == "" {
     None
@@ -264,8 +284,10 @@ fn parse_inline_class_declaration(line : String) -> (String, String?)? {
   }
   match line.find("{") {
     Some(open_idx) => {
-      let class_id = trim_owned((try! line[6:open_idx]).to_string())
-      let inline_detail = trim_owned(
+      let class_id = @parser_common_engine_core.trim_owned(
+        (try! line[6:open_idx]).to_string(),
+      )
+      let inline_detail = @parser_common_engine_core.trim_owned(
         (try! line[open_idx + 1:line.length() - 1]).to_string(),
       )
       if class_id == "" {
@@ -308,7 +330,11 @@ pub fn parse_class_diagram(lines : Array[String]) -> MermaidGraph {
 
     match parse_inline_class_declaration(line) {
       Some((class_id, inline_detail)) => {
-        ensure_node(nodes, { id: class_id, label: class_id, shape: ClassEntity })
+        @parser_common_engine_core.ensure_node(nodes, {
+          id: class_id,
+          label: class_id,
+          shape: ClassEntity,
+        })
         match inline_detail {
           Some(detail) =>
             append_detail(details, class_id, normalize_class_member(detail))
@@ -321,7 +347,11 @@ pub fn parse_class_diagram(lines : Array[String]) -> MermaidGraph {
 
     match parse_class_declaration(line) {
       Some((class_id, opens_block)) => {
-        ensure_node(nodes, { id: class_id, label: class_id, shape: ClassEntity })
+        @parser_common_engine_core.ensure_node(nodes, {
+          id: class_id,
+          label: class_id,
+          shape: ClassEntity,
+        })
         if opens_block {
           current_class = Some(class_id)
         }
@@ -350,8 +380,8 @@ pub fn parse_class_diagram(lines : Array[String]) -> MermaidGraph {
       (candidate_part, ":", detail_part) => {
         let candidate = candidate_part.trim().to_string()
         let detail = normalize_class_member(detail_part.trim().to_string())
-        if is_plain_identifier(candidate) {
-          ensure_node(nodes, {
+        if @parser_common_engine_core.is_plain_identifier(candidate) {
+          @parser_common_engine_core.ensure_node(nodes, {
             id: candidate,
             label: candidate,
             shape: ClassEntity,
@@ -389,11 +419,17 @@ fn parse_er_entity_declaration_line(
   if !line.has_suffix("{") {
     return None
   }
-  let id = trim_owned((try! line[:line.length() - 1]).to_string())
+  let id = @parser_common_engine_core.trim_owned(
+    (try! line[:line.length() - 1]).to_string(),
+  )
   if id == "" {
     return None
   }
-  ensure_node(nodes, { id, label: id, shape: ErEntity })
+  @parser_common_engine_core.ensure_node(nodes, {
+    id,
+    label: id,
+    shape: ErEntity,
+  })
   Some(id)
 }
 

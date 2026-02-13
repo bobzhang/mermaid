@@ -6,21 +6,29 @@ fn parse_state_token(
   start_counter : Int,
   end_counter : Int,
 ) -> (String, Int, Int) {
-  let trimmed = trim_owned(token)
+  let trimmed = @parser_common_engine_core.trim_owned(token)
   if trimmed == "[*]" {
     if is_source {
       let next = start_counter + 1
       let id = "state_start_\{next}"
-      ensure_node(nodes, { id, label: "", shape: StateStart })
+      @parser_common_engine_core.ensure_node(nodes, {
+        id,
+        label: "",
+        shape: StateStart,
+      })
       (id, next, end_counter)
     } else {
       let next = end_counter + 1
       let id = "state_end_\{next}"
-      ensure_node(nodes, { id, label: "", shape: StateEnd })
+      @parser_common_engine_core.ensure_node(nodes, {
+        id,
+        label: "",
+        shape: StateEnd,
+      })
       (id, start_counter, next)
     }
   } else {
-    let parsed = parse_node_token(trimmed)
+    let parsed = @parser_common_engine_core.parse_node_token(trimmed)
     let node = MermaidNode::{
       id: parsed.id,
       label: parsed.label,
@@ -30,7 +38,7 @@ fn parse_state_token(
         parsed.shape
       },
     }
-    ensure_node(nodes, node)
+    @parser_common_engine_core.ensure_node(nodes, node)
     (node.id, start_counter, end_counter)
   }
 }
@@ -58,13 +66,20 @@ fn parse_state_declaration(
       let id = id_part.trim().to_string()
       let label = strip_quotes(raw_label.trim())
       if id != "" {
-        ensure_node(nodes, { id, label, shape: Rounded })
-        append_nodes_to_current_subgraph(composite_stack, [id])
+        @parser_common_engine_core.ensure_node(nodes, {
+          id,
+          label,
+          shape: Rounded,
+        })
+        @parser_common_engine_core.append_nodes_to_current_subgraph(
+          composite_stack,
+          [id],
+        )
       }
     }
     _ => {
       let rest_str = rest.to_string()
-      let parsed = parse_node_token(rest_str)
+      let parsed = @parser_common_engine_core.parse_node_token(rest_str)
       let node = MermaidNode::{
         id: parsed.id,
         label: parsed.label,
@@ -74,8 +89,11 @@ fn parse_state_declaration(
           parsed.shape
         },
       }
-      ensure_node(nodes, node)
-      append_nodes_to_current_subgraph(composite_stack, [node.id])
+      @parser_common_engine_core.ensure_node(nodes, node)
+      @parser_common_engine_core.append_nodes_to_current_subgraph(
+        composite_stack,
+        [node.id],
+      )
     }
   }
 }
@@ -93,7 +111,7 @@ fn parse_state_composite_start_line(line : String) -> MermaidSubgraph? {
   lexmatch rest {
     (raw_label, " as ", id_part) => {
       let id = id_part.trim().to_string()
-      if id == "" || !is_plain_identifier(id) {
+      if id == "" || !@parser_common_engine_core.is_plain_identifier(id) {
         return None
       }
       let label = strip_quotes(raw_label.trim())
@@ -113,7 +131,7 @@ fn parse_state_composite_start_line(line : String) -> MermaidSubgraph? {
   }
 
   let rest_str = rest.to_string()
-  if !is_plain_identifier(rest_str) {
+  if !@parser_common_engine_core.is_plain_identifier(rest_str) {
     return None
   }
   Some({
@@ -133,7 +151,9 @@ fn append_state_node_to_current_composite(
   if node_id == "" {
     return
   }
-  append_nodes_to_current_subgraph(composite_stack, [node_id])
+  @parser_common_engine_core.append_nodes_to_current_subgraph(composite_stack, [
+    node_id,
+  ])
 }
 
 ///|
@@ -142,9 +162,11 @@ fn parse_state_description_line(
   description : String,
   nodes : Map[String, MermaidNode],
 ) -> Bool {
-  let id = trim_owned(state_id)
-  let label = trim_owned(description)
-  if id == "" || label == "" || !is_plain_identifier(id) {
+  let id = @parser_common_engine_core.trim_owned(state_id)
+  let label = @parser_common_engine_core.trim_owned(description)
+  if id == "" ||
+    label == "" ||
+    !@parser_common_engine_core.is_plain_identifier(id) {
     return false
   }
 
@@ -176,11 +198,15 @@ pub fn parse_state_diagram(lines : Array[String]) -> MermaidGraph {
   for i in 1..<lines.length() {
     let line = lines[i]
     if line.has_prefix("direction ") {
-      let token = trim_owned((try! line[10:]).to_string())
-      match parse_direction_token_strict(token) {
+      let token = @parser_common_engine_core.trim_owned(
+        (try! line[10:]).to_string(),
+      )
+      match @parser_common_engine_core.parse_direction_token_strict(token) {
         Some(parsed_direction) =>
           if composite_stack.length() > 0 {
-            set_current_subgraph_direction(composite_stack, parsed_direction)
+            @parser_common_engine_core.set_current_subgraph_direction(
+              composite_stack, parsed_direction,
+            )
           } else {
             direction = parsed_direction
           }
@@ -201,7 +227,9 @@ pub fn parse_state_diagram(lines : Array[String]) -> MermaidGraph {
       match composite_stack.pop() {
         Some(completed) =>
           if composite_stack.length() > 0 {
-            append_child_subgraph(composite_stack, completed)
+            @parser_common_engine_core.append_child_subgraph(
+              composite_stack, completed,
+            )
           } else {
             subgraphs.push(completed)
           }
@@ -225,8 +253,10 @@ pub fn parse_state_diagram(lines : Array[String]) -> MermaidGraph {
 
     match find_edge_operator(transition_line) {
       Some(found) => {
-        let left = trim_owned((try! transition_line[:found.index]).to_string())
-        let right = trim_owned(
+        let left = @parser_common_engine_core.trim_owned(
+          (try! transition_line[:found.index]).to_string(),
+        )
+        let right = @parser_common_engine_core.trim_owned(
           (try! transition_line[found.index + found.op.symbol.length():]).to_string(),
         )
         let (source_id, next_start, next_end) = parse_state_token(
@@ -248,7 +278,10 @@ pub fn parse_state_diagram(lines : Array[String]) -> MermaidGraph {
           has_arrow_end: found.op.has_arrow_end,
           relation_operator: Some(found.op.symbol),
         })
-        append_nodes_to_current_subgraph(composite_stack, [source_id, target_id])
+        @parser_common_engine_core.append_nodes_to_current_subgraph(
+          composite_stack,
+          [source_id, target_id],
+        )
       }
       None =>
         match edge_label {
@@ -256,7 +289,7 @@ pub fn parse_state_diagram(lines : Array[String]) -> MermaidGraph {
             if parse_state_description_line(transition_line, description, nodes) {
               append_state_node_to_current_composite(
                 composite_stack,
-                trim_owned(transition_line),
+                @parser_common_engine_core.trim_owned(transition_line),
               )
             }
           None => ()

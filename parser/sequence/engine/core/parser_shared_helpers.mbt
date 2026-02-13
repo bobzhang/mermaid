@@ -13,11 +13,6 @@ priv struct FoundEdgeOp {
 }
 
 ///|
-fn trim_owned(s : String) -> String {
-  @parser_common_engine_core.trim_owned(s)
-}
-
-///|
 fn edge_operator_symbols(operators : Array[EdgeOp]) -> Array[String] {
   let symbols : Array[String] = []
   for op in operators {

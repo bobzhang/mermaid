@@ -47,10 +47,10 @@ fn parse_sequence_participant_declaration(
   let lower_line = line.to_lower()
   let mut rest = ""
   let kind = if lower_line.has_prefix("participant ") {
-    rest = trim_owned((try! line[12:]).to_string())
+    rest = @parser_common_engine_core.trim_owned((try! line[12:]).to_string())
     SequenceParticipantKind::Participant
   } else if lower_line.has_prefix("actor ") {
-    rest = trim_owned((try! line[6:]).to_string())
+    rest = @parser_common_engine_core.trim_owned((try! line[6:]).to_string())
     Actor
   } else {
     return false
@@ -216,8 +216,10 @@ fn parse_sequence_message_line(
 ) -> Bool {
   match find_sequence_operator(line) {
     Some(found) => {
-      let source = trim_owned((try! line[:found.index]).to_string())
-      let rhs = trim_owned(
+      let source = @parser_common_engine_core.trim_owned(
+        (try! line[:found.index]).to_string(),
+      )
+      let rhs = @parser_common_engine_core.trim_owned(
         (try! line[found.index + found.op.symbol.length():]).to_string(),
       )
       let (raw_target, label) = lexmatch rhs[:] {
@@ -238,7 +240,7 @@ fn parse_sequence_message_line(
       let target = if activation_mark == "" {
         raw_target
       } else {
-        trim_owned((try! raw_target[1:]).to_string())
+        @parser_common_engine_core.trim_owned((try! raw_target[1:]).to_string())
       }
 
       if source == "" || target == "" {
