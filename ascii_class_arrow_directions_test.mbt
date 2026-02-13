@@ -1,6 +1,6 @@
 ///|
-fn class_render(diagram : String, use_ascii : Bool) -> String {
-  try! @beautiful_mermaid.render_mermaid_ascii(diagram, options={
+fn class_render(diagram : String, use_ascii : Bool) -> String raise {
+  @beautiful_mermaid.render_mermaid_ascii(diagram, options={
     use_ascii,
     padding_x: 5,
     padding_y: 5,
