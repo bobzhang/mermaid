@@ -68,11 +68,6 @@ fn available_theme_list() -> String {
 }
 
 ///|
-fn canonical_cli_theme_slug(theme : String) -> String? {
-  @beautiful_mermaid.canonical_theme_slug(theme)
-}
-
-///|
 fn parse_non_negative_int(raw : String) -> Int? {
   let normalized = raw.trim().to_string()
   if normalized == "" {
@@ -821,7 +816,7 @@ pub fn run() -> Unit {
 
   let rendered_svg = match theme_slug {
     Some(slug) =>
-      match canonical_cli_theme_slug(slug) {
+      match @beautiful_mermaid.canonical_theme_slug(slug) {
         Some(canonical_slug) =>
           try? @beautiful_mermaid.render_mermaid_with_theme_name(
             input,

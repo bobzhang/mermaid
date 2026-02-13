@@ -24,11 +24,6 @@ struct StateEdgeLabelRect {
 }
 
 ///|
-fn state_svg_attr_int(snippet : String, attr : String) -> Int? {
-  @test_support.svg_attr_int(snippet, attr)
-}
-
-///|
 fn state_collect_edge_label_rects(svg : String) -> Array[StateEdgeLabelRect] {
   let rects : Array[StateEdgeLabelRect] = []
   let marker = "<rect class=\"edge-label-bg\""
@@ -45,10 +40,10 @@ fn state_collect_edge_label_rects(svg : String) -> Array[StateEdgeLabelRect] {
             let snippet = (try! tail[:close_idx + 2]).to_string()
             match
               (
-                state_svg_attr_int(snippet, "x"),
-                state_svg_attr_int(snippet, "y"),
-                state_svg_attr_int(snippet, "width"),
-                state_svg_attr_int(snippet, "height"),
+                @test_support.svg_attr_int(snippet, "x"),
+                @test_support.svg_attr_int(snippet, "y"),
+                @test_support.svg_attr_int(snippet, "width"),
+                @test_support.svg_attr_int(snippet, "height"),
               ) {
               (Some(x), Some(y), Some(width), Some(height)) =>
                 rects.push({ x, y, width, height })
