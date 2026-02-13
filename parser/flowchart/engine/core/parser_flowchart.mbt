@@ -130,17 +130,6 @@ fn edge_operators() -> Array[EdgeOp] {
 }
 
 ///|
-fn find_edge_operator(line : String) -> FoundEdgeOp? {
-  for op in edge_operators() {
-    match line.find(op.symbol) {
-      Some(index) => return Some({ op, index })
-      None => ()
-    }
-  }
-  None
-}
-
-///|
 fn find_earliest_edge_operator(line : String) -> FoundEdgeOp? {
   find_earliest_operator(line, edge_operators())
 }

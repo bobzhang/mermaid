@@ -52,6 +52,15 @@ pub fn count_occurrences(haystack : String, needle : String) -> Int {
 }
 
 ///|
+test "count_occurrences counts needle occurrences in haystack" {
+  assert_eq(count_occurrences("the quick brown fox", "o"), 2)
+  assert_eq(count_occurrences("ababa", "aba"), 1)
+  assert_eq(count_occurrences("aaaa", "aa"), 2)
+  assert_eq(count_occurrences("hello", ","), 0)
+  assert_eq(count_occurrences("hello", ""), 0)
+}
+
+///|
 /// Public function `svg_attr_int`.
 pub fn svg_attr_int(svg : String, attr : String) -> Int? {
   let marker = "\{attr}=\""

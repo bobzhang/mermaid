@@ -28,7 +28,7 @@ fn make_svg_test_node(label : String) -> PositionedNode {
 }
 
 ///|
-fn make_svg_test_node_with_shape(shape : NodeShape) -> PositionedNode {
+fn make_svg_test_node_with_shape(shape : @model.NodeShape) -> PositionedNode {
   {
     id: "A",
     label: "Test",

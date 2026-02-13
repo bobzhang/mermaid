@@ -1,8 +1,4 @@
 ///|
-/// Visual shape of a diagram node.
-type NodeShape = @model.NodeShape
-
-///|
 /// Stroke style of a diagram edge.
 type EdgeStyle = @model.EdgeStyle
 
