@@ -1,3 +1,4 @@
+///|
 /// Renders an ER diagram as ASCII/Unicode text art.
 pub fn render_ascii_er(
   graph : @model.MermaidGraph,

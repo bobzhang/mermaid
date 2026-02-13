@@ -591,6 +591,7 @@ fn parse_flow_line(
   }
 }
 
+///|
 /// Parses flowchart body lines into a `MermaidGraph`.
 pub fn parse_flowchart(
   lines : Array[String],

@@ -1,3 +1,4 @@
+///|
 /// Renders a class diagram as ASCII/Unicode text art.
 pub fn render_ascii_class(
   graph : @model.MermaidGraph,

@@ -1,8 +1,10 @@
+///|
 /// Trims whitespace and returns an owned copy of the string.
 pub fn trim_owned(s : String) -> String {
   s.trim().to_string()
 }
 
+///|
 /// Inserts a node into the map if it does not already exist.
 pub fn ensure_node(
   nodes : Map[String, @model.MermaidNode],
@@ -13,6 +15,7 @@ pub fn ensure_node(
   }
 }
 
+///|
 /// Returns true if the text is a plain identifier with no spaces or sign prefixes.
 pub fn is_plain_identifier(text : String) -> Bool {
   text != "" &&
@@ -21,6 +24,7 @@ pub fn is_plain_identifier(text : String) -> Bool {
   !text.has_prefix("-")
 }
 
+///|
 /// Parses a direction token strictly (TD, TB, LR, BT, RL).
 pub fn parse_direction_token_strict(token : String) -> @model.Direction? {
   match token.to_upper() {
@@ -33,6 +37,7 @@ pub fn parse_direction_token_strict(token : String) -> @model.Direction? {
   }
 }
 
+///|
 /// Parses a node token with open/close delimiters into a `MermaidNode`.
 pub fn parse_delimited_token(
   token : String,
@@ -65,6 +70,7 @@ pub fn parse_delimited_token(
   }
 }
 
+///|
 /// Parses a raw token string into a `MermaidNode` with shape detection.
 pub fn parse_node_token(raw_token : String) -> @model.MermaidNode {
   let token = trim_owned(raw_token)
@@ -165,6 +171,7 @@ pub fn parse_node_token(raw_token : String) -> @model.MermaidNode {
   }
 }
 
+///|
 /// Finds the earliest occurrence among operator symbols in a line.
 pub fn find_earliest_operator_indices(
   line : String,
@@ -192,6 +199,7 @@ pub fn find_earliest_operator_indices(
   best
 }
 
+///|
 /// Finds the first matching operator symbol by priority order.
 pub fn find_first_operator_indices(
   line : String,
@@ -206,6 +214,7 @@ pub fn find_first_operator_indices(
   None
 }
 
+///|
 /// Returns the edge operator specifications for flowchart parsing.
 pub fn flow_edge_operator_specs() -> Array[
   (String, @model.EdgeStyle, Bool, Bool),
@@ -223,6 +232,7 @@ pub fn flow_edge_operator_specs() -> Array[
   ]
 }
 
+///|
 /// Pushes an ID into the array if not already present.
 pub fn push_unique_id(ids : Array[String], id : String) -> Unit {
   if !ids.any(found => found == id) {
@@ -230,6 +240,7 @@ pub fn push_unique_id(ids : Array[String], id : String) -> Unit {
   }
 }
 
+///|
 /// Appends touched node IDs to the current subgraph on the stack.
 pub fn append_nodes_to_current_subgraph(
   subgraph_stack : Array[@model.MermaidSubgraph],
@@ -253,6 +264,7 @@ pub fn append_nodes_to_current_subgraph(
   }
 }
 
+///|
 /// Appends a child subgraph to the current subgraph on the stack.
 pub fn append_child_subgraph(
   subgraph_stack : Array[@model.MermaidSubgraph],
@@ -274,6 +286,7 @@ pub fn append_child_subgraph(
   }
 }
 
+///|
 /// Sets the layout direction of the current subgraph on the stack.
 pub fn set_current_subgraph_direction(
   subgraph_stack : Array[@model.MermaidSubgraph],

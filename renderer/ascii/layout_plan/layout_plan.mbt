@@ -1,3 +1,4 @@
+///|
 /// The kind of diagram layout plan for ASCII rendering.
 pub enum AsciiPlanKind {
   Sequence
@@ -8,6 +9,7 @@ pub enum AsciiPlanKind {
   NodesOnly
 }
 
+///|
 /// Layout metrics for a sequence diagram note in ASCII rendering.
 pub struct AsciiSequenceNoteLayout {
   x : Int
@@ -17,6 +19,7 @@ pub struct AsciiSequenceNoteLayout {
   lines : Array[String]
 }
 
+///|
 /// Layout metrics for a sequence activation bar in ASCII rendering.
 pub struct AsciiSequenceActivationLayout {
   actor_idx : Int
@@ -24,6 +27,7 @@ pub struct AsciiSequenceActivationLayout {
   bottom_y : Int
 }
 
+///|
 /// Complete layout metrics for a sequence diagram in ASCII rendering.
 pub struct AsciiSequenceLayout {
   actors : Array[@model.MermaidNode]
@@ -41,6 +45,7 @@ pub struct AsciiSequenceLayout {
   total_h : Int
 }
 
+///|
 /// Layout metrics for a class diagram in ASCII rendering.
 pub struct AsciiClassLayout {
   class_sections_map : Map[String, Array[Array[String]]]
@@ -53,6 +58,7 @@ pub struct AsciiClassLayout {
   total_h : Int
 }
 
+///|
 /// Layout metrics for an ER diagram in ASCII rendering.
 pub struct AsciiErLayout {
   entity_sections : Map[String, Array[Array[String]]]
@@ -65,6 +71,7 @@ pub struct AsciiErLayout {
   total_h : Int
 }
 
+///|
 /// Layout metrics for a flat state diagram grid in ASCII rendering.
 pub struct AsciiStateFlatGridLayout {
   nodes_in_order : Array[@model.MermaidNode]
@@ -72,11 +79,13 @@ pub struct AsciiStateFlatGridLayout {
   edge_paths : Array[Array[@layout.AsciiGridCoord]]
 }
 
+///|
 /// Layout metrics for a flowchart with subgraphs in ASCII rendering.
 pub struct AsciiFlowSubgraphLayout {
   positioned : @model.PositionedGraph
 }
 
+///|
 /// The layout plan selecting rendering strategy for ASCII output.
 pub struct AsciiLayoutPlan {
   kind : AsciiPlanKind
@@ -964,6 +973,7 @@ fn build_flow_subgraph_layout(
   }
 }
 
+///|
 /// Builds an ASCII layout plan by detecting the diagram type.
 pub fn build_plan(graph : @model.MermaidGraph) -> AsciiLayoutPlan {
   let sequence_mode = graph_is_shape(graph, SequenceParticipant)

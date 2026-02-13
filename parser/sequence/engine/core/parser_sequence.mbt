@@ -267,6 +267,7 @@ fn parse_sequence_message_line(
   }
 }
 
+///|
 /// Parses sequence diagram body lines into a `MermaidGraph`.
 pub fn parse_sequence_diagram(lines : Array[String]) -> MermaidGraph {
   let nodes : Map[String, MermaidNode] = {}
