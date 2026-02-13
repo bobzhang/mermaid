@@ -140,10 +140,10 @@ fn integration_input_state_done_end() -> String {
 
 ///|
 test "Pipeline dimensions honor direction" (it : @test.Test) {
-  let lr_svg = try! @beautiful_mermaid.render_mermaid(
+  let lr_svg = @beautiful_mermaid.render_mermaid(
     integration_input_graph_lr_abc_chain(),
   )
-  let td_svg = try! @beautiful_mermaid.render_mermaid(
+  let td_svg = @beautiful_mermaid.render_mermaid(
     integration_input_graph_td_abc_chain(),
   )
 
@@ -166,19 +166,19 @@ test "Flowchart BT direction renders across text and SVG modes" (
     #|graph BT
     #|A[Start] --> B[Middle] --> C[End]
 
-  let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
+  let ascii = @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: true,
     padding_x: 5,
     padding_y: 5,
     box_border_padding: 1,
   })
-  let unicode = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
+  let unicode = @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: false,
     padding_x: 5,
     padding_y: 5,
     box_border_padding: 1,
   })
-  let svg = try! @beautiful_mermaid.render_mermaid(input)
+  let svg = @beautiful_mermaid.render_mermaid(input)
   snapshot_svg(it, "integration_flowchart_bt.svg", svg)
 
   assert_true(ascii.contains("Start"))
@@ -200,19 +200,19 @@ test "Flowchart RL direction renders across text and SVG modes" (
     #|graph RL
     #|A[Origin] --> B[Pivot] --> C[Target]
 
-  let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
+  let ascii = @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: true,
     padding_x: 5,
     padding_y: 5,
     box_border_padding: 1,
   })
-  let unicode = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
+  let unicode = @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: false,
     padding_x: 5,
     padding_y: 5,
     box_border_padding: 1,
   })
-  let svg = try! @beautiful_mermaid.render_mermaid(input)
+  let svg = @beautiful_mermaid.render_mermaid(input)
   snapshot_svg(it, "integration_flowchart_rl.svg", svg)
 
   assert_true(ascii.contains("Origin"))
@@ -228,9 +228,7 @@ test "Flowchart RL direction renders across text and SVG modes" (
 
 ///|
 test "SVG simple flow keeps valid svg envelope" (it : @test.Test) {
-  let svg = try! @beautiful_mermaid.render_mermaid(
-    integration_input_graph_td_ab(),
-  )
+  let svg = @beautiful_mermaid.render_mermaid(integration_input_graph_td_ab())
   snapshot_svg(it, "integration_flowchart_simple.svg", svg)
   assert_true(svg.has_prefix("<svg "))
   assert_true(svg.has_suffix("</svg>"))
@@ -267,11 +265,11 @@ test "SVG dimensions expand with padding option" (it : @test.Test) {
     transparent: None,
   }
 
-  let small_svg = try! @beautiful_mermaid.render_mermaid(
+  let small_svg = @beautiful_mermaid.render_mermaid(
     integration_input_graph_td_ab(),
     options=small_options,
   )
-  let large_svg = try! @beautiful_mermaid.render_mermaid(
+  let large_svg = @beautiful_mermaid.render_mermaid(
     integration_input_graph_td_ab(),
     options=large_options,
   )
@@ -296,7 +294,7 @@ test "SVG dimensions expand with padding option" (it : @test.Test) {
 
 ///|
 test "SVG renders labeled nodes for simple flow" (it : @test.Test) {
-  let svg = try! @beautiful_mermaid.render_mermaid(
+  let svg = @beautiful_mermaid.render_mermaid(
     integration_input_graph_td_start_end(),
   )
   snapshot_svg(it, "integration_flowchart_labeled_nodes.svg", svg)
@@ -306,7 +304,7 @@ test "SVG renders labeled nodes for simple flow" (it : @test.Test) {
 
 ///|
 test "SVG renders edge labels for simple flow" (it : @test.Test) {
-  let svg = try! @beautiful_mermaid.render_mermaid(
+  let svg = @beautiful_mermaid.render_mermaid(
     integration_input_graph_td_yes_label(),
   )
   snapshot_svg(it, "integration_flowchart_edge_label.svg", svg)
@@ -321,19 +319,19 @@ test "Flowchart chained labeled edges render across text and SVG modes" (
     #|graph LR
     #|A[One] -->|first| B[Two] -->|second| C[Three] -->|third| D[Four]
 
-  let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
+  let ascii = @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: true,
     padding_x: 5,
     padding_y: 5,
     box_border_padding: 1,
   })
-  let unicode = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
+  let unicode = @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: false,
     padding_x: 5,
     padding_y: 5,
     box_border_padding: 1,
   })
-  let svg = try! @beautiful_mermaid.render_mermaid(input)
+  let svg = @beautiful_mermaid.render_mermaid(input)
   snapshot_svg(it, "integration_flowchart_chained_labels.svg", svg)
 
   assert_true(ascii.contains("One"))
@@ -369,7 +367,7 @@ test "SVG applies custom font option" (it : @test.Test) {
     layer_spacing: None,
     transparent: None,
   }
-  let svg = try! @beautiful_mermaid.render_mermaid(
+  let svg = @beautiful_mermaid.render_mermaid(
     integration_input_graph_td_ab(),
     options~,
   )
@@ -380,9 +378,7 @@ test "SVG applies custom font option" (it : @test.Test) {
 
 ///|
 test "SVG defaults to light theme colors" (it : @test.Test) {
-  let svg = try! @beautiful_mermaid.render_mermaid(
-    integration_input_graph_td_ab(),
-  )
+  let svg = @beautiful_mermaid.render_mermaid(integration_input_graph_td_ab())
   snapshot_svg(it, "integration_flowchart_default_light.svg", svg)
   assert_true(svg.contains("--bg:#FFFFFF"))
   assert_true(svg.contains("--fg:#27272A"))
@@ -404,7 +400,7 @@ test "SVG applies explicit dark colors" (it : @test.Test) {
     layer_spacing: None,
     transparent: None,
   }
-  let svg = try! @beautiful_mermaid.render_mermaid(
+  let svg = @beautiful_mermaid.render_mermaid(
     integration_input_graph_td_ab(),
     options~,
   )
@@ -417,7 +413,7 @@ test "SVG applies explicit dark colors" (it : @test.Test) {
 test "SVG renders solid dotted and thick edge styles with labels" (
   it : @test.Test,
 ) {
-  let svg = try! @beautiful_mermaid.render_mermaid(
+  let svg = @beautiful_mermaid.render_mermaid(
     (
       #|graph TD
       #|A -->|solid| B
@@ -435,7 +431,7 @@ test "SVG renders solid dotted and thick edge styles with labels" (
 
 ///|
 test "SVG renders subgraph labels and nodes" (it : @test.Test) {
-  let svg = try! @beautiful_mermaid.render_mermaid(
+  let svg = @beautiful_mermaid.render_mermaid(
     (
       #|graph TD
       #|subgraph Backend
@@ -467,19 +463,19 @@ test "Subgraph direction override renders across text and SVG modes" (
     #|end
     #|B --> C
 
-  let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
+  let ascii = @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: true,
     padding_x: 5,
     padding_y: 5,
     box_border_padding: 1,
   })
-  let unicode = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
+  let unicode = @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: false,
     padding_x: 5,
     padding_y: 5,
     box_border_padding: 1,
   })
-  let svg = try! @beautiful_mermaid.render_mermaid(input)
+  let svg = @beautiful_mermaid.render_mermaid(input)
   snapshot_svg(it, "integration_flowchart_subgraph_direction_override.svg", svg)
 
   assert_true(ascii.contains("Frontend"))
@@ -500,7 +496,7 @@ test "Subgraph direction override renders across text and SVG modes" (
 
 ///|
 test "SVG renders complex CI pipeline diagram" (it : @test.Test) {
-  let svg = try! @beautiful_mermaid.render_mermaid(
+  let svg = @beautiful_mermaid.render_mermaid(
     (
       #|graph TD
       #|subgraph ci [CI Pipeline]
@@ -527,7 +523,7 @@ test "SVG renders complex CI pipeline diagram" (it : @test.Test) {
 
 ///|
 test "SVG renders original flowchart shape set" (it : @test.Test) {
-  let svg = try! @beautiful_mermaid.render_mermaid(
+  let svg = @beautiful_mermaid.render_mermaid(
     (
       #|graph TD
       #|A[Rectangle] --> B(Rounded)
@@ -549,7 +545,7 @@ test "SVG renders original flowchart shape set" (it : @test.Test) {
 
 ///|
 test "SVG renders subroutine shape with inner guide lines" (it : @test.Test) {
-  let svg = try! @beautiful_mermaid.render_mermaid(
+  let svg = @beautiful_mermaid.render_mermaid(
     (
       #|graph TD
       #|A[[Subroutine]] --> B
@@ -564,7 +560,7 @@ test "SVG renders subroutine shape with inner guide lines" (it : @test.Test) {
 test "SVG renders double-circle shape with two circle elements" (
   it : @test.Test,
 ) {
-  let svg = try! @beautiful_mermaid.render_mermaid(
+  let svg = @beautiful_mermaid.render_mermaid(
     (
       #|graph TD
       #|A(((Important))) --> B
@@ -577,7 +573,7 @@ test "SVG renders double-circle shape with two circle elements" (
 
 ///|
 test "SVG renders hexagon shape as polygon" (it : @test.Test) {
-  let svg = try! @beautiful_mermaid.render_mermaid(
+  let svg = @beautiful_mermaid.render_mermaid(
     (
       #|graph TD
       #|A{{Decision}} --> B
@@ -590,7 +586,7 @@ test "SVG renders hexagon shape as polygon" (it : @test.Test) {
 
 ///|
 test "SVG renders cylinder database shape" (it : @test.Test) {
-  let svg = try! @beautiful_mermaid.render_mermaid(
+  let svg = @beautiful_mermaid.render_mermaid(
     (
       #|graph TD
       #|A[(Database)] --> B
@@ -603,7 +599,7 @@ test "SVG renders cylinder database shape" (it : @test.Test) {
 
 ///|
 test "SVG renders asymmetric flag shape" (it : @test.Test) {
-  let svg = try! @beautiful_mermaid.render_mermaid(
+  let svg = @beautiful_mermaid.render_mermaid(
     (
       #|graph TD
       #|A>Flag Shape] --> B
@@ -616,7 +612,7 @@ test "SVG renders asymmetric flag shape" (it : @test.Test) {
 
 ///|
 test "SVG renders trapezoid variants" (it : @test.Test) {
-  let svg = try! @beautiful_mermaid.render_mermaid(
+  let svg = @beautiful_mermaid.render_mermaid(
     (
       #|graph TD
       #|A[/Wider Bottom\\] --> B[\\Wider Top/]
@@ -630,7 +626,7 @@ test "SVG renders trapezoid variants" (it : @test.Test) {
 
 ///|
 test "SVG no-arrow edges omit marker-end" (it : @test.Test) {
-  let svg = try! @beautiful_mermaid.render_mermaid(
+  let svg = @beautiful_mermaid.render_mermaid(
     (
       #|graph TD
       #|A --- B
@@ -649,19 +645,19 @@ test "Flowchart no-arrow edges render across text and SVG modes" (
     #|graph TD
     #|A[Client] --- B[Cache] --- C[Backend]
 
-  let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
+  let ascii = @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: true,
     padding_x: 5,
     padding_y: 5,
     box_border_padding: 1,
   })
-  let unicode = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
+  let unicode = @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: false,
     padding_x: 5,
     padding_y: 5,
     box_border_padding: 1,
   })
-  let svg = try! @beautiful_mermaid.render_mermaid(input)
+  let svg = @beautiful_mermaid.render_mermaid(input)
   snapshot_svg(it, "integration_flowchart_no_arrow_cross_mode.svg", svg)
 
   assert_true(ascii.contains("Client"))
@@ -680,7 +676,7 @@ test "Flowchart no-arrow edges render across text and SVG modes" (
 test "SVG bidirectional edges include start and end arrowheads" (
   it : @test.Test,
 ) {
-  let svg = try! @beautiful_mermaid.render_mermaid(
+  let svg = @beautiful_mermaid.render_mermaid(
     (
       #|graph TD
       #|A <--> B
@@ -699,19 +695,19 @@ test "Flowchart bidirectional edges render across text and SVG modes" (
     #|graph TD
     #|A[North] <--> B[South]
 
-  let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
+  let ascii = @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: true,
     padding_x: 5,
     padding_y: 5,
     box_border_padding: 1,
   })
-  let unicode = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
+  let unicode = @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: false,
     padding_x: 5,
     padding_y: 5,
     box_border_padding: 1,
   })
-  let svg = try! @beautiful_mermaid.render_mermaid(input)
+  let svg = @beautiful_mermaid.render_mermaid(input)
   snapshot_svg(it, "integration_flowchart_bidirectional_cross_mode.svg", svg)
 
   assert_true(ascii.contains("North"))
@@ -726,7 +722,7 @@ test "Flowchart bidirectional edges render across text and SVG modes" (
 
 ///|
 test "SVG parallel ampersand links emit one edge per source" (it : @test.Test) {
-  let svg = try! @beautiful_mermaid.render_mermaid(
+  let svg = @beautiful_mermaid.render_mermaid(
     (
       #|graph TD
       #|A & B --> C
@@ -749,19 +745,19 @@ test "Flowchart ampersand fan-in renders across text and SVG modes" (
     #|A[Web] & B[Mobile] --> C[API]
     #|C --> D[(Database)]
 
-  let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
+  let ascii = @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: true,
     padding_x: 5,
     padding_y: 5,
     box_border_padding: 1,
   })
-  let unicode = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
+  let unicode = @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: false,
     padding_x: 5,
     padding_y: 5,
     box_border_padding: 1,
   })
-  let svg = try! @beautiful_mermaid.render_mermaid(input)
+  let svg = @beautiful_mermaid.render_mermaid(input)
   snapshot_svg(it, "integration_flowchart_amp_fan_in.svg", svg)
 
   assert_true(ascii.contains("Web"))
@@ -792,19 +788,19 @@ test "Flowchart nested subgraphs render across text and SVG modes" (
     #|end
     #|B --> C[Client]
 
-  let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
+  let ascii = @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: true,
     padding_x: 5,
     padding_y: 5,
     box_border_padding: 1,
   })
-  let unicode = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
+  let unicode = @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: false,
     padding_x: 5,
     padding_y: 5,
     box_border_padding: 1,
   })
-  let svg = try! @beautiful_mermaid.render_mermaid(input)
+  let svg = @beautiful_mermaid.render_mermaid(input)
   snapshot_svg(it, "integration_flowchart_nested_subgraphs.svg", svg)
 
   assert_true(ascii.contains("Outer"))
@@ -826,7 +822,7 @@ test "Flowchart nested subgraphs render across text and SVG modes" (
 
 ///|
 test "SVG applies inline style overrides for nodes" (it : @test.Test) {
-  let svg = try! @beautiful_mermaid.render_mermaid(
+  let svg = @beautiful_mermaid.render_mermaid(
     (
       #|graph TD
       #|A[Red Node] --> B
@@ -848,19 +844,19 @@ test "Flowchart inline style overrides keep text parity and affect SVG" (
     #|style A fill:#ff0000,stroke:#cc0000
     #|style B fill:#0000ff,stroke:#0000cc
 
-  let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
+  let ascii = @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: true,
     padding_x: 5,
     padding_y: 5,
     box_border_padding: 1,
   })
-  let unicode = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
+  let unicode = @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: false,
     padding_x: 5,
     padding_y: 5,
     box_border_padding: 1,
   })
-  let svg = try! @beautiful_mermaid.render_mermaid(input)
+  let svg = @beautiful_mermaid.render_mermaid(input)
   snapshot_svg(it, "integration_flowchart_inline_style_cross_mode.svg", svg)
 
   assert_true(ascii.contains("Red Node"))
@@ -884,19 +880,19 @@ test "Flowchart classDef shorthand renders across text and SVG modes" (
     #|A[Start]:::entry --> B[End]
     #|classDef entry fill:#f9f,stroke:#333,color:#111
 
-  let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
+  let ascii = @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: true,
     padding_x: 5,
     padding_y: 5,
     box_border_padding: 1,
   })
-  let unicode = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
+  let unicode = @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: false,
     padding_x: 5,
     padding_y: 5,
     box_border_padding: 1,
   })
-  let svg = try! @beautiful_mermaid.render_mermaid(input)
+  let svg = @beautiful_mermaid.render_mermaid(input)
   snapshot_svg(it, "integration_flowchart_classdef_shorthand.svg", svg)
 
   assert_true(ascii.contains("Start"))
@@ -911,7 +907,7 @@ test "Flowchart classDef shorthand renders across text and SVG modes" (
 
 ///|
 test "SVG renders basic state diagram labels" (it : @test.Test) {
-  let svg = try! @beautiful_mermaid.render_mermaid(
+  let svg = @beautiful_mermaid.render_mermaid(
     (
       #|stateDiagram-v2
       #|[*] --> Idle
@@ -931,7 +927,7 @@ test "SVG renders basic state diagram labels" (it : @test.Test) {
 
 ///|
 test "SVG renders state start pseudostate as filled circle" (it : @test.Test) {
-  let svg = try! @beautiful_mermaid.render_mermaid(
+  let svg = @beautiful_mermaid.render_mermaid(
     integration_input_state_start_ready(),
   )
   snapshot_svg(it, "integration_state_start_pseudostate.svg", svg)
@@ -941,7 +937,7 @@ test "SVG renders state start pseudostate as filled circle" (it : @test.Test) {
 
 ///|
 test "SVG renders state end pseudostate as bullseye" (it : @test.Test) {
-  let svg = try! @beautiful_mermaid.render_mermaid(
+  let svg = @beautiful_mermaid.render_mermaid(
     integration_input_state_done_end(),
   )
   snapshot_svg(it, "integration_state_end_pseudostate.svg", svg)
@@ -959,19 +955,19 @@ test "State multiple pseudostates render across text and SVG modes" (
     #|A --> [*]
     #|B --> [*]
 
-  let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
+  let ascii = @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: true,
     padding_x: 5,
     padding_y: 5,
     box_border_padding: 1,
   })
-  let unicode = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
+  let unicode = @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: false,
     padding_x: 5,
     padding_y: 5,
     box_border_padding: 1,
   })
-  let svg = try! @beautiful_mermaid.render_mermaid(input)
+  let svg = @beautiful_mermaid.render_mermaid(input)
   snapshot_svg(it, "integration_state_multiple_pseudostates.svg", svg)
 
   assert_true(ascii.contains("A"))
@@ -985,7 +981,7 @@ test "State multiple pseudostates render across text and SVG modes" (
 
 ///|
 test "SVG renders composite state with inner nodes" (it : @test.Test) {
-  let svg = try! @beautiful_mermaid.render_mermaid(
+  let svg = @beautiful_mermaid.render_mermaid(
     (
       #|stateDiagram-v2
       #|state Processing {
@@ -1005,7 +1001,7 @@ test "SVG renders composite state with inner nodes" (it : @test.Test) {
 
 ///|
 test "SVG renders full state lifecycle with labels" (it : @test.Test) {
-  let svg = try! @beautiful_mermaid.render_mermaid(
+  let svg = @beautiful_mermaid.render_mermaid(
     (
       #|stateDiagram-v2
       #|[*] --> Idle
@@ -1038,19 +1034,19 @@ test "State description lines render across text and SVG modes" (
     #|s1 : Idle State
     #|s1 --> s2 : proceed
 
-  let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
+  let ascii = @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: true,
     padding_x: 5,
     padding_y: 5,
     box_border_padding: 1,
   })
-  let unicode = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
+  let unicode = @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: false,
     padding_x: 5,
     padding_y: 5,
     box_border_padding: 1,
   })
-  let svg = try! @beautiful_mermaid.render_mermaid(input)
+  let svg = @beautiful_mermaid.render_mermaid(input)
   snapshot_svg(it, "integration_state_description_lines.svg", svg)
 
   assert_true(ascii.contains("Idle State"))
@@ -1069,19 +1065,19 @@ test "State direction LR renders across text and SVG modes" (it : @test.Test) {
     #|Idle --> Active
     #|Active --> Done
 
-  let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
+  let ascii = @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: true,
     padding_x: 5,
     padding_y: 5,
     box_border_padding: 1,
   })
-  let unicode = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
+  let unicode = @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: false,
     padding_x: 5,
     padding_y: 5,
     box_border_padding: 1,
   })
-  let svg = try! @beautiful_mermaid.render_mermaid(input)
+  let svg = @beautiful_mermaid.render_mermaid(input)
   snapshot_svg(it, "integration_state_direction_lr.svg", svg)
 
   assert_true(ascii.contains("Idle"))
@@ -1105,19 +1101,19 @@ test "State transition labels render across text and SVG modes" (
     #|Active --> Busy : process
     #|Busy --> Done : finish
 
-  let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
+  let ascii = @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: true,
     padding_x: 5,
     padding_y: 5,
     box_border_padding: 1,
   })
-  let unicode = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
+  let unicode = @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: false,
     padding_x: 5,
     padding_y: 5,
     box_border_padding: 1,
   })
-  let svg = try! @beautiful_mermaid.render_mermaid(input)
+  let svg = @beautiful_mermaid.render_mermaid(input)
   snapshot_svg(it, "integration_state_transition_labels.svg", svg)
 
   assert_true(ascii.contains("Idle"))
@@ -1154,19 +1150,19 @@ test "State composite direction override renders across text and SVG modes" (
     #|}
     #|Processing --> Done
 
-  let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
+  let ascii = @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: true,
     padding_x: 5,
     padding_y: 5,
     box_border_padding: 1,
   })
-  let unicode = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
+  let unicode = @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: false,
     padding_x: 5,
     padding_y: 5,
     box_border_padding: 1,
   })
-  let svg = try! @beautiful_mermaid.render_mermaid(input)
+  let svg = @beautiful_mermaid.render_mermaid(input)
   snapshot_svg(it, "integration_state_composite_direction.svg", svg)
 
   assert_true(ascii.contains("Processing"))
@@ -1195,19 +1191,19 @@ test "State alias declarations render across text and SVG modes" (
     #|state "Waiting for input" as waiting
     #|waiting --> active : trigger
 
-  let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
+  let ascii = @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: true,
     padding_x: 5,
     padding_y: 5,
     box_border_padding: 1,
   })
-  let unicode = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
+  let unicode = @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: false,
     padding_x: 5,
     padding_y: 5,
     box_border_padding: 1,
   })
-  let svg = try! @beautiful_mermaid.render_mermaid(input)
+  let svg = @beautiful_mermaid.render_mermaid(input)
   snapshot_svg(it, "integration_state_alias.svg", svg)
 
   assert_true(ascii.contains("Waiting for input"))
@@ -1232,19 +1228,19 @@ test "State composite alias blocks render across text and SVG modes" (
     #|}
     #|AP --> Done : finish
 
-  let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
+  let ascii = @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: true,
     padding_x: 5,
     padding_y: 5,
     box_border_padding: 1,
   })
-  let unicode = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
+  let unicode = @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: false,
     padding_x: 5,
     padding_y: 5,
     box_border_padding: 1,
   })
-  let svg = try! @beautiful_mermaid.render_mermaid(input)
+  let svg = @beautiful_mermaid.render_mermaid(input)
   snapshot_svg(it, "integration_state_composite_alias.svg", svg)
 
   assert_true(ascii.contains("Active Process"))
@@ -1264,7 +1260,7 @@ test "State composite alias blocks render across text and SVG modes" (
 
 ///|
 test "SVG does not duplicate composite state labels" (it : @test.Test) {
-  let svg = try! @beautiful_mermaid.render_mermaid(
+  let svg = @beautiful_mermaid.render_mermaid(
     (
       #|stateDiagram-v2
       #|[*] --> Idle
@@ -1285,7 +1281,7 @@ test "SVG does not duplicate composite state labels" (it : @test.Test) {
 test "SVG renders subgraph-first TD diagrams without ordering regressions" (
   it : @test.Test,
 ) {
-  let svg = try! @beautiful_mermaid.render_mermaid(
+  let svg = @beautiful_mermaid.render_mermaid(
     (
       #|graph TD
       #|subgraph ci [CI Pipeline]
@@ -1307,7 +1303,7 @@ test "SVG renders subgraph-first TD diagrams without ordering regressions" (
 
 ///|
 test "SVG renders flowchart self-loop edges" (it : @test.Test) {
-  let svg = try! @beautiful_mermaid.render_mermaid(
+  let svg = @beautiful_mermaid.render_mermaid(
     (
       #|graph TD
       #|A[Node] --> A
@@ -1321,7 +1317,7 @@ test "SVG renders flowchart self-loop edges" (it : @test.Test) {
 
 ///|
 test "SVG renders self-loop labels" (it : @test.Test) {
-  let svg = try! @beautiful_mermaid.render_mermaid(
+  let svg = @beautiful_mermaid.render_mermaid(
     (
       #|graph TD
       #|A[Retry] -->|again| A
@@ -1348,11 +1344,11 @@ test "ASCII and Unicode modes differ" {
   }
 
   let input = integration_input_graph_lr_ab()
-  let ascii_output = try! @beautiful_mermaid.render_mermaid_ascii(
+  let ascii_output = @beautiful_mermaid.render_mermaid_ascii(
     input,
     options=ascii_options,
   )
-  let unicode_output = try! @beautiful_mermaid.render_mermaid_ascii(
+  let unicode_output = @beautiful_mermaid.render_mermaid_ascii(
     input,
     options=unicode_options,
   )
@@ -1361,7 +1357,7 @@ test "ASCII and Unicode modes differ" {
 
 ///|
 test "ASCII mode avoids Unicode box drawing glyphs" {
-  let output = try! @beautiful_mermaid.render_mermaid_ascii(
+  let output = @beautiful_mermaid.render_mermaid_ascii(
     integration_input_graph_lr_ab(),
     options={
       use_ascii: true,
@@ -1378,7 +1374,7 @@ test "ASCII mode avoids Unicode box drawing glyphs" {
 
 ///|
 test "Unicode mode emits box drawing glyphs" {
-  let output = try! @beautiful_mermaid.render_mermaid_ascii(
+  let output = @beautiful_mermaid.render_mermaid_ascii(
     integration_input_graph_lr_ab(),
     options={
       use_ascii: false,
@@ -1405,19 +1401,19 @@ test "Standalone sequence activate/deactivate lines are ignored for rendering pa
     #|A->>B: Work
     #|deactivate A
 
-  let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
+  let ascii = @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: true,
     padding_x: 5,
     padding_y: 5,
     box_border_padding: 1,
   })
-  let unicode = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
+  let unicode = @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: false,
     padding_x: 5,
     padding_y: 5,
     box_border_padding: 1,
   })
-  let svg = try! @beautiful_mermaid.render_mermaid(input)
+  let svg = @beautiful_mermaid.render_mermaid(input)
   snapshot_svg(it, "integration_sequence_standalone_activation.svg", svg)
 
   assert_true(ascii.contains("Work"))
@@ -1438,19 +1434,19 @@ test "SVG renders sequence self-message labels with participant aliases" (
     #|participant A as App
     #|A->>A: Retry
 
-  let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
+  let ascii = @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: true,
     padding_x: 5,
     padding_y: 5,
     box_border_padding: 1,
   })
-  let unicode = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
+  let unicode = @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: false,
     padding_x: 5,
     padding_y: 5,
     box_border_padding: 1,
   })
-  let svg = try! @beautiful_mermaid.render_mermaid(input)
+  let svg = @beautiful_mermaid.render_mermaid(input)
   snapshot_svg(it, "integration_sequence_self_message_alias.svg", svg)
 
   assert_true(ascii.contains("App"))
@@ -1476,19 +1472,19 @@ test "Sequence alt/else block renders across text and SVG modes" (
     #|S-->>C: 500
     #|end
 
-  let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
+  let ascii = @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: true,
     padding_x: 5,
     padding_y: 5,
     box_border_padding: 1,
   })
-  let unicode = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
+  let unicode = @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: false,
     padding_x: 5,
     padding_y: 5,
     box_border_padding: 1,
   })
-  let svg = try! @beautiful_mermaid.render_mermaid(input)
+  let svg = @beautiful_mermaid.render_mermaid(input)
   snapshot_svg(it, "integration_sequence_alt_else.svg", svg)
 
   assert_true(ascii.contains("Client"))
@@ -1519,19 +1515,19 @@ test "Sequence loop block renders across text and SVG modes" (it : @test.Test) {
     #|Q-->>W: Empty
     #|end
 
-  let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
+  let ascii = @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: true,
     padding_x: 5,
     padding_y: 5,
     box_border_padding: 1,
   })
-  let unicode = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
+  let unicode = @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: false,
     padding_x: 5,
     padding_y: 5,
     box_border_padding: 1,
   })
-  let svg = try! @beautiful_mermaid.render_mermaid(input)
+  let svg = @beautiful_mermaid.render_mermaid(input)
   snapshot_svg(it, "integration_sequence_loop.svg", svg)
 
   assert_true(ascii.contains("Worker"))
@@ -1560,19 +1556,19 @@ test "Sequence self-message loop renders across text and SVG modes" (
     #|W->>W: Check cache
     #|end
 
-  let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
+  let ascii = @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: true,
     padding_x: 5,
     padding_y: 5,
     box_border_padding: 1,
   })
-  let unicode = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
+  let unicode = @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: false,
     padding_x: 5,
     padding_y: 5,
     box_border_padding: 1,
   })
-  let svg = try! @beautiful_mermaid.render_mermaid(input)
+  let svg = @beautiful_mermaid.render_mermaid(input)
   snapshot_svg(it, "integration_sequence_self_message_loop.svg", svg)
 
   assert_true(ascii.contains("Worker"))
@@ -1595,19 +1591,19 @@ test "Sequence opt block renders across text and SVG modes" (it : @test.Test) {
     #|API-->>C: 304 Not Modified
     #|end
 
-  let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
+  let ascii = @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: true,
     padding_x: 5,
     padding_y: 5,
     box_border_padding: 1,
   })
-  let unicode = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
+  let unicode = @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: false,
     padding_x: 5,
     padding_y: 5,
     box_border_padding: 1,
   })
-  let svg = try! @beautiful_mermaid.render_mermaid(input)
+  let svg = @beautiful_mermaid.render_mermaid(input)
   snapshot_svg(it, "integration_sequence_opt.svg", svg)
 
   assert_true(ascii.contains("Client"))
@@ -1635,19 +1631,19 @@ test "Sequence note-over renders across text and SVG modes" (it : @test.Test) {
     #|Note over A,B: cache miss
     #|B-->>A: Result
 
-  let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
+  let ascii = @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: true,
     padding_x: 5,
     padding_y: 5,
     box_border_padding: 1,
   })
-  let unicode = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
+  let unicode = @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: false,
     padding_x: 5,
     padding_y: 5,
     box_border_padding: 1,
   })
-  let svg = try! @beautiful_mermaid.render_mermaid(input)
+  let svg = @beautiful_mermaid.render_mermaid(input)
   snapshot_svg(it, "integration_sequence_note_over.svg", svg)
 
   assert_true(ascii.contains("API"))
@@ -1680,19 +1676,19 @@ test "Sequence note-left-right renders across text and SVG modes" (
     .trim_end()
     .to_string()
 
-  let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
+  let ascii = @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: true,
     padding_x: 5,
     padding_y: 5,
     box_border_padding: 1,
   })
-  let unicode = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
+  let unicode = @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: false,
     padding_x: 5,
     padding_y: 5,
     box_border_padding: 1,
   })
-  let svg = try! @beautiful_mermaid.render_mermaid(input)
+  let svg = @beautiful_mermaid.render_mermaid(input)
   snapshot_svg(it, "integration_sequence_note_left_right.svg", svg)
 
   assert_true(ascii.contains("App"))
@@ -1734,19 +1730,19 @@ test "Sequence critical/option block renders across text and SVG modes" (
     .trim_end()
     .to_string()
 
-  let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
+  let ascii = @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: true,
     padding_x: 5,
     padding_y: 5,
     box_border_padding: 1,
   })
-  let unicode = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
+  let unicode = @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: false,
     padding_x: 5,
     padding_y: 5,
     box_border_padding: 1,
   })
-  let svg = try! @beautiful_mermaid.render_mermaid(input)
+  let svg = @beautiful_mermaid.render_mermaid(input)
   snapshot_svg(it, "integration_sequence_critical_option.svg", svg)
 
   assert_true(ascii.contains("Service"))
@@ -1789,19 +1785,19 @@ test "Sequence par/and block renders across text and SVG modes" (
     .trim_end()
     .to_string()
 
-  let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
+  let ascii = @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: true,
     padding_x: 5,
     padding_y: 5,
     box_border_padding: 1,
   })
-  let unicode = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
+  let unicode = @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: false,
     padding_x: 5,
     padding_y: 5,
     box_border_padding: 1,
   })
-  let svg = try! @beautiful_mermaid.render_mermaid(input)
+  let svg = @beautiful_mermaid.render_mermaid(input)
   snapshot_svg(it, "integration_sequence_par_and.svg", svg)
 
   assert_true(ascii.contains("Client"))
@@ -1839,19 +1835,19 @@ test "Sequence activation markers render across text and SVG modes" (
     .trim_end()
     .to_string()
 
-  let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
+  let ascii = @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: true,
     padding_x: 5,
     padding_y: 5,
     box_border_padding: 1,
   })
-  let unicode = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
+  let unicode = @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: false,
     padding_x: 5,
     padding_y: 5,
     box_border_padding: 1,
   })
-  let svg = try! @beautiful_mermaid.render_mermaid(input)
+  let svg = @beautiful_mermaid.render_mermaid(input)
   snapshot_svg(it, "integration_sequence_activation_markers.svg", svg)
 
   assert_true(ascii.contains("User"))
@@ -1884,19 +1880,19 @@ test "Sequence actor declarations render across text and SVG modes" (
     .trim_end()
     .to_string()
 
-  let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
+  let ascii = @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: true,
     padding_x: 5,
     padding_y: 5,
     box_border_padding: 1,
   })
-  let unicode = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
+  let unicode = @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: false,
     padding_x: 5,
     padding_y: 5,
     box_border_padding: 1,
   })
-  let svg = try! @beautiful_mermaid.render_mermaid(input)
+  let svg = @beautiful_mermaid.render_mermaid(input)
   snapshot_svg(it, "integration_sequence_actor_declarations.svg", svg)
 
   assert_true(ascii.contains("User"))
@@ -1930,19 +1926,19 @@ test "Sequence mixed arrow operators render across text and SVG modes" (
     .trim_end()
     .to_string()
 
-  let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
+  let ascii = @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: true,
     padding_x: 5,
     padding_y: 5,
     box_border_padding: 1,
   })
-  let unicode = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
+  let unicode = @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: false,
     padding_x: 5,
     padding_y: 5,
     box_border_padding: 1,
   })
-  let svg = try! @beautiful_mermaid.render_mermaid(input)
+  let svg = @beautiful_mermaid.render_mermaid(input)
   snapshot_svg(it, "integration_sequence_mixed_arrows.svg", svg)
 
   assert_true(ascii.contains("Open"))
@@ -1978,19 +1974,19 @@ test "Class inheritance labels render across text and SVG modes" (
     .trim_end()
     .to_string()
 
-  let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
+  let ascii = @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: true,
     padding_x: 5,
     padding_y: 5,
     box_border_padding: 1,
   })
-  let unicode = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
+  let unicode = @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: false,
     padding_x: 5,
     padding_y: 5,
     box_border_padding: 1,
   })
-  let svg = try! @beautiful_mermaid.render_mermaid(input)
+  let svg = @beautiful_mermaid.render_mermaid(input)
   snapshot_svg(it, "integration_class_inheritance.svg", svg)
 
   assert_true(ascii.contains("Shape"))
@@ -2023,19 +2019,19 @@ test "Class abstract annotation renders across text and SVG modes" (
     .trim_end()
     .to_string()
 
-  let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
+  let ascii = @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: true,
     padding_x: 5,
     padding_y: 5,
     box_border_padding: 1,
   })
-  let unicode = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
+  let unicode = @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: false,
     padding_x: 5,
     padding_y: 5,
     box_border_padding: 1,
   })
-  let svg = try! @beautiful_mermaid.render_mermaid(input)
+  let svg = @beautiful_mermaid.render_mermaid(input)
   snapshot_svg(it, "integration_class_abstract.svg", svg)
 
   assert_true(ascii.contains("Service"))
@@ -2071,19 +2067,19 @@ test "Class interface realization renders across text and SVG modes" (
     .trim_end()
     .to_string()
 
-  let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
+  let ascii = @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: true,
     padding_x: 5,
     padding_y: 5,
     box_border_padding: 1,
   })
-  let unicode = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
+  let unicode = @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: false,
     padding_x: 5,
     padding_y: 5,
     box_border_padding: 1,
   })
-  let svg = try! @beautiful_mermaid.render_mermaid(input)
+  let svg = @beautiful_mermaid.render_mermaid(input)
   snapshot_svg(it, "integration_class_interface.svg", svg)
 
   assert_true(ascii.contains("Flyable"))
@@ -2115,19 +2111,19 @@ test "Class enum annotation renders across text and SVG modes" (it : @test.Test)
     .trim_end()
     .to_string()
 
-  let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
+  let ascii = @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: true,
     padding_x: 5,
     padding_y: 5,
     box_border_padding: 1,
   })
-  let unicode = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
+  let unicode = @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: false,
     padding_x: 5,
     padding_y: 5,
     box_border_padding: 1,
   })
-  let svg = try! @beautiful_mermaid.render_mermaid(input)
+  let svg = @beautiful_mermaid.render_mermaid(input)
   snapshot_svg(it, "integration_class_enum.svg", svg)
 
   assert_true(ascii.contains("Status"))
@@ -2163,19 +2159,19 @@ test "Class visibility members render across text and SVG modes" (
     .trim_end()
     .to_string()
 
-  let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
+  let ascii = @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: true,
     padding_x: 5,
     padding_y: 5,
     box_border_padding: 1,
   })
-  let unicode = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
+  let unicode = @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: false,
     padding_x: 5,
     padding_y: 5,
     box_border_padding: 1,
   })
-  let svg = try! @beautiful_mermaid.render_mermaid(input)
+  let svg = @beautiful_mermaid.render_mermaid(input)
   snapshot_svg(it, "integration_class_visibility.svg", svg)
 
   assert_true(ascii.contains("User"))
@@ -2212,19 +2208,19 @@ test "Class relationship set renders across text and SVG modes" (
     .trim_end()
     .to_string()
 
-  let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
+  let ascii = @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: true,
     padding_x: 5,
     padding_y: 5,
     box_border_padding: 1,
   })
-  let unicode = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
+  let unicode = @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: false,
     padding_x: 5,
     padding_y: 5,
     box_border_padding: 1,
   })
-  let svg = try! @beautiful_mermaid.render_mermaid(input)
+  let svg = @beautiful_mermaid.render_mermaid(input)
   snapshot_svg(it, "integration_class_relationship_set.svg", svg)
 
   assert_true(ascii.contains("inh"))
@@ -2269,19 +2265,19 @@ test "ER entities and relationship labels render across text and SVG modes" (
     .trim_end()
     .to_string()
 
-  let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
+  let ascii = @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: true,
     padding_x: 5,
     padding_y: 5,
     box_border_padding: 1,
   })
-  let unicode = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
+  let unicode = @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: false,
     padding_x: 5,
     padding_y: 5,
     box_border_padding: 1,
   })
-  let svg = try! @beautiful_mermaid.render_mermaid(input)
+  let svg = @beautiful_mermaid.render_mermaid(input)
   snapshot_svg(it, "integration_er_entities_relationship.svg", svg)
 
   assert_true(ascii.contains("CUSTOMER"))
@@ -2313,19 +2309,19 @@ test "ER attribute keys render across text and SVG modes" (it : @test.Test) {
     .trim_end()
     .to_string()
 
-  let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
+  let ascii = @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: true,
     padding_x: 5,
     padding_y: 5,
     box_border_padding: 1,
   })
-  let unicode = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
+  let unicode = @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: false,
     padding_x: 5,
     padding_y: 5,
     box_border_padding: 1,
   })
-  let svg = try! @beautiful_mermaid.render_mermaid(input)
+  let svg = @beautiful_mermaid.render_mermaid(input)
   snapshot_svg(it, "integration_er_attribute_keys.svg", svg)
 
   assert_true(ascii.contains("USER"))
@@ -2358,19 +2354,19 @@ test "ER identifying and non-identifying edges render across text and SVG modes"
     .trim_end()
     .to_string()
 
-  let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
+  let ascii = @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: true,
     padding_x: 5,
     padding_y: 5,
     box_border_padding: 1,
   })
-  let unicode = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
+  let unicode = @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: false,
     padding_x: 5,
     padding_y: 5,
     box_border_padding: 1,
   })
-  let svg = try! @beautiful_mermaid.render_mermaid(input)
+  let svg = @beautiful_mermaid.render_mermaid(input)
   snapshot_svg(it, "integration_er_identifying_mixed.svg", svg)
 
   assert_true(ascii.contains("USER"))
@@ -2400,19 +2396,19 @@ test "ER mixed cardinalities render across text and SVG modes" (it : @test.Test)
     #|C |o--|{ D : optional
     #|D }|--o{ E : mixed
 
-  let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
+  let ascii = @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: true,
     padding_x: 5,
     padding_y: 5,
     box_border_padding: 1,
   })
-  let unicode = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
+  let unicode = @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: false,
     padding_x: 5,
     padding_y: 5,
     box_border_padding: 1,
   })
-  let svg = try! @beautiful_mermaid.render_mermaid(input)
+  let svg = @beautiful_mermaid.render_mermaid(input)
   snapshot_svg(it, "integration_er_mixed_cardinalities.svg", svg)
 
   assert_true(ascii.contains("A"))
@@ -2440,7 +2436,7 @@ test "ER mixed cardinalities render across text and SVG modes" (it : @test.Test)
 
 ///|
 test "Flowchart cycle edge label pills do not overlap" (it : @test.Test) {
-  let svg = try! @beautiful_mermaid.render_mermaid(
+  let svg = @beautiful_mermaid.render_mermaid(
     (
       #|graph LR
       #|A -->|forward| B
