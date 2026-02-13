@@ -317,7 +317,7 @@ test "Blackbox branch probe SVG font URL encoding includes multibyte paths" {
       layer_spacing: Some(8),
       transparent: Some(i % 2 == 0),
     }
-    let svg = try! @beautiful_mermaid.render_mermaid(input, options~)
+    let svg = @beautiful_mermaid.render_mermaid(input, options~)
     assert_true(
       svg.contains("@import url('https://fonts.googleapis.com/css2?family="),
     )

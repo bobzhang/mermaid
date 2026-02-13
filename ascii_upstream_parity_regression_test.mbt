@@ -11,11 +11,11 @@ fn assert_text_parity(
   expected_ascii : String,
   expected_unicode : String,
 ) -> Unit raise {
-  let actual_ascii = try! @beautiful_mermaid.render_mermaid_ascii(
+  let actual_ascii = @beautiful_mermaid.render_mermaid_ascii(
     input,
     options=default_ascii_options(true),
   )
-  let actual_unicode = try! @beautiful_mermaid.render_mermaid_ascii(
+  let actual_unicode = @beautiful_mermaid.render_mermaid_ascii(
     input,
     options=default_ascii_options(false),
   )

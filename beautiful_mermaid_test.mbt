@@ -18,12 +18,12 @@ fn simple_graph_ab() -> String {
 
 ///|
 test "Public API smoke test" (it : @test.Test) {
-  let svg = try! @beautiful_mermaid.render_mermaid(simple_graph_ab())
+  let svg = @beautiful_mermaid.render_mermaid(simple_graph_ab())
   snapshot_public_api_svg(it, "public_api_smoke.svg", svg)
   assert_true(svg.contains("<svg"))
   assert_true(svg.contains("</svg>"))
 
-  let ascii = try! @beautiful_mermaid.render_mermaid_ascii(simple_graph_ab(), options={
+  let ascii = @beautiful_mermaid.render_mermaid_ascii(simple_graph_ab(), options={
     use_ascii: true,
     padding_x: 5,
     padding_y: 5,
@@ -50,7 +50,7 @@ test "render_mermaid_with_colors applies theme colors by default" (
     Some(found) => found
     None => fail("missing tokyo-night theme")
   }
-  let svg = try! @beautiful_mermaid.render_mermaid_with_colors(
+  let svg = @beautiful_mermaid.render_mermaid_with_colors(
     simple_graph_ab(),
     colors,
   )
@@ -131,7 +131,7 @@ test "render_mermaid_with_colors keeps explicit option overrides" (
     layer_spacing: None,
     transparent: None,
   }
-  let svg = try! @beautiful_mermaid.render_mermaid_with_colors(
+  let svg = @beautiful_mermaid.render_mermaid_with_colors(
     simple_graph_ab(),
     colors,
     options~,
@@ -146,7 +146,7 @@ test "render_mermaid_with_colors keeps explicit option overrides" (
 
 ///|
 test "render_mermaid_with_theme_name applies built-in theme" (it : @test.Test) {
-  let svg = try! @beautiful_mermaid.render_mermaid_with_theme_name(
+  let svg = @beautiful_mermaid.render_mermaid_with_theme_name(
     simple_graph_ab(),
     "github-dark",
   )
@@ -159,7 +159,7 @@ test "render_mermaid_with_theme_name applies built-in theme" (it : @test.Test) {
 test "render_mermaid_with_theme_name normalizes user theme input" (
   it : @test.Test,
 ) {
-  let svg = try! @beautiful_mermaid.render_mermaid_with_theme_name(
+  let svg = @beautiful_mermaid.render_mermaid_with_theme_name(
     simple_graph_ab(),
     "TOKYO   NIGHT",
   )
@@ -172,7 +172,7 @@ test "render_mermaid_with_theme_name normalizes user theme input" (
 
 ///|
 test "render_mermaid_with_theme_name accepts default alias" (it : @test.Test) {
-  let svg = try! @beautiful_mermaid.render_mermaid_with_theme_name(
+  let svg = @beautiful_mermaid.render_mermaid_with_theme_name(
     simple_graph_ab(),
     "default",
   )
@@ -187,7 +187,7 @@ test "render_mermaid_with_theme applies enum theme directly" (it : @test.Test) {
     Some(found) => found
     None => fail("failed to parse tokyo-night theme")
   }
-  let svg = try! @beautiful_mermaid.render_mermaid_with_theme(
+  let svg = @beautiful_mermaid.render_mermaid_with_theme(
     simple_graph_ab(),
     theme,
   )
