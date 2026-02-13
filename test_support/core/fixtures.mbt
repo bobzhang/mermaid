@@ -21,7 +21,11 @@ pub fn corpus_cases() -> Array[CorpusCase] {
   [
     {
       name: "ampersand_lhs",
-      input: "graph LR\nA --> B & C\n",
+      input: (
+        #|graph LR
+        #|A --> B & C
+        #|
+      ),
       header: "graph",
       supported_by_moonbit: true,
       padding_x: 5,
@@ -39,7 +43,11 @@ pub fn corpus_cases() -> Array[CorpusCase] {
     },
     {
       name: "ampersand_lhs_and_rhs",
-      input: "graph LR\nA & B --> C & D\n",
+      input: (
+        #|graph LR
+        #|A & B --> C & D
+        #|
+      ),
       header: "graph",
       supported_by_moonbit: true,
       padding_x: 5,
@@ -57,7 +65,11 @@ pub fn corpus_cases() -> Array[CorpusCase] {
     },
     {
       name: "ampersand_rhs",
-      input: "graph LR\nA & B --> C\n",
+      input: (
+        #|graph LR
+        #|A & B --> C
+        #|
+      ),
       header: "graph",
       supported_by_moonbit: true,
       padding_x: 5,
@@ -75,7 +87,11 @@ pub fn corpus_cases() -> Array[CorpusCase] {
     },
     {
       name: "ampersand_without_edge",
-      input: "graph LR\nA & B\n",
+      input: (
+        #|graph LR
+        #|A & B
+        #|
+      ),
       header: "graph",
       supported_by_moonbit: true,
       padding_x: 5,
@@ -93,7 +109,11 @@ pub fn corpus_cases() -> Array[CorpusCase] {
     },
     {
       name: "back_reference_from_child",
-      input: "graph LR\nA --> B --> C --> A\n",
+      input: (
+        #|graph LR
+        #|A --> B --> C --> A
+        #|
+      ),
       header: "graph",
       supported_by_moonbit: true,
       padding_x: 5,
@@ -111,7 +131,15 @@ pub fn corpus_cases() -> Array[CorpusCase] {
     },
     {
       name: "backlink_from_bottom",
-      input: "graph LR\nA --> B\nB --> C\nA --> C\nB --> D\nC --> D\n",
+      input: (
+        #|graph LR
+        #|A --> B
+        #|B --> C
+        #|A --> C
+        #|B --> D
+        #|C --> D
+        #|
+      ),
       header: "graph",
       supported_by_moonbit: true,
       padding_x: 5,
@@ -129,7 +157,15 @@ pub fn corpus_cases() -> Array[CorpusCase] {
     },
     {
       name: "backlink_from_top",
-      input: "graph LR\nA --> B\nB --> C\nA --> C\nB --> D\nD --> C\n",
+      input: (
+        #|graph LR
+        #|A --> B
+        #|B --> C
+        #|A --> C
+        #|B --> D
+        #|D --> C
+        #|
+      ),
       header: "graph",
       supported_by_moonbit: true,
       padding_x: 5,
@@ -147,7 +183,13 @@ pub fn corpus_cases() -> Array[CorpusCase] {
     },
     {
       name: "backlink_with_short_y_padding",
-      input: "graph LR\nA --> B & C\nB --> C & D\nD --> C\n",
+      input: (
+        #|graph LR
+        #|A --> B & C
+        #|B --> C & D
+        #|D --> C
+        #|
+      ),
       header: "graph",
       supported_by_moonbit: true,
       padding_x: 5,
@@ -165,7 +207,16 @@ pub fn corpus_cases() -> Array[CorpusCase] {
     },
     {
       name: "cls_all_relationships",
-      input: "classDiagram\n  A <|-- B : inherits\n  C *-- D : owns\n  E o-- F : has\n  G --> H : uses\n  I ..> J : depends\n  K ..|> L : implements\n",
+      input: (
+        #|classDiagram
+        #|  A <|-- B : inherits
+        #|  C *-- D : owns
+        #|  E o-- F : has
+        #|  G --> H : uses
+        #|  I ..> J : depends
+        #|  K ..|> L : implements
+        #|
+      ),
       header: "classdiagram",
       supported_by_moonbit: true,
       padding_x: 5,
@@ -183,7 +234,19 @@ pub fn corpus_cases() -> Array[CorpusCase] {
     },
     {
       name: "cls_annotation",
-      input: "classDiagram\n  class Shape {\n    <<abstract>>\n    +draw() void\n  }\n  class Circle {\n    +radius int\n    +draw() void\n  }\n  Shape <|-- Circle\n",
+      input: (
+        #|classDiagram
+        #|  class Shape {
+        #|    <<abstract>>
+        #|    +draw() void
+        #|  }
+        #|  class Circle {
+        #|    +radius int
+        #|    +draw() void
+        #|  }
+        #|  Shape <|-- Circle
+        #|
+      ),
       header: "classdiagram",
       supported_by_moonbit: true,
       padding_x: 5,
@@ -201,7 +264,11 @@ pub fn corpus_cases() -> Array[CorpusCase] {
     },
     {
       name: "cls_association",
-      input: "classDiagram\n  Student --> Course : enrolls\n",
+      input: (
+        #|classDiagram
+        #|  Student --> Course : enrolls
+        #|
+      ),
       header: "classdiagram",
       supported_by_moonbit: true,
       padding_x: 5,
@@ -219,7 +286,14 @@ pub fn corpus_cases() -> Array[CorpusCase] {
     },
     {
       name: "cls_basic",
-      input: "classDiagram\n  class Animal {\n    +String name\n    +eat() void\n  }\n",
+      input: (
+        #|classDiagram
+        #|  class Animal {
+        #|    +String name
+        #|    +eat() void
+        #|  }
+        #|
+      ),
       header: "classdiagram",
       supported_by_moonbit: true,
       padding_x: 5,
@@ -237,7 +311,11 @@ pub fn corpus_cases() -> Array[CorpusCase] {
     },
     {
       name: "cls_dependency",
-      input: "classDiagram\n  Client ..> Server : uses\n",
+      input: (
+        #|classDiagram
+        #|  Client ..> Server : uses
+        #|
+      ),
       header: "classdiagram",
       supported_by_moonbit: true,
       padding_x: 5,
@@ -255,7 +333,13 @@ pub fn corpus_cases() -> Array[CorpusCase] {
     },
     {
       name: "cls_inheritance",
-      input: "classDiagram\n  Animal <|-- Dog\n  Animal : +String name\n  Dog : +bark() void\n",
+      input: (
+        #|classDiagram
+        #|  Animal <|-- Dog
+        #|  Animal : +String name
+        #|  Dog : +bark() void
+        #|
+      ),
       header: "classdiagram",
       supported_by_moonbit: true,
       padding_x: 5,
@@ -273,7 +357,17 @@ pub fn corpus_cases() -> Array[CorpusCase] {
     },
     {
       name: "cls_methods",
-      input: "classDiagram\n  class BankAccount {\n    +String owner\n    -int balance\n    +deposit(int amount) void\n    +withdraw(int amount) bool\n    -validate() bool\n  }\n",
+      input: (
+        #|classDiagram
+        #|  class BankAccount {
+        #|    +String owner
+        #|    -int balance
+        #|    +deposit(int amount) void
+        #|    +withdraw(int amount) bool
+        #|    -validate() bool
+        #|  }
+        #|
+      ),
       header: "classdiagram",
       supported_by_moonbit: true,
       padding_x: 5,
@@ -291,7 +385,16 @@ pub fn corpus_cases() -> Array[CorpusCase] {
     },
     {
       name: "comments",
-      input: "graph LR\n%% This is a comment\nA --> B\n%% Another comment\nB --> C\nA --> C\n%% Final comment\n",
+      input: (
+        #|graph LR
+        #|%% This is a comment
+        #|A --> B
+        #|%% Another comment
+        #|B --> C
+        #|A --> C
+        #|%% Final comment
+        #|
+      ),
       header: "graph",
       supported_by_moonbit: true,
       padding_x: 5,
@@ -309,7 +412,11 @@ pub fn corpus_cases() -> Array[CorpusCase] {
     },
     {
       name: "custom_padding",
-      input: "graph LR\nA --> B\n",
+      input: (
+        #|graph LR
+        #|A --> B
+        #|
+      ),
       header: "graph",
       supported_by_moonbit: true,
       padding_x: 2,
@@ -327,7 +434,12 @@ pub fn corpus_cases() -> Array[CorpusCase] {
     },
     {
       name: "duplicate_labels",
-      input: "graph TD\nA[Server] --> B[Client]\nC[Server] --> D[Client]\n",
+      input: (
+        #|graph TD
+        #|A[Server] --> B[Client]
+        #|C[Server] --> D[Client]
+        #|
+      ),
       header: "graph",
       supported_by_moonbit: true,
       padding_x: 5,
@@ -345,7 +457,20 @@ pub fn corpus_cases() -> Array[CorpusCase] {
     },
     {
       name: "er_attributes",
-      input: "erDiagram\n  CUSTOMER {\n    string name PK\n    string email UK\n    int age\n  }\n  ORDER {\n    int id PK\n    string status\n  }\n  CUSTOMER ||--o{ ORDER : places\n",
+      input: (
+        #|erDiagram
+        #|  CUSTOMER {
+        #|    string name PK
+        #|    string email UK
+        #|    int age
+        #|  }
+        #|  ORDER {
+        #|    int id PK
+        #|    string status
+        #|  }
+        #|  CUSTOMER ||--o{ ORDER : places
+        #|
+      ),
       header: "erdiagram",
       supported_by_moonbit: true,
       padding_x: 5,
@@ -363,7 +488,11 @@ pub fn corpus_cases() -> Array[CorpusCase] {
     },
     {
       name: "er_basic",
-      input: "erDiagram\n  CUSTOMER ||--o{ ORDER : places\n",
+      input: (
+        #|erDiagram
+        #|  CUSTOMER ||--o{ ORDER : places
+        #|
+      ),
       header: "erdiagram",
       supported_by_moonbit: true,
       padding_x: 5,
@@ -381,7 +510,18 @@ pub fn corpus_cases() -> Array[CorpusCase] {
     },
     {
       name: "er_identifying",
-      input: "erDiagram\n  PERSON ||--o{ ADDRESS : lives_at\n  PERSON {\n    string name PK\n  }\n  ADDRESS {\n    string street\n    string city\n  }\n",
+      input: (
+        #|erDiagram
+        #|  PERSON ||--o{ ADDRESS : lives_at
+        #|  PERSON {
+        #|    string name PK
+        #|  }
+        #|  ADDRESS {
+        #|    string street
+        #|    string city
+        #|  }
+        #|
+      ),
       header: "erdiagram",
       supported_by_moonbit: true,
       padding_x: 5,
@@ -399,7 +539,12 @@ pub fn corpus_cases() -> Array[CorpusCase] {
     },
     {
       name: "flowchart_tb_simple",
-      input: "flowchart TB\n    A --> B\n    B --> C\n",
+      input: (
+        #|flowchart TB
+        #|    A --> B
+        #|    B --> C
+        #|
+      ),
       header: "flowchart",
       supported_by_moonbit: true,
       padding_x: 5,
@@ -417,7 +562,11 @@ pub fn corpus_cases() -> Array[CorpusCase] {
     },
     {
       name: "graph_bt_direction",
-      input: "graph BT\n  A --> B --> C\n",
+      input: (
+        #|graph BT
+        #|  A --> B --> C
+        #|
+      ),
       header: "graph",
       supported_by_moonbit: true,
       padding_x: 5,
@@ -435,7 +584,13 @@ pub fn corpus_cases() -> Array[CorpusCase] {
     },
     {
       name: "graph_tb_direction",
-      input: "graph TB\nsubgraph one\n    A --> B\nend\n",
+      input: (
+        #|graph TB
+        #|subgraph one
+        #|    A --> B
+        #|end
+        #|
+      ),
       header: "graph",
       supported_by_moonbit: true,
       padding_x: 5,
@@ -453,7 +608,19 @@ pub fn corpus_cases() -> Array[CorpusCase] {
     },
     {
       name: "nested_subgraphs_with_labels",
-      input: "graph TD\nA[Web Server] --> B[API Gateway]\nB --> C[Web Server]\nsubgraph Frontend\nA\nend\nsubgraph Backend\nB\nC\nend\n",
+      input: (
+        #|graph TD
+        #|A[Web Server] --> B[API Gateway]
+        #|B --> C[Web Server]
+        #|subgraph Frontend
+        #|A
+        #|end
+        #|subgraph Backend
+        #|B
+        #|C
+        #|end
+        #|
+      ),
       header: "graph",
       supported_by_moonbit: true,
       padding_x: 5,
@@ -471,7 +638,16 @@ pub fn corpus_cases() -> Array[CorpusCase] {
     },
     {
       name: "preserve_order_of_definition",
-      input: "graph LR\nA\nB\nB --> A\nA --> A\nB --> C\nC --> A\n",
+      input: (
+        #|graph LR
+        #|A
+        #|B
+        #|B --> A
+        #|A --> A
+        #|B --> C
+        #|C --> A
+        #|
+      ),
       header: "graph",
       supported_by_moonbit: true,
       padding_x: 5,
@@ -489,7 +665,11 @@ pub fn corpus_cases() -> Array[CorpusCase] {
     },
     {
       name: "self_reference",
-      input: "graph LR\nA --> A\n",
+      input: (
+        #|graph LR
+        #|A --> A
+        #|
+      ),
       header: "graph",
       supported_by_moonbit: true,
       padding_x: 5,
@@ -507,7 +687,11 @@ pub fn corpus_cases() -> Array[CorpusCase] {
     },
     {
       name: "self_reference_with_edge",
-      input: "graph LR\nA --> A & B\n",
+      input: (
+        #|graph LR
+        #|A --> A & B
+        #|
+      ),
       header: "graph",
       supported_by_moonbit: true,
       padding_x: 5,
@@ -525,7 +709,12 @@ pub fn corpus_cases() -> Array[CorpusCase] {
     },
     {
       name: "seq_basic",
-      input: "sequenceDiagram\n  Alice->>Bob: Hello Bob\n  Bob-->>Alice: Hi Alice\n",
+      input: (
+        #|sequenceDiagram
+        #|  Alice->>Bob: Hello Bob
+        #|  Bob-->>Alice: Hi Alice
+        #|
+      ),
       header: "sequencediagram",
       supported_by_moonbit: true,
       padding_x: 5,
@@ -543,7 +732,14 @@ pub fn corpus_cases() -> Array[CorpusCase] {
     },
     {
       name: "seq_multiple_messages",
-      input: "sequenceDiagram\n  Alice->>Bob: Hello\n  Bob->>Charlie: Forward\n  Charlie-->>Bob: Reply\n  Bob-->>Alice: Done\n",
+      input: (
+        #|sequenceDiagram
+        #|  Alice->>Bob: Hello
+        #|  Bob->>Charlie: Forward
+        #|  Charlie-->>Bob: Reply
+        #|  Bob-->>Alice: Done
+        #|
+      ),
       header: "sequencediagram",
       supported_by_moonbit: true,
       padding_x: 5,
@@ -561,7 +757,12 @@ pub fn corpus_cases() -> Array[CorpusCase] {
     },
     {
       name: "seq_self_message",
-      input: "sequenceDiagram\n  Alice->>Alice: Think\n  Alice->>Bob: Result\n",
+      input: (
+        #|sequenceDiagram
+        #|  Alice->>Alice: Think
+        #|  Alice->>Bob: Result
+        #|
+      ),
       header: "sequencediagram",
       supported_by_moonbit: true,
       padding_x: 5,
@@ -579,7 +780,11 @@ pub fn corpus_cases() -> Array[CorpusCase] {
     },
     {
       name: "single_node",
-      input: "graph LR\nA\n",
+      input: (
+        #|graph LR
+        #|A
+        #|
+      ),
       header: "graph",
       supported_by_moonbit: true,
       padding_x: 5,
@@ -595,7 +800,11 @@ pub fn corpus_cases() -> Array[CorpusCase] {
     },
     {
       name: "single_node_longer_name",
-      input: "graph LR\nLongerName\n",
+      input: (
+        #|graph LR
+        #|LongerName
+        #|
+      ),
       header: "graph",
       supported_by_moonbit: true,
       padding_x: 5,
@@ -613,7 +822,25 @@ pub fn corpus_cases() -> Array[CorpusCase] {
     },
     {
       name: "subgraph_complex_mixed",
-      input: "graph LR\nStart\nsubgraph Processing\n    A --> B\n    B --> C\nend\nsubgraph Storage\n    D\n    E\nend\nStart --> A\nC --> D\nC --> E\nD --> End\nE --> End\nEnd\n",
+      input: (
+        #|graph LR
+        #|Start
+        #|subgraph Processing
+        #|    A --> B
+        #|    B --> C
+        #|end
+        #|subgraph Storage
+        #|    D
+        #|    E
+        #|end
+        #|Start --> A
+        #|C --> D
+        #|C --> E
+        #|D --> End
+        #|E --> End
+        #|End
+        #|
+      ),
       header: "graph",
       supported_by_moonbit: true,
       padding_x: 5,
@@ -631,7 +858,18 @@ pub fn corpus_cases() -> Array[CorpusCase] {
     },
     {
       name: "subgraph_complex_nested",
-      input: "graph LR\nsubgraph outer\n    A\n    subgraph inner\n        B\n    end\n    C\nend\nD\n",
+      input: (
+        #|graph LR
+        #|subgraph outer
+        #|    A
+        #|    subgraph inner
+        #|        B
+        #|    end
+        #|    C
+        #|end
+        #|D
+        #|
+      ),
       header: "graph",
       supported_by_moonbit: true,
       padding_x: 5,
@@ -649,7 +887,13 @@ pub fn corpus_cases() -> Array[CorpusCase] {
     },
     {
       name: "subgraph_empty",
-      input: "graph LR\nsubgraph one\nend\nA --> B\n",
+      input: (
+        #|graph LR
+        #|subgraph one
+        #|end
+        #|A --> B
+        #|
+      ),
       header: "graph",
       supported_by_moonbit: true,
       padding_x: 5,
@@ -667,7 +911,17 @@ pub fn corpus_cases() -> Array[CorpusCase] {
     },
     {
       name: "subgraph_mixed_nodes",
-      input: "graph LR\nX\nsubgraph one\n    A --> B\nend\nY\nX --> A\nB --> Y\n",
+      input: (
+        #|graph LR
+        #|X
+        #|subgraph one
+        #|    A --> B
+        #|end
+        #|Y
+        #|X --> A
+        #|B --> Y
+        #|
+      ),
       header: "graph",
       supported_by_moonbit: true,
       padding_x: 5,
@@ -685,7 +939,17 @@ pub fn corpus_cases() -> Array[CorpusCase] {
     },
     {
       name: "subgraph_mixed_nodes_td",
-      input: "graph TD\nX\nsubgraph one\n    A --> B\nend\nY\nX --> A\nB --> Y\n",
+      input: (
+        #|graph TD
+        #|X
+        #|subgraph one
+        #|    A --> B
+        #|end
+        #|Y
+        #|X --> A
+        #|B --> Y
+        #|
+      ),
       header: "graph",
       supported_by_moonbit: true,
       padding_x: 5,
@@ -703,7 +967,19 @@ pub fn corpus_cases() -> Array[CorpusCase] {
     },
     {
       name: "subgraph_multiple_edges",
-      input: "graph LR\nsubgraph one\n    A --> B\n    A --> C\nend\nsubgraph two\n    D --> E\nend\nB --> D\nC --> E\n",
+      input: (
+        #|graph LR
+        #|subgraph one
+        #|    A --> B
+        #|    A --> C
+        #|end
+        #|subgraph two
+        #|    D --> E
+        #|end
+        #|B --> D
+        #|C --> E
+        #|
+      ),
       header: "graph",
       supported_by_moonbit: true,
       padding_x: 5,
@@ -721,7 +997,13 @@ pub fn corpus_cases() -> Array[CorpusCase] {
     },
     {
       name: "subgraph_multiple_nodes",
-      input: "graph LR\nsubgraph one\n    A --> B\nend\n",
+      input: (
+        #|graph LR
+        #|subgraph one
+        #|    A --> B
+        #|end
+        #|
+      ),
       header: "graph",
       supported_by_moonbit: true,
       padding_x: 5,
@@ -739,7 +1021,15 @@ pub fn corpus_cases() -> Array[CorpusCase] {
     },
     {
       name: "subgraph_nested",
-      input: "graph LR\nsubgraph outer\n    subgraph inner\n        A\n    end\nend\n",
+      input: (
+        #|graph LR
+        #|subgraph outer
+        #|    subgraph inner
+        #|        A
+        #|    end
+        #|end
+        #|
+      ),
       header: "graph",
       supported_by_moonbit: true,
       padding_x: 5,
@@ -757,7 +1047,21 @@ pub fn corpus_cases() -> Array[CorpusCase] {
     },
     {
       name: "subgraph_nested_with_external",
-      input: "graph LR\nX\nsubgraph outer\n    A\n    subgraph inner\n        B --> C\n    end\n    A --> B\nend\nX --> A\nC --> Y\nY\n",
+      input: (
+        #|graph LR
+        #|X
+        #|subgraph outer
+        #|    A
+        #|    subgraph inner
+        #|        B --> C
+        #|    end
+        #|    A --> B
+        #|end
+        #|X --> A
+        #|C --> Y
+        #|Y
+        #|
+      ),
       header: "graph",
       supported_by_moonbit: true,
       padding_x: 5,
@@ -775,7 +1079,14 @@ pub fn corpus_cases() -> Array[CorpusCase] {
     },
     {
       name: "subgraph_node_outside_lr",
-      input: "graph LR\nX\nsubgraph one\n    A --> B\nend\n",
+      input: (
+        #|graph LR
+        #|X
+        #|subgraph one
+        #|    A --> B
+        #|end
+        #|
+      ),
       header: "graph",
       supported_by_moonbit: true,
       padding_x: 5,
@@ -793,7 +1104,13 @@ pub fn corpus_cases() -> Array[CorpusCase] {
     },
     {
       name: "subgraph_single_node",
-      input: "graph LR\nsubgraph one\n    A\nend\n",
+      input: (
+        #|graph LR
+        #|subgraph one
+        #|    A
+        #|end
+        #|
+      ),
       header: "graph",
       supported_by_moonbit: true,
       padding_x: 5,
@@ -811,7 +1128,13 @@ pub fn corpus_cases() -> Array[CorpusCase] {
     },
     {
       name: "subgraph_td_direction",
-      input: "graph TD\nsubgraph one\n    A --> B\nend\n",
+      input: (
+        #|graph TD
+        #|subgraph one
+        #|    A --> B
+        #|end
+        #|
+      ),
       header: "graph",
       supported_by_moonbit: true,
       padding_x: 5,
@@ -829,7 +1152,17 @@ pub fn corpus_cases() -> Array[CorpusCase] {
     },
     {
       name: "subgraph_td_multiple",
-      input: "graph TD\nsubgraph Frontend\n    UI --> API\nend\nsubgraph Backend\n    API --> Database\n    API --> Cache\nend\n",
+      input: (
+        #|graph TD
+        #|subgraph Frontend
+        #|    UI --> API
+        #|end
+        #|subgraph Backend
+        #|    API --> Database
+        #|    API --> Cache
+        #|end
+        #|
+      ),
       header: "graph",
       supported_by_moonbit: true,
       padding_x: 5,
@@ -847,7 +1180,17 @@ pub fn corpus_cases() -> Array[CorpusCase] {
     },
     {
       name: "subgraph_td_multiple_paddingy",
-      input: "graph TD\nsubgraph Frontend\n    UI --> API\nend\nsubgraph Backend\n    API --> Database\n    API --> Cache\nend\n",
+      input: (
+        #|graph TD
+        #|subgraph Frontend
+        #|    UI --> API
+        #|end
+        #|subgraph Backend
+        #|    API --> Database
+        #|    API --> Cache
+        #|end
+        #|
+      ),
       header: "graph",
       supported_by_moonbit: true,
       padding_x: 3,
@@ -865,7 +1208,17 @@ pub fn corpus_cases() -> Array[CorpusCase] {
     },
     {
       name: "subgraph_three_levels_nested",
-      input: "graph LR\nsubgraph level1\n    subgraph level2\n        subgraph level3\n            A\n        end\n    end\nend\n",
+      input: (
+        #|graph LR
+        #|subgraph level1
+        #|    subgraph level2
+        #|        subgraph level3
+        #|            A
+        #|        end
+        #|    end
+        #|end
+        #|
+      ),
       header: "graph",
       supported_by_moonbit: true,
       padding_x: 5,
@@ -883,7 +1236,21 @@ pub fn corpus_cases() -> Array[CorpusCase] {
     },
     {
       name: "subgraph_three_separate",
-      input: "graph LR\nsubgraph Frontend\n    UI\nend\nsubgraph Backend\n    API\nend\nsubgraph Database\n    DB\nend\nUI --> API\nAPI --> DB\n",
+      input: (
+        #|graph LR
+        #|subgraph Frontend
+        #|    UI
+        #|end
+        #|subgraph Backend
+        #|    API
+        #|end
+        #|subgraph Database
+        #|    DB
+        #|end
+        #|UI --> API
+        #|API --> DB
+        #|
+      ),
       header: "graph",
       supported_by_moonbit: true,
       padding_x: 5,
@@ -901,7 +1268,17 @@ pub fn corpus_cases() -> Array[CorpusCase] {
     },
     {
       name: "subgraph_two_separate",
-      input: "graph LR\nsubgraph one\n    A\nend\nsubgraph two\n    B\nend\nA --> B\n",
+      input: (
+        #|graph LR
+        #|subgraph one
+        #|    A
+        #|end
+        #|subgraph two
+        #|    B
+        #|end
+        #|A --> B
+        #|
+      ),
       header: "graph",
       supported_by_moonbit: true,
       padding_x: 5,
@@ -919,7 +1296,17 @@ pub fn corpus_cases() -> Array[CorpusCase] {
     },
     {
       name: "subgraph_with_labels",
-      input: "graph LR\nsubgraph one\n    A -->|sends| B\nend\nsubgraph two\n    C -->|receives| D\nend\nB -->|data| C\n",
+      input: (
+        #|graph LR
+        #|subgraph one
+        #|    A -->|sends| B
+        #|end
+        #|subgraph two
+        #|    C -->|receives| D
+        #|end
+        #|B -->|data| C
+        #|
+      ),
       header: "graph",
       supported_by_moonbit: true,
       padding_x: 5,
@@ -937,7 +1324,12 @@ pub fn corpus_cases() -> Array[CorpusCase] {
     },
     {
       name: "three_nodes",
-      input: "graph LR\nA --> B\nB --> C\n",
+      input: (
+        #|graph LR
+        #|A --> B
+        #|B --> C
+        #|
+      ),
       header: "graph",
       supported_by_moonbit: true,
       padding_x: 5,
@@ -955,7 +1347,11 @@ pub fn corpus_cases() -> Array[CorpusCase] {
     },
     {
       name: "three_nodes_single_line",
-      input: "graph LR\nA --> B --> C\n",
+      input: (
+        #|graph LR
+        #|A --> B --> C
+        #|
+      ),
       header: "graph",
       supported_by_moonbit: true,
       padding_x: 5,
@@ -973,7 +1369,12 @@ pub fn corpus_cases() -> Array[CorpusCase] {
     },
     {
       name: "two_layer_single_graph",
-      input: "graph LR\nA --> B\nA --> C\n",
+      input: (
+        #|graph LR
+        #|A --> B
+        #|A --> C
+        #|
+      ),
       header: "graph",
       supported_by_moonbit: true,
       padding_x: 5,
@@ -991,7 +1392,12 @@ pub fn corpus_cases() -> Array[CorpusCase] {
     },
     {
       name: "two_layer_single_graph_longer_names",
-      input: "graph LR\nABC --> BCDEFG\nABC --> CDEFGHI\n",
+      input: (
+        #|graph LR
+        #|ABC --> BCDEFG
+        #|ABC --> CDEFGHI
+        #|
+      ),
       header: "graph",
       supported_by_moonbit: true,
       padding_x: 5,
@@ -1009,7 +1415,11 @@ pub fn corpus_cases() -> Array[CorpusCase] {
     },
     {
       name: "two_nodes_linked",
-      input: "graph LR\nA --> B\n",
+      input: (
+        #|graph LR
+        #|A --> B
+        #|
+      ),
       header: "graph",
       supported_by_moonbit: true,
       padding_x: 5,
@@ -1027,7 +1437,11 @@ pub fn corpus_cases() -> Array[CorpusCase] {
     },
     {
       name: "two_nodes_longer_names",
-      input: "graph LR\nLongerName1 --> LongerName2\n",
+      input: (
+        #|graph LR
+        #|LongerName1 --> LongerName2
+        #|
+      ),
       header: "graph",
       supported_by_moonbit: true,
       padding_x: 5,
@@ -1045,7 +1459,12 @@ pub fn corpus_cases() -> Array[CorpusCase] {
     },
     {
       name: "two_root_nodes",
-      input: "graph LR\nA --> B\nC --> D\n",
+      input: (
+        #|graph LR
+        #|A --> B
+        #|C --> D
+        #|
+      ),
       header: "graph",
       supported_by_moonbit: true,
       padding_x: 5,
@@ -1063,7 +1482,12 @@ pub fn corpus_cases() -> Array[CorpusCase] {
     },
     {
       name: "two_root_nodes_longer_names",
-      input: "graph LR\nABC --> BCDEFG\nCDEFGH --> DEF\n",
+      input: (
+        #|graph LR
+        #|ABC --> BCDEFG
+        #|CDEFGH --> DEF
+        #|
+      ),
       header: "graph",
       supported_by_moonbit: true,
       padding_x: 5,
@@ -1081,7 +1505,12 @@ pub fn corpus_cases() -> Array[CorpusCase] {
     },
     {
       name: "two_single_root_nodes",
-      input: "graph LR\nA\nB\n",
+      input: (
+        #|graph LR
+        #|A
+        #|B
+        #|
+      ),
       header: "graph",
       supported_by_moonbit: true,
       padding_x: 5,
