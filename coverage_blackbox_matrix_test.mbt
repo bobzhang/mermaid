@@ -231,9 +231,16 @@ test "Coverage matrix sequence edge cases" {
 
 ///|
 test "Coverage matrix renders empty flowchart forms" {
-  let empty_a = try! render_mermaid_ascii("graph TD\n")
-  let empty_b = try! render_mermaid_ascii("graph LR\n%% comment only\n")
-  let empty_svg = try! render_mermaid("graph TD\n")
+  let empty_flowchart =
+    #|graph TD
+    #|
+  let empty_flowchart_with_comment =
+    #|graph LR
+    #|%% comment only
+    #|
+  let empty_a = try! render_mermaid_ascii(empty_flowchart)
+  let empty_b = try! render_mermaid_ascii(empty_flowchart_with_comment)
+  let empty_svg = try! render_mermaid(empty_flowchart)
 
   assert_true(empty_a == "" || empty_a == "\n")
   assert_true(empty_b == "" || empty_b == "\n")
