@@ -94,7 +94,12 @@ pub fn merge_options_with_colors(
 /// # Example
 /// ```mbt check
 /// test {
-///   let svg = try! render_mermaid("graph TD\nA --> B")
+///   let svg = try! render_mermaid(
+///     (
+///       #|graph TD
+///       #|A --> B
+///     ),
+///   )
 ///   assert_true(svg.has_prefix("<svg "))
 ///   assert_true(svg.contains(">A</text>"))
 /// }
@@ -143,7 +148,11 @@ pub fn render_mermaid_with_theme(
 /// ```mbt check
 /// test {
 ///   let svg = try! render_mermaid_with_theme_name(
-///     "graph TD\nA --> B", "TOKYO   NIGHT",
+///     (
+///       #|graph TD
+///       #|A --> B
+///     ),
+///     "TOKYO   NIGHT",
 ///   )
 ///   assert_true(svg.contains("--bg:#1a1b26"))
 /// }
@@ -166,12 +175,18 @@ pub fn render_mermaid_with_theme_name(
 /// # Example
 /// ```mbt check
 /// test {
-///   let ascii = try! render_mermaid_ascii("graph LR\nA --> B", options={
-///     use_ascii: true,
-///     padding_x: 5,
-///     padding_y: 5,
-///     box_border_padding: 1,
-///   })
+///   let ascii = try! render_mermaid_ascii(
+///     (
+///       #|graph LR
+///       #|A --> B
+///     ),
+///     options={
+///       use_ascii: true,
+///       padding_x: 5,
+///       padding_y: 5,
+///       box_border_padding: 1,
+///     },
+///   )
 ///   assert_true(ascii.contains("A"))
 ///   assert_true(ascii.contains("B"))
 /// }
