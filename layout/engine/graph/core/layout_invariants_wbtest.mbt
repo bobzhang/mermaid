@@ -41,7 +41,13 @@ fn find_positioned_edge(
 ///|
 test "Layout invariants: nodes stay inside canvas" {
   let graph = try! @parser.parse_mermaid(
-    "graph TD\nA[Start] --> B{Check} --> C((Done))",
+    (
+      #|graph TD
+      #|A[Start] --> B{Check} --> C((Done))
+      #|
+    )
+    .trim_end()
+    .to_string(),
   )
   let positioned = layout_graph(graph, RenderOptions::default())
 
@@ -56,7 +62,15 @@ test "Layout invariants: nodes stay inside canvas" {
 ///|
 test "Layout builds positioned groups for flowchart subgraphs" {
   let graph = try! @parser.parse_mermaid(
-    "graph TD\nsubgraph Backend\nA --> B\nend",
+    (
+      #|graph TD
+      #|subgraph Backend
+      #|A --> B
+      #|end
+      #|
+    )
+    .trim_end()
+    .to_string(),
   )
   let positioned = layout_graph(graph, RenderOptions::default())
 
@@ -76,7 +90,18 @@ test "Layout builds positioned groups for flowchart subgraphs" {
 ///|
 test "Layout keeps nested positioned groups inside parent group" {
   let graph = try! @parser.parse_mermaid(
-    "graph TD\nsubgraph Outer\nsubgraph Inner\nA --> B\nend\nC --> D\nend",
+    (
+      #|graph TD
+      #|subgraph Outer
+      #|subgraph Inner
+      #|A --> B
+      #|end
+      #|C --> D
+      #|end
+      #|
+    )
+    .trim_end()
+    .to_string(),
   )
   let positioned = layout_graph(graph, RenderOptions::default())
 
@@ -96,10 +121,27 @@ test "Layout keeps nested positioned groups inside parent group" {
 ///|
 test "Layout flowchart subgraph direction override keeps single-edge axis stable" {
   let base_graph = try! @parser.parse_mermaid(
-    "graph TD\nsubgraph one\nA --> B\nend",
+    (
+      #|graph TD
+      #|subgraph one
+      #|A --> B
+      #|end
+      #|
+    )
+    .trim_end()
+    .to_string(),
   )
   let override_graph = try! @parser.parse_mermaid(
-    "graph TD\nsubgraph one\ndirection LR\nA --> B\nend",
+    (
+      #|graph TD
+      #|subgraph one
+      #|direction LR
+      #|A --> B
+      #|end
+      #|
+    )
+    .trim_end()
+    .to_string(),
   )
 
   let base_positioned = layout_graph(base_graph, RenderOptions::default())
@@ -135,10 +177,31 @@ test "Layout flowchart subgraph direction override keeps single-edge axis stable
 ///|
 test "Layout state composite direction override changes internal axis" {
   let base_graph = try! @parser.parse_mermaid(
-    "stateDiagram-v2\nstate Processing {\n  parse --> validate\n}\n[*] --> Processing\nProcessing --> [*]",
+    (
+      #|stateDiagram-v2
+      #|state Processing {
+      #|  parse --> validate
+      #|}
+      #|[*] --> Processing
+      #|Processing --> [*]
+      #|
+    )
+    .trim_end()
+    .to_string(),
   )
   let override_graph = try! @parser.parse_mermaid(
-    "stateDiagram-v2\nstate Processing {\n  direction LR\n  parse --> validate\n}\n[*] --> Processing\nProcessing --> [*]",
+    (
+      #|stateDiagram-v2
+      #|state Processing {
+      #|  direction LR
+      #|  parse --> validate
+      #|}
+      #|[*] --> Processing
+      #|Processing --> [*]
+      #|
+    )
+    .trim_end()
+    .to_string(),
   )
 
   let base_positioned = layout_graph(base_graph, RenderOptions::default())
