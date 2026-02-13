@@ -277,14 +277,6 @@ fn is_sequence_graph(graph : MermaidGraph) -> Bool {
 }
 
 ///|
-fn layout_sequence_graph(
-  graph : MermaidGraph,
-  options : RenderOptions,
-) -> PositionedGraph {
-  @layout_engine_sequence_core.layout_sequence_graph(graph, options)
-}
-
-///|
 fn subgraph_group_padding() -> Int {
   12
 }
@@ -1264,7 +1256,7 @@ fn layout_graph_with_subgraph_redirects(
   use_subgraph_redirects : Bool,
 ) -> PositionedGraph {
   if is_sequence_graph(graph) {
-    return layout_sequence_graph(graph, options)
+    return @layout_engine_sequence_core.layout_sequence_graph(graph, options)
   }
 
   let padding = resolve_padding(options)

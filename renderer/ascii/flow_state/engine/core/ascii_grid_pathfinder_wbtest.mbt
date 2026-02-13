@@ -11,7 +11,15 @@ fn path_to_string(path : Array[AsciiGridCoord]) -> String {
 test "ascii grid pathfinder returns direct horizontal path" {
   let blocked : Map[String, Bool] = {}
   let path = match
-    ascii_grid_pathfind({ x: 0, y: 0 }, { x: 3, y: 0 }, blocked, 0, 5, 0, 5) {
+    @layout.ascii_grid_pathfind(
+      { x: 0, y: 0 },
+      { x: 3, y: 0 },
+      blocked,
+      0,
+      5,
+      0,
+      5,
+    ) {
     Some(value) => value
     None => fail("expected a path")
   }
@@ -26,7 +34,15 @@ test "ascii grid pathfinder routes around a blocked point" {
   blocked["1:0"] = true
 
   let path = match
-    ascii_grid_pathfind({ x: 0, y: 0 }, { x: 2, y: 0 }, blocked, -1, 4, -1, 4) {
+    @layout.ascii_grid_pathfind(
+      { x: 0, y: 0 },
+      { x: 2, y: 0 },
+      blocked,
+      -1,
+      4,
+      -1,
+      4,
+    ) {
     Some(value) => value
     None => fail("expected a path around the obstacle")
   }
@@ -47,7 +63,15 @@ test "ascii grid pathfinder returns None when unreachable" {
   blocked["0:-1"] = true
 
   match
-    ascii_grid_pathfind({ x: 0, y: 0 }, { x: 2, y: 0 }, blocked, -2, 2, -2, 2) {
+    @layout.ascii_grid_pathfind(
+      { x: 0, y: 0 },
+      { x: 2, y: 0 },
+      blocked,
+      -2,
+      2,
+      -2,
+      2,
+    ) {
     Some(path) => fail("expected no path, got: \{path_to_string(path)}")
     None => ()
   }
@@ -62,6 +86,6 @@ test "ascii grid merge path removes interior straight points" {
     { x: 2, y: 1 },
     { x: 2, y: 2 },
   ]
-  let merged = ascii_grid_merge_path(path)
+  let merged = @layout.ascii_grid_merge_path(path)
   assert_eq(path_to_string(merged), "(0,0) -> (2,0) -> (2,2)")
 }

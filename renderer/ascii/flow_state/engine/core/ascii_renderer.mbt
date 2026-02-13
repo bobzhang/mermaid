@@ -476,7 +476,7 @@ fn flow_non_state_route_points_with_pathfinder(
   let start = AsciiGridCoord::{ x: source_x, y: source_y }
   let ending = AsciiGridCoord::{ x: target_x, y: target_y }
   match
-    ascii_grid_pathfind(
+    @layout.ascii_grid_pathfind(
       start,
       ending,
       blocked,
@@ -489,7 +489,7 @@ fn flow_non_state_route_points_with_pathfinder(
       if path.length() < 2 {
         return fallback
       }
-      let merged_path = ascii_grid_merge_path(path)
+      let merged_path = @layout.ascii_grid_merge_path(path)
       if merged_path.length() < 2 {
         return fallback
       }
@@ -1285,7 +1285,7 @@ fn flow_draw_routed_segment(
   let start = AsciiGridCoord::{ x: x1, y: y1 }
   let ending = AsciiGridCoord::{ x: x2, y: y2 }
   match
-    ascii_grid_pathfind(
+    @layout.ascii_grid_pathfind(
       start,
       ending,
       blocked,
@@ -3412,12 +3412,16 @@ fn render_ascii_plan(
       }
     Class =>
       match plan.class_layout {
-        Some(class_layout) => render_ascii_class(graph, class_layout, options)
+        Some(class_layout) =>
+          @renderer_ascii_class_er.render_ascii_class(
+            graph, class_layout, options,
+          )
         None => ""
       }
     Er =>
       match plan.er_layout {
-        Some(er_layout) => render_ascii_er(graph, er_layout, options)
+        Some(er_layout) =>
+          @renderer_ascii_class_er.render_ascii_er(graph, er_layout, options)
         None => ""
       }
     StateFlatGrid =>
