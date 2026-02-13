@@ -106,7 +106,7 @@ fn is_uri_unreserved_char(ch : Char) -> Bool {
 
 ///|
 fn percent_hex(byte_value : Int) -> String {
-  "%" + byte_value.to_byte().to_hex().to_upper()
+  "%\{byte_value.to_byte().to_hex().to_upper()}"
 }
 
 ///|
