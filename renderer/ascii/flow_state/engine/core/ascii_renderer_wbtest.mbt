@@ -17,19 +17,47 @@ fn state_lifecycle_source() -> String {
 
 ///|
 test "trim_flow_canvas_output trims outer blank lines and shared indent" {
-  let raw = "\n\n   +---+\n   | A |\n   +---+\n\n"
-  assert_eq(trim_flow_canvas_output(raw), "+---+\n| A |\n+---+")
+  let raw =
+    #|
+    #|
+    #|   +---+
+    #|   | A |
+    #|   +---+
+    #|
+    #|
+  assert_eq(
+    trim_flow_canvas_output(raw),
+    (
+      #|+---+
+      #|| A |
+      #|+---+
+    ),
+  )
 }
 
 ///|
 test "trim_flow_canvas_output preserves relative indentation" {
-  let raw = "\n    root\n      child\n"
-  assert_eq(trim_flow_canvas_output(raw), "root\n  child")
+  let raw =
+    #|
+    #|    root
+    #|      child
+    #|
+  assert_eq(
+    trim_flow_canvas_output(raw),
+    (
+      #|root
+      #|  child
+    ),
+  )
 }
 
 ///|
 test "trim_flow_canvas_output returns empty for blank canvas text" {
-  let raw = "\n   \n\t\n"
+  let raw =
+    #|
+    #|   
+    #|	
+    #|
   assert_eq(trim_flow_canvas_output(raw), "")
 }
 
