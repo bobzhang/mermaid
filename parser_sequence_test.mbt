@@ -1,6 +1,6 @@
 ///|
 test "Parser supports basic sequence messages" {
-  let graph = try! @beautiful_mermaid.parse_mermaid(
+  let graph = @beautiful_mermaid.parse_mermaid(
     (
       #|sequenceDiagram
       #|  Alice->>Bob: Hello Bob
@@ -31,7 +31,7 @@ test "Parser supports basic sequence messages" {
 
 ///|
 test "Parser keeps sequence self messages" {
-  let graph = try! @beautiful_mermaid.parse_mermaid(
+  let graph = @beautiful_mermaid.parse_mermaid(
     (
       #|sequenceDiagram
       #|  Alice->>Alice: Think
@@ -53,7 +53,7 @@ test "Parser keeps sequence self messages" {
 
 ///|
 test "Parser supports additional sequence arrow operators" {
-  let graph = try! @beautiful_mermaid.parse_mermaid(
+  let graph = @beautiful_mermaid.parse_mermaid(
     (
       #|sequenceDiagram
       #|A->B: open
@@ -80,7 +80,7 @@ test "Parser supports additional sequence arrow operators" {
 
 ///|
 test "Parser supports sequence activation marker targets" {
-  let graph = try! @beautiful_mermaid.parse_mermaid(
+  let graph = @beautiful_mermaid.parse_mermaid(
     (
       #|sequenceDiagram
       #|A->>+B: Activate target
@@ -102,7 +102,7 @@ test "Parser supports sequence activation marker targets" {
 
 ///|
 test "Parser captures sequence blocks and dividers" {
-  let graph = try! @beautiful_mermaid.parse_mermaid(
+  let graph = @beautiful_mermaid.parse_mermaid(
     (
       #|sequenceDiagram
       #|A->>B: Request
@@ -128,7 +128,7 @@ test "Parser captures sequence blocks and dividers" {
 
 ///|
 test "Parser captures sequence notes and actor declarations" {
-  let graph = try! @beautiful_mermaid.parse_mermaid(
+  let graph = @beautiful_mermaid.parse_mermaid(
     (
       #|sequenceDiagram
       #|actor U as User
@@ -159,7 +159,7 @@ test "Parser captures sequence notes and actor declarations" {
 
 ///|
 test "Parser ignores standalone activate/deactivate commands" {
-  let graph = try! @beautiful_mermaid.parse_mermaid(
+  let graph = @beautiful_mermaid.parse_mermaid(
     (
       #|sequenceDiagram
       #|participant A
@@ -176,7 +176,7 @@ test "Parser ignores standalone activate/deactivate commands" {
 
 ///|
 test "Parser supports all sequence block keywords" {
-  let graph = try! @beautiful_mermaid.parse_mermaid(
+  let graph = @beautiful_mermaid.parse_mermaid(
     (
       #|sequenceDiagram
       #|A->>B: Start
@@ -228,7 +228,7 @@ test "Parser supports all sequence block keywords" {
 
 ///|
 test "Parser auto-creates sequence participants from messages" {
-  let graph = try! @beautiful_mermaid.parse_mermaid(
+  let graph = @beautiful_mermaid.parse_mermaid(
     (
       #|sequenceDiagram
       #|Alice->>Bob: Hello
@@ -249,7 +249,7 @@ test "Parser auto-creates sequence participants from messages" {
 
 ///|
 test "Parser avoids duplicate declared participants used in messages" {
-  let graph = try! @beautiful_mermaid.parse_mermaid(
+  let graph = @beautiful_mermaid.parse_mermaid(
     (
       #|sequenceDiagram
       #|participant A as Alice
@@ -270,7 +270,7 @@ test "Parser avoids duplicate declared participants used in messages" {
 
 ///|
 test "Parser participant without alias uses id as label" {
-  let graph = try! @beautiful_mermaid.parse_mermaid(
+  let graph = @beautiful_mermaid.parse_mermaid(
     (
       #|sequenceDiagram
       #|participant Server
@@ -290,7 +290,7 @@ test "Parser participant without alias uses id as label" {
 
 ///|
 test "Parser captures left sequence notes" {
-  let graph = try! @beautiful_mermaid.parse_mermaid(
+  let graph = @beautiful_mermaid.parse_mermaid(
     (
       #|sequenceDiagram
       #|A->>B: Hello
@@ -308,7 +308,7 @@ test "Parser captures left sequence notes" {
 
 ///|
 test "Parser keeps sequence message order" {
-  let graph = try! @beautiful_mermaid.parse_mermaid(
+  let graph = @beautiful_mermaid.parse_mermaid(
     (
       #|sequenceDiagram
       #|A->>B: First
@@ -325,7 +325,7 @@ test "Parser keeps sequence message order" {
 
 ///|
 test "Parser handles full authentication sequence flow" {
-  let graph = try! @beautiful_mermaid.parse_mermaid(
+  let graph = @beautiful_mermaid.parse_mermaid(
     (
       #|sequenceDiagram
       #|participant C as Client

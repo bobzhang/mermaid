@@ -7,7 +7,7 @@ fn assert_contains_id(ids : Array[String], expected : String) -> Unit raise {
 
 ///|
 test "Parser parses a basic flowchart subgraph" {
-  let graph = try! @beautiful_mermaid.parse_mermaid(
+  let graph = @beautiful_mermaid.parse_mermaid(
     (
       #|graph TD
       #|subgraph Backend
@@ -27,7 +27,7 @@ test "Parser parses a basic flowchart subgraph" {
 
 ///|
 test "Parser parses subgraph id and label in bracket form" {
-  let graph = try! @beautiful_mermaid.parse_mermaid(
+  let graph = @beautiful_mermaid.parse_mermaid(
     (
       #|graph TD
       #|subgraph us-east [US East Region]
@@ -44,7 +44,7 @@ test "Parser parses subgraph id and label in bracket form" {
 
 ///|
 test "Parser keeps nested subgraph nodes scoped to their direct owner" {
-  let graph = try! @beautiful_mermaid.parse_mermaid(
+  let graph = @beautiful_mermaid.parse_mermaid(
     (
       #|graph TD
       #|subgraph Outer
@@ -72,7 +72,7 @@ test "Parser keeps nested subgraph nodes scoped to their direct owner" {
 
 ///|
 test "Parser keeps subgraph membership at first node definition" {
-  let graph = try! @beautiful_mermaid.parse_mermaid(
+  let graph = @beautiful_mermaid.parse_mermaid(
     (
       #|graph TD
       #|subgraph Clients
@@ -96,7 +96,7 @@ test "Parser keeps subgraph membership at first node definition" {
 
 ///|
 test "Parser captures direction override inside subgraph only" {
-  let graph = try! @beautiful_mermaid.parse_mermaid(
+  let graph = @beautiful_mermaid.parse_mermaid(
     (
       #|graph TD
       #|subgraph sub1 [Left Right Group]
@@ -116,7 +116,7 @@ test "Parser captures direction override inside subgraph only" {
 
 ///|
 test "Parser ignores root flowchart direction lines after header" {
-  let graph = try! @beautiful_mermaid.parse_mermaid(
+  let graph = @beautiful_mermaid.parse_mermaid(
     (
       #|graph TD
       #|direction LR
@@ -131,7 +131,7 @@ test "Parser ignores root flowchart direction lines after header" {
 
 ///|
 test "Parser ignores invalid direction override inside subgraph" {
-  let graph = try! @beautiful_mermaid.parse_mermaid(
+  let graph = @beautiful_mermaid.parse_mermaid(
     (
       #|graph LR
       #|subgraph Sub

@@ -30,7 +30,7 @@ fn all_shapes_diagram() -> String {
 
 ///|
 test "Parser recognizes all flowchart shape syntaxes" {
-  let graph = try! @beautiful_mermaid.parse_mermaid(all_shapes_diagram())
+  let graph = @beautiful_mermaid.parse_mermaid(all_shapes_diagram())
 
   assert_eq(graph.nodes.length(), 12)
   assert_eq(graph.edges.length(), 11)
@@ -53,7 +53,7 @@ test "Parser recognizes all flowchart shape syntaxes" {
 test "SVG renders all flowchart shape labels in a single diagram" (
   it : @test.Test,
 ) {
-  let svg = try! @beautiful_mermaid.render_mermaid(all_shapes_diagram())
+  let svg = @beautiful_mermaid.render_mermaid(all_shapes_diagram())
   it.write(svg)
   it.snapshot(filename="flowchart_shapes_all_labels.svg")
 
