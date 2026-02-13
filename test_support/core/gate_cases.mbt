@@ -28,8 +28,40 @@ pub fn gate_cases() -> Array[GateCase] {
       expected_edge_count: 1,
       padding_x: 5,
       padding_y: 5,
-      expected_ascii: "+---+\n|   |\n| A |\n|   |\n+---+\n  |\n  |\n  |\n  |\n  v\n+---+\n|   |\n| B |\n|   |\n+---+",
-      expected_unicode: "┌───┐\n│   │\n│ A │\n│   │\n└─┬─┘\n  │\n  │\n  │\n  │\n  ▼\n┌───┐\n│   │\n│ B │\n│   │\n└───┘",
+      expected_ascii: (
+        #|+---+
+        #||   |
+        #|| A |
+        #||   |
+        #|+---+
+        #|  |
+        #|  |
+        #|  |
+        #|  |
+        #|  v
+        #|+---+
+        #||   |
+        #|| B |
+        #||   |
+        #|+---+
+      ),
+      expected_unicode: (
+        #|┌───┐
+        #|│   │
+        #|│ A │
+        #|│   │
+        #|└─┬─┘
+        #|  │
+        #|  │
+        #|  │
+        #|  │
+        #|  ▼
+        #|┌───┐
+        #|│   │
+        #|│ B │
+        #|│   │
+        #|└───┘
+      ),
       expected_svg_fragments: [
         "<svg", "<polyline", ">A</text>", ">B</text>", "marker-end=\"url(#arrowhead)\"",
       ],
@@ -45,8 +77,20 @@ pub fn gate_cases() -> Array[GateCase] {
       expected_edge_count: 1,
       padding_x: 5,
       padding_y: 5,
-      expected_ascii: "+-------+     +------+\n|       |     |      |\n| Start |-Yes>| Done |\n|       |     |      |\n+-------+     +------+",
-      expected_unicode: "┌───────┐     ┌──────┐\n│       │     │      │\n│ Start ├─Yes►│ Done │\n│       │     │      │\n└───────┘     └──────┘",
+      expected_ascii: (
+        #|+-------+     +------+
+        #||       |     |      |
+        #|| Start |-Yes>| Done |
+        #||       |     |      |
+        #|+-------+     +------+
+      ),
+      expected_unicode: (
+        #|┌───────┐     ┌──────┐
+        #|│       │     │      │
+        #|│ Start ├─Yes►│ Done │
+        #|│       │     │      │
+        #|└───────┘     └──────┘
+      ),
       expected_svg_fragments: [
         "<svg", "<polygon", ">Start</text>", ">Done</text>", ">Yes</text>",
       ],
@@ -62,8 +106,40 @@ pub fn gate_cases() -> Array[GateCase] {
       expected_edge_count: 1,
       padding_x: 5,
       padding_y: 5,
-      expected_ascii: "+---+\n|   |\n| A |\n|   |\n+---+\n  |\n  |\n  |\n  |\n  v\n+---+\n|   |\n| B |\n|   |\n+---+",
-      expected_unicode: "┌───┐\n│   │\n│ A │\n│   │\n└─┬─┘\n  │\n  │\n  │\n  │\n  ▼\n┌───┐\n│   │\n│ B │\n│   │\n└───┘",
+      expected_ascii: (
+        #|+---+
+        #||   |
+        #|| A |
+        #||   |
+        #|+---+
+        #|  |
+        #|  |
+        #|  |
+        #|  |
+        #|  v
+        #|+---+
+        #||   |
+        #|| B |
+        #||   |
+        #|+---+
+      ),
+      expected_unicode: (
+        #|┌───┐
+        #|│   │
+        #|│ A │
+        #|│   │
+        #|└─┬─┘
+        #|  │
+        #|  │
+        #|  │
+        #|  │
+        #|  ▼
+        #|┌───┐
+        #|│   │
+        #|│ B │
+        #|│   │
+        #|└───┘
+      ),
       expected_svg_fragments: [
         "<svg", "marker-end=\"url(#arrowhead)\"", "marker-start=\"url(#arrowhead-start)\"",
         "stroke-width=\"1.5\"",
@@ -80,8 +156,40 @@ pub fn gate_cases() -> Array[GateCase] {
       expected_edge_count: 1,
       padding_x: 5,
       padding_y: 5,
-      expected_ascii: "+---+\n|   |\n| A |\n|   |\n+---+\n  |\n  |\n  |\n  |\n  v\n+---+\n|   |\n| B |\n|   |\n+---+",
-      expected_unicode: "┌───┐\n│   │\n│ A │\n│   │\n└─┬─┘\n  │\n  │\n  │\n  │\n  ▼\n┌───┐\n│   │\n│ B │\n│   │\n└───┘",
+      expected_ascii: (
+        #|+---+
+        #||   |
+        #|| A |
+        #||   |
+        #|+---+
+        #|  |
+        #|  |
+        #|  |
+        #|  |
+        #|  v
+        #|+---+
+        #||   |
+        #|| B |
+        #||   |
+        #|+---+
+      ),
+      expected_unicode: (
+        #|┌───┐
+        #|│   │
+        #|│ A │
+        #|│   │
+        #|└─┬─┘
+        #|  │
+        #|  │
+        #|  │
+        #|  │
+        #|  ▼
+        #|┌───┐
+        #|│   │
+        #|│ B │
+        #|│   │
+        #|└───┘
+      ),
       expected_svg_fragments: [
         "<svg", "stroke-dasharray=\"4 4\"", ">A</text>", ">B</text>",
       ],
@@ -97,8 +205,20 @@ pub fn gate_cases() -> Array[GateCase] {
       expected_edge_count: 2,
       padding_x: 5,
       padding_y: 5,
-      expected_ascii: "+---+     +---+     +---+\n|   |     |   |     |   |\n| A |---->| B |---->| C |\n|   |     |   |     |   |\n+---+     +---+     +---+",
-      expected_unicode: "┌───┐     ┌───┐     ┌───┐\n│   │     │   │     │   │\n│ A ├────►│ B ├────►│ C │\n│   │     │   │     │   │\n└───┘     └───┘     └───┘",
+      expected_ascii: (
+        #|+---+     +---+     +---+
+        #||   |     |   |     |   |
+        #|| A |---->| B |---->| C |
+        #||   |     |   |     |   |
+        #|+---+     +---+     +---+
+      ),
+      expected_unicode: (
+        #|┌───┐     ┌───┐     ┌───┐
+        #|│   │     │   │     │   │
+        #|│ A ├────►│ B ├────►│ C │
+        #|│   │     │   │     │   │
+        #|└───┘     └───┘     └───┘
+      ),
       expected_svg_fragments: [
         "<svg", "<polyline", ">A</text>", ">B</text>", ">C</text>",
       ],
@@ -114,8 +234,40 @@ pub fn gate_cases() -> Array[GateCase] {
       expected_edge_count: 2,
       padding_x: 5,
       padding_y: 5,
-      expected_ascii: "+---+     +---+\n|   |     |   |\n| A |---->| B |\n|   |     |   |\n+---+     +---+\n  |\n  |\n  |\n  |\n  |\n  |       +---+\n  |       |   |\n  +------>| C |\n          |   |\n          +---+",
-      expected_unicode: "┌───┐     ┌───┐\n│   │     │   │\n│ A ├────►│ B │\n│   │     │   │\n└─┬─┘     └───┘\n  │\n  │\n  │\n  │\n  │\n  │       ┌───┐\n  │       │   │\n  └──────►│ C │\n          │   │\n          └───┘",
+      expected_ascii: (
+        #|+---+     +---+
+        #||   |     |   |
+        #|| A |---->| B |
+        #||   |     |   |
+        #|+---+     +---+
+        #|  |
+        #|  |
+        #|  |
+        #|  |
+        #|  |
+        #|  |       +---+
+        #|  |       |   |
+        #|  +------>| C |
+        #|          |   |
+        #|          +---+
+      ),
+      expected_unicode: (
+        #|┌───┐     ┌───┐
+        #|│   │     │   │
+        #|│ A ├────►│ B │
+        #|│   │     │   │
+        #|└─┬─┘     └───┘
+        #|  │
+        #|  │
+        #|  │
+        #|  │
+        #|  │
+        #|  │       ┌───┐
+        #|  │       │   │
+        #|  └──────►│ C │
+        #|          │   │
+        #|          └───┘
+      ),
       expected_svg_fragments: [
         "<svg", "<polyline", ">A</text>", ">B</text>", ">C</text>",
       ],
@@ -133,8 +285,80 @@ pub fn gate_cases() -> Array[GateCase] {
       expected_edge_count: 3,
       padding_x: 5,
       padding_y: 5,
-      expected_ascii: "+------------+\n|            |\n|            |\n|            |\n+------------+\n       |\n       |\n       |\n       |\n       v\n+------------+\n|            |\n|    Idle    |\n|            |\n+------------+\n       |\n       |\n     start\n       |\n       v\n+------------+\n|            |\n| Processing |\n|            |\n+------------+\n       |\n       |\n       |\n       |\n       v\n+------------+\n|            |\n|            |\n|            |\n+------------+",
-      expected_unicode: "┌────────────┐\n│            │\n│            │\n│            │\n└──────┬─────┘\n       │\n       │\n       │\n       │\n       ▼\n┌────────────┐\n│            │\n│    Idle    │\n│            │\n└──────┬─────┘\n       │\n       │\n     start\n       │\n       ▼\n┌────────────┐\n│            │\n│ Processing │\n│            │\n└──────┬─────┘\n       │\n       │\n       │\n       │\n       ▼\n┌────────────┐\n│            │\n│            │\n│            │\n└────────────┘",
+      expected_ascii: (
+        #|+------------+
+        #||            |
+        #||            |
+        #||            |
+        #|+------------+
+        #|       |
+        #|       |
+        #|       |
+        #|       |
+        #|       v
+        #|+------------+
+        #||            |
+        #||    Idle    |
+        #||            |
+        #|+------------+
+        #|       |
+        #|       |
+        #|     start
+        #|       |
+        #|       v
+        #|+------------+
+        #||            |
+        #|| Processing |
+        #||            |
+        #|+------------+
+        #|       |
+        #|       |
+        #|       |
+        #|       |
+        #|       v
+        #|+------------+
+        #||            |
+        #||            |
+        #||            |
+        #|+------------+
+      ),
+      expected_unicode: (
+        #|┌────────────┐
+        #|│            │
+        #|│            │
+        #|│            │
+        #|└──────┬─────┘
+        #|       │
+        #|       │
+        #|       │
+        #|       │
+        #|       ▼
+        #|┌────────────┐
+        #|│            │
+        #|│    Idle    │
+        #|│            │
+        #|└──────┬─────┘
+        #|       │
+        #|       │
+        #|     start
+        #|       │
+        #|       ▼
+        #|┌────────────┐
+        #|│            │
+        #|│ Processing │
+        #|│            │
+        #|└──────┬─────┘
+        #|       │
+        #|       │
+        #|       │
+        #|       │
+        #|       ▼
+        #|┌────────────┐
+        #|│            │
+        #|│            │
+        #|│            │
+        #|└────────────┘
+      ),
       expected_svg_fragments: [
         "<svg", "class=\"state-start\"", ">Idle</text>", ">Processing</text>",
       ],
@@ -152,8 +376,20 @@ pub fn gate_cases() -> Array[GateCase] {
       expected_edge_count: 2,
       padding_x: 5,
       padding_y: 5,
-      expected_ascii: "+--+     +---+     +--+\n|  |     |   |     |  |\n|  |---->| A |---->|  |\n|  |     |   |     |  |\n+--+     +---+     +--+",
-      expected_unicode: "┌──┐     ┌───┐     ┌──┐\n│  │     │   │     │  │\n│  ├────►│ A ├────►│  │\n│  │     │   │     │  │\n└──┘     └───┘     └──┘",
+      expected_ascii: (
+        #|+--+     +---+     +--+
+        #||  |     |   |     |  |
+        #||  |---->| A |---->|  |
+        #||  |     |   |     |  |
+        #|+--+     +---+     +--+
+      ),
+      expected_unicode: (
+        #|┌──┐     ┌───┐     ┌──┐
+        #|│  │     │   │     │  │
+        #|│  ├────►│ A ├────►│  │
+        #|│  │     │   │     │  │
+        #|└──┘     └───┘     └──┘
+      ),
       expected_svg_fragments: ["<svg", "class=\"state-start\"", ">A</text>"],
     },
   ]
