@@ -11,6 +11,28 @@ pub fn build_plan(@model.MermaidGraph) -> AsciiLayoutPlan
 // Errors
 
 // Types and methods
+pub struct AsciiClassLayout {
+  class_sections_map : Map[String, Array[Array[String]]]
+  class_width : Map[String, Int]
+  class_height : Map[String, Int]
+  class_order : Array[String]
+  placed_x : Map[String, Int]
+  placed_y : Map[String, Int]
+  total_w : Int
+  total_h : Int
+}
+
+pub struct AsciiErLayout {
+  entity_sections : Map[String, Array[Array[String]]]
+  entity_width : Map[String, Int]
+  entity_height : Map[String, Int]
+  entity_order : Array[String]
+  placed_x : Map[String, Int]
+  placed_y : Map[String, Int]
+  total_w : Int
+  total_h : Int
+}
+
 pub struct AsciiFlowSubgraphLayout {
   positioned : @model.PositionedGraph
 }
@@ -18,6 +40,9 @@ pub struct AsciiFlowSubgraphLayout {
 pub struct AsciiLayoutPlan {
   kind : AsciiPlanKind
   graph : @model.MermaidGraph
+  sequence_layout : AsciiSequenceLayout?
+  class_layout : AsciiClassLayout?
+  er_layout : AsciiErLayout?
   state_flat_grid : AsciiStateFlatGridLayout?
   flow_subgraph : AsciiFlowSubgraphLayout?
 }
@@ -29,6 +54,36 @@ pub enum AsciiPlanKind {
   StateFlatGrid
   FlowSubgraph
   NodesOnly
+}
+
+pub struct AsciiSequenceActivationLayout {
+  actor_idx : Int
+  top_y : Int
+  bottom_y : Int
+}
+
+pub struct AsciiSequenceLayout {
+  actors : Array[@model.MermaidNode]
+  actor_index : Map[String, Int]
+  lifeline_x : Array[Int]
+  message_arrow_y : Array[Int]
+  message_label_y : Array[Int]
+  block_start_y : Array[Int]
+  block_end_y : Array[Int]
+  divider_y_map : Map[String, Int]
+  note_positions : Array[AsciiSequenceNoteLayout]
+  activations : Array[AsciiSequenceActivationLayout]
+  footer_y : Int
+  total_w : Int
+  total_h : Int
+}
+
+pub struct AsciiSequenceNoteLayout {
+  x : Int
+  y : Int
+  width : Int
+  height : Int
+  lines : Array[String]
 }
 
 pub struct AsciiStateFlatGridLayout {

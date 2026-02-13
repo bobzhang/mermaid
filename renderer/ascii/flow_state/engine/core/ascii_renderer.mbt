@@ -3404,9 +3404,22 @@ fn render_ascii_plan(
 ) -> String {
   let graph = plan.graph
   match plan.kind {
-    Sequence => render_ascii_sequence(graph, options)
-    Class => render_ascii_class(graph, options)
-    Er => render_ascii_er(graph, options)
+    Sequence =>
+      match plan.sequence_layout {
+        Some(sequence_layout) =>
+          render_ascii_sequence(graph, sequence_layout, options)
+        None => ""
+      }
+    Class =>
+      match plan.class_layout {
+        Some(class_layout) => render_ascii_class(graph, class_layout, options)
+        None => ""
+      }
+    Er =>
+      match plan.er_layout {
+        Some(er_layout) => render_ascii_er(graph, er_layout, options)
+        None => ""
+      }
     StateFlatGrid =>
       match plan.state_flat_grid {
         Some(layout_plan) =>

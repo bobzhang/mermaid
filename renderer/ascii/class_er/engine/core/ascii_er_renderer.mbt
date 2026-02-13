@@ -1,31 +1,4 @@
 ///|
-fn er_sections(node : MermaidNode) -> Array[Array[String]] {
-  let lines = node.label.split("\n").map(part => part.to_string()).to_array()
-  if lines.length() == 0 {
-    return [[node.id]]
-  }
-  let header = [lines[0]]
-  let attrs : Array[String] = []
-  for i in 1..<lines.length() {
-    let line = trim_owned(lines[i])
-    if line != "" {
-      if line.has_prefix("PK ") ||
-        line.has_prefix("UK ") ||
-        line.has_prefix("FK ") {
-        attrs.push(line)
-      } else {
-        attrs.push("   \{line}")
-      }
-    }
-  }
-  if attrs.length() == 0 {
-    [header]
-  } else {
-    [header, attrs]
-  }
-}
-
-///|
 fn er_operator_tokens(operator : String?) -> (String, String) {
   match operator {
     Some(op) => {
@@ -121,85 +94,24 @@ fn er_ensure_canvas_size(
 ///|
 pub fn render_ascii_er(
   graph : MermaidGraph,
+  er_layout : @renderer_ascii_layout_plan.AsciiErLayout,
   options : AsciiRenderOptions,
 ) -> String {
-  let entities = graph.nodes.values().to_array()
-  if entities.length() == 0 {
+  let entity_order = er_layout.entity_order
+  if entity_order.length() == 0 {
     return ""
   }
 
   let use_ascii = options.use_ascii
-  let h_gap = 6
-  let v_gap = 4
-
-  let entity_sections : Map[String, Array[Array[String]]] = {}
-  let entity_width : Map[String, Int] = {}
-  let entity_height : Map[String, Int] = {}
-  let entity_order : Array[String] = []
-
-  for entity in entities {
-    let sections = er_sections(entity)
-    let (box_w, box_h) = class_multibox_size(sections)
-    entity_sections[entity.id] = sections
-    entity_width[entity.id] = box_w
-    entity_height[entity.id] = box_h
-    entity_order.push(entity.id)
-  }
-
-  let mut max_per_row = 2
-  while max_per_row * max_per_row < entities.length() {
-    max_per_row = max_per_row + 1
-  }
-  let placed_x : Map[String, Int] = {}
-  let placed_y : Map[String, Int] = {}
-  let mut current_x = 0
-  let mut current_y = 0
-  let mut max_row_h = 0
-  let mut col_count = 0
-
-  for entity_id in entity_order {
-    let w = entity_width.get(entity_id).unwrap()
-    let h = entity_height.get(entity_id).unwrap()
-
-    if col_count >= max_per_row {
-      current_y = current_y + max_row_h + v_gap
-      current_x = 0
-      max_row_h = 0
-      col_count = 0
-    }
-
-    placed_x[entity_id] = current_x
-    placed_y[entity_id] = current_y
-
-    current_x = current_x + w + h_gap
-    if h > max_row_h {
-      max_row_h = h
-    }
-    col_count = col_count + 1
-  }
-
-  let mut total_w = 0
-  let mut total_h = 0
-  for entity_id in entity_order {
-    let x = placed_x.get(entity_id).unwrap()
-    let y = placed_y.get(entity_id).unwrap()
-    let w = entity_width.get(entity_id).unwrap()
-    let h = entity_height.get(entity_id).unwrap()
-    if x + w > total_w {
-      total_w = x + w
-    }
-    if y + h > total_h {
-      total_h = y + h
-    }
-  }
-  total_w = total_w + 4
-  if max_per_row > 2 && entities.length() > max_per_row * 2 {
-    total_w = total_w + 1
-  }
-  total_h = total_h + 2 + graph.edges.length() * 3
+  let entity_sections = er_layout.entity_sections
+  let entity_width = er_layout.entity_width
+  let entity_height = er_layout.entity_height
+  let placed_x = er_layout.placed_x
+  let placed_y = er_layout.placed_y
+  let total_w = er_layout.total_w
+  let total_h = er_layout.total_h
 
   let canvas = make_canvas(total_w, total_h)
-
   for entity_id in entity_order {
     let x = placed_x.get(entity_id).unwrap()
     let y = placed_y.get(entity_id).unwrap()

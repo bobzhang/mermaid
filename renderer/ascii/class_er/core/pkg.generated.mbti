@@ -3,12 +3,13 @@ package "bobzhang/beautiful_mermaid/renderer/ascii/class_er/core"
 
 import {
   "bobzhang/beautiful_mermaid/model",
+  "bobzhang/beautiful_mermaid/renderer/ascii/layout_plan",
 }
 
 // Values
-pub fn render_ascii_class(@model.MermaidGraph, @model.AsciiRenderOptions) -> String
+pub fn render_ascii_class(@model.MermaidGraph, @layout_plan.AsciiClassLayout, @model.AsciiRenderOptions) -> String
 
-pub fn render_ascii_er(@model.MermaidGraph, @model.AsciiRenderOptions) -> String
+pub fn render_ascii_er(@model.MermaidGraph, @layout_plan.AsciiErLayout, @model.AsciiRenderOptions) -> String
 
 // Errors
 

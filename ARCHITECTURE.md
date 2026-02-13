@@ -133,17 +133,24 @@ Output: `PositionedGraph`.
 - Public umbrella: `renderer/ascii/ascii_renderer.mbt`
 - Internal layout-plan stage:
   - Package: `renderer/ascii/layout_plan/layout_plan.mbt`
-  - Produces `AsciiLayoutPlan` with family dispatch + precomputed flow/state layout data.
+  - Produces `AsciiLayoutPlan` with family dispatch and precomputed layout payloads for:
+    - sequence lifeline/message/block/note coordinates,
+    - class box sections/levels/placements,
+    - ER entity sections/grid placements,
+    - state flat-grid routing, and
+    - flow subgraph positioned geometry.
 - Flow/state renderer:
   - Bridge: `renderer/ascii/flow_state/core/ascii_renderer.mbt`
   - Implementation: `renderer/ascii/flow_state/engine/core/ascii_renderer.mbt`
-  - Consumes `AsciiLayoutPlan` and renders from plan data (instead of calling layout APIs inline).
+  - Dispatches by plan kind and delegates rendering to family renderers with precomputed plan data.
 - Sequence renderer:
   - Bridge: `renderer/ascii/sequence/core/ascii_sequence_renderer.mbt`
   - Implementation: `renderer/ascii/sequence/engine/core/ascii_sequence_renderer.mbt`
+  - Consumes `AsciiSequenceLayout` from the plan stage.
 - Class/ER renderer:
   - Bridge: `renderer/ascii/class_er/core/ascii_class_renderer.mbt`, `renderer/ascii/class_er/core/ascii_er_renderer.mbt`
   - Implementations: `renderer/ascii/class_er/engine/core/ascii_class_renderer.mbt`, `renderer/ascii/class_er/engine/core/ascii_er_renderer.mbt`
+  - Consume `AsciiClassLayout` and `AsciiErLayout` from the plan stage.
 
 ## Theme and Styling
 

@@ -1,60 +1,4 @@
 ///|
-fn class_is_method_detail(detail : StringView) -> Bool {
-  if detail.has_suffix(" ()") {
-    return true
-  }
-  if detail.contains("(") && detail.contains(")") {
-    return true
-  }
-  false
-}
-
-///|
-fn class_strip_method_marker(detail : StringView) -> StringView {
-  if detail.strip_suffix(" ()") is Some(a) {
-    a.trim()
-  } else {
-    detail
-  }
-}
-
-///|
-fn class_sections(node : MermaidNode) -> Array[Array[String]] {
-  let lines = node.label.split("\n").map(part => part.to_string()).to_array()
-  if lines.length() == 0 {
-    return [[node.id]]
-  }
-
-  let header : Array[String] = []
-  let attributes : Array[String] = []
-  let methods : Array[String] = []
-
-  for i in 1..<lines.length() {
-    let detail = lines[i].trim()
-    if detail == "" {
-      continue
-    }
-    let rendered = class_strip_method_marker(detail)
-    if detail.has_prefix("<<") && detail.has_suffix(">>") {
-      header.push(rendered.to_string())
-    } else if class_is_method_detail(detail) {
-      methods.push(rendered.to_string())
-    } else {
-      attributes.push(rendered.to_string())
-    }
-  }
-  header.push(lines[0])
-
-  if attributes.length() == 0 && methods.length() == 0 {
-    [header]
-  } else if methods.length() == 0 {
-    [header, attributes]
-  } else {
-    [header, attributes, methods]
-  }
-}
-
-///|
 fn class_multibox_size(sections : Array[Array[String]]) -> (Int, Int) {
   let mut max_text_width = 0
   for section in sections {
@@ -124,18 +68,6 @@ fn class_draw_multibox(
       put_canvas(canvas, left + box_width - 1, row, div_r)
       row = row + 1
     }
-  }
-}
-
-///|
-fn map_push_unique(
-  mapping : Map[String, Array[String]],
-  key : String,
-  value : String,
-) -> Unit {
-  let values = mapping.get_or_init(key, () => [])
-  if !values.any(item => item == value) {
-    values.push(value)
   }
 }
 
@@ -260,160 +192,24 @@ fn class_draw_marker(
 ///|
 pub fn render_ascii_class(
   graph : MermaidGraph,
+  class_layout : @renderer_ascii_layout_plan.AsciiClassLayout,
   options : AsciiRenderOptions,
 ) -> String {
-  let classes = graph.nodes.values().to_array()
-  if classes.length() == 0 {
+  let class_order = class_layout.class_order
+  if class_order.length() == 0 {
     return ""
   }
 
   let use_ascii = options.use_ascii
-  let h_gap = 4
-  let v_gap = 3
-
-  let class_sections_map : Map[String, Array[Array[String]]] = {}
-  let class_width : Map[String, Int] = {}
-  let class_height : Map[String, Int] = {}
-  let class_order : Array[String] = []
-
-  for cls in classes {
-    let sections = class_sections(cls)
-    let (box_w, box_h) = class_multibox_size(sections)
-    class_sections_map[cls.id] = sections
-    class_width[cls.id] = box_w
-    class_height[cls.id] = box_h
-    class_order.push(cls.id)
-  }
-
-  let parents : Map[String, Array[String]] = {}
-  let children : Map[String, Array[String]] = {}
-  for edge in graph.edges {
-    let (_, marker_at_to, _, hierarchical) = class_relation_meta(
-      edge.relation_operator,
-    )
-    let (parent_id, child_id) = if hierarchical && marker_at_to {
-      (edge.target, edge.source)
-    } else {
-      (edge.source, edge.target)
-    }
-    map_push_unique(parents, child_id, parent_id)
-    map_push_unique(children, parent_id, child_id)
-  }
-
-  let level : Map[String, Int] = {}
-  let queue : Array[String] = []
-  for class_id in class_order {
-    match parents.get(class_id) {
-      Some(found) =>
-        if found.length() == 0 {
-          level[class_id] = 0
-          queue.push(class_id)
-        }
-      None => {
-        level[class_id] = 0
-        queue.push(class_id)
-      }
-    }
-  }
-
-  let level_cap = classes.length() - 1
-  let mut qi = 0
-  while qi < queue.length() {
-    let id = queue[qi]
-    qi = qi + 1
-    match children.get(id) {
-      Some(child_ids) =>
-        for child_id in child_ids {
-          let new_level = match level.get(id) {
-            Some(found) => found + 1
-            None => 1
-          }
-          if new_level > level_cap {
-            continue
-          }
-          match level.get(child_id) {
-            Some(existing) =>
-              if existing < new_level {
-                level[child_id] = new_level
-                queue.push(child_id)
-              }
-            None => {
-              level[child_id] = new_level
-              queue.push(child_id)
-            }
-          }
-        }
-      None => ()
-    }
-  }
-
-  for class_id in class_order {
-    if !level.contains(class_id) {
-      level[class_id] = 0
-    }
-  }
-
-  let mut max_level = 0
-  for class_id in class_order {
-    match level.get(class_id) {
-      Some(found) => if found > max_level { max_level = found }
-      None => ()
-    }
-  }
-
-  let level_groups : Array[Array[String]] = []
-  for _ in 0..<=max_level {
-    level_groups.push([])
-  }
-  for class_id in class_order {
-    match level.get(class_id) {
-      Some(found) => level_groups[found].push(class_id)
-      None => level_groups[0].push(class_id)
-    }
-  }
-
-  let placed_x : Map[String, Int] = {}
-  let placed_y : Map[String, Int] = {}
-  let mut current_y = 0
-  for lv in 0..<=max_level {
-    let group = level_groups[lv]
-    if group.length() == 0 {
-      continue
-    }
-    let mut current_x = 0
-    let mut max_h = 0
-    for class_id in group {
-      let w = class_width.get(class_id).unwrap()
-      let h = class_height.get(class_id).unwrap()
-      placed_x[class_id] = current_x
-      placed_y[class_id] = current_y
-      current_x = current_x + w + h_gap
-      if h > max_h {
-        max_h = h
-      }
-    }
-    current_y = current_y + max_h + v_gap
-  }
-
-  let mut total_w = 0
-  let mut total_h = 0
-  for class_id in class_order {
-    let x = placed_x.get(class_id).unwrap()
-    let y = placed_y.get(class_id).unwrap()
-    let w = class_width.get(class_id).unwrap()
-    let h = class_height.get(class_id).unwrap()
-    if x + w > total_w {
-      total_w = x + w
-    }
-    if y + h > total_h {
-      total_h = y + h
-    }
-  }
-  total_w = total_w + 4
-  total_h = total_h + 2 + graph.edges.length() * 3
+  let class_sections_map = class_layout.class_sections_map
+  let class_width = class_layout.class_width
+  let class_height = class_layout.class_height
+  let placed_x = class_layout.placed_x
+  let placed_y = class_layout.placed_y
+  let total_w = class_layout.total_w
+  let total_h = class_layout.total_h
 
   let canvas = make_canvas(total_w, total_h)
-
   for class_id in class_order {
     let x = placed_x.get(class_id).unwrap()
     let y = placed_y.get(class_id).unwrap()

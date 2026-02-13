@@ -1,4 +1,5 @@
 import {
   "bobzhang/beautiful_mermaid/model" @model,
   "bobzhang/beautiful_mermaid/renderer/ascii/class_er/engine/core" @renderer_ascii_class_er_engine_core,
+  "bobzhang/beautiful_mermaid/renderer/ascii/layout_plan" @renderer_ascii_layout_plan,
 }

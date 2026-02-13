@@ -103,3 +103,59 @@ test "ASCII pipeline lock er snapshots" (it : @test.Test) {
     ),
   )
 }
+
+///|
+test "ASCII pipeline lock sequence activation snapshots" (it : @test.Test) {
+  snapshot_ascii_and_unicode(
+    it,
+    "pipeline_lock_sequence_activation",
+    (
+      #|sequenceDiagram
+      #|participant Client
+      #|participant API
+      #|Client->>+API: Open
+      #|API-->>Client: Ack
+      #|API-->>-Client: Close
+      #|Note over Client,API: done
+    ),
+  )
+}
+
+///|
+test "ASCII pipeline lock class section snapshots" (it : @test.Test) {
+  snapshot_ascii_and_unicode(
+    it,
+    "pipeline_lock_class_sections",
+    (
+      #|classDiagram
+      #|class Vehicle {
+      #|  +id
+      #|  +start() 
+      #|}
+      #|class Car {
+      #|  +wheelCount
+      #|  +drive() 
+      #|}
+      #|class Engine {
+      #|  +serial
+      #|}
+      #|Vehicle <|-- Car : extends
+      #|Car *-- Engine : has
+    ),
+  )
+}
+
+///|
+test "ASCII pipeline lock er dense snapshots" (it : @test.Test) {
+  snapshot_ascii_and_unicode(
+    it,
+    "pipeline_lock_er_dense",
+    (
+      #|erDiagram
+      #|USER ||--o{ SESSION : creates
+      #|SESSION ||--|| TOKEN : owns
+      #|AUDIT ||--o{ SESSION : logs
+      #|TOKEN ||--o{ AUDIT : traces
+    ),
+  )
+}
