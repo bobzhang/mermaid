@@ -17,7 +17,7 @@ fn snapshot_ascii_and_unicode(
     input,
     options=lock_options(false),
   )
-  let combined = "# ASCII\n" + ascii + "\n\n# UNICODE\n" + unicode
+  let combined = "# ASCII\n\{ascii}\n\n# UNICODE\n\{unicode}"
   it.write(combined)
   it.snapshot(filename="\{base}.txt")
 }

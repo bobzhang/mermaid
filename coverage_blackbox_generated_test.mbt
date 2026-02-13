@@ -61,13 +61,32 @@ fn generated_flowchart(
   seed : Int,
 ) -> String {
   let label = "L\{seed % 5}"
-  "graph \{direction}\nA[Alpha] \{operator} B[Beta]\nB \{operator} C[Gamma]\nA \{operator} C\nC \{operator} D[Delta]\nD -->|back \{label}| A\nA -->|label \{label}| E[Echo]\n"
+  (
+    $|graph \{direction}
+    $|A[Alpha] \{operator} B[Beta]
+    $|B \{operator} C[Gamma]
+    $|A \{operator} C
+    $|C \{operator} D[Delta]
+    $|D -->|back \{label}| A
+    $|A -->|label \{label}| E[Echo]
+    $|
+  )
 }
 
 ///|
 fn generated_state(direction : String, seed : Int) -> String {
   let tag = "t\{seed % 7}"
-  "stateDiagram-v2\n  direction \{direction}\n  [*] --> Idle\n  Idle --> Working: \{tag}\n  Working --> Waiting\n  Waiting --> Working\n  Working --> Done\n  Done --> [*]\n"
+  (
+    $|stateDiagram-v2
+    $|  direction \{direction}
+    $|  [*] --> Idle
+    $|  Idle --> Working: \{tag}
+    $|  Working --> Waiting
+    $|  Waiting --> Working
+    $|  Working --> Done
+    $|  Done --> [*]
+    $|
+  )
 }
 
 ///|
@@ -77,7 +96,17 @@ fn generated_sequence(
   seed : Int,
 ) -> String {
   let tag = "m\{seed % 9}"
-  "sequenceDiagram\nparticipant A\nparticipant B\nparticipant C\nA\{operator1}B: \{tag}-1\nB\{operator2}C: \{tag}-2\nC->>A: \{tag}-3\nNote over A,C: \{tag}\n"
+  (
+    $|sequenceDiagram
+    $|participant A
+    $|participant B
+    $|participant C
+    $|A\{operator1}B: \{tag}-1
+    $|B\{operator2}C: \{tag}-2
+    $|C->>A: \{tag}-3
+    $|Note over A,C: \{tag}
+    $|
+  )
 }
 
 ///|
@@ -87,13 +116,43 @@ fn generated_class(
   seed : Int,
 ) -> String {
   let tag = "R\{seed % 5}"
-  "classDiagram\nclass Base {\n  +id Int\n  +run()\n}\nclass Impl {\n  +run()\n}\nclass Helper {\n  +assist()\n}\nBase \{operator} Impl : \{tag}\nImpl \{reverse_operator} Helper : \{tag}\nImpl --> Base\n"
+  (
+    $|classDiagram
+    $|class Base {
+    $|  +id Int
+    $|  +run()
+    $|}
+    $|class Impl {
+    $|  +run()
+    $|}
+    $|class Helper {
+    $|  +assist()
+    $|}
+    $|Base \{operator} Impl : \{tag}
+    $|Impl \{reverse_operator} Helper : \{tag}
+    $|Impl --> Base
+    $|
+  )
 }
 
 ///|
 fn generated_er(operator1 : String, operator2 : String, seed : Int) -> String {
   let tag = "E\{seed % 6}"
-  "erDiagram\nA {\n  string id PK\n}\nB {\n  string aid FK\n}\nC {\n  string bid FK\n}\nA \{operator1} B : \{tag}-ab\nB \{operator2} C : \{tag}-bc\n"
+  (
+    $|erDiagram
+    $|A {
+    $|  string id PK
+    $|}
+    $|B {
+    $|  string aid FK
+    $|}
+    $|C {
+    $|  string bid FK
+    $|}
+    $|A \{operator1} B : \{tag}-ab
+    $|B \{operator2} C : \{tag}-bc
+    $|
+  )
 }
 
 ///|

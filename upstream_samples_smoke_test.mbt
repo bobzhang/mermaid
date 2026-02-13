@@ -435,7 +435,15 @@ test "Render smoke for upstream samples-data corpus" (it : @test.Test) {
     if !svg.has_prefix("<svg ") || !svg.has_suffix("</svg>") {
       fail("invalid svg envelope for sample: \{sample.title}")
     }
-    svg_sections.push("<section><h2>\{sample.title}</h2>\n\{svg}\n</section>")
+    let section = (
+        $|<section><h2>\{sample.title}</h2>
+        $|\{svg}
+        $|</section>
+        $|
+      )
+      .trim_end()
+      .to_string()
+    svg_sections.push(section)
     if sample.transparent {
       assert_true(!svg.contains("background:var(--bg)"))
     }
@@ -462,7 +470,14 @@ test "Render smoke for upstream samples-data corpus" (it : @test.Test) {
   }
 
   let gallery_body = svg_sections.join("\n<hr/>\n")
-  let gallery = "<!doctype html><html><head><meta charset=\"utf-8\" /><title>Upstream Samples SVG Gallery</title></head><body>\n\{gallery_body}\n</body></html>"
+  let gallery = (
+      $|<!doctype html><html><head><meta charset="utf-8" /><title>Upstream Samples SVG Gallery</title></head><body>
+      $|\{gallery_body}
+      $|</body></html>
+      $|
+    )
+    .trim_end()
+    .to_string()
   it.write(gallery)
   it.snapshot(filename="upstream_samples_smoke_gallery.html")
 }

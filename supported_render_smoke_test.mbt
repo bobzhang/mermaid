@@ -6,7 +6,15 @@ test "Render smoke for all supported corpus cases" (it : @test.Test) {
     if !svg.has_prefix("<svg ") || !svg.has_suffix("</svg>") {
       fail("invalid svg envelope for \{case_data.name}")
     }
-    svg_sections.push("<section><h2>\{case_data.name}</h2>\n\{svg}\n</section>")
+    let section = (
+        $|<section><h2>\{case_data.name}</h2>
+        $|\{svg}
+        $|</section>
+        $|
+      )
+      .trim_end()
+      .to_string()
+    svg_sections.push(section)
 
     let ascii_options = @beautiful_mermaid.AsciiRenderOptions::{
       use_ascii: true,
@@ -39,7 +47,14 @@ test "Render smoke for all supported corpus cases" (it : @test.Test) {
   }
 
   let gallery_body = svg_sections.join("\n<hr/>\n")
-  let gallery = "<!doctype html><html><head><meta charset=\"utf-8\" /><title>Supported Render Smoke SVG Gallery</title></head><body>\n\{gallery_body}\n</body></html>"
+  let gallery = (
+      $|<!doctype html><html><head><meta charset="utf-8" /><title>Supported Render Smoke SVG Gallery</title></head><body>
+      $|\{gallery_body}
+      $|</body></html>
+      $|
+    )
+    .trim_end()
+    .to_string()
   it.write(gallery)
   it.snapshot(filename="supported_render_smoke_gallery.html")
 }

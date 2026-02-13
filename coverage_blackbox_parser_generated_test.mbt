@@ -53,7 +53,16 @@ fn parser_generated_flowchart(
   seed : Int,
 ) -> String {
   let tag = "f\{seed % 11}"
-  "graph \{direction}\n%% generated \{tag}\nA[Rect] \{operator} B((Circle))\nB \{operator} C{Diamond}\nC \{operator} D[/Trap/]\nD \{operator} E[\\\\Trap\\\\]\nE -->|lbl \{tag}| A\n"
+  (
+    $|graph \{direction}
+    $|%% generated \{tag}
+    $|A[Rect] \{operator} B((Circle))
+    $|B \{operator} C{Diamond}
+    $|C \{operator} D[/Trap/]
+    $|D \{operator} E[\{'\\'}\{'\\'}Trap\{'\\'}\{'\\'}]
+    $|E -->|lbl \{tag}| A
+    $|
+  )
 }
 
 ///|
@@ -63,7 +72,20 @@ fn parser_generated_sequence(
   seed : Int,
 ) -> String {
   let tag = "s\{seed % 17}"
-  "sequenceDiagram\nactor U as User\nparticipant S as Server\nparticipant DB as Database\nU\{operator}S: \{tag}-1\nS->>DB: \{tag}-2\n\{block_type} branch\nDB-->>S: \{tag}-3\nend\nNote left of U: \{tag}\nNote over U,S: \{tag} over\n"
+  (
+    $|sequenceDiagram
+    $|actor U as User
+    $|participant S as Server
+    $|participant DB as Database
+    $|U\{operator}S: \{tag}-1
+    $|S->>DB: \{tag}-2
+    $|\{block_type} branch
+    $|DB-->>S: \{tag}-3
+    $|end
+    $|Note left of U: \{tag}
+    $|Note over U,S: \{tag} over
+    $|
+  )
 }
 
 ///|
@@ -73,7 +95,23 @@ fn parser_generated_class(
   seed : Int,
 ) -> String {
   let tag = "c\{seed % 13}"
-  "classDiagram\nclass A {\n  +id int\n  +run ()\n}\nclass B {\n  +start()\n}\nclass C {\n  +stop()\n}\nA \{relation1} B : \{tag}-ab\nB \{relation2} C : \{tag}-bc\nB --> A\n"
+  (
+    $|classDiagram
+    $|class A {
+    $|  +id int
+    $|  +run ()
+    $|}
+    $|class B {
+    $|  +start()
+    $|}
+    $|class C {
+    $|  +stop()
+    $|}
+    $|A \{relation1} B : \{tag}-ab
+    $|B \{relation2} C : \{tag}-bc
+    $|B --> A
+    $|
+  )
 }
 
 ///|
@@ -83,7 +121,23 @@ fn parser_generated_er(
   seed : Int,
 ) -> String {
   let tag = "e\{seed % 13}"
-  "erDiagram\nA {\n  string id PK\n  string name\n}\nB {\n  string aid FK\n  string note \\\"text\\\"\n}\nC {\n  string bid FK\n}\nA \{relation1} B : \{tag}-ab\nB \{relation2} C : \{tag}-bc\n"
+  (
+    $|erDiagram
+    $|A {
+    $|  string id PK
+    $|  string name
+    $|}
+    $|B {
+    $|  string aid FK
+    $|  string note \{'\\'}"text\{'\\'}"
+    $|}
+    $|C {
+    $|  string bid FK
+    $|}
+    $|A \{relation1} B : \{tag}-ab
+    $|B \{relation2} C : \{tag}-bc
+    $|
+  )
 }
 
 ///|
@@ -162,8 +216,31 @@ test "Generated parser corpus exercises mixed syntax paths" {
 ///|
 test "Generated parser corpus exercises empty diagram variants" {
   let empty_variants = [
-    "graph TD\n", "graph LR\n%% only comment\n", "classDiagram\n", "erDiagram\n",
-    "sequenceDiagram\n", "stateDiagram-v2\n",
+    (
+      #|graph TD
+      #|
+    ),
+    (
+      #|graph LR
+      #|%% only comment
+      #|
+    ),
+    (
+      #|classDiagram
+      #|
+    ),
+    (
+      #|erDiagram
+      #|
+    ),
+    (
+      #|sequenceDiagram
+      #|
+    ),
+    (
+      #|stateDiagram-v2
+      #|
+    ),
   ]
 
   let mut ok = 0
