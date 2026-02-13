@@ -1664,7 +1664,18 @@ test "Sequence note-over renders across text and SVG modes" (it : @test.Test) {
 test "Sequence note-left-right renders across text and SVG modes" (
   it : @test.Test,
 ) {
-  let input = "sequenceDiagram\nparticipant A as App\nparticipant B as Backend\nA->>B: Request\nNote left of A: queued\nNote right of B: processing\nB-->>A: Done"
+  let input = (
+      #|sequenceDiagram
+      #|participant A as App
+      #|participant B as Backend
+      #|A->>B: Request
+      #|Note left of A: queued
+      #|Note right of B: processing
+      #|B-->>A: Done
+      #|
+    )
+    .trim_end()
+    .to_string()
 
   let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: true,
@@ -1703,7 +1714,22 @@ test "Sequence note-left-right renders across text and SVG modes" (
 test "Sequence critical/option block renders across text and SVG modes" (
   it : @test.Test,
 ) {
-  let input = "sequenceDiagram\nparticipant S as Service\nparticipant DB as Database\nS->>DB: Begin\ncritical Commit transaction\nS->>DB: write row\noption Timeout\nDB-->>S: timeout\noption Success\nDB-->>S: ok\nend"
+  let input = (
+      #|sequenceDiagram
+      #|participant S as Service
+      #|participant DB as Database
+      #|S->>DB: Begin
+      #|critical Commit transaction
+      #|S->>DB: write row
+      #|option Timeout
+      #|DB-->>S: timeout
+      #|option Success
+      #|DB-->>S: ok
+      #|end
+      #|
+    )
+    .trim_end()
+    .to_string()
 
   let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: true,
@@ -1744,7 +1770,21 @@ test "Sequence critical/option block renders across text and SVG modes" (
 test "Sequence par/and block renders across text and SVG modes" (
   it : @test.Test,
 ) {
-  let input = "sequenceDiagram\nparticipant C as Client\nparticipant API\nparticipant DB\npar Request API\nC->>API: /items\nand Write audit\nAPI->>DB: INSERT audit\nend\nAPI-->>C: 200"
+  let input = (
+      #|sequenceDiagram
+      #|participant C as Client
+      #|participant API
+      #|participant DB
+      #|par Request API
+      #|C->>API: /items
+      #|and Write audit
+      #|API->>DB: INSERT audit
+      #|end
+      #|API-->>C: 200
+      #|
+    )
+    .trim_end()
+    .to_string()
 
   let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: true,
@@ -1785,7 +1825,16 @@ test "Sequence par/and block renders across text and SVG modes" (
 test "Sequence activation markers render across text and SVG modes" (
   it : @test.Test,
 ) {
-  let input = "sequenceDiagram\nparticipant U as User\nparticipant S as Server\nU->>+S: Request\nS-->>-U: Response"
+  let input = (
+      #|sequenceDiagram
+      #|participant U as User
+      #|participant S as Server
+      #|U->>+S: Request
+      #|S-->>-U: Response
+      #|
+    )
+    .trim_end()
+    .to_string()
 
   let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: true,
@@ -1821,7 +1870,16 @@ test "Sequence activation markers render across text and SVG modes" (
 test "Sequence actor declarations render across text and SVG modes" (
   it : @test.Test,
 ) {
-  let input = "sequenceDiagram\nactor U as User\nactor S as Service\nU->>S: Login\nS-->>U: Token"
+  let input = (
+      #|sequenceDiagram
+      #|actor U as User
+      #|actor S as Service
+      #|U->>S: Login
+      #|S-->>U: Token
+      #|
+    )
+    .trim_end()
+    .to_string()
 
   let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: true,
@@ -1857,7 +1915,17 @@ test "Sequence actor declarations render across text and SVG modes" (
 test "Sequence mixed arrow operators render across text and SVG modes" (
   it : @test.Test,
 ) {
-  let input = "sequenceDiagram\nparticipant A\nparticipant B\nA->B: Open\nB--)A: Dotted Open\nA-->>B: Filled"
+  let input = (
+      #|sequenceDiagram
+      #|participant A
+      #|participant B
+      #|A->B: Open
+      #|B--)A: Dotted Open
+      #|A-->>B: Filled
+      #|
+    )
+    .trim_end()
+    .to_string()
 
   let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: true,
@@ -1891,7 +1959,21 @@ test "Sequence mixed arrow operators render across text and SVG modes" (
 test "Class inheritance labels render across text and SVG modes" (
   it : @test.Test,
 ) {
-  let input = "classDiagram\nclass Shape {\n<<abstract>>\n+draw() void\n}\nclass Circle {\n+radius int\n+draw() void\n}\nShape <|-- Circle : inherits"
+  let input = (
+      #|classDiagram
+      #|class Shape {
+      #|<<abstract>>
+      #|+draw() void
+      #|}
+      #|class Circle {
+      #|+radius int
+      #|+draw() void
+      #|}
+      #|Shape <|-- Circle : inherits
+      #|
+    )
+    .trim_end()
+    .to_string()
 
   let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: true,
@@ -1923,7 +2005,20 @@ test "Class inheritance labels render across text and SVG modes" (
 test "Class abstract annotation renders across text and SVG modes" (
   it : @test.Test,
 ) {
-  let input = "classDiagram\nclass Service {\n<<abstract>>\n+run() void\n}\nclass Worker {\n+run() void\n}\nService <|-- Worker"
+  let input = (
+      #|classDiagram
+      #|class Service {
+      #|<<abstract>>
+      #|+run() void
+      #|}
+      #|class Worker {
+      #|+run() void
+      #|}
+      #|Service <|-- Worker
+      #|
+    )
+    .trim_end()
+    .to_string()
 
   let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: true,
@@ -1958,7 +2053,20 @@ test "Class abstract annotation renders across text and SVG modes" (
 test "Class interface realization renders across text and SVG modes" (
   it : @test.Test,
 ) {
-  let input = "classDiagram\nclass Flyable {\n<<interface>>\n+fly() void\n}\nclass Bird {\n+fly() void\n}\nBird ..|> Flyable : implements"
+  let input = (
+      #|classDiagram
+      #|class Flyable {
+      #|<<interface>>
+      #|+fly() void
+      #|}
+      #|class Bird {
+      #|+fly() void
+      #|}
+      #|Bird ..|> Flyable : implements
+      #|
+    )
+    .trim_end()
+    .to_string()
 
   let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: true,
@@ -1991,7 +2099,18 @@ test "Class interface realization renders across text and SVG modes" (
 
 ///|
 test "Class enum annotation renders across text and SVG modes" (it : @test.Test) {
-  let input = "classDiagram\nclass Status {\n<<enum>>\n+OPEN\n+CLOSED\n}\nStatus --> Ticket : labels"
+  let input = (
+      #|classDiagram
+      #|class Status {
+      #|<<enum>>
+      #|+OPEN
+      #|+CLOSED
+      #|}
+      #|Status --> Ticket : labels
+      #|
+    )
+    .trim_end()
+    .to_string()
 
   let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: true,
@@ -2028,7 +2147,18 @@ test "Class enum annotation renders across text and SVG modes" (it : @test.Test)
 test "Class visibility members render across text and SVG modes" (
   it : @test.Test,
 ) {
-  let input = "classDiagram\nclass User {\n+int id\n-string secret\n#string name\n+login() bool\n}"
+  let input = (
+      #|classDiagram
+      #|class User {
+      #|+int id
+      #|-string secret
+      #|#string name
+      #|+login() bool
+      #|}
+      #|
+    )
+    .trim_end()
+    .to_string()
 
   let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: true,
@@ -2066,7 +2196,18 @@ test "Class visibility members render across text and SVG modes" (
 test "Class relationship set renders across text and SVG modes" (
   it : @test.Test,
 ) {
-  let input = "classDiagram\nA <|-- B : inh\nC *-- D : own\nE o-- F : has\nG --> H : use\nI ..> J : dep\nK ..|> L : imp"
+  let input = (
+      #|classDiagram
+      #|A <|-- B : inh
+      #|C *-- D : own
+      #|E o-- F : has
+      #|G --> H : use
+      #|I ..> J : dep
+      #|K ..|> L : imp
+      #|
+    )
+    .trim_end()
+    .to_string()
 
   let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: true,
@@ -2109,7 +2250,21 @@ test "Class relationship set renders across text and SVG modes" (
 test "ER entities and relationship labels render across text and SVG modes" (
   it : @test.Test,
 ) {
-  let input = "erDiagram\nCUSTOMER {\n  int id PK\n  string email UK\n}\nORDER {\n  int id PK\n  int customer_id FK\n}\nCUSTOMER ||--o{ ORDER : places"
+  let input = (
+      #|erDiagram
+      #|CUSTOMER {
+      #|  int id PK
+      #|  string email UK
+      #|}
+      #|ORDER {
+      #|  int id PK
+      #|  int customer_id FK
+      #|}
+      #|CUSTOMER ||--o{ ORDER : places
+      #|
+    )
+    .trim_end()
+    .to_string()
 
   let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: true,
@@ -2143,7 +2298,17 @@ test "ER entities and relationship labels render across text and SVG modes" (
 
 ///|
 test "ER attribute keys render across text and SVG modes" (it : @test.Test) {
-  let input = "erDiagram\nUSER {\n  int id PK\n  int role_id FK\n  string email UK\n}"
+  let input = (
+      #|erDiagram
+      #|USER {
+      #|  int id PK
+      #|  int role_id FK
+      #|  string email UK
+      #|}
+      #|
+    )
+    .trim_end()
+    .to_string()
 
   let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: true,
@@ -2181,7 +2346,14 @@ test "ER attribute keys render across text and SVG modes" (it : @test.Test) {
 test "ER identifying and non-identifying edges render across text and SVG modes" (
   it : @test.Test,
 ) {
-  let input = "erDiagram\nUSER ||--o{ ORDER : places\nUSER ||..o{ LOG : generates"
+  let input = (
+      #|erDiagram
+      #|USER ||--o{ ORDER : places
+      #|USER ||..o{ LOG : generates
+      #|
+    )
+    .trim_end()
+    .to_string()
 
   let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: true,
