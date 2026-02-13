@@ -1,7 +1,7 @@
 ///|
 test "SVG semantic parity gate cases" {
   for case_data in @test_support.gate_cases() {
-    let svg = try! @beautiful_mermaid.render_mermaid(case_data.input)
+    let svg = @beautiful_mermaid.render_mermaid(case_data.input)
     assert_true(
       @test_support.contains_all(svg, case_data.expected_svg_fragments),
     )
@@ -22,7 +22,7 @@ fn snapshot_semantic_svg(
 
 ///|
 test "SVG renders flowchart subgraph containers" (it : @test.Test) {
-  let svg = try! @beautiful_mermaid.render_mermaid(
+  let svg = @beautiful_mermaid.render_mermaid(
     (
       #|graph TD
       #|subgraph Backend
@@ -40,7 +40,7 @@ test "SVG renders flowchart subgraph containers" (it : @test.Test) {
 
 ///|
 test "SVG renders nested flowchart subgraph containers" (it : @test.Test) {
-  let svg = try! @beautiful_mermaid.render_mermaid(
+  let svg = @beautiful_mermaid.render_mermaid(
     (
       #|graph TD
       #|subgraph Outer
@@ -65,7 +65,7 @@ test "SVG renders nested flowchart subgraph containers" (it : @test.Test) {
 
 ///|
 test "SVG renders nested empty subgraph labels" (it : @test.Test) {
-  let svg = try! @beautiful_mermaid.render_mermaid(
+  let svg = @beautiful_mermaid.render_mermaid(
     (
       #|graph TD
       #|subgraph Outer
@@ -87,7 +87,7 @@ test "SVG renders nested empty subgraph labels" (it : @test.Test) {
 
 ///|
 test "SVG renders empty subgraph without crashing" (it : @test.Test) {
-  let svg = try! @beautiful_mermaid.render_mermaid(
+  let svg = @beautiful_mermaid.render_mermaid(
     (
       #|graph TD
       #|subgraph Empty
@@ -107,7 +107,7 @@ test "SVG renders empty subgraph without crashing" (it : @test.Test) {
 test "SVG renders edges targeting an empty subgraph without id-dup node label" (
   it : @test.Test,
 ) {
-  let svg = try! @beautiful_mermaid.render_mermaid(
+  let svg = @beautiful_mermaid.render_mermaid(
     (
       #|graph TD
       #|subgraph S [Empty Group]
@@ -129,7 +129,7 @@ test "SVG renders edges targeting an empty subgraph without id-dup node label" (
 
 ///|
 test "SVG applies classDef and style overrides" (it : @test.Test) {
-  let svg = try! @beautiful_mermaid.render_mermaid(
+  let svg = @beautiful_mermaid.render_mermaid(
     (
       #|graph TD
       #|A[Start]:::entry --> B[End]
@@ -149,7 +149,7 @@ test "SVG applies classDef and style overrides" (it : @test.Test) {
 test "SVG flowchart no-arrow edges render without arrowhead markers" (
   it : @test.Test,
 ) {
-  let svg = try! @beautiful_mermaid.render_mermaid(
+  let svg = @beautiful_mermaid.render_mermaid(
     (
       #|graph TD
       #|A --- B
@@ -164,7 +164,7 @@ test "SVG flowchart no-arrow edges render without arrowhead markers" (
 
 ///|
 test "SVG flowchart bidirectional arrows render both markers" (it : @test.Test) {
-  let svg = try! @beautiful_mermaid.render_mermaid(
+  let svg = @beautiful_mermaid.render_mermaid(
     (
       #|graph TD
       #|A <--> B
@@ -178,7 +178,7 @@ test "SVG flowchart bidirectional arrows render both markers" (it : @test.Test) 
 
 ///|
 test "SVG flowchart renders self-loop edge" (it : @test.Test) {
-  let svg = try! @beautiful_mermaid.render_mermaid(
+  let svg = @beautiful_mermaid.render_mermaid(
     (
       #|graph TD
       #|A[Node] --> A
@@ -193,7 +193,7 @@ test "SVG flowchart renders self-loop edge" (it : @test.Test) {
 
 ///|
 test "SVG flowchart renders self-loop edge with label" (it : @test.Test) {
-  let svg = try! @beautiful_mermaid.render_mermaid(
+  let svg = @beautiful_mermaid.render_mermaid(
     (
       #|graph TD
       #|A[Retry] -->|again| A
@@ -207,7 +207,7 @@ test "SVG flowchart renders self-loop edge with label" (it : @test.Test) {
 
 ///|
 test "SVG renders multiline class labels from parser details" (it : @test.Test) {
-  let svg = try! @beautiful_mermaid.render_mermaid(
+  let svg = @beautiful_mermaid.render_mermaid(
     (
       #|classDiagram
       #|class Animal {
@@ -227,7 +227,7 @@ test "SVG renders multiline class labels from parser details" (it : @test.Test) 
 
 ///|
 test "SVG class renders annotations and members" (it : @test.Test) {
-  let svg = try! @beautiful_mermaid.render_mermaid(
+  let svg = @beautiful_mermaid.render_mermaid(
     (
       #|classDiagram
       #|class Flyable {
@@ -245,7 +245,7 @@ test "SVG class renders annotations and members" (it : @test.Test) {
 
 ///|
 test "SVG class dependency uses dashed line and arrow marker" (it : @test.Test) {
-  let svg = try! @beautiful_mermaid.render_mermaid(
+  let svg = @beautiful_mermaid.render_mermaid(
     (
       #|classDiagram
       #|Service ..> Repository
@@ -261,7 +261,7 @@ test "SVG class dependency uses dashed line and arrow marker" (it : @test.Test) 
 test "SVG class realization uses dashed line and inherit marker" (
   it : @test.Test,
 ) {
-  let svg = try! @beautiful_mermaid.render_mermaid(
+  let svg = @beautiful_mermaid.render_mermaid(
     (
       #|classDiagram
       #|Service ..|> Contract : realizes
@@ -276,7 +276,7 @@ test "SVG class realization uses dashed line and inherit marker" (
 
 ///|
 test "SVG class marker defs match upstream geometry" (it : @test.Test) {
-  let svg = try! @beautiful_mermaid.render_mermaid(
+  let svg = @beautiful_mermaid.render_mermaid(
     (
       #|classDiagram
       #|A <|-- B
@@ -313,7 +313,7 @@ test "SVG class marker defs match upstream geometry" (it : @test.Test) {
 
 ///|
 test "SVG class entities include compartment divider lines" (it : @test.Test) {
-  let svg = try! @beautiful_mermaid.render_mermaid(
+  let svg = @beautiful_mermaid.render_mermaid(
     (
       #|classDiagram
       #|class Animal {
@@ -334,7 +334,7 @@ test "SVG class entities include compartment divider lines" (it : @test.Test) {
 test "SVG class renders complete hierarchy with abstract annotation" (
   it : @test.Test,
 ) {
-  let svg = try! @beautiful_mermaid.render_mermaid(
+  let svg = @beautiful_mermaid.render_mermaid(
     (
       #|classDiagram
       #|class Animal {
@@ -378,7 +378,7 @@ test "SVG class supports explicit dark colors" (it : @test.Test) {
     layer_spacing: None,
     transparent: None,
   }
-  let svg = try! @beautiful_mermaid.render_mermaid(
+  let svg = @beautiful_mermaid.render_mermaid(
     (
       #|classDiagram
       #|class A {
@@ -409,7 +409,7 @@ test "SVG render options include provided enrichment CSS vars" (it : @test.Test)
     layer_spacing: None,
     transparent: None,
   }
-  let svg = try! @beautiful_mermaid.render_mermaid(
+  let svg = @beautiful_mermaid.render_mermaid(
     (
       #|graph TD
       #|A --> B
@@ -443,7 +443,7 @@ test "SVG render options omit enrichment CSS vars when unset" (it : @test.Test) 
     layer_spacing: None,
     transparent: None,
   }
-  let svg = try! @beautiful_mermaid.render_mermaid(
+  let svg = @beautiful_mermaid.render_mermaid(
     (
       #|graph TD
       #|A --> B
@@ -479,7 +479,7 @@ test "SVG transparent render option omits root background style and rect" (
     layer_spacing: None,
     transparent: Some(true),
   }
-  let svg = try! @beautiful_mermaid.render_mermaid(
+  let svg = @beautiful_mermaid.render_mermaid(
     (
       #|graph TD
       #|A --> B
@@ -494,7 +494,7 @@ test "SVG transparent render option omits root background style and rect" (
 
 ///|
 test "SVG sequence renders lifelines and message labels" (it : @test.Test) {
-  let svg = try! @beautiful_mermaid.render_mermaid(
+  let svg = @beautiful_mermaid.render_mermaid(
     (
       #|sequenceDiagram
       #|Alice->>Bob: Hello Bob
@@ -512,7 +512,7 @@ test "SVG sequence renders lifelines and message labels" (it : @test.Test) {
 test "SVG sequence renders participant declarations and aliases" (
   it : @test.Test,
 ) {
-  let svg = try! @beautiful_mermaid.render_mermaid(
+  let svg = @beautiful_mermaid.render_mermaid(
     (
       #|sequenceDiagram
       #|participant A as Alice
@@ -529,7 +529,7 @@ test "SVG sequence renders participant declarations and aliases" (
 
 ///|
 test "SVG sequence maps open and filled arrow markers" (it : @test.Test) {
-  let svg = try! @beautiful_mermaid.render_mermaid(
+  let svg = @beautiful_mermaid.render_mermaid(
     (
       #|sequenceDiagram
       #|A->B: Open
@@ -549,7 +549,7 @@ test "SVG sequence maps open and filled arrow markers" (it : @test.Test) {
 test "SVG sequence dashed returns include dashed stroke segments" (
   it : @test.Test,
 ) {
-  let svg = try! @beautiful_mermaid.render_mermaid(
+  let svg = @beautiful_mermaid.render_mermaid(
     (
       #|sequenceDiagram
       #|A->>B: Request
@@ -565,7 +565,7 @@ test "SVG sequence dashed returns include dashed stroke segments" (
 
 ///|
 test "SVG sequence renders blocks, dividers, and notes" (it : @test.Test) {
-  let svg = try! @beautiful_mermaid.render_mermaid(
+  let svg = @beautiful_mermaid.render_mermaid(
     (
       #|sequenceDiagram
       #|A->>B: Request
@@ -588,7 +588,7 @@ test "SVG sequence renders blocks, dividers, and notes" (it : @test.Test) {
 
 ///|
 test "SVG sequence renders loop block labels" (it : @test.Test) {
-  let svg = try! @beautiful_mermaid.render_mermaid(
+  let svg = @beautiful_mermaid.render_mermaid(
     (
       #|sequenceDiagram
       #|A->>B: Start
@@ -605,7 +605,7 @@ test "SVG sequence renders loop block labels" (it : @test.Test) {
 
 ///|
 test "SVG sequence renders activation bars and actor icons" (it : @test.Test) {
-  let svg = try! @beautiful_mermaid.render_mermaid(
+  let svg = @beautiful_mermaid.render_mermaid(
     (
       #|sequenceDiagram
       #|actor U as User
@@ -622,7 +622,7 @@ test "SVG sequence renders activation bars and actor icons" (it : @test.Test) {
 
 ///|
 test "SVG sequence ignores standalone activation commands" (it : @test.Test) {
-  let svg = try! @beautiful_mermaid.render_mermaid(
+  let svg = @beautiful_mermaid.render_mermaid(
     (
       #|sequenceDiagram
       #|participant A
@@ -644,7 +644,7 @@ test "SVG sequence ignores standalone activation commands" (it : @test.Test) {
 test "SVG sequence ignores standalone activation commands for self messages" (
   it : @test.Test,
 ) {
-  let svg = try! @beautiful_mermaid.render_mermaid(
+  let svg = @beautiful_mermaid.render_mermaid(
     (
       #|sequenceDiagram
       #|participant A
@@ -663,7 +663,7 @@ test "SVG sequence ignores standalone activation commands for self messages" (
 
 ///|
 test "SVG sequence lifeline count follows participant count" (it : @test.Test) {
-  let svg = try! @beautiful_mermaid.render_mermaid(
+  let svg = @beautiful_mermaid.render_mermaid(
     (
       #|sequenceDiagram
       #|participant A
@@ -683,7 +683,7 @@ test "SVG sequence lifeline count follows participant count" (it : @test.Test) {
 test "SVG sequence renders complex authentication flow content" (
   it : @test.Test,
 ) {
-  let svg = try! @beautiful_mermaid.render_mermaid(
+  let svg = @beautiful_mermaid.render_mermaid(
     (
       #|sequenceDiagram
       #|participant C as Client
@@ -725,7 +725,7 @@ test "SVG sequence supports explicit dark colors" (it : @test.Test) {
     layer_spacing: None,
     transparent: None,
   }
-  let svg = try! @beautiful_mermaid.render_mermaid(
+  let svg = @beautiful_mermaid.render_mermaid(
     (
       #|sequenceDiagram
       #|A->>B: Hello
@@ -740,7 +740,7 @@ test "SVG sequence supports explicit dark colors" (it : @test.Test) {
 
 ///|
 test "SVG class relations render semantic markers" (it : @test.Test) {
-  let svg = try! @beautiful_mermaid.render_mermaid(
+  let svg = @beautiful_mermaid.render_mermaid(
     (
       #|classDiagram
       #|A <|-- B : inherits
@@ -759,7 +759,7 @@ test "SVG class relations render semantic markers" (it : @test.Test) {
 
 ///|
 test "SVG ER relations render endpoint cardinality tokens" (it : @test.Test) {
-  let svg = try! @beautiful_mermaid.render_mermaid(
+  let svg = @beautiful_mermaid.render_mermaid(
     (
       #|erDiagram
       #|CUSTOMER ||--o{ ORDER : places
@@ -774,7 +774,7 @@ test "SVG ER relations render endpoint cardinality tokens" (it : @test.Test) {
 
 ///|
 test "SVG ER renders entity attributes with key tokens" (it : @test.Test) {
-  let svg = try! @beautiful_mermaid.render_mermaid(
+  let svg = @beautiful_mermaid.render_mermaid(
     (
       #|erDiagram
       #|CUSTOMER {
@@ -796,7 +796,7 @@ test "SVG ER renders entity attributes with key tokens" (it : @test.Test) {
 
 ///|
 test "SVG ER renders relationship polyline and label" (it : @test.Test) {
-  let svg = try! @beautiful_mermaid.render_mermaid(
+  let svg = @beautiful_mermaid.render_mermaid(
     (
       #|erDiagram
       #|A ||--o{ B : has
@@ -810,7 +810,7 @@ test "SVG ER renders relationship polyline and label" (it : @test.Test) {
 
 ///|
 test "SVG ER non-identifying relations are dashed" (it : @test.Test) {
-  let svg = try! @beautiful_mermaid.render_mermaid(
+  let svg = @beautiful_mermaid.render_mermaid(
     (
       #|erDiagram
       #|USER ||..o{ LOG : generates
@@ -838,7 +838,7 @@ test "SVG ER supports explicit dark colors" (it : @test.Test) {
     layer_spacing: None,
     transparent: None,
   }
-  let svg = try! @beautiful_mermaid.render_mermaid(
+  let svg = @beautiful_mermaid.render_mermaid(
     (
       #|erDiagram
       #|A ||--|| B : links

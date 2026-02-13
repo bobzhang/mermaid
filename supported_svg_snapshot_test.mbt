@@ -19,7 +19,7 @@ fn snapshot_supported_case_svg(
   filename : String,
 ) -> Unit raise {
   let case_data = supported_case_by_name(case_name)
-  let svg = try! @beautiful_mermaid.render_mermaid(case_data.input)
+  let svg = @beautiful_mermaid.render_mermaid(case_data.input)
   it.write(svg)
   it.snapshot(filename~)
 
