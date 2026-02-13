@@ -35,7 +35,13 @@ test "Parser rejects empty input" {
 test "Parser accepts all supported flowchart directions" {
   for direction in ["TD", "TB", "LR", "BT", "RL"] {
     let graph = try! @beautiful_mermaid.parse_mermaid(
-      "graph \{direction}\nA --> B",
+      (
+        $|graph \{direction}
+        $|A --> B
+        $|
+      )
+      .trim_end()
+      .to_string(),
     )
     assert_eq(graph.direction.to_string(), direction)
     assert_eq(graph.edges.length(), 1)
@@ -426,7 +432,16 @@ test "Parser keeps ampersand inside node labels while still expanding parallel l
 ///|
 test "Parser handles extra whitespace and empty lines" {
   let graph = try! @beautiful_mermaid.parse_mermaid(
-    "  graph   TD  \n\n  A   -->   B  \n\n  B -->   C  ",
+    (
+      #|  graph   TD  
+      #|
+      #|  A   -->   B  
+      #|
+      #|  B -->   C  
+      #|
+    )
+    .trim_end()
+    .to_string(),
   )
   assert_eq(graph.direction.to_string(), "TD")
   assert_eq(graph.nodes.length(), 3)
