@@ -1,4 +1,0 @@
-import {
-  "bobzhang/beautiful_mermaid/model" @model,
-  "bobzhang/beautiful_mermaid/parser/class_er/engine/core" @parser_class_er_engine_core,
-}

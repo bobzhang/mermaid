@@ -1,7 +1,7 @@
 import {
   "bobzhang/beautiful_mermaid/layout" @layout,
   "bobzhang/beautiful_mermaid/model" @model,
-  "bobzhang/beautiful_mermaid/parser" @parser,
+  "bobzhang/beautiful_mermaid/parser/header/core" @parser_header_core,
   "bobzhang/beautiful_mermaid/renderer/ascii" @renderer_ascii,
   "bobzhang/beautiful_mermaid/renderer/svg" @renderer_svg,
   "bobzhang/beautiful_mermaid/themes" @themes,

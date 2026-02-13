@@ -9,5 +9,5 @@
 /// - `classDiagram`
 /// - `erDiagram`
 pub fn parse_mermaid(text : String) -> MermaidGraph raise MermaidError {
-  @parser.parse_mermaid(text)
+  @parser_header_core.parse_mermaid(text)
 }
