@@ -1,54 +1,51 @@
 ///|
 fn print_usage() -> Unit {
-  println("Usage:")
-  println("  moon run cmd/main -- \"graph TD\\nA --> B\"")
-  println("  moon run cmd/main -- --ascii \"graph LR\\nA --> B\"")
-  println("  moon run cmd/main -- --unicode \"graph LR\\nA --> B\"")
-  println(
-    "  moon run cmd/main -- --ascii --ascii-padding-x=8 \"graph LR\\nA --> B\"",
-  )
-  println(
-    "  moon run cmd/main -- --ascii --ascii-padding-y=2 \"graph LR\\nA --> B\"",
-  )
-  println(
-    "  moon run cmd/main -- --ascii --ascii-box-border-padding=2 \"graph LR\\nA --> B\"",
-  )
-  println("  moon run cmd/main -- --theme=tokyo-night \"graph TD\\nA --> B\"")
-  println("  moon run cmd/main -- --theme=default \"graph TD\\nA --> B\"")
-  println("  moon run cmd/main -- --font='Roboto Mono' \"graph TD\\nA --> B\"")
-  println("  moon run cmd/main -- --bg='#0f172a' \"graph TD\\nA --> B\"")
-  println("  moon run cmd/main -- --fg='#e2e8f0' \"graph TD\\nA --> B\"")
-  println("  moon run cmd/main -- --line='#64748b' \"graph TD\\nA --> B\"")
-  println("  moon run cmd/main -- --accent='#38bdf8' \"graph TD\\nA --> B\"")
-  println("  moon run cmd/main -- --muted='#94a3b8' \"graph TD\\nA --> B\"")
-  println("  moon run cmd/main -- --surface='#0b1220' \"graph TD\\nA --> B\"")
-  println("  moon run cmd/main -- --border='#334155' \"graph TD\\nA --> B\"")
-  println("  moon run cmd/main -- --padding=20 \"graph TD\\nA --> B\"")
-  println("  moon run cmd/main -- --node-spacing=80 \"graph TD\\nA --> B\"")
-  println("  moon run cmd/main -- --layer-spacing=90 \"graph TD\\nA --> B\"")
-  println("  moon run cmd/main -- --transparent \"graph TD\\nA --> B\"")
-  println("  moon run cmd/main -- --list-themes")
-  println("Flags:")
-  println("  --ascii    Render ASCII output")
-  println("  --unicode  Render Unicode text output")
-  println("  --ascii-padding-x  ASCII horizontal padding, e.g. 8")
-  println("  --ascii-padding-y  ASCII vertical padding, e.g. 2")
-  println("  --ascii-box-border-padding  ASCII box border padding, e.g. 2")
-  println("  --theme    SVG theme slug, e.g. tokyo-night, github-dark, default")
-  println("  --font     SVG font family, e.g. Inter, Roboto Mono")
-  println("  --bg       SVG background color, e.g. #0f172a")
-  println("  --fg       SVG foreground color, e.g. #e2e8f0")
-  println("  --line     SVG edge color, e.g. #64748b")
-  println("  --accent   SVG accent color, e.g. #38bdf8")
-  println("  --muted    SVG muted text color, e.g. #94a3b8")
-  println("  --surface  SVG node fill color, e.g. #0b1220")
-  println("  --border   SVG stroke color, e.g. #334155")
-  println("  --padding  SVG/layout padding in px, e.g. 20")
-  println("  --node-spacing  Horizontal node spacing in px, e.g. 80")
-  println("  --layer-spacing  Vertical layer spacing in px, e.g. 90")
-  println("  --transparent  Omit SVG background fill")
-  println("  --list-themes  Print built-in theme names")
-  println("  --help     Show this help")
+  let usage =
+    #|Usage:
+    #|  moon run cmd/main -- "graph TD\nA --> B"
+    #|  moon run cmd/main -- --ascii "graph LR\nA --> B"
+    #|  moon run cmd/main -- --unicode "graph LR\nA --> B"
+    #|  moon run cmd/main -- --ascii --ascii-padding-x=8 "graph LR\nA --> B"
+    #|  moon run cmd/main -- --ascii --ascii-padding-y=2 "graph LR\nA --> B"
+    #|  moon run cmd/main -- --ascii --ascii-box-border-padding=2 "graph LR\nA --> B"
+    #|  moon run cmd/main -- --theme=tokyo-night "graph TD\nA --> B"
+    #|  moon run cmd/main -- --theme=default "graph TD\nA --> B"
+    #|  moon run cmd/main -- --font='Roboto Mono' "graph TD\nA --> B"
+    #|  moon run cmd/main -- --bg='#0f172a' "graph TD\nA --> B"
+    #|  moon run cmd/main -- --fg='#e2e8f0' "graph TD\nA --> B"
+    #|  moon run cmd/main -- --line='#64748b' "graph TD\nA --> B"
+    #|  moon run cmd/main -- --accent='#38bdf8' "graph TD\nA --> B"
+    #|  moon run cmd/main -- --muted='#94a3b8' "graph TD\nA --> B"
+    #|  moon run cmd/main -- --surface='#0b1220' "graph TD\nA --> B"
+    #|  moon run cmd/main -- --border='#334155' "graph TD\nA --> B"
+    #|  moon run cmd/main -- --padding=20 "graph TD\nA --> B"
+    #|  moon run cmd/main -- --node-spacing=80 "graph TD\nA --> B"
+    #|  moon run cmd/main -- --layer-spacing=90 "graph TD\nA --> B"
+    #|  moon run cmd/main -- --transparent "graph TD\nA --> B"
+    #|  moon run cmd/main -- --list-themes
+    #|Flags:
+    #|  --ascii    Render ASCII output
+    #|  --unicode  Render Unicode text output
+    #|  --ascii-padding-x  ASCII horizontal padding, e.g. 8
+    #|  --ascii-padding-y  ASCII vertical padding, e.g. 2
+    #|  --ascii-box-border-padding  ASCII box border padding, e.g. 2
+    #|  --theme    SVG theme slug, e.g. tokyo-night, github-dark, default
+    #|  --font     SVG font family, e.g. Inter, Roboto Mono
+    #|  --bg       SVG background color, e.g. #0f172a
+    #|  --fg       SVG foreground color, e.g. #e2e8f0
+    #|  --line     SVG edge color, e.g. #64748b
+    #|  --accent   SVG accent color, e.g. #38bdf8
+    #|  --muted    SVG muted text color, e.g. #94a3b8
+    #|  --surface  SVG node fill color, e.g. #0b1220
+    #|  --border   SVG stroke color, e.g. #334155
+    #|  --padding  SVG/layout padding in px, e.g. 20
+    #|  --node-spacing  Horizontal node spacing in px, e.g. 80
+    #|  --layer-spacing  Vertical layer spacing in px, e.g. 90
+    #|  --transparent  Omit SVG background fill
+    #|  --list-themes  Print built-in theme names
+    #|  --help     Show this help
+    #|
+  println(usage.trim_end().to_string())
 }
 
 ///|
@@ -780,7 +777,13 @@ pub fn run() -> Unit {
   let input = match diagram {
     Some(found) => found
     None =>
-      "graph TD\nA[Start] --> B{Decision}\nB -->|Yes| C[Done]\nB -->|No| D[Retry]"
+      (
+        #|graph TD
+        #|A[Start] --> B{Decision}
+        #|B -->|Yes| C[Done]
+        #|B -->|No| D[Retry]
+        #|
+      )
   }
 
   if render_text {
