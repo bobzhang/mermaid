@@ -453,7 +453,15 @@ test "Layout RL reverses horizontal node ordering and edge direction" {
 
 ///|
 test "Layout BT reverses vertical node ordering and edge direction" {
-  let bt_graph = try! @parser.parse_mermaid("graph BT\nA --> B --> C")
+  let bt_graph = try! @parser.parse_mermaid(
+    (
+      #|graph BT
+      #|A --> B --> C
+      #|
+    )
+    .trim_end()
+    .to_string(),
+  )
   let positioned = layout_graph(bt_graph, RenderOptions::default())
 
   let node_a = find_positioned_node(positioned.nodes, "A")
@@ -472,7 +480,15 @@ test "Layout BT reverses vertical node ordering and edge direction" {
 ///|
 test "Layout resolves inline styles with node override precedence" {
   let graph = try! @parser.parse_mermaid(
-    "graph TD\nA[Start]:::entry --> B[End]\nclassDef entry fill:#f9f,stroke:#333,color:#111\nstyle A stroke:#000,color:#fff",
+    (
+      #|graph TD
+      #|A[Start]:::entry --> B[End]
+      #|classDef entry fill:#f9f,stroke:#333,color:#111
+      #|style A stroke:#000,color:#fff
+      #|
+    )
+    .trim_end()
+    .to_string(),
   )
   let positioned = layout_graph(graph, RenderOptions::default())
 
@@ -502,7 +518,14 @@ test "Layout resolves inline styles with node override precedence" {
 ///|
 test "Layout sequence messages are vertically separated" {
   let graph = try! @parser.parse_mermaid(
-    "sequenceDiagram\nAlice->>Bob: Hello\nBob-->>Alice: Hi",
+    (
+      #|sequenceDiagram
+      #|Alice->>Bob: Hello
+      #|Bob-->>Alice: Hi
+      #|
+    )
+    .trim_end()
+    .to_string(),
   )
   let positioned = layout_graph(graph, RenderOptions::default())
 
@@ -515,7 +538,18 @@ test "Layout sequence messages are vertically separated" {
 ///|
 test "Layout sequence adds block and divider spacing" {
   let graph = try! @parser.parse_mermaid(
-    "sequenceDiagram\nA->>B: Login\nalt Success\nB-->>A: 200\nelse Failure\nB-->>A: 500\nend",
+    (
+      #|sequenceDiagram
+      #|A->>B: Login
+      #|alt Success
+      #|B-->>A: 200
+      #|else Failure
+      #|B-->>A: 500
+      #|end
+      #|
+    )
+    .trim_end()
+    .to_string(),
   )
   let positioned = layout_graph(graph, RenderOptions::default())
 
