@@ -1086,7 +1086,7 @@ test "Render smoke for upstream samples-data corpus" (it : @test.Test) {
       layer_spacing: None,
       transparent: Some(sample.transparent),
     }
-    let svg = try! @beautiful_mermaid.render_mermaid(
+    let svg = @beautiful_mermaid.render_mermaid(
       sample.source,
       options=svg_options,
     )
@@ -1106,7 +1106,7 @@ test "Render smoke for upstream samples-data corpus" (it : @test.Test) {
       assert_true(!svg.contains("background:var(--bg)"))
     }
 
-    let ascii = try! @beautiful_mermaid.render_mermaid_ascii(sample.source, options={
+    let ascii = @beautiful_mermaid.render_mermaid_ascii(sample.source, options={
       use_ascii: true,
       padding_x: 5,
       padding_y: 5,
@@ -1116,7 +1116,7 @@ test "Render smoke for upstream samples-data corpus" (it : @test.Test) {
       fail("empty ascii output for sample: \{sample.title}")
     }
 
-    let unicode = try! @beautiful_mermaid.render_mermaid_ascii(sample.source, options={
+    let unicode = @beautiful_mermaid.render_mermaid_ascii(sample.source, options={
       use_ascii: false,
       padding_x: 5,
       padding_y: 5,
@@ -1127,7 +1127,13 @@ test "Render smoke for upstream samples-data corpus" (it : @test.Test) {
     }
   }
 
-  let gallery_body = svg_sections.join("\n<hr/>\n")
+  let gallery_body = svg_sections.join(
+    (
+      #|
+      #|<hr/>
+      #|
+    ),
+  )
   let gallery = (
       $|<!doctype html><html><head><meta charset="utf-8" /><title>Upstream Samples SVG Gallery</title></head><body>
       $|\{gallery_body}

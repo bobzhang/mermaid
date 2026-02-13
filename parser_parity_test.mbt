@@ -1,7 +1,7 @@
 ///|
 test "Parser parity gate cases" {
   for case_data in @test_support.gate_cases() {
-    let graph = try! @beautiful_mermaid.parse_mermaid(case_data.input)
+    let graph = @beautiful_mermaid.parse_mermaid(case_data.input)
     assert_eq(graph.direction.to_string(), case_data.direction)
     assert_eq(graph.nodes.length(), case_data.expected_node_count)
     assert_eq(graph.edges.length(), case_data.expected_edge_count)
@@ -34,7 +34,7 @@ test "Parser rejects empty input" {
 ///|
 test "Parser accepts all supported flowchart directions" {
   for direction in ["TD", "TB", "LR", "BT", "RL"] {
-    let graph = try! @beautiful_mermaid.parse_mermaid(
+    let graph = @beautiful_mermaid.parse_mermaid(
       (
         $|graph \{direction}
         $|A --> B
@@ -78,7 +78,7 @@ test "Parser rejects flowchart header with invalid direction token" {
 
 ///|
 test "Parser keeps first node definition for shape and label" {
-  let graph = try! @beautiful_mermaid.parse_mermaid(
+  let graph = @beautiful_mermaid.parse_mermaid(
     (
       #|graph TD
       #|A[Start]
@@ -97,7 +97,7 @@ test "Parser keeps first node definition for shape and label" {
 
 ///|
 test "Parser supports hyphenated node IDs" {
-  let graph = try! @beautiful_mermaid.parse_mermaid(
+  let graph = @beautiful_mermaid.parse_mermaid(
     (
       #|graph TD
       #|start-node --> end-node
@@ -113,7 +113,7 @@ test "Parser supports hyphenated node IDs" {
 
 ///|
 test "Parser creates default rectangle nodes for bare references" {
-  let graph = try! @beautiful_mermaid.parse_mermaid(
+  let graph = @beautiful_mermaid.parse_mermaid(
     (
       #|graph TD
       #|A --> B
@@ -138,7 +138,7 @@ test "Parser creates default rectangle nodes for bare references" {
 
 ///|
 test "Parser recognizes all flowchart node shape variants together" {
-  let graph = try! @beautiful_mermaid.parse_mermaid(
+  let graph = @beautiful_mermaid.parse_mermaid(
     (
       #|graph TD
       #|A[Rectangle]
@@ -208,7 +208,7 @@ test "Parser recognizes all flowchart node shape variants together" {
 
 ///|
 test "Parser accepts case-insensitive flowchart header keywords" {
-  let graph = try! @beautiful_mermaid.parse_mermaid(
+  let graph = @beautiful_mermaid.parse_mermaid(
     (
       #|Graph td
       #|A --> B
@@ -217,7 +217,7 @@ test "Parser accepts case-insensitive flowchart header keywords" {
   assert_eq(graph.direction.to_string(), "TD")
   assert_eq(graph.edges.length(), 1)
 
-  let flowchart = try! @beautiful_mermaid.parse_mermaid(
+  let flowchart = @beautiful_mermaid.parse_mermaid(
     (
       #|FLOWCHART lr
       #|X --> Y
@@ -229,14 +229,14 @@ test "Parser accepts case-insensitive flowchart header keywords" {
 
 ///|
 test "Parser accepts tab-separated flowchart header tokens" {
-  let graph = try! @beautiful_mermaid.parse_mermaid("graph\tTD\nA --> B")
+  let graph = @beautiful_mermaid.parse_mermaid("graph\tTD\nA --> B")
   assert_eq(graph.direction.to_string(), "TD")
   assert_eq(graph.edges.length(), 1)
 }
 
 ///|
 test "Parser preserves node definition order in map iteration" {
-  let graph = try! @beautiful_mermaid.parse_mermaid(
+  let graph = @beautiful_mermaid.parse_mermaid(
     (
       #|graph TD
       #|C
@@ -254,7 +254,7 @@ test "Parser preserves node definition order in map iteration" {
 
 ///|
 test "Parser parses no-arrow edge with label" {
-  let graph = try! @beautiful_mermaid.parse_mermaid(
+  let graph = @beautiful_mermaid.parse_mermaid(
     (
       #|graph TD
       #|A ---|text| B
@@ -272,7 +272,7 @@ test "Parser parses no-arrow edge with label" {
 
 ///|
 test "Parser keeps no-arrow operators without arrowheads across styles" {
-  let graph = try! @beautiful_mermaid.parse_mermaid(
+  let graph = @beautiful_mermaid.parse_mermaid(
     (
       #|graph TD
       #|A --- B
@@ -300,7 +300,7 @@ test "Parser keeps no-arrow operators without arrowheads across styles" {
 
 ///|
 test "Parser parses dotted bidirectional edge operator" {
-  let graph = try! @beautiful_mermaid.parse_mermaid(
+  let graph = @beautiful_mermaid.parse_mermaid(
     (
       #|graph TD
       #|A <-.-> B
@@ -315,7 +315,7 @@ test "Parser parses dotted bidirectional edge operator" {
 
 ///|
 test "Parser parses solid bidirectional edge operator" {
-  let graph = try! @beautiful_mermaid.parse_mermaid(
+  let graph = @beautiful_mermaid.parse_mermaid(
     (
       #|graph TD
       #|A <--> B
@@ -330,7 +330,7 @@ test "Parser parses solid bidirectional edge operator" {
 
 ///|
 test "Parser keeps edge styles and labels for solid dotted and thick links" {
-  let graph = try! @beautiful_mermaid.parse_mermaid(
+  let graph = @beautiful_mermaid.parse_mermaid(
     (
       #|graph TD
       #|A -->|solid| B
@@ -355,7 +355,7 @@ test "Parser keeps edge styles and labels for solid dotted and thick links" {
 
 ///|
 test "Parser expands chained edges in order" {
-  let graph = try! @beautiful_mermaid.parse_mermaid(
+  let graph = @beautiful_mermaid.parse_mermaid(
     (
       #|graph TD
       #|A --> B --> C
@@ -370,7 +370,7 @@ test "Parser expands chained edges in order" {
 
 ///|
 test "Parser handles multiple edge lines" {
-  let graph = try! @beautiful_mermaid.parse_mermaid(
+  let graph = @beautiful_mermaid.parse_mermaid(
     (
       #|graph TD
       #|A --> B
@@ -385,7 +385,7 @@ test "Parser handles multiple edge lines" {
 
 ///|
 test "Parser expands chained edges while preserving inline shapes" {
-  let graph = try! @beautiful_mermaid.parse_mermaid(
+  let graph = @beautiful_mermaid.parse_mermaid(
     (
       #|graph TD
       #|A[Start] --> B{Check} --> C(End)
@@ -409,7 +409,7 @@ test "Parser expands chained edges while preserving inline shapes" {
 
 ///|
 test "Parser keeps ampersand inside node labels while still expanding parallel links" {
-  let graph = try! @beautiful_mermaid.parse_mermaid(
+  let graph = @beautiful_mermaid.parse_mermaid(
     (
       #|graph TD
       #|A[Input] & B[Config] --> C[Processor]
@@ -431,7 +431,7 @@ test "Parser keeps ampersand inside node labels while still expanding parallel l
 
 ///|
 test "Parser handles extra whitespace and empty lines" {
-  let graph = try! @beautiful_mermaid.parse_mermaid(
+  let graph = @beautiful_mermaid.parse_mermaid(
     (
       #|  graph   TD  
       #|
@@ -450,7 +450,7 @@ test "Parser handles extra whitespace and empty lines" {
 
 ///|
 test "Parser handles diagram with only standalone nodes" {
-  let graph = try! @beautiful_mermaid.parse_mermaid(
+  let graph = @beautiful_mermaid.parse_mermaid(
     (
       #|graph TD
       #|A
@@ -480,7 +480,7 @@ test "Parser rejects flowchart header with extra trailing tokens" {
 
 ///|
 test "Parser ignores comment lines including indented comments" {
-  let graph = try! @beautiful_mermaid.parse_mermaid(
+  let graph = @beautiful_mermaid.parse_mermaid(
     (
       #|graph TD
       #|%% comment
@@ -518,7 +518,7 @@ test "Full corpus inventory is imported" {
 
 ///|
 test "Parser parses thick bidirectional edge operator" {
-  let graph = try! @beautiful_mermaid.parse_mermaid(
+  let graph = @beautiful_mermaid.parse_mermaid(
     (
       #|graph TD
       #|A <==> B
@@ -533,7 +533,7 @@ test "Parser parses thick bidirectional edge operator" {
 
 ///|
 test "Parser expands mixed chained operators with correct precedence" {
-  let graph = try! @beautiful_mermaid.parse_mermaid(
+  let graph = @beautiful_mermaid.parse_mermaid(
     (
       #|graph TD
       #|A --- B --> C -.-> D === E

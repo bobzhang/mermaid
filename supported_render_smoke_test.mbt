@@ -2,7 +2,7 @@
 test "Render smoke for all supported corpus cases" (it : @test.Test) {
   let svg_sections : Array[String] = []
   for case_data in @test_support.supported_cases() {
-    let svg = try! @beautiful_mermaid.render_mermaid(case_data.input)
+    let svg = @beautiful_mermaid.render_mermaid(case_data.input)
     if !svg.has_prefix("<svg ") || !svg.has_suffix("</svg>") {
       fail("invalid svg envelope for \{case_data.name}")
     }
@@ -29,11 +29,11 @@ test "Render smoke for all supported corpus cases" (it : @test.Test) {
       box_border_padding: 1,
     }
 
-    let ascii = try! @beautiful_mermaid.render_mermaid_ascii(
+    let ascii = @beautiful_mermaid.render_mermaid_ascii(
       case_data.input,
       options=ascii_options,
     )
-    let unicode = try! @beautiful_mermaid.render_mermaid_ascii(
+    let unicode = @beautiful_mermaid.render_mermaid_ascii(
       case_data.input,
       options=unicode_options,
     )
@@ -46,7 +46,13 @@ test "Render smoke for all supported corpus cases" (it : @test.Test) {
     }
   }
 
-  let gallery_body = svg_sections.join("\n<hr/>\n")
+  let gallery_body = svg_sections.join(
+    (
+      #|
+      #|<hr/>
+      #|
+    ),
+  )
   let gallery = (
       $|<!doctype html><html><head><meta charset="utf-8" /><title>Supported Render Smoke SVG Gallery</title></head><body>
       $|\{gallery_body}
