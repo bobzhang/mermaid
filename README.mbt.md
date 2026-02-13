@@ -41,7 +41,12 @@ Regenerate the upstream sample smoke test after upstream `samples-data.ts` chang
 ```mbt check
 ///|
 test "simple_td" (it : @test.Test) {
-  let svg = try! render_mermaid("graph TD\nA --> B")
+  let svg = try! render_mermaid(
+    (
+      #|graph TD
+      #|A --> B
+    ),
+  )
   assert_true(svg.has_prefix("<svg "))
   assert_true(svg.has_suffix("</svg>"))
   assert_true(svg.contains(">A</text>"))
@@ -56,7 +61,12 @@ test "simple_td" (it : @test.Test) {
 ```mbt check
 ///|
 test {
-  let ascii = try! render_mermaid_ascii("graph LR\nA --> B")
+  let ascii = try! render_mermaid_ascii(
+    (
+      #|graph LR
+      #|A --> B
+    ),
+  )
   assert_true(ascii.length() > 0)
   assert_true(ascii.contains("A"))
   assert_true(ascii.contains("B"))
@@ -99,7 +109,13 @@ test {
     layer_spacing: None,
     transparent: Some(true),
   }
-  let svg = try! render_mermaid("graph TD\nA --> B", options~)
+  let svg = try! render_mermaid(
+    (
+      #|graph TD
+      #|A --> B
+    ),
+    options~,
+  )
   assert_true(svg.contains("--bg:#18181B"))
   assert_true(svg.contains("--line:#7aa2f7"))
 }
@@ -138,7 +154,13 @@ test {
     layer_spacing: None,
     transparent: None,
   }
-  let svg = try! render_mermaid("graph TD\nA --> B", options~)
+  let svg = try! render_mermaid(
+    (
+      #|graph TD
+      #|A --> B
+    ),
+    options~,
+  )
   assert_true(svg.contains("--bg:#1a1b26"))
   assert_true(svg.contains("--accent:#7aa2f7"))
 }
@@ -150,7 +172,11 @@ Or render in one call:
 ///|
 test {
   let svg = try! render_mermaid_with_theme_name(
-    "graph TD\nA --> B", "github-dark",
+    (
+      #|graph TD
+      #|A --> B
+    ),
+    "github-dark",
   )
   assert_true(svg.contains("--bg:#0d1117"))
   assert_true(svg.contains("--accent:#4493f8"))
@@ -166,7 +192,13 @@ test {
     Some(found) => found
     None => fail("missing theme")
   }
-  let svg = try! render_mermaid_with_theme("graph TD\nA --> B", theme)
+  let svg = try! render_mermaid_with_theme(
+    (
+      #|graph TD
+      #|A --> B
+    ),
+    theme,
+  )
   assert_true(svg.contains("--bg:#1a1b26"))
 }
 ```
@@ -192,7 +224,13 @@ test {
     Some([shiki_token_color("comment", Some("#565f89"))]),
   )
   let colors = from_shiki_theme(shiki_theme)
-  let svg = try! render_mermaid_with_colors("graph TD\nA --> B", colors)
+  let svg = try! render_mermaid_with_colors(
+    (
+      #|graph TD
+      #|A --> B
+    ),
+    colors,
+  )
   assert_true(svg.contains("--bg:#1a1b26"))
   assert_true(svg.contains("--accent:#7aa2f7"))
 }

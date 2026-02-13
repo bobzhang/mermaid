@@ -1,4 +1,15 @@
 ///|
+fn github_newline_dark() -> String {
+  (
+    #|github
+    #| dark
+    #|
+  )
+  .trim_end()
+  .to_string()
+}
+
+///|
 test "Theme presets include tokyo-night enrichment colors" {
   let colors = match theme_by_name("tokyo-night") {
     Some(found) => found
@@ -49,7 +60,7 @@ test "Theme slug and parser round-trip" {
 ///|
 test "Theme parser is case-insensitive and unknown-safe" {
   assert_eq(normalize_theme_name("  TOKYO___NIGHT  "), "tokyo-night")
-  assert_eq(normalize_theme_name("github\n dark"), "github-dark")
+  assert_eq(normalize_theme_name(github_newline_dark()), "github-dark")
   assert_eq(normalize_theme_name("DEFAULT"), "default")
   assert_eq(normalize_theme_name("__github_dark__"), "github-dark")
   assert_eq(normalize_theme_name("---tokyo-night---"), "tokyo-night")
@@ -86,7 +97,7 @@ test "Theme parser is case-insensitive and unknown-safe" {
     Some(parsed) => assert_eq(theme_slug(parsed), "tokyo-night")
     None => fail("tokyo\\t night should parse")
   }
-  match parse_theme_name("github\n dark") {
+  match parse_theme_name(github_newline_dark()) {
     Some(parsed) => assert_eq(theme_slug(parsed), "github-dark")
     None => fail("github\\n dark should parse")
   }
@@ -111,7 +122,7 @@ test "theme_exists reflects whether a theme name is supported" {
   assert_eq(theme_exists("TOKYO NIGHT"), true)
   assert_eq(theme_exists("default"), true)
   assert_eq(theme_exists("tokyo\t night"), true)
-  assert_eq(theme_exists("github\n dark"), true)
+  assert_eq(theme_exists(github_newline_dark()), true)
   assert_eq(theme_exists("github-neon"), false)
 }
 
@@ -122,7 +133,7 @@ test "canonical_theme_slug returns normalized slug or none" {
   assert_eq(canonical_theme_slug("__github_dark__"), Some("github-dark"))
   assert_eq(canonical_theme_slug("github__dark"), Some("github-dark"))
   assert_eq(canonical_theme_slug("tokyo\t night"), Some("tokyo-night"))
-  assert_eq(canonical_theme_slug("github\n dark"), Some("github-dark"))
+  assert_eq(canonical_theme_slug(github_newline_dark()), Some("github-dark"))
   assert_eq(canonical_theme_slug("one-dark"), Some("one-dark"))
   assert_eq(canonical_theme_slug("github-neon"), None)
 }

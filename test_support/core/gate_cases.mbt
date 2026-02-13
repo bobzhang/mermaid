@@ -19,7 +19,10 @@ pub fn gate_cases() -> Array[GateCase] {
   [
     {
       name: "flow_basic",
-      input: "graph TD\nA --> B",
+      input: (
+        #|graph TD
+        #|A --> B
+      ),
       direction: "TD",
       expected_node_count: 2,
       expected_edge_count: 1,
@@ -33,7 +36,10 @@ pub fn gate_cases() -> Array[GateCase] {
     },
     {
       name: "flow_labeled_shapes",
-      input: "graph LR\nA[Start] -->|Yes| B{Done}",
+      input: (
+        #|graph LR
+        #|A[Start] -->|Yes| B{Done}
+      ),
       direction: "LR",
       expected_node_count: 2,
       expected_edge_count: 1,
@@ -47,7 +53,10 @@ pub fn gate_cases() -> Array[GateCase] {
     },
     {
       name: "flow_bidirectional_thick",
-      input: "graph TD\nA <==> B",
+      input: (
+        #|graph TD
+        #|A <==> B
+      ),
       direction: "TD",
       expected_node_count: 2,
       expected_edge_count: 1,
@@ -62,7 +71,10 @@ pub fn gate_cases() -> Array[GateCase] {
     },
     {
       name: "flow_dotted_no_arrow",
-      input: "graph TD\nA -.- B",
+      input: (
+        #|graph TD
+        #|A -.- B
+      ),
       direction: "TD",
       expected_node_count: 2,
       expected_edge_count: 1,
@@ -76,7 +88,10 @@ pub fn gate_cases() -> Array[GateCase] {
     },
     {
       name: "flow_chained_edges",
-      input: "graph LR\nA --> B --> C",
+      input: (
+        #|graph LR
+        #|A --> B --> C
+      ),
       direction: "LR",
       expected_node_count: 3,
       expected_edge_count: 2,
@@ -90,7 +105,10 @@ pub fn gate_cases() -> Array[GateCase] {
     },
     {
       name: "flow_parallel_targets",
-      input: "graph LR\nA --> B & C",
+      input: (
+        #|graph LR
+        #|A --> B & C
+      ),
       direction: "LR",
       expected_node_count: 3,
       expected_edge_count: 2,
@@ -104,7 +122,12 @@ pub fn gate_cases() -> Array[GateCase] {
     },
     {
       name: "state_basic",
-      input: "stateDiagram-v2\n[*] --> Idle\nIdle --> Processing: start\nProcessing --> [*]",
+      input: (
+        #|stateDiagram-v2
+        #|[*] --> Idle
+        #|Idle --> Processing: start
+        #|Processing --> [*]
+      ),
       direction: "TD",
       expected_node_count: 4,
       expected_edge_count: 3,
@@ -118,7 +141,12 @@ pub fn gate_cases() -> Array[GateCase] {
     },
     {
       name: "state_direction_override",
-      input: "stateDiagram-v2\ndirection LR\n[*] --> A\nA --> [*]",
+      input: (
+        #|stateDiagram-v2
+        #|direction LR
+        #|[*] --> A
+        #|A --> [*]
+      ),
       direction: "LR",
       expected_node_count: 3,
       expected_edge_count: 2,
