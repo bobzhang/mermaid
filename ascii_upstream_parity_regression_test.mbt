@@ -32,7 +32,19 @@ fn assert_text_parity(
 
 ///|
 fn beautiful_mermaid_source() -> String {
-  "stateDiagram-v2\n    direction LR\n    [*] --> Input\n    Input --> Parse: DSL\n    Parse --> Layout: AST\n    Layout --> SVG: Vector\n    Layout --> ASCII: Text\n    SVG --> Theme\n    ASCII --> Theme\n    Theme --> Output\n    Output --> [*]"
+  (
+    #|stateDiagram-v2
+    #|    direction LR
+    #|    [*] --> Input
+    #|    Input --> Parse: DSL
+    #|    Parse --> Layout: AST
+    #|    Layout --> SVG: Vector
+    #|    Layout --> ASCII: Text
+    #|    SVG --> Theme
+    #|    ASCII --> Theme
+    #|    Theme --> Output
+    #|    Output --> [*]
+  )
 }
 
 ///|
@@ -81,7 +93,19 @@ fn beautiful_mermaid_expected_unicode() -> String {
 
 ///|
 fn git_branching_workflow_source() -> String {
-  "graph LR\n  A[main] --> B[develop]\n  B --> C[feature/auth]\n  B --> D[feature/ui]\n  C --> E{PR Review}\n  D --> E\n  E -->|approved| B\n  B --> F[release/1.0]\n  F --> G{Tests?}\n  G -->|pass| A\n  G -->|fail| F"
+  (
+    #|graph LR
+    #|  A[main] --> B[develop]
+    #|  B --> C[feature/auth]
+    #|  B --> D[feature/ui]
+    #|  C --> E{PR Review}
+    #|  D --> E
+    #|  E -->|approved| B
+    #|  B --> F[release/1.0]
+    #|  F --> G{Tests?}
+    #|  G -->|pass| A
+    #|  G -->|fail| F
+  )
 }
 
 ///|
@@ -134,7 +158,15 @@ fn git_branching_workflow_expected_unicode() -> String {
 
 ///|
 fn subgraph_direction_override_source() -> String {
-  "graph TD\n  subgraph pipeline [Processing Pipeline]\n    direction LR\n    A[Input] --> B[Parse] --> C[Transform] --> D[Output]\n  end\n  E[Source] --> A\n  D --> F[Sink]"
+  (
+    #|graph TD
+    #|  subgraph pipeline [Processing Pipeline]
+    #|    direction LR
+    #|    A[Input] --> B[Parse] --> C[Transform] --> D[Output]
+    #|  end
+    #|  E[Source] --> A
+    #|  D --> F[Sink]
+  )
 }
 
 ///|
@@ -195,7 +227,19 @@ fn subgraph_direction_override_expected_unicode() -> String {
 
 ///|
 fn ci_cd_pipeline_source() -> String {
-  "graph TD\n  subgraph ci [CI Pipeline]\n    A[Push Code] --> B{Tests Pass?}\n    B -->|Yes| C[Build Image]\n    B -->|No| D[Fix & Retry]\n    D -.-> A\n  end\n  C --> E([Deploy Staging])\n  E --> F{QA Approved?}\n  F -->|Yes| G((Production))\n  F -->|No| D"
+  (
+    #|graph TD
+    #|  subgraph ci [CI Pipeline]
+    #|    A[Push Code] --> B{Tests Pass?}
+    #|    B -->|Yes| C[Build Image]
+    #|    B -->|No| D[Fix & Retry]
+    #|    D -.-> A
+    #|  end
+    #|  C --> E([Deploy Staging])
+    #|  E --> F{QA Approved?}
+    #|  F -->|Yes| G((Production))
+    #|  F -->|No| D
+  )
 }
 
 ///|
@@ -272,7 +316,15 @@ fn ci_cd_pipeline_expected_unicode() -> String {
 
 ///|
 fn decision_tree_source() -> String {
-  "graph TD\n  A{Is it raining?} -->|Yes| B{Have umbrella?}\n  A -->|No| C([Go outside])\n  B -->|Yes| D([Go with umbrella])\n  B -->|No| E{Is it heavy?}\n  E -->|Yes| F([Stay inside])\n  E -->|No| G([Run for it])"
+  (
+    #|graph TD
+    #|  A{Is it raining?} -->|Yes| B{Have umbrella?}
+    #|  A -->|No| C([Go outside])
+    #|  B -->|Yes| D([Go with umbrella])
+    #|  B -->|No| E{Is it heavy?}
+    #|  E -->|Yes| F([Stay inside])
+    #|  E -->|No| G([Run for it])
+  )
 }
 
 ///|
@@ -328,7 +380,24 @@ fn decision_tree_expected_unicode() -> String {
 
 ///|
 fn system_architecture_source() -> String {
-  "graph LR\n  subgraph clients [Client Layer]\n    A([Web App]) --> B[API Gateway]\n    C([Mobile App]) --> B\n  end\n  subgraph services [Service Layer]\n    B --> D[Auth Service]\n    B --> E[User Service]\n    B --> F[Order Service]\n  end\n  subgraph data [Data Layer]\n    D --> G[(Auth DB)]\n    E --> H[(User DB)]\n    F --> I[(Order DB)]\n    F --> J([Message Queue])\n  end"
+  (
+    #|graph LR
+    #|  subgraph clients [Client Layer]
+    #|    A([Web App]) --> B[API Gateway]
+    #|    C([Mobile App]) --> B
+    #|  end
+    #|  subgraph services [Service Layer]
+    #|    B --> D[Auth Service]
+    #|    B --> E[User Service]
+    #|    B --> F[Order Service]
+    #|  end
+    #|  subgraph data [Data Layer]
+    #|    D --> G[(Auth DB)]
+    #|    E --> H[(User DB)]
+    #|    F --> I[(Order DB)]
+    #|    F --> J([Message Queue])
+    #|  end
+  )
 }
 
 ///|
@@ -431,7 +500,16 @@ fn system_architecture_expected_unicode() -> String {
 
 ///|
 fn subgraphs_source() -> String {
-  "graph TD\n  subgraph Frontend\n    A[React App] --> B[State Manager]\n  end\n  subgraph Backend\n    C[API Server] --> D[Database]\n  end\n  B --> C"
+  (
+    #|graph TD
+    #|  subgraph Frontend
+    #|    A[React App] --> B[State Manager]
+    #|  end
+    #|  subgraph Backend
+    #|    C[API Server] --> D[Database]
+    #|  end
+    #|  B --> C
+  )
 }
 
 ///|
@@ -481,7 +559,19 @@ fn subgraphs_expected_unicode() -> String {
 
 ///|
 fn nested_subgraphs_source() -> String {
-  "graph TD\n  subgraph Cloud\n    subgraph us-east [US East Region]\n      A[Web Server] --> B[App Server]\n    end\n    subgraph us-west [US West Region]\n      C[Web Server] --> D[App Server]\n    end\n  end\n  E[Load Balancer] --> A\n  E --> C"
+  (
+    #|graph TD
+    #|  subgraph Cloud
+    #|    subgraph us-east [US East Region]
+    #|      A[Web Server] --> B[App Server]
+    #|    end
+    #|    subgraph us-west [US West Region]
+    #|      C[Web Server] --> D[App Server]
+    #|    end
+    #|  end
+    #|  E[Load Balancer] --> A
+    #|  E --> C
+  )
 }
 
 ///|
@@ -533,7 +623,10 @@ fn nested_subgraphs_expected_unicode() -> String {
 
 ///|
 fn simple_flow_source() -> String {
-  "graph TD\n  A[Start] --> B[Process] --> C[End]"
+  (
+    #|graph TD
+    #|  A[Start] --> B[Process] --> C[End]
+  )
 }
 
 ///|
@@ -564,7 +657,13 @@ fn simple_flow_expected_unicode() -> String {
 
 ///|
 fn original_node_shapes_source() -> String {
-  "graph LR\n  A[Rectangle] --> B(Rounded)\n  B --> C{Diamond}\n  C --> D([Stadium])\n  D --> E((Circle))"
+  (
+    #|graph LR
+    #|  A[Rectangle] --> B(Rounded)
+    #|  B --> C{Diamond}
+    #|  C --> D([Stadium])
+    #|  D --> E((Circle))
+  )
 }
 
 ///|
@@ -595,7 +694,11 @@ fn original_node_shapes_expected_unicode() -> String {
 
 ///|
 fn batch_1_shapes_source() -> String {
-  "graph LR\n  A[[Subroutine]] --> B(((Double Circle)))\n  B --> C{{Hexagon}}"
+  (
+    #|graph LR
+    #|  A[[Subroutine]] --> B(((Double Circle)))
+    #|  B --> C{{Hexagon}}
+  )
 }
 
 ///|
@@ -622,7 +725,12 @@ fn batch_1_shapes_expected_unicode() -> String {
 
 ///|
 fn batch_2_shapes_source() -> String {
-  "graph LR\n  A[(Database)] --> B>Flag Shape]\n  B --> C[/Wider Bottom\\]\n  C --> D[\\Wider Top/]"
+  (
+    #|graph LR
+    #|  A[(Database)] --> B>Flag Shape]
+    #|  B --> C[/Wider Bottom\]
+    #|  C --> D[\Wider Top/]
+  )
 }
 
 ///|
@@ -651,7 +759,12 @@ fn batch_2_shapes_expected_unicode() -> String {
 
 ///|
 fn all_edge_styles_source() -> String {
-  "graph TD\n  A[Source] -->|solid| B[Target 1]\n  A -.->|dotted| C[Target 2]\n  A ==>|thick| D[Target 3]"
+  (
+    #|graph TD
+    #|  A[Source] -->|solid| B[Target 1]
+    #|  A -.->|dotted| C[Target 2]
+    #|  A ==>|thick| D[Target 3]
+  )
 }
 
 ///|
@@ -686,7 +799,12 @@ fn all_edge_styles_expected_unicode() -> String {
 
 ///|
 fn no_arrow_edges_source() -> String {
-  "graph TD\n  A[Node 1] ---|related| B[Node 2]\n  B -.- C[Node 3]\n  C === D[Node 4]"
+  (
+    #|graph TD
+    #|  A[Node 1] ---|related| B[Node 2]
+    #|  B -.- C[Node 3]
+    #|  C === D[Node 4]
+  )
 }
 
 ///|
@@ -721,7 +839,12 @@ fn no_arrow_edges_expected_unicode() -> String {
 
 ///|
 fn bidirectional_arrows_source() -> String {
-  "graph LR\n  A[Client] <-->|sync| B[Server]\n  B <-.->|heartbeat| C[Monitor]\n  C <==>|data| D[Storage]"
+  (
+    #|graph LR
+    #|  A[Client] <-->|sync| B[Server]
+    #|  B <-.->|heartbeat| C[Monitor]
+    #|  C <==>|data| D[Storage]
+  )
 }
 
 ///|
@@ -750,7 +873,11 @@ fn bidirectional_arrows_expected_unicode() -> String {
 
 ///|
 fn parallel_links_and_source() -> String {
-  "graph TD\n  A[Input] & B[Config] --> C[Processor]\n  C --> D[Output] & E[Log]"
+  (
+    #|graph TD
+    #|  A[Input] & B[Config] --> C[Processor]
+    #|  C --> D[Output] & E[Log]
+  )
 }
 
 ///|
@@ -791,7 +918,10 @@ fn parallel_links_and_expected_unicode() -> String {
 
 ///|
 fn chained_edges_source() -> String {
-  "graph LR\n  A[Step 1] --> B[Step 2] --> C[Step 3] --> D[Step 4] --> E[Step 5]"
+  (
+    #|graph LR
+    #|  A[Step 1] --> B[Step 2] --> C[Step 3] --> D[Step 4] --> E[Step 5]
+  )
 }
 
 ///|
@@ -820,7 +950,10 @@ fn chained_edges_expected_unicode() -> String {
 
 ///|
 fn direction_left_right_lr_source() -> String {
-  "graph LR\n  A[Input] --> B[Transform] --> C[Output]"
+  (
+    #|graph LR
+    #|  A[Input] --> B[Transform] --> C[Output]
+  )
 }
 
 ///|
@@ -847,7 +980,10 @@ fn direction_left_right_lr_expected_unicode() -> String {
 
 ///|
 fn direction_bottom_top_bt_source() -> String {
-  "graph BT\n  A[Foundation] --> B[Layer 2] --> C[Top]"
+  (
+    #|graph BT
+    #|  A[Foundation] --> B[Layer 2] --> C[Top]
+  )
 }
 
 ///|
@@ -881,7 +1017,20 @@ fn direction_bottom_top_bt_expected_unicode() -> String {
 
 ///|
 fn all_12_flowchart_shapes_source() -> String {
-  "graph LR\n  A[Rectangle] --> B(Rounded)\n  B --> C{Diamond}\n  C --> D([Stadium])\n  D --> E((Circle))\n  E --> F[[Subroutine]]\n  F --> G(((Double Circle)))\n  G --> H{{Hexagon}}\n  H --> I[(Database)]\n  I --> J>Flag]\n  J --> K[/Trapezoid\\]\n  K --> L[\\Inverse Trap/]"
+  (
+    #|graph LR
+    #|  A[Rectangle] --> B(Rounded)
+    #|  B --> C{Diamond}
+    #|  C --> D([Stadium])
+    #|  D --> E((Circle))
+    #|  E --> F[[Subroutine]]
+    #|  F --> G(((Double Circle)))
+    #|  G --> H{{Hexagon}}
+    #|  H --> I[(Database)]
+    #|  I --> J>Flag]
+    #|  J --> K[/Trapezoid\]
+    #|  K --> L[\Inverse Trap/]
+  )
 }
 
 ///|
@@ -912,7 +1061,13 @@ fn all_12_flowchart_shapes_expected_unicode() -> String {
 
 ///|
 fn class_shorthand_source() -> String {
-  "graph TD\n  A[Normal]:::default --> B[Highlighted]:::highlight --> C[Error]:::error\n  classDef default fill:#f4f4f5,stroke:#a1a1aa\n  classDef highlight fill:#fbbf24,stroke:#d97706\n  classDef error fill:#ef4444,stroke:#dc2626"
+  (
+    #|graph TD
+    #|  A[Normal]:::default --> B[Highlighted]:::highlight --> C[Error]:::error
+    #|  classDef default fill:#f4f4f5,stroke:#a1a1aa
+    #|  classDef highlight fill:#fbbf24,stroke:#d97706
+    #|  classDef error fill:#ef4444,stroke:#dc2626
+  )
 }
 
 ///|
@@ -946,7 +1101,12 @@ fn class_shorthand_expected_unicode() -> String {
 
 ///|
 fn inline_style_overrides_source() -> String {
-  "graph TD\n  A[Default] --> B[Custom Colors] --> C[Another Custom]\n  style B fill:#3b82f6,stroke:#1d4ed8,color:#ffffff\n  style C fill:#10b981,stroke:#059669"
+  (
+    #|graph TD
+    #|  A[Default] --> B[Custom Colors] --> C[Another Custom]
+    #|  style B fill:#3b82f6,stroke:#1d4ed8,color:#ffffff
+    #|  style C fill:#10b981,stroke:#059669
+  )
 }
 
 ///|
@@ -983,7 +1143,14 @@ fn inline_style_overrides_expected_unicode() -> String {
 
 ///|
 fn basic_state_diagram_source() -> String {
-  "stateDiagram-v2\n  [*] --> Idle\n  Idle --> Active : start\n  Active --> Idle : cancel\n  Active --> Done : complete\n  Done --> [*]"
+  (
+    #|stateDiagram-v2
+    #|  [*] --> Idle
+    #|  Idle --> Active : start
+    #|  Active --> Idle : cancel
+    #|  Active --> Done : complete
+    #|  Done --> [*]
+  )
 }
 
 ///|
@@ -1025,7 +1192,19 @@ fn basic_state_diagram_expected_unicode() -> String {
 
 ///|
 fn state_composite_states_source() -> String {
-  "stateDiagram-v2\n  [*] --> Idle\n  Idle --> Processing : submit\n  state Processing {\n    parse --> validate\n    validate --> execute\n  }\n  Processing --> Complete : done\n  Processing --> Error : fail\n  Error --> Idle : retry\n  Complete --> [*]"
+  (
+    #|stateDiagram-v2
+    #|  [*] --> Idle
+    #|  Idle --> Processing : submit
+    #|  state Processing {
+    #|    parse --> validate
+    #|    validate --> execute
+    #|  }
+    #|  Processing --> Complete : done
+    #|  Processing --> Error : fail
+    #|  Error --> Idle : retry
+    #|  Complete --> [*]
+  )
 }
 
 ///|
@@ -1096,7 +1275,19 @@ fn state_composite_states_expected_unicode() -> String {
 
 ///|
 fn state_connection_lifecycle_sample_source() -> String {
-  "stateDiagram-v2\n  [*] --> Closed\n  Closed --> Connecting : connect\n  Connecting --> Connected : success\n  Connecting --> Closed : timeout\n  Connected --> Disconnecting : close\n  Connected --> Reconnecting : error\n  Reconnecting --> Connected : success\n  Reconnecting --> Closed : max_retries\n  Disconnecting --> Closed : done\n  Closed --> [*]"
+  (
+    #|stateDiagram-v2
+    #|  [*] --> Closed
+    #|  Closed --> Connecting : connect
+    #|  Connecting --> Connected : success
+    #|  Connecting --> Closed : timeout
+    #|  Connected --> Disconnecting : close
+    #|  Connected --> Reconnecting : error
+    #|  Reconnecting --> Connected : success
+    #|  Reconnecting --> Closed : max_retries
+    #|  Disconnecting --> Closed : done
+    #|  Closed --> [*]
+  )
 }
 
 ///|
@@ -1163,7 +1354,11 @@ fn state_connection_lifecycle_sample_expected_unicode() -> String {
 
 ///|
 fn sequence_basic_messages_source() -> String {
-  "sequenceDiagram\n  Alice->>Bob: Hello Bob!\n  Bob-->>Alice: Hi Alice!"
+  (
+    #|sequenceDiagram
+    #|  Alice->>Bob: Hello Bob!
+    #|  Bob-->>Alice: Hi Alice!
+  )
 }
 
 ///|
@@ -1195,7 +1390,15 @@ fn sequence_basic_messages_expected_unicode() -> String {
 
 ///|
 fn sequence_participant_aliases_source() -> String {
-  "sequenceDiagram\n  participant A as Alice\n  participant B as Bob\n  participant C as Charlie\n  A->>B: Hello\n  B->>C: Forward\n  C-->>A: Reply"
+  (
+    #|sequenceDiagram
+    #|  participant A as Alice
+    #|  participant B as Bob
+    #|  participant C as Charlie
+    #|  A->>B: Hello
+    #|  B->>C: Forward
+    #|  C-->>A: Reply
+  )
 }
 
 ///|
@@ -1233,7 +1436,16 @@ fn sequence_participant_aliases_expected_unicode() -> String {
 
 ///|
 fn sequence_actor_stick_figures_source() -> String {
-  "sequenceDiagram\n  actor U as User\n  participant S as System\n  participant DB as Database\n  U->>S: Click button\n  S->>DB: Query\n  DB-->>S: Results\n  S-->>U: Display"
+  (
+    #|sequenceDiagram
+    #|  actor U as User
+    #|  participant S as System
+    #|  participant DB as Database
+    #|  U->>S: Click button
+    #|  S->>DB: Query
+    #|  DB-->>S: Results
+    #|  S-->>U: Display
+  )
 }
 
 ///|
@@ -1276,7 +1488,13 @@ fn sequence_actor_stick_figures_expected_unicode() -> String {
 
 ///|
 fn sequence_arrow_types_source() -> String {
-  "sequenceDiagram\n  A->>B: Solid arrow (sync)\n  B-->>A: Dashed arrow (return)\n  A-)B: Open arrow (async)\n  B--)A: Open dashed arrow"
+  (
+    #|sequenceDiagram
+    #|  A->>B: Solid arrow (sync)
+    #|  B-->>A: Dashed arrow (return)
+    #|  A-)B: Open arrow (async)
+    #|  B--)A: Open dashed arrow
+  )
 }
 
 ///|
@@ -1318,7 +1536,15 @@ fn sequence_arrow_types_expected_unicode() -> String {
 
 ///|
 fn sequence_activation_boxes_sample_source() -> String {
-  "sequenceDiagram\n  participant C as Client\n  participant S as Server\n  C->>+S: Request\n  S->>+S: Process\n  S->>-S: Done\n  S-->>-C: Response"
+  (
+    #|sequenceDiagram
+    #|  participant C as Client
+    #|  participant S as Server
+    #|  C->>+S: Request
+    #|  S->>+S: Process
+    #|  S->>-S: Done
+    #|  S-->>-C: Response
+  )
 }
 
 ///|
@@ -1361,7 +1587,13 @@ fn sequence_activation_boxes_sample_expected_unicode() -> String {
 
 ///|
 fn sequence_self_messages_source() -> String {
-  "sequenceDiagram\n  participant S as Server\n  S->>S: Internal process\n  S->>S: Validate\n  S-->>S: Log"
+  (
+    #|sequenceDiagram
+    #|  participant S as Server
+    #|  S->>S: Internal process
+    #|  S->>S: Validate
+    #|  S-->>S: Log
+  )
 }
 
 ///|
@@ -1399,7 +1631,17 @@ fn sequence_self_messages_expected_unicode() -> String {
 
 ///|
 fn sequence_loop_block_source() -> String {
-  "sequenceDiagram\n  participant C as Client\n  participant S as Server\n  C->>S: Connect\n  loop Every 30s\n    C->>S: Heartbeat\n    S-->>C: Ack\n  end\n  C->>S: Disconnect"
+  (
+    #|sequenceDiagram
+    #|  participant C as Client
+    #|  participant S as Server
+    #|  C->>S: Connect
+    #|  loop Every 30s
+    #|    C->>S: Heartbeat
+    #|    S-->>C: Ack
+    #|  end
+    #|  C->>S: Disconnect
+  )
 }
 
 ///|
@@ -1439,7 +1681,19 @@ fn sequence_loop_block_expected_unicode() -> String {
 
 ///|
 fn sequence_alt_else_block_source() -> String {
-  "sequenceDiagram\n  participant C as Client\n  participant S as Server\n  C->>S: Login\n  alt Valid credentials\n    S-->>C: 200 OK\n  else Invalid\n    S-->>C: 401 Unauthorized\n  else Account locked\n    S-->>C: 403 Forbidden\n  end"
+  (
+    #|sequenceDiagram
+    #|  participant C as Client
+    #|  participant S as Server
+    #|  C->>S: Login
+    #|  alt Valid credentials
+    #|    S-->>C: 200 OK
+    #|  else Invalid
+    #|    S-->>C: 401 Unauthorized
+    #|  else Account locked
+    #|    S-->>C: 403 Forbidden
+    #|  end
+  )
 }
 
 ///|
@@ -1490,7 +1744,19 @@ fn sequence_alt_else_block_expected_unicode() -> String {
 
 ///|
 fn sequence_opt_block_source() -> String {
-  "sequenceDiagram\n  participant A as App\n  participant C as Cache\n  participant DB as Database\n  A->>C: Get data\n  C-->>A: Cache miss\n  opt Cache miss\n    A->>DB: Query\n    DB-->>A: Results\n    A->>C: Store in cache\n  end"
+  (
+    #|sequenceDiagram
+    #|  participant A as App
+    #|  participant C as Cache
+    #|  participant DB as Database
+    #|  A->>C: Get data
+    #|  C-->>A: Cache miss
+    #|  opt Cache miss
+    #|    A->>DB: Query
+    #|    DB-->>A: Results
+    #|    A->>C: Store in cache
+    #|  end
+  )
 }
 
 ///|
@@ -1540,7 +1806,20 @@ fn sequence_opt_block_expected_unicode() -> String {
 
 ///|
 fn sequence_par_block_source() -> String {
-  "sequenceDiagram\n  participant C as Client\n  participant A as AuthService\n  participant U as UserService\n  participant O as OrderService\n  C->>A: Authenticate\n  par Fetch user data\n    A->>U: Get profile\n  and Fetch orders\n    A->>O: Get orders\n  end\n  A-->>C: Combined response"
+  (
+    #|sequenceDiagram
+    #|  participant C as Client
+    #|  participant A as AuthService
+    #|  participant U as UserService
+    #|  participant O as OrderService
+    #|  C->>A: Authenticate
+    #|  par Fetch user data
+    #|    A->>U: Get profile
+    #|  and Fetch orders
+    #|    A->>O: Get orders
+    #|  end
+    #|  A-->>C: Combined response
+  )
 }
 
 ///|
@@ -1611,7 +1890,17 @@ fn sequence_par_block_expected_unicode() -> String {
 
 ///|
 fn sequence_critical_block_source() -> String {
-  "sequenceDiagram\n  participant A as App\n  participant DB as Database\n  A->>DB: BEGIN\n  critical Transaction\n    A->>DB: UPDATE accounts\n    A->>DB: INSERT log\n  end\n  A->>DB: COMMIT"
+  (
+    #|sequenceDiagram
+    #|  participant A as App
+    #|  participant DB as Database
+    #|  A->>DB: BEGIN
+    #|  critical Transaction
+    #|    A->>DB: UPDATE accounts
+    #|    A->>DB: INSERT log
+    #|  end
+    #|  A->>DB: COMMIT
+  )
 }
 
 ///|
@@ -1653,7 +1942,16 @@ fn sequence_critical_block_expected_unicode() -> String {
 
 ///|
 fn sequence_notes_right_left_over_source() -> String {
-  "sequenceDiagram\n  participant A as Alice\n  participant B as Bob\n  Note left of A: Alice prepares\n  A->>B: Hello\n  Note right of B: Bob thinks\n  B-->>A: Reply\n  Note over A,B: Conversation complete"
+  (
+    #|sequenceDiagram
+    #|  participant A as Alice
+    #|  participant B as Bob
+    #|  Note left of A: Alice prepares
+    #|  A->>B: Hello
+    #|  Note right of B: Bob thinks
+    #|  B-->>A: Reply
+    #|  Note over A,B: Conversation complete
+  )
 }
 
 ///|
@@ -1692,7 +1990,23 @@ fn sequence_notes_right_left_over_expected_unicode() -> String {
 
 ///|
 fn sequence_oauth_2_0_flow_source() -> String {
-  "sequenceDiagram\n  actor U as User\n  participant App as Client App\n  participant Auth as Auth Server\n  participant API as Resource API\n  U->>App: Click Login\n  App->>Auth: Authorization request\n  Auth->>U: Login page\n  U->>Auth: Credentials\n  Auth-->>App: Authorization code\n  App->>Auth: Exchange code for token\n  Auth-->>App: Access token\n  App->>API: Request + token\n  API-->>App: Protected resource\n  App-->>U: Display data"
+  (
+    #|sequenceDiagram
+    #|  actor U as User
+    #|  participant App as Client App
+    #|  participant Auth as Auth Server
+    #|  participant API as Resource API
+    #|  U->>App: Click Login
+    #|  App->>Auth: Authorization request
+    #|  Auth->>U: Login page
+    #|  U->>Auth: Credentials
+    #|  Auth-->>App: Authorization code
+    #|  App->>Auth: Exchange code for token
+    #|  Auth-->>App: Access token
+    #|  App->>API: Request + token
+    #|  API-->>App: Protected resource
+    #|  App-->>U: Display data
+  )
 }
 
 ///|
@@ -1787,7 +2101,24 @@ fn sequence_oauth_2_0_flow_expected_unicode() -> String {
 
 ///|
 fn sequence_database_transaction_source() -> String {
-  "sequenceDiagram\n  participant C as Client\n  participant S as Server\n  participant DB as Database\n  C->>S: POST /transfer\n  S->>DB: BEGIN\n  S->>DB: Debit account A\n  alt Success\n    S->>DB: Credit account B\n    S->>DB: INSERT audit_log\n    S->>DB: COMMIT\n    S-->>C: 200 OK\n  else Insufficient funds\n    S->>DB: ROLLBACK\n    S-->>C: 400 Bad Request\n  end"
+  (
+    #|sequenceDiagram
+    #|  participant C as Client
+    #|  participant S as Server
+    #|  participant DB as Database
+    #|  C->>S: POST /transfer
+    #|  S->>DB: BEGIN
+    #|  S->>DB: Debit account A
+    #|  alt Success
+    #|    S->>DB: Credit account B
+    #|    S->>DB: INSERT audit_log
+    #|    S->>DB: COMMIT
+    #|    S-->>C: 200 OK
+    #|  else Insufficient funds
+    #|    S->>DB: ROLLBACK
+    #|    S-->>C: 400 Bad Request
+    #|  end
+  )
 }
 
 ///|
@@ -1853,7 +2184,26 @@ fn sequence_database_transaction_expected_unicode() -> String {
 
 ///|
 fn sequence_microservice_orchestration_source() -> String {
-  "sequenceDiagram\n  participant G as Gateway\n  participant A as Auth\n  participant U as Users\n  participant O as Orders\n  participant N as Notify\n  G->>A: Validate token\n  A-->>G: Valid\n  par Fetch data\n    G->>U: Get user\n    U-->>G: User data\n  and\n    G->>O: Get orders\n    O-->>G: Order list\n  end\n  G->>N: Send notification\n  N-->>G: Queued\n  Note over G: Aggregate response"
+  (
+    #|sequenceDiagram
+    #|  participant G as Gateway
+    #|  participant A as Auth
+    #|  participant U as Users
+    #|  participant O as Orders
+    #|  participant N as Notify
+    #|  G->>A: Validate token
+    #|  A-->>G: Valid
+    #|  par Fetch data
+    #|    G->>U: Get user
+    #|    U-->>G: User data
+    #|  and
+    #|    G->>O: Get orders
+    #|    O-->>G: Order list
+    #|  end
+    #|  G->>N: Send notification
+    #|  N-->>G: Queued
+    #|  Note over G: Aggregate response
+  )
 }
 
 ///|
@@ -1936,7 +2286,15 @@ fn sequence_microservice_orchestration_expected_unicode() -> String {
 
 ///|
 fn class_basic_class_sample_source() -> String {
-  "classDiagram\n  class Animal {\n    +String name\n    +int age\n    +eat() void\n    +sleep() void\n  }"
+  (
+    #|classDiagram
+    #|  class Animal {
+    #|    +String name
+    #|    +int age
+    #|    +eat() void
+    #|    +sleep() void
+    #|  }
+  )
 }
 
 ///|
@@ -2334,7 +2692,19 @@ test "ASCII/Unicode parity regression: Class: Basic Class sample" {
 
 ///|
 fn class_visibility_markers_sample_source() -> String {
-  "classDiagram\n  class User {\n    +String name\n    -String password\n    #int internalId\n    ~String packageField\n    +login() bool\n    -hashPassword() String\n    #validate() void\n    ~notify() void\n  }"
+  (
+    #|classDiagram
+    #|  class User {
+    #|    +String name
+    #|    -String password
+    #|    #int internalId
+    #|    ~String packageField
+    #|    +login() bool
+    #|    -hashPassword() String
+    #|    #validate() void
+    #|    ~notify() void
+    #|  }
+  )
 }
 
 ///|
@@ -2376,7 +2746,14 @@ test "ASCII/Unicode parity regression: Class: Visibility Markers sample" {
 
 ///|
 fn class_interface_annotation_sample_source() -> String {
-  "classDiagram\n  class Serializable {\n    <<interface>>\n    +serialize() String\n    +deserialize(data) void\n  }"
+  (
+    #|classDiagram
+    #|  class Serializable {
+    #|    <<interface>>
+    #|    +serialize() String
+    #|    +deserialize(data) void
+    #|  }
+  )
 }
 
 ///|
@@ -2415,7 +2792,15 @@ test "ASCII/Unicode parity regression: Class: Interface Annotation sample" {
 
 ///|
 fn class_abstract_annotation_sample_source() -> String {
-  "classDiagram\n  class Shape {\n    <<abstract>>\n    +String color\n    +area() double\n    +draw() void\n  }"
+  (
+    #|classDiagram
+    #|  class Shape {
+    #|    <<abstract>>
+    #|    +String color
+    #|    +area() double
+    #|    +draw() void
+    #|  }
+  )
 }
 
 ///|
@@ -2454,7 +2839,16 @@ test "ASCII/Unicode parity regression: Class: Abstract Annotation sample" {
 
 ///|
 fn class_enum_annotation_sample_source() -> String {
-  "classDiagram\n  class Status {\n    <<enumeration>>\n    ACTIVE\n    INACTIVE\n    PENDING\n    DELETED\n  }"
+  (
+    #|classDiagram
+    #|  class Status {
+    #|    <<enumeration>>
+    #|    ACTIVE
+    #|    INACTIVE
+    #|    PENDING
+    #|    DELETED
+    #|  }
+  )
 }
 
 ///|
@@ -2493,7 +2887,23 @@ test "ASCII/Unicode parity regression: Class: Enum Annotation sample" {
 
 ///|
 fn class_inheritance_sample_source() -> String {
-  "classDiagram\n  class Animal {\n    +String name\n    +eat() void\n  }\n  class Dog {\n    +String breed\n    +bark() void\n  }\n  class Cat {\n    +bool isIndoor\n    +meow() void\n  }\n  Animal <|-- Dog\n  Animal <|-- Cat"
+  (
+    #|classDiagram
+    #|  class Animal {
+    #|    +String name
+    #|    +eat() void
+    #|  }
+    #|  class Dog {
+    #|    +String breed
+    #|    +bark() void
+    #|  }
+    #|  class Cat {
+    #|    +bool isIndoor
+    #|    +meow() void
+    #|  }
+    #|  Animal <|-- Dog
+    #|  Animal <|-- Cat
+  )
 }
 
 ///|
@@ -2543,7 +2953,18 @@ test "ASCII/Unicode parity regression: Class: Inheritance (<|--) sample" {
 
 ///|
 fn class_composition_sample_source() -> String {
-  "classDiagram\n  class Car {\n    +String model\n    +start() void\n  }\n  class Engine {\n    +int horsepower\n    +rev() void\n  }\n  Car *-- Engine"
+  (
+    #|classDiagram
+    #|  class Car {
+    #|    +String model
+    #|    +start() void
+    #|  }
+    #|  class Engine {
+    #|    +int horsepower
+    #|    +rev() void
+    #|  }
+    #|  Car *-- Engine
+  )
 }
 
 ///|
@@ -2589,7 +3010,16 @@ test "ASCII/Unicode parity regression: Class: Composition (*--) sample" {
 
 ///|
 fn class_aggregation_o_sample_source() -> String {
-  "classDiagram\n  class University {\n    +String name\n  }\n  class Department {\n    +String faculty\n  }\n  University o-- Department"
+  (
+    #|classDiagram
+    #|  class University {
+    #|    +String name
+    #|  }
+    #|  class Department {
+    #|    +String faculty
+    #|  }
+    #|  University o-- Department
+  )
 }
 
 ///|
@@ -2631,7 +3061,16 @@ test "ASCII/Unicode parity regression: Class: Aggregation (o--) sample" {
 
 ///|
 fn class_association_sample_source() -> String {
-  "classDiagram\n  class Customer {\n    +String name\n  }\n  class Order {\n    +int orderId\n  }\n  Customer --> Order"
+  (
+    #|classDiagram
+    #|  class Customer {
+    #|    +String name
+    #|  }
+    #|  class Order {
+    #|    +int orderId
+    #|  }
+    #|  Customer --> Order
+  )
 }
 
 ///|
@@ -2672,7 +3111,16 @@ test "ASCII/Unicode parity regression: Class: Association (-->) sample" {
 
 ///|
 fn class_dependency_sample_source() -> String {
-  "classDiagram\n  class Service {\n    +process() void\n  }\n  class Repository {\n    +find() Object\n  }\n  Service ..> Repository"
+  (
+    #|classDiagram
+    #|  class Service {
+    #|    +process() void
+    #|  }
+    #|  class Repository {
+    #|    +find() Object
+    #|  }
+    #|  Service ..> Repository
+  )
 }
 
 ///|
@@ -2718,7 +3166,18 @@ test "ASCII/Unicode parity regression: Class: Dependency (..>) sample" {
 
 ///|
 fn class_realization_sample_source() -> String {
-  "classDiagram\n  class Flyable {\n    <<interface>>\n    +fly() void\n  }\n  class Bird {\n    +fly() void\n    +sing() void\n  }\n  Bird ..|> Flyable"
+  (
+    #|classDiagram
+    #|  class Flyable {
+    #|    <<interface>>
+    #|    +fly() void
+    #|  }
+    #|  class Bird {
+    #|    +fly() void
+    #|    +sing() void
+    #|  }
+    #|  Bird ..|> Flyable
+  )
 }
 
 ///|
@@ -2764,7 +3223,15 @@ test "ASCII/Unicode parity regression: Class: Realization (..|>) sample" {
 
 ///|
 fn class_all_6_relationship_types_sample_source() -> String {
-  "classDiagram\n  A <|-- B : inheritance\n  C *-- D : composition\n  E o-- F : aggregation\n  G --> H : association\n  I ..> J : dependency\n  K ..|> L : realization"
+  (
+    #|classDiagram
+    #|  A <|-- B : inheritance
+    #|  C *-- D : composition
+    #|  E o-- F : aggregation
+    #|  G --> H : association
+    #|  I ..> J : dependency
+    #|  K ..|> L : realization
+  )
 }
 
 ///|
@@ -2808,7 +3275,20 @@ test "ASCII/Unicode parity regression: Class: All 6 Relationship Types sample" {
 
 ///|
 fn class_relationship_labels_sample_source() -> String {
-  "classDiagram\n  class Teacher {\n    +String name\n  }\n  class Student {\n    +String name\n  }\n  class Course {\n    +String title\n  }\n  Teacher --> Course : teaches\n  Student --> Course : enrolled in"
+  (
+    #|classDiagram
+    #|  class Teacher {
+    #|    +String name
+    #|  }
+    #|  class Student {
+    #|    +String name
+    #|  }
+    #|  class Course {
+    #|    +String title
+    #|  }
+    #|  Teacher --> Course : teaches
+    #|  Student --> Course : enrolled in
+  )
 }
 
 ///|
@@ -2854,7 +3334,35 @@ test "ASCII/Unicode parity regression: Class: Relationship Labels sample" {
 
 ///|
 fn class_design_pattern_observer_sample_source() -> String {
-  "classDiagram\n  class Subject {\n    <<interface>>\n    +attach(Observer) void\n    +detach(Observer) void\n    +notify() void\n  }\n  class Observer {\n    <<interface>>\n    +update() void\n  }\n  class EventEmitter {\n    -List~Observer~ observers\n    +attach(Observer) void\n    +detach(Observer) void\n    +notify() void\n  }\n  class Logger {\n    +update() void\n  }\n  class Alerter {\n    +update() void\n  }\n  Subject <|.. EventEmitter\n  Observer <|.. Logger\n  Observer <|.. Alerter\n  EventEmitter --> Observer"
+  (
+    #|classDiagram
+    #|  class Subject {
+    #|    <<interface>>
+    #|    +attach(Observer) void
+    #|    +detach(Observer) void
+    #|    +notify() void
+    #|  }
+    #|  class Observer {
+    #|    <<interface>>
+    #|    +update() void
+    #|  }
+    #|  class EventEmitter {
+    #|    -List~Observer~ observers
+    #|    +attach(Observer) void
+    #|    +detach(Observer) void
+    #|    +notify() void
+    #|  }
+    #|  class Logger {
+    #|    +update() void
+    #|  }
+    #|  class Alerter {
+    #|    +update() void
+    #|  }
+    #|  Subject <|.. EventEmitter
+    #|  Observer <|.. Logger
+    #|  Observer <|.. Alerter
+    #|  EventEmitter --> Observer
+  )
 }
 
 ///|
@@ -2931,7 +3439,30 @@ test "ASCII/Unicode parity regression: Class: Design Pattern — Observer sample
 
 ///|
 fn class_mvc_architecture_sample_source() -> String {
-  "classDiagram\n  class Model {\n    -data Map\n    +getData() Map\n    +setData(key, val) void\n    +notify() void\n  }\n  class View {\n    -model Model\n    +render() void\n    +update() void\n  }\n  class Controller {\n    -model Model\n    -view View\n    +handleInput(event) void\n    +updateModel(data) void\n  }\n  Controller --> Model : updates\n  Controller --> View : refreshes\n  View --> Model : reads\n  Model ..> View : notifies"
+  (
+    #|classDiagram
+    #|  class Model {
+    #|    -data Map
+    #|    +getData() Map
+    #|    +setData(key, val) void
+    #|    +notify() void
+    #|  }
+    #|  class View {
+    #|    -model Model
+    #|    +render() void
+    #|    +update() void
+    #|  }
+    #|  class Controller {
+    #|    -model Model
+    #|    -view View
+    #|    +handleInput(event) void
+    #|    +updateModel(data) void
+    #|  }
+    #|  Controller --> Model : updates
+    #|  Controller --> View : refreshes
+    #|  View --> Model : reads
+    #|  Model ..> View : notifies
+  )
 }
 
 ///|
@@ -2988,7 +3519,41 @@ test "ASCII/Unicode parity regression: Class: MVC Architecture sample" {
 
 ///|
 fn class_full_hierarchy_sample_source() -> String {
-  "classDiagram\n  class Animal {\n    <<abstract>>\n    +String name\n    +int age\n    +eat() void\n    +sleep() void\n  }\n  class Mammal {\n    +bool warmBlooded\n    +nurse() void\n  }\n  class Bird {\n    +bool canFly\n    +layEggs() void\n  }\n  class Dog {\n    +String breed\n    +bark() void\n  }\n  class Cat {\n    +bool isIndoor\n    +purr() void\n  }\n  class Parrot {\n    +String vocabulary\n    +speak() void\n  }\n  Animal <|-- Mammal\n  Animal <|-- Bird\n  Mammal <|-- Dog\n  Mammal <|-- Cat\n  Bird <|-- Parrot"
+  (
+    #|classDiagram
+    #|  class Animal {
+    #|    <<abstract>>
+    #|    +String name
+    #|    +int age
+    #|    +eat() void
+    #|    +sleep() void
+    #|  }
+    #|  class Mammal {
+    #|    +bool warmBlooded
+    #|    +nurse() void
+    #|  }
+    #|  class Bird {
+    #|    +bool canFly
+    #|    +layEggs() void
+    #|  }
+    #|  class Dog {
+    #|    +String breed
+    #|    +bark() void
+    #|  }
+    #|  class Cat {
+    #|    +bool isIndoor
+    #|    +purr() void
+    #|  }
+    #|  class Parrot {
+    #|    +String vocabulary
+    #|    +speak() void
+    #|  }
+    #|  Animal <|-- Mammal
+    #|  Animal <|-- Bird
+    #|  Mammal <|-- Dog
+    #|  Mammal <|-- Cat
+    #|  Bird <|-- Parrot
+  )
 }
 
 ///|
@@ -3065,7 +3630,10 @@ test "ASCII/Unicode parity regression: Class: Full Hierarchy sample" {
 
 ///|
 fn er_basic_relationship_sample_source() -> String {
-  "erDiagram\n  CUSTOMER ||--o{ ORDER : places"
+  (
+    #|erDiagram
+    #|  CUSTOMER ||--o{ ORDER : places
+  )
 }
 
 ///|
@@ -3100,7 +3668,15 @@ test "ASCII/Unicode parity regression: ER: Basic Relationship sample" {
 
 ///|
 fn er_entity_with_attributes_sample_source() -> String {
-  "erDiagram\n  CUSTOMER {\n    int id PK\n    string name\n    string email UK\n    date created_at\n  }"
+  (
+    #|erDiagram
+    #|  CUSTOMER {
+    #|    int id PK
+    #|    string name
+    #|    string email UK
+    #|    date created_at
+    #|  }
+  )
 }
 
 ///|
@@ -3139,7 +3715,17 @@ test "ASCII/Unicode parity regression: ER: Entity with Attributes sample" {
 
 ///|
 fn er_attribute_keys_pk_fk_uk_sample_source() -> String {
-  "erDiagram\n  ORDER {\n    int id PK\n    int customer_id FK\n    string invoice_number UK\n    decimal total\n    date order_date\n    string status\n  }"
+  (
+    #|erDiagram
+    #|  ORDER {
+    #|    int id PK
+    #|    int customer_id FK
+    #|    string invoice_number UK
+    #|    decimal total
+    #|    date order_date
+    #|    string status
+    #|  }
+  )
 }
 
 ///|
@@ -3180,7 +3766,10 @@ test "ASCII/Unicode parity regression: ER: Attribute Keys (PK, FK, UK) sample" {
 
 ///|
 fn er_exactly_one_to_exactly_one_sample_source() -> String {
-  "erDiagram\n  PERSON ||--|| PASSPORT : has"
+  (
+    #|erDiagram
+    #|  PERSON ||--|| PASSPORT : has
+  )
 }
 
 ///|
@@ -3215,7 +3804,10 @@ test "ASCII/Unicode parity regression: ER: Exactly One to Exactly One (||--||) s
 
 ///|
 fn er_exactly_one_to_zero_or_many_o_sample_source() -> String {
-  "erDiagram\n  CUSTOMER ||--o{ ORDER : places"
+  (
+    #|erDiagram
+    #|  CUSTOMER ||--o{ ORDER : places
+  )
 }
 
 ///|
@@ -3250,7 +3842,10 @@ test "ASCII/Unicode parity regression: ER: Exactly One to Zero-or-Many (||--o{) 
 
 ///|
 fn er_zero_or_one_to_one_or_many_o_sample_source() -> String {
-  "erDiagram\n  SUPERVISOR |o--|{ EMPLOYEE : manages"
+  (
+    #|erDiagram
+    #|  SUPERVISOR |o--|{ EMPLOYEE : manages
+  )
 }
 
 ///|
@@ -3286,7 +3881,10 @@ test "ASCII/Unicode parity regression: ER: Zero-or-One to One-or-Many (|o--|{) s
 
 ///|
 fn er_one_or_more_to_zero_or_many_o_sample_source() -> String {
-  "erDiagram\n  TEACHER }|--o{ COURSE : teaches"
+  (
+    #|erDiagram
+    #|  TEACHER }|--o{ COURSE : teaches
+  )
 }
 
 ///|
@@ -3321,7 +3919,13 @@ test "ASCII/Unicode parity regression: ER: One-or-More to Zero-or-Many (}|--o{) 
 
 ///|
 fn er_all_cardinality_types_sample_source() -> String {
-  "erDiagram\n  A ||--|| B : one-to-one\n  C ||--o{ D : one-to-many\n  E |o--|{ F : opt-to-many\n  G }|--o{ H : many-to-many"
+  (
+    #|erDiagram
+    #|  A ||--|| B : one-to-one
+    #|  C ||--o{ D : one-to-many
+    #|  E |o--|{ F : opt-to-many
+    #|  G }|--o{ H : many-to-many
+  )
 }
 
 ///|
@@ -3371,7 +3975,10 @@ test "ASCII/Unicode parity regression: ER: All Cardinality Types sample" {
 
 ///|
 fn er_identifying_solid_relationship_sample_source() -> String {
-  "erDiagram\n  ORDER ||--|{ LINE_ITEM : contains"
+  (
+    #|erDiagram
+    #|  ORDER ||--|{ LINE_ITEM : contains
+  )
 }
 
 ///|
@@ -3406,7 +4013,11 @@ test "ASCII/Unicode parity regression: ER: Identifying (Solid) Relationship samp
 
 ///|
 fn er_non_identifying_dashed_relationship_sample_source() -> String {
-  "erDiagram\n  USER ||..o{ LOG_ENTRY : generates\n  USER ||..o{ SESSION : opens"
+  (
+    #|erDiagram
+    #|  USER ||..o{ LOG_ENTRY : generates
+    #|  USER ||..o{ SESSION : opens
+  )
 }
 
 ///|
@@ -3446,7 +4057,13 @@ test "ASCII/Unicode parity regression: ER: Non-Identifying (Dashed) Relationship
 
 ///|
 fn er_mixed_identifying_non_identifying_sample_source() -> String {
-  "erDiagram\n  ORDER ||--|{ LINE_ITEM : contains\n  ORDER ||..o{ SHIPMENT : ships-via\n  PRODUCT ||--o{ LINE_ITEM : includes\n  PRODUCT ||..o{ REVIEW : receives"
+  (
+    #|erDiagram
+    #|  ORDER ||--|{ LINE_ITEM : contains
+    #|  ORDER ||..o{ SHIPMENT : ships-via
+    #|  PRODUCT ||--o{ LINE_ITEM : includes
+    #|  PRODUCT ||..o{ REVIEW : receives
+  )
 }
 
 ///|
@@ -3490,7 +4107,33 @@ test "ASCII/Unicode parity regression: ER: Mixed Identifying & Non-Identifying s
 
 ///|
 fn er_e_commerce_schema_sample_source() -> String {
-  "erDiagram\n  CUSTOMER {\n    int id PK\n    string name\n    string email UK\n  }\n  ORDER {\n    int id PK\n    date created\n    int customer_id FK\n  }\n  PRODUCT {\n    int id PK\n    string name\n    float price\n  }\n  LINE_ITEM {\n    int id PK\n    int order_id FK\n    int product_id FK\n    int quantity\n  }\n  CUSTOMER ||--o{ ORDER : places\n  ORDER ||--|{ LINE_ITEM : contains\n  PRODUCT ||--o{ LINE_ITEM : includes"
+  (
+    #|erDiagram
+    #|  CUSTOMER {
+    #|    int id PK
+    #|    string name
+    #|    string email UK
+    #|  }
+    #|  ORDER {
+    #|    int id PK
+    #|    date created
+    #|    int customer_id FK
+    #|  }
+    #|  PRODUCT {
+    #|    int id PK
+    #|    string name
+    #|    float price
+    #|  }
+    #|  LINE_ITEM {
+    #|    int id PK
+    #|    int order_id FK
+    #|    int product_id FK
+    #|    int quantity
+    #|  }
+    #|  CUSTOMER ||--o{ ORDER : places
+    #|  ORDER ||--|{ LINE_ITEM : contains
+    #|  PRODUCT ||--o{ LINE_ITEM : includes
+  )
 }
 
 ///|
@@ -3543,7 +4186,37 @@ test "ASCII/Unicode parity regression: ER: E-Commerce Schema sample" {
 
 ///|
 fn er_blog_platform_schema_sample_source() -> String {
-  "erDiagram\n  USER {\n    int id PK\n    string username UK\n    string email UK\n    date joined\n  }\n  POST {\n    int id PK\n    string title\n    text content\n    int author_id FK\n    date published\n  }\n  COMMENT {\n    int id PK\n    text body\n    int post_id FK\n    int user_id FK\n    date created\n  }\n  TAG {\n    int id PK\n    string name UK\n  }\n  USER ||--o{ POST : writes\n  USER ||--o{ COMMENT : authors\n  POST ||--o{ COMMENT : has\n  POST }|--o{ TAG : tagged-with"
+  (
+    #|erDiagram
+    #|  USER {
+    #|    int id PK
+    #|    string username UK
+    #|    string email UK
+    #|    date joined
+    #|  }
+    #|  POST {
+    #|    int id PK
+    #|    string title
+    #|    text content
+    #|    int author_id FK
+    #|    date published
+    #|  }
+    #|  COMMENT {
+    #|    int id PK
+    #|    text body
+    #|    int post_id FK
+    #|    int user_id FK
+    #|    date created
+    #|  }
+    #|  TAG {
+    #|    int id PK
+    #|    string name UK
+    #|  }
+    #|  USER ||--o{ POST : writes
+    #|  USER ||--o{ COMMENT : authors
+    #|  POST ||--o{ COMMENT : has
+    #|  POST }|--o{ TAG : tagged-with
+  )
 }
 
 ///|
@@ -3600,7 +4273,36 @@ test "ASCII/Unicode parity regression: ER: Blog Platform Schema sample" {
 
 ///|
 fn er_school_management_schema_sample_source() -> String {
-  "erDiagram\n  STUDENT {\n    int id PK\n    string name\n    date dob\n    string grade\n  }\n  TEACHER {\n    int id PK\n    string name\n    string department\n  }\n  COURSE {\n    int id PK\n    string title\n    int teacher_id FK\n    int credits\n  }\n  ENROLLMENT {\n    int id PK\n    int student_id FK\n    int course_id FK\n    string semester\n    float grade\n  }\n  TEACHER ||--o{ COURSE : teaches\n  STUDENT ||--o{ ENROLLMENT : enrolled\n  COURSE ||--o{ ENROLLMENT : has"
+  (
+    #|erDiagram
+    #|  STUDENT {
+    #|    int id PK
+    #|    string name
+    #|    date dob
+    #|    string grade
+    #|  }
+    #|  TEACHER {
+    #|    int id PK
+    #|    string name
+    #|    string department
+    #|  }
+    #|  COURSE {
+    #|    int id PK
+    #|    string title
+    #|    int teacher_id FK
+    #|    int credits
+    #|  }
+    #|  ENROLLMENT {
+    #|    int id PK
+    #|    int student_id FK
+    #|    int course_id FK
+    #|    string semester
+    #|    float grade
+    #|  }
+    #|  TEACHER ||--o{ COURSE : teaches
+    #|  STUDENT ||--o{ ENROLLMENT : enrolled
+    #|  COURSE ||--o{ ENROLLMENT : has
+  )
 }
 
 ///|
