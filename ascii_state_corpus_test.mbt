@@ -58,8 +58,8 @@ fn assert_state_output_invariants(
 ///|
 test "ASCII state corpus keeps readable labels and pseudostate rendering" {
   for case_data in @test_support.supported_ascii_cases().filter(is_state_case) {
-    let graph = try! @beautiful_mermaid.parse_mermaid(case_data.input)
-    let output = try! @beautiful_mermaid.render_mermaid_ascii(case_data.input, options={
+    let graph = @beautiful_mermaid.parse_mermaid(case_data.input)
+    let output = @beautiful_mermaid.render_mermaid_ascii(case_data.input, options={
       use_ascii: true,
       padding_x: case_data.padding_x,
       padding_y: case_data.padding_y,
@@ -72,8 +72,8 @@ test "ASCII state corpus keeps readable labels and pseudostate rendering" {
 ///|
 test "Unicode state corpus keeps readable labels and pseudostate rendering" {
   for case_data in @test_support.supported_unicode_cases().filter(is_state_case) {
-    let graph = try! @beautiful_mermaid.parse_mermaid(case_data.input)
-    let output = try! @beautiful_mermaid.render_mermaid_ascii(case_data.input, options={
+    let graph = @beautiful_mermaid.parse_mermaid(case_data.input)
+    let output = @beautiful_mermaid.render_mermaid_ascii(case_data.input, options={
       use_ascii: false,
       padding_x: case_data.padding_x,
       padding_y: case_data.padding_y,

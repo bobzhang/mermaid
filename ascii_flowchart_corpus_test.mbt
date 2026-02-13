@@ -34,13 +34,13 @@ fn assert_output_contains_flow_labels(
 test "ASCII flowchart corpus keeps node labels visible" {
   for
     case_data in @test_support.supported_ascii_cases().filter(is_flowchart_case) {
-    let graph = try! @beautiful_mermaid.parse_mermaid(case_data.input)
+    let graph = @beautiful_mermaid.parse_mermaid(case_data.input)
     let labels = collect_flow_labels(graph)
     if labels.length() == 0 {
       fail("expected at least one node for \{case_data.name}")
     }
 
-    let output = try! @beautiful_mermaid.render_mermaid_ascii(case_data.input, options={
+    let output = @beautiful_mermaid.render_mermaid_ascii(case_data.input, options={
       use_ascii: true,
       padding_x: case_data.padding_x,
       padding_y: case_data.padding_y,
@@ -58,13 +58,13 @@ test "Unicode flowchart corpus keeps node labels visible" {
     case_data in @test_support.supported_unicode_cases().filter(
       is_flowchart_case,
     ) {
-    let graph = try! @beautiful_mermaid.parse_mermaid(case_data.input)
+    let graph = @beautiful_mermaid.parse_mermaid(case_data.input)
     let labels = collect_flow_labels(graph)
     if labels.length() == 0 {
       fail("expected at least one node for \{case_data.name}")
     }
 
-    let output = try! @beautiful_mermaid.render_mermaid_ascii(case_data.input, options={
+    let output = @beautiful_mermaid.render_mermaid_ascii(case_data.input, options={
       use_ascii: false,
       padding_x: case_data.padding_x,
       padding_y: case_data.padding_y,

@@ -7,7 +7,7 @@ test "Unicode golden gate cases" {
       padding_y: case_data.padding_y,
       box_border_padding: 1,
     }
-    let actual = try! @beautiful_mermaid.render_mermaid_ascii(
+    let actual = @beautiful_mermaid.render_mermaid_ascii(
       case_data.input,
       options~,
     )

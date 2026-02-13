@@ -9,11 +9,11 @@ fn snapshot_ascii_and_unicode(
   base : String,
   input : String,
 ) -> Unit raise {
-  let ascii = try! @beautiful_mermaid.render_mermaid_ascii(
+  let ascii = @beautiful_mermaid.render_mermaid_ascii(
     input,
     options=lock_options(true),
   )
-  let unicode = try! @beautiful_mermaid.render_mermaid_ascii(
+  let unicode = @beautiful_mermaid.render_mermaid_ascii(
     input,
     options=lock_options(false),
   )
