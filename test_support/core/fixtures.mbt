@@ -34,10 +34,42 @@ pub fn corpus_cases() -> Array[CorpusCase] {
       expected_node_count: Some(3),
       expected_edge_count: Some(2),
       expected_ascii: Some(
-        "+---+     +---+\n|   |     |   |\n| A |---->| B |\n|   |     |   |\n+---+     +---+\n  |\n  |\n  |\n  |\n  |\n  |       +---+\n  |       |   |\n  +------>| C |\n          |   |\n          +---+",
+        (
+          #|+---+     +---+
+          #||   |     |   |
+          #|| A |---->| B |
+          #||   |     |   |
+          #|+---+     +---+
+          #|  |
+          #|  |
+          #|  |
+          #|  |
+          #|  |
+          #|  |       +---+
+          #|  |       |   |
+          #|  +------>| C |
+          #|          |   |
+          #|          +---+
+        ),
       ),
       expected_unicode: Some(
-        "┌───┐     ┌───┐\n│   │     │   │\n│ A ├────►│ B │\n│   │     │   │\n└─┬─┘     └───┘\n  │\n  │\n  │\n  │\n  │\n  │       ┌───┐\n  │       │   │\n  └──────►│ C │\n          │   │\n          └───┘",
+        (
+          #|┌───┐     ┌───┐
+          #|│   │     │   │
+          #|│ A ├────►│ B │
+          #|│   │     │   │
+          #|└─┬─┘     └───┘
+          #|  │
+          #|  │
+          #|  │
+          #|  │
+          #|  │
+          #|  │       ┌───┐
+          #|  │       │   │
+          #|  └──────►│ C │
+          #|          │   │
+          #|          └───┘
+        ),
       ),
       expected_svg_fragments: ["<svg", "</svg>", "<defs>"],
     },
@@ -56,10 +88,42 @@ pub fn corpus_cases() -> Array[CorpusCase] {
       expected_node_count: Some(4),
       expected_edge_count: Some(4),
       expected_ascii: Some(
-        "+---+     +---+\n|   |     |   |\n| A |--+->| C |\n|   |  |  |   |\n+---+  |  +---+\n  |    |\n  |    |\n  +----+\n  |    |\n  |    |\n+---+  |  +---+\n|   |  |  |   |\n| B |--+->| D |\n|   |     |   |\n+---+     +---+",
+        (
+          #|+---+     +---+
+          #||   |     |   |
+          #|| A |--+->| C |
+          #||   |  |  |   |
+          #|+---+  |  +---+
+          #|  |    |
+          #|  |    |
+          #|  +----+
+          #|  |    |
+          #|  |    |
+          #|+---+  |  +---+
+          #||   |  |  |   |
+          #|| B |--+->| D |
+          #||   |     |   |
+          #|+---+     +---+
+        ),
       ),
       expected_unicode: Some(
-        "┌───┐     ┌───┐\n│   │     │   │\n│ A ├──┬─►│ C │\n│   │  │  │   │\n└─┬─┘  │  └───┘\n  │    │\n  │    │\n  ├────┤\n  │    │\n  │    │\n┌─┴─┐  │  ┌───┐\n│   │  │  │   │\n│ B ├──┴─►│ D │\n│   │     │   │\n└───┘     └───┘",
+        (
+          #|┌───┐     ┌───┐
+          #|│   │     │   │
+          #|│ A ├──┬─►│ C │
+          #|│   │  │  │   │
+          #|└─┬─┘  │  └───┘
+          #|  │    │
+          #|  │    │
+          #|  ├────┤
+          #|  │    │
+          #|  │    │
+          #|┌─┴─┐  │  ┌───┐
+          #|│   │  │  │   │
+          #|│ B ├──┴─►│ D │
+          #|│   │     │   │
+          #|└───┘     └───┘
+        ),
       ),
       expected_svg_fragments: ["<svg", "</svg>", "<defs>"],
     },
@@ -78,10 +142,42 @@ pub fn corpus_cases() -> Array[CorpusCase] {
       expected_node_count: Some(3),
       expected_edge_count: Some(2),
       expected_ascii: Some(
-        "+---+     +---+\n|   |     |   |\n| A |---->| C |\n|   |     |   |\n+---+     +---+\n            ^\n            |\n            |\n            |\n            |\n+---+       |\n|   |       |\n| B |-------+\n|   |\n+---+",
+        (
+          #|+---+     +---+
+          #||   |     |   |
+          #|| A |---->| C |
+          #||   |     |   |
+          #|+---+     +---+
+          #|            ^
+          #|            |
+          #|            |
+          #|            |
+          #|            |
+          #|+---+       |
+          #||   |       |
+          #|| B |-------+
+          #||   |
+          #|+---+
+        ),
       ),
       expected_unicode: Some(
-        "┌───┐     ┌───┐\n│   │     │   │\n│ A ├────►│ C │\n│   │     │   │\n└───┘     └───┘\n            ▲\n            │\n            │\n            │\n            │\n┌───┐       │\n│   │       │\n│ B ├───────┘\n│   │\n└───┘",
+        (
+          #|┌───┐     ┌───┐
+          #|│   │     │   │
+          #|│ A ├────►│ C │
+          #|│   │     │   │
+          #|└───┘     └───┘
+          #|            ▲
+          #|            │
+          #|            │
+          #|            │
+          #|            │
+          #|┌───┐       │
+          #|│   │       │
+          #|│ B ├───────┘
+          #|│   │
+          #|└───┘
+        ),
       ),
       expected_svg_fragments: ["<svg", "</svg>", "<defs>"],
     },
@@ -100,10 +196,42 @@ pub fn corpus_cases() -> Array[CorpusCase] {
       expected_node_count: Some(2),
       expected_edge_count: Some(0),
       expected_ascii: Some(
-        "+---+\n|   |\n| A |\n|   |\n+---+\n\n\n\n\n\n+---+\n|   |\n| B |\n|   |\n+---+",
+        (
+          #|+---+
+          #||   |
+          #|| A |
+          #||   |
+          #|+---+
+          #|
+          #|
+          #|
+          #|
+          #|
+          #|+---+
+          #||   |
+          #|| B |
+          #||   |
+          #|+---+
+        ),
       ),
       expected_unicode: Some(
-        "┌───┐\n│   │\n│ A │\n│   │\n└───┘\n\n\n\n\n\n┌───┐\n│   │\n│ B │\n│   │\n└───┘",
+        (
+          #|┌───┐
+          #|│   │
+          #|│ A │
+          #|│   │
+          #|└───┘
+          #|
+          #|
+          #|
+          #|
+          #|
+          #|┌───┐
+          #|│   │
+          #|│ B │
+          #|│   │
+          #|└───┘
+        ),
       ),
       expected_svg_fragments: ["<svg", "</svg>", "<defs>"],
     },
@@ -122,10 +250,26 @@ pub fn corpus_cases() -> Array[CorpusCase] {
       expected_node_count: Some(3),
       expected_edge_count: Some(3),
       expected_ascii: Some(
-        "+---+     +---+     +---+\n|   |     |   |     |   |\n| A |---->| B |---->| C |\n|   |     |   |     |   |\n+---+     +---+     +---+\n  ^                   |\n  +-------------------+",
+        (
+          #|+---+     +---+     +---+
+          #||   |     |   |     |   |
+          #|| A |---->| B |---->| C |
+          #||   |     |   |     |   |
+          #|+---+     +---+     +---+
+          #|  ^                   |
+          #|  +-------------------+
+        ),
       ),
       expected_unicode: Some(
-        "┌───┐     ┌───┐     ┌───┐\n│   │     │   │     │   │\n│ A ├────►│ B ├────►│ C │\n│   │     │   │     │   │\n└───┘     └───┘     └─┬─┘\n  ▲                   │\n  └───────────────────┘",
+        (
+          #|┌───┐     ┌───┐     ┌───┐
+          #|│   │     │   │     │   │
+          #|│ A ├────►│ B ├────►│ C │
+          #|│   │     │   │     │   │
+          #|└───┘     └───┘     └─┬─┘
+          #|  ▲                   │
+          #|  └───────────────────┘
+        ),
       ),
       expected_svg_fragments: ["<svg", "</svg>", "<defs>"],
     },
@@ -148,10 +292,42 @@ pub fn corpus_cases() -> Array[CorpusCase] {
       expected_node_count: Some(4),
       expected_edge_count: Some(5),
       expected_ascii: Some(
-        "+---+     +---+     +---+\n|   |     |   |     |   |\n| A |---->| B |---->| D |\n|   |     |   |     |   |\n+---+     +---+     +---+\n  |         |         ^\n  |         |         |\n  |         |         |\n  |         |         |\n  |         v         |\n  |       +---+       |\n  |       |   |       |\n  +------>| C |-------+\n          |   |\n          +---+",
+        (
+          #|+---+     +---+     +---+
+          #||   |     |   |     |   |
+          #|| A |---->| B |---->| D |
+          #||   |     |   |     |   |
+          #|+---+     +---+     +---+
+          #|  |         |         ^
+          #|  |         |         |
+          #|  |         |         |
+          #|  |         |         |
+          #|  |         v         |
+          #|  |       +---+       |
+          #|  |       |   |       |
+          #|  +------>| C |-------+
+          #|          |   |
+          #|          +---+
+        ),
       ),
       expected_unicode: Some(
-        "┌───┐     ┌───┐     ┌───┐\n│   │     │   │     │   │\n│ A ├────►│ B ├────►│ D │\n│   │     │   │     │   │\n└─┬─┘     └─┬─┘     └───┘\n  │         │         ▲\n  │         │         │\n  │         │         │\n  │         │         │\n  │         ▼         │\n  │       ┌───┐       │\n  │       │   │       │\n  └──────►│ C ├───────┘\n          │   │\n          └───┘",
+        (
+          #|┌───┐     ┌───┐     ┌───┐
+          #|│   │     │   │     │   │
+          #|│ A ├────►│ B ├────►│ D │
+          #|│   │     │   │     │   │
+          #|└─┬─┘     └─┬─┘     └───┘
+          #|  │         │         ▲
+          #|  │         │         │
+          #|  │         │         │
+          #|  │         │         │
+          #|  │         ▼         │
+          #|  │       ┌───┐       │
+          #|  │       │   │       │
+          #|  └──────►│ C ├───────┘
+          #|          │   │
+          #|          └───┘
+        ),
       ),
       expected_svg_fragments: ["<svg", "</svg>", "<defs>"],
     },
@@ -174,10 +350,42 @@ pub fn corpus_cases() -> Array[CorpusCase] {
       expected_node_count: Some(4),
       expected_edge_count: Some(5),
       expected_ascii: Some(
-        "+---+     +---+     +---+\n|   |     |   |     |   |\n| A |---->| B |--+->| D |\n|   |     |   |  |  |   |\n+---+     +---+  |  +---+\n  |         |    |\n  |         |    |\n  |         +----+\n  |         |\n  |         v\n  |       +---+\n  |       |   |\n  +------>| C |\n          |   |\n          +---+",
+        (
+          #|+---+     +---+     +---+
+          #||   |     |   |     |   |
+          #|| A |---->| B |--+->| D |
+          #||   |     |   |  |  |   |
+          #|+---+     +---+  |  +---+
+          #|  |         |    |
+          #|  |         |    |
+          #|  |         +----+
+          #|  |         |
+          #|  |         v
+          #|  |       +---+
+          #|  |       |   |
+          #|  +------>| C |
+          #|          |   |
+          #|          +---+
+        ),
       ),
       expected_unicode: Some(
-        "┌───┐     ┌───┐     ┌───┐\n│   │     │   │     │   │\n│ A ├────►│ B ├──┬─►┤ D │\n│   │     │   │  │  │   │\n└─┬─┘     └─┬─┘  │  └───┘\n  │         │    │\n  │         │    │\n  │         ├────┘\n  │         │\n  │         ▼\n  │       ┌───┐\n  │       │   │\n  └──────►│ C │\n          │   │\n          └───┘",
+        (
+          #|┌───┐     ┌───┐     ┌───┐
+          #|│   │     │   │     │   │
+          #|│ A ├────►│ B ├──┬─►┤ D │
+          #|│   │     │   │  │  │   │
+          #|└─┬─┘     └─┬─┘  │  └───┘
+          #|  │         │    │
+          #|  │         │    │
+          #|  │         ├────┘
+          #|  │         │
+          #|  │         ▼
+          #|  │       ┌───┐
+          #|  │       │   │
+          #|  └──────►│ C │
+          #|          │   │
+          #|          └───┘
+        ),
       ),
       expected_svg_fragments: ["<svg", "</svg>", "<defs>"],
     },
@@ -198,10 +406,38 @@ pub fn corpus_cases() -> Array[CorpusCase] {
       expected_node_count: Some(4),
       expected_edge_count: Some(5),
       expected_ascii: Some(
-        "+---+     +---+     +---+\n|   |     |   |     |   |\n| A |---->| B |--+->| D |\n|   |     |   |  |  |   |\n+---+     +---+  |  +---+\n  |         |    |\n  |         +----+\n  |         v\n  |       +---+\n  |       |   |\n  +------>| C |\n          |   |\n          +---+",
+        (
+          #|+---+     +---+     +---+
+          #||   |     |   |     |   |
+          #|| A |---->| B |--+->| D |
+          #||   |     |   |  |  |   |
+          #|+---+     +---+  |  +---+
+          #|  |         |    |
+          #|  |         +----+
+          #|  |         v
+          #|  |       +---+
+          #|  |       |   |
+          #|  +------>| C |
+          #|          |   |
+          #|          +---+
+        ),
       ),
       expected_unicode: Some(
-        "┌───┐     ┌───┐     ┌───┐\n│   │     │   │     │   │\n│ A ├────►│ B ├──┬─►┤ D │\n│   │     │   │  │  │   │\n└─┬─┘     └─┬─┘  │  └───┘\n  │         │    │\n  │         ├────┘\n  │         ▼\n  │       ┌───┐\n  │       │   │\n  └──────►│ C │\n          │   │\n          └───┘",
+        (
+          #|┌───┐     ┌───┐     ┌───┐
+          #|│   │     │   │     │   │
+          #|│ A ├────►│ B ├──┬─►┤ D │
+          #|│   │     │   │  │  │   │
+          #|└─┬─┘     └─┬─┘  │  └───┘
+          #|  │         │    │
+          #|  │         ├────┘
+          #|  │         ▼
+          #|  │       ┌───┐
+          #|  │       │   │
+          #|  └──────►│ C │
+          #|          │   │
+          #|          └───┘
+        ),
       ),
       expected_svg_fragments: ["<svg", "</svg>", "<defs>"],
     },
@@ -225,10 +461,30 @@ pub fn corpus_cases() -> Array[CorpusCase] {
       expected_node_count: Some(12),
       expected_edge_count: Some(6),
       expected_ascii: Some(
-        "+---+    +---+    +---+    +---+    +---+    +---+\n| A |    | C |    | E |    | G |    | I |    | L |\n+---+    +---+    +---+    +---+    +---+    +---+\n  ^        *        o        |        :        ^\nherits   owns      has     uses    depend implements\n  |        |        |        v        v        :\n+---+    +---+    +---+    +---+    +---+    +---+\n| B |    | D |    | F |    | H |    | J |    | K |\n+---+    +---+    +---+    +---+    +---+    +---+",
+        (
+          #|+---+    +---+    +---+    +---+    +---+    +---+
+          #|| A |    | C |    | E |    | G |    | I |    | L |
+          #|+---+    +---+    +---+    +---+    +---+    +---+
+          #|  ^        *        o        |        :        ^
+          #|herits   owns      has     uses    depend implements
+          #|  |        |        |        v        v        :
+          #|+---+    +---+    +---+    +---+    +---+    +---+
+          #|| B |    | D |    | F |    | H |    | J |    | K |
+          #|+---+    +---+    +---+    +---+    +---+    +---+
+        ),
       ),
       expected_unicode: Some(
-        "┌───┐    ┌───┐    ┌───┐    ┌───┐    ┌───┐    ┌───┐\n│ A │    │ C │    │ E │    │ G │    │ I │    │ L │\n└───┘    └───┘    └───┘    └───┘    └───┘    └───┘\n  △        ◆        ◇        │        ┊        △\nherits   owns      has     uses    depend implements\n  │        │        │        ▼        ▼        ┊\n┌───┐    ┌───┐    ┌───┐    ┌───┐    ┌───┐    ┌───┐\n│ B │    │ D │    │ F │    │ H │    │ J │    │ K │\n└───┘    └───┘    └───┘    └───┘    └───┘    └───┘",
+        (
+          #|┌───┐    ┌───┐    ┌───┐    ┌───┐    ┌───┐    ┌───┐
+          #|│ A │    │ C │    │ E │    │ G │    │ I │    │ L │
+          #|└───┘    └───┘    └───┘    └───┘    └───┘    └───┘
+          #|  △        ◆        ◇        │        ┊        △
+          #|herits   owns      has     uses    depend implements
+          #|  │        │        │        ▼        ▼        ┊
+          #|┌───┐    ┌───┐    ┌───┐    ┌───┐    ┌───┐    ┌───┐
+          #|│ B │    │ D │    │ F │    │ H │    │ J │    │ K │
+          #|└───┘    └───┘    └───┘    └───┘    └───┘    └───┘
+        ),
       ),
       expected_svg_fragments: ["<svg", "</svg>", "<defs>"],
     },
@@ -255,10 +511,48 @@ pub fn corpus_cases() -> Array[CorpusCase] {
       expected_node_count: Some(2),
       expected_edge_count: Some(1),
       expected_ascii: Some(
-        "+--------------+\n| <<abstract>> |\n| Shape        |\n+--------------+\n|              |\n+--------------+\n| +draw: void  |\n+--------------+\n        ^\n        |\n        |\n+--------------+\n| Circle       |\n+--------------+\n| +int: radius |\n+--------------+\n| +draw: void  |\n+--------------+",
+        (
+          #|+--------------+
+          #|| <<abstract>> |
+          #|| Shape        |
+          #|+--------------+
+          #||              |
+          #|+--------------+
+          #|| +draw: void  |
+          #|+--------------+
+          #|        ^
+          #|        |
+          #|        |
+          #|+--------------+
+          #|| Circle       |
+          #|+--------------+
+          #|| +int: radius |
+          #|+--------------+
+          #|| +draw: void  |
+          #|+--------------+
+        ),
       ),
       expected_unicode: Some(
-        "┌──────────────┐\n│ <<abstract>> │\n│ Shape        │\n├──────────────┤\n│              │\n├──────────────┤\n│ +draw: void  │\n└──────────────┘\n        △\n        │\n        │\n┌──────────────┐\n│ Circle       │\n├──────────────┤\n│ +int: radius │\n├──────────────┤\n│ +draw: void  │\n└──────────────┘",
+        (
+          #|┌──────────────┐
+          #|│ <<abstract>> │
+          #|│ Shape        │
+          #|├──────────────┤
+          #|│              │
+          #|├──────────────┤
+          #|│ +draw: void  │
+          #|└──────────────┘
+          #|        △
+          #|        │
+          #|        │
+          #|┌──────────────┐
+          #|│ Circle       │
+          #|├──────────────┤
+          #|│ +int: radius │
+          #|├──────────────┤
+          #|│ +draw: void  │
+          #|└──────────────┘
+        ),
       ),
       expected_svg_fragments: ["<svg", "</svg>", "<defs>"],
     },
@@ -277,10 +571,30 @@ pub fn corpus_cases() -> Array[CorpusCase] {
       expected_node_count: Some(2),
       expected_edge_count: Some(1),
       expected_ascii: Some(
-        "+---------+\n| Student |\n+---------+\n     |\n  enrolls\n     v\n+--------+\n| Course |\n+--------+",
+        (
+          #|+---------+
+          #|| Student |
+          #|+---------+
+          #|     |
+          #|  enrolls
+          #|     v
+          #|+--------+
+          #|| Course |
+          #|+--------+
+        ),
       ),
       expected_unicode: Some(
-        "┌─────────┐\n│ Student │\n└─────────┘\n     │\n  enrolls\n     ▼\n┌────────┐\n│ Course │\n└────────┘",
+        (
+          #|┌─────────┐
+          #|│ Student │
+          #|└─────────┘
+          #|     │
+          #|  enrolls
+          #|     ▼
+          #|┌────────┐
+          #|│ Course │
+          #|└────────┘
+        ),
       ),
       expected_svg_fragments: ["<svg", "</svg>", "<defs>"],
     },
@@ -302,10 +616,26 @@ pub fn corpus_cases() -> Array[CorpusCase] {
       expected_node_count: Some(1),
       expected_edge_count: Some(0),
       expected_ascii: Some(
-        "+---------------+\n| Animal        |\n+---------------+\n| +name: String |\n+---------------+\n| +eat: void    |\n+---------------+",
+        (
+          #|+---------------+
+          #|| Animal        |
+          #|+---------------+
+          #|| +name: String |
+          #|+---------------+
+          #|| +eat: void    |
+          #|+---------------+
+        ),
       ),
       expected_unicode: Some(
-        "┌───────────────┐\n│ Animal        │\n├───────────────┤\n│ +name: String │\n├───────────────┤\n│ +eat: void    │\n└───────────────┘",
+        (
+          #|┌───────────────┐
+          #|│ Animal        │
+          #|├───────────────┤
+          #|│ +name: String │
+          #|├───────────────┤
+          #|│ +eat: void    │
+          #|└───────────────┘
+        ),
       ),
       expected_svg_fragments: ["<svg", "</svg>", "<defs>"],
     },
@@ -324,10 +654,30 @@ pub fn corpus_cases() -> Array[CorpusCase] {
       expected_node_count: Some(2),
       expected_edge_count: Some(1),
       expected_ascii: Some(
-        "+--------+\n| Client |\n+--------+\n     :\n   uses\n     v\n+--------+\n| Server |\n+--------+",
+        (
+          #|+--------+
+          #|| Client |
+          #|+--------+
+          #|     :
+          #|   uses
+          #|     v
+          #|+--------+
+          #|| Server |
+          #|+--------+
+        ),
       ),
       expected_unicode: Some(
-        "┌────────┐\n│ Client │\n└────────┘\n     ┊\n   uses\n     ▼\n┌────────┐\n│ Server │\n└────────┘",
+        (
+          #|┌────────┐
+          #|│ Client │
+          #|└────────┘
+          #|     ┊
+          #|   uses
+          #|     ▼
+          #|┌────────┐
+          #|│ Server │
+          #|└────────┘
+        ),
       ),
       expected_svg_fragments: ["<svg", "</svg>", "<defs>"],
     },
@@ -348,10 +698,42 @@ pub fn corpus_cases() -> Array[CorpusCase] {
       expected_node_count: Some(2),
       expected_edge_count: Some(1),
       expected_ascii: Some(
-        "+---------------+\n| Animal        |\n+---------------+\n| +name: String |\n+---------------+\n        ^\n       --\n       |\n+-------------+\n| Dog         |\n+-------------+\n|             |\n+-------------+\n| +bark: void |\n+-------------+",
+        (
+          #|+---------------+
+          #|| Animal        |
+          #|+---------------+
+          #|| +name: String |
+          #|+---------------+
+          #|        ^
+          #|       --
+          #|       |
+          #|+-------------+
+          #|| Dog         |
+          #|+-------------+
+          #||             |
+          #|+-------------+
+          #|| +bark: void |
+          #|+-------------+
+        ),
       ),
       expected_unicode: Some(
-        "┌───────────────┐\n│ Animal        │\n├───────────────┤\n│ +name: String │\n└───────────────┘\n        △\n       ┌┘\n       │\n┌─────────────┐\n│ Dog         │\n├─────────────┤\n│             │\n├─────────────┤\n│ +bark: void │\n└─────────────┘",
+        (
+          #|┌───────────────┐
+          #|│ Animal        │
+          #|├───────────────┤
+          #|│ +name: String │
+          #|└───────────────┘
+          #|        △
+          #|       ┌┘
+          #|       │
+          #|┌─────────────┐
+          #|│ Dog         │
+          #|├─────────────┤
+          #|│             │
+          #|├─────────────┤
+          #|│ +bark: void │
+          #|└─────────────┘
+        ),
       ),
       expected_svg_fragments: ["<svg", "</svg>", "<defs>"],
     },
@@ -376,10 +758,32 @@ pub fn corpus_cases() -> Array[CorpusCase] {
       expected_node_count: Some(1),
       expected_edge_count: Some(0),
       expected_ascii: Some(
-        "+-----------------+\n| BankAccount     |\n+-----------------+\n| +owner: String  |\n| -balance: int   |\n+-----------------+\n| +deposit: void  |\n| +withdraw: bool |\n| -validate: bool |\n+-----------------+",
+        (
+          #|+-----------------+
+          #|| BankAccount     |
+          #|+-----------------+
+          #|| +owner: String  |
+          #|| -balance: int   |
+          #|+-----------------+
+          #|| +deposit: void  |
+          #|| +withdraw: bool |
+          #|| -validate: bool |
+          #|+-----------------+
+        ),
       ),
       expected_unicode: Some(
-        "┌─────────────────┐\n│ BankAccount     │\n├─────────────────┤\n│ +owner: String  │\n│ -balance: int   │\n├─────────────────┤\n│ +deposit: void  │\n│ +withdraw: bool │\n│ -validate: bool │\n└─────────────────┘",
+        (
+          #|┌─────────────────┐
+          #|│ BankAccount     │
+          #|├─────────────────┤
+          #|│ +owner: String  │
+          #|│ -balance: int   │
+          #|├─────────────────┤
+          #|│ +deposit: void  │
+          #|│ +withdraw: bool │
+          #|│ -validate: bool │
+          #|└─────────────────┘
+        ),
       ),
       expected_svg_fragments: ["<svg", "</svg>", "<defs>"],
     },
@@ -403,10 +807,42 @@ pub fn corpus_cases() -> Array[CorpusCase] {
       expected_node_count: Some(3),
       expected_edge_count: Some(3),
       expected_ascii: Some(
-        "+---+     +---+\n|   |     |   |\n| A |---->| B |\n|   |     |   |\n+---+     +---+\n  |         |\n  |         |\n  |         |\n  |         |\n  |         v\n  |       +---+\n  |       |   |\n  +------>| C |\n          |   |\n          +---+",
+        (
+          #|+---+     +---+
+          #||   |     |   |
+          #|| A |---->| B |
+          #||   |     |   |
+          #|+---+     +---+
+          #|  |         |
+          #|  |         |
+          #|  |         |
+          #|  |         |
+          #|  |         v
+          #|  |       +---+
+          #|  |       |   |
+          #|  +------>| C |
+          #|          |   |
+          #|          +---+
+        ),
       ),
       expected_unicode: Some(
-        "┌───┐     ┌───┐\n│   │     │   │\n│ A ├────►│ B │\n│   │     │   │\n└─┬─┘     └─┬─┘\n  │         │\n  │         │\n  │         │\n  │         │\n  │         ▼\n  │       ┌───┐\n  │       │   │\n  └──────►│ C │\n          │   │\n          └───┘",
+        (
+          #|┌───┐     ┌───┐
+          #|│   │     │   │
+          #|│ A ├────►│ B │
+          #|│   │     │   │
+          #|└─┬─┘     └─┬─┘
+          #|  │         │
+          #|  │         │
+          #|  │         │
+          #|  │         │
+          #|  │         ▼
+          #|  │       ┌───┐
+          #|  │       │   │
+          #|  └──────►│ C │
+          #|          │   │
+          #|          └───┘
+        ),
       ),
       expected_svg_fragments: ["<svg", "</svg>", "<defs>"],
     },
@@ -425,10 +861,22 @@ pub fn corpus_cases() -> Array[CorpusCase] {
       expected_node_count: Some(2),
       expected_edge_count: Some(1),
       expected_ascii: Some(
-        "+---+  +---+\n|   |  |   |\n| A |->| B |\n|   |  |   |\n+---+  +---+",
+        (
+          #|+---+  +---+
+          #||   |  |   |
+          #|| A |->| B |
+          #||   |  |   |
+          #|+---+  +---+
+        ),
       ),
       expected_unicode: Some(
-        "┌───┐  ┌───┐\n│   │  │   │\n│ A ├─►│ B │\n│   │  │   │\n└───┘  └───┘",
+        (
+          #|┌───┐  ┌───┐
+          #|│   │  │   │
+          #|│ A ├─►│ B │
+          #|│   │  │   │
+          #|└───┘  └───┘
+        ),
       ),
       expected_svg_fragments: ["<svg", "</svg>", "<defs>"],
     },
@@ -448,10 +896,42 @@ pub fn corpus_cases() -> Array[CorpusCase] {
       expected_node_count: Some(4),
       expected_edge_count: Some(2),
       expected_ascii: Some(
-        "+--------+     +--------+\n|        |     |        |\n| Server |     | Server |\n|        |     |        |\n+--------+     +--------+\n     |              |\n     |              |\n     |              |\n     |              |\n     v              v\n+--------+     +--------+\n|        |     |        |\n| Client |     | Client |\n|        |     |        |\n+--------+     +--------+",
+        (
+          #|+--------+     +--------+
+          #||        |     |        |
+          #|| Server |     | Server |
+          #||        |     |        |
+          #|+--------+     +--------+
+          #|     |              |
+          #|     |              |
+          #|     |              |
+          #|     |              |
+          #|     v              v
+          #|+--------+     +--------+
+          #||        |     |        |
+          #|| Client |     | Client |
+          #||        |     |        |
+          #|+--------+     +--------+
+        ),
       ),
       expected_unicode: Some(
-        "┌────────┐     ┌────────┐\n│        │     │        │\n│ Server │     │ Server │\n│        │     │        │\n└────┬───┘     └────┬───┘\n     │              │\n     │              │\n     │              │\n     │              │\n     ▼              ▼\n┌────────┐     ┌────────┐\n│        │     │        │\n│ Client │     │ Client │\n│        │     │        │\n└────────┘     └────────┘",
+        (
+          #|┌────────┐     ┌────────┐
+          #|│        │     │        │
+          #|│ Server │     │ Server │
+          #|│        │     │        │
+          #|└────┬───┘     └────┬───┘
+          #|     │              │
+          #|     │              │
+          #|     │              │
+          #|     │              │
+          #|     ▼              ▼
+          #|┌────────┐     ┌────────┐
+          #|│        │     │        │
+          #|│ Client │     │ Client │
+          #|│        │     │        │
+          #|└────────┘     └────────┘
+        ),
       ),
       expected_svg_fragments: ["<svg", "</svg>", "<defs>"],
     },
@@ -479,10 +959,26 @@ pub fn corpus_cases() -> Array[CorpusCase] {
       expected_node_count: Some(2),
       expected_edge_count: Some(1),
       expected_ascii: Some(
-        "+-----------------+      +------------------+\n| CUSTOMER        |      | ORDER            |\n+-----------------+places+------------------+\n| PK string name  |||--o{| PK int id        |\n| UK string email |      |    string status |\n|    int age      |      +------------------+\n+-----------------+",
+        (
+          #|+-----------------+      +------------------+
+          #|| CUSTOMER        |      | ORDER            |
+          #|+-----------------+places+------------------+
+          #|| PK string name  |||--o{| PK int id        |
+          #|| UK string email |      |    string status |
+          #||    int age      |      +------------------+
+          #|+-----------------+
+        ),
       ),
       expected_unicode: Some(
-        "┌─────────────────┐      ┌──────────────────┐\n│ CUSTOMER        │      │ ORDER            │\n├─────────────────┤places├──────────────────┤\n│ PK string name  │║───o╟│ PK int id        │\n│ UK string email │      │    string status │\n│    int age      │      └──────────────────┘\n└─────────────────┘",
+        (
+          #|┌─────────────────┐      ┌──────────────────┐
+          #|│ CUSTOMER        │      │ ORDER            │
+          #|├─────────────────┤places├──────────────────┤
+          #|│ PK string name  │║───o╟│ PK int id        │
+          #|│ UK string email │      │    string status │
+          #|│    int age      │      └──────────────────┘
+          #|└─────────────────┘
+        ),
       ),
       expected_svg_fragments: ["<svg", "</svg>", "<defs>"],
     },
@@ -501,10 +997,18 @@ pub fn corpus_cases() -> Array[CorpusCase] {
       expected_node_count: Some(2),
       expected_edge_count: Some(1),
       expected_ascii: Some(
-        "+----------+places+-------+\n| CUSTOMER |||--o{| ORDER |\n+----------+      +-------+",
+        (
+          #|+----------+places+-------+
+          #|| CUSTOMER |||--o{| ORDER |
+          #|+----------+      +-------+
+        ),
       ),
       expected_unicode: Some(
-        "┌──────────┐places┌───────┐\n│ CUSTOMER │║───o╟│ ORDER │\n└──────────┘      └───────┘",
+        (
+          #|┌──────────┐places┌───────┐
+          #|│ CUSTOMER │║───o╟│ ORDER │
+          #|└──────────┘      └───────┘
+        ),
       ),
       expected_svg_fragments: ["<svg", "</svg>", "<defs>"],
     },
@@ -530,10 +1034,24 @@ pub fn corpus_cases() -> Array[CorpusCase] {
       expected_node_count: Some(2),
       expected_edge_count: Some(1),
       expected_ascii: Some(
-        "+----------------+      +------------------+\n| PERSON         |lives_| ADDRESS          |\n+----------------+||--o{+------------------+\n| PK string name |      |    string street |\n+----------------+      |    string city   |\n                        +------------------+",
+        (
+          #|+----------------+      +------------------+
+          #|| PERSON         |lives_| ADDRESS          |
+          #|+----------------+||--o{+------------------+
+          #|| PK string name |      |    string street |
+          #|+----------------+      |    string city   |
+          #|                        +------------------+
+        ),
       ),
       expected_unicode: Some(
-        "┌────────────────┐      ┌──────────────────┐\n│ PERSON         │lives_│ ADDRESS          │\n├────────────────┤║───o╟├──────────────────┤\n│ PK string name │      │    string street │\n└────────────────┘      │    string city   │\n                        └──────────────────┘",
+        (
+          #|┌────────────────┐      ┌──────────────────┐
+          #|│ PERSON         │lives_│ ADDRESS          │
+          #|├────────────────┤║───o╟├──────────────────┤
+          #|│ PK string name │      │    string street │
+          #|└────────────────┘      │    string city   │
+          #|                        └──────────────────┘
+        ),
       ),
       expected_svg_fragments: ["<svg", "</svg>", "<defs>"],
     },
@@ -553,10 +1071,62 @@ pub fn corpus_cases() -> Array[CorpusCase] {
       expected_node_count: Some(3),
       expected_edge_count: Some(2),
       expected_ascii: Some(
-        "+---+\n|   |\n| A |\n|   |\n+---+\n  |\n  |\n  |\n  |\n  v\n+---+\n|   |\n| B |\n|   |\n+---+\n  |\n  |\n  |\n  |\n  v\n+---+\n|   |\n| C |\n|   |\n+---+",
+        (
+          #|+---+
+          #||   |
+          #|| A |
+          #||   |
+          #|+---+
+          #|  |
+          #|  |
+          #|  |
+          #|  |
+          #|  v
+          #|+---+
+          #||   |
+          #|| B |
+          #||   |
+          #|+---+
+          #|  |
+          #|  |
+          #|  |
+          #|  |
+          #|  v
+          #|+---+
+          #||   |
+          #|| C |
+          #||   |
+          #|+---+
+        ),
       ),
       expected_unicode: Some(
-        "┌───┐\n│   │\n│ A │\n│   │\n└─┬─┘\n  │\n  │\n  │\n  │\n  ▼\n┌───┐\n│   │\n│ B │\n│   │\n└─┬─┘\n  │\n  │\n  │\n  │\n  ▼\n┌───┐\n│   │\n│ C │\n│   │\n└───┘",
+        (
+          #|┌───┐
+          #|│   │
+          #|│ A │
+          #|│   │
+          #|└─┬─┘
+          #|  │
+          #|  │
+          #|  │
+          #|  │
+          #|  ▼
+          #|┌───┐
+          #|│   │
+          #|│ B │
+          #|│   │
+          #|└─┬─┘
+          #|  │
+          #|  │
+          #|  │
+          #|  │
+          #|  ▼
+          #|┌───┐
+          #|│   │
+          #|│ C │
+          #|│   │
+          #|└───┘
+        ),
       ),
       expected_svg_fragments: ["<svg", "</svg>", "<defs>"],
     },
@@ -575,10 +1145,62 @@ pub fn corpus_cases() -> Array[CorpusCase] {
       expected_node_count: Some(3),
       expected_edge_count: Some(2),
       expected_ascii: Some(
-        "+---+\n|   |\n| C |\n|   |\n+---+\n  ^\n  |\n  |\n  |\n  |\n+---+\n|   |\n| B |\n|   |\n+---+\n  ^\n  |\n  |\n  |\n  |\n+---+\n|   |\n| A |\n|   |\n+---+",
+        (
+          #|+---+
+          #||   |
+          #|| C |
+          #||   |
+          #|+---+
+          #|  ^
+          #|  |
+          #|  |
+          #|  |
+          #|  |
+          #|+---+
+          #||   |
+          #|| B |
+          #||   |
+          #|+---+
+          #|  ^
+          #|  |
+          #|  |
+          #|  |
+          #|  |
+          #|+---+
+          #||   |
+          #|| A |
+          #||   |
+          #|+---+
+        ),
       ),
       expected_unicode: Some(
-        "┌───┐\n│   │\n│ C │\n│   │\n└───┘\n  ▲\n  │\n  │\n  │\n  │\n┌─┴─┐\n│   │\n│ B │\n│   │\n└───┘\n  ▲\n  │\n  │\n  │\n  │\n┌─┴─┐\n│   │\n│ A │\n│   │\n└───┘",
+        (
+          #|┌───┐
+          #|│   │
+          #|│ C │
+          #|│   │
+          #|└───┘
+          #|  ▲
+          #|  │
+          #|  │
+          #|  │
+          #|  │
+          #|┌─┴─┐
+          #|│   │
+          #|│ B │
+          #|│   │
+          #|└───┘
+          #|  ▲
+          #|  │
+          #|  │
+          #|  │
+          #|  │
+          #|┌─┴─┐
+          #|│   │
+          #|│ A │
+          #|│   │
+          #|└───┘
+        ),
       ),
       expected_svg_fragments: ["<svg", "</svg>", "<defs>"],
     },
@@ -599,10 +1221,54 @@ pub fn corpus_cases() -> Array[CorpusCase] {
       expected_node_count: Some(2),
       expected_edge_count: Some(1),
       expected_ascii: Some(
-        "+-------+\n|  one  |\n|       |\n|       |\n| +---+ |\n| |   | |\n| | A | |\n| |   | |\n| +---+ |\n|   |   |\n|   |   |\n|   |   |\n|   |   |\n|   v   |\n| +---+ |\n| |   | |\n| | B | |\n| |   | |\n| +---+ |\n|       |\n+-------+",
+        (
+          #|+-------+
+          #||  one  |
+          #||       |
+          #||       |
+          #|| +---+ |
+          #|| |   | |
+          #|| | A | |
+          #|| |   | |
+          #|| +---+ |
+          #||   |   |
+          #||   |   |
+          #||   |   |
+          #||   |   |
+          #||   v   |
+          #|| +---+ |
+          #|| |   | |
+          #|| | B | |
+          #|| |   | |
+          #|| +---+ |
+          #||       |
+          #|+-------+
+        ),
       ),
       expected_unicode: Some(
-        "┌───────┐\n│  one  │\n│       │\n│       │\n│ ┌───┐ │\n│ │   │ │\n│ │ A │ │\n│ │   │ │\n│ └─┬─┘ │\n│   │   │\n│   │   │\n│   │   │\n│   │   │\n│   ▼   │\n│ ┌───┐ │\n│ │   │ │\n│ │ B │ │\n│ │   │ │\n│ └───┘ │\n│       │\n└───────┘",
+        (
+          #|┌───────┐
+          #|│  one  │
+          #|│       │
+          #|│       │
+          #|│ ┌───┐ │
+          #|│ │   │ │
+          #|│ │ A │ │
+          #|│ │   │ │
+          #|│ └─┬─┘ │
+          #|│   │   │
+          #|│   │   │
+          #|│   │   │
+          #|│   │   │
+          #|│   ▼   │
+          #|│ ┌───┐ │
+          #|│ │   │ │
+          #|│ │ B │ │
+          #|│ │   │ │
+          #|│ └───┘ │
+          #|│       │
+          #|└───────┘
+        ),
       ),
       expected_svg_fragments: ["<svg", "</svg>", "<defs>"],
     },
@@ -629,10 +1295,82 @@ pub fn corpus_cases() -> Array[CorpusCase] {
       expected_node_count: Some(3),
       expected_edge_count: Some(2),
       expected_ascii: Some(
-        "+-----------------+\n|    Frontend     |\n|                 |\n|                 |\n| +-------------+ |\n| |             | |\n| |  Web Server | |\n| |             | |\n| +-------------+ |\n|        |        |\n+--------|--------+\n         |\n         |\n         |\n+--------|--------+\n|     Backend     |\n|        |        |\n|        v        |\n| +-------------+ |\n| |             | |\n| | API Gateway | |\n| |             | |\n| +-------------+ |\n|        |        |\n|        |        |\n|        |        |\n|        |        |\n|        v        |\n| +-------------+ |\n| |             | |\n| |  Web Server | |\n| |             | |\n| +-------------+ |\n|                 |\n+-----------------+",
+        (
+          #|+-----------------+
+          #||    Frontend     |
+          #||                 |
+          #||                 |
+          #|| +-------------+ |
+          #|| |             | |
+          #|| |  Web Server | |
+          #|| |             | |
+          #|| +-------------+ |
+          #||        |        |
+          #|+--------|--------+
+          #|         |
+          #|         |
+          #|         |
+          #|+--------|--------+
+          #||     Backend     |
+          #||        |        |
+          #||        v        |
+          #|| +-------------+ |
+          #|| |             | |
+          #|| | API Gateway | |
+          #|| |             | |
+          #|| +-------------+ |
+          #||        |        |
+          #||        |        |
+          #||        |        |
+          #||        |        |
+          #||        v        |
+          #|| +-------------+ |
+          #|| |             | |
+          #|| |  Web Server | |
+          #|| |             | |
+          #|| +-------------+ |
+          #||                 |
+          #|+-----------------+
+        ),
       ),
       expected_unicode: Some(
-        "┌─────────────────┐\n│    Frontend     │\n│                 │\n│                 │\n│ ┌─────────────┐ │\n│ │             │ │\n│ │  Web Server │ │\n│ │             │ │\n│ └──────┬──────┘ │\n│        │        │\n└────────┼────────┘\n         │\n         │\n         │\n┌────────┼────────┐\n│     Backend     │\n│        │        │\n│        ▼        │\n│ ┌─────────────┐ │\n│ │             │ │\n│ │ API Gateway │ │\n│ │             │ │\n│ └──────┬──────┘ │\n│        │        │\n│        │        │\n│        │        │\n│        │        │\n│        ▼        │\n│ ┌─────────────┐ │\n│ │             │ │\n│ │  Web Server │ │\n│ │             │ │\n│ └─────────────┘ │\n│                 │\n└─────────────────┘",
+        (
+          #|┌─────────────────┐
+          #|│    Frontend     │
+          #|│                 │
+          #|│                 │
+          #|│ ┌─────────────┐ │
+          #|│ │             │ │
+          #|│ │  Web Server │ │
+          #|│ │             │ │
+          #|│ └──────┬──────┘ │
+          #|│        │        │
+          #|└────────┼────────┘
+          #|         │
+          #|         │
+          #|         │
+          #|┌────────┼────────┐
+          #|│     Backend     │
+          #|│        │        │
+          #|│        ▼        │
+          #|│ ┌─────────────┐ │
+          #|│ │             │ │
+          #|│ │ API Gateway │ │
+          #|│ │             │ │
+          #|│ └──────┬──────┘ │
+          #|│        │        │
+          #|│        │        │
+          #|│        │        │
+          #|│        │        │
+          #|│        ▼        │
+          #|│ ┌─────────────┐ │
+          #|│ │             │ │
+          #|│ │  Web Server │ │
+          #|│ │             │ │
+          #|│ └─────────────┘ │
+          #|│                 │
+          #|└─────────────────┘
+        ),
       ),
       expected_svg_fragments: ["<svg", "</svg>", "<defs>"],
     },
@@ -656,10 +1394,42 @@ pub fn corpus_cases() -> Array[CorpusCase] {
       expected_node_count: Some(3),
       expected_edge_count: Some(4),
       expected_ascii: Some(
-        "+---+     +---+\n|   |     |   |\n| A |<-+--| C |\n|   |  |  |   |\n+---+  |  +---+\n  ^    |    ^\n  |    |    |\n  +----+    |\n  |         |\n  |         |\n+---+       |\n|   |       |\n| B |-------+\n|   |\n+---+",
+        (
+          #|+---+     +---+
+          #||   |     |   |
+          #|| A |<-+--| C |
+          #||   |  |  |   |
+          #|+---+  |  +---+
+          #|  ^    |    ^
+          #|  |    |    |
+          #|  +----+    |
+          #|  |         |
+          #|  |         |
+          #|+---+       |
+          #||   |       |
+          #|| B |-------+
+          #||   |
+          #|+---+
+        ),
       ),
       expected_unicode: Some(
-        "┌───┐     ┌───┐\n│   │     │   │\n│ A ├◄─┬──┤ C │\n│   │  │  │   │\n└───┘  │  └───┘\n  ▲    │    ▲\n  │    │    │\n  ├────┘    │\n  │         │\n  │         │\n┌─┴─┐       │\n│   │       │\n│ B ├───────┘\n│   │\n└───┘",
+        (
+          #|┌───┐     ┌───┐
+          #|│   │     │   │
+          #|│ A ├◄─┬──┤ C │
+          #|│   │  │  │   │
+          #|└───┘  │  └───┘
+          #|  ▲    │    ▲
+          #|  │    │    │
+          #|  ├────┘    │
+          #|  │         │
+          #|  │         │
+          #|┌─┴─┐       │
+          #|│   │       │
+          #|│ B ├───────┘
+          #|│   │
+          #|└───┘
+        ),
       ),
       expected_svg_fragments: ["<svg", "</svg>", "<defs>"],
     },
@@ -678,10 +1448,26 @@ pub fn corpus_cases() -> Array[CorpusCase] {
       expected_node_count: Some(1),
       expected_edge_count: Some(1),
       expected_ascii: Some(
-        "+---+\n|   |\n| A |-+\n|   | |\n+---+ |\n  ^   |\n  +---+",
+        (
+          #|+---+
+          #||   |
+          #|| A |-+
+          #||   | |
+          #|+---+ |
+          #|  ^   |
+          #|  +---+
+        ),
       ),
       expected_unicode: Some(
-        "┌───┐\n│   │\n│ A ├─┐\n│   │ │\n└───┘ │\n  ▲   │\n  └───┘",
+        (
+          #|┌───┐
+          #|│   │
+          #|│ A ├─┐
+          #|│   │ │
+          #|└───┘ │
+          #|  ▲   │
+          #|  └───┘
+        ),
       ),
       expected_svg_fragments: ["<svg", "</svg>", "<defs>"],
     },
@@ -700,10 +1486,26 @@ pub fn corpus_cases() -> Array[CorpusCase] {
       expected_node_count: Some(2),
       expected_edge_count: Some(2),
       expected_ascii: Some(
-        "+---+     +---+\n|   |     |   |\n| A |--+->| B |\n|   |  |  |   |\n+---+  |  +---+\n  ^    |\n  +----+",
+        (
+          #|+---+     +---+
+          #||   |     |   |
+          #|| A |--+->| B |
+          #||   |  |  |   |
+          #|+---+  |  +---+
+          #|  ^    |
+          #|  +----+
+        ),
       ),
       expected_unicode: Some(
-        "┌───┐     ┌───┐\n│   │     │   │\n│ A ├──┬─►│ B │\n│   │  │  │   │\n└───┘  │  └───┘\n  ▲    │\n  └────┘",
+        (
+          #|┌───┐     ┌───┐
+          #|│   │     │   │
+          #|│ A ├──┬─►│ B │
+          #|│   │  │  │   │
+          #|└───┘  │  └───┘
+          #|  ▲    │
+          #|  └────┘
+        ),
       ),
       expected_svg_fragments: ["<svg", "</svg>", "<defs>"],
     },
@@ -723,10 +1525,38 @@ pub fn corpus_cases() -> Array[CorpusCase] {
       expected_node_count: Some(2),
       expected_edge_count: Some(2),
       expected_ascii: Some(
-        " +-------+       +-----+\n | Alice |       | Bob |\n +-------+       +-----+\n     |              |\n     |  Hello Bob   |\n     |-------------->\n     |              |\n     |  Hi Alice    |\n     <..............|\n     |              |\n +-------+       +-----+\n | Alice |       | Bob |\n +-------+       +-----+",
+        (
+          #| +-------+       +-----+
+          #| | Alice |       | Bob |
+          #| +-------+       +-----+
+          #|     |              |
+          #|     |  Hello Bob   |
+          #|     |-------------->
+          #|     |              |
+          #|     |  Hi Alice    |
+          #|     <..............|
+          #|     |              |
+          #| +-------+       +-----+
+          #| | Alice |       | Bob |
+          #| +-------+       +-----+
+        ),
       ),
       expected_unicode: Some(
-        " ┌───────┐       ┌─────┐\n │ Alice │       │ Bob │\n └───┬───┘       └──┬──┘\n     │              │\n     │  Hello Bob   │\n     │──────────────▶\n     │              │\n     │  Hi Alice    │\n     ◀╌╌╌╌╌╌╌╌╌╌╌╌╌╌│\n     │              │\n ┌───┴───┐       ┌──┴──┐\n │ Alice │       │ Bob │\n └───────┘       └─────┘",
+        (
+          #| ┌───────┐       ┌─────┐
+          #| │ Alice │       │ Bob │
+          #| └───┬───┘       └──┬──┘
+          #|     │              │
+          #|     │  Hello Bob   │
+          #|     │──────────────▶
+          #|     │              │
+          #|     │  Hi Alice    │
+          #|     ◀╌╌╌╌╌╌╌╌╌╌╌╌╌╌│
+          #|     │              │
+          #| ┌───┴───┐       ┌──┴──┐
+          #| │ Alice │       │ Bob │
+          #| └───────┘       └─────┘
+        ),
       ),
       expected_svg_fragments: ["<svg", "</svg>", "<defs>"],
     },
@@ -748,10 +1578,50 @@ pub fn corpus_cases() -> Array[CorpusCase] {
       expected_node_count: Some(3),
       expected_edge_count: Some(4),
       expected_ascii: Some(
-        " +-------+   +-----+    +---------+\n | Alice |   | Bob |    | Charlie |\n +-------+   +-----+    +---------+\n     |          |            |\n     |  Hello   |            |\n     |---------->            |\n     |          |            |\n     |          |  Forward   |\n     |          |------------>\n     |          |            |\n     |          |   Reply    |\n     |          <............|\n     |          |            |\n     |  Done    |            |\n     <..........|            |\n     |          |            |\n +-------+   +-----+    +---------+\n | Alice |   | Bob |    | Charlie |\n +-------+   +-----+    +---------+",
+        (
+          #| +-------+   +-----+    +---------+
+          #| | Alice |   | Bob |    | Charlie |
+          #| +-------+   +-----+    +---------+
+          #|     |          |            |
+          #|     |  Hello   |            |
+          #|     |---------->            |
+          #|     |          |            |
+          #|     |          |  Forward   |
+          #|     |          |------------>
+          #|     |          |            |
+          #|     |          |   Reply    |
+          #|     |          <............|
+          #|     |          |            |
+          #|     |  Done    |            |
+          #|     <..........|            |
+          #|     |          |            |
+          #| +-------+   +-----+    +---------+
+          #| | Alice |   | Bob |    | Charlie |
+          #| +-------+   +-----+    +---------+
+        ),
       ),
       expected_unicode: Some(
-        " ┌───────┐   ┌─────┐    ┌─────────┐\n │ Alice │   │ Bob │    │ Charlie │\n └───┬───┘   └──┬──┘    └────┬────┘\n     │          │            │\n     │  Hello   │            │\n     │──────────▶            │\n     │          │            │\n     │          │  Forward   │\n     │          │────────────▶\n     │          │            │\n     │          │   Reply    │\n     │          ◀╌╌╌╌╌╌╌╌╌╌╌╌│\n     │          │            │\n     │  Done    │            │\n     ◀╌╌╌╌╌╌╌╌╌╌│            │\n     │          │            │\n ┌───┴───┐   ┌──┴──┐    ┌────┴────┐\n │ Alice │   │ Bob │    │ Charlie │\n └───────┘   └─────┘    └─────────┘",
+        (
+          #| ┌───────┐   ┌─────┐    ┌─────────┐
+          #| │ Alice │   │ Bob │    │ Charlie │
+          #| └───┬───┘   └──┬──┘    └────┬────┘
+          #|     │          │            │
+          #|     │  Hello   │            │
+          #|     │──────────▶            │
+          #|     │          │            │
+          #|     │          │  Forward   │
+          #|     │          │────────────▶
+          #|     │          │            │
+          #|     │          │   Reply    │
+          #|     │          ◀╌╌╌╌╌╌╌╌╌╌╌╌│
+          #|     │          │            │
+          #|     │  Done    │            │
+          #|     ◀╌╌╌╌╌╌╌╌╌╌│            │
+          #|     │          │            │
+          #| ┌───┴───┐   ┌──┴──┐    ┌────┴────┐
+          #| │ Alice │   │ Bob │    │ Charlie │
+          #| └───────┘   └─────┘    └─────────┘
+        ),
       ),
       expected_svg_fragments: ["<svg", "</svg>", "<defs>"],
     },
@@ -771,10 +1641,40 @@ pub fn corpus_cases() -> Array[CorpusCase] {
       expected_node_count: Some(2),
       expected_edge_count: Some(2),
       expected_ascii: Some(
-        " +-------+    +-----+\n | Alice |    | Bob |\n +-------+    +-----+\n     |           |\n     +---+       |\n     |   | Think |\n     <---+       |\n     |           |\n     |  Result   |\n     |----------->\n     |           |\n +-------+    +-----+\n | Alice |    | Bob |\n +-------+    +-----+",
+        (
+          #| +-------+    +-----+
+          #| | Alice |    | Bob |
+          #| +-------+    +-----+
+          #|     |           |
+          #|     +---+       |
+          #|     |   | Think |
+          #|     <---+       |
+          #|     |           |
+          #|     |  Result   |
+          #|     |----------->
+          #|     |           |
+          #| +-------+    +-----+
+          #| | Alice |    | Bob |
+          #| +-------+    +-----+
+        ),
       ),
       expected_unicode: Some(
-        " ┌───────┐    ┌─────┐\n │ Alice │    │ Bob │\n └───┬───┘    └──┬──┘\n     │           │\n     ├───┐       │\n     │   │ Think │\n     ◀───┘       │\n     │           │\n     │  Result   │\n     │───────────▶\n     │           │\n ┌───┴───┐    ┌──┴──┐\n │ Alice │    │ Bob │\n └───────┘    └─────┘",
+        (
+          #| ┌───────┐    ┌─────┐
+          #| │ Alice │    │ Bob │
+          #| └───┬───┘    └──┬──┘
+          #|     │           │
+          #|     ├───┐       │
+          #|     │   │ Think │
+          #|     ◀───┘       │
+          #|     │           │
+          #|     │  Result   │
+          #|     │───────────▶
+          #|     │           │
+          #| ┌───┴───┐    ┌──┴──┐
+          #| │ Alice │    │ Bob │
+          #| └───────┘    └─────┘
+        ),
       ),
       expected_svg_fragments: ["<svg", "</svg>", "<defs>"],
     },
@@ -792,9 +1692,23 @@ pub fn corpus_cases() -> Array[CorpusCase] {
       direction: Some("LR"),
       expected_node_count: Some(1),
       expected_edge_count: Some(0),
-      expected_ascii: Some("+---+\n|   |\n| A |\n|   |\n+---+"),
+      expected_ascii: Some(
+        (
+          #|+---+
+          #||   |
+          #|| A |
+          #||   |
+          #|+---+
+        ),
+      ),
       expected_unicode: Some(
-        "┌───┐\n│   │\n│ A │\n│   │\n└───┘",
+        (
+          #|┌───┐
+          #|│   │
+          #|│ A │
+          #|│   │
+          #|└───┘
+        ),
       ),
       expected_svg_fragments: ["<svg", "</svg>", "<defs>"],
     },
@@ -813,10 +1727,22 @@ pub fn corpus_cases() -> Array[CorpusCase] {
       expected_node_count: Some(1),
       expected_edge_count: Some(0),
       expected_ascii: Some(
-        "+------------+\n|            |\n| LongerName |\n|            |\n+------------+",
+        (
+          #|+------------+
+          #||            |
+          #|| LongerName |
+          #||            |
+          #|+------------+
+        ),
       ),
       expected_unicode: Some(
-        "┌────────────┐\n│            │\n│ LongerName │\n│            │\n└────────────┘",
+        (
+          #|┌────────────┐
+          #|│            │
+          #|│ LongerName │
+          #|│            │
+          #|└────────────┘
+        ),
       ),
       expected_svg_fragments: ["<svg", "</svg>", "<defs>"],
     },
@@ -849,10 +1775,54 @@ pub fn corpus_cases() -> Array[CorpusCase] {
       expected_node_count: Some(7),
       expected_edge_count: Some(7),
       expected_ascii: Some(
-        "            +---------------------------+ +-------+\n            |        Processing         | |Storage|\n            |                           | |       |\n            |                           | |       |\n+-------+   | +---+     +---+     +---+ | | +---+ |   +-----+\n|       |   | |   |     |   |     |   | | | |   | |   |     |\n| Start |---->| A |---->| B |---->| C |---->| D |---->| End |\n|       |   | |   |     |   |     |   | | | |   | |   |     |\n+-------+   | +---+     +---+     +---+ | | +---+ |   +-----+\n            |                       |   | |       |      ^\n            +-----------------------|---+ |       |      |\n                                    |     |       |      |\n                                    |     |       |      |\n                                    |     |       |      |\n                                    |     | +---+ |      |\n                                    |     | |   | |      |\n                                    +------>| E |--------+\n                                          | |   | |\n                                          | +---+ |\n                                          |       |\n                                          +-------+",
+        (
+          #|            +---------------------------+ +-------+
+          #|            |        Processing         | |Storage|
+          #|            |                           | |       |
+          #|            |                           | |       |
+          #|+-------+   | +---+     +---+     +---+ | | +---+ |   +-----+
+          #||       |   | |   |     |   |     |   | | | |   | |   |     |
+          #|| Start |---->| A |---->| B |---->| C |---->| D |---->| End |
+          #||       |   | |   |     |   |     |   | | | |   | |   |     |
+          #|+-------+   | +---+     +---+     +---+ | | +---+ |   +-----+
+          #|            |                       |   | |       |      ^
+          #|            +-----------------------|---+ |       |      |
+          #|                                    |     |       |      |
+          #|                                    |     |       |      |
+          #|                                    |     |       |      |
+          #|                                    |     | +---+ |      |
+          #|                                    |     | |   | |      |
+          #|                                    +------>| E |--------+
+          #|                                          | |   | |
+          #|                                          | +---+ |
+          #|                                          |       |
+          #|                                          +-------+
+        ),
       ),
       expected_unicode: Some(
-        "            ┌───────────────────────────┐ ┌───────┐\n            │        Processing         │ │Storage│\n            │                           │ │       │\n            │                           │ │       │\n┌───────┐   │ ┌───┐     ┌───┐     ┌───┐ │ │ ┌───┐ │   ┌─────┐\n│       │   │ │   │     │   │     │   │ │ │ │   │ │   │     │\n│ Start ├───┼►│ A ├────►│ B ├────►│ C ├─┼─┼►│ D ├─┼──►│ End │\n│       │   │ │   │     │   │     │   │ │ │ │   │ │   │     │\n└───────┘   │ └───┘     └───┘     └─┬─┘ │ │ └───┘ │   └─────┘\n            │                       │   │ │       │      ▲\n            └───────────────────────┼───┘ │       │      │\n                                    │     │       │      │\n                                    │     │       │      │\n                                    │     │       │      │\n                                    │     │ ┌───┐ │      │\n                                    │     │ │   │ │      │\n                                    └─────┼►│ E ├─┼──────┘\n                                          │ │   │ │\n                                          │ └───┘ │\n                                          │       │\n                                          └───────┘",
+        (
+          #|            ┌───────────────────────────┐ ┌───────┐
+          #|            │        Processing         │ │Storage│
+          #|            │                           │ │       │
+          #|            │                           │ │       │
+          #|┌───────┐   │ ┌───┐     ┌───┐     ┌───┐ │ │ ┌───┐ │   ┌─────┐
+          #|│       │   │ │   │     │   │     │   │ │ │ │   │ │   │     │
+          #|│ Start ├───┼►│ A ├────►│ B ├────►│ C ├─┼─┼►│ D ├─┼──►│ End │
+          #|│       │   │ │   │     │   │     │   │ │ │ │   │ │   │     │
+          #|└───────┘   │ └───┘     └───┘     └─┬─┘ │ │ └───┘ │   └─────┘
+          #|            │                       │   │ │       │      ▲
+          #|            └───────────────────────┼───┘ │       │      │
+          #|                                    │     │       │      │
+          #|                                    │     │       │      │
+          #|                                    │     │       │      │
+          #|                                    │     │ ┌───┐ │      │
+          #|                                    │     │ │   │ │      │
+          #|                                    └─────┼►│ E ├─┼──────┘
+          #|                                          │ │   │ │
+          #|                                          │ └───┘ │
+          #|                                          │       │
+          #|                                          └───────┘
+        ),
       ),
       expected_svg_fragments: ["<svg", "</svg>", "<defs>"],
     },
@@ -878,10 +1848,90 @@ pub fn corpus_cases() -> Array[CorpusCase] {
       expected_node_count: Some(4),
       expected_edge_count: Some(0),
       expected_ascii: Some(
-        "+-----------+\n|   outer   |\n|           |\n|           |\n|   +---+   |\n|   |   |   |\n|   | A |   |\n|   |   |   |\n|   +---+   |\n|           |\n| +-------+ |\n| | inner | |\n| |       | |\n| |       | |\n| | +---+ | |\n| | |   | | |\n| | | B | | |\n| | |   | | |\n| | +---+ | |\n| |       | |\n| +-------+ |\n|           |\n|           |\n|           |\n|   +---+   |\n|   |   |   |\n|   | C |   |\n|   |   |   |\n|   +---+   |\n|           |\n+-----------+\n\n\n\n    +---+\n    |   |\n    | D |\n    |   |\n    +---+",
+        (
+          #|+-----------+
+          #||   outer   |
+          #||           |
+          #||           |
+          #||   +---+   |
+          #||   |   |   |
+          #||   | A |   |
+          #||   |   |   |
+          #||   +---+   |
+          #||           |
+          #|| +-------+ |
+          #|| | inner | |
+          #|| |       | |
+          #|| |       | |
+          #|| | +---+ | |
+          #|| | |   | | |
+          #|| | | B | | |
+          #|| | |   | | |
+          #|| | +---+ | |
+          #|| |       | |
+          #|| +-------+ |
+          #||           |
+          #||           |
+          #||           |
+          #||   +---+   |
+          #||   |   |   |
+          #||   | C |   |
+          #||   |   |   |
+          #||   +---+   |
+          #||           |
+          #|+-----------+
+          #|
+          #|
+          #|
+          #|    +---+
+          #|    |   |
+          #|    | D |
+          #|    |   |
+          #|    +---+
+        ),
       ),
       expected_unicode: Some(
-        "┌───────────┐\n│   outer   │\n│           │\n│           │\n│   ┌───┐   │\n│   │   │   │\n│   │ A │   │\n│   │   │   │\n│   └───┘   │\n│           │\n│ ┌───────┐ │\n│ │ inner │ │\n│ │       │ │\n│ │       │ │\n│ │ ┌───┐ │ │\n│ │ │   │ │ │\n│ │ │ B │ │ │\n│ │ │   │ │ │\n│ │ └───┘ │ │\n│ │       │ │\n│ └───────┘ │\n│           │\n│           │\n│           │\n│   ┌───┐   │\n│   │   │   │\n│   │ C │   │\n│   │   │   │\n│   └───┘   │\n│           │\n└───────────┘\n\n\n\n    ┌───┐\n    │   │\n    │ D │\n    │   │\n    └───┘",
+        (
+          #|┌───────────┐
+          #|│   outer   │
+          #|│           │
+          #|│           │
+          #|│   ┌───┐   │
+          #|│   │   │   │
+          #|│   │ A │   │
+          #|│   │   │   │
+          #|│   └───┘   │
+          #|│           │
+          #|│ ┌───────┐ │
+          #|│ │ inner │ │
+          #|│ │       │ │
+          #|│ │       │ │
+          #|│ │ ┌───┐ │ │
+          #|│ │ │   │ │ │
+          #|│ │ │ B │ │ │
+          #|│ │ │   │ │ │
+          #|│ │ └───┘ │ │
+          #|│ │       │ │
+          #|│ └───────┘ │
+          #|│           │
+          #|│           │
+          #|│           │
+          #|│   ┌───┐   │
+          #|│   │   │   │
+          #|│   │ C │   │
+          #|│   │   │   │
+          #|│   └───┘   │
+          #|│           │
+          #|└───────────┘
+          #|
+          #|
+          #|
+          #|    ┌───┐
+          #|    │   │
+          #|    │ D │
+          #|    │   │
+          #|    └───┘
+        ),
       ),
       expected_svg_fragments: ["<svg", "</svg>", "<defs>"],
     },
@@ -902,10 +1952,22 @@ pub fn corpus_cases() -> Array[CorpusCase] {
       expected_node_count: Some(2),
       expected_edge_count: Some(1),
       expected_ascii: Some(
-        "+---+     +---+\n|   |     |   |\n| A |---->| B |\n|   |     |   |\n+---+     +---+",
+        (
+          #|+---+     +---+
+          #||   |     |   |
+          #|| A |---->| B |
+          #||   |     |   |
+          #|+---+     +---+
+        ),
       ),
       expected_unicode: Some(
-        "┌───┐     ┌───┐\n│   │     │   │\n│ A ├────►│ B │\n│   │     │   │\n└───┘     └───┘",
+        (
+          #|┌───┐     ┌───┐
+          #|│   │     │   │
+          #|│ A ├────►│ B │
+          #|│   │     │   │
+          #|└───┘     └───┘
+        ),
       ),
       expected_svg_fragments: ["<svg", "</svg>", "<defs>"],
     },
@@ -930,10 +1992,34 @@ pub fn corpus_cases() -> Array[CorpusCase] {
       expected_node_count: Some(4),
       expected_edge_count: Some(3),
       expected_ascii: Some(
-        "        +-----------------+\n        |       one       |\n        |                 |\n        |                 |\n+---+   | +---+     +---+ |   +---+\n|   |   | |   |     |   | |   |   |\n| X |---->| A |---->| B |---->| Y |\n|   |   | |   |     |   | |   |   |\n+---+   | +---+     +---+ |   +---+\n        |                 |\n        +-----------------+",
+        (
+          #|        +-----------------+
+          #|        |       one       |
+          #|        |                 |
+          #|        |                 |
+          #|+---+   | +---+     +---+ |   +---+
+          #||   |   | |   |     |   | |   |   |
+          #|| X |---->| A |---->| B |---->| Y |
+          #||   |   | |   |     |   | |   |   |
+          #|+---+   | +---+     +---+ |   +---+
+          #|        |                 |
+          #|        +-----------------+
+        ),
       ),
       expected_unicode: Some(
-        "        ┌─────────────────┐\n        │       one       │\n        │                 │\n        │                 │\n┌───┐   │ ┌───┐     ┌───┐ │   ┌───┐\n│   │   │ │   │     │   │ │   │   │\n│ X ├───┼►│ A ├────►│ B ├─┼──►│ Y │\n│   │   │ │   │     │   │ │   │   │\n└───┘   │ └───┘     └───┘ │   └───┘\n        │                 │\n        └─────────────────┘",
+        (
+          #|        ┌─────────────────┐
+          #|        │       one       │
+          #|        │                 │
+          #|        │                 │
+          #|┌───┐   │ ┌───┐     ┌───┐ │   ┌───┐
+          #|│   │   │ │   │     │   │ │   │   │
+          #|│ X ├───┼►│ A ├────►│ B ├─┼──►│ Y │
+          #|│   │   │ │   │     │   │ │   │   │
+          #|└───┘   │ └───┘     └───┘ │   └───┘
+          #|        │                 │
+          #|        └─────────────────┘
+        ),
       ),
       expected_svg_fragments: ["<svg", "</svg>", "<defs>"],
     },
@@ -958,10 +2044,90 @@ pub fn corpus_cases() -> Array[CorpusCase] {
       expected_node_count: Some(4),
       expected_edge_count: Some(3),
       expected_ascii: Some(
-        "  +---+\n  |   |\n  | X |\n  |   |\n  +---+\n    |\n    |\n    |\n    |\n    |\n+---|---+\n|  one  |\n|   |   |\n|   v   |\n| +---+ |\n| |   | |\n| | A | |\n| |   | |\n| +---+ |\n|   |   |\n|   |   |\n|   |   |\n|   |   |\n|   v   |\n| +---+ |\n| |   | |\n| | B | |\n| |   | |\n| +---+ |\n|   |   |\n+---|---+\n    |\n    |\n    v\n  +---+\n  |   |\n  | Y |\n  |   |\n  +---+",
+        (
+          #|  +---+
+          #|  |   |
+          #|  | X |
+          #|  |   |
+          #|  +---+
+          #|    |
+          #|    |
+          #|    |
+          #|    |
+          #|    |
+          #|+---|---+
+          #||  one  |
+          #||   |   |
+          #||   v   |
+          #|| +---+ |
+          #|| |   | |
+          #|| | A | |
+          #|| |   | |
+          #|| +---+ |
+          #||   |   |
+          #||   |   |
+          #||   |   |
+          #||   |   |
+          #||   v   |
+          #|| +---+ |
+          #|| |   | |
+          #|| | B | |
+          #|| |   | |
+          #|| +---+ |
+          #||   |   |
+          #|+---|---+
+          #|    |
+          #|    |
+          #|    v
+          #|  +---+
+          #|  |   |
+          #|  | Y |
+          #|  |   |
+          #|  +---+
+        ),
       ),
       expected_unicode: Some(
-        "  ┌───┐\n  │   │\n  │ X │\n  │   │\n  └─┬─┘\n    │\n    │\n    │\n    │\n    │\n┌───┼───┐\n│  one  │\n│   │   │\n│   ▼   │\n│ ┌───┐ │\n│ │   │ │\n│ │ A │ │\n│ │   │ │\n│ └─┬─┘ │\n│   │   │\n│   │   │\n│   │   │\n│   │   │\n│   ▼   │\n│ ┌───┐ │\n│ │   │ │\n│ │ B │ │\n│ │   │ │\n│ └─┬─┘ │\n│   │   │\n└───┼───┘\n    │\n    │\n    ▼\n  ┌───┐\n  │   │\n  │ Y │\n  │   │\n  └───┘",
+        (
+          #|  ┌───┐
+          #|  │   │
+          #|  │ X │
+          #|  │   │
+          #|  └─┬─┘
+          #|    │
+          #|    │
+          #|    │
+          #|    │
+          #|    │
+          #|┌───┼───┐
+          #|│  one  │
+          #|│   │   │
+          #|│   ▼   │
+          #|│ ┌───┐ │
+          #|│ │   │ │
+          #|│ │ A │ │
+          #|│ │   │ │
+          #|│ └─┬─┘ │
+          #|│   │   │
+          #|│   │   │
+          #|│   │   │
+          #|│   │   │
+          #|│   ▼   │
+          #|│ ┌───┐ │
+          #|│ │   │ │
+          #|│ │ B │ │
+          #|│ │   │ │
+          #|│ └─┬─┘ │
+          #|│   │   │
+          #|└───┼───┘
+          #|    │
+          #|    │
+          #|    ▼
+          #|  ┌───┐
+          #|  │   │
+          #|  │ Y │
+          #|  │   │
+          #|  └───┘
+        ),
       ),
       expected_svg_fragments: ["<svg", "</svg>", "<defs>"],
     },
@@ -988,10 +2154,54 @@ pub fn corpus_cases() -> Array[CorpusCase] {
       expected_node_count: Some(5),
       expected_edge_count: Some(5),
       expected_ascii: Some(
-        "+-----------------+ +-------+\n|       one       | |  two  |\n|                 | |       |\n|                 | |       |\n| +---+     +---+ | | +---+ |\n| |   |     |   | | | |   | |\n| | A |---->| B |---->| D | |\n| |   |     |   | | | |   | |\n| +---+     +---+ | | +---+ |\n|   |             | |   |   |\n|   |             | |   |   |\n|   |             | |   |   |\n|   |             | |   |   |\n|   |             | |   v   |\n|   |       +---+ | | +---+ |\n|   |       |   | | | |   | |\n|   +------>| C |---->| E | |\n|           |   | | | |   | |\n|           +---+ | | +---+ |\n|                 | |       |\n+-----------------+ +-------+",
+        (
+          #|+-----------------+ +-------+
+          #||       one       | |  two  |
+          #||                 | |       |
+          #||                 | |       |
+          #|| +---+     +---+ | | +---+ |
+          #|| |   |     |   | | | |   | |
+          #|| | A |---->| B |---->| D | |
+          #|| |   |     |   | | | |   | |
+          #|| +---+     +---+ | | +---+ |
+          #||   |             | |   |   |
+          #||   |             | |   |   |
+          #||   |             | |   |   |
+          #||   |             | |   |   |
+          #||   |             | |   v   |
+          #||   |       +---+ | | +---+ |
+          #||   |       |   | | | |   | |
+          #||   +------>| C |---->| E | |
+          #||           |   | | | |   | |
+          #||           +---+ | | +---+ |
+          #||                 | |       |
+          #|+-----------------+ +-------+
+        ),
       ),
       expected_unicode: Some(
-        "┌─────────────────┐ ┌───────┐\n│       one       │ │  two  │\n│                 │ │       │\n│                 │ │       │\n│ ┌───┐     ┌───┐ │ │ ┌───┐ │\n│ │   │     │   │ │ │ │   │ │\n│ │ A ├────►│ B ├─┼─┼►│ D │ │\n│ │   │     │   │ │ │ │   │ │\n│ └─┬─┘     └───┘ │ │ └─┬─┘ │\n│   │             │ │   │   │\n│   │             │ │   │   │\n│   │             │ │   │   │\n│   │             │ │   │   │\n│   │             │ │   ▼   │\n│   │       ┌───┐ │ │ ┌───┐ │\n│   │       │   │ │ │ │   │ │\n│   └──────►│ C ├─┼─┼►│ E │ │\n│           │   │ │ │ │   │ │\n│           └───┘ │ │ └───┘ │\n│                 │ │       │\n└─────────────────┘ └───────┘",
+        (
+          #|┌─────────────────┐ ┌───────┐
+          #|│       one       │ │  two  │
+          #|│                 │ │       │
+          #|│                 │ │       │
+          #|│ ┌───┐     ┌───┐ │ │ ┌───┐ │
+          #|│ │   │     │   │ │ │ │   │ │
+          #|│ │ A ├────►│ B ├─┼─┼►│ D │ │
+          #|│ │   │     │   │ │ │ │   │ │
+          #|│ └─┬─┘     └───┘ │ │ └─┬─┘ │
+          #|│   │             │ │   │   │
+          #|│   │             │ │   │   │
+          #|│   │             │ │   │   │
+          #|│   │             │ │   │   │
+          #|│   │             │ │   ▼   │
+          #|│   │       ┌───┐ │ │ ┌───┐ │
+          #|│   │       │   │ │ │ │   │ │
+          #|│   └──────►│ C ├─┼─┼►│ E │ │
+          #|│           │   │ │ │ │   │ │
+          #|│           └───┘ │ │ └───┘ │
+          #|│                 │ │       │
+          #|└─────────────────┘ └───────┘
+        ),
       ),
       expected_svg_fragments: ["<svg", "</svg>", "<defs>"],
     },
@@ -1012,10 +2222,34 @@ pub fn corpus_cases() -> Array[CorpusCase] {
       expected_node_count: Some(2),
       expected_edge_count: Some(1),
       expected_ascii: Some(
-        "+-----------------+\n|       one       |\n|                 |\n|                 |\n| +---+     +---+ |\n| |   |     |   | |\n| | A |---->| B | |\n| |   |     |   | |\n| +---+     +---+ |\n|                 |\n+-----------------+",
+        (
+          #|+-----------------+
+          #||       one       |
+          #||                 |
+          #||                 |
+          #|| +---+     +---+ |
+          #|| |   |     |   | |
+          #|| | A |---->| B | |
+          #|| |   |     |   | |
+          #|| +---+     +---+ |
+          #||                 |
+          #|+-----------------+
+        ),
       ),
       expected_unicode: Some(
-        "┌─────────────────┐\n│       one       │\n│                 │\n│                 │\n│ ┌───┐     ┌───┐ │\n│ │   │     │   │ │\n│ │ A ├────►│ B │ │\n│ │   │     │   │ │\n│ └───┘     └───┘ │\n│                 │\n└─────────────────┘",
+        (
+          #|┌─────────────────┐
+          #|│       one       │
+          #|│                 │
+          #|│                 │
+          #|│ ┌───┐     ┌───┐ │
+          #|│ │   │     │   │ │
+          #|│ │ A ├────►│ B │ │
+          #|│ │   │     │   │ │
+          #|│ └───┘     └───┘ │
+          #|│                 │
+          #|└─────────────────┘
+        ),
       ),
       expected_svg_fragments: ["<svg", "</svg>", "<defs>"],
     },
@@ -1038,10 +2272,46 @@ pub fn corpus_cases() -> Array[CorpusCase] {
       expected_node_count: Some(1),
       expected_edge_count: Some(0),
       expected_ascii: Some(
-        "+-----------+\n|   outer   |\n|           |\n|           |\n| +-------+ |\n| | inner | |\n| |       | |\n| |       | |\n| | +---+ | |\n| | |   | | |\n| | | A | | |\n| | |   | | |\n| | +---+ | |\n| |       | |\n| +-------+ |\n|           |\n+-----------+",
+        (
+          #|+-----------+
+          #||   outer   |
+          #||           |
+          #||           |
+          #|| +-------+ |
+          #|| | inner | |
+          #|| |       | |
+          #|| |       | |
+          #|| | +---+ | |
+          #|| | |   | | |
+          #|| | | A | | |
+          #|| | |   | | |
+          #|| | +---+ | |
+          #|| |       | |
+          #|| +-------+ |
+          #||           |
+          #|+-----------+
+        ),
       ),
       expected_unicode: Some(
-        "┌───────────┐\n│   outer   │\n│           │\n│           │\n│ ┌───────┐ │\n│ │ inner │ │\n│ │       │ │\n│ │       │ │\n│ │ ┌───┐ │ │\n│ │ │   │ │ │\n│ │ │ A │ │ │\n│ │ │   │ │ │\n│ │ └───┘ │ │\n│ │       │ │\n│ └───────┘ │\n│           │\n└───────────┘",
+        (
+          #|┌───────────┐
+          #|│   outer   │
+          #|│           │
+          #|│           │
+          #|│ ┌───────┐ │
+          #|│ │ inner │ │
+          #|│ │       │ │
+          #|│ │       │ │
+          #|│ │ ┌───┐ │ │
+          #|│ │ │   │ │ │
+          #|│ │ │ A │ │ │
+          #|│ │ │   │ │ │
+          #|│ │ └───┘ │ │
+          #|│ │       │ │
+          #|│ └───────┘ │
+          #|│           │
+          #|└───────────┘
+        ),
       ),
       expected_svg_fragments: ["<svg", "</svg>", "<defs>"],
     },
@@ -1070,10 +2340,46 @@ pub fn corpus_cases() -> Array[CorpusCase] {
       expected_node_count: Some(5),
       expected_edge_count: Some(4),
       expected_ascii: Some(
-        "        +-----------------------------+\n        |            outer            |\n        |                             |\n        |                             |\n        |         +-----------------+ |\n        |         |      inner      | |\n        |         |                 | |\n        |         |                 | |\n+---+   | +---+   | +---+     +---+ | | +---+\n|   |   | |   |   | |   |     |   | | | |   |\n| X |---->| A |---->| B |---->| C |---->| Y |\n|   |   | |   |   | |   |     |   | | | |   |\n+---+   | +---+   | +---+     +---+ | | +---+\n        |         |                 | |\n        |         +-----------------+ |\n        |                             |\n        +-----------------------------+",
+        (
+          #|        +-----------------------------+
+          #|        |            outer            |
+          #|        |                             |
+          #|        |                             |
+          #|        |         +-----------------+ |
+          #|        |         |      inner      | |
+          #|        |         |                 | |
+          #|        |         |                 | |
+          #|+---+   | +---+   | +---+     +---+ | | +---+
+          #||   |   | |   |   | |   |     |   | | | |   |
+          #|| X |---->| A |---->| B |---->| C |---->| Y |
+          #||   |   | |   |   | |   |     |   | | | |   |
+          #|+---+   | +---+   | +---+     +---+ | | +---+
+          #|        |         |                 | |
+          #|        |         +-----------------+ |
+          #|        |                             |
+          #|        +-----------------------------+
+        ),
       ),
       expected_unicode: Some(
-        "        ┌─────────────────────────────┐\n        │            outer            │\n        │                             │\n        │                             │\n        │         ┌─────────────────┐ │\n        │         │      inner      │ │\n        │         │                 │ │\n        │         │                 │ │\n┌───┐   │ ┌───┐   │ ┌───┐     ┌───┐ │ │ ┌───┐\n│   │   │ │   │   │ │   │     │   │ │ │ │   │\n│ X ├───┼►│ A ├───┼►│ B ├────►│ C ├─┼─┼►│ Y │\n│   │   │ │   │   │ │   │     │   │ │ │ │   │\n└───┘   │ └───┘   │ └───┘     └───┘ │ │ └───┘\n        │         │                 │ │\n        │         └─────────────────┘ │\n        │                             │\n        └─────────────────────────────┘",
+        (
+          #|        ┌─────────────────────────────┐
+          #|        │            outer            │
+          #|        │                             │
+          #|        │                             │
+          #|        │         ┌─────────────────┐ │
+          #|        │         │      inner      │ │
+          #|        │         │                 │ │
+          #|        │         │                 │ │
+          #|┌───┐   │ ┌───┐   │ ┌───┐     ┌───┐ │ │ ┌───┐
+          #|│   │   │ │   │   │ │   │     │   │ │ │ │   │
+          #|│ X ├───┼►│ A ├───┼►│ B ├────►│ C ├─┼─┼►│ Y │
+          #|│   │   │ │   │   │ │   │     │   │ │ │ │   │
+          #|└───┘   │ └───┘   │ └───┘     └───┘ │ │ └───┘
+          #|        │         │                 │ │
+          #|        │         └─────────────────┘ │
+          #|        │                             │
+          #|        └─────────────────────────────┘
+        ),
       ),
       expected_svg_fragments: ["<svg", "</svg>", "<defs>"],
     },
@@ -1095,10 +2401,34 @@ pub fn corpus_cases() -> Array[CorpusCase] {
       expected_node_count: Some(3),
       expected_edge_count: Some(1),
       expected_ascii: Some(
-        "        +-----------------+\n        |       one       |\n        |                 |\n        |                 |\n+---+   | +---+     +---+ |\n|   |   | |   |     |   | |\n| X |   | | A |---->| B | |\n|   |   | |   |     |   | |\n+---+   | +---+     +---+ |\n        |                 |\n        +-----------------+",
+        (
+          #|        +-----------------+
+          #|        |       one       |
+          #|        |                 |
+          #|        |                 |
+          #|+---+   | +---+     +---+ |
+          #||   |   | |   |     |   | |
+          #|| X |   | | A |---->| B | |
+          #||   |   | |   |     |   | |
+          #|+---+   | +---+     +---+ |
+          #|        |                 |
+          #|        +-----------------+
+        ),
       ),
       expected_unicode: Some(
-        "        ┌─────────────────┐\n        │       one       │\n        │                 │\n        │                 │\n┌───┐   │ ┌───┐     ┌───┐ │\n│   │   │ │   │     │   │ │\n│ X │   │ │ A ├────►│ B │ │\n│   │   │ │   │     │   │ │\n└───┘   │ └───┘     └───┘ │\n        │                 │\n        └─────────────────┘",
+        (
+          #|        ┌─────────────────┐
+          #|        │       one       │
+          #|        │                 │
+          #|        │                 │
+          #|┌───┐   │ ┌───┐     ┌───┐ │
+          #|│   │   │ │   │     │   │ │
+          #|│ X │   │ │ A ├────►│ B │ │
+          #|│   │   │ │   │     │   │ │
+          #|└───┘   │ └───┘     └───┘ │
+          #|        │                 │
+          #|        └─────────────────┘
+        ),
       ),
       expected_svg_fragments: ["<svg", "</svg>", "<defs>"],
     },
@@ -1119,10 +2449,34 @@ pub fn corpus_cases() -> Array[CorpusCase] {
       expected_node_count: Some(1),
       expected_edge_count: Some(0),
       expected_ascii: Some(
-        "+-------+\n|  one  |\n|       |\n|       |\n| +---+ |\n| |   | |\n| | A | |\n| |   | |\n| +---+ |\n|       |\n+-------+",
+        (
+          #|+-------+
+          #||  one  |
+          #||       |
+          #||       |
+          #|| +---+ |
+          #|| |   | |
+          #|| | A | |
+          #|| |   | |
+          #|| +---+ |
+          #||       |
+          #|+-------+
+        ),
       ),
       expected_unicode: Some(
-        "┌───────┐\n│  one  │\n│       │\n│       │\n│ ┌───┐ │\n│ │   │ │\n│ │ A │ │\n│ │   │ │\n│ └───┘ │\n│       │\n└───────┘",
+        (
+          #|┌───────┐
+          #|│  one  │
+          #|│       │
+          #|│       │
+          #|│ ┌───┐ │
+          #|│ │   │ │
+          #|│ │ A │ │
+          #|│ │   │ │
+          #|│ └───┘ │
+          #|│       │
+          #|└───────┘
+        ),
       ),
       expected_svg_fragments: ["<svg", "</svg>", "<defs>"],
     },
@@ -1143,10 +2497,54 @@ pub fn corpus_cases() -> Array[CorpusCase] {
       expected_node_count: Some(2),
       expected_edge_count: Some(1),
       expected_ascii: Some(
-        "+-------+\n|  one  |\n|       |\n|       |\n| +---+ |\n| |   | |\n| | A | |\n| |   | |\n| +---+ |\n|   |   |\n|   |   |\n|   |   |\n|   |   |\n|   v   |\n| +---+ |\n| |   | |\n| | B | |\n| |   | |\n| +---+ |\n|       |\n+-------+",
+        (
+          #|+-------+
+          #||  one  |
+          #||       |
+          #||       |
+          #|| +---+ |
+          #|| |   | |
+          #|| | A | |
+          #|| |   | |
+          #|| +---+ |
+          #||   |   |
+          #||   |   |
+          #||   |   |
+          #||   |   |
+          #||   v   |
+          #|| +---+ |
+          #|| |   | |
+          #|| | B | |
+          #|| |   | |
+          #|| +---+ |
+          #||       |
+          #|+-------+
+        ),
       ),
       expected_unicode: Some(
-        "┌───────┐\n│  one  │\n│       │\n│       │\n│ ┌───┐ │\n│ │   │ │\n│ │ A │ │\n│ │   │ │\n│ └─┬─┘ │\n│   │   │\n│   │   │\n│   │   │\n│   │   │\n│   ▼   │\n│ ┌───┐ │\n│ │   │ │\n│ │ B │ │\n│ │   │ │\n│ └───┘ │\n│       │\n└───────┘",
+        (
+          #|┌───────┐
+          #|│  one  │
+          #|│       │
+          #|│       │
+          #|│ ┌───┐ │
+          #|│ │   │ │
+          #|│ │ A │ │
+          #|│ │   │ │
+          #|│ └─┬─┘ │
+          #|│   │   │
+          #|│   │   │
+          #|│   │   │
+          #|│   │   │
+          #|│   ▼   │
+          #|│ ┌───┐ │
+          #|│ │   │ │
+          #|│ │ B │ │
+          #|│ │   │ │
+          #|│ └───┘ │
+          #|│       │
+          #|└───────┘
+        ),
       ),
       expected_svg_fragments: ["<svg", "</svg>", "<defs>"],
     },
@@ -1171,10 +2569,82 @@ pub fn corpus_cases() -> Array[CorpusCase] {
       expected_node_count: Some(4),
       expected_edge_count: Some(3),
       expected_ascii: Some(
-        "+--------------+\n|  Frontend    |\n|              |\n|              |\n| +----------+ |\n| |          | |\n| |    UI    | |\n| |          | |\n| +----------+ |\n|       |      |\n|       |      |\n|       |      |\n|       |      |\n|       v      |\n| +----------+ |\n| |          | |\n| |   API    |---------+\n| |          | |       |\n| +----------+ |       |\n|       |      |       |\n+-------|------+       |\n        |              |\n        |              |\n        |              |\n+-------|--------------|-----+\n|       |  Backend     |     |\n|       |              |     |\n|       v              v     |\n| +----------+     +-------+ |\n| |          |     |       | |\n| | Database |     | Cache | |\n| |          |     |       | |\n| +----------+     +-------+ |\n|                            |\n+----------------------------+",
+        (
+          #|+--------------+
+          #||  Frontend    |
+          #||              |
+          #||              |
+          #|| +----------+ |
+          #|| |          | |
+          #|| |    UI    | |
+          #|| |          | |
+          #|| +----------+ |
+          #||       |      |
+          #||       |      |
+          #||       |      |
+          #||       |      |
+          #||       v      |
+          #|| +----------+ |
+          #|| |          | |
+          #|| |   API    |---------+
+          #|| |          | |       |
+          #|| +----------+ |       |
+          #||       |      |       |
+          #|+-------|------+       |
+          #|        |              |
+          #|        |              |
+          #|        |              |
+          #|+-------|--------------|-----+
+          #||       |  Backend     |     |
+          #||       |              |     |
+          #||       v              v     |
+          #|| +----------+     +-------+ |
+          #|| |          |     |       | |
+          #|| | Database |     | Cache | |
+          #|| |          |     |       | |
+          #|| +----------+     +-------+ |
+          #||                            |
+          #|+----------------------------+
+        ),
       ),
       expected_unicode: Some(
-        "┌──────────────┐\n│  Frontend    │\n│              │\n│              │\n│ ┌──────────┐ │\n│ │          │ │\n│ │    UI    │ │\n│ │          │ │\n│ └─────┬────┘ │\n│       │      │\n│       │      │\n│       │      │\n│       │      │\n│       ▼      │\n│ ┌──────────┐ │\n│ │          │ │\n│ │   API    ├─┼───────┐\n│ │          │ │       │\n│ └─────┬────┘ │       │\n│       │      │       │\n└───────┼──────┘       │\n        │              │\n        │              │\n        │              │\n┌───────┼──────────────┼─────┐\n│       │  Backend     │     │\n│       │              │     │\n│       ▼              ▼     │\n│ ┌──────────┐     ┌───────┐ │\n│ │          │     │       │ │\n│ │ Database │     │ Cache │ │\n│ │          │     │       │ │\n│ └──────────┘     └───────┘ │\n│                            │\n└────────────────────────────┘",
+        (
+          #|┌──────────────┐
+          #|│  Frontend    │
+          #|│              │
+          #|│              │
+          #|│ ┌──────────┐ │
+          #|│ │          │ │
+          #|│ │    UI    │ │
+          #|│ │          │ │
+          #|│ └─────┬────┘ │
+          #|│       │      │
+          #|│       │      │
+          #|│       │      │
+          #|│       │      │
+          #|│       ▼      │
+          #|│ ┌──────────┐ │
+          #|│ │          │ │
+          #|│ │   API    ├─┼───────┐
+          #|│ │          │ │       │
+          #|│ └─────┬────┘ │       │
+          #|│       │      │       │
+          #|└───────┼──────┘       │
+          #|        │              │
+          #|        │              │
+          #|        │              │
+          #|┌───────┼──────────────┼─────┐
+          #|│       │  Backend     │     │
+          #|│       │              │     │
+          #|│       ▼              ▼     │
+          #|│ ┌──────────┐     ┌───────┐ │
+          #|│ │          │     │       │ │
+          #|│ │ Database │     │ Cache │ │
+          #|│ │          │     │       │ │
+          #|│ └──────────┘     └───────┘ │
+          #|│                            │
+          #|└────────────────────────────┘
+        ),
       ),
       expected_svg_fragments: ["<svg", "</svg>", "<defs>"],
     },
@@ -1199,10 +2669,74 @@ pub fn corpus_cases() -> Array[CorpusCase] {
       expected_node_count: Some(4),
       expected_edge_count: Some(3),
       expected_ascii: Some(
-        "+--------------+\n|  Frontend    |\n|              |\n|              |\n| +----------+ |\n| |          | |\n| |    UI    | |\n| |          | |\n| +----------+ |\n|       |      |\n|       |      |\n|       v      |\n| +----------+ |\n| |          | |\n| |   API    |-------+\n| |          | |     |\n| +----------+ |     |\n|       |      |     |\n+-------|------+     |\n        |            |\n+-------|------------|-----+\n|       | Backend    |     |\n|       |            |     |\n|       v            v     |\n| +----------+   +-------+ |\n| |          |   |       | |\n| | Database |   | Cache | |\n| |          |   |       | |\n| +----------+   +-------+ |\n|                          |\n+--------------------------+",
+        (
+          #|+--------------+
+          #||  Frontend    |
+          #||              |
+          #||              |
+          #|| +----------+ |
+          #|| |          | |
+          #|| |    UI    | |
+          #|| |          | |
+          #|| +----------+ |
+          #||       |      |
+          #||       |      |
+          #||       v      |
+          #|| +----------+ |
+          #|| |          | |
+          #|| |   API    |-------+
+          #|| |          | |     |
+          #|| +----------+ |     |
+          #||       |      |     |
+          #|+-------|------+     |
+          #|        |            |
+          #|+-------|------------|-----+
+          #||       | Backend    |     |
+          #||       |            |     |
+          #||       v            v     |
+          #|| +----------+   +-------+ |
+          #|| |          |   |       | |
+          #|| | Database |   | Cache | |
+          #|| |          |   |       | |
+          #|| +----------+   +-------+ |
+          #||                          |
+          #|+--------------------------+
+        ),
       ),
       expected_unicode: Some(
-        "┌──────────────┐\n│  Frontend    │\n│              │\n│              │\n│ ┌──────────┐ │\n│ │          │ │\n│ │    UI    │ │\n│ │          │ │\n│ └─────┬────┘ │\n│       │      │\n│       │      │\n│       ▼      │\n│ ┌──────────┐ │\n│ │          │ │\n│ │   API    ├─┼─────┐\n│ │          │ │     │\n│ └─────┬────┘ │     │\n│       │      │     │\n└───────┼──────┘     │\n        │            │\n┌───────┼────────────┼─────┐\n│       │ Backend    │     │\n│       │            │     │\n│       ▼            ▼     │\n│ ┌──────────┐   ┌───────┐ │\n│ │          │   │       │ │\n│ │ Database │   │ Cache │ │\n│ │          │   │       │ │\n│ └──────────┘   └───────┘ │\n│                          │\n└──────────────────────────┘",
+        (
+          #|┌──────────────┐
+          #|│  Frontend    │
+          #|│              │
+          #|│              │
+          #|│ ┌──────────┐ │
+          #|│ │          │ │
+          #|│ │    UI    │ │
+          #|│ │          │ │
+          #|│ └─────┬────┘ │
+          #|│       │      │
+          #|│       │      │
+          #|│       ▼      │
+          #|│ ┌──────────┐ │
+          #|│ │          │ │
+          #|│ │   API    ├─┼─────┐
+          #|│ │          │ │     │
+          #|│ └─────┬────┘ │     │
+          #|│       │      │     │
+          #|└───────┼──────┘     │
+          #|        │            │
+          #|┌───────┼────────────┼─────┐
+          #|│       │ Backend    │     │
+          #|│       │            │     │
+          #|│       ▼            ▼     │
+          #|│ ┌──────────┐   ┌───────┐ │
+          #|│ │          │   │       │ │
+          #|│ │ Database │   │ Cache │ │
+          #|│ │          │   │       │ │
+          #|│ └──────────┘   └───────┘ │
+          #|│                          │
+          #|└──────────────────────────┘
+        ),
       ),
       expected_svg_fragments: ["<svg", "</svg>", "<defs>"],
     },
@@ -1227,10 +2761,58 @@ pub fn corpus_cases() -> Array[CorpusCase] {
       expected_node_count: Some(1),
       expected_edge_count: Some(0),
       expected_ascii: Some(
-        "+---------------+\n|    level1     |\n|               |\n|               |\n| +-----------+ |\n| |  level2   | |\n| |           | |\n| |           | |\n| | +-------+ | |\n| | |level3 | | |\n| | |       | | |\n| | |       | | |\n| | | +---+ | | |\n| | | |   | | | |\n| | | | A | | | |\n| | | |   | | | |\n| | | +---+ | | |\n| | |       | | |\n| | +-------+ | |\n| |           | |\n| +-----------+ |\n|               |\n+---------------+",
+        (
+          #|+---------------+
+          #||    level1     |
+          #||               |
+          #||               |
+          #|| +-----------+ |
+          #|| |  level2   | |
+          #|| |           | |
+          #|| |           | |
+          #|| | +-------+ | |
+          #|| | |level3 | | |
+          #|| | |       | | |
+          #|| | |       | | |
+          #|| | | +---+ | | |
+          #|| | | |   | | | |
+          #|| | | | A | | | |
+          #|| | | |   | | | |
+          #|| | | +---+ | | |
+          #|| | |       | | |
+          #|| | +-------+ | |
+          #|| |           | |
+          #|| +-----------+ |
+          #||               |
+          #|+---------------+
+        ),
       ),
       expected_unicode: Some(
-        "┌───────────────┐\n│    level1     │\n│               │\n│               │\n│ ┌───────────┐ │\n│ │  level2   │ │\n│ │           │ │\n│ │           │ │\n│ │ ┌───────┐ │ │\n│ │ │level3 │ │ │\n│ │ │       │ │ │\n│ │ │       │ │ │\n│ │ │ ┌───┐ │ │ │\n│ │ │ │   │ │ │ │\n│ │ │ │ A │ │ │ │\n│ │ │ │   │ │ │ │\n│ │ │ └───┘ │ │ │\n│ │ │       │ │ │\n│ │ └───────┘ │ │\n│ │           │ │\n│ └───────────┘ │\n│               │\n└───────────────┘",
+        (
+          #|┌───────────────┐
+          #|│    level1     │
+          #|│               │
+          #|│               │
+          #|│ ┌───────────┐ │
+          #|│ │  level2   │ │
+          #|│ │           │ │
+          #|│ │           │ │
+          #|│ │ ┌───────┐ │ │
+          #|│ │ │level3 │ │ │
+          #|│ │ │       │ │ │
+          #|│ │ │       │ │ │
+          #|│ │ │ ┌───┐ │ │ │
+          #|│ │ │ │   │ │ │ │
+          #|│ │ │ │ A │ │ │ │
+          #|│ │ │ │   │ │ │ │
+          #|│ │ │ └───┘ │ │ │
+          #|│ │ │       │ │ │
+          #|│ │ └───────┘ │ │
+          #|│ │           │ │
+          #|│ └───────────┘ │
+          #|│               │
+          #|└───────────────┘
+        ),
       ),
       expected_svg_fragments: ["<svg", "</svg>", "<defs>"],
     },
@@ -1259,10 +2841,34 @@ pub fn corpus_cases() -> Array[CorpusCase] {
       expected_node_count: Some(3),
       expected_edge_count: Some(2),
       expected_ascii: Some(
-        "+--------+ +---------+ +--------+\n|Frontend| | Backend | |Database|\n|        | |         | |        |\n|        | |         | |        |\n| +----+ | | +-----+ | | +----+ |\n| |    | | | |     | | | |    | |\n| | UI |---->| API |---->| DB | |\n| |    | | | |     | | | |    | |\n| +----+ | | +-----+ | | +----+ |\n|        | |         | |        |\n+--------+ +---------+ +--------+",
+        (
+          #|+--------+ +---------+ +--------+
+          #||Frontend| | Backend | |Database|
+          #||        | |         | |        |
+          #||        | |         | |        |
+          #|| +----+ | | +-----+ | | +----+ |
+          #|| |    | | | |     | | | |    | |
+          #|| | UI |---->| API |---->| DB | |
+          #|| |    | | | |     | | | |    | |
+          #|| +----+ | | +-----+ | | +----+ |
+          #||        | |         | |        |
+          #|+--------+ +---------+ +--------+
+        ),
       ),
       expected_unicode: Some(
-        "┌────────┐ ┌─────────┐ ┌────────┐\n│Frontend│ │ Backend │ │Database│\n│        │ │         │ │        │\n│        │ │         │ │        │\n│ ┌────┐ │ │ ┌─────┐ │ │ ┌────┐ │\n│ │    │ │ │ │     │ │ │ │    │ │\n│ │ UI ├─┼─┼►│ API ├─┼─┼►│ DB │ │\n│ │    │ │ │ │     │ │ │ │    │ │\n│ └────┘ │ │ └─────┘ │ │ └────┘ │\n│        │ │         │ │        │\n└────────┘ └─────────┘ └────────┘",
+        (
+          #|┌────────┐ ┌─────────┐ ┌────────┐
+          #|│Frontend│ │ Backend │ │Database│
+          #|│        │ │         │ │        │
+          #|│        │ │         │ │        │
+          #|│ ┌────┐ │ │ ┌─────┐ │ │ ┌────┐ │
+          #|│ │    │ │ │ │     │ │ │ │    │ │
+          #|│ │ UI ├─┼─┼►│ API ├─┼─┼►│ DB │ │
+          #|│ │    │ │ │ │     │ │ │ │    │ │
+          #|│ └────┘ │ │ └─────┘ │ │ └────┘ │
+          #|│        │ │         │ │        │
+          #|└────────┘ └─────────┘ └────────┘
+        ),
       ),
       expected_svg_fragments: ["<svg", "</svg>", "<defs>"],
     },
@@ -1287,10 +2893,34 @@ pub fn corpus_cases() -> Array[CorpusCase] {
       expected_node_count: Some(2),
       expected_edge_count: Some(1),
       expected_ascii: Some(
-        "+-------+ +-------+\n|  one  | |  two  |\n|       | |       |\n|       | |       |\n| +---+ | | +---+ |\n| |   | | | |   | |\n| | A |---->| B | |\n| |   | | | |   | |\n| +---+ | | +---+ |\n|       | |       |\n+-------+ +-------+",
+        (
+          #|+-------+ +-------+
+          #||  one  | |  two  |
+          #||       | |       |
+          #||       | |       |
+          #|| +---+ | | +---+ |
+          #|| |   | | | |   | |
+          #|| | A |---->| B | |
+          #|| |   | | | |   | |
+          #|| +---+ | | +---+ |
+          #||       | |       |
+          #|+-------+ +-------+
+        ),
       ),
       expected_unicode: Some(
-        "┌───────┐ ┌───────┐\n│  one  │ │  two  │\n│       │ │       │\n│       │ │       │\n│ ┌───┐ │ │ ┌───┐ │\n│ │   │ │ │ │   │ │\n│ │ A ├─┼─┼►│ B │ │\n│ │   │ │ │ │   │ │\n│ └───┘ │ │ └───┘ │\n│       │ │       │\n└───────┘ └───────┘",
+        (
+          #|┌───────┐ ┌───────┐
+          #|│  one  │ │  two  │
+          #|│       │ │       │
+          #|│       │ │       │
+          #|│ ┌───┐ │ │ ┌───┐ │
+          #|│ │   │ │ │ │   │ │
+          #|│ │ A ├─┼─┼►│ B │ │
+          #|│ │   │ │ │ │   │ │
+          #|│ └───┘ │ │ └───┘ │
+          #|│       │ │       │
+          #|└───────┘ └───────┘
+        ),
       ),
       expected_svg_fragments: ["<svg", "</svg>", "<defs>"],
     },
@@ -1315,10 +2945,34 @@ pub fn corpus_cases() -> Array[CorpusCase] {
       expected_node_count: Some(4),
       expected_edge_count: Some(3),
       expected_ascii: Some(
-        "+-------------------+  +----------------------+\n|        one        |  |         two          |\n|                   |  |                      |\n|                   |  |                      |\n| +---+       +---+ |  | +---+          +---+ |\n| |   |       |   | |  | |   |          |   | |\n| | A |-sends>| B |data->| C |receives->| D | |\n| |   |       |   | |  | |   |          |   | |\n| +---+       +---+ |  | +---+          +---+ |\n|                   |  |                      |\n+-------------------+  +----------------------+",
+        (
+          #|+-------------------+  +----------------------+
+          #||        one        |  |         two          |
+          #||                   |  |                      |
+          #||                   |  |                      |
+          #|| +---+       +---+ |  | +---+          +---+ |
+          #|| |   |       |   | |  | |   |          |   | |
+          #|| | A |-sends>| B |data->| C |receives->| D | |
+          #|| |   |       |   | |  | |   |          |   | |
+          #|| +---+       +---+ |  | +---+          +---+ |
+          #||                   |  |                      |
+          #|+-------------------+  +----------------------+
+        ),
       ),
       expected_unicode: Some(
-        "┌───────────────────┐  ┌──────────────────────┐\n│        one        │  │         two          │\n│                   │  │                      │\n│                   │  │                      │\n│ ┌───┐       ┌───┐ │  │ ┌───┐          ┌───┐ │\n│ │   │       │   │ │  │ │   │          │   │ │\n│ │ A ├─sends►│ B ├data┼►│ C ├receives─►│ D │ │\n│ │   │       │   │ │  │ │   │          │   │ │\n│ └───┘       └───┘ │  │ └───┘          └───┘ │\n│                   │  │                      │\n└───────────────────┘  └──────────────────────┘",
+        (
+          #|┌───────────────────┐  ┌──────────────────────┐
+          #|│        one        │  │         two          │
+          #|│                   │  │                      │
+          #|│                   │  │                      │
+          #|│ ┌───┐       ┌───┐ │  │ ┌───┐          ┌───┐ │
+          #|│ │   │       │   │ │  │ │   │          │   │ │
+          #|│ │ A ├─sends►│ B ├data┼►│ C ├receives─►│ D │ │
+          #|│ │   │       │   │ │  │ │   │          │   │ │
+          #|│ └───┘       └───┘ │  │ └───┘          └───┘ │
+          #|│                   │  │                      │
+          #|└───────────────────┘  └──────────────────────┘
+        ),
       ),
       expected_svg_fragments: ["<svg", "</svg>", "<defs>"],
     },
@@ -1338,10 +2992,22 @@ pub fn corpus_cases() -> Array[CorpusCase] {
       expected_node_count: Some(3),
       expected_edge_count: Some(2),
       expected_ascii: Some(
-        "+---+     +---+     +---+\n|   |     |   |     |   |\n| A |---->| B |---->| C |\n|   |     |   |     |   |\n+---+     +---+     +---+",
+        (
+          #|+---+     +---+     +---+
+          #||   |     |   |     |   |
+          #|| A |---->| B |---->| C |
+          #||   |     |   |     |   |
+          #|+---+     +---+     +---+
+        ),
       ),
       expected_unicode: Some(
-        "┌───┐     ┌───┐     ┌───┐\n│   │     │   │     │   │\n│ A ├────►│ B ├────►│ C │\n│   │     │   │     │   │\n└───┘     └───┘     └───┘",
+        (
+          #|┌───┐     ┌───┐     ┌───┐
+          #|│   │     │   │     │   │
+          #|│ A ├────►│ B ├────►│ C │
+          #|│   │     │   │     │   │
+          #|└───┘     └───┘     └───┘
+        ),
       ),
       expected_svg_fragments: ["<svg", "</svg>", "<defs>"],
     },
@@ -1360,10 +3026,22 @@ pub fn corpus_cases() -> Array[CorpusCase] {
       expected_node_count: Some(3),
       expected_edge_count: Some(2),
       expected_ascii: Some(
-        "+---+     +---+     +---+\n|   |     |   |     |   |\n| A |---->| B |---->| C |\n|   |     |   |     |   |\n+---+     +---+     +---+",
+        (
+          #|+---+     +---+     +---+
+          #||   |     |   |     |   |
+          #|| A |---->| B |---->| C |
+          #||   |     |   |     |   |
+          #|+---+     +---+     +---+
+        ),
       ),
       expected_unicode: Some(
-        "┌───┐     ┌───┐     ┌───┐\n│   │     │   │     │   │\n│ A ├────►│ B ├────►│ C │\n│   │     │   │     │   │\n└───┘     └───┘     └───┘",
+        (
+          #|┌───┐     ┌───┐     ┌───┐
+          #|│   │     │   │     │   │
+          #|│ A ├────►│ B ├────►│ C │
+          #|│   │     │   │     │   │
+          #|└───┘     └───┘     └───┘
+        ),
       ),
       expected_svg_fragments: ["<svg", "</svg>", "<defs>"],
     },
@@ -1383,10 +3061,42 @@ pub fn corpus_cases() -> Array[CorpusCase] {
       expected_node_count: Some(3),
       expected_edge_count: Some(2),
       expected_ascii: Some(
-        "+---+     +---+\n|   |     |   |\n| A |---->| B |\n|   |     |   |\n+---+     +---+\n  |\n  |\n  |\n  |\n  |\n  |       +---+\n  |       |   |\n  +------>| C |\n          |   |\n          +---+",
+        (
+          #|+---+     +---+
+          #||   |     |   |
+          #|| A |---->| B |
+          #||   |     |   |
+          #|+---+     +---+
+          #|  |
+          #|  |
+          #|  |
+          #|  |
+          #|  |
+          #|  |       +---+
+          #|  |       |   |
+          #|  +------>| C |
+          #|          |   |
+          #|          +---+
+        ),
       ),
       expected_unicode: Some(
-        "┌───┐     ┌───┐\n│   │     │   │\n│ A ├────►│ B │\n│   │     │   │\n└─┬─┘     └───┘\n  │\n  │\n  │\n  │\n  │\n  │       ┌───┐\n  │       │   │\n  └──────►│ C │\n          │   │\n          └───┘",
+        (
+          #|┌───┐     ┌───┐
+          #|│   │     │   │
+          #|│ A ├────►│ B │
+          #|│   │     │   │
+          #|└─┬─┘     └───┘
+          #|  │
+          #|  │
+          #|  │
+          #|  │
+          #|  │
+          #|  │       ┌───┐
+          #|  │       │   │
+          #|  └──────►│ C │
+          #|          │   │
+          #|          └───┘
+        ),
       ),
       expected_svg_fragments: ["<svg", "</svg>", "<defs>"],
     },
@@ -1406,10 +3116,42 @@ pub fn corpus_cases() -> Array[CorpusCase] {
       expected_node_count: Some(3),
       expected_edge_count: Some(2),
       expected_ascii: Some(
-        "+-----+     +---------+\n|     |     |         |\n| ABC |---->|  BCDEFG |\n|     |     |         |\n+-----+     +---------+\n   |\n   |\n   |\n   |\n   |\n   |        +---------+\n   |        |         |\n   +------->| CDEFGHI |\n            |         |\n            +---------+",
+        (
+          #|+-----+     +---------+
+          #||     |     |         |
+          #|| ABC |---->|  BCDEFG |
+          #||     |     |         |
+          #|+-----+     +---------+
+          #|   |
+          #|   |
+          #|   |
+          #|   |
+          #|   |
+          #|   |        +---------+
+          #|   |        |         |
+          #|   +------->| CDEFGHI |
+          #|            |         |
+          #|            +---------+
+        ),
       ),
       expected_unicode: Some(
-        "┌─────┐     ┌─────────┐\n│     │     │         │\n│ ABC ├────►│  BCDEFG │\n│     │     │         │\n└──┬──┘     └─────────┘\n   │\n   │\n   │\n   │\n   │\n   │        ┌─────────┐\n   │        │         │\n   └───────►│ CDEFGHI │\n            │         │\n            └─────────┘",
+        (
+          #|┌─────┐     ┌─────────┐
+          #|│     │     │         │
+          #|│ ABC ├────►│  BCDEFG │
+          #|│     │     │         │
+          #|└──┬──┘     └─────────┘
+          #|   │
+          #|   │
+          #|   │
+          #|   │
+          #|   │
+          #|   │        ┌─────────┐
+          #|   │        │         │
+          #|   └───────►│ CDEFGHI │
+          #|            │         │
+          #|            └─────────┘
+        ),
       ),
       expected_svg_fragments: ["<svg", "</svg>", "<defs>"],
     },
@@ -1428,10 +3170,22 @@ pub fn corpus_cases() -> Array[CorpusCase] {
       expected_node_count: Some(2),
       expected_edge_count: Some(1),
       expected_ascii: Some(
-        "+---+     +---+\n|   |     |   |\n| A |---->| B |\n|   |     |   |\n+---+     +---+",
+        (
+          #|+---+     +---+
+          #||   |     |   |
+          #|| A |---->| B |
+          #||   |     |   |
+          #|+---+     +---+
+        ),
       ),
       expected_unicode: Some(
-        "┌───┐     ┌───┐\n│   │     │   │\n│ A ├────►│ B │\n│   │     │   │\n└───┘     └───┘",
+        (
+          #|┌───┐     ┌───┐
+          #|│   │     │   │
+          #|│ A ├────►│ B │
+          #|│   │     │   │
+          #|└───┘     └───┘
+        ),
       ),
       expected_svg_fragments: ["<svg", "</svg>", "<defs>"],
     },
@@ -1450,10 +3204,22 @@ pub fn corpus_cases() -> Array[CorpusCase] {
       expected_node_count: Some(2),
       expected_edge_count: Some(1),
       expected_ascii: Some(
-        "+-------------+     +-------------+\n|             |     |             |\n| LongerName1 |---->| LongerName2 |\n|             |     |             |\n+-------------+     +-------------+",
+        (
+          #|+-------------+     +-------------+
+          #||             |     |             |
+          #|| LongerName1 |---->| LongerName2 |
+          #||             |     |             |
+          #|+-------------+     +-------------+
+        ),
       ),
       expected_unicode: Some(
-        "┌─────────────┐     ┌─────────────┐\n│             │     │             │\n│ LongerName1 ├────►│ LongerName2 │\n│             │     │             │\n└─────────────┘     └─────────────┘",
+        (
+          #|┌─────────────┐     ┌─────────────┐
+          #|│             │     │             │
+          #|│ LongerName1 ├────►│ LongerName2 │
+          #|│             │     │             │
+          #|└─────────────┘     └─────────────┘
+        ),
       ),
       expected_svg_fragments: ["<svg", "</svg>", "<defs>"],
     },
@@ -1473,10 +3239,42 @@ pub fn corpus_cases() -> Array[CorpusCase] {
       expected_node_count: Some(4),
       expected_edge_count: Some(2),
       expected_ascii: Some(
-        "+---+     +---+\n|   |     |   |\n| A |---->| B |\n|   |     |   |\n+---+     +---+\n\n\n\n\n\n+---+     +---+\n|   |     |   |\n| C |---->| D |\n|   |     |   |\n+---+     +---+",
+        (
+          #|+---+     +---+
+          #||   |     |   |
+          #|| A |---->| B |
+          #||   |     |   |
+          #|+---+     +---+
+          #|
+          #|
+          #|
+          #|
+          #|
+          #|+---+     +---+
+          #||   |     |   |
+          #|| C |---->| D |
+          #||   |     |   |
+          #|+---+     +---+
+        ),
       ),
       expected_unicode: Some(
-        "┌───┐     ┌───┐\n│   │     │   │\n│ A ├────►│ B │\n│   │     │   │\n└───┘     └───┘\n\n\n\n\n\n┌───┐     ┌───┐\n│   │     │   │\n│ C ├────►│ D │\n│   │     │   │\n└───┘     └───┘",
+        (
+          #|┌───┐     ┌───┐
+          #|│   │     │   │
+          #|│ A ├────►│ B │
+          #|│   │     │   │
+          #|└───┘     └───┘
+          #|
+          #|
+          #|
+          #|
+          #|
+          #|┌───┐     ┌───┐
+          #|│   │     │   │
+          #|│ C ├────►│ D │
+          #|│   │     │   │
+          #|└───┘     └───┘
+        ),
       ),
       expected_svg_fragments: ["<svg", "</svg>", "<defs>"],
     },
@@ -1496,10 +3294,42 @@ pub fn corpus_cases() -> Array[CorpusCase] {
       expected_node_count: Some(4),
       expected_edge_count: Some(2),
       expected_ascii: Some(
-        "+--------+     +--------+\n|        |     |        |\n|  ABC   |---->| BCDEFG |\n|        |     |        |\n+--------+     +--------+\n\n\n\n\n\n+--------+     +--------+\n|        |     |        |\n| CDEFGH |---->|  DEF   |\n|        |     |        |\n+--------+     +--------+",
+        (
+          #|+--------+     +--------+
+          #||        |     |        |
+          #||  ABC   |---->| BCDEFG |
+          #||        |     |        |
+          #|+--------+     +--------+
+          #|
+          #|
+          #|
+          #|
+          #|
+          #|+--------+     +--------+
+          #||        |     |        |
+          #|| CDEFGH |---->|  DEF   |
+          #||        |     |        |
+          #|+--------+     +--------+
+        ),
       ),
       expected_unicode: Some(
-        "┌────────┐     ┌────────┐\n│        │     │        │\n│  ABC   ├────►│ BCDEFG │\n│        │     │        │\n└────────┘     └────────┘\n\n\n\n\n\n┌────────┐     ┌────────┐\n│        │     │        │\n│ CDEFGH ├────►│  DEF   │\n│        │     │        │\n└────────┘     └────────┘",
+        (
+          #|┌────────┐     ┌────────┐
+          #|│        │     │        │
+          #|│  ABC   ├────►│ BCDEFG │
+          #|│        │     │        │
+          #|└────────┘     └────────┘
+          #|
+          #|
+          #|
+          #|
+          #|
+          #|┌────────┐     ┌────────┐
+          #|│        │     │        │
+          #|│ CDEFGH ├────►│  DEF   │
+          #|│        │     │        │
+          #|└────────┘     └────────┘
+        ),
       ),
       expected_svg_fragments: ["<svg", "</svg>", "<defs>"],
     },
@@ -1519,10 +3349,42 @@ pub fn corpus_cases() -> Array[CorpusCase] {
       expected_node_count: Some(2),
       expected_edge_count: Some(0),
       expected_ascii: Some(
-        "+---+\n|   |\n| A |\n|   |\n+---+\n\n\n\n\n\n+---+\n|   |\n| B |\n|   |\n+---+",
+        (
+          #|+---+
+          #||   |
+          #|| A |
+          #||   |
+          #|+---+
+          #|
+          #|
+          #|
+          #|
+          #|
+          #|+---+
+          #||   |
+          #|| B |
+          #||   |
+          #|+---+
+        ),
       ),
       expected_unicode: Some(
-        "┌───┐\n│   │\n│ A │\n│   │\n└───┘\n\n\n\n\n\n┌───┐\n│   │\n│ B │\n│   │\n└───┘",
+        (
+          #|┌───┐
+          #|│   │
+          #|│ A │
+          #|│   │
+          #|└───┘
+          #|
+          #|
+          #|
+          #|
+          #|
+          #|┌───┐
+          #|│   │
+          #|│ B │
+          #|│   │
+          #|└───┘
+        ),
       ),
       expected_svg_fragments: ["<svg", "</svg>", "<defs>"],
     },
