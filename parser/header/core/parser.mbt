@@ -1,14 +1,9 @@
 ///|
-fn trim_owned(s : String) -> String {
-  s.trim().to_string()
-}
-
-///|
 fn preprocess_lines(text : String) -> Array[String] {
   let normalized = text.replace_all(old=";", new="\n")
   let lines : Array[String] = []
   for raw in normalized.split("\n") {
-    let line = trim_owned(raw.to_string())
+    let line = @parser_common_engine_core.trim_owned(raw.to_string())
     if line == "" || line.has_prefix("%%") {
       continue
     }
