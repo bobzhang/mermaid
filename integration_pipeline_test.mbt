@@ -617,7 +617,10 @@ test "SVG renders asymmetric flag shape" (it : @test.Test) {
 ///|
 test "SVG renders trapezoid variants" (it : @test.Test) {
   let svg = try! @beautiful_mermaid.render_mermaid(
-    "graph TD\nA[/Wider Bottom\\\\] --> B[\\\\Wider Top/]",
+    (
+      #|graph TD
+      #|A[/Wider Bottom\\] --> B[\\Wider Top/]
+    ),
   )
   snapshot_svg(it, "integration_flowchart_trapezoid_variants.svg", svg)
   assert_true(svg.contains("Wider Bottom"))
@@ -2390,7 +2393,12 @@ test "ER identifying and non-identifying edges render across text and SVG modes"
 
 ///|
 test "ER mixed cardinalities render across text and SVG modes" (it : @test.Test) {
-  let input = "erDiagram\nA ||--|| B : one\nB ||--o{ C : many\nC |o--|{ D : optional\nD }|--o{ E : mixed"
+  let input =
+    #|erDiagram
+    #|A ||--|| B : one
+    #|B ||--o{ C : many
+    #|C |o--|{ D : optional
+    #|D }|--o{ E : mixed
 
   let ascii = try! @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: true,
@@ -2433,7 +2441,12 @@ test "ER mixed cardinalities render across text and SVG modes" (it : @test.Test)
 ///|
 test "Flowchart cycle edge label pills do not overlap" (it : @test.Test) {
   let svg = try! @beautiful_mermaid.render_mermaid(
-    "graph LR\nA -->|forward| B\nB -->|back| A\nA -->|down| C",
+    (
+      #|graph LR
+      #|A -->|forward| B
+      #|B -->|back| A
+      #|A -->|down| C
+    ),
   )
   snapshot_svg(it, "integration_flowchart_cycle_labels.svg", svg)
 

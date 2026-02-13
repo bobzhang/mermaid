@@ -112,9 +112,43 @@ test "Coverage matrix exercises parser corpus paths" {
 ///|
 test "Coverage matrix parser malformed headers and bodies" {
   let invalid_inputs = [
-    "", "pie\nA : 1", "graph\nA --> B", "graph XX\nA --> B", "graph TD extra\nA --> B",
-    "flowchart XX\nA --> B", "stateDiagram-v2 extra\nA --> B", "sequenceDiagram extra\nA->>B: x",
-    "classDiagram extra\nA --> B", "erDiagram extra\nA ||--|| B : link",
+    "",
+    (
+      #|pie
+      #|A : 1
+    ),
+    (
+      #|graph
+      #|A --> B
+    ),
+    (
+      #|graph XX
+      #|A --> B
+    ),
+    (
+      #|graph TD extra
+      #|A --> B
+    ),
+    (
+      #|flowchart XX
+      #|A --> B
+    ),
+    (
+      #|stateDiagram-v2 extra
+      #|A --> B
+    ),
+    (
+      #|sequenceDiagram extra
+      #|A->>B: x
+    ),
+    (
+      #|classDiagram extra
+      #|A --> B
+    ),
+    (
+      #|erDiagram extra
+      #|A ||--|| B : link
+    ),
   ]
 
   for input in invalid_inputs {
