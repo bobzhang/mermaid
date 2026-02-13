@@ -64,7 +64,7 @@ fn cli_args_without_program() -> Array[String] {
 
 ///|
 fn available_theme_list() -> String {
-  "\{@beautiful_mermaid.built_in_theme_slugs_csv()}, default"
+  "\{@themes.built_in_theme_slugs_csv()}, default"
 }
 
 ///|
@@ -816,7 +816,7 @@ pub fn run() -> Unit {
 
   let rendered_svg = match theme_slug {
     Some(slug) =>
-      match @beautiful_mermaid.canonical_theme_slug(slug) {
+      match @themes.canonical_theme_slug(slug) {
         Some(canonical_slug) =>
           try? @beautiful_mermaid.render_mermaid_with_theme_name(
             input,

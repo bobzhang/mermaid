@@ -1,4 +1,4 @@
 import {
-  "bobzhang/beautiful_mermaid/layout" @layout,
+  "bobzhang/beautiful_mermaid/layout/engine/graph/core" @layout,
   "bobzhang/beautiful_mermaid/model" @model,
 }

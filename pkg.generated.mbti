@@ -9,27 +9,9 @@ import {
 // Values
 pub fn build_colors(@model.RenderOptions) -> @model.DiagramColors
 
-pub fn built_in_theme_colors() -> Map[String, @model.DiagramColors]
-
-pub fn built_in_theme_slugs() -> Array[String]
-
-pub fn built_in_theme_slugs_csv() -> String
-
-pub fn built_in_themes() -> Array[@core.ThemeName]
-
-pub fn canonical_theme_slug(String) -> String?
-
 pub fn default_colors() -> @model.DiagramColors
 
-pub fn from_shiki_theme(@core.ShikiTheme) -> @model.DiagramColors
-
 pub fn merge_options_with_colors(@model.RenderOptions, @model.DiagramColors) -> @model.RenderOptions
-
-pub fn normalize_theme_name(String) -> String
-
-pub fn parse_mermaid(String) -> @model.MermaidGraph raise @model.MermaidError
-
-pub fn parse_theme_name(String) -> @core.ThemeName?
 
 pub fn render_mermaid(String, options? : @model.RenderOptions) -> String raise @model.MermaidError
 
@@ -40,24 +22,6 @@ pub fn render_mermaid_with_colors(String, @model.DiagramColors, options? : @mode
 pub fn render_mermaid_with_theme(String, @core.ThemeName, options? : @model.RenderOptions) -> String raise @model.MermaidError
 
 pub fn render_mermaid_with_theme_name(String, String, options? : @model.RenderOptions) -> String raise @model.MermaidError
-
-pub fn shiki_dark_theme(Map[String, String]?, Array[@core.ShikiTokenColor]?) -> @core.ShikiTheme
-
-pub fn shiki_light_theme(Map[String, String]?, Array[@core.ShikiTokenColor]?) -> @core.ShikiTheme
-
-pub fn shiki_theme(String?, Map[String, String]?, Array[@core.ShikiTokenColor]?) -> @core.ShikiTheme
-
-pub fn shiki_token_color(String, String?) -> @core.ShikiTokenColor
-
-pub fn shiki_token_color_many(Array[String], String?) -> @core.ShikiTokenColor
-
-pub fn theme_by_name(String) -> @model.DiagramColors?
-
-pub fn theme_colors(@core.ThemeName) -> @model.DiagramColors
-
-pub fn theme_exists(String) -> Bool
-
-pub fn theme_slug(@core.ThemeName) -> String
 
 // Errors
 
@@ -119,12 +83,6 @@ pub using @model {type SequenceNote}
 pub using @model {type SequenceNotePosition}
 
 pub using @model {type SequenceParticipantKind}
-
-pub using @core {type ShikiTheme}
-
-pub using @core {type ShikiTokenColor}
-
-pub using @core {type ThemeName}
 
 // Traits
 

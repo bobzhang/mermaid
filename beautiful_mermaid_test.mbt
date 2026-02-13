@@ -46,7 +46,7 @@ test "default_colors matches DiagramColors default" {
 test "render_mermaid_with_colors applies theme colors by default" (
   it : @test.Test,
 ) {
-  let colors = match @beautiful_mermaid.theme_by_name("tokyo-night") {
+  let colors = match @themes.theme_by_name("tokyo-night") {
     Some(found) => found
     None => fail("missing tokyo-night theme")
   }
@@ -63,7 +63,7 @@ test "render_mermaid_with_colors applies theme colors by default" (
 
 ///|
 test "merge_options_with_colors fills missing fields from theme colors" {
-  let colors = match @beautiful_mermaid.theme_by_name("dracula") {
+  let colors = match @themes.theme_by_name("dracula") {
     Some(found) => found
     None => fail("missing dracula theme")
   }
@@ -80,7 +80,7 @@ test "merge_options_with_colors fills missing fields from theme colors" {
 
 ///|
 test "merge_options_with_colors preserves explicit overrides" {
-  let colors = match @beautiful_mermaid.theme_by_name("dracula") {
+  let colors = match @themes.theme_by_name("dracula") {
     Some(found) => found
     None => fail("missing dracula theme")
   }
@@ -113,7 +113,7 @@ test "merge_options_with_colors preserves explicit overrides" {
 test "render_mermaid_with_colors keeps explicit option overrides" (
   it : @test.Test,
 ) {
-  let colors = match @beautiful_mermaid.theme_by_name("tokyo-night") {
+  let colors = match @themes.theme_by_name("tokyo-night") {
     Some(found) => found
     None => fail("missing tokyo-night theme")
   }
@@ -183,7 +183,7 @@ test "render_mermaid_with_theme_name accepts default alias" (it : @test.Test) {
 
 ///|
 test "render_mermaid_with_theme applies enum theme directly" (it : @test.Test) {
-  let theme = match @beautiful_mermaid.parse_theme_name("tokyo-night") {
+  let theme = match @themes.parse_theme_name("tokyo-night") {
     Some(found) => found
     None => fail("failed to parse tokyo-night theme")
   }

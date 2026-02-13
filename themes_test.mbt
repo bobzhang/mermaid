@@ -11,7 +11,7 @@ fn github_newline_dark() -> String {
 
 ///|
 test "Theme presets include tokyo-night enrichment colors" {
-  let colors = match theme_by_name("tokyo-night") {
+  let colors = match @themes.theme_by_name("tokyo-night") {
     Some(found) => found
     None => fail("missing tokyo-night preset")
   }
@@ -24,7 +24,7 @@ test "Theme presets include tokyo-night enrichment colors" {
 
 ///|
 test "Theme presets include zinc-dark mono defaults" {
-  let colors = match theme_by_name("zinc-dark") {
+  let colors = match @themes.theme_by_name("zinc-dark") {
     Some(found) => found
     None => fail("missing zinc-dark preset")
   }
@@ -37,7 +37,7 @@ test "Theme presets include zinc-dark mono defaults" {
 
 ///|
 test "Theme presets include zinc-light default colors" {
-  let colors = match theme_by_name("zinc-light") {
+  let colors = match @themes.theme_by_name("zinc-light") {
     Some(found) => found
     None => fail("missing zinc-light preset")
   }
@@ -48,10 +48,10 @@ test "Theme presets include zinc-light default colors" {
 
 ///|
 test "Theme slug and parser round-trip" {
-  for theme in built_in_themes() {
-    let slug = theme_slug(theme)
-    match parse_theme_name(slug) {
-      Some(parsed) => assert_eq(theme_slug(parsed), slug)
+  for theme in @themes.built_in_themes() {
+    let slug = @themes.theme_slug(theme)
+    match @themes.parse_theme_name(slug) {
+      Some(parsed) => assert_eq(@themes.theme_slug(parsed), slug)
       None => fail("failed to parse theme slug: \{slug}")
     }
   }
@@ -59,108 +59,114 @@ test "Theme slug and parser round-trip" {
 
 ///|
 test "Theme parser is case-insensitive and unknown-safe" {
-  assert_eq(normalize_theme_name("  TOKYO___NIGHT  "), "tokyo-night")
-  assert_eq(normalize_theme_name(github_newline_dark()), "github-dark")
-  assert_eq(normalize_theme_name("DEFAULT"), "default")
-  assert_eq(normalize_theme_name("__github_dark__"), "github-dark")
-  assert_eq(normalize_theme_name("---tokyo-night---"), "tokyo-night")
+  assert_eq(@themes.normalize_theme_name("  TOKYO___NIGHT  "), "tokyo-night")
+  assert_eq(@themes.normalize_theme_name(github_newline_dark()), "github-dark")
+  assert_eq(@themes.normalize_theme_name("DEFAULT"), "default")
+  assert_eq(@themes.normalize_theme_name("__github_dark__"), "github-dark")
+  assert_eq(@themes.normalize_theme_name("---tokyo-night---"), "tokyo-night")
 
-  match parse_theme_name("TOKYO-NIGHT") {
-    Some(parsed) => assert_eq(theme_slug(parsed), "tokyo-night")
+  match @themes.parse_theme_name("TOKYO-NIGHT") {
+    Some(parsed) => assert_eq(@themes.theme_slug(parsed), "tokyo-night")
     None => fail("TOKYO-NIGHT should parse")
   }
-  match parse_theme_name("__github_dark__") {
-    Some(parsed) => assert_eq(theme_slug(parsed), "github-dark")
+  match @themes.parse_theme_name("__github_dark__") {
+    Some(parsed) => assert_eq(@themes.theme_slug(parsed), "github-dark")
     None => fail("__github_dark__ should parse")
   }
-  match parse_theme_name("DEFAULT") {
-    Some(parsed) => assert_eq(theme_slug(parsed), "zinc-light")
+  match @themes.parse_theme_name("DEFAULT") {
+    Some(parsed) => assert_eq(@themes.theme_slug(parsed), "zinc-light")
     None => fail("DEFAULT should parse")
   }
-  match parse_theme_name("TOKYO NIGHT") {
-    Some(parsed) => assert_eq(theme_slug(parsed), "tokyo-night")
+  match @themes.parse_theme_name("TOKYO NIGHT") {
+    Some(parsed) => assert_eq(@themes.theme_slug(parsed), "tokyo-night")
     None => fail("TOKYO NIGHT should parse")
   }
-  match parse_theme_name("github_dark") {
-    Some(parsed) => assert_eq(theme_slug(parsed), "github-dark")
+  match @themes.parse_theme_name("github_dark") {
+    Some(parsed) => assert_eq(@themes.theme_slug(parsed), "github-dark")
     None => fail("github_dark should parse")
   }
-  match parse_theme_name("TOKYO   NIGHT") {
-    Some(parsed) => assert_eq(theme_slug(parsed), "tokyo-night")
+  match @themes.parse_theme_name("TOKYO   NIGHT") {
+    Some(parsed) => assert_eq(@themes.theme_slug(parsed), "tokyo-night")
     None => fail("TOKYO   NIGHT should parse")
   }
-  match parse_theme_name("github__dark") {
-    Some(parsed) => assert_eq(theme_slug(parsed), "github-dark")
+  match @themes.parse_theme_name("github__dark") {
+    Some(parsed) => assert_eq(@themes.theme_slug(parsed), "github-dark")
     None => fail("github__dark should parse")
   }
-  match parse_theme_name("tokyo\t night") {
-    Some(parsed) => assert_eq(theme_slug(parsed), "tokyo-night")
+  match @themes.parse_theme_name("tokyo\t night") {
+    Some(parsed) => assert_eq(@themes.theme_slug(parsed), "tokyo-night")
     None => fail("tokyo\\t night should parse")
   }
-  match parse_theme_name(github_newline_dark()) {
-    Some(parsed) => assert_eq(theme_slug(parsed), "github-dark")
+  match @themes.parse_theme_name(github_newline_dark()) {
+    Some(parsed) => assert_eq(@themes.theme_slug(parsed), "github-dark")
     None => fail("github\\n dark should parse")
   }
-  assert_eq(parse_theme_name("not-a-theme"), None)
+  assert_eq(@themes.parse_theme_name("not-a-theme"), None)
 }
 
 ///|
 test "Theme lookup by name returns colors or none" {
-  let github_dark = match theme_by_name("github-dark") {
+  let github_dark = match @themes.theme_by_name("github-dark") {
     Some(found) => found
     None => fail("missing github-dark preset")
   }
   assert_eq(github_dark.bg, "#0d1117")
   assert_eq(github_dark.fg, "#e6edf3")
   assert_eq(github_dark.accent, Some("#4493f8"))
-  assert_eq(theme_by_name("github-neon"), None)
+  assert_eq(@themes.theme_by_name("github-neon"), None)
 }
 
 ///|
 test "theme_exists reflects whether a theme name is supported" {
-  assert_eq(theme_exists("tokyo-night"), true)
-  assert_eq(theme_exists("TOKYO NIGHT"), true)
-  assert_eq(theme_exists("default"), true)
-  assert_eq(theme_exists("tokyo\t night"), true)
-  assert_eq(theme_exists(github_newline_dark()), true)
-  assert_eq(theme_exists("github-neon"), false)
+  assert_eq(@themes.theme_exists("tokyo-night"), true)
+  assert_eq(@themes.theme_exists("TOKYO NIGHT"), true)
+  assert_eq(@themes.theme_exists("default"), true)
+  assert_eq(@themes.theme_exists("tokyo\t night"), true)
+  assert_eq(@themes.theme_exists(github_newline_dark()), true)
+  assert_eq(@themes.theme_exists("github-neon"), false)
 }
 
 ///|
 test "canonical_theme_slug returns normalized slug or none" {
-  assert_eq(canonical_theme_slug("TOKYO   NIGHT"), Some("tokyo-night"))
-  assert_eq(canonical_theme_slug("DEFAULT"), Some("zinc-light"))
-  assert_eq(canonical_theme_slug("__github_dark__"), Some("github-dark"))
-  assert_eq(canonical_theme_slug("github__dark"), Some("github-dark"))
-  assert_eq(canonical_theme_slug("tokyo\t night"), Some("tokyo-night"))
-  assert_eq(canonical_theme_slug(github_newline_dark()), Some("github-dark"))
-  assert_eq(canonical_theme_slug("one-dark"), Some("one-dark"))
-  assert_eq(canonical_theme_slug("github-neon"), None)
+  assert_eq(@themes.canonical_theme_slug("TOKYO   NIGHT"), Some("tokyo-night"))
+  assert_eq(@themes.canonical_theme_slug("DEFAULT"), Some("zinc-light"))
+  assert_eq(
+    @themes.canonical_theme_slug("__github_dark__"),
+    Some("github-dark"),
+  )
+  assert_eq(@themes.canonical_theme_slug("github__dark"), Some("github-dark"))
+  assert_eq(@themes.canonical_theme_slug("tokyo\t night"), Some("tokyo-night"))
+  assert_eq(
+    @themes.canonical_theme_slug(github_newline_dark()),
+    Some("github-dark"),
+  )
+  assert_eq(@themes.canonical_theme_slug("one-dark"), Some("one-dark"))
+  assert_eq(@themes.canonical_theme_slug("github-neon"), None)
 }
 
 ///|
 test "Built-in theme slugs are exported for CLI and config UX" {
-  let slugs = built_in_theme_slugs()
+  let slugs = @themes.built_in_theme_slugs()
   assert_true(slugs.contains("zinc-light"))
   assert_true(slugs.contains("tokyo-night"))
   assert_true(slugs.contains("github-dark"))
   assert_true(slugs.contains("one-dark"))
-  assert_eq(slugs.length(), built_in_themes().length())
+  assert_eq(slugs.length(), @themes.built_in_themes().length())
   let seen : Map[String, Bool] = {}
   for slug in slugs {
     assert_true(!seen.contains(slug))
     seen[slug] = true
   }
-  let csv = built_in_theme_slugs_csv()
+  let csv = @themes.built_in_theme_slugs_csv()
   assert_true(csv.contains("tokyo-night"))
   assert_true(csv.contains("github-dark"))
 }
 
 ///|
 test "Built-in theme color map is exported by slug" {
-  let themes = built_in_theme_colors()
-  for theme in built_in_themes() {
-    assert_true(themes.get(theme_slug(theme)) is Some(_))
+  let themes = @themes.built_in_theme_colors()
+  for theme in @themes.built_in_themes() {
+    assert_true(themes.get(@themes.theme_slug(theme)) is Some(_))
   }
 
   let tokyo_night = match themes.get("tokyo-night") {
@@ -173,7 +179,7 @@ test "Built-in theme color map is exported by slug" {
 
 ///|
 test "from_shiki_theme extracts bg and fg from editor colors" {
-  let theme = ShikiTheme::{
+  let theme = @themes.ShikiTheme::{
     theme_type: Some("dark"),
     colors: Some({
       "editor.background": "#1a1b26",
@@ -181,29 +187,32 @@ test "from_shiki_theme extracts bg and fg from editor colors" {
     }),
     token_colors: None,
   }
-  let colors = from_shiki_theme(theme)
+  let colors = @themes.from_shiki_theme(theme)
   assert_eq(colors.bg, "#1a1b26")
   assert_eq(colors.fg, "#a9b1d6")
 }
 
 ///|
 test "shiki_token_color builds a single-scope token entry" {
-  let token = shiki_token_color("comment", Some("#888888"))
+  let token = @themes.shiki_token_color("comment", Some("#888888"))
   assert_eq(token.scopes, ["comment"])
   assert_eq(token.foreground, Some("#888888"))
 }
 
 ///|
 test "shiki_token_color_many preserves multiple scopes" {
-  let token = shiki_token_color_many(["comment", "keyword"], Some("#aaaaaa"))
+  let token = @themes.shiki_token_color_many(
+    ["comment", "keyword"],
+    Some("#aaaaaa"),
+  )
   assert_eq(token.scopes, ["comment", "keyword"])
   assert_eq(token.foreground, Some("#aaaaaa"))
 }
 
 ///|
 test "shiki_theme constructor preserves provided fields" {
-  let token = shiki_token_color("comment", Some("#888888"))
-  let theme = shiki_theme(
+  let token = @themes.shiki_token_color("comment", Some("#888888"))
+  let theme = @themes.shiki_theme(
     Some("dark"),
     Some({ "editor.background": "#111111" }),
     Some([token]),
@@ -221,15 +230,15 @@ test "shiki_theme constructor preserves provided fields" {
 
 ///|
 test "shiki_dark_theme and shiki_light_theme set theme type" {
-  let dark = shiki_dark_theme(None, None)
-  let light = shiki_light_theme(None, None)
+  let dark = @themes.shiki_dark_theme(None, None)
+  let light = @themes.shiki_light_theme(None, None)
   assert_eq(dark.theme_type, Some("dark"))
   assert_eq(light.theme_type, Some("light"))
 }
 
 ///|
 test "from_shiki_theme falls back for missing editor colors" {
-  let dark = from_shiki_theme({
+  let dark = @themes.from_shiki_theme({
     theme_type: Some("dark"),
     colors: None,
     token_colors: None,
@@ -237,7 +246,7 @@ test "from_shiki_theme falls back for missing editor colors" {
   assert_eq(dark.bg, "#1e1e1e")
   assert_eq(dark.fg, "#d4d4d4")
 
-  let light = from_shiki_theme({
+  let light = @themes.from_shiki_theme({
     theme_type: Some("light"),
     colors: None,
     token_colors: None,
@@ -245,7 +254,7 @@ test "from_shiki_theme falls back for missing editor colors" {
   assert_eq(light.bg, "#ffffff")
   assert_eq(light.fg, "#333333")
 
-  let unspecified = from_shiki_theme({
+  let unspecified = @themes.from_shiki_theme({
     theme_type: None,
     colors: None,
     token_colors: None,
@@ -256,7 +265,7 @@ test "from_shiki_theme falls back for missing editor colors" {
 
 ///|
 test "from_shiki_theme treats theme_type case-insensitively" {
-  let dark = from_shiki_theme({
+  let dark = @themes.from_shiki_theme({
     theme_type: Some(" Dark "),
     colors: None,
     token_colors: None,
@@ -267,7 +276,7 @@ test "from_shiki_theme treats theme_type case-insensitively" {
 
 ///|
 test "from_shiki_theme maps token and editor colors to enrichment fields" {
-  let theme = ShikiTheme::{
+  let theme = @themes.ShikiTheme::{
     theme_type: Some("dark"),
     colors: Some({
       "editor.background": "#111111",
@@ -281,7 +290,7 @@ test "from_shiki_theme maps token and editor colors to enrichment fields" {
       { scopes: ["keyword"], foreground: Some("#ff00ff") },
     ]),
   }
-  let colors = from_shiki_theme(theme)
+  let colors = @themes.from_shiki_theme(theme)
   assert_eq(colors.line, Some("#666666"))
   assert_eq(colors.accent, Some("#ff00ff"))
   assert_eq(colors.muted, Some("#888888"))
@@ -291,7 +300,7 @@ test "from_shiki_theme maps token and editor colors to enrichment fields" {
 
 ///|
 test "from_shiki_theme prefers focusBorder and falls back muted to line" {
-  let theme = ShikiTheme::{
+  let theme = @themes.ShikiTheme::{
     theme_type: Some("dark"),
     colors: Some({
       "editor.background": "#111111",
@@ -301,14 +310,14 @@ test "from_shiki_theme prefers focusBorder and falls back muted to line" {
     }),
     token_colors: Some([{ scopes: ["keyword"], foreground: Some("#ff00ff") }]),
   }
-  let colors = from_shiki_theme(theme)
+  let colors = @themes.from_shiki_theme(theme)
   assert_eq(colors.accent, Some("#00ffcc"))
   assert_eq(colors.muted, Some("#666666"))
 }
 
 ///|
 test "from_shiki_theme ignores token entries without foreground" {
-  let theme = ShikiTheme::{
+  let theme = @themes.ShikiTheme::{
     theme_type: Some("dark"),
     colors: Some({
       "editor.background": "#111111",
@@ -319,21 +328,21 @@ test "from_shiki_theme ignores token entries without foreground" {
       { scopes: ["keyword"], foreground: Some("#ff00ff") },
     ]),
   }
-  let colors = from_shiki_theme(theme)
+  let colors = @themes.from_shiki_theme(theme)
   assert_eq(colors.accent, Some("#ff00ff"))
 }
 
 ///|
 test "from_shiki_theme matches multi-scope token entries" {
-  let theme = shiki_theme(
+  let theme = @themes.shiki_theme(
     Some("dark"),
     Some({ "editor.background": "#111111", "editor.foreground": "#eeeeee" }),
     Some([
-      shiki_token_color_many(["storage", "keyword"], Some("#22d3ee")),
-      shiki_token_color_many(["meta", "comment"], Some("#94a3b8")),
+      @themes.shiki_token_color_many(["storage", "keyword"], Some("#22d3ee")),
+      @themes.shiki_token_color_many(["meta", "comment"], Some("#94a3b8")),
     ]),
   )
-  let colors = from_shiki_theme(theme)
+  let colors = @themes.from_shiki_theme(theme)
   assert_eq(colors.accent, Some("#22d3ee"))
   assert_eq(colors.muted, Some("#94a3b8"))
 }

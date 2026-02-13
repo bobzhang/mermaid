@@ -59,7 +59,7 @@ fn branch_probe_exercise_case(input : String, seed : Int) -> (Bool, Bool, Bool) 
   let parsed : Result[
     @beautiful_mermaid.MermaidGraph,
     @beautiful_mermaid.MermaidError,
-  ] = try? @beautiful_mermaid.parse_mermaid(input)
+  ] = try? @parser_header_core.parse_mermaid(input)
   match parsed {
     Ok(_) => {
       let ascii_result : Result[String, @beautiful_mermaid.MermaidError] = try? @beautiful_mermaid.render_mermaid_ascii(

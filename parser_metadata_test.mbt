@@ -1,6 +1,6 @@
 ///|
 test "Parser captures classDef/class/style metadata" {
-  let graph = @beautiful_mermaid.parse_mermaid(
+  let graph = @parser_header_core.parse_mermaid(
     (
       #|graph TD
       #|A[Start]:::entry --> B[End]
@@ -34,7 +34,7 @@ test "Parser captures classDef/class/style metadata" {
 
 ///|
 test "Parser applies style to multiple nodes" {
-  let graph = @beautiful_mermaid.parse_mermaid(
+  let graph = @parser_header_core.parse_mermaid(
     (
       #|graph LR
       #|A --> B

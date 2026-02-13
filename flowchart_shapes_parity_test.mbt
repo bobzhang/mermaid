@@ -30,7 +30,7 @@ fn all_shapes_diagram() -> String {
 
 ///|
 test "Parser recognizes all flowchart shape syntaxes" {
-  let graph = @beautiful_mermaid.parse_mermaid(all_shapes_diagram())
+  let graph = @parser_header_core.parse_mermaid(all_shapes_diagram())
 
   assert_eq(graph.nodes.length(), 12)
   assert_eq(graph.edges.length(), 11)

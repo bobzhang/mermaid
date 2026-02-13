@@ -6,13 +6,12 @@ This document describes the current MoonBit architecture of `bobzhang/beautiful_
 
 ```text
 Mermaid source text
-  -> parser facade (`parser.mbt`)
-  -> parser package stack (`parser/*`)
+  -> parser dispatcher (`parser/header/core`)
   -> MermaidGraph (normalized semantic graph)
-  -> layout package stack (`layout/*`)
+  -> layout engine (`layout/engine/graph/core`)
   -> PositionedGraph (geometry + routed edges)
   -> ASCII layout-plan stage (`renderer/ascii/layout_plan/*`) for text-mode routing/packing
-  -> renderer package stack (`renderer/svg/*`, `renderer/ascii/*`)
+  -> renderer engines (`renderer/svg/engine/core`, `renderer/ascii/flow_state/engine/core`)
   -> SVG or ASCII/Unicode output
 ```
 
@@ -20,13 +19,9 @@ Mermaid source text
 
 ## Design Pattern Used Across Packages
 
-The project uses a consistent 3-layer package pattern in most subsystems:
-
-1. `engine/core` packages: implementation.
-2. `core` packages: stable bridge/re-export surface.
-3. top-level package bridge: public subsystem entrypoint.
-
-This keeps implementation internals movable while preserving clean public import paths.
+Recent refactors flattened most bridge packages. The module now favors direct
+imports of implementation-oriented packages (`*/engine/core` or equivalent)
+while keeping internal helper packages separated by responsibility.
 
 ## Data Model and Contracts
 
@@ -45,8 +40,6 @@ Key models:
 
 ### Entry and Dispatch
 
-- Root facade: `parser.mbt`
-  - `parse_mermaid(text)` delegates to the header dispatcher.
 - Header dispatcher implementation: `parser/header/core/parser.mbt`
   - Handles normalization, preprocessing, header detection, and dispatch.
 
@@ -92,7 +85,6 @@ Important design detail:
 
 ### Package Topology
 
-- Public bridge: `layout/layout.mbt`, `layout/types.mbt`
 - Implementation entry: `layout/engine/graph/core`
 
 Implementations:

@@ -28,7 +28,9 @@ fn parser_generated_svg_option(seed : Int) -> RenderOptions {
 
 ///|
 fn parser_generated_exercise(input : String, seed : Int) -> Bool {
-  let parsed : Result[MermaidGraph, MermaidError] = try? parse_mermaid(input)
+  let parsed : Result[MermaidGraph, MermaidError] = try? @parser_header_core.parse_mermaid(
+    input,
+  )
   match parsed {
     Ok(_) => {
       ignore(

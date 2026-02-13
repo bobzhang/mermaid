@@ -1,5 +1,5 @@
 import {
-  "bobzhang/beautiful_mermaid/layout" @layout,
+  "bobzhang/beautiful_mermaid/layout/engine/graph/core" @layout,
   "bobzhang/beautiful_mermaid/model" @model,
   "bobzhang/beautiful_mermaid/parser/header/core" @parser_header_core,
   "bobzhang/beautiful_mermaid/renderer/ascii/flow_state/engine/core" @renderer_ascii,

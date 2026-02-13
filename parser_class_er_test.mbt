@@ -1,6 +1,6 @@
 ///|
 test "Parser supports class diagram relationships" {
-  let graph = @beautiful_mermaid.parse_mermaid(
+  let graph = @parser_header_core.parse_mermaid(
     (
       #|classDiagram
       #|A <|-- B : inherits
@@ -22,7 +22,7 @@ test "Parser supports class diagram relationships" {
 
 ///|
 test "Parser supports reversed class relationship operators" {
-  let graph = @beautiful_mermaid.parse_mermaid(
+  let graph = @parser_header_core.parse_mermaid(
     (
       #|classDiagram
       #|Flyable <|.. Bird
@@ -57,7 +57,7 @@ test "Parser supports reversed class relationship operators" {
 
 ///|
 test "Parser accepts class relationships with cardinality tokens" {
-  let graph = @beautiful_mermaid.parse_mermaid(
+  let graph = @parser_header_core.parse_mermaid(
     (
       #|classDiagram
       #|Customer "1" --> "*" Order : places
@@ -75,7 +75,7 @@ test "Parser accepts class relationships with cardinality tokens" {
 
 ///|
 test "Parser accepts class relationships with range cardinality tokens" {
-  let graph = @beautiful_mermaid.parse_mermaid(
+  let graph = @parser_header_core.parse_mermaid(
     (
       #|classDiagram
       #|Service "0..1" ..> "1..*" Repository : depends
@@ -94,7 +94,7 @@ test "Parser accepts class relationships with range cardinality tokens" {
 
 ///|
 test "Parser captures class members from blocks and property lines" {
-  let graph = @beautiful_mermaid.parse_mermaid(
+  let graph = @parser_header_core.parse_mermaid(
     (
       #|classDiagram
       #|class Animal {
@@ -120,7 +120,7 @@ test "Parser captures class members from blocks and property lines" {
 
 ///|
 test "Parser parses inline class attributes in Type Name form" {
-  let graph = @beautiful_mermaid.parse_mermaid(
+  let graph = @parser_header_core.parse_mermaid(
     (
       #|classDiagram
       #|class Animal
@@ -141,7 +141,7 @@ test "Parser parses inline class attributes in Type Name form" {
 
 ///|
 test "Parser captures inline class annotation declarations" {
-  let graph = @beautiful_mermaid.parse_mermaid(
+  let graph = @parser_header_core.parse_mermaid(
     (
       #|classDiagram
       #|class Shape { <<abstract>> }
@@ -161,7 +161,7 @@ test "Parser captures inline class annotation declarations" {
 
 ///|
 test "Parser normalizes class member visibilities including package scope" {
-  let graph = @beautiful_mermaid.parse_mermaid(
+  let graph = @parser_header_core.parse_mermaid(
     (
       #|classDiagram
       #|class MyClass {
@@ -186,7 +186,7 @@ test "Parser normalizes class member visibilities including package scope" {
 
 ///|
 test "Parser supports ER diagram relationships" {
-  let graph = @beautiful_mermaid.parse_mermaid(
+  let graph = @parser_header_core.parse_mermaid(
     (
       #|erDiagram
       #|CUSTOMER ||--o{ ORDER : places
@@ -207,7 +207,7 @@ test "Parser supports ER diagram relationships" {
 
 ///|
 test "Parser captures ER attributes from entity blocks" {
-  let graph = @beautiful_mermaid.parse_mermaid(
+  let graph = @parser_header_core.parse_mermaid(
     (
       #|erDiagram
       #|CUSTOMER {
@@ -229,7 +229,7 @@ test "Parser captures ER attributes from entity blocks" {
 
 ///|
 test "Parser captures non-identifying ER relationships as dotted" {
-  let graph = @beautiful_mermaid.parse_mermaid(
+  let graph = @parser_header_core.parse_mermaid(
     (
       #|erDiagram
       #|USER ||..o{ LOG : generates
@@ -247,7 +247,7 @@ test "Parser captures non-identifying ER relationships as dotted" {
 
 ///|
 test "Parser handles complete ER e-commerce schema" {
-  let graph = @beautiful_mermaid.parse_mermaid(
+  let graph = @parser_header_core.parse_mermaid(
     (
       #|erDiagram
       #|CUSTOMER {
@@ -301,7 +301,7 @@ test "Parser handles complete ER e-commerce schema" {
 
 ///|
 test "Parser normalizes ER attributes with keys and quoted comments" {
-  let graph = @beautiful_mermaid.parse_mermaid(
+  let graph = @parser_header_core.parse_mermaid(
     (
       #|erDiagram
       #|USER {
@@ -319,7 +319,7 @@ test "Parser normalizes ER attributes with keys and quoted comments" {
 
 ///|
 test "Parser preserves ER attribute quoted comments" {
-  let graph = @beautiful_mermaid.parse_mermaid(
+  let graph = @parser_header_core.parse_mermaid(
     (
       #|erDiagram
       #|USER {
@@ -336,7 +336,7 @@ test "Parser preserves ER attribute quoted comments" {
 
 ///|
 test "Parser supports mixed ER cardinality operators" {
-  let graph = @beautiful_mermaid.parse_mermaid(
+  let graph = @parser_header_core.parse_mermaid(
     (
       #|erDiagram
       #|A |o--|{ B : connects
@@ -354,7 +354,7 @@ test "Parser supports mixed ER cardinality operators" {
 
 ///|
 test "Parser supports one-to-one ER cardinality operator" {
-  let graph = @beautiful_mermaid.parse_mermaid(
+  let graph = @parser_header_core.parse_mermaid(
     (
       #|erDiagram
       #|PERSON ||--|| PASSPORT : has
@@ -373,7 +373,7 @@ test "Parser supports one-to-one ER cardinality operator" {
 
 ///|
 test "Parser supports many-to-zero-many ER cardinality operator" {
-  let graph = @beautiful_mermaid.parse_mermaid(
+  let graph = @parser_header_core.parse_mermaid(
     (
       #|erDiagram
       #|PRODUCT }|--o{ TAG : has

@@ -136,7 +136,7 @@ Leading/trailing separators are ignored, so forms like `__github_dark__` also no
 ```mbt check
 ///|
 test {
-  let colors = match theme_by_name("tokyo-night") {
+  let colors = match @themes.theme_by_name("tokyo-night") {
     Some(found) => found
     None => fail("missing theme")
   }
@@ -188,7 +188,7 @@ Typed variant via parsed enum:
 ```mbt check
 ///|
 test {
-  let theme = match parse_theme_name("tokyo-night") {
+  let theme = match @themes.parse_theme_name("tokyo-night") {
     Some(found) => found
     None => fail("missing theme")
   }
@@ -213,7 +213,7 @@ When `theme_type` is omitted, fallback colors use light defaults.
 ```mbt check
 ///|
 test {
-  let shiki_theme = shiki_theme(
+  let shiki_theme = @themes.shiki_theme(
     Some("dark"),
     Some({
       "editor.background": "#1a1b26",
@@ -221,9 +221,9 @@ test {
       "editorLineNumber.foreground": "#565f89",
       "focusBorder": "#7aa2f7",
     }),
-    Some([shiki_token_color("comment", Some("#565f89"))]),
+    Some([@themes.shiki_token_color("comment", Some("#565f89"))]),
   )
-  let colors = from_shiki_theme(shiki_theme)
+  let colors = @themes.from_shiki_theme(shiki_theme)
   let svg = try! render_mermaid_with_colors(
     (
       #|graph TD

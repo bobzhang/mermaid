@@ -92,7 +92,7 @@ test "Coverage matrix exercises parser corpus paths" {
 
   let all_cases = @test_support.corpus_cases()
   for case_data in all_cases {
-    let parsed : Result[MermaidGraph, MermaidError] = try? parse_mermaid(
+    let parsed : Result[MermaidGraph, MermaidError] = try? @parser_header_core.parse_mermaid(
       case_data.input,
     )
     match parsed {
@@ -152,7 +152,9 @@ test "Coverage matrix parser malformed headers and bodies" {
   ]
 
   for input in invalid_inputs {
-    let parsed : Result[MermaidGraph, MermaidError] = try? parse_mermaid(input)
+    let parsed : Result[MermaidGraph, MermaidError] = try? @parser_header_core.parse_mermaid(
+      input,
+    )
     match parsed {
       Ok(_) => ()
       Err(ParseFailure(_)) => ()

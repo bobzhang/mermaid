@@ -24,7 +24,7 @@ fn assert_state_shape(
 
 ///|
 test "Parser detects state diagram headers and default direction" {
-  let v2 = @beautiful_mermaid.parse_mermaid(
+  let v2 = @parser_header_core.parse_mermaid(
     (
       #|stateDiagram-v2
       #|s1 --> s2
@@ -32,7 +32,7 @@ test "Parser detects state diagram headers and default direction" {
   )
   assert_eq(v2.direction.to_string(), "TD")
 
-  let legacy = @beautiful_mermaid.parse_mermaid(
+  let legacy = @parser_header_core.parse_mermaid(
     (
       #|stateDiagram
       #|s1 --> s2
@@ -43,7 +43,7 @@ test "Parser detects state diagram headers and default direction" {
 
 ///|
 test "Parser parses state transitions and transition labels" {
-  let graph = @beautiful_mermaid.parse_mermaid(
+  let graph = @parser_header_core.parse_mermaid(
     (
       #|stateDiagram-v2
       #|Idle --> Active
@@ -65,7 +65,7 @@ test "Parser parses state transitions and transition labels" {
 
 ///|
 test "Parser parses start and end state pseudostates with unique ids" {
-  let graph = @beautiful_mermaid.parse_mermaid(
+  let graph = @parser_header_core.parse_mermaid(
     (
       #|stateDiagram-v2
       #|[*] --> A
@@ -92,7 +92,7 @@ test "Parser parses start and end state pseudostates with unique ids" {
 
 ///|
 test "Parser parses state alias declarations" {
-  let graph = @beautiful_mermaid.parse_mermaid(
+  let graph = @parser_header_core.parse_mermaid(
     (
       #|stateDiagram-v2
       #|state "Waiting for input" as waiting
@@ -108,7 +108,7 @@ test "Parser parses state alias declarations" {
 
 ///|
 test "Parser applies state direction override" {
-  let graph = @beautiful_mermaid.parse_mermaid(
+  let graph = @parser_header_core.parse_mermaid(
     (
       #|stateDiagram-v2
       #|direction LR
@@ -120,7 +120,7 @@ test "Parser applies state direction override" {
 
 ///|
 test "Parser ignores invalid state direction token" {
-  let graph = @beautiful_mermaid.parse_mermaid(
+  let graph = @parser_header_core.parse_mermaid(
     (
       #|stateDiagram-v2
       #|direction LR
@@ -133,7 +133,7 @@ test "Parser ignores invalid state direction token" {
 
 ///|
 test "Parser supports state description lines" {
-  let graph = @beautiful_mermaid.parse_mermaid(
+  let graph = @parser_header_core.parse_mermaid(
     (
       #|stateDiagram-v2
       #|s1 : Idle State
@@ -150,7 +150,7 @@ test "Parser supports state description lines" {
 
 ///|
 test "Parser captures state composite blocks as subgraphs" {
-  let graph = @beautiful_mermaid.parse_mermaid(
+  let graph = @parser_header_core.parse_mermaid(
     (
       #|stateDiagram-v2
       #|state Processing {
@@ -171,7 +171,7 @@ test "Parser captures state composite blocks as subgraphs" {
 
 ///|
 test "Parser captures state composite alias blocks as subgraphs" {
-  let graph = @beautiful_mermaid.parse_mermaid(
+  let graph = @parser_header_core.parse_mermaid(
     (
       #|stateDiagram-v2
       #|state "Active Processing" as AP {
@@ -190,7 +190,7 @@ test "Parser captures state composite alias blocks as subgraphs" {
 
 ///|
 test "Parser captures direction override inside state composite" {
-  let graph = @beautiful_mermaid.parse_mermaid(
+  let graph = @parser_header_core.parse_mermaid(
     (
       #|stateDiagram-v2
       #|state Processing {
@@ -210,7 +210,7 @@ test "Parser captures direction override inside state composite" {
 
 ///|
 test "Parser handles state diagrams with composite declaration and outer transitions" {
-  let graph = @beautiful_mermaid.parse_mermaid(
+  let graph = @parser_header_core.parse_mermaid(
     (
       #|stateDiagram-v2
       #|[*] --> Idle
@@ -239,7 +239,7 @@ test "Parser handles state diagrams with composite declaration and outer transit
 
 ///|
 test "Parser keeps state edge operator semantics across all flow-style operators" {
-  let graph = @beautiful_mermaid.parse_mermaid(
+  let graph = @parser_header_core.parse_mermaid(
     (
       #|stateDiagram-v2
       #|A <==> B
@@ -304,7 +304,7 @@ test "Parser keeps state edge operator semantics across all flow-style operators
 
 ///|
 test "Parser parses state labels on bidirectional thick edges" {
-  let graph = @beautiful_mermaid.parse_mermaid(
+  let graph = @parser_header_core.parse_mermaid(
     (
       #|stateDiagram-v2
       #|A <==> B : sync

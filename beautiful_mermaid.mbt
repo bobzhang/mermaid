@@ -108,7 +108,7 @@ pub fn render_mermaid(
   text : String,
   options? : RenderOptions = RenderOptions::default(),
 ) -> String raise MermaidError {
-  let graph = parse_mermaid(text)
+  let graph = @parser_header_core.parse_mermaid(text)
   let positioned = @layout.layout_graph(graph, options)
   @renderer_svg.render_svg(
     positioned,
@@ -133,10 +133,10 @@ pub fn render_mermaid_with_colors(
 /// Render SVG with a built-in `ThemeName` palette.
 pub fn render_mermaid_with_theme(
   text : String,
-  theme : ThemeName,
+  theme : @themes.ThemeName,
   options? : RenderOptions = RenderOptions::default(),
 ) -> String raise MermaidError {
-  render_mermaid_with_colors(text, theme_colors(theme), options~)
+  render_mermaid_with_colors(text, @themes.theme_colors(theme), options~)
 }
 
 ///|
@@ -162,7 +162,7 @@ pub fn render_mermaid_with_theme_name(
   theme_name : String,
   options? : RenderOptions = RenderOptions::default(),
 ) -> String raise MermaidError {
-  match theme_by_name(theme_name) {
+  match @themes.theme_by_name(theme_name) {
     Some(colors) => render_mermaid_with_colors(text, colors, options~)
     None => raise UnknownTheme(theme_name)
   }
@@ -195,6 +195,6 @@ pub fn render_mermaid_ascii(
   text : String,
   options? : AsciiRenderOptions = AsciiRenderOptions::default(),
 ) -> String raise MermaidError {
-  let graph = parse_mermaid(text)
+  let graph = @parser_header_core.parse_mermaid(text)
   @renderer_ascii.render_ascii(graph, options)
 }
