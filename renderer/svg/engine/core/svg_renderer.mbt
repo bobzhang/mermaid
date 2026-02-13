@@ -717,13 +717,19 @@ pub fn render_svg(
   let class_mode = is_class_render(graph)
   let er_mode = is_er_render(graph)
   let font_url = font_url_component(font)
-  let root_style = "--bg:\{colors.bg};--fg:\{colors.fg}" +
-    css_var_attr("--line", colors.line) +
-    css_var_attr("--accent", colors.accent) +
-    css_var_attr("--muted", colors.muted) +
-    css_var_attr("--surface", colors.surface) +
-    css_var_attr("--border", colors.border) +
-    (if transparent { "" } else { ";background:var(--bg)" })
+  let root_style = {
+    let sb = StringBuilder::new()
+    sb.write_string("--bg:\{colors.bg};--fg:\{colors.fg}")
+    sb.write_string(css_var_attr("--line", colors.line))
+    sb.write_string(css_var_attr("--accent", colors.accent))
+    sb.write_string(css_var_attr("--muted", colors.muted))
+    sb.write_string(css_var_attr("--surface", colors.surface))
+    sb.write_string(css_var_attr("--border", colors.border))
+    if !transparent {
+      sb.write_string(";background:var(--bg)")
+    }
+    sb.to_string()
+  }
 
   let sb = StringBuilder::new()
   sb.write_string(
