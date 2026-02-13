@@ -189,7 +189,7 @@ fn class_draw_marker(
   write_canvas_text(canvas, start_x, y, marker)
 }
 
-///|
+/// Renders a class diagram as ASCII/Unicode text art.
 pub fn render_ascii_class(
   graph : MermaidGraph,
   class_layout : @renderer_ascii_layout_plan.AsciiClassLayout,

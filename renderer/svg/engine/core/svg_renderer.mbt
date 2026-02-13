@@ -705,7 +705,7 @@ fn render_node_shape(node : PositionedNode) -> String {
   }
 }
 
-///|
+/// Renders a positioned graph as an SVG string.
 pub fn render_svg(
   graph : PositionedGraph,
   colors : DiagramColors,

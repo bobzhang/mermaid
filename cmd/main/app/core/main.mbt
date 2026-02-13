@@ -152,7 +152,7 @@ fn svg_options_overridden(
   transparent
 }
 
-///|
+/// CLI entry point: parses arguments and renders a mermaid diagram.
 pub fn run() -> Unit {
   let args = cli_args_without_program()
   let mut render_text = false

@@ -3436,7 +3436,7 @@ fn render_ascii_plan(
   }
 }
 
-///|
+/// Renders a mermaid graph as ASCII/Unicode text art.
 pub fn render_ascii(
   graph : MermaidGraph,
   options : AsciiRenderOptions,

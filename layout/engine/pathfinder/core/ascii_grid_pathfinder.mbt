@@ -6,7 +6,7 @@ fn option_int_or(value : Int?, fallback : Int) -> Int {
   }
 }
 
-///|
+/// A coordinate on the ASCII grid used for pathfinding.
 pub(all) struct AsciiGridCoord {
   x : Int
   y : Int
@@ -146,7 +146,7 @@ fn ascii_grid_heap_pop(
   Some(top)
 }
 
-///|
+/// Finds a path between two grid coordinates using A* pathfinding.
 pub fn ascii_grid_pathfind(
   start : AsciiGridCoord,
   end : AsciiGridCoord,
@@ -211,7 +211,7 @@ pub fn ascii_grid_pathfind(
   None
 }
 
-///|
+/// Merges collinear segments in a grid path to reduce waypoints.
 pub fn ascii_grid_merge_path(
   path : Array[AsciiGridCoord],
 ) -> Array[AsciiGridCoord] {

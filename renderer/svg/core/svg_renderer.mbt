@@ -1,4 +1,4 @@
-///|
+/// Renders a positioned graph as an SVG string.
 pub fn render_svg(
   graph : @model.PositionedGraph,
   colors : @model.DiagramColors,

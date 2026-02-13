@@ -162,7 +162,7 @@ fn parse_state_description_line(
   true
 }
 
-///|
+/// Parses state diagram body lines into a `MermaidGraph`.
 pub fn parse_state_diagram(lines : Array[String]) -> MermaidGraph {
   let nodes : Map[String, MermaidNode] = {}
   let edges : Array[MermaidEdge] = []

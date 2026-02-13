@@ -1,4 +1,4 @@
-///|
+/// A coordinate on the state diagram layout grid.
 pub(all) struct LayoutStateGridCoord {
   x : Int
   y : Int
@@ -33,7 +33,7 @@ fn layout_state_children_in_order(
   children
 }
 
-///|
+/// Returns graph nodes in their original definition order.
 pub fn layout_state_nodes_in_definition_order(
   graph : MermaidGraph,
 ) -> Array[MermaidNode] {
@@ -44,7 +44,7 @@ pub fn layout_state_nodes_in_definition_order(
   nodes
 }
 
-///|
+/// Computes grid positions for state diagram nodes.
 pub fn layout_state_grid_positions(
   graph : MermaidGraph,
   nodes_in_order : Array[MermaidNode],
@@ -105,7 +105,7 @@ pub fn layout_state_grid_positions(
   positions
 }
 
-///|
+/// Computes the bounding box of the state diagram grid.
 pub fn layout_state_grid_bounds(
   positions : Map[String, LayoutStateGridCoord],
 ) -> (Int, Int) {
@@ -118,7 +118,7 @@ pub fn layout_state_grid_bounds(
   (max_x, max_y)
 }
 
-///|
+/// Computes the set of grid cells blocked by node positions.
 pub fn layout_state_grid_blocked_cells(
   positions : Map[String, LayoutStateGridCoord],
 ) -> Map[String, Bool] {
@@ -392,7 +392,7 @@ fn layout_state_pick_shorter_path(
   }
 }
 
-///|
+/// Routes an edge path on the state grid in top-down direction.
 pub fn layout_state_edge_grid_path_td(
   positions : Map[String, LayoutStateGridCoord],
   blocked : Map[String, Bool],

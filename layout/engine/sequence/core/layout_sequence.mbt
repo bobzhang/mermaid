@@ -263,7 +263,7 @@ fn sequence_divider_extra() -> Int {
   24
 }
 
-///|
+/// Lays out a sequence diagram graph.
 pub fn layout_sequence_graph(
   graph : MermaidGraph,
   options : RenderOptions,

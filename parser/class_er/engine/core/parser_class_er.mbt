@@ -280,7 +280,7 @@ fn parse_inline_class_declaration(line : String) -> (String, String?)? {
   }
 }
 
-///|
+/// Parses class diagram body lines into a `MermaidGraph`.
 pub fn parse_class_diagram(lines : Array[String]) -> MermaidGraph {
   let nodes : Map[String, MermaidNode] = {}
   let edges : Array[MermaidEdge] = []
@@ -396,7 +396,7 @@ fn parse_er_entity_declaration_line(
   Some(id)
 }
 
-///|
+/// Parses ER diagram body lines into a `MermaidGraph`.
 pub fn parse_er_diagram(lines : Array[String]) -> MermaidGraph {
   let nodes : Map[String, MermaidNode] = {}
   let edges : Array[MermaidEdge] = []

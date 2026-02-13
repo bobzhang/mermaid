@@ -91,7 +91,7 @@ fn er_ensure_canvas_size(
   }
 }
 
-///|
+/// Renders an ER diagram as ASCII/Unicode text art.
 pub fn render_ascii_er(
   graph : MermaidGraph,
   er_layout : @renderer_ascii_layout_plan.AsciiErLayout,

@@ -1,4 +1,4 @@
-///|
+/// Parses flowchart body lines into a `MermaidGraph`.
 pub fn parse_flowchart(
   lines : Array[String],
 ) -> @model.MermaidGraph raise @model.MermaidError {

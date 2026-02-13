@@ -1226,7 +1226,7 @@ fn register_group_anchors(
   }
 }
 
-///|
+/// Lays out a mermaid graph for SVG rendering.
 pub fn layout_graph(
   graph : MermaidGraph,
   options : RenderOptions,
@@ -1234,7 +1234,7 @@ pub fn layout_graph(
   layout_graph_with_subgraph_redirects(graph, options, true)
 }
 
-///|
+/// Lays out a mermaid graph for ASCII text rendering.
 pub fn layout_graph_for_ascii(
   graph : MermaidGraph,
   options : RenderOptions,
