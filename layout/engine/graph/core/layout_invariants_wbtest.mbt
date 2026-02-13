@@ -915,7 +915,15 @@ test "Layout sequence block height encloses in-block messages" {
 ///|
 test "Layout sequence base spacing is uniform without blocks" {
   let graph = try! @parser.parse_mermaid(
-    "sequenceDiagram\nA->>B: First\nB->>A: Second\nA->>B: Third",
+    (
+      #|sequenceDiagram
+      #|A->>B: First
+      #|B->>A: Second
+      #|A->>B: Third
+      #|
+    )
+    .trim_end()
+    .to_string(),
   )
   let positioned = layout_graph(graph, RenderOptions::default())
 
@@ -930,7 +938,17 @@ test "Layout sequence base spacing is uniform without blocks" {
 ///|
 test "Layout sequence spacing after block returns to base row height" {
   let graph = try! @parser.parse_mermaid(
-    "sequenceDiagram\nA->>B: Before\nloop Retry\nA->>B: Attempt\nend\nA->>B: After",
+    (
+      #|sequenceDiagram
+      #|A->>B: Before
+      #|loop Retry
+      #|A->>B: Attempt
+      #|end
+      #|A->>B: After
+      #|
+    )
+    .trim_end()
+    .to_string(),
   )
   let positioned = layout_graph(graph, RenderOptions::default())
 
@@ -945,7 +963,20 @@ test "Layout sequence spacing after block returns to base row height" {
 ///|
 test "Layout sequence multiple dividers each add divider extra spacing" {
   let graph = try! @parser.parse_mermaid(
-    "sequenceDiagram\nC->>S: Login\nalt Valid\nS-->>C: 200\nelse Invalid\nS-->>C: 401\nelse Locked\nS-->>C: 403\nend",
+    (
+      #|sequenceDiagram
+      #|C->>S: Login
+      #|alt Valid
+      #|S-->>C: 200
+      #|else Invalid
+      #|S-->>C: 401
+      #|else Locked
+      #|S-->>C: 403
+      #|end
+      #|
+    )
+    .trim_end()
+    .to_string(),
   )
   let positioned = layout_graph(graph, RenderOptions::default())
 
@@ -962,7 +993,18 @@ test "Layout sequence multiple dividers each add divider extra spacing" {
 ///|
 test "Layout sequence par divider spacing matches alt divider spacing" {
   let graph = try! @parser.parse_mermaid(
-    "sequenceDiagram\nG->>A: Validate\npar Fetch user\nG->>U: Get user\nand Fetch orders\nG->>O: Get orders\nend",
+    (
+      #|sequenceDiagram
+      #|G->>A: Validate
+      #|par Fetch user
+      #|G->>U: Get user
+      #|and Fetch orders
+      #|G->>O: Get orders
+      #|end
+      #|
+    )
+    .trim_end()
+    .to_string(),
   )
   let positioned = layout_graph(graph, RenderOptions::default())
 
@@ -977,7 +1019,15 @@ test "Layout sequence par divider spacing matches alt divider spacing" {
 ///|
 test "Layout sequence note right of last actor stays within diagram bounds" {
   let graph = try! @parser.parse_mermaid(
-    "sequenceDiagram\nA->>B: Hello\nNote right of B: Right-side note\nB-->>A: Hi",
+    (
+      #|sequenceDiagram
+      #|A->>B: Hello
+      #|Note right of B: Right-side note
+      #|B-->>A: Hi
+      #|
+    )
+    .trim_end()
+    .to_string(),
   )
   let positioned = layout_graph(graph, RenderOptions::default())
 
@@ -990,7 +1040,15 @@ test "Layout sequence note right of last actor stays within diagram bounds" {
 ///|
 test "Layout sequence note left of first actor stays within diagram bounds" {
   let graph = try! @parser.parse_mermaid(
-    "sequenceDiagram\nA->>B: Hello\nNote left of A: Left-side note\nB-->>A: Hi",
+    (
+      #|sequenceDiagram
+      #|A->>B: Hello
+      #|Note left of A: Left-side note
+      #|B-->>A: Hi
+      #|
+    )
+    .trim_end()
+    .to_string(),
   )
   let positioned = layout_graph(graph, RenderOptions::default())
 
@@ -1003,7 +1061,16 @@ test "Layout sequence note left of first actor stays within diagram bounds" {
 ///|
 test "Layout sequence notes on both sides stay within diagram bounds" {
   let graph = try! @parser.parse_mermaid(
-    "sequenceDiagram\nA->>B: Hello\nNote left of A: Left note\nNote right of B: Right note\nB-->>A: Hi",
+    (
+      #|sequenceDiagram
+      #|A->>B: Hello
+      #|Note left of A: Left note
+      #|Note right of B: Right note
+      #|B-->>A: Hi
+      #|
+    )
+    .trim_end()
+    .to_string(),
   )
   let positioned = layout_graph(graph, RenderOptions::default())
 
@@ -1017,7 +1084,18 @@ test "Layout sequence notes on both sides stay within diagram bounds" {
 ///|
 test "Layout state cycle offsets opposite-direction edge labels" {
   let graph = try! @parser.parse_mermaid(
-    "stateDiagram-v2\n[*] --> Ready\nReady --> Running : start\nRunning --> Paused : pause\nPaused --> Running : resume\nRunning --> Stopped : stop\nStopped --> [*]",
+    (
+      #|stateDiagram-v2
+      #|[*] --> Ready
+      #|Ready --> Running : start
+      #|Running --> Paused : pause
+      #|Paused --> Running : resume
+      #|Running --> Stopped : stop
+      #|Stopped --> [*]
+      #|
+    )
+    .trim_end()
+    .to_string(),
   )
   let positioned = layout_graph(graph, RenderOptions::default())
 
@@ -1038,7 +1116,15 @@ test "Layout state cycle offsets opposite-direction edge labels" {
 ///|
 test "Layout sequence note over actor stays within diagram bounds" {
   let graph = try! @parser.parse_mermaid(
-    "sequenceDiagram\nA->>B: Hello\nNote over A: Centered note\nB-->>A: Hi",
+    (
+      #|sequenceDiagram
+      #|A->>B: Hello
+      #|Note over A: Centered note
+      #|B-->>A: Hi
+      #|
+    )
+    .trim_end()
+    .to_string(),
   )
   let positioned = layout_graph(graph, RenderOptions::default())
 
@@ -1051,7 +1137,15 @@ test "Layout sequence note over actor stays within diagram bounds" {
 ///|
 test "Layout sequence shift preserves actor message and lifeline alignment" {
   let graph = try! @parser.parse_mermaid(
-    "sequenceDiagram\nA->>B: Hello\nNote left of A: This shifts everything\nB-->>A: Reply",
+    (
+      #|sequenceDiagram
+      #|A->>B: Hello
+      #|Note left of A: This shifts everything
+      #|B-->>A: Reply
+      #|
+    )
+    .trim_end()
+    .to_string(),
   )
   let positioned = layout_graph(graph, RenderOptions::default())
 
@@ -1093,7 +1187,14 @@ test "Layout sequence shift preserves actor message and lifeline alignment" {
 ///|
 test "Layout sequence without notes has no extra horizontal shift" {
   let graph = try! @parser.parse_mermaid(
-    "sequenceDiagram\nA->>B: Hello\nB-->>A: Hi",
+    (
+      #|sequenceDiagram
+      #|A->>B: Hello
+      #|B-->>A: Hi
+      #|
+    )
+    .trim_end()
+    .to_string(),
   )
   let positioned = layout_graph(graph, RenderOptions::default())
 
@@ -1106,10 +1207,25 @@ test "Layout sequence without notes has no extra horizontal shift" {
 ///|
 test "Layout sequence right-side note expands diagram width" {
   let without_note_graph = try! @parser.parse_mermaid(
-    "sequenceDiagram\nA->>B: Hello\nB-->>A: Hi",
+    (
+      #|sequenceDiagram
+      #|A->>B: Hello
+      #|B-->>A: Hi
+      #|
+    )
+    .trim_end()
+    .to_string(),
   )
   let with_note_graph = try! @parser.parse_mermaid(
-    "sequenceDiagram\nA->>B: Hello\nNote right of B: Extra wide note text here\nB-->>A: Hi",
+    (
+      #|sequenceDiagram
+      #|A->>B: Hello
+      #|Note right of B: Extra wide note text here
+      #|B-->>A: Hi
+      #|
+    )
+    .trim_end()
+    .to_string(),
   )
 
   let without_note = layout_graph(without_note_graph, RenderOptions::default())
@@ -1121,10 +1237,25 @@ test "Layout sequence right-side note expands diagram width" {
 ///|
 test "Layout sequence left-side note shifts actors right" {
   let without_note_graph = try! @parser.parse_mermaid(
-    "sequenceDiagram\nA->>B: Hello\nB-->>A: Hi",
+    (
+      #|sequenceDiagram
+      #|A->>B: Hello
+      #|B-->>A: Hi
+      #|
+    )
+    .trim_end()
+    .to_string(),
   )
   let with_note_graph = try! @parser.parse_mermaid(
-    "sequenceDiagram\nA->>B: Hello\nNote left of A: Left note\nB-->>A: Hi",
+    (
+      #|sequenceDiagram
+      #|A->>B: Hello
+      #|Note left of A: Left note
+      #|B-->>A: Hi
+      #|
+    )
+    .trim_end()
+    .to_string(),
   )
 
   let without_note = layout_graph(without_note_graph, RenderOptions::default())
@@ -1140,7 +1271,16 @@ test "Layout sequence left-side note shifts actors right" {
 ///|
 test "Layout sequence opt block header adds extra spacing" {
   let graph = try! @parser.parse_mermaid(
-    "sequenceDiagram\nA->>B: Request\nopt Cache available\nB-->>A: Cached response\nend",
+    (
+      #|sequenceDiagram
+      #|A->>B: Request
+      #|opt Cache available
+      #|B-->>A: Cached response
+      #|end
+      #|
+    )
+    .trim_end()
+    .to_string(),
   )
   let positioned = layout_graph(graph, RenderOptions::default())
 
@@ -1153,7 +1293,16 @@ test "Layout sequence opt block header adds extra spacing" {
 ///|
 test "Layout sequence critical block header adds extra spacing" {
   let graph = try! @parser.parse_mermaid(
-    "sequenceDiagram\nA->>DB: BEGIN\ncritical Transaction\nA->>DB: UPDATE\nend",
+    (
+      #|sequenceDiagram
+      #|A->>DB: BEGIN
+      #|critical Transaction
+      #|A->>DB: UPDATE
+      #|end
+      #|
+    )
+    .trim_end()
+    .to_string(),
   )
   let positioned = layout_graph(graph, RenderOptions::default())
 
@@ -1166,7 +1315,20 @@ test "Layout sequence critical block header adds extra spacing" {
 ///|
 test "Layout sequence multiple dividers are between corresponding messages" {
   let graph = try! @parser.parse_mermaid(
-    "sequenceDiagram\nC->>S: Login\nalt Valid\nS-->>C: 200\nelse Invalid\nS-->>C: 401\nelse Locked\nS-->>C: 403\nend",
+    (
+      #|sequenceDiagram
+      #|C->>S: Login
+      #|alt Valid
+      #|S-->>C: 200
+      #|else Invalid
+      #|S-->>C: 401
+      #|else Locked
+      #|S-->>C: 403
+      #|end
+      #|
+    )
+    .trim_end()
+    .to_string(),
   )
   let positioned = layout_graph(graph, RenderOptions::default())
 
@@ -1184,7 +1346,18 @@ test "Layout sequence multiple dividers are between corresponding messages" {
 ///|
 test "Layout sequence divider line stays below previous message arrow" {
   let graph = try! @parser.parse_mermaid(
-    "sequenceDiagram\nA->>B: Login\nalt Success\nB->>A: 200 OK\nelse Failure\nB->>A: 500 Error\nend",
+    (
+      #|sequenceDiagram
+      #|A->>B: Login
+      #|alt Success
+      #|B->>A: 200 OK
+      #|else Failure
+      #|B->>A: 500 Error
+      #|end
+      #|
+    )
+    .trim_end()
+    .to_string(),
   )
   let positioned = layout_graph(graph, RenderOptions::default())
 
@@ -1202,7 +1375,20 @@ test "Layout sequence divider line stays below previous message arrow" {
 ///|
 test "Layout sequence three-branch alt keeps header and divider clearance" {
   let graph = try! @parser.parse_mermaid(
-    "sequenceDiagram\nC->>S: Login\nalt Valid\nS-->>C: 200\nelse Invalid\nS-->>C: 401\nelse Locked\nS-->>C: 403\nend",
+    (
+      #|sequenceDiagram
+      #|C->>S: Login
+      #|alt Valid
+      #|S-->>C: 200
+      #|else Invalid
+      #|S-->>C: 401
+      #|else Locked
+      #|S-->>C: 403
+      #|end
+      #|
+    )
+    .trim_end()
+    .to_string(),
   )
   let positioned = layout_graph(graph, RenderOptions::default())
 
@@ -1230,7 +1416,20 @@ test "Layout sequence three-branch alt keeps header and divider clearance" {
 ///|
 test "Layout sequence long divider labels trigger larger offset" {
   let graph = try! @parser.parse_mermaid(
-    "sequenceDiagram\nparticipant C as Client\nparticipant S as Server\nC->>S: Login\nalt Valid credentials\nS-->>C: 200 OK\nelse Account locked\nS-->>C: 403 Forbidden\nend",
+    (
+      #|sequenceDiagram
+      #|participant C as Client
+      #|participant S as Server
+      #|C->>S: Login
+      #|alt Valid credentials
+      #|S-->>C: 200 OK
+      #|else Account locked
+      #|S-->>C: 403 Forbidden
+      #|end
+      #|
+    )
+    .trim_end()
+    .to_string(),
   )
   let positioned = layout_graph(graph, RenderOptions::default())
 
@@ -1251,7 +1450,18 @@ test "Layout sequence long divider labels trigger larger offset" {
 ///|
 test "Layout sequence short divider labels keep default offset" {
   let graph = try! @parser.parse_mermaid(
-    "sequenceDiagram\nA->>B: Login\nalt Yes\nB->>A: 200\nelse No\nB->>A: 500\nend",
+    (
+      #|sequenceDiagram
+      #|A->>B: Login
+      #|alt Yes
+      #|B->>A: 200
+      #|else No
+      #|B->>A: 500
+      #|end
+      #|
+    )
+    .trim_end()
+    .to_string(),
   )
   let positioned = layout_graph(graph, RenderOptions::default())
 
