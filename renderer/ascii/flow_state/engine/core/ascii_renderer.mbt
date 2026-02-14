@@ -2619,6 +2619,10 @@ fn render_ascii_flow_subgraphs(
   } else {
     graph.edges.any(edge => edge.label is Some(_))
   }
+  let flow_all_labeled_edges_without_arrow_end = !state_layout_mode &&
+    flow_has_labeled_edges &&
+    graph.edges.length() > 0 &&
+    graph.edges.all(edge => !edge.has_arrow_end)
   let flow_vertical_min_node_width = if !flow_direction_horizontal &&
     flow_has_labeled_edges {
     7
@@ -2652,7 +2656,11 @@ fn render_ascii_flow_subgraphs(
         (label.length() + 4).max(5)
       }
     } else {
-      (label.length() + 4).max(flow_vertical_min_node_width)
+      (
+        label.length() +
+        4 +
+        (if flow_all_labeled_edges_without_arrow_end { 1 } else { 0 })
+      ).max(flow_vertical_min_node_width)
     }
     let current = option_int_or(column_width_by_x.get(column_key), 0)
     if base_width > current {
@@ -2703,7 +2711,11 @@ fn render_ascii_flow_subgraphs(
           (label.length() + 4).max(5)
         }
       } else {
-        (label.length() + 4).max(flow_vertical_min_node_width)
+        (
+          label.length() +
+          4 +
+          (if flow_all_labeled_edges_without_arrow_end { 1 } else { 0 })
+        ).max(flow_vertical_min_node_width)
       }
       (option_int_or(column_width_by_x.get(column_key), fallback_width), 5)
     }
