@@ -3282,6 +3282,13 @@ fn render_ascii_flow_subgraphs(
               center_dy > 0 &&
               source_out_degree > 1 &&
               edge.label is Some(_)
+            let unlabeled_left_descending_detour = flow_direction_horizontal &&
+              !flow_with_subgraphs &&
+              center_dx < 0 &&
+              center_dy > 0 &&
+              source_out_degree <= 1 &&
+              target_in_degree > 1 &&
+              edge.label is None
             let route_points = if labeled_back_edge_detour {
               let (sx, sy) = flow_edge_anchor(source_box, 0, 1, false)
               let (tx, ty) = flow_edge_anchor(target_box, 0, -1, true)
@@ -3336,6 +3343,24 @@ fn render_ascii_flow_subgraphs(
                 { x: target_anchor_x, y: target_anchor_y },
               ]
             } else if labeled_left_descending_detour {
+              let (sx, sy) = flow_edge_anchor(source_box, center_dx, 0, false)
+              let (tx, ty) = flow_edge_anchor(target_box, 0, center_dy, true)
+              source_anchor_x = sx
+              source_anchor_y = sy
+              target_anchor_x = tx
+              target_anchor_y = ty
+              let shared_source_x = (source_box.left - 3).max(
+                target_anchor_x + 1,
+              )
+              let bend_y = (source_anchor_y + target_anchor_y) / 2 + 1
+              flow_compact_route_points([
+                { x: source_anchor_x, y: source_anchor_y },
+                { x: shared_source_x, y: source_anchor_y },
+                { x: shared_source_x, y: bend_y },
+                { x: target_anchor_x, y: bend_y },
+                { x: target_anchor_x, y: target_anchor_y },
+              ])
+            } else if unlabeled_left_descending_detour {
               let (sx, sy) = flow_edge_anchor(source_box, center_dx, 0, false)
               let (tx, ty) = flow_edge_anchor(target_box, 0, center_dy, true)
               source_anchor_x = sx
