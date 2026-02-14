@@ -3102,6 +3102,52 @@ fn render_ascii_flow_subgraphs(
   }
   let mapped_groups = if !state_layout_mode &&
     flow_with_subgraphs &&
+    !flow_direction_horizontal {
+    let top_level_has_direct_nodes : Map[String, Bool] = {}
+    for subgraph in graph.subgraphs {
+      top_level_has_direct_nodes[subgraph.id] = subgraph.node_ids.length() > 0
+    }
+    let top_level_has_external_edge : Map[String, Bool] = {}
+    for edge in graph.edges {
+      match
+        (
+          node_top_level_group_by_id.get(edge.source),
+          node_top_level_group_by_id.get(edge.target),
+        ) {
+        (Some(source_group_id), Some(target_group_id)) =>
+          if source_group_id != target_group_id {
+            top_level_has_external_edge[source_group_id] = true
+            top_level_has_external_edge[target_group_id] = true
+          }
+        (Some(source_group_id), None) =>
+          top_level_has_external_edge[source_group_id] = true
+        (None, Some(target_group_id)) =>
+          top_level_has_external_edge[target_group_id] = true
+        _ => ()
+      }
+    }
+    let grown_groups : Array[AsciiFlowGroupBox] = []
+    for group in mapped_groups {
+      let has_direct_nodes = match top_level_has_direct_nodes.get(group.id) {
+        Some(value) => value
+        None => true
+      }
+      let has_external_edge = match top_level_has_external_edge.get(group.id) {
+        Some(value) => value
+        None => false
+      }
+      if group.children.length() > 0 && !has_direct_nodes && has_external_edge {
+        grown_groups.push(grow_ascii_flow_group_bottom(group, 1))
+      } else {
+        grown_groups.push(group)
+      }
+    }
+    grown_groups
+  } else {
+    mapped_groups
+  }
+  let mapped_groups = if !state_layout_mode &&
+    flow_with_subgraphs &&
     flow_direction_horizontal {
     let has_single_nested_top_group = graph.subgraphs.length() == 1 &&
       graph.subgraphs[0].children.length() > 0
