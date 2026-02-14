@@ -3029,7 +3029,12 @@ fn render_ascii_flow_subgraphs(
             source_anchor_y = source_box.top + source_box.height / 2
             target_anchor_x = source_box.left + 2
             target_anchor_y = source_box.top + source_box.height - 1
-            let loop_right_x = source_anchor_x + 2
+            let source_total_out = option_int_or(
+              non_state_out_degree_by_source.get(edge.source),
+              0,
+            )
+            let loop_extra = if source_total_out > 1 { 3 } else { 2 }
+            let loop_right_x = source_anchor_x + loop_extra
             let loop_bottom_y = target_anchor_y + 2
             let route_points = [
               Point::{ x: source_anchor_x, y: source_anchor_y },
