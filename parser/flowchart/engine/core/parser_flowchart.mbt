@@ -15,10 +15,24 @@ fn parse_flow_direction(header : String) -> Direction? {
 }
 
 ///|
+fn strip_node_metadata(raw_token : String) -> String {
+  let token = raw_token.trim().to_string()
+  match token.find("@{") {
+    Some(index) =>
+      if token.has_suffix("}") {
+        @parser_common_engine_core.trim_owned((try! token[:index]).to_string())
+      } else {
+        token
+      }
+    None => token
+  }
+}
+
+///|
 fn split_node_and_class(raw_token : String) -> (String, String?) {
   lexmatch raw_token[:] {
     (token, ":::", class_name) => {
-      let t = token.trim().to_string()
+      let t = strip_node_metadata(token.trim().to_string())
       let c = class_name.trim().to_string()
       if c == "" {
         (t, None)
@@ -26,7 +40,7 @@ fn split_node_and_class(raw_token : String) -> (String, String?) {
         (t, Some(c))
       }
     }
-    _ => (raw_token.trim().to_string(), None)
+    _ => (strip_node_metadata(raw_token.trim().to_string()), None)
   }
 }
 
@@ -120,6 +134,155 @@ fn split_parallel_nodes_with_classes(
     entries.push(parse_node_and_class(part))
   }
   entries
+}
+
+///|
+fn is_clean_flow_node_token(raw_token : String) -> Bool {
+  let token = raw_token.trim().to_string()
+  if token == "" || token.contains("@{") {
+    return false
+  }
+
+  let parsed = @parser_common_engine_core.parse_node_token(token)
+  if !is_subgraph_id_token(parsed.id) {
+    return false
+  }
+
+  if parsed.shape == Rectangle && parsed.label == parsed.id {
+    return token == parsed.id
+  }
+
+  if parsed.id.length() >= token.length() {
+    return false
+  }
+
+  let delimiter = token[parsed.id.length()]
+  delimiter == '[' || delimiter == '(' || delimiter == '{' || delimiter == '>'
+}
+
+///|
+fn is_clean_parallel_node_group(segment : String) -> Bool {
+  let parts = split_parallel_node_segments(segment)
+  if parts.length() == 0 {
+    return false
+  }
+
+  for part in parts {
+    let trimmed = part.trim().to_string()
+    if trimmed == "" || trimmed.contains("@{") {
+      return false
+    }
+    let (token, _) = split_node_and_class(trimmed)
+    if !is_clean_flow_node_token(token) {
+      return false
+    }
+  }
+  true
+}
+
+///|
+fn leading_node_token(raw_line : String) -> String {
+  let line = @parser_common_engine_core.trim_owned(raw_line)
+  if line == "" {
+    return ""
+  }
+
+  let mut square_depth = 0
+  let mut round_depth = 0
+  let mut curly_depth = 0
+  let mut in_single_quote = false
+  let mut in_double_quote = false
+  let mut end_index = line.length()
+
+  for i in 0..<line.length() {
+    let unit = line[i]
+    if unit == '"' && !in_single_quote {
+      in_double_quote = !in_double_quote
+      continue
+    }
+    if unit == '\'' && !in_double_quote {
+      in_single_quote = !in_single_quote
+      continue
+    }
+    if in_single_quote || in_double_quote {
+      continue
+    }
+    if unit == '[' {
+      square_depth = square_depth + 1
+      continue
+    }
+    if unit == ']' {
+      if square_depth > 0 {
+        square_depth = square_depth - 1
+      }
+      continue
+    }
+    if unit == '(' {
+      round_depth = round_depth + 1
+      continue
+    }
+    if unit == ')' {
+      if round_depth > 0 {
+        round_depth = round_depth - 1
+      }
+      continue
+    }
+    if unit == '{' {
+      curly_depth = curly_depth + 1
+      continue
+    }
+    if unit == '}' {
+      if curly_depth > 0 {
+        curly_depth = curly_depth - 1
+      }
+      continue
+    }
+    if (unit == ' ' || unit == '\t') &&
+      square_depth == 0 &&
+      round_depth == 0 &&
+      curly_depth == 0 {
+      end_index = i
+      break
+    }
+  }
+
+  if end_index == 0 {
+    ""
+  } else {
+    (try! line[:end_index]).to_string()
+  }
+}
+
+///|
+fn parse_leading_node_entry(line : String) -> (MermaidNode, String?)? {
+  let trimmed = @parser_common_engine_core.trim_owned(line)
+  if trimmed == "" {
+    return None
+  }
+
+  let token = leading_node_token(trimmed)
+  if token == "" {
+    None
+  } else {
+    Some(parse_node_and_class(token))
+  }
+}
+
+///|
+fn ensure_leading_node_only(
+  line : String,
+  nodes : Map[String, MermaidNode],
+  class_assignments : Map[String, String],
+) -> Array[String] {
+  let touched_node_ids : Array[String] = []
+  match parse_leading_node_entry(line) {
+    Some(entry) => {
+      let touched = ensure_nodes_from_entries(nodes, class_assignments, [entry])
+      push_unique_node_ids(touched_node_ids, touched)
+    }
+    None => ()
+  }
+  touched_node_ids
 }
 
 ///|
@@ -244,6 +407,18 @@ test "split_node_and_class" {
       #|("B", Some("highlight"))
     ),
   )
+  debug_inspect(
+    split_node_and_class("start@{shape: f-circ}"),
+    content=(
+      #|("start", None)
+    ),
+  )
+  debug_inspect(
+    split_node_and_class("accept@{shape: dbl-circ}:::final"),
+    content=(
+      #|("accept", Some("final"))
+    ),
+  )
 }
 
 ///|
@@ -302,6 +477,53 @@ test "is_subgraph_id_token" {
   assert_false(is_subgraph_id_token("a.b"))
   assert_false(is_subgraph_id_token("a:b"))
   assert_false(is_subgraph_id_token("a[b]"))
+}
+
+///|
+test "parse_flow_line skips malformed edge labels and metadata edge tails" {
+  let nodes : Map[String, MermaidNode] = {}
+  let edges : Array[MermaidEdge] = []
+  let class_defs : Map[String, Map[String, String]] = {}
+  let class_assignments : Map[String, String] = {}
+  let node_styles : Map[String, Map[String, String]] = {}
+
+  ignore(
+    parse_flow_line(
+      "start@{shape: f-circ} --- 0", nodes, edges, class_defs, class_assignments,
+      node_styles,
+    ),
+  )
+  assert_true(nodes.contains("start"))
+  assert_false(nodes.contains("0"))
+  assert_eq(edges.length(), 0)
+
+  ignore(
+    parse_flow_line(
+      "0 -- [a-b] --> 3", nodes, edges, class_defs, class_assignments, node_styles,
+    ),
+  )
+  assert_true(nodes.contains("0"))
+  assert_false(nodes.contains("3"))
+  assert_eq(edges.length(), 0)
+
+  ignore(
+    parse_flow_line(
+      "5 --- #0@{shape: dbl-circ}", nodes, edges, class_defs, class_assignments,
+      node_styles,
+    ),
+  )
+  assert_true(nodes.contains("5"))
+  assert_false(nodes.contains("#0"))
+  assert_eq(edges.length(), 0)
+
+  ignore(
+    parse_flow_line(
+      "A --> B", nodes, edges, class_defs, class_assignments, node_styles,
+    ),
+  )
+  assert_true(nodes.contains("A"))
+  assert_true(nodes.contains("B"))
+  assert_eq(edges.length(), 1)
 }
 
 ///|
@@ -520,6 +742,9 @@ fn parse_flow_line(
       let left_segment = @parser_common_engine_core.trim_owned(
         (try! line[:found.index]).to_string(),
       )
+      if !is_clean_parallel_node_group(left_segment) {
+        return ensure_leading_node_only(line, nodes, class_assignments)
+      }
       let mut current_sources = ensure_nodes_from_entries(
         nodes,
         class_assignments,
@@ -540,6 +765,10 @@ fn parse_flow_line(
             let target_segment = @parser_common_engine_core.trim_owned(
               (try! rhs_without_label[:next_found.index]).to_string(),
             )
+            if !is_clean_parallel_node_group(target_segment) {
+              done = true
+              continue
+            }
             let next_targets = ensure_nodes_from_entries(
               nodes,
               class_assignments,
@@ -557,6 +786,10 @@ fn parse_flow_line(
             )
           }
           None => {
+            if !is_clean_parallel_node_group(rhs_without_label) {
+              done = true
+              continue
+            }
             let final_targets = ensure_nodes_from_entries(
               nodes,
               class_assignments,
