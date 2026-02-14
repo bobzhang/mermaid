@@ -562,6 +562,41 @@ fn flow_non_state_shared_back_edge_route_points(
 }
 
 ///|
+fn flow_has_two_by_two_fanout_fanin(
+  source_id : String,
+  target_id : String,
+  out_degree_by_source : Map[String, Int],
+  in_degree_by_target : Map[String, Int],
+  targets_by_source : Map[String, Array[String]],
+) -> Bool {
+  if option_int_or(out_degree_by_source.get(source_id), 0) < 2 ||
+    option_int_or(in_degree_by_target.get(target_id), 0) < 2 {
+    return false
+  }
+  let source_targets = match targets_by_source.get(source_id) {
+    Some(targets) => targets
+    None => return false
+  }
+  for other_target in source_targets {
+    if other_target == target_id ||
+      option_int_or(in_degree_by_target.get(other_target), 0) < 2 {
+      continue
+    }
+    for other_source, other_targets in targets_by_source {
+      if other_source == source_id ||
+        option_int_or(out_degree_by_source.get(other_source), 0) < 2 {
+        continue
+      }
+      if other_targets.contains(target_id) &&
+        other_targets.contains(other_target) {
+        return true
+      }
+    }
+  }
+  false
+}
+
+///|
 fn flow_non_state_edge_span(start : Point, ending : Point) -> Int {
   (ending.x - start.x).abs() + (ending.y - start.y).abs()
 }
@@ -3067,6 +3102,7 @@ fn render_ascii_flow_subgraphs(
   let non_state_out_degree_by_source : Map[String, Int] = {}
   let non_state_in_degree_by_target : Map[String, Int] = {}
   let non_state_has_labeled_incoming_target : Map[String, Bool] = {}
+  let non_state_targets_by_source : Map[String, Array[String]] = {}
   if !state_layout_mode {
     for edge in graph.edges {
       let current = option_int_or(
@@ -3074,6 +3110,13 @@ fn render_ascii_flow_subgraphs(
         0,
       )
       non_state_out_degree_by_source[edge.source] = current + 1
+      if !non_state_targets_by_source.contains(edge.source) {
+        non_state_targets_by_source[edge.source] = []
+      }
+      let targets = non_state_targets_by_source[edge.source]
+      if !targets.contains(edge.target) {
+        targets.push(edge.target)
+      }
       let target_current = option_int_or(
         non_state_in_degree_by_target.get(edge.target),
         0,
@@ -3234,7 +3277,25 @@ fn render_ascii_flow_subgraphs(
               non_state_in_degree_by_target.get(edge.target),
               0,
             )
-            let merge_target = false
+            let target_out_degree = option_int_or(
+              non_state_out_degree_by_source.get(edge.target),
+              0,
+            )
+            let merge_target = !horizontal_state_flow_mode &&
+              !flow_with_subgraphs &&
+              flow_direction_horizontal &&
+              center_dx > 0 &&
+              center_dy == 0 &&
+              target_out_degree <= 1 &&
+              !non_state_has_labeled_incoming_target.contains(edge.target) &&
+              edge.label is None &&
+              flow_has_two_by_two_fanout_fanin(
+                edge.source,
+                edge.target,
+                non_state_out_degree_by_source,
+                non_state_in_degree_by_target,
+                non_state_targets_by_source,
+              )
             let merge_primary_edge = merge_target && center_dy == 0
             merge_secondary_edge = merge_target && center_dy != 0
             if merge_primary_edge {
@@ -3289,6 +3350,18 @@ fn render_ascii_flow_subgraphs(
               source_out_degree <= 1 &&
               target_in_degree > 1 &&
               edge.label is None
+            let square_cross_detour = flow_direction_horizontal &&
+              !flow_with_subgraphs &&
+              center_dx > 0 &&
+              center_dy != 0 &&
+              edge.label is None &&
+              flow_has_two_by_two_fanout_fanin(
+                edge.source,
+                edge.target,
+                non_state_out_degree_by_source,
+                non_state_in_degree_by_target,
+                non_state_targets_by_source,
+              )
             let route_points = if labeled_back_edge_detour {
               let (sx, sy) = flow_edge_anchor(source_box, 0, 1, false)
               let (tx, ty) = flow_edge_anchor(target_box, 0, -1, true)
@@ -3376,6 +3449,30 @@ fn render_ascii_flow_subgraphs(
                 { x: shared_source_x, y: source_anchor_y },
                 { x: shared_source_x, y: bend_y },
                 { x: target_anchor_x, y: bend_y },
+                { x: target_anchor_x, y: target_anchor_y },
+              ])
+            } else if square_cross_detour {
+              let source_anchor = if center_dy > 0 {
+                flow_edge_anchor(source_box, 0, 1, false)
+              } else {
+                flow_edge_anchor(source_box, 0, -1, false)
+              }
+              let target_anchor = flow_edge_anchor(
+                target_box, center_dx, 0, true,
+              )
+              let (sx, sy) = source_anchor
+              let (tx, ty) = target_anchor
+              source_anchor_x = sx
+              source_anchor_y = sy
+              target_anchor_x = tx
+              target_anchor_y = ty
+              let shared_x = (target_box.left - 3).max(source_anchor_x + 1)
+              let bend_y = (source_center_y + target_center_y) / 2
+              flow_compact_route_points([
+                { x: source_anchor_x, y: source_anchor_y },
+                { x: source_anchor_x, y: bend_y },
+                { x: shared_x, y: bend_y },
+                { x: shared_x, y: target_anchor_y },
                 { x: target_anchor_x, y: target_anchor_y },
               ])
             } else if merge_primary_edge {
@@ -3487,7 +3584,9 @@ fn render_ascii_flow_subgraphs(
               )
             }
             if options.use_ascii {
-              if flow_with_subgraphs && !flow_direction_horizontal {
+              if square_cross_detour {
+                flow_mark_ascii_route_bends(canvas, non_state_route_points)
+              } else if flow_with_subgraphs && !flow_direction_horizontal {
                 flow_mark_ascii_route_bends(canvas, non_state_route_points)
               } else if !flow_with_subgraphs &&
                 flow_direction_horizontal &&
