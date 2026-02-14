@@ -1690,15 +1690,13 @@ fn flow_expand_group_side_padding_for_nodes(
       right = desired_right
     }
   }
-  let extra_bottom_padding = if adjusted_children.length() > 0 { 1 } else { 0 }
-
   {
     id: group.id,
     label: group.label,
     left,
     top: group.top,
     width: right - left + 1,
-    height: group.height + extra_bottom_padding,
+    height: group.height,
     children: adjusted_children,
   }
 }
