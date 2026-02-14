@@ -87,26 +87,32 @@ fn collect_non_state_flow_ranks(
     return (rank_by_id, 0)
   }
 
-  for _ in 0..<nodes_in_order.length() {
-    let mut changed = false
+  for node in nodes_in_order {
+    let target_order = option_int_or(node_order_by_id.get(node.id), -1)
+    if target_order < 0 {
+      continue
+    }
+    let mut has_forward_incoming = false
+    let mut best_rank = 0
     for edge in edges {
-      match
-        (node_order_by_id.get(edge.source), node_order_by_id.get(edge.target)) {
-        (Some(source_order), Some(target_order)) =>
+      if edge.target != node.id {
+        continue
+      }
+      match node_order_by_id.get(edge.source) {
+        Some(source_order) =>
           if target_order > source_order {
             let source_rank = option_int_or(rank_by_id.get(edge.source), 0)
-            let target_rank = option_int_or(rank_by_id.get(edge.target), 0)
             let candidate_rank = source_rank + 1
-            if candidate_rank > target_rank {
-              rank_by_id[edge.target] = candidate_rank
-              changed = true
+            if !has_forward_incoming || candidate_rank < best_rank {
+              best_rank = candidate_rank
+              has_forward_incoming = true
             }
           }
-        _ => ()
+        None => ()
       }
     }
-    if !changed {
-      break
+    if has_forward_incoming {
+      rank_by_id[node.id] = best_rank
     }
   }
 

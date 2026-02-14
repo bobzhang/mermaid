@@ -2494,8 +2494,20 @@ fn render_ascii_flow_subgraphs(
   let mapped_nodes : Array[AsciiFlowNodeBox] = []
   let node_layout_x_by_id : Map[String, Int] = {}
   let node_column_key_by_id : Map[String, Int] = {}
-  let flow_horizontal_subgraph_node_inset = 0
-  let flow_horizontal_subgraph_node_vshift = 0
+  let flow_horizontal_subgraph_node_inset = if !state_layout_mode &&
+    flow_with_subgraphs &&
+    flow_direction_horizontal {
+    1
+  } else {
+    0
+  }
+  let flow_horizontal_subgraph_node_vshift = if !state_layout_mode &&
+    flow_with_subgraphs &&
+    flow_direction_horizontal {
+    1
+  } else {
+    0
+  }
   for node in positioned.nodes {
     node_layout_x_by_id[node.id] = node.x
     let label = flow_node_label(node)
@@ -3085,22 +3097,11 @@ fn render_ascii_flow_subgraphs(
               non_state_out_degree_by_source.get(edge.source),
               0,
             )
-            let target_out_degree = option_int_or(
-              non_state_out_degree_by_source.get(edge.target),
-              0,
-            )
             let target_in_degree = option_int_or(
               non_state_in_degree_by_target.get(edge.target),
               0,
             )
-            let merge_target = !horizontal_state_flow_mode &&
-              !flow_with_subgraphs &&
-              flow_direction_horizontal &&
-              center_dx > 0 &&
-              target_in_degree > 1 &&
-              target_out_degree <= 1 &&
-              !non_state_has_labeled_incoming_target.contains(edge.target) &&
-              edge.label is None
+            let merge_target = false
             let merge_primary_edge = merge_target && center_dy == 0
             merge_secondary_edge = merge_target && center_dy != 0
             if merge_primary_edge {
@@ -3110,7 +3111,7 @@ fn render_ascii_flow_subgraphs(
               if horizontal_state_flow_mode && center_dx != 0 && center_dy < 0 {
                 true
               } else if !flow_with_subgraphs &&
-                center_dy != 0 &&
+                center_dy > 0 &&
                 center_dx > 0 &&
                 (source_out_degree > 1 || target_in_degree > 1) {
                 false
