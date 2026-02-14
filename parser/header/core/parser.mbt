@@ -13,7 +13,7 @@ fn preprocess_lines(text : String) -> Array[String] {
       continue
     }
     if at_start {
-      if line == "" {
+      if line == "" || line.has_prefix("%%") {
         continue
       }
       if line == "---" {
