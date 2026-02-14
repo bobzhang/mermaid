@@ -22,10 +22,7 @@ async fn repos_markdown_files_from(
 #cfg(target="native")
 async fn repos_markdown_files() -> Array[String] {
   let roots = [
-    ".repos/mermaid/docs/syntax",
-    ".repos/mermaid/docs/intro",
-    ".repos/mermaid/packages/mermaid/src/docs/syntax",
-    ".repos/mermaid/packages/mermaid/src/docs/intro",
+    ".repos/mermaid/docs", ".repos/mermaid/packages/mermaid/src/docs",
   ]
   let files : Array[String] = []
   for root in roots {
@@ -59,11 +56,29 @@ fn repos_extract_mermaid_blocks(markdown : String) -> Array[String] {
 
 ///|
 fn repos_first_non_comment_line(source : String) -> String {
-  for line in source.split("\n") {
-    let trimmed = line.trim().to_string()
+  let lines = source.split("\n").to_array()
+  let mut i = 0
+  while i < lines.length() {
+    let trimmed = lines[i].to_string().trim().to_string()
+    if trimmed == "" || trimmed.has_prefix("%%") {
+      i += 1
+      continue
+    }
+    if trimmed == "---" {
+      i += 1
+      while i < lines.length() {
+        if lines[i].to_string().trim().to_string() == "---" {
+          i += 1
+          break
+        }
+        i += 1
+      }
+      continue
+    }
     if trimmed != "" && !trimmed.has_prefix("%%") {
       return trimmed
     }
+    i += 1
   }
   ""
 }

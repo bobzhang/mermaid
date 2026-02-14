@@ -85,17 +85,24 @@ test "Parser accepts all supported flowchart directions" {
 }
 
 ///|
-test "Parser rejects flowchart header without direction" {
-  let result : Result[
-    @beautiful_mermaid.MermaidGraph,
-    @beautiful_mermaid.MermaidError,
-  ] = try? @parser_header_core.parse_mermaid(
+test "Parser accepts graph/flowchart headers without direction" {
+  let graph_default = @parser_header_core.parse_mermaid(
     (
       #|graph
       #|A --> B
     ),
   )
-  assert_true(result is Err(_))
+  assert_eq(graph_default.direction.to_string(), "TD")
+  assert_eq(graph_default.edges.length(), 1)
+
+  let flowchart_default = @parser_header_core.parse_mermaid(
+    (
+      #|flowchart
+      #|A --> B
+    ),
+  )
+  assert_eq(flowchart_default.direction.to_string(), "TD")
+  assert_eq(flowchart_default.edges.length(), 1)
 }
 
 ///|

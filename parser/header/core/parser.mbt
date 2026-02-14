@@ -47,7 +47,10 @@ pub fn parse_mermaid(text : String) -> MermaidGraph raise MermaidError {
     raise ParseFailure("Mermaid input is empty")
   }
   let header = lines[0].replace_all(old="\t", new=" ").to_lower()
-  if header.has_prefix("graph ") || header.has_prefix("flowchart ") {
+  if header == "graph" ||
+    header == "flowchart" ||
+    header.has_prefix("graph ") ||
+    header.has_prefix("flowchart ") {
     return @parser_flowchart_core.parse_flowchart(lines)
   }
   if header == "statediagram" || header == "statediagram-v2" {

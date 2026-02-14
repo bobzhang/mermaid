@@ -2,6 +2,7 @@
 fn parse_flow_direction(header : String) -> Direction? {
   let normalized = header.replace_all(old="\t", new=" ")
   lexmatch normalized[:] {
+    ("[[:space:]]*" "(?i:graph|flowchart)" "[[:space:]]*") => Some(TD)
     (
       "[[:space:]]*"
       "(?i:graph|flowchart)"
@@ -433,9 +434,10 @@ test "parse_flow_direction" {
   assert_eq(parse_flow_direction("  flowchart   BT  "), Some(BT))
   // tab replaced
   assert_eq(parse_flow_direction("flowchart\tLR"), Some(LR))
-  // missing direction
-  assert_eq(parse_flow_direction("flowchart"), None)
-  assert_eq(parse_flow_direction("flowchart "), None)
+  // missing direction defaults to TD
+  assert_eq(parse_flow_direction("flowchart"), Some(TD))
+  assert_eq(parse_flow_direction("flowchart "), Some(TD))
+  assert_eq(parse_flow_direction("graph"), Some(TD))
   // invalid direction token
   assert_eq(parse_flow_direction("flowchart XX"), None)
   // unrelated string
