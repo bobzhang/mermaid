@@ -50,13 +50,10 @@ test "available_theme_list includes representative built-in slugs" {
 }
 
 ///|
-test "canonical_cli_theme_slug handles aliases and normalization" {
-  assert_eq(@themes.canonical_theme_slug("default"), Some("zinc-light"))
-  assert_eq(
-    @themes.canonical_theme_slug("__github_dark__"),
-    Some("github-dark"),
-  )
-  assert_eq(@themes.canonical_theme_slug("moonbit-neon"), None)
+test "theme_by_name handles aliases and normalization" {
+  assert_true(@themes.theme_by_name("default") is Some(_))
+  assert_true(@themes.theme_by_name("__github_dark__") is Some(_))
+  assert_true(@themes.theme_by_name("moonbit-neon") is None)
 }
 
 ///|

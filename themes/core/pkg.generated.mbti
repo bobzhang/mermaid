@@ -8,8 +8,6 @@ import {
 // Values
 pub fn built_in_theme_slugs_csv() -> String
 
-pub fn canonical_theme_slug(String) -> String?
-
 pub fn theme_by_name(String) -> @model.DiagramColors?
 
 // Errors

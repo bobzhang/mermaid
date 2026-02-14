@@ -816,11 +816,11 @@ pub fn run() -> Unit {
 
   let rendered_svg = match theme_slug {
     Some(slug) =>
-      match @themes.canonical_theme_slug(slug) {
-        Some(canonical_slug) =>
+      match @themes.theme_by_name(slug) {
+        Some(_) =>
           try? @beautiful_mermaid.render_mermaid_with_theme_name(
             input,
-            canonical_slug,
+            slug,
             options=svg_options,
           )
         None => {

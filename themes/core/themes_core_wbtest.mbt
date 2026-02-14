@@ -117,25 +117,25 @@ test "Theme lookup by name returns colors or none" {
 }
 
 ///|
-test "canonical_theme_slug indicates whether a theme is supported" {
-  assert_true(canonical_theme_slug("tokyo-night") is Some(_))
-  assert_true(canonical_theme_slug("TOKYO NIGHT") is Some(_))
-  assert_true(canonical_theme_slug("default") is Some(_))
-  assert_true(canonical_theme_slug("tokyo\t night") is Some(_))
-  assert_true(canonical_theme_slug(github_newline_dark()) is Some(_))
-  assert_true(canonical_theme_slug("github-neon") is None)
+test "theme_by_name indicates whether a theme is supported" {
+  assert_true(theme_by_name("tokyo-night") is Some(_))
+  assert_true(theme_by_name("TOKYO NIGHT") is Some(_))
+  assert_true(theme_by_name("default") is Some(_))
+  assert_true(theme_by_name("tokyo\t night") is Some(_))
+  assert_true(theme_by_name(github_newline_dark()) is Some(_))
+  assert_true(theme_by_name("github-neon") is None)
 }
 
 ///|
-test "canonical_theme_slug returns normalized slug or none" {
-  assert_eq(canonical_theme_slug("TOKYO   NIGHT"), Some("tokyo-night"))
-  assert_eq(canonical_theme_slug("DEFAULT"), Some("zinc-light"))
-  assert_eq(canonical_theme_slug("__github_dark__"), Some("github-dark"))
-  assert_eq(canonical_theme_slug("github__dark"), Some("github-dark"))
-  assert_eq(canonical_theme_slug("tokyo\t night"), Some("tokyo-night"))
-  assert_eq(canonical_theme_slug(github_newline_dark()), Some("github-dark"))
-  assert_eq(canonical_theme_slug("one-dark"), Some("one-dark"))
-  assert_eq(canonical_theme_slug("github-neon"), None)
+test "theme_by_name resolves aliases and normalized names" {
+  assert_true(theme_by_name("TOKYO   NIGHT") is Some(_))
+  assert_true(theme_by_name("DEFAULT") is Some(_))
+  assert_true(theme_by_name("__github_dark__") is Some(_))
+  assert_true(theme_by_name("github__dark") is Some(_))
+  assert_true(theme_by_name("tokyo\t night") is Some(_))
+  assert_true(theme_by_name(github_newline_dark()) is Some(_))
+  assert_true(theme_by_name("one-dark") is Some(_))
+  assert_true(theme_by_name("github-neon") is None)
 }
 
 ///|

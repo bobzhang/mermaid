@@ -116,7 +116,6 @@ test {
 ## Built-in Themes
 
 Use built-in theme presets by name directly in `render_mermaid_with_theme_name`.
-Use `canonical_theme_slug(name)` in CLI/tooling code to normalize user input.
 `default` is accepted as an alias for `zinc-light`.
 Use `built_in_theme_slugs_csv()` when you need a CLI-friendly list string.
 Available slugs: `zinc-light`, `zinc-dark`, `tokyo-night`, `tokyo-night-storm`, `tokyo-night-light`, `catppuccin-mocha`, `catppuccin-latte`, `nord`, `nord-light`, `dracula`, `github-light`, `github-dark`, `solarized-light`, `solarized-dark`, `one-dark`.

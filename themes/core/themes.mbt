@@ -272,15 +272,6 @@ pub fn theme_by_name(name : String) -> DiagramColors? {
 }
 
 ///|
-/// Return the canonical slug for a user theme name, if it resolves.
-pub fn canonical_theme_slug(name : String) -> String? {
-  match parse_theme_name(name) {
-    Some(theme) => Some(theme_slug(theme))
-    None => None
-  }
-}
-
-///|
 /// Return all built-in themes in stable display order.
 fn built_in_themes() -> Array[ThemeName] {
   [
