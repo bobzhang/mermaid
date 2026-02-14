@@ -47,10 +47,6 @@ test "simple_td" (it : @test.Test) {
       #|A --> B
     ),
   )
-  assert_true(svg.has_prefix("<svg "))
-  assert_true(svg.has_suffix("</svg>"))
-  assert_true(svg.contains(">A</text>"))
-  assert_true(svg.contains(">B</text>"))
   it.write(svg)
   it.snapshot(filename="simple_td.svg")
 }
@@ -67,9 +63,16 @@ test {
       #|A --> B
     ),
   )
-  assert_true(ascii.length() > 0)
-  assert_true(ascii.contains("A"))
-  assert_true(ascii.contains("B"))
+  inspect(
+    ascii,
+    content=(
+      #|┌───┐     ┌───┐
+      #|│   │     │   │
+      #|│ A ├────►│ B │
+      #|│   │     │   │
+      #|└───┘     └───┘
+    ),
+  )
 }
 ```
 
