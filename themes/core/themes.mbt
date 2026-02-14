@@ -1,5 +1,5 @@
 ///|
-/// Built-in theme identifiers for `render_mermaid_with_theme`.
+/// Built-in theme identifiers for `render_mermaid_with_theme_name`.
 pub enum ThemeName {
   ZincLight
   ZincDark

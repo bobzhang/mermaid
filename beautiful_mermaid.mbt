@@ -15,22 +15,6 @@ fn option_bool_or(value : Bool?, fallback : Bool) -> Bool {
 }
 
 ///|
-/// Return the package default colors (`#FFFFFF` background, `#27272A` foreground).
-/// Use this when building custom theme presets.
-///
-/// # Example
-/// ```mbt check
-/// test {
-///   let colors = default_colors()
-///   assert_eq(colors.bg, "#FFFFFF")
-///   assert_eq(colors.fg, "#27272A")
-/// }
-/// ```
-pub fn default_colors() -> DiagramColors {
-  DiagramColors::default()
-}
-
-///|
 fn option_color_or(value : String?, fallback : String?) -> String? {
   match value {
     Some(found) => Some(found)
@@ -40,7 +24,7 @@ fn option_color_or(value : String?, fallback : String?) -> String? {
 
 ///|
 /// Resolve a full `DiagramColors` value from `RenderOptions`.
-/// Missing `bg`/`fg` values fall back to `default_colors()`.
+/// Missing `bg`/`fg` values fall back to `DiagramColors::default()`.
 fn build_colors(options : RenderOptions) -> DiagramColors {
   let defaults = DiagramColors::default()
   {
@@ -57,7 +41,7 @@ fn build_colors(options : RenderOptions) -> DiagramColors {
 ///|
 /// Merge user `options` with an explicit color palette.
 /// Explicit values in `options` win; missing color fields are filled from `colors`.
-pub fn merge_options_with_colors(
+fn merge_options_with_colors(
   options : RenderOptions,
   colors : DiagramColors,
 ) -> RenderOptions {
@@ -110,23 +94,13 @@ pub fn render_mermaid(
 
 ///|
 /// Render SVG using an explicit color palette, plus optional non-color options.
-pub fn render_mermaid_with_colors(
+fn render_mermaid_with_colors(
   text : String,
   colors : DiagramColors,
   options? : RenderOptions = RenderOptions::default(),
 ) -> String raise MermaidError {
   let merged = merge_options_with_colors(options, colors)
   render_mermaid(text, options=merged)
-}
-
-///|
-/// Render SVG with a built-in `ThemeName` palette.
-pub fn render_mermaid_with_theme(
-  text : String,
-  theme : @themes.ThemeName,
-  options? : RenderOptions = RenderOptions::default(),
-) -> String raise MermaidError {
-  render_mermaid_with_colors(text, @themes.theme_colors(theme), options~)
 }
 
 ///|

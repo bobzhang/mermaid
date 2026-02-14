@@ -3,21 +3,12 @@ package "bobzhang/beautiful_mermaid"
 
 import {
   "bobzhang/beautiful_mermaid/model",
-  "bobzhang/beautiful_mermaid/themes/core",
 }
 
 // Values
-pub fn default_colors() -> @model.DiagramColors
-
-pub fn merge_options_with_colors(@model.RenderOptions, @model.DiagramColors) -> @model.RenderOptions
-
 pub fn render_mermaid(String, options? : @model.RenderOptions) -> String raise @model.MermaidError
 
 pub fn render_mermaid_ascii(String, options? : @model.AsciiRenderOptions) -> String raise @model.MermaidError
-
-pub fn render_mermaid_with_colors(String, @model.DiagramColors, options? : @model.RenderOptions) -> String raise @model.MermaidError
-
-pub fn render_mermaid_with_theme(String, @core.ThemeName, options? : @model.RenderOptions) -> String raise @model.MermaidError
 
 pub fn render_mermaid_with_theme_name(String, String, options? : @model.RenderOptions) -> String raise @model.MermaidError
 
