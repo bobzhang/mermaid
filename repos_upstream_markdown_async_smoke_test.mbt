@@ -202,7 +202,7 @@ async fn repos_verify_markdown_chunk(
 #cfg(target="native")
 async test "Upstream markdown supported corpus has enough cases" {
   let count = repos_supported_markdown_case_count()
-  assert_true(count >= 100)
+  assert_true(count >= 700)
 }
 
 ///|
