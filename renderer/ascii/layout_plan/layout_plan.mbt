@@ -958,18 +958,23 @@ fn build_state_flat_grid_layout(
 ///|
 fn build_flow_subgraph_layout(
   graph : @model.MermaidGraph,
+  options : @model.AsciiRenderOptions,
 ) -> AsciiFlowSubgraphLayout {
+  let layer_spacing = (options.padding_y + 5).max(5) * 9
   {
-    positioned: @layout.layout_graph_for_ascii(
-      graph,
-      @model.RenderOptions::default(),
-    ),
+    positioned: @layout.layout_graph_for_ascii(graph, {
+      ..@model.RenderOptions::default(),
+      layer_spacing: Some(layer_spacing),
+    }),
   }
 }
 
 ///|
 /// Builds an ASCII layout plan by detecting the diagram type.
-pub fn build_plan(graph : @model.MermaidGraph) -> AsciiLayoutPlan {
+pub fn build_plan(
+  graph : @model.MermaidGraph,
+  options : @model.AsciiRenderOptions,
+) -> AsciiLayoutPlan {
   let sequence_mode = graph_is_shape(graph, SequenceParticipant)
   if sequence_mode {
     return {
@@ -1033,7 +1038,7 @@ pub fn build_plan(graph : @model.MermaidGraph) -> AsciiLayoutPlan {
       class_layout: None,
       er_layout: None,
       state_flat_grid: None,
-      flow_subgraph: Some(build_flow_subgraph_layout(graph)),
+      flow_subgraph: Some(build_flow_subgraph_layout(graph, options)),
     }
   }
 
@@ -1045,7 +1050,7 @@ pub fn build_plan(graph : @model.MermaidGraph) -> AsciiLayoutPlan {
       class_layout: None,
       er_layout: None,
       state_flat_grid: None,
-      flow_subgraph: Some(build_flow_subgraph_layout(graph)),
+      flow_subgraph: Some(build_flow_subgraph_layout(graph, options)),
     }
   }
 
@@ -1056,6 +1061,6 @@ pub fn build_plan(graph : @model.MermaidGraph) -> AsciiLayoutPlan {
     class_layout: None,
     er_layout: None,
     state_flat_grid: None,
-    flow_subgraph: Some(build_flow_subgraph_layout(graph)),
+    flow_subgraph: Some(build_flow_subgraph_layout(graph, options)),
   }
 }

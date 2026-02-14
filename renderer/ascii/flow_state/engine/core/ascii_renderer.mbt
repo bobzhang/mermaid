@@ -1682,8 +1682,8 @@ fn flow_expand_indirect_nested_group_bottom_padding(
     top: group.top,
     width: group.width,
     height: group.height +
-      (if grow_bottom { 1 } else { 0 }) +
-      (if extra_bottom_for_indirect_chain { 1 } else { 0 }),
+    (if grow_bottom { 1 } else { 0 }) +
+    (if extra_bottom_for_indirect_chain { 1 } else { 0 }),
     children: adjusted_children,
   }
 }
@@ -3689,6 +3689,6 @@ pub fn render_ascii(
   graph : MermaidGraph,
   options : AsciiRenderOptions,
 ) -> String {
-  let plan = @renderer_ascii_layout_plan.build_plan(graph)
+  let plan = @renderer_ascii_layout_plan.build_plan(graph, options)
   render_ascii_plan(plan, options)
 }

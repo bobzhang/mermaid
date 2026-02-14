@@ -6,7 +6,7 @@ import {
 }
 
 // Values
-pub fn build_plan(@model.MermaidGraph) -> AsciiLayoutPlan
+pub fn build_plan(@model.MermaidGraph, @model.AsciiRenderOptions) -> AsciiLayoutPlan
 
 // Errors
 
