@@ -105,7 +105,6 @@ pub(all) struct MermaidSubgraph {
   children : Array[MermaidSubgraph]
   direction : Direction?
 }
-pub fn MermaidSubgraph::new(String, String, Array[String], children? : Array[Self], direction? : Direction) -> Self
 pub impl Eq for MermaidSubgraph
 pub impl Show for MermaidSubgraph
 pub impl ToJson for MermaidSubgraph
@@ -180,7 +179,6 @@ pub(all) struct PositionedGroup {
   height : Int
   children : Array[PositionedGroup]
 }
-pub fn PositionedGroup::new(String, String, Int, Int, Int, Int, children? : Array[Self]) -> Self
 pub impl Eq for PositionedGroup
 pub impl Show for PositionedGroup
 pub impl ToJson for PositionedGroup

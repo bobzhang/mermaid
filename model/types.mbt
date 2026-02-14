@@ -76,18 +76,6 @@ pub(all) struct MermaidSubgraph {
 } derive(Eq, Show, ToJson)
 
 ///|
-/// Convenience constructor for `MermaidSubgraph`.
-pub fn MermaidSubgraph::new(
-  id : String,
-  label : String,
-  node_ids : Array[String],
-  children? : Array[MermaidSubgraph] = [],
-  direction? : Direction,
-) -> MermaidSubgraph {
-  { id, label, node_ids, children, direction }
-}
-
-///|
 /// Sequence participant visual kind.
 pub(all) enum SequenceParticipantKind {
   Participant
@@ -287,20 +275,6 @@ pub(all) struct PositionedGroup {
   height : Int
   children : Array[PositionedGroup]
 } derive(Eq, Show, ToJson)
-
-///|
-/// Convenience constructor for `PositionedGroup`.
-pub fn PositionedGroup::new(
-  id : String,
-  label : String,
-  x : Int,
-  y : Int,
-  width : Int,
-  height : Int,
-  children? : Array[PositionedGroup] = [],
-) -> PositionedGroup {
-  { id, label, x, y, width, height, children }
-}
 
 ///|
 /// Sequence lifeline geometry for SVG/ASCII sequence renderers.

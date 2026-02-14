@@ -164,16 +164,44 @@ test "Coverage matrix parser malformed headers and bodies" {
 }
 
 ///|
-test "Coverage matrix types constructors are exercised" {
-  let sub = MermaidSubgraph::new("sg-id", "Subgraph", ["A", "B"], children=[
-    MermaidSubgraph::new("child", "Child", ["A"]),
-  ])
+test "Coverage matrix nested structs are exercised" {
+  let sub : MermaidSubgraph = {
+    id: "sg-id",
+    label: "Subgraph",
+    node_ids: ["A", "B"],
+    children: [
+      {
+        id: "child",
+        label: "Child",
+        node_ids: ["A"],
+        children: [],
+        direction: None,
+      },
+    ],
+    direction: None,
+  }
   assert_eq(sub.id, "sg-id")
   assert_eq(sub.children.length(), 1)
 
-  let group = PositionedGroup::new("g", "Group", 10, 20, 30, 40, children=[
-    PositionedGroup::new("nested", "Nested", 1, 2, 3, 4),
-  ])
+  let group : PositionedGroup = {
+    id: "g",
+    label: "Group",
+    x: 10,
+    y: 20,
+    width: 30,
+    height: 40,
+    children: [
+      {
+        id: "nested",
+        label: "Nested",
+        x: 1,
+        y: 2,
+        width: 3,
+        height: 4,
+        children: [],
+      },
+    ],
+  }
   assert_eq(group.id, "g")
   assert_eq(group.children.length(), 1)
 }
