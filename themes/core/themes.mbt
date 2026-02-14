@@ -176,28 +176,6 @@ fn theme_colors(theme : ThemeName) -> DiagramColors {
 }
 
 ///|
-/// Return the canonical slug for a built-in theme.
-fn theme_slug(theme : ThemeName) -> String {
-  match theme {
-    ZincLight => "zinc-light"
-    ZincDark => "zinc-dark"
-    TokyoNight => "tokyo-night"
-    TokyoNightStorm => "tokyo-night-storm"
-    TokyoNightLight => "tokyo-night-light"
-    CatppuccinMocha => "catppuccin-mocha"
-    CatppuccinLatte => "catppuccin-latte"
-    Nord => "nord"
-    NordLight => "nord-light"
-    Dracula => "dracula"
-    GithubLight => "github-light"
-    GithubDark => "github-dark"
-    SolarizedLight => "solarized-light"
-    SolarizedDark => "solarized-dark"
-    OneDark => "one-dark"
-  }
-}
-
-///|
 /// Normalize user theme input:
 /// lowercase, spaces/underscores to `-`, collapse repeated separators.
 fn normalize_theme_name(name : String) -> String {
@@ -269,32 +247,4 @@ pub fn theme_by_name(name : String) -> DiagramColors? {
     Some(theme) => Some(theme_colors(theme))
     None => None
   }
-}
-
-///|
-/// Return all built-in themes in stable display order.
-fn built_in_themes() -> Array[ThemeName] {
-  [
-    ZincLight,
-    ZincDark,
-    TokyoNight,
-    TokyoNightStorm,
-    TokyoNightLight,
-    CatppuccinMocha,
-    CatppuccinLatte,
-    Nord,
-    NordLight,
-    Dracula,
-    GithubLight,
-    GithubDark,
-    SolarizedLight,
-    SolarizedDark,
-    OneDark,
-  ]
-}
-
-///|
-/// Return built-in theme slugs as a comma-separated string.
-pub fn built_in_theme_slugs_csv() -> String {
-  built_in_themes().map(theme_slug).join(", ")
 }

@@ -64,7 +64,7 @@ fn cli_args_without_program() -> Array[String] {
 
 ///|
 fn available_theme_list() -> String {
-  "\{@themes.built_in_theme_slugs_csv()}, default"
+  "zinc-light, zinc-dark, tokyo-night, tokyo-night-storm, tokyo-night-light, catppuccin-mocha, catppuccin-latte, nord, nord-light, dracula, github-light, github-dark, solarized-light, solarized-dark, one-dark, default"
 }
 
 ///|

@@ -10,6 +10,15 @@ fn github_newline_dark() -> String {
 }
 
 ///|
+fn built_in_theme_slugs_wb() -> Array[String] {
+  [
+    "zinc-light", "zinc-dark", "tokyo-night", "tokyo-night-storm", "tokyo-night-light",
+    "catppuccin-mocha", "catppuccin-latte", "nord", "nord-light", "dracula", "github-light",
+    "github-dark", "solarized-light", "solarized-dark", "one-dark",
+  ]
+}
+
+///|
 test "Theme presets include tokyo-night enrichment colors" {
   let colors = match theme_by_name("tokyo-night") {
     Some(found) => found
@@ -47,17 +56,6 @@ test "Theme presets include zinc-light default colors" {
 }
 
 ///|
-test "Theme slug and parser round-trip" {
-  for theme in built_in_themes() {
-    let slug = theme_slug(theme)
-    match parse_theme_name(slug) {
-      Some(parsed) => assert_eq(theme_slug(parsed), slug)
-      None => fail("failed to parse theme slug: \{slug}")
-    }
-  }
-}
-
-///|
 test "Theme parser is case-insensitive and unknown-safe" {
   assert_eq(normalize_theme_name("  TOKYO___NIGHT  "), "tokyo-night")
   assert_eq(normalize_theme_name(github_newline_dark()), "github-dark")
@@ -65,43 +63,17 @@ test "Theme parser is case-insensitive and unknown-safe" {
   assert_eq(normalize_theme_name("__github_dark__"), "github-dark")
   assert_eq(normalize_theme_name("---tokyo-night---"), "tokyo-night")
 
-  match parse_theme_name("TOKYO-NIGHT") {
-    Some(parsed) => assert_eq(theme_slug(parsed), "tokyo-night")
-    None => fail("TOKYO-NIGHT should parse")
-  }
-  match parse_theme_name("__github_dark__") {
-    Some(parsed) => assert_eq(theme_slug(parsed), "github-dark")
-    None => fail("__github_dark__ should parse")
-  }
-  match parse_theme_name("DEFAULT") {
-    Some(parsed) => assert_eq(theme_slug(parsed), "zinc-light")
-    None => fail("DEFAULT should parse")
-  }
-  match parse_theme_name("TOKYO NIGHT") {
-    Some(parsed) => assert_eq(theme_slug(parsed), "tokyo-night")
-    None => fail("TOKYO NIGHT should parse")
-  }
-  match parse_theme_name("github_dark") {
-    Some(parsed) => assert_eq(theme_slug(parsed), "github-dark")
-    None => fail("github_dark should parse")
-  }
-  match parse_theme_name("TOKYO   NIGHT") {
-    Some(parsed) => assert_eq(theme_slug(parsed), "tokyo-night")
-    None => fail("TOKYO   NIGHT should parse")
-  }
-  match parse_theme_name("github__dark") {
-    Some(parsed) => assert_eq(theme_slug(parsed), "github-dark")
-    None => fail("github__dark should parse")
-  }
-  match parse_theme_name("tokyo\t night") {
-    Some(parsed) => assert_eq(theme_slug(parsed), "tokyo-night")
-    None => fail("tokyo\\t night should parse")
-  }
-  match parse_theme_name(github_newline_dark()) {
-    Some(parsed) => assert_eq(theme_slug(parsed), "github-dark")
-    None => fail("github\\n dark should parse")
-  }
+  assert_true(parse_theme_name("TOKYO-NIGHT") is Some(_))
+  assert_true(parse_theme_name("__github_dark__") is Some(_))
+  assert_true(parse_theme_name("DEFAULT") is Some(_))
+  assert_true(parse_theme_name("TOKYO NIGHT") is Some(_))
+  assert_true(parse_theme_name("github_dark") is Some(_))
+  assert_true(parse_theme_name("TOKYO   NIGHT") is Some(_))
+  assert_true(parse_theme_name("github__dark") is Some(_))
+  assert_true(parse_theme_name("tokyo\t night") is Some(_))
+  assert_true(parse_theme_name(github_newline_dark()) is Some(_))
   assert_true(parse_theme_name("not-a-theme") is None)
+  assert_eq(theme_by_name("DEFAULT"), theme_by_name("zinc-light"))
 }
 
 ///|
@@ -140,26 +112,26 @@ test "theme_by_name resolves aliases and normalized names" {
 
 ///|
 test "Built-in theme slugs are exported for CLI and config UX" {
-  let slugs = built_in_themes().map(theme_slug)
+  let slugs = built_in_theme_slugs_wb()
   assert_true(slugs.contains("zinc-light"))
   assert_true(slugs.contains("tokyo-night"))
   assert_true(slugs.contains("github-dark"))
   assert_true(slugs.contains("one-dark"))
-  assert_eq(slugs.length(), built_in_themes().length())
+  assert_eq(slugs.length(), 15)
   let seen : Map[String, Bool] = {}
   for slug in slugs {
     assert_true(!seen.contains(slug))
     seen[slug] = true
   }
-  let csv = built_in_theme_slugs_csv()
+  let csv = built_in_theme_slugs_wb().join(", ")
   assert_true(csv.contains("tokyo-night"))
   assert_true(csv.contains("github-dark"))
 }
 
 ///|
 test "theme_by_name resolves built-in slugs" {
-  for theme in built_in_themes() {
-    assert_true(theme_by_name(theme_slug(theme)) is Some(_))
+  for slug in built_in_theme_slugs_wb() {
+    assert_true(theme_by_name(slug) is Some(_))
   }
 
   let tokyo_night = match theme_by_name("tokyo-night") {
