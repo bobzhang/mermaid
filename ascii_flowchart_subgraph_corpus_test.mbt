@@ -25,7 +25,7 @@ fn assert_subgraph_labels_visible(
 }
 
 ///|
-fn is_flow_subgraph_case(case_data : @test_support.CorpusCase) -> Bool {
+fn is_flow_subgraph_case(case_data : CorpusCase) -> Bool {
   (case_data.header == "graph" || case_data.header == "flowchart") &&
   case_data.input.contains("subgraph ")
 }

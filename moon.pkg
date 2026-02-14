@@ -8,7 +8,6 @@ import {
 }
 
 import {
-  "bobzhang/beautiful_mermaid/test_support/core" @test_support,
   "moonbitlang/core/strconv" @strconv,
   "moonbitlang/core/test",
 } for "test"

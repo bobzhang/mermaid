@@ -1,6 +1,6 @@
 ///|
 /// Public type `CorpusCase`.
-pub struct CorpusCase {
+struct CorpusCase {
   name : String
   input : String
   header : String
@@ -17,7 +17,7 @@ pub struct CorpusCase {
 
 ///|
 /// Public function `corpus_cases`.
-pub fn corpus_cases() -> Array[CorpusCase] {
+fn corpus_cases() -> Array[CorpusCase] {
   [
     {
       name: "ampersand_lhs",

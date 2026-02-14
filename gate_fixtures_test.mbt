@@ -1,6 +1,6 @@
 ///|
 /// Public type `GateCase`.
-pub struct GateCase {
+struct GateCase {
   input : String
   direction : String
   expected_node_count : Int
@@ -14,7 +14,7 @@ pub struct GateCase {
 
 ///|
 /// Public function `gate_cases`.
-pub fn gate_cases() -> Array[GateCase] {
+fn gate_cases() -> Array[GateCase] {
   [
     {
       input: (

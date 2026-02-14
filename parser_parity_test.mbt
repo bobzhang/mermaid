@@ -1,6 +1,6 @@
 ///|
 test "Parser parity gate cases" {
-  for case_data in @test_support.gate_cases() {
+  for case_data in gate_cases() {
     let graph = @parser_header_core.parse_mermaid(case_data.input)
     assert_eq(graph.direction.to_string(), case_data.direction)
     assert_eq(graph.nodes.length(), case_data.expected_node_count)
@@ -510,7 +510,7 @@ test "Parser rejects stateDiagram header with extra trailing tokens" {
 
 ///|
 test "Full corpus inventory is imported" {
-  let all = @test_support.corpus_cases()
+  let all = corpus_cases()
   assert_eq(all.length(), 60)
   let supported = all.filter(case_data => case_data.supported_by_moonbit)
   assert_eq(supported.length(), 60)

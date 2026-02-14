@@ -1,6 +1,6 @@
 ///|
 test "ASCII golden gate cases" {
-  for case_data in @test_support.gate_cases() {
+  for case_data in gate_cases() {
     let options = @beautiful_mermaid.AsciiRenderOptions::{
       use_ascii: true,
       padding_x: case_data.padding_x,

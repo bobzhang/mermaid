@@ -1,6 +1,6 @@
 ///|
-fn supported_case_by_name(name : String) -> @test_support.CorpusCase raise {
-  let mut matched : @test_support.CorpusCase? = None
+fn supported_case_by_name(name : String) -> CorpusCase raise {
+  let mut matched : CorpusCase? = None
   for case_data in ts_supported_cases() {
     if case_data.name == name {
       matched = Some(case_data)

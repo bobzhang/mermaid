@@ -1,17 +1,15 @@
 ///|
-fn ts_supported_cases() -> Array[@test_support.CorpusCase] {
-  @test_support.corpus_cases().filter(case_data => {
-    case_data.supported_by_moonbit
-  })
+fn ts_supported_cases() -> Array[CorpusCase] {
+  corpus_cases().filter(case_data => case_data.supported_by_moonbit)
 }
 
 ///|
-fn ts_supported_ascii_cases() -> Array[@test_support.CorpusCase] {
+fn ts_supported_ascii_cases() -> Array[CorpusCase] {
   ts_supported_cases().filter(case_data => case_data.expected_ascii is Some(_))
 }
 
 ///|
-fn ts_supported_unicode_cases() -> Array[@test_support.CorpusCase] {
+fn ts_supported_unicode_cases() -> Array[CorpusCase] {
   ts_supported_cases().filter(case_data => case_data.expected_unicode is Some(_))
 }
 

@@ -1,5 +1,5 @@
 ///|
-fn is_state_case(case_data : @test_support.CorpusCase) -> Bool {
+fn is_state_case(case_data : CorpusCase) -> Bool {
   case_data.header == "statediagram" || case_data.header == "statediagram-v2"
 }
 

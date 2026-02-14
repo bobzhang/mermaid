@@ -1,5 +1,5 @@
 ///|
-fn is_flowchart_case(case_data : @test_support.CorpusCase) -> Bool {
+fn is_flowchart_case(case_data : CorpusCase) -> Bool {
   case_data.header == "graph" || case_data.header == "flowchart"
 }
 
