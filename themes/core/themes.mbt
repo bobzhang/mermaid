@@ -26,21 +26,6 @@ priv struct ShikiTokenColor {
 }
 
 ///|
-/// Helper to construct a token-color entry for one scope.
-fn shiki_token_color(scope : String, foreground : String?) -> ShikiTokenColor {
-  { scopes: [scope], foreground }
-}
-
-///|
-/// Helper to construct a token-color entry for multiple scopes.
-fn shiki_token_color_many(
-  scopes : Array[String],
-  foreground : String?,
-) -> ShikiTokenColor {
-  { scopes, foreground }
-}
-
-///|
 /// Simplified Shiki-like theme model used to derive `DiagramColors`.
 priv struct ShikiTheme {
   theme_type : String?
@@ -56,24 +41,6 @@ fn shiki_theme(
   token_colors : Array[ShikiTokenColor]?,
 ) -> ShikiTheme {
   { theme_type, colors, token_colors }
-}
-
-///|
-/// Build a dark `ShikiTheme`.
-fn shiki_dark_theme(
-  colors : Map[String, String]?,
-  token_colors : Array[ShikiTokenColor]?,
-) -> ShikiTheme {
-  shiki_theme(Some("dark"), colors, token_colors)
-}
-
-///|
-/// Build a light `ShikiTheme`.
-fn shiki_light_theme(
-  colors : Map[String, String]?,
-  token_colors : Array[ShikiTokenColor]?,
-) -> ShikiTheme {
-  shiki_theme(Some("light"), colors, token_colors)
 }
 
 ///|
@@ -394,12 +361,6 @@ pub fn theme_by_name(name : String) -> DiagramColors? {
 }
 
 ///|
-/// Return whether a user theme name resolves to a known built-in theme.
-fn theme_exists(name : String) -> Bool {
-  parse_theme_name(name) is Some(_)
-}
-
-///|
 /// Return the canonical slug for a user theme name, if it resolves.
 pub fn canonical_theme_slug(name : String) -> String? {
   match parse_theme_name(name) {
@@ -440,14 +401,4 @@ fn built_in_theme_slugs() -> Array[String] {
 /// Return built-in theme slugs as a comma-separated string.
 pub fn built_in_theme_slugs_csv() -> String {
   built_in_theme_slugs().join(", ")
-}
-
-///|
-/// Return a slug-to-colors map for all built-in themes.
-fn built_in_theme_colors() -> Map[String, DiagramColors] {
-  let themes : Map[String, DiagramColors] = {}
-  for theme in built_in_themes() {
-    themes[theme_slug(theme)] = theme_colors(theme)
-  }
-  themes
 }

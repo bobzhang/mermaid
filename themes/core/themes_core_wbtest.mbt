@@ -117,13 +117,13 @@ test "Theme lookup by name returns colors or none" {
 }
 
 ///|
-test "theme_exists reflects whether a theme name is supported" {
-  assert_eq(theme_exists("tokyo-night"), true)
-  assert_eq(theme_exists("TOKYO NIGHT"), true)
-  assert_eq(theme_exists("default"), true)
-  assert_eq(theme_exists("tokyo\t night"), true)
-  assert_eq(theme_exists(github_newline_dark()), true)
-  assert_eq(theme_exists("github-neon"), false)
+test "canonical_theme_slug indicates whether a theme is supported" {
+  assert_true(canonical_theme_slug("tokyo-night") is Some(_))
+  assert_true(canonical_theme_slug("TOKYO NIGHT") is Some(_))
+  assert_true(canonical_theme_slug("default") is Some(_))
+  assert_true(canonical_theme_slug("tokyo\t night") is Some(_))
+  assert_true(canonical_theme_slug(github_newline_dark()) is Some(_))
+  assert_true(canonical_theme_slug("github-neon") is None)
 }
 
 ///|
@@ -157,15 +157,14 @@ test "Built-in theme slugs are exported for CLI and config UX" {
 }
 
 ///|
-test "Built-in theme color map is exported by slug" {
-  let themes = built_in_theme_colors()
+test "theme_by_name resolves built-in slugs" {
   for theme in built_in_themes() {
-    assert_true(themes.get(theme_slug(theme)) is Some(_))
+    assert_true(theme_by_name(theme_slug(theme)) is Some(_))
   }
 
-  let tokyo_night = match themes.get("tokyo-night") {
+  let tokyo_night = match theme_by_name("tokyo-night") {
     Some(found) => found
-    None => fail("missing tokyo-night in built-in map")
+    None => fail("missing tokyo-night")
   }
   assert_eq(tokyo_night.bg, "#1a1b26")
   assert_eq(tokyo_night.accent, Some("#7aa2f7"))
@@ -188,21 +187,30 @@ test "from_shiki_theme extracts bg and fg from editor colors" {
 
 ///|
 test "shiki_token_color builds a single-scope token entry" {
-  let token = shiki_token_color("comment", Some("#888888"))
+  let token : ShikiTokenColor = {
+    scopes: ["comment"],
+    foreground: Some("#888888"),
+  }
   assert_eq(token.scopes, ["comment"])
   assert_eq(token.foreground, Some("#888888"))
 }
 
 ///|
 test "shiki_token_color_many preserves multiple scopes" {
-  let token = shiki_token_color_many(["comment", "keyword"], Some("#aaaaaa"))
+  let token : ShikiTokenColor = {
+    scopes: ["comment", "keyword"],
+    foreground: Some("#aaaaaa"),
+  }
   assert_eq(token.scopes, ["comment", "keyword"])
   assert_eq(token.foreground, Some("#aaaaaa"))
 }
 
 ///|
 test "shiki_theme constructor preserves provided fields" {
-  let token = shiki_token_color("comment", Some("#888888"))
+  let token : ShikiTokenColor = {
+    scopes: ["comment"],
+    foreground: Some("#888888"),
+  }
   let theme = shiki_theme(
     Some("dark"),
     Some({ "editor.background": "#111111" }),
@@ -221,8 +229,16 @@ test "shiki_theme constructor preserves provided fields" {
 
 ///|
 test "shiki_dark_theme and shiki_light_theme set theme type" {
-  let dark = shiki_dark_theme(None, None)
-  let light = shiki_light_theme(None, None)
+  let dark : ShikiTheme = {
+    theme_type: Some("dark"),
+    colors: None,
+    token_colors: None,
+  }
+  let light : ShikiTheme = {
+    theme_type: Some("light"),
+    colors: None,
+    token_colors: None,
+  }
   assert_eq(dark.theme_type, Some("dark"))
   assert_eq(light.theme_type, Some("light"))
 }
@@ -329,8 +345,8 @@ test "from_shiki_theme matches multi-scope token entries" {
     Some("dark"),
     Some({ "editor.background": "#111111", "editor.foreground": "#eeeeee" }),
     Some([
-      shiki_token_color_many(["storage", "keyword"], Some("#22d3ee")),
-      shiki_token_color_many(["meta", "comment"], Some("#94a3b8")),
+      { scopes: ["storage", "keyword"], foreground: Some("#22d3ee") },
+      { scopes: ["meta", "comment"], foreground: Some("#94a3b8") },
     ]),
   )
   let colors = from_shiki_theme(theme)
