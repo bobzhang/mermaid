@@ -19,59 +19,15 @@ pub fn render_mermaid_with_theme_name(String, String, options? : @model.RenderOp
 // Type aliases
 pub using @model {type AsciiRenderOptions}
 
-pub using @model {type DiagramColors}
-
-pub using @model {type Direction}
-
-pub using @model {type EdgeStyle}
-
-pub using @model {type MermaidEdge}
-
 pub using @model {type MermaidError}
 
 pub using @model {type MermaidGraph}
 
-pub using @model {type MermaidNode}
-
 pub using @model {type MermaidSubgraph}
-
-pub using @model {type NodeShape}
-
-pub using @model {type Point}
-
-pub using @model {type PositionedEdge}
-
-pub using @model {type PositionedGraph}
 
 pub using @model {type PositionedGroup}
 
-pub using @model {type PositionedNode}
-
-pub using @model {type PositionedSequenceActivation}
-
-pub using @model {type PositionedSequenceBlock}
-
-pub using @model {type PositionedSequenceBlockDivider}
-
-pub using @model {type PositionedSequenceLifeline}
-
-pub using @model {type PositionedSequenceNote}
-
 pub using @model {type RenderOptions}
-
-pub using @model {type SequenceActivationCommand}
-
-pub using @model {type SequenceBlock}
-
-pub using @model {type SequenceBlockDivider}
-
-pub using @model {type SequenceBlockType}
-
-pub using @model {type SequenceNote}
-
-pub using @model {type SequenceNotePosition}
-
-pub using @model {type SequenceParticipantKind}
 
 // Traits
 

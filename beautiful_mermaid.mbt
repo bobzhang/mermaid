@@ -24,9 +24,9 @@ fn option_color_or(value : String?, fallback : String?) -> String? {
 
 ///|
 /// Resolve a full `DiagramColors` value from `RenderOptions`.
-/// Missing `bg`/`fg` values fall back to `DiagramColors::default()`.
-fn build_colors(options : RenderOptions) -> DiagramColors {
-  let defaults = DiagramColors::default()
+/// Missing `bg`/`fg` values fall back to `@model.DiagramColors::default()`.
+fn build_colors(options : RenderOptions) -> @model.DiagramColors {
+  let defaults = @model.DiagramColors::default()
   {
     bg: option_string_or(options.bg, defaults.bg),
     fg: option_string_or(options.fg, defaults.fg),
@@ -43,7 +43,7 @@ fn build_colors(options : RenderOptions) -> DiagramColors {
 /// Explicit values in `options` win; missing color fields are filled from `colors`.
 fn merge_options_with_colors(
   options : RenderOptions,
-  colors : DiagramColors,
+  colors : @model.DiagramColors,
 ) -> RenderOptions {
   {
     bg: Some(option_string_or(options.bg, colors.bg)),
@@ -96,7 +96,7 @@ pub fn render_mermaid(
 /// Render SVG using an explicit color palette, plus optional non-color options.
 fn render_mermaid_with_colors(
   text : String,
-  colors : DiagramColors,
+  colors : @model.DiagramColors,
   options? : RenderOptions = RenderOptions::default(),
 ) -> String raise MermaidError {
   let merged = merge_options_with_colors(options, colors)
