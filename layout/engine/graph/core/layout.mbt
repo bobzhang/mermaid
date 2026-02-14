@@ -74,6 +74,7 @@ fn layout_direction_is_reverse(direction : Direction) -> Bool {
 fn collect_non_state_flow_ranks(
   nodes_in_order : Array[MermaidNode],
   edges : Array[MermaidEdge],
+  compact_fanin : Bool,
 ) -> (Map[String, Int], Int) {
   let node_order_by_id : Map[String, Int] = {}
   let rank_by_id : Map[String, Int] = {}
@@ -87,32 +88,57 @@ fn collect_non_state_flow_ranks(
     return (rank_by_id, 0)
   }
 
-  for node in nodes_in_order {
-    let target_order = option_int_or(node_order_by_id.get(node.id), -1)
-    if target_order < 0 {
-      continue
-    }
-    let mut has_forward_incoming = false
-    let mut best_rank = 0
-    for edge in edges {
-      if edge.target != node.id {
+  if compact_fanin {
+    for node in nodes_in_order {
+      let target_order = option_int_or(node_order_by_id.get(node.id), -1)
+      if target_order < 0 {
         continue
       }
-      match node_order_by_id.get(edge.source) {
-        Some(source_order) =>
-          if target_order > source_order {
-            let source_rank = option_int_or(rank_by_id.get(edge.source), 0)
-            let candidate_rank = source_rank + 1
-            if !has_forward_incoming || candidate_rank < best_rank {
-              best_rank = candidate_rank
-              has_forward_incoming = true
+      let mut has_forward_incoming = false
+      let mut best_rank = 0
+      for edge in edges {
+        if edge.target != node.id {
+          continue
+        }
+        match node_order_by_id.get(edge.source) {
+          Some(source_order) =>
+            if target_order > source_order {
+              let source_rank = option_int_or(rank_by_id.get(edge.source), 0)
+              let candidate_rank = source_rank + 1
+              if !has_forward_incoming || candidate_rank < best_rank {
+                best_rank = candidate_rank
+                has_forward_incoming = true
+              }
             }
-          }
-        None => ()
+          None => ()
+        }
+      }
+      if has_forward_incoming {
+        rank_by_id[node.id] = best_rank
       }
     }
-    if has_forward_incoming {
-      rank_by_id[node.id] = best_rank
+  } else {
+    for _ in 0..<nodes_in_order.length() {
+      let mut changed = false
+      for edge in edges {
+        match
+          (node_order_by_id.get(edge.source), node_order_by_id.get(edge.target)) {
+          (Some(source_order), Some(target_order)) =>
+            if target_order > source_order {
+              let source_rank = option_int_or(rank_by_id.get(edge.source), 0)
+              let target_rank = option_int_or(rank_by_id.get(edge.target), 0)
+              let candidate_rank = source_rank + 1
+              if candidate_rank > target_rank {
+                rank_by_id[edge.target] = candidate_rank
+                changed = true
+              }
+            }
+          _ => ()
+        }
+      }
+      if !changed {
+        break
+      }
     }
   }
 
@@ -154,9 +180,7 @@ fn collect_top_level_group_index_by_node_id(
   }
   for child in subgraph.children {
     collect_top_level_group_index_by_node_id(
-      child,
-      top_level_group_index,
-      top_level_group_index_by_node_id,
+      child, top_level_group_index, top_level_group_index_by_node_id,
     )
   }
 }
@@ -1250,7 +1274,7 @@ pub fn layout_graph(
   graph : MermaidGraph,
   options : RenderOptions,
 ) -> PositionedGraph {
-  layout_graph_with_subgraph_redirects(graph, options, true)
+  layout_graph_with_subgraph_redirects(graph, options, true, false)
 }
 
 ///|
@@ -1272,6 +1296,7 @@ pub fn layout_graph_for_ascii(
     graph,
     options,
     !state_composite_ascii_mode,
+    true,
   )
 }
 
@@ -1280,6 +1305,7 @@ fn layout_graph_with_subgraph_redirects(
   graph : MermaidGraph,
   options : RenderOptions,
   use_subgraph_redirects : Bool,
+  compact_fanin : Bool,
 ) -> PositionedGraph {
   if is_sequence_graph(graph) {
     return @layout_engine_sequence_core.layout_sequence_graph(graph, options)
@@ -1333,18 +1359,17 @@ fn layout_graph_with_subgraph_redirects(
     let (rank_by_id, max_rank) = collect_non_state_flow_ranks(
       nodes_in_order,
       graph.edges,
+      compact_fanin,
     )
     flow_max_rank = max_rank
     for node_id, rank in rank_by_id {
       flow_rank_by_node_id[node_id] = rank
     }
-    if !state_graph && graph.subgraphs.length() > 0 {
+    if compact_fanin && !state_graph && graph.subgraphs.length() > 0 {
       let top_level_group_index_by_node_id : Map[String, Int] = {}
       for i, subgraph in graph.subgraphs {
         collect_top_level_group_index_by_node_id(
-          subgraph,
-          i,
-          top_level_group_index_by_node_id,
+          subgraph, i, top_level_group_index_by_node_id,
         )
       }
 
@@ -1398,7 +1423,10 @@ fn layout_graph_with_subgraph_redirects(
         let rank_delta = desired_min_rank - min_group_rank
         for node_id, index in top_level_group_index_by_node_id {
           if index == group_index {
-            let current_rank = option_int_or(flow_rank_by_node_id.get(node_id), 0)
+            let current_rank = option_int_or(
+              flow_rank_by_node_id.get(node_id),
+              0,
+            )
             flow_rank_by_node_id[node_id] = current_rank + rank_delta
           }
         }
