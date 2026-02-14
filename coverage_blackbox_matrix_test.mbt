@@ -68,17 +68,14 @@ test "Coverage matrix renders supported corpus with varied options" {
 
   for case_data in @test_support.supported_cases() {
     for option_index, ascii_option in ascii_options {
-      let ascii = try! render_mermaid_ascii(
-        case_data.input,
-        options=ascii_option,
-      )
+      let ascii = render_mermaid_ascii(case_data.input, options=ascii_option)
       if option_index < 4 && @test_support.normalize_whitespace(ascii) == "" {
         fail("empty ascii output in coverage matrix for \{case_data.name}")
       }
     }
 
     for svg_option in svg_options {
-      let svg = try! render_mermaid(case_data.input, options=svg_option)
+      let svg = render_mermaid(case_data.input, options=svg_option)
       assert_true(svg.has_prefix("<svg "))
       assert_true(svg.has_suffix("</svg>"))
     }
@@ -227,8 +224,8 @@ test "Coverage matrix class and ER relation variants" {
     #|  Writer --* Chapter
     #|  Client ..> Api
     #|  Api --> Client
-  let class_ascii = try! render_mermaid_ascii(class_diagram)
-  let class_unicode = try! render_mermaid_ascii(class_diagram, options={
+  let class_ascii = render_mermaid_ascii(class_diagram)
+  let class_unicode = render_mermaid_ascii(class_diagram, options={
     use_ascii: false,
     padding_x: 5,
     padding_y: 5,
@@ -246,8 +243,8 @@ test "Coverage matrix class and ER relation variants" {
     #|  D }|--o{ E : many_to_optional_many
     #|  E }|..|| F : dotted_ident
     #|  F ||..|| G : dotted_pair
-  let er_ascii = try! render_mermaid_ascii(er_diagram)
-  let er_unicode = try! render_mermaid_ascii(er_diagram, options={
+  let er_ascii = render_mermaid_ascii(er_diagram)
+  let er_unicode = render_mermaid_ascii(er_diagram, options={
     use_ascii: false,
     padding_x: 5,
     padding_y: 5,
@@ -279,14 +276,14 @@ test "Coverage matrix sequence edge cases" {
     #|    U->>+S: Retry
     #|  end
     #|  deactivate S
-  let ascii = try! render_mermaid_ascii(sequence_input)
-  let unicode = try! render_mermaid_ascii(sequence_input, options={
+  let ascii = render_mermaid_ascii(sequence_input)
+  let unicode = render_mermaid_ascii(sequence_input, options={
     use_ascii: false,
     padding_x: 5,
     padding_y: 5,
     box_border_padding: 1,
   })
-  let svg = try! render_mermaid(sequence_input)
+  let svg = render_mermaid(sequence_input)
 
   assert_true(ascii.contains("User"))
   assert_true(unicode.contains("Server"))
@@ -302,9 +299,9 @@ test "Coverage matrix renders empty flowchart forms" {
     #|graph LR
     #|%% comment only
     #|
-  let empty_a = try! render_mermaid_ascii(empty_flowchart)
-  let empty_b = try! render_mermaid_ascii(empty_flowchart_with_comment)
-  let empty_svg = try! render_mermaid(empty_flowchart)
+  let empty_a = render_mermaid_ascii(empty_flowchart)
+  let empty_b = render_mermaid_ascii(empty_flowchart_with_comment)
+  let empty_svg = render_mermaid(empty_flowchart)
 
   assert_true(empty_a == "" || empty_a == "\n")
   assert_true(empty_b == "" || empty_b == "\n")
