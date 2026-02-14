@@ -16,14 +16,14 @@ enum ThemeName {
   SolarizedLight
   SolarizedDark
   OneDark
-} derive(Eq, Show, ToJson)
+}
 
 ///|
 /// Minimal Shiki token color model used by `from_shiki_theme`.
 struct ShikiTokenColor {
   scopes : Array[String]
   foreground : String?
-} derive(Eq, Show, ToJson)
+}
 
 ///|
 /// Helper to construct a token-color entry for one scope.
@@ -46,7 +46,7 @@ struct ShikiTheme {
   theme_type : String?
   colors : Map[String, String]?
   token_colors : Array[ShikiTokenColor]?
-} derive(Eq, Show, ToJson)
+}
 
 ///|
 /// Build a `ShikiTheme` value.
