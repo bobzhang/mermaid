@@ -1527,6 +1527,22 @@ fn shift_ascii_flow_group(
 }
 
 ///|
+fn grow_ascii_flow_group_bottom(
+  group : AsciiFlowGroupBox,
+  grow_height : Int,
+) -> AsciiFlowGroupBox {
+  {
+    id: group.id,
+    label: group.label,
+    left: group.left,
+    top: group.top,
+    width: group.width,
+    height: group.height + grow_height,
+    children: group.children,
+  }
+}
+
+///|
 fn flow_collect_node_top_level_group_ids(
   subgraph : MermaidSubgraph,
   top_level_group_id : String,
@@ -1728,12 +1744,13 @@ fn flow_expand_group_side_padding_for_nodes(
   group : AsciiFlowGroupBox,
   nodes : Array[AsciiFlowNodeBox],
   require_node_within_group : Bool,
+  descendant_node_ids_by_group : Map[String, Map[String, Bool]],
 ) -> AsciiFlowGroupBox {
   let adjusted_children : Array[AsciiFlowGroupBox] = []
   for child in group.children {
     adjusted_children.push(
       flow_expand_group_side_padding_for_nodes(
-        child, nodes, require_node_within_group,
+        child, nodes, require_node_within_group, descendant_node_ids_by_group,
       ),
     )
   }
@@ -1763,6 +1780,10 @@ fn flow_expand_group_side_padding_for_nodes(
   }
 
   for node in nodes {
+    match descendant_node_ids_by_group.get(group.id) {
+      Some(group_node_ids) => if !group_node_ids.contains(node.id) { continue }
+      None => ()
+    }
     if require_node_within_group &&
       !flow_group_contains_node_center(group, node) {
       continue
@@ -1802,6 +1823,41 @@ fn flow_expand_group_side_padding_for_nodes(
     width: right - left + 1,
     height: group.height,
     children: adjusted_children,
+  }
+}
+
+///|
+fn flow_collect_descendant_node_ids_for_group(
+  subgraph : MermaidSubgraph,
+  descendant_node_ids_by_group : Map[String, Map[String, Bool]],
+) -> Map[String, Bool] {
+  let descendant_node_ids : Map[String, Bool] = {}
+  for node_id in subgraph.node_ids {
+    descendant_node_ids[node_id] = true
+  }
+  for child in subgraph.children {
+    let child_descendant_node_ids = flow_collect_descendant_node_ids_for_group(
+      child, descendant_node_ids_by_group,
+    )
+    for node_id, _ in child_descendant_node_ids {
+      descendant_node_ids[node_id] = true
+    }
+  }
+  descendant_node_ids_by_group[subgraph.id] = descendant_node_ids
+  descendant_node_ids
+}
+
+///|
+fn flow_collect_descendant_node_ids_by_group(
+  subgraphs : Array[MermaidSubgraph],
+  descendant_node_ids_by_group : Map[String, Map[String, Bool]],
+) -> Unit {
+  for subgraph in subgraphs {
+    ignore(
+      flow_collect_descendant_node_ids_for_group(
+        subgraph, descendant_node_ids_by_group,
+      ),
+    )
   }
 }
 
@@ -2745,6 +2801,13 @@ fn render_ascii_flow_subgraphs(
       )
     }
   }
+  let descendant_node_ids_by_group : Map[String, Map[String, Bool]] = {}
+  if flow_with_subgraphs {
+    flow_collect_descendant_node_ids_by_group(
+      graph.subgraphs,
+      descendant_node_ids_by_group,
+    )
+  }
   if flow_with_subgraphs && flow_direction_horizontal {
     let node_has_indirect_ancestor : Map[String, Bool] = {}
     flow_collect_node_has_indirect_ancestor(
@@ -2878,6 +2941,226 @@ fn render_ascii_flow_subgraphs(
     }
     groups
   }
+  let mapped_groups = if !state_layout_mode &&
+    flow_with_subgraphs &&
+    !flow_direction_horizontal {
+    let mut focus_group_id = ""
+    let mut focus_member_top = 0
+    let mut has_focus_group = false
+    for group in mapped_groups {
+      let mut has_member = false
+      let mut first_member_top = 0
+      for node in mapped_nodes {
+        match node_top_level_group_by_id.get(node.id) {
+          Some(top_level_group_id) =>
+            if top_level_group_id == group.id {
+              if !has_member {
+                first_member_top = node.top
+                has_member = true
+              } else {
+                first_member_top = first_member_top.min(node.top)
+              }
+            }
+          None => ()
+        }
+      }
+      if !has_member {
+        continue
+      }
+      let mut has_outside_before = false
+      let mut has_outside_after = false
+      for node in mapped_nodes {
+        let mut in_group = false
+        match node_top_level_group_by_id.get(node.id) {
+          Some(top_level_group_id) => in_group = top_level_group_id == group.id
+          None => ()
+        }
+        if in_group {
+          continue
+        }
+        if node.top < first_member_top {
+          has_outside_before = true
+        } else if node.top > first_member_top {
+          has_outside_after = true
+        }
+      }
+      if has_outside_before && has_outside_after {
+        focus_group_id = group.id
+        focus_member_top = first_member_top
+        has_focus_group = true
+        break
+      }
+    }
+    if has_focus_group {
+      let shift_y = (options.padding_y - 1).max(1)
+      for i, node in mapped_nodes {
+        let mut in_focus_group = false
+        match node_top_level_group_by_id.get(node.id) {
+          Some(top_level_group_id) =>
+            in_focus_group = top_level_group_id == focus_group_id
+          None => ()
+        }
+        if in_focus_group || node.top >= focus_member_top {
+          mapped_nodes[i] = {
+            id: node.id,
+            label: node.label,
+            left: node.left,
+            top: node.top + shift_y,
+            width: node.width,
+            height: node.height,
+          }
+        }
+      }
+      for box in mapped_nodes {
+        node_box_by_id[box.id] = box
+      }
+      let shifted_groups : Array[AsciiFlowGroupBox] = []
+      for group in mapped_groups {
+        if group.id == focus_group_id || group.top >= focus_member_top {
+          shifted_groups.push(shift_ascii_flow_group(group, 0, shift_y))
+        } else {
+          shifted_groups.push(group)
+        }
+      }
+      shifted_groups
+    } else {
+      mapped_groups
+    }
+  } else {
+    mapped_groups
+  }
+  let mapped_groups = if !state_layout_mode &&
+    flow_with_subgraphs &&
+    !flow_direction_horizontal &&
+    options.padding_y <= 3 {
+    let top_level_incoming_by_id : Map[String, Bool] = {}
+    let top_level_outgoing_by_id : Map[String, Bool] = {}
+    for edge in graph.edges {
+      match
+        (
+          node_top_level_group_by_id.get(edge.source),
+          node_top_level_group_by_id.get(edge.target),
+        ) {
+        (Some(source_group_id), Some(target_group_id)) =>
+          if source_group_id != target_group_id {
+            top_level_incoming_by_id[target_group_id] = true
+            top_level_outgoing_by_id[source_group_id] = true
+          }
+        _ => ()
+      }
+    }
+    let compact_top_level_group_ids : Map[String, Bool] = {}
+    for subgraph in graph.subgraphs {
+      let has_incoming_from_other_group = match
+        top_level_incoming_by_id.get(subgraph.id) {
+        Some(value) => value
+        None => false
+      }
+      let has_outgoing_to_other_group = match
+        top_level_outgoing_by_id.get(subgraph.id) {
+        Some(value) => value
+        None => false
+      }
+      if has_incoming_from_other_group && !has_outgoing_to_other_group {
+        compact_top_level_group_ids[subgraph.id] = true
+      }
+    }
+    if compact_top_level_group_ids.length() > 0 {
+      for i, node in mapped_nodes {
+        match node_top_level_group_by_id.get(node.id) {
+          Some(top_level_group_id) =>
+            if compact_top_level_group_ids.contains(top_level_group_id) {
+              mapped_nodes[i] = {
+                id: node.id,
+                label: node.label,
+                left: node.left,
+                top: node.top - 1,
+                width: node.width,
+                height: node.height,
+              }
+            }
+          None => ()
+        }
+      }
+      for box in mapped_nodes {
+        node_box_by_id[box.id] = box
+      }
+      let compacted_groups : Array[AsciiFlowGroupBox] = []
+      for group in mapped_groups {
+        if compact_top_level_group_ids.contains(group.id) {
+          compacted_groups.push(shift_ascii_flow_group(group, 0, -1))
+        } else {
+          compacted_groups.push(group)
+        }
+      }
+      compacted_groups
+    } else {
+      mapped_groups
+    }
+  } else {
+    mapped_groups
+  }
+  let mapped_groups = if !state_layout_mode &&
+    flow_with_subgraphs &&
+    flow_direction_horizontal {
+    let has_single_nested_top_group = graph.subgraphs.length() == 1 &&
+      graph.subgraphs[0].children.length() > 0
+    let has_external_member_edge = graph.edges.any(edge => {
+      let source_in_group = node_top_level_group_by_id.contains(edge.source)
+      let target_in_group = node_top_level_group_by_id.contains(edge.target)
+      (source_in_group && !target_in_group) ||
+      (!source_in_group && target_in_group)
+    })
+    if has_single_nested_top_group && has_external_member_edge {
+      let top_group_id = graph.subgraphs[0].id
+      let mut shift_start_top = 0
+      let mut has_shift_start = false
+      for node in mapped_nodes {
+        match node_top_level_group_by_id.get(node.id) {
+          Some(node_group_id) =>
+            if node_group_id == top_group_id {
+              if !has_shift_start {
+                shift_start_top = node.top
+                has_shift_start = true
+              } else {
+                shift_start_top = shift_start_top.min(node.top)
+              }
+            }
+          None => ()
+        }
+      }
+      if has_shift_start {
+        for i, node in mapped_nodes {
+          if node.top >= shift_start_top {
+            mapped_nodes[i] = {
+              id: node.id,
+              label: node.label,
+              left: node.left,
+              top: node.top + 1,
+              width: node.width,
+              height: node.height,
+            }
+          }
+        }
+        for box in mapped_nodes {
+          node_box_by_id[box.id] = box
+        }
+      }
+      let grown_groups : Array[AsciiFlowGroupBox] = []
+      for group in mapped_groups {
+        if group.id == top_group_id {
+          grown_groups.push(grow_ascii_flow_group_bottom(group, 1))
+        } else {
+          grown_groups.push(group)
+        }
+      }
+      grown_groups
+    } else {
+      mapped_groups
+    }
+  } else {
+    mapped_groups
+  }
   let flow_has_subgraph_direction_override = graph.subgraphs.any(subgraph => {
     subgraph.direction is Some(_)
   })
@@ -2897,7 +3180,9 @@ fn render_ascii_flow_subgraphs(
         }
       }
       padded_groups.push(
-        flow_expand_group_side_padding_for_nodes(group, member_nodes, false),
+        flow_expand_group_side_padding_for_nodes(
+          group, member_nodes, false, descendant_node_ids_by_group,
+        ),
       )
     }
     padded_groups
@@ -2989,7 +3274,9 @@ fn render_ascii_flow_subgraphs(
         }
       }
       adjusted_groups.push(
-        flow_expand_group_side_padding_for_nodes(group, member_nodes, false),
+        flow_expand_group_side_padding_for_nodes(
+          group, member_nodes, false, descendant_node_ids_by_group,
+        ),
       )
     }
     adjusted_groups
