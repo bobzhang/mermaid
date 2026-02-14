@@ -1,0 +1,21 @@
+graph LR
+0@{shape: circ}
+1@{shape: circ}
+2@{shape: circ}
+3@{shape: circ}
+4@{shape: circ}
+5@{shape: circ}
+6@{shape: circ}
+7@{shape: circ}
+8@{shape: circ}
+start@{shape: f-circ} --- 8
+0 -- A --> 1
+1 -- B --> 2
+2 -- C --> 3
+3 --- #0@{shape: dbl-circ}
+4 -- A --> 5
+5 -- B --> 6
+6 -- C --> 7
+7 --- #1@{shape: dbl-circ}
+8 -.-> 0
+8 -.-> 4
