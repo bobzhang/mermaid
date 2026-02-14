@@ -20,8 +20,6 @@ pub fn flow_edge_operator_specs() -> Array[(String, @model.EdgeStyle, Bool, Bool
 
 pub fn is_plain_identifier(String) -> Bool
 
-pub fn parse_delimited_token(String, String, String, @model.NodeShape) -> @model.MermaidNode?
-
 pub fn parse_direction_token_strict(String) -> @model.Direction?
 
 pub fn parse_node_token(String) -> @model.MermaidNode

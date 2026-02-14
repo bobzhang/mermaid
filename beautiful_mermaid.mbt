@@ -41,7 +41,7 @@ fn option_color_or(value : String?, fallback : String?) -> String? {
 ///|
 /// Resolve a full `DiagramColors` value from `RenderOptions`.
 /// Missing `bg`/`fg` values fall back to `default_colors()`.
-pub fn build_colors(options : RenderOptions) -> DiagramColors {
+fn build_colors(options : RenderOptions) -> DiagramColors {
   let defaults = DiagramColors::default()
   {
     bg: option_string_or(options.bg, defaults.bg),

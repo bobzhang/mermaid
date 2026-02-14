@@ -7,8 +7,6 @@ import {
 }
 
 // Values
-pub fn build_colors(@model.RenderOptions) -> @model.DiagramColors
-
 pub fn default_colors() -> @model.DiagramColors
 
 pub fn merge_options_with_colors(@model.RenderOptions, @model.DiagramColors) -> @model.RenderOptions

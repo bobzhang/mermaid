@@ -39,7 +39,7 @@ pub fn parse_direction_token_strict(token : String) -> @model.Direction? {
 
 ///|
 /// Parses a node token with open/close delimiters into a `MermaidNode`.
-pub fn parse_delimited_token(
+fn parse_delimited_token(
   token : String,
   open : String,
   close : String,
