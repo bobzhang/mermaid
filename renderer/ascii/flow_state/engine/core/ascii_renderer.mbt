@@ -2750,8 +2750,7 @@ fn render_ascii_flow_subgraphs(
   })
   let mapped_groups = if !state_layout_mode &&
     flow_with_subgraphs &&
-    !flow_direction_horizontal &&
-    !flow_has_subgraph_direction_override {
+    (flow_direction_horizontal || !flow_has_subgraph_direction_override) {
     let padded_groups : Array[AsciiFlowGroupBox] = []
     for group in mapped_groups {
       padded_groups.push(
