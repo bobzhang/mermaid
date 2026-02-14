@@ -839,6 +839,7 @@ pub fn parse_flowchart(
   let class_assignments : Map[String, String] = {}
   let node_styles : Map[String, Map[String, String]] = {}
   let known_node_ids : Map[String, Bool] = {}
+  let subgraph_assigned_node_ids : Map[String, Bool] = {}
   let direction = match parse_flow_direction(lines[0]) {
     Some(found) => found
     None =>
@@ -902,8 +903,17 @@ pub fn parse_flowchart(
         newly_defined_node_ids.push(node_id)
       }
     }
+    let first_seen_in_subgraph : Array[String] = []
+    if subgraph_stack.length() > 0 {
+      for node_id in touched_node_ids {
+        if !subgraph_assigned_node_ids.contains(node_id) {
+          subgraph_assigned_node_ids[node_id] = true
+          first_seen_in_subgraph.push(node_id)
+        }
+      }
+    }
     @parser_common_engine_core.append_nodes_to_current_subgraph(
-      subgraph_stack, newly_defined_node_ids,
+      subgraph_stack, first_seen_in_subgraph,
     )
   }
 
