@@ -149,6 +149,20 @@ test "Parser supports state description lines" {
 }
 
 ///|
+test "Parser supports standalone state declarations without transitions" {
+  let graph = @parser_header_core.parse_mermaid(
+    (
+      #|stateDiagram-v2
+      #|stateId
+    ),
+  )
+
+  assert_true(graph.nodes.get("stateId") is Some(_))
+  assert_eq(graph.edges.length(), 0)
+  assert_state_shape(graph, "stateId", "Rounded")
+}
+
+///|
 test "Parser captures state composite blocks as subgraphs" {
   let graph = @parser_header_core.parse_mermaid(
     (

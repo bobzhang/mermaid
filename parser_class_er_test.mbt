@@ -206,6 +206,45 @@ test "Parser supports ER diagram relationships" {
 }
 
 ///|
+test "Parser supports standalone ER entities including quoted names" {
+  let graph = @parser_header_core.parse_mermaid(
+    (
+      #|erDiagram
+      #|"This ❤ Unicode"
+      #|"This **is** _Markdown_"
+    ),
+  )
+
+  assert_eq(graph.edges.length(), 0)
+  assert_true(graph.nodes.get("This ❤ Unicode") is Some(_))
+  assert_true(graph.nodes.get("This **is** _Markdown_") is Some(_))
+}
+
+///|
+test "Parser supports compact and alias-style ER relationship syntax" {
+  let graph = @parser_header_core.parse_mermaid(
+    (
+      #|erDiagram
+      #|id1||--||id2 : label
+      #|CAR 1 to zero or more NAMED_DRIVER : allows
+      #|PERSON many(0) optionally to 0+ NAMED_DRIVER : is
+    ),
+  )
+
+  assert_eq(graph.edges.length(), 3)
+  assert_eq(graph.edges[0].source, "id1")
+  assert_eq(graph.edges[0].target, "id2")
+  assert_eq(graph.edges[0].relation_operator, Some("||--||"))
+  assert_eq(graph.edges[1].source, "CAR")
+  assert_eq(graph.edges[1].target, "NAMED_DRIVER")
+  assert_eq(graph.edges[1].relation_operator, Some("--"))
+  assert_eq(graph.edges[2].source, "PERSON")
+  assert_eq(graph.edges[2].target, "NAMED_DRIVER")
+  assert_eq(graph.edges[2].relation_operator, Some(".."))
+  assert_eq(graph.edges[2].style.to_string(), "Dotted")
+}
+
+///|
 test "Parser captures ER attributes from entity blocks" {
   let graph = @parser_header_core.parse_mermaid(
     (

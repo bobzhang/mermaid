@@ -185,6 +185,27 @@ fn parse_state_description_line(
 }
 
 ///|
+fn parse_state_standalone_line(
+  line : String,
+  nodes : Map[String, MermaidNode],
+  composite_stack : Array[MermaidSubgraph],
+) -> Bool {
+  let candidate = @parser_common_engine_core.trim_owned(line)
+  if candidate == "" ||
+    !@parser_common_engine_core.is_plain_identifier(candidate) {
+    return false
+  }
+
+  @parser_common_engine_core.ensure_node(nodes, {
+    id: candidate,
+    label: candidate,
+    shape: Rounded,
+  })
+  append_state_node_to_current_composite(composite_stack, candidate)
+  true
+}
+
+///|
 /// Parses state diagram body lines into a `MermaidGraph`.
 pub fn parse_state_diagram(lines : Array[String]) -> MermaidGraph {
   let nodes : Map[String, MermaidNode] = {}
@@ -292,7 +313,8 @@ pub fn parse_state_diagram(lines : Array[String]) -> MermaidGraph {
                 @parser_common_engine_core.trim_owned(transition_line),
               )
             }
-          None => ()
+          None =>
+            ignore(parse_state_standalone_line(line, nodes, composite_stack))
         }
     }
   }

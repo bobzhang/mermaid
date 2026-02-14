@@ -1,4 +1,77 @@
 ///|
+fn parse_compact_relation_parts(
+  body : String,
+  label : String?,
+) -> (String, String, String, String?)? {
+  let trimmed = body.trim().to_string()
+  if trimmed == "" || trimmed.contains(" ") {
+    return None
+  }
+  let chars = trimmed.to_array()
+  let mut operator_start = -1
+  for i in 0..<chars.length() {
+    if chars[i] is ('|' | '{' | '}') {
+      operator_start = i
+      break
+    }
+  }
+  if operator_start <= 0 {
+    return None
+  }
+
+  let mut operator_end = -1
+  for i in 0..<chars.length() {
+    let j = chars.length() - i - 1
+    if chars[j] is ('|' | '{' | '}') {
+      operator_end = j
+      break
+    }
+  }
+  if operator_end < operator_start || operator_end >= chars.length() - 1 {
+    return None
+  }
+
+  let source = @parser_common_engine_core.trim_owned(
+    (try! trimmed[:operator_start]).to_string(),
+  )
+  let operator = @parser_common_engine_core.trim_owned(
+    (try! trimmed[operator_start:operator_end + 1]).to_string(),
+  )
+  let target = @parser_common_engine_core.trim_owned(
+    (try! trimmed[operator_end + 1:]).to_string(),
+  )
+  if source == "" ||
+    operator == "" ||
+    target == "" ||
+    !(operator.contains("-") || operator.contains(".") || operator.contains("=")) {
+    return None
+  }
+  Some((source, operator, target, label))
+}
+
+///|
+fn parse_alias_relation_parts(
+  parts : Array[String],
+  label : String?,
+) -> (String, String, String, String?)? {
+  if parts.length() < 5 {
+    return None
+  }
+  if !parts.iter().any(token => token == "to") {
+    return None
+  }
+  let source = parts[0]
+  let target = parts[parts.length() - 1]
+  if !@parser_common_engine_core.is_plain_identifier(source) ||
+    !@parser_common_engine_core.is_plain_identifier(target) {
+    return None
+  }
+  let dotted = parts.iter().any(token => token == "optionally")
+  let operator = if dotted { ".." } else { "--" }
+  Some((source, operator, target, label))
+}
+
+///|
 fn parse_relation_parts(line : String) -> (String, String, String, String?)? {
   let (body, label) = lexmatch line[:] {
     (head, ":", raw_label) => {
@@ -14,7 +87,7 @@ fn parse_relation_parts(line : String) -> (String, String, String, String?)? {
     .filter(part => part != "")
     .to_array()
   if parts.length() < 3 {
-    return None
+    return parse_compact_relation_parts(body, label)
   }
 
   let source = parts[0]
@@ -27,7 +100,7 @@ fn parse_relation_parts(line : String) -> (String, String, String, String?)? {
     }
   }
   if operator_index <= 0 || operator_index >= parts.length() - 1 {
-    return None
+    return parse_alias_relation_parts(parts, label)
   }
 
   let operator = parts[operator_index]
@@ -434,6 +507,41 @@ fn parse_er_entity_declaration_line(
 }
 
 ///|
+fn parse_er_standalone_entity_line(
+  line : String,
+  nodes : Map[String, MermaidNode],
+) -> Bool {
+  let trimmed = @parser_common_engine_core.trim_owned(line)
+  if trimmed == "" ||
+    trimmed.has_prefix("direction ") ||
+    trimmed.has_prefix("style ") ||
+    trimmed == "{" ||
+    trimmed == "}" {
+    return false
+  }
+
+  let (id, label) = if trimmed.has_prefix("\"") &&
+    trimmed.has_suffix("\"") &&
+    trimmed.length() >= 2 {
+    let content = @parser_common_engine_core.trim_owned(
+      (try! trimmed[1:trimmed.length() - 1]).to_string(),
+    )
+    if content == "" {
+      return false
+    }
+    (content, content)
+  } else {
+    if !@parser_common_engine_core.is_plain_identifier(trimmed) {
+      return false
+    }
+    (trimmed, trimmed)
+  }
+
+  @parser_common_engine_core.ensure_node(nodes, { id, label, shape: ErEntity })
+  true
+}
+
+///|
 /// Parses ER diagram body lines into a `MermaidGraph`.
 pub fn parse_er_diagram(lines : Array[String]) -> MermaidGraph {
   let nodes : Map[String, MermaidNode] = {}
@@ -487,7 +595,7 @@ pub fn parse_er_diagram(lines : Array[String]) -> MermaidGraph {
           nodes,
           edges,
         )
-      None => ()
+      None => ignore(parse_er_standalone_entity_line(line, nodes))
     }
   }
 
@@ -529,4 +637,12 @@ test "parse_relation_parts" {
   // empty label after colon is None
   let r5 = parse_relation_parts("A -- B :")
   assert_eq(r5, Some(("A", "--", "B", None)))
+  // compact relation without spaces around operator
+  let r6 = parse_relation_parts("A||--||B : owns")
+  assert_eq(r6, Some(("A", "||--||", "B", Some("owns"))))
+  // textual cardinality aliases used in upstream docs
+  let r7 = parse_relation_parts("CAR 1 to zero or more DRIVER : allows")
+  assert_eq(r7, Some(("CAR", "--", "DRIVER", Some("allows"))))
+  let r8 = parse_relation_parts("PERSON many(0) optionally to 0+ CAR : is")
+  assert_eq(r8, Some(("PERSON", "..", "CAR", Some("is"))))
 }
