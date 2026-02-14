@@ -1,7 +1,7 @@
 ///|
 test "ASCII class corpus parity" {
   for
-    case_data in @test_support.supported_ascii_cases().filter(case_data => {
+    case_data in ts_supported_ascii_cases().filter(case_data => {
       case_data.header == "classdiagram"
     }) {
     let options = @beautiful_mermaid.AsciiRenderOptions::{
@@ -17,8 +17,8 @@ test "ASCII class corpus parity" {
     match case_data.expected_ascii {
       Some(expected) =>
         assert_eq(
-          @test_support.normalize_whitespace(actual),
-          @test_support.normalize_whitespace(expected),
+          ts_normalize_whitespace(actual),
+          ts_normalize_whitespace(expected),
         )
       None => fail("missing expected ascii for \{case_data.name}")
     }
@@ -28,7 +28,7 @@ test "ASCII class corpus parity" {
 ///|
 test "Unicode class corpus parity" {
   for
-    case_data in @test_support.supported_unicode_cases().filter(case_data => {
+    case_data in ts_supported_unicode_cases().filter(case_data => {
       case_data.header == "classdiagram"
     }) {
     let options = @beautiful_mermaid.AsciiRenderOptions::{
@@ -44,8 +44,8 @@ test "Unicode class corpus parity" {
     match case_data.expected_unicode {
       Some(expected) =>
         assert_eq(
-          @test_support.normalize_whitespace(actual),
-          @test_support.normalize_whitespace(expected),
+          ts_normalize_whitespace(actual),
+          ts_normalize_whitespace(expected),
         )
       None => fail("missing expected unicode for \{case_data.name}")
     }

@@ -11,8 +11,8 @@ test "Unicode golden gate cases" {
       case_data.input,
       options~,
     )
-    let normalized_actual = @test_support.normalize_whitespace(actual)
-    let normalized_expected = @test_support.normalize_whitespace(
+    let normalized_actual = ts_normalize_whitespace(actual)
+    let normalized_expected = ts_normalize_whitespace(
       case_data.expected_unicode,
     )
     assert_eq(normalized_actual, normalized_expected)

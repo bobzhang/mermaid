@@ -40,10 +40,10 @@ fn state_collect_edge_label_rects(svg : String) -> Array[StateEdgeLabelRect] {
             let snippet = (try! tail[:close_idx + 2]).to_string()
             match
               (
-                @test_support.svg_attr_int(snippet, "x"),
-                @test_support.svg_attr_int(snippet, "y"),
-                @test_support.svg_attr_int(snippet, "width"),
-                @test_support.svg_attr_int(snippet, "height"),
+                ts_svg_attr_int(snippet, "x"),
+                ts_svg_attr_int(snippet, "y"),
+                ts_svg_attr_int(snippet, "width"),
+                ts_svg_attr_int(snippet, "height"),
               ) {
               (Some(x), Some(y), Some(width), Some(height)) =>
                 rects.push({ x, y, width, height })
@@ -275,18 +275,10 @@ test "SVG state diagram direction override changes orientation" (
     ),
   )
 
-  let lr_width = state_option_or_zero(
-    @test_support.svg_attr_int(lr_svg, "width"),
-  )
-  let td_width = state_option_or_zero(
-    @test_support.svg_attr_int(td_svg, "width"),
-  )
-  let lr_height = state_option_or_zero(
-    @test_support.svg_attr_int(lr_svg, "height"),
-  )
-  let td_height = state_option_or_zero(
-    @test_support.svg_attr_int(td_svg, "height"),
-  )
+  let lr_width = state_option_or_zero(ts_svg_attr_int(lr_svg, "width"))
+  let td_width = state_option_or_zero(ts_svg_attr_int(td_svg, "width"))
+  let lr_height = state_option_or_zero(ts_svg_attr_int(lr_svg, "height"))
+  let td_height = state_option_or_zero(ts_svg_attr_int(td_svg, "height"))
 
   assert_true(lr_width > td_width)
   assert_true(td_height > lr_height)

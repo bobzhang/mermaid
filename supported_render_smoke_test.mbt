@@ -1,7 +1,7 @@
 ///|
 test "Render smoke for all supported corpus cases" (it : @test.Test) {
   let svg_sections : Array[String] = []
-  for case_data in @test_support.supported_cases() {
+  for case_data in ts_supported_cases() {
     let svg = @beautiful_mermaid.render_mermaid(case_data.input)
     if !svg.has_prefix("<svg ") || !svg.has_suffix("</svg>") {
       fail("invalid svg envelope for \{case_data.name}")
@@ -38,10 +38,10 @@ test "Render smoke for all supported corpus cases" (it : @test.Test) {
       options=unicode_options,
     )
 
-    if @test_support.normalize_whitespace(ascii) == "" {
+    if ts_normalize_whitespace(ascii) == "" {
       fail("empty ascii output for \{case_data.name}")
     }
-    if @test_support.normalize_whitespace(unicode) == "" {
+    if ts_normalize_whitespace(unicode) == "" {
       fail("empty unicode output for \{case_data.name}")
     }
   }

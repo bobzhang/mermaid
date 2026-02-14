@@ -2,23 +2,9 @@
 package "bobzhang/beautiful_mermaid/test_support/core"
 
 // Values
-pub fn contains_all(String, Array[String]) -> Bool
-
 pub fn corpus_cases() -> Array[CorpusCase]
 
-pub fn count_occurrences(String, String) -> Int
-
 pub fn gate_cases() -> Array[GateCase]
-
-pub fn normalize_whitespace(String) -> String
-
-pub fn supported_ascii_cases() -> Array[CorpusCase]
-
-pub fn supported_cases() -> Array[CorpusCase]
-
-pub fn supported_unicode_cases() -> Array[CorpusCase]
-
-pub fn svg_attr_int(String, String) -> Int?
 
 // Errors
 

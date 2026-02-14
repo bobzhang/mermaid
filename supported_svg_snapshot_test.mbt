@@ -1,7 +1,7 @@
 ///|
 fn supported_case_by_name(name : String) -> @test_support.CorpusCase raise {
   let mut matched : @test_support.CorpusCase? = None
-  for case_data in @test_support.supported_cases() {
+  for case_data in ts_supported_cases() {
     if case_data.name == name {
       matched = Some(case_data)
     }
@@ -25,7 +25,7 @@ fn snapshot_supported_case_svg(
 
   assert_true(svg.has_prefix("<svg "))
   assert_true(svg.has_suffix("</svg>"))
-  assert_true(@test_support.contains_all(svg, case_data.expected_svg_fragments))
+  assert_true(ts_contains_all(svg, case_data.expected_svg_fragments))
 }
 
 ///|

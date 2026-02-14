@@ -1,6 +1,6 @@
 ///|
 test "Parser parity for all supported corpus cases" {
-  for case_data in @test_support.supported_cases() {
+  for case_data in ts_supported_cases() {
     let graph = @parser_header_core.parse_mermaid(case_data.input)
     match case_data.direction {
       Some(direction) =>

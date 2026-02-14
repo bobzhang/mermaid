@@ -1,6 +1,22 @@
 ///|
-/// Public function `normalize_whitespace`.
-pub fn normalize_whitespace(text : String) -> String {
+fn ts_supported_cases() -> Array[@test_support.CorpusCase] {
+  @test_support.corpus_cases().filter(case_data => {
+    case_data.supported_by_moonbit
+  })
+}
+
+///|
+fn ts_supported_ascii_cases() -> Array[@test_support.CorpusCase] {
+  ts_supported_cases().filter(case_data => case_data.expected_ascii is Some(_))
+}
+
+///|
+fn ts_supported_unicode_cases() -> Array[@test_support.CorpusCase] {
+  ts_supported_cases().filter(case_data => case_data.expected_unicode is Some(_))
+}
+
+///|
+fn ts_normalize_whitespace(text : String) -> String {
   let lines = text
     .split("\n")
     .map(line => line.trim_end().to_string())
@@ -24,14 +40,12 @@ pub fn normalize_whitespace(text : String) -> String {
 }
 
 ///|
-/// Public function `contains_all`.
-pub fn contains_all(haystack : String, needles : Array[String]) -> Bool {
+fn ts_contains_all(haystack : String, needles : Array[String]) -> Bool {
   needles.all(needle => haystack.contains(needle))
 }
 
 ///|
-/// Public function `count_occurrences`.
-pub fn count_occurrences(haystack : String, needle : String) -> Int {
+fn ts_count_occurrences(haystack : String, needle : String) -> Int {
   if needle == "" {
     return 0
   }
@@ -52,17 +66,7 @@ pub fn count_occurrences(haystack : String, needle : String) -> Int {
 }
 
 ///|
-test "count_occurrences counts needle occurrences in haystack" {
-  assert_eq(count_occurrences("the quick brown fox", "o"), 2)
-  assert_eq(count_occurrences("ababa", "aba"), 1)
-  assert_eq(count_occurrences("aaaa", "aa"), 2)
-  assert_eq(count_occurrences("hello", ","), 0)
-  assert_eq(count_occurrences("hello", ""), 0)
-}
-
-///|
-/// Public function `svg_attr_int`.
-pub fn svg_attr_int(svg : String, attr : String) -> Int? {
+fn ts_svg_attr_int(svg : String, attr : String) -> Int? {
   let marker = "\{attr}=\""
   match svg.find(marker) {
     Some(start) => {

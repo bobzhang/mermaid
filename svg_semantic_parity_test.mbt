@@ -2,9 +2,7 @@
 test "SVG semantic parity gate cases" {
   for case_data in @test_support.gate_cases() {
     let svg = @beautiful_mermaid.render_mermaid(case_data.input)
-    assert_true(
-      @test_support.contains_all(svg, case_data.expected_svg_fragments),
-    )
+    assert_true(ts_contains_all(svg, case_data.expected_svg_fragments))
     assert_true(svg.has_prefix("<svg "))
     assert_true(svg.has_suffix("</svg>"))
   }
@@ -55,9 +53,7 @@ test "SVG renders nested flowchart subgraph containers" (it : @test.Test) {
     it, "semantic_flowchart_nested_subgraph_containers.svg", svg,
   )
 
-  let group_count = @test_support.count_occurrences(
-    svg, "class=\"group-outer\"",
-  )
+  let group_count = ts_count_occurrences(svg, "class=\"group-outer\"")
   assert_true(group_count >= 2)
   assert_true(svg.contains(">Outer</text>"))
   assert_true(svg.contains(">Inner</text>"))
@@ -124,7 +120,7 @@ test "SVG renders edges targeting an empty subgraph without id-dup node label" (
   assert_true(svg.contains(">Empty Group</text>"))
   assert_true(svg.contains(">A</text>"))
   assert_true(svg.contains(">B</text>"))
-  assert_eq(@test_support.count_occurrences(svg, ">S</text>"), 0)
+  assert_eq(ts_count_occurrences(svg, ">S</text>"), 0)
 }
 
 ///|
@@ -324,9 +320,7 @@ test "SVG class entities include compartment divider lines" (it : @test.Test) {
   )
   snapshot_semantic_svg(it, "semantic_class_compartment_dividers.svg", svg)
 
-  let divider_count = @test_support.count_occurrences(
-    svg, "class=\"node-divider\"",
-  )
+  let divider_count = ts_count_occurrences(svg, "class=\"node-divider\"")
   assert_true(divider_count >= 1)
 }
 
@@ -673,9 +667,7 @@ test "SVG sequence lifeline count follows participant count" (it : @test.Test) {
   )
   snapshot_semantic_svg(it, "semantic_sequence_lifeline_count.svg", svg)
 
-  let lifeline_count = @test_support.count_occurrences(
-    svg, "class=\"lifeline\"",
-  )
+  let lifeline_count = ts_count_occurrences(svg, "class=\"lifeline\"")
   assert_true(lifeline_count >= 2)
 }
 

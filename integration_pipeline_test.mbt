@@ -40,10 +40,10 @@ fn collect_edge_label_rects(svg : String) -> Array[EdgeLabelRect] {
             let snippet = (try! tail[:close_idx + 2]).to_string()
             match
               (
-                @test_support.svg_attr_int(snippet, "x"),
-                @test_support.svg_attr_int(snippet, "y"),
-                @test_support.svg_attr_int(snippet, "width"),
-                @test_support.svg_attr_int(snippet, "height"),
+                ts_svg_attr_int(snippet, "x"),
+                ts_svg_attr_int(snippet, "y"),
+                ts_svg_attr_int(snippet, "width"),
+                ts_svg_attr_int(snippet, "height"),
               ) {
               (Some(x), Some(y), Some(width), Some(height)) =>
                 rects.push({ x, y, width, height })
@@ -149,10 +149,10 @@ test "Pipeline dimensions honor direction" (it : @test.Test) {
 
   snapshot_svg(it, "integration_pipeline_direction_lr.svg", lr_svg)
 
-  let lr_width = option_or_zero(@test_support.svg_attr_int(lr_svg, "width"))
-  let td_width = option_or_zero(@test_support.svg_attr_int(td_svg, "width"))
-  let lr_height = option_or_zero(@test_support.svg_attr_int(lr_svg, "height"))
-  let td_height = option_or_zero(@test_support.svg_attr_int(td_svg, "height"))
+  let lr_width = option_or_zero(ts_svg_attr_int(lr_svg, "width"))
+  let td_width = option_or_zero(ts_svg_attr_int(td_svg, "width"))
+  let lr_height = option_or_zero(ts_svg_attr_int(lr_svg, "height"))
+  let td_height = option_or_zero(ts_svg_attr_int(td_svg, "height"))
 
   assert_true(lr_width > td_width)
   assert_true(td_height > lr_height)
@@ -275,18 +275,10 @@ test "SVG dimensions expand with padding option" (it : @test.Test) {
   )
   snapshot_svg(it, "integration_flowchart_padding_small.svg", small_svg)
 
-  let small_width = option_or_zero(
-    @test_support.svg_attr_int(small_svg, "width"),
-  )
-  let large_width = option_or_zero(
-    @test_support.svg_attr_int(large_svg, "width"),
-  )
-  let small_height = option_or_zero(
-    @test_support.svg_attr_int(small_svg, "height"),
-  )
-  let large_height = option_or_zero(
-    @test_support.svg_attr_int(large_svg, "height"),
-  )
+  let small_width = option_or_zero(ts_svg_attr_int(small_svg, "width"))
+  let large_width = option_or_zero(ts_svg_attr_int(large_svg, "width"))
+  let small_height = option_or_zero(ts_svg_attr_int(small_svg, "height"))
+  let large_height = option_or_zero(ts_svg_attr_int(large_svg, "height"))
 
   assert_true(large_width > small_width)
   assert_true(large_height > small_height)

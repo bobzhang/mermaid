@@ -1107,7 +1107,7 @@ test "Render smoke for upstream samples-data corpus" (it : @test.Test) {
       padding_y: 5,
       box_border_padding: 1,
     })
-    if @test_support.normalize_whitespace(ascii) == "" {
+    if ts_normalize_whitespace(ascii) == "" {
       fail("empty ascii output for sample: \{sample.title}")
     }
 
@@ -1117,7 +1117,7 @@ test "Render smoke for upstream samples-data corpus" (it : @test.Test) {
       padding_y: 5,
       box_border_padding: 1,
     })
-    if @test_support.normalize_whitespace(unicode) == "" {
+    if ts_normalize_whitespace(unicode) == "" {
       fail("empty unicode output for sample: \{sample.title}")
     }
   }

@@ -66,10 +66,10 @@ test "Coverage matrix renders supported corpus with varied options" {
   let ascii_options = coverage_ascii_option_matrix()
   let svg_options = coverage_svg_option_matrix()
 
-  for case_data in @test_support.supported_cases() {
+  for case_data in ts_supported_cases() {
     for option_index, ascii_option in ascii_options {
       let ascii = render_mermaid_ascii(case_data.input, options=ascii_option)
-      if option_index < 4 && @test_support.normalize_whitespace(ascii) == "" {
+      if option_index < 4 && ts_normalize_whitespace(ascii) == "" {
         fail("empty ascii output in coverage matrix for \{case_data.name}")
       }
     }

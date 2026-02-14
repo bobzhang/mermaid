@@ -21,12 +21,12 @@ fn assert_text_parity(
   )
 
   assert_eq(
-    @test_support.normalize_whitespace(actual_ascii),
-    @test_support.normalize_whitespace(expected_ascii),
+    ts_normalize_whitespace(actual_ascii),
+    ts_normalize_whitespace(expected_ascii),
   )
   assert_eq(
-    @test_support.normalize_whitespace(actual_unicode),
-    @test_support.normalize_whitespace(expected_unicode),
+    ts_normalize_whitespace(actual_unicode),
+    ts_normalize_whitespace(expected_unicode),
   )
 }
 

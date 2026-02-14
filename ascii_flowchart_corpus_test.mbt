@@ -32,8 +32,7 @@ fn assert_output_contains_flow_labels(
 
 ///|
 test "ASCII flowchart corpus keeps node labels visible" {
-  for
-    case_data in @test_support.supported_ascii_cases().filter(is_flowchart_case) {
+  for case_data in ts_supported_ascii_cases().filter(is_flowchart_case) {
     let graph = @parser_header_core.parse_mermaid(case_data.input)
     let labels = collect_flow_labels(graph)
     if labels.length() == 0 {
@@ -54,10 +53,7 @@ test "ASCII flowchart corpus keeps node labels visible" {
 
 ///|
 test "Unicode flowchart corpus keeps node labels visible" {
-  for
-    case_data in @test_support.supported_unicode_cases().filter(
-      is_flowchart_case,
-    ) {
+  for case_data in ts_supported_unicode_cases().filter(is_flowchart_case) {
     let graph = @parser_header_core.parse_mermaid(case_data.input)
     let labels = collect_flow_labels(graph)
     if labels.length() == 0 {

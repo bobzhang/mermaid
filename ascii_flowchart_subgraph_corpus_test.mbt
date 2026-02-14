@@ -32,10 +32,7 @@ fn is_flow_subgraph_case(case_data : @test_support.CorpusCase) -> Bool {
 
 ///|
 test "ASCII flowchart corpus subgraph cases keep labels and borders" {
-  for
-    case_data in @test_support.supported_ascii_cases().filter(
-      is_flow_subgraph_case,
-    ) {
+  for case_data in ts_supported_ascii_cases().filter(is_flow_subgraph_case) {
     let graph = @parser_header_core.parse_mermaid(case_data.input)
     if graph.subgraphs.length() == 0 {
       fail("expected parsed subgraphs for \{case_data.name}")
@@ -61,10 +58,7 @@ test "ASCII flowchart corpus subgraph cases keep labels and borders" {
 
 ///|
 test "Unicode flowchart corpus subgraph cases keep labels and borders" {
-  for
-    case_data in @test_support.supported_unicode_cases().filter(
-      is_flow_subgraph_case,
-    ) {
+  for case_data in ts_supported_unicode_cases().filter(is_flow_subgraph_case) {
     let graph = @parser_header_core.parse_mermaid(case_data.input)
     if graph.subgraphs.length() == 0 {
       fail("expected parsed subgraphs for \{case_data.name}")
