@@ -2902,6 +2902,65 @@ fn render_ascii_flow_subgraphs(
       node_box_by_id[box.id] = box
     }
   }
+  let mapped_groups = if !state_layout_mode &&
+    flow_with_subgraphs &&
+    (flow_direction_horizontal || !flow_has_subgraph_direction_override) {
+    let adjusted_groups : Array[AsciiFlowGroupBox] = []
+    for group in mapped_groups {
+      adjusted_groups.push(
+        flow_expand_group_side_padding_for_nodes(group, mapped_nodes),
+      )
+    }
+    adjusted_groups
+  } else {
+    mapped_groups
+  }
+  let post_compaction_group_shift_by_id : Map[String, Int] = if !state_layout_mode &&
+    flow_with_subgraphs &&
+    flow_direction_horizontal {
+    flow_lr_top_level_group_shifts(mapped_groups)
+  } else {
+    {}
+  }
+  let mapped_groups = if post_compaction_group_shift_by_id.length() > 0 {
+    let shifted_groups : Array[AsciiFlowGroupBox] = []
+    for group in mapped_groups {
+      let shift_x = option_int_or(
+        post_compaction_group_shift_by_id.get(group.id),
+        0,
+      )
+      shifted_groups.push(shift_ascii_flow_group(group, shift_x, 0))
+    }
+    shifted_groups
+  } else {
+    mapped_groups
+  }
+  if post_compaction_group_shift_by_id.length() > 0 {
+    for i, node in mapped_nodes {
+      match node_top_level_group_by_id.get(node.id) {
+        Some(top_level_group_id) => {
+          let shift_x = option_int_or(
+            post_compaction_group_shift_by_id.get(top_level_group_id),
+            0,
+          )
+          if shift_x != 0 {
+            mapped_nodes[i] = {
+              id: node.id,
+              label: node.label,
+              left: node.left + shift_x,
+              top: node.top,
+              width: node.width,
+              height: node.height,
+            }
+          }
+        }
+        None => ()
+      }
+    }
+    for box in mapped_nodes {
+      node_box_by_id[box.id] = box
+    }
+  }
   let mut max_x = 0
   let mut max_y = 0
   for group in mapped_groups {
