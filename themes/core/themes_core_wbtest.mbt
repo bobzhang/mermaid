@@ -140,7 +140,7 @@ test "canonical_theme_slug returns normalized slug or none" {
 
 ///|
 test "Built-in theme slugs are exported for CLI and config UX" {
-  let slugs = built_in_theme_slugs()
+  let slugs = built_in_themes().map(theme_slug)
   assert_true(slugs.contains("zinc-light"))
   assert_true(slugs.contains("tokyo-night"))
   assert_true(slugs.contains("github-dark"))

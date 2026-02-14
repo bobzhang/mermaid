@@ -303,13 +303,7 @@ fn built_in_themes() -> Array[ThemeName] {
 }
 
 ///|
-/// Return canonical slugs for all built-in themes.
-fn built_in_theme_slugs() -> Array[String] {
-  built_in_themes().map(theme_slug)
-}
-
-///|
 /// Return built-in theme slugs as a comma-separated string.
 pub fn built_in_theme_slugs_csv() -> String {
-  built_in_theme_slugs().join(", ")
+  built_in_themes().map(theme_slug).join(", ")
 }
