@@ -23,9 +23,6 @@ pub struct CorpusCase {
   expected_unicode : String?
   expected_svg_fragments : Array[String]
 }
-pub impl Eq for CorpusCase
-pub impl Show for CorpusCase
-pub impl ToJson for CorpusCase
 
 pub struct GateCase {
   name : String
@@ -39,9 +36,6 @@ pub struct GateCase {
   expected_unicode : String
   expected_svg_fragments : Array[String]
 }
-pub impl Eq for GateCase
-pub impl Show for GateCase
-pub impl ToJson for GateCase
 
 // Type aliases
 

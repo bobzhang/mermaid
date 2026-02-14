@@ -11,7 +11,7 @@ pub struct GateCase {
   expected_ascii : String
   expected_unicode : String
   expected_svg_fragments : Array[String]
-} derive(Eq, Show, ToJson)
+}
 
 ///|
 /// Public function `gate_cases`.
