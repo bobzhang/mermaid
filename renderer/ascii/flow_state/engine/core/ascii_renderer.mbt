@@ -1564,6 +1564,59 @@ fn flow_group_contains_node_center(
 }
 
 ///|
+fn option_bool_or(value : Bool?, fallback : Bool) -> Bool {
+  match value {
+    Some(found) => found
+    None => fallback
+  }
+}
+
+///|
+fn flow_collect_subgraph_content_flags(
+  subgraphs : Array[MermaidSubgraph],
+  has_content : Map[String, Bool],
+) -> Unit {
+  for subgraph in subgraphs {
+    let mut child_has_content = false
+    for child in subgraph.children {
+      flow_collect_subgraph_content_flags([child], has_content)
+      if option_bool_or(has_content.get(child.id), false) {
+        child_has_content = true
+      }
+    }
+    has_content[subgraph.id] = subgraph.node_ids.length() > 0 ||
+      child_has_content
+  }
+}
+
+///|
+fn flow_filter_groups_by_content(
+  groups : Array[AsciiFlowGroupBox],
+  has_content : Map[String, Bool],
+) -> Array[AsciiFlowGroupBox] {
+  let filtered : Array[AsciiFlowGroupBox] = []
+  for group in groups {
+    let filtered_children = flow_filter_groups_by_content(
+      group.children,
+      has_content,
+    )
+    if option_bool_or(has_content.get(group.id), true) ||
+      filtered_children.length() > 0 {
+      filtered.push({
+        id: group.id,
+        label: group.label,
+        left: group.left,
+        top: group.top,
+        width: group.width,
+        height: group.height,
+        children: filtered_children,
+      })
+    }
+  }
+  filtered
+}
+
+///|
 fn flow_expand_group_side_padding_for_nodes(
   group : AsciiFlowGroupBox,
   nodes : Array[AsciiFlowNodeBox],
@@ -2713,6 +2766,11 @@ fn render_ascii_flow_subgraphs(
   } else {
     mapped_groups
   }
+  let subgraph_has_content : Map[String, Bool] = {}
+  flow_collect_subgraph_content_flags(graph.subgraphs, subgraph_has_content)
+  let mapped_groups = flow_filter_groups_by_content(
+    mapped_groups, subgraph_has_content,
+  )
   let top_level_group_by_id : Map[String, AsciiFlowGroupBox] = {}
   for group in mapped_groups {
     top_level_group_by_id[group.id] = group
