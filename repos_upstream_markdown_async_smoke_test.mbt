@@ -21,7 +21,12 @@ async fn repos_markdown_files_from(
 ///|
 #cfg(target="native")
 async fn repos_markdown_files() -> Array[String] {
-  let roots = [".repos/mermaid/docs/syntax", ".repos/mermaid/docs/intro"]
+  let roots = [
+    ".repos/mermaid/docs/syntax",
+    ".repos/mermaid/docs/intro",
+    ".repos/mermaid/packages/mermaid/src/docs/syntax",
+    ".repos/mermaid/packages/mermaid/src/docs/intro",
+  ]
   let files : Array[String] = []
   for root in roots {
     repos_markdown_files_from(root, files)
