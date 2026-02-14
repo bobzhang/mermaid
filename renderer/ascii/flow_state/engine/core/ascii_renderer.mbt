@@ -1621,11 +1621,16 @@ fn flow_filter_groups_by_subgraph_content(
 fn flow_expand_group_side_padding_for_nodes(
   group : AsciiFlowGroupBox,
   nodes : Array[AsciiFlowNodeBox],
+  require_node_within_group : Bool,
 ) -> AsciiFlowGroupBox {
   let adjusted_children : Array[AsciiFlowGroupBox] = []
   for child in group.children {
     adjusted_children.push(
-      flow_expand_group_side_padding_for_nodes(child, nodes),
+      flow_expand_group_side_padding_for_nodes(
+        child,
+        nodes,
+        require_node_within_group,
+      ),
     )
   }
 
@@ -1654,7 +1659,8 @@ fn flow_expand_group_side_padding_for_nodes(
   }
 
   for node in nodes {
-    if !flow_group_contains_node_center(group, node) {
+    if require_node_within_group &&
+      !flow_group_contains_node_center(group, node) {
       continue
     }
     let node_left = node.left
@@ -2754,7 +2760,7 @@ fn render_ascii_flow_subgraphs(
     let padded_groups : Array[AsciiFlowGroupBox] = []
     for group in mapped_groups {
       padded_groups.push(
-        flow_expand_group_side_padding_for_nodes(group, mapped_nodes),
+        flow_expand_group_side_padding_for_nodes(group, mapped_nodes, true),
       )
     }
     padded_groups
@@ -2907,8 +2913,18 @@ fn render_ascii_flow_subgraphs(
     (flow_direction_horizontal || !flow_has_subgraph_direction_override) {
     let adjusted_groups : Array[AsciiFlowGroupBox] = []
     for group in mapped_groups {
+      let member_nodes : Array[AsciiFlowNodeBox] = []
+      for node in mapped_nodes {
+        match node_top_level_group_by_id.get(node.id) {
+          Some(top_level_group_id) =>
+            if top_level_group_id == group.id {
+              member_nodes.push(node)
+            }
+          None => ()
+        }
+      }
       adjusted_groups.push(
-        flow_expand_group_side_padding_for_nodes(group, mapped_nodes),
+        flow_expand_group_side_padding_for_nodes(group, member_nodes, false),
       )
     }
     adjusted_groups
