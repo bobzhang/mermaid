@@ -1,7 +1,6 @@
 ///|
 /// Public type `GateCase`.
 pub struct GateCase {
-  name : String
   input : String
   direction : String
   expected_node_count : Int
@@ -18,7 +17,6 @@ pub struct GateCase {
 pub fn gate_cases() -> Array[GateCase] {
   [
     {
-      name: "flow_basic",
       input: (
         #|graph TD
         #|A --> B
@@ -67,7 +65,6 @@ pub fn gate_cases() -> Array[GateCase] {
       ],
     },
     {
-      name: "flow_labeled_shapes",
       input: (
         #|graph LR
         #|A[Start] -->|Yes| B{Done}
@@ -96,7 +93,6 @@ pub fn gate_cases() -> Array[GateCase] {
       ],
     },
     {
-      name: "flow_bidirectional_thick",
       input: (
         #|graph TD
         #|A <==> B
@@ -146,7 +142,6 @@ pub fn gate_cases() -> Array[GateCase] {
       ],
     },
     {
-      name: "flow_dotted_no_arrow",
       input: (
         #|graph TD
         #|A -.- B
@@ -195,7 +190,6 @@ pub fn gate_cases() -> Array[GateCase] {
       ],
     },
     {
-      name: "flow_chained_edges",
       input: (
         #|graph LR
         #|A --> B --> C
@@ -224,7 +218,6 @@ pub fn gate_cases() -> Array[GateCase] {
       ],
     },
     {
-      name: "flow_parallel_targets",
       input: (
         #|graph LR
         #|A --> B & C
@@ -273,7 +266,6 @@ pub fn gate_cases() -> Array[GateCase] {
       ],
     },
     {
-      name: "state_basic",
       input: (
         #|stateDiagram-v2
         #|[*] --> Idle
@@ -364,7 +356,6 @@ pub fn gate_cases() -> Array[GateCase] {
       ],
     },
     {
-      name: "state_direction_override",
       input: (
         #|stateDiagram-v2
         #|direction LR

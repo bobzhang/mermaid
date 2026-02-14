@@ -25,7 +25,6 @@ pub struct CorpusCase {
 }
 
 pub struct GateCase {
-  name : String
   input : String
   direction : String
   expected_node_count : Int
