@@ -605,7 +605,7 @@ test "NFA fixture 001: SVG renders all nodes and edges" (it : @test.Test) {
     #|5 --- #0@{shape: dbl-circ}
   let svg = @beautiful_mermaid.render_mermaid(input)
   it.write(svg)
-  it.snapshot(filename="nfa_001_svg.txt")
+  it.snapshot(filename="nfa_001_svg.svg")
 }
 
 ///|
@@ -634,5 +634,5 @@ test "NFA fixture 003: SVG renders all nodes and edges" (it : @test.Test) {
     #|8 -.-> 4
   let svg = @beautiful_mermaid.render_mermaid(input)
   it.write(svg)
-  it.snapshot(filename="nfa_003_svg.txt")
+  it.snapshot(filename="nfa_003_svg.svg")
 }
