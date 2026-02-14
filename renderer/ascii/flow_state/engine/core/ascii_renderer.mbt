@@ -1618,6 +1618,66 @@ fn flow_filter_groups_by_subgraph_content(
 }
 
 ///|
+fn flow_collect_subgraph_has_direct_nodes(
+  subgraphs : Array[MermaidSubgraph],
+  has_direct_nodes : Map[String, Bool],
+) -> Unit {
+  for subgraph in subgraphs {
+    has_direct_nodes[subgraph.id] = subgraph.node_ids.length() > 0
+    flow_collect_subgraph_has_direct_nodes(subgraph.children, has_direct_nodes)
+  }
+}
+
+///|
+fn flow_collect_node_has_indirect_ancestor(
+  subgraphs : Array[MermaidSubgraph],
+  has_indirect_ancestor : Bool,
+  node_has_indirect_ancestor : Map[String, Bool],
+) -> Unit {
+  for subgraph in subgraphs {
+    for node_id in subgraph.node_ids {
+      if has_indirect_ancestor {
+        node_has_indirect_ancestor[node_id] = true
+      }
+    }
+    let child_has_indirect_ancestor = has_indirect_ancestor ||
+      subgraph.node_ids.length() == 0
+    flow_collect_node_has_indirect_ancestor(
+      subgraph.children,
+      child_has_indirect_ancestor,
+      node_has_indirect_ancestor,
+    )
+  }
+}
+
+///|
+fn flow_expand_indirect_nested_group_bottom_padding(
+  group : AsciiFlowGroupBox,
+  has_direct_nodes : Map[String, Bool],
+) -> AsciiFlowGroupBox {
+  let adjusted_children : Array[AsciiFlowGroupBox] = []
+  for child in group.children {
+    adjusted_children.push(
+      flow_expand_indirect_nested_group_bottom_padding(child, has_direct_nodes),
+    )
+  }
+  let has_direct_nodes_here = match has_direct_nodes.get(group.id) {
+    Some(value) => value
+    None => true
+  }
+  let grow_bottom = adjusted_children.length() > 0 && !has_direct_nodes_here
+  {
+    id: group.id,
+    label: group.label,
+    left: group.left,
+    top: group.top,
+    width: group.width,
+    height: group.height + (if grow_bottom { 1 } else { 0 }),
+    children: adjusted_children,
+  }
+}
+
+///|
 fn flow_expand_group_side_padding_for_nodes(
   group : AsciiFlowGroupBox,
   nodes : Array[AsciiFlowNodeBox],
@@ -1627,9 +1687,7 @@ fn flow_expand_group_side_padding_for_nodes(
   for child in group.children {
     adjusted_children.push(
       flow_expand_group_side_padding_for_nodes(
-        child,
-        nodes,
-        require_node_within_group,
+        child, nodes, require_node_within_group,
       ),
     )
   }
@@ -2641,6 +2699,28 @@ fn render_ascii_flow_subgraphs(
       )
     }
   }
+  if flow_with_subgraphs && flow_direction_horizontal {
+    let node_has_indirect_ancestor : Map[String, Bool] = {}
+    flow_collect_node_has_indirect_ancestor(
+      graph.subgraphs,
+      false,
+      node_has_indirect_ancestor,
+    )
+    for i, node in mapped_nodes {
+      match node_has_indirect_ancestor.get(node.id) {
+        Some(true) =>
+          mapped_nodes[i] = {
+            id: node.id,
+            label: node.label,
+            left: node.left,
+            top: node.top + 1,
+            width: node.width,
+            height: node.height,
+          }
+        _ => ()
+      }
+    }
+  }
 
   if !state_layout_mode {
     let row_indexes_by_center_y : Map[Int, Array[Int]] = {}
@@ -2915,6 +2995,26 @@ fn render_ascii_flow_subgraphs(
     for box in mapped_nodes {
       node_box_by_id[box.id] = box
     }
+  }
+  let subgraph_has_direct_nodes : Map[String, Bool] = {}
+  flow_collect_subgraph_has_direct_nodes(
+    graph.subgraphs,
+    subgraph_has_direct_nodes,
+  )
+  let mapped_groups = if !state_layout_mode &&
+    flow_with_subgraphs &&
+    flow_direction_horizontal {
+    let adjusted_groups : Array[AsciiFlowGroupBox] = []
+    for group in mapped_groups {
+      adjusted_groups.push(
+        flow_expand_indirect_nested_group_bottom_padding(
+          group, subgraph_has_direct_nodes,
+        ),
+      )
+    }
+    adjusted_groups
+  } else {
+    mapped_groups
   }
   let mut max_x = 0
   let mut max_y = 0
