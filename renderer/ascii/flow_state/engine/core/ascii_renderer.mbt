@@ -1592,8 +1592,11 @@ fn flow_lr_top_level_group_shifts(
     let group = groups[ordered_indexes[i]]
     let shifted_left = group.left + cumulative_shift
     let desired_left = previous_right + 3
+    let min_allowed_left = previous_right + 2
     if shifted_left > desired_left {
       cumulative_shift = cumulative_shift - (shifted_left - desired_left)
+    } else if shifted_left < min_allowed_left {
+      cumulative_shift = cumulative_shift + (min_allowed_left - shifted_left)
     }
     shifts[group.id] = cumulative_shift
     previous_right = group.left + cumulative_shift + group.width - 1
@@ -2656,11 +2659,11 @@ fn render_ascii_flow_subgraphs(
         (label.length() + 4).max(5)
       }
     } else {
-      (
-        label.length() +
-        4 +
-        (if flow_all_labeled_edges_without_arrow_end { 1 } else { 0 })
-      ).max(flow_vertical_min_node_width)
+      (label.length() +
+      4 +
+      (if flow_all_labeled_edges_without_arrow_end { 1 } else { 0 })).max(
+        flow_vertical_min_node_width,
+      )
     }
     let current = option_int_or(column_width_by_x.get(column_key), 0)
     if base_width > current {
@@ -2711,11 +2714,11 @@ fn render_ascii_flow_subgraphs(
           (label.length() + 4).max(5)
         }
       } else {
-        (
-          label.length() +
-          4 +
-          (if flow_all_labeled_edges_without_arrow_end { 1 } else { 0 })
-        ).max(flow_vertical_min_node_width)
+        (label.length() +
+        4 +
+        (if flow_all_labeled_edges_without_arrow_end { 1 } else { 0 })).max(
+          flow_vertical_min_node_width,
+        )
       }
       (option_int_or(column_width_by_x.get(column_key), fallback_width), 5)
     }
