@@ -79,8 +79,6 @@ test {
 - `render_mermaid(text, options?) -> String raise MermaidError`
 - `render_mermaid_ascii(text, options?) -> String raise MermaidError`
 - `render_mermaid_with_theme_name(text, theme_name, options?) -> String raise MermaidError`
-- Theme helpers: `theme_by_name`, `parse_theme_name`, `theme_exists`, `built_in_theme_slugs`, `built_in_theme_colors`
-- Shiki mapping helpers: `shiki_theme`, `shiki_dark_theme`, `shiki_light_theme`, `from_shiki_theme`
 
 ## Styling Options
 
@@ -117,10 +115,8 @@ test {
 
 ## Built-in Themes
 
-Use built-in theme presets by name and pass the resulting colors through `RenderOptions`.
-Use `built_in_theme_colors()` if you want the full slug-to-colors map.
-Use `theme_exists(name)` to validate a user-provided theme name before rendering.
-Use `canonical_theme_slug(name)` to resolve an arbitrary user input to a canonical slug.
+Use built-in theme presets by name directly in `render_mermaid_with_theme_name`.
+Use `canonical_theme_slug(name)` in CLI/tooling code to normalize user input.
 `default` is accepted as an alias for `zinc-light`.
 Use `built_in_theme_slugs_csv()` when you need a CLI-friendly list string.
 Available slugs: `zinc-light`, `zinc-dark`, `tokyo-night`, `tokyo-night-storm`, `tokyo-night-light`, `catppuccin-mocha`, `catppuccin-latte`, `nord`, `nord-light`, `dracula`, `github-light`, `github-dark`, `solarized-light`, `solarized-dark`, `one-dark`.
@@ -130,30 +126,12 @@ Leading/trailing separators are ignored, so forms like `__github_dark__` also no
 ```mbt check
 ///|
 test {
-  let colors = match @themes.theme_by_name("tokyo-night") {
-    Some(found) => found
-    None => fail("missing theme")
-  }
-  let options = RenderOptions::{
-    bg: Some(colors.bg),
-    fg: Some(colors.fg),
-    line: colors.line,
-    accent: colors.accent,
-    muted: colors.muted,
-    surface: colors.surface,
-    border: colors.border,
-    font: None,
-    padding: None,
-    node_spacing: None,
-    layer_spacing: None,
-    transparent: None,
-  }
-  let svg = try! render_mermaid(
+  let svg = try! render_mermaid_with_theme_name(
     (
       #|graph TD
       #|A --> B
     ),
-    options~,
+    "tokyo-night",
   )
   assert_true(svg.contains("--bg:#1a1b26"))
   assert_true(svg.contains("--accent:#7aa2f7"))
@@ -174,53 +152,6 @@ test {
   )
   assert_true(svg.contains("--bg:#0d1117"))
   assert_true(svg.contains("--accent:#4493f8"))
-}
-```
-
-### Theme Extraction from Editor-Like Theme Data
-
-Use `from_shiki_theme` to map editor/theme token data into `DiagramColors`.
-Use `shiki_token_color` / `shiki_token_color_many` to build token entries.
-Use `shiki_dark_theme` / `shiki_light_theme` when constructing `ShikiTheme`.
-When `theme_type` is omitted, fallback colors use light defaults.
-
-```mbt check
-///|
-test {
-  let shiki_theme = @themes.shiki_theme(
-    Some("dark"),
-    Some({
-      "editor.background": "#1a1b26",
-      "editor.foreground": "#a9b1d6",
-      "editorLineNumber.foreground": "#565f89",
-      "focusBorder": "#7aa2f7",
-    }),
-    Some([@themes.shiki_token_color("comment", Some("#565f89"))]),
-  )
-  let colors = @themes.from_shiki_theme(shiki_theme)
-  let options = RenderOptions::{
-    bg: Some(colors.bg),
-    fg: Some(colors.fg),
-    line: colors.line,
-    accent: colors.accent,
-    muted: colors.muted,
-    surface: colors.surface,
-    border: colors.border,
-    font: None,
-    padding: None,
-    node_spacing: None,
-    layer_spacing: None,
-    transparent: None,
-  }
-  let svg = try! render_mermaid(
-    (
-      #|graph TD
-      #|A --> B
-    ),
-    options~,
-  )
-  assert_true(svg.contains("--bg:#1a1b26"))
-  assert_true(svg.contains("--accent:#7aa2f7"))
 }
 ```
 

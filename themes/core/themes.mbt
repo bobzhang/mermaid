@@ -1,6 +1,6 @@
 ///|
 /// Built-in theme identifiers for `render_mermaid_with_theme_name`.
-pub enum ThemeName {
+enum ThemeName {
   ZincLight
   ZincDark
   TokyoNight
@@ -20,23 +20,20 @@ pub enum ThemeName {
 
 ///|
 /// Minimal Shiki token color model used by `from_shiki_theme`.
-pub(all) struct ShikiTokenColor {
+struct ShikiTokenColor {
   scopes : Array[String]
   foreground : String?
 } derive(Eq, Show, ToJson)
 
 ///|
 /// Helper to construct a token-color entry for one scope.
-pub fn shiki_token_color(
-  scope : String,
-  foreground : String?,
-) -> ShikiTokenColor {
+fn shiki_token_color(scope : String, foreground : String?) -> ShikiTokenColor {
   { scopes: [scope], foreground }
 }
 
 ///|
 /// Helper to construct a token-color entry for multiple scopes.
-pub fn shiki_token_color_many(
+fn shiki_token_color_many(
   scopes : Array[String],
   foreground : String?,
 ) -> ShikiTokenColor {
@@ -45,7 +42,7 @@ pub fn shiki_token_color_many(
 
 ///|
 /// Simplified Shiki-like theme model used to derive `DiagramColors`.
-pub(all) struct ShikiTheme {
+struct ShikiTheme {
   theme_type : String?
   colors : Map[String, String]?
   token_colors : Array[ShikiTokenColor]?
@@ -53,7 +50,7 @@ pub(all) struct ShikiTheme {
 
 ///|
 /// Build a `ShikiTheme` value.
-pub fn shiki_theme(
+fn shiki_theme(
   theme_type : String?,
   colors : Map[String, String]?,
   token_colors : Array[ShikiTokenColor]?,
@@ -63,7 +60,7 @@ pub fn shiki_theme(
 
 ///|
 /// Build a dark `ShikiTheme`.
-pub fn shiki_dark_theme(
+fn shiki_dark_theme(
   colors : Map[String, String]?,
   token_colors : Array[ShikiTokenColor]?,
 ) -> ShikiTheme {
@@ -72,7 +69,7 @@ pub fn shiki_dark_theme(
 
 ///|
 /// Build a light `ShikiTheme`.
-pub fn shiki_light_theme(
+fn shiki_light_theme(
   colors : Map[String, String]?,
   token_colors : Array[ShikiTokenColor]?,
 ) -> ShikiTheme {
@@ -112,7 +109,7 @@ fn shiki_token_scope_color(theme : ShikiTheme, scope : String) -> String? {
 ///|
 /// Convert editor-like theme data to diagram colors.
 /// Falls back to sensible light/dark defaults when fields are missing.
-pub fn from_shiki_theme(theme : ShikiTheme) -> DiagramColors {
+fn from_shiki_theme(theme : ShikiTheme) -> DiagramColors {
   let theme_kind = match theme.theme_type {
     Some(kind) => kind.trim().to_string().to_lower()
     None => ""
@@ -145,7 +142,7 @@ pub fn from_shiki_theme(theme : ShikiTheme) -> DiagramColors {
 
 ///|
 /// Return the color palette for a built-in theme.
-pub fn theme_colors(theme : ThemeName) -> DiagramColors {
+fn theme_colors(theme : ThemeName) -> DiagramColors {
   match theme {
     ZincLight =>
       {
@@ -302,7 +299,7 @@ pub fn theme_colors(theme : ThemeName) -> DiagramColors {
 
 ///|
 /// Return the canonical slug for a built-in theme.
-pub fn theme_slug(theme : ThemeName) -> String {
+fn theme_slug(theme : ThemeName) -> String {
   match theme {
     ZincLight => "zinc-light"
     ZincDark => "zinc-dark"
@@ -325,7 +322,7 @@ pub fn theme_slug(theme : ThemeName) -> String {
 ///|
 /// Normalize user theme input:
 /// lowercase, spaces/underscores to `-`, collapse repeated separators.
-pub fn normalize_theme_name(name : String) -> String {
+fn normalize_theme_name(name : String) -> String {
   let normalized = name
     .trim()
     .to_string()
@@ -355,21 +352,7 @@ pub fn normalize_theme_name(name : String) -> String {
 /// Parse a user-supplied theme name to a `ThemeName`.
 /// Accepts `default` as an alias for `zinc-light`.
 ///
-/// # Example
-/// ```mbt check
-/// test {
-///   match parse_theme_name("TOKYO   NIGHT") {
-///     Some(theme) => assert_eq(theme_slug(theme), "tokyo-night")
-///     None => fail("theme should parse")
-///   }
-///   match parse_theme_name("default") {
-///     Some(theme) => assert_eq(theme_slug(theme), "zinc-light")
-///     None => fail("default should parse")
-///   }
-///   assert_true(parse_theme_name("not-a-theme") is None)
-/// }
-/// ```
-pub fn parse_theme_name(name : String) -> ThemeName? {
+fn parse_theme_name(name : String) -> ThemeName? {
   match normalize_theme_name(name) {
     "default" => Some(ZincLight)
     "zinc-light" => Some(ZincLight)
@@ -412,7 +395,7 @@ pub fn theme_by_name(name : String) -> DiagramColors? {
 
 ///|
 /// Return whether a user theme name resolves to a known built-in theme.
-pub fn theme_exists(name : String) -> Bool {
+fn theme_exists(name : String) -> Bool {
   parse_theme_name(name) is Some(_)
 }
 
@@ -427,7 +410,7 @@ pub fn canonical_theme_slug(name : String) -> String? {
 
 ///|
 /// Return all built-in themes in stable display order.
-pub fn built_in_themes() -> Array[ThemeName] {
+fn built_in_themes() -> Array[ThemeName] {
   [
     ZincLight,
     ZincDark,
@@ -449,7 +432,7 @@ pub fn built_in_themes() -> Array[ThemeName] {
 
 ///|
 /// Return canonical slugs for all built-in themes.
-pub fn built_in_theme_slugs() -> Array[String] {
+fn built_in_theme_slugs() -> Array[String] {
   built_in_themes().map(theme_slug)
 }
 
@@ -461,7 +444,7 @@ pub fn built_in_theme_slugs_csv() -> String {
 
 ///|
 /// Return a slug-to-colors map for all built-in themes.
-pub fn built_in_theme_colors() -> Map[String, DiagramColors] {
+fn built_in_theme_colors() -> Map[String, DiagramColors] {
   let themes : Map[String, DiagramColors] = {}
   for theme in built_in_themes() {
     themes[theme_slug(theme)] = theme_colors(theme)
