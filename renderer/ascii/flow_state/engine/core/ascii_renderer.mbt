@@ -3169,9 +3169,18 @@ fn render_ascii_flow_subgraphs(
               non_state_out_degree_by_source.get(edge.source),
               0,
             )
-            let loop_extra = if source_total_out > 1 { 3 } else { 2 }
+            let source_total_in = option_int_or(
+              non_state_in_degree_by_target.get(edge.source),
+              0,
+            )
+            let loop_extra = if source_total_out > 1 || source_total_in > 1 {
+              3
+            } else {
+              2
+            }
             let loop_right_x = source_anchor_x + loop_extra
-            let loop_bottom_y = target_anchor_y + 2
+            let loop_bottom_y = target_anchor_y +
+              (if source_total_in > 1 { 3 } else { 2 })
             let route_points = [
               Point::{ x: source_anchor_x, y: source_anchor_y },
               { x: loop_right_x, y: source_anchor_y },
@@ -3266,6 +3275,7 @@ fn render_ascii_flow_subgraphs(
               !flow_with_subgraphs &&
               center_dx < 0 &&
               center_dy == 0 &&
+              target_in_degree <= 1 &&
               edge.label is None
             let labeled_left_descending_detour = flow_direction_horizontal &&
               center_dx < 0 &&
