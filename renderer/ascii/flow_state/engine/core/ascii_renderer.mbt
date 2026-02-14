@@ -1666,13 +1666,24 @@ fn flow_expand_indirect_nested_group_bottom_padding(
     None => true
   }
   let grow_bottom = adjusted_children.length() > 0 && !has_direct_nodes_here
+  let all_children_indirect = adjusted_children.length() > 0 &&
+    adjusted_children.all(child => {
+      match has_direct_nodes.get(child.id) {
+        Some(value) => !value
+        None => false
+      }
+    })
+  let extra_bottom_for_indirect_chain = !has_direct_nodes_here &&
+    all_children_indirect
   {
     id: group.id,
     label: group.label,
     left: group.left,
     top: group.top,
     width: group.width,
-    height: group.height + (if grow_bottom { 1 } else { 0 }),
+    height: group.height +
+      (if grow_bottom { 1 } else { 0 }) +
+      (if extra_bottom_for_indirect_chain { 1 } else { 0 }),
     children: adjusted_children,
   }
 }
