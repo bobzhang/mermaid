@@ -15,11 +15,6 @@ pub fn theme_by_name(String) -> @model.DiagramColors?
 // Errors
 
 // Types and methods
-type ShikiTheme
-
-type ShikiTokenColor
-
-type ThemeName
 
 // Type aliases
 

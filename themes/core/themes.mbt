@@ -1,6 +1,6 @@
 ///|
 /// Built-in theme identifiers for `render_mermaid_with_theme_name`.
-enum ThemeName {
+priv enum ThemeName {
   ZincLight
   ZincDark
   TokyoNight
@@ -20,7 +20,7 @@ enum ThemeName {
 
 ///|
 /// Minimal Shiki token color model used by `from_shiki_theme`.
-struct ShikiTokenColor {
+priv struct ShikiTokenColor {
   scopes : Array[String]
   foreground : String?
 }
@@ -42,7 +42,7 @@ fn shiki_token_color_many(
 
 ///|
 /// Simplified Shiki-like theme model used to derive `DiagramColors`.
-struct ShikiTheme {
+priv struct ShikiTheme {
   theme_type : String?
   colors : Map[String, String]?
   token_colors : Array[ShikiTokenColor]?
