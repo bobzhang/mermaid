@@ -32,6 +32,24 @@ test "Parser rejects empty input" {
 }
 
 ///|
+test "Parser ignores leading yaml frontmatter" {
+  let graph = @parser_header_core.parse_mermaid(
+    (
+      #|---
+      #|title: Flowchart internals
+      #|references:
+      #|  - /packages/mermaid/src/diagrams/flowchart/flowDiagram.ts
+      #|generationTime: 2025-07-23T10:31:53.266Z
+      #|---
+      #|graph TD
+      #|A --> B
+    ),
+  )
+  assert_eq(graph.direction.to_string(), "TD")
+  assert_eq(graph.edges.length(), 1)
+}
+
+///|
 test "Parser accepts all supported flowchart directions" {
   for direction in ["TD", "TB", "LR", "BT", "RL"] {
     let graph = @parser_header_core.parse_mermaid(

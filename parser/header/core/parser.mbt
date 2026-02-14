@@ -2,8 +2,27 @@
 fn preprocess_lines(text : String) -> Array[String] {
   let normalized = text.replace_all(old=";", new="\n")
   let lines : Array[String] = []
+  let mut at_start = true
+  let mut in_frontmatter = false
   for raw in normalized.split("\n") {
     let line = @parser_common_engine_core.trim_owned(raw.to_string())
+    if in_frontmatter {
+      if line == "---" {
+        in_frontmatter = false
+      }
+      continue
+    }
+    if at_start {
+      if line == "" {
+        continue
+      }
+      if line == "---" {
+        in_frontmatter = true
+        at_start = false
+        continue
+      }
+      at_start = false
+    }
     if line == "" || line.has_prefix("%%") {
       continue
     }
