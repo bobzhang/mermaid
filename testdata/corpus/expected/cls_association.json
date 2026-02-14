@@ -1,7 +1,7 @@
 {
   "name": "cls_association",
   "header": "classdiagram",
-  "supportedByMoonbit": false,
+  "supportedByMoonbit": true,
   "paddingX": 5,
   "paddingY": 5,
   "direction": null,

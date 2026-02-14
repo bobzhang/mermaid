@@ -1,7 +1,7 @@
 {
   "name": "seq_self_message",
   "header": "sequencediagram",
-  "supportedByMoonbit": false,
+  "supportedByMoonbit": true,
   "paddingX": 5,
   "paddingY": 5,
   "direction": null,
