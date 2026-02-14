@@ -3138,6 +3138,11 @@ fn render_ascii_flow_subgraphs(
               center_dx < 0 &&
               (center_dy.abs() <= source_box.height || center_dy < 0) &&
               edge.label is Some(_)
+            let unlabeled_back_edge_detour = flow_direction_horizontal &&
+              !flow_with_subgraphs &&
+              center_dx < 0 &&
+              center_dy == 0 &&
+              edge.label is None
             let labeled_left_descending_detour = flow_direction_horizontal &&
               center_dx < 0 &&
               center_dy > 0 &&
@@ -3170,6 +3175,28 @@ fn render_ascii_flow_subgraphs(
               )
               [
                 Point::{ x: source_anchor_x, y: source_anchor_y },
+                { x: source_anchor_x, y: detour_y },
+                { x: target_anchor_x, y: detour_y },
+                { x: target_anchor_x, y: target_anchor_y },
+              ]
+            } else if unlabeled_back_edge_detour {
+              let (sx, sy) = flow_edge_anchor(source_box, 0, 1, false)
+              let (tx, ty) = flow_edge_anchor(target_box, 0, -1, true)
+              source_anchor_x = sx
+              source_anchor_y = sy
+              target_anchor_x = tx
+              target_anchor_y = ty
+              let detour_start_y = source_anchor_y.max(target_anchor_y) + 2
+              let detour_y = flow_non_state_back_edge_detour_row(
+                edge.source,
+                edge.target,
+                source_anchor_x,
+                target_anchor_x,
+                detour_start_y,
+                mapped_nodes,
+              )
+              [
+                { x: source_anchor_x, y: source_anchor_y },
                 { x: source_anchor_x, y: detour_y },
                 { x: target_anchor_x, y: detour_y },
                 { x: target_anchor_x, y: target_anchor_y },
@@ -3302,6 +3329,11 @@ fn render_ascii_flow_subgraphs(
             }
             if options.use_ascii {
               if flow_with_subgraphs && !flow_direction_horizontal {
+                flow_mark_ascii_route_bends(canvas, non_state_route_points)
+              } else if !flow_with_subgraphs &&
+                flow_direction_horizontal &&
+                center_dx < 0 &&
+                non_state_route_points.length() >= 4 {
                 flow_mark_ascii_route_bends(canvas, non_state_route_points)
               } else if non_state_route_points.length() == 3 {
                 let bend = non_state_route_points[1]
