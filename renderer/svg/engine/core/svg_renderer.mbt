@@ -524,8 +524,8 @@ fn er_endpoint_tokens(operator : String?) -> (String?, String?) {
       }
       match (start_sep, end_sep) {
         (Some(start), Some(end)) => {
-          let start_token = trim_owned((try! op[:start]).to_string())
-          let end_token = trim_owned((try! op[end + 1:]).to_string())
+          let start_token = (try! op[:start]).to_string().trim().to_string()
+          let end_token = (try! op[end + 1:]).to_string().trim().to_string()
           let start_value = if start_token == "" {
             None
           } else {

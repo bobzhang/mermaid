@@ -806,11 +806,6 @@ fn build_class_layout(graph : @model.MermaidGraph) -> AsciiClassLayout {
 }
 
 ///|
-fn trim_owned(s : String) -> String {
-  s.trim().to_string()
-}
-
-///|
 fn er_sections(node : @model.MermaidNode) -> Array[Array[String]] {
   let lines = node.label.split("\n").map(part => part.to_string()).to_array()
   if lines.length() == 0 {
@@ -820,7 +815,7 @@ fn er_sections(node : @model.MermaidNode) -> Array[Array[String]] {
   let header = [lines[0]]
   let attrs : Array[String] = []
   for i in 1..<lines.length() {
-    let line = trim_owned(lines[i])
+    let line = lines[i].trim().to_string()
     if line != "" {
       if line.has_prefix("PK ") ||
         line.has_prefix("UK ") ||
