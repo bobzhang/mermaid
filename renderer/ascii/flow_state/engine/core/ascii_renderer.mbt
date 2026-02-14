@@ -1540,7 +1540,7 @@ fn flow_lr_top_level_group_shifts(
   for i in 1..<ordered_indexes.length() {
     let group = groups[ordered_indexes[i]]
     let shifted_left = group.left + cumulative_shift
-    let desired_left = previous_right + 2
+    let desired_left = previous_right + 3
     if shifted_left > desired_left {
       cumulative_shift = cumulative_shift - (shifted_left - desired_left)
     }
@@ -2459,7 +2459,12 @@ fn render_ascii_flow_subgraphs(
   } else {
     graph.edges.any(edge => edge.label is Some(_))
   }
-  let flow_vertical_min_node_width = if flow_has_labeled_edges { 7 } else { 5 }
+  let flow_vertical_min_node_width = if !flow_direction_horizontal &&
+    flow_has_labeled_edges {
+    7
+  } else {
+    5
+  }
   let scale_x = if state_layout_mode { 9 } else { flow_scale_x() }
   let scale_y = if state_layout_mode { 10 } else { flow_scale_y() }
   let column_width_by_x : Map[Int, Int] = {}
@@ -2496,7 +2501,6 @@ fn render_ascii_flow_subgraphs(
   }
 
   let mapped_nodes : Array[AsciiFlowNodeBox] = []
-  let node_layout_x_by_id : Map[String, Int] = {}
   let node_column_key_by_id : Map[String, Int] = {}
   let flow_horizontal_subgraph_node_inset = if !state_layout_mode &&
     flow_with_subgraphs &&
@@ -2513,7 +2517,6 @@ fn render_ascii_flow_subgraphs(
     0
   }
   for node in positioned.nodes {
-    node_layout_x_by_id[node.id] = node.x
     let label = flow_node_label(node)
     let column_key = if !state_layout_mode && flow_direction_horizontal {
       node.x - node.width / 2
@@ -2757,8 +2760,18 @@ fn render_ascii_flow_subgraphs(
     (flow_direction_horizontal || !flow_has_subgraph_direction_override) {
     let padded_groups : Array[AsciiFlowGroupBox] = []
     for group in mapped_groups {
+      let member_nodes : Array[AsciiFlowNodeBox] = []
+      for node in mapped_nodes {
+        match node_top_level_group_by_id.get(node.id) {
+          Some(top_level_group_id) =>
+            if top_level_group_id == group.id {
+              member_nodes.push(node)
+            }
+          None => ()
+        }
+      }
       padded_groups.push(
-        flow_expand_group_side_padding_for_nodes(group, mapped_nodes, true),
+        flow_expand_group_side_padding_for_nodes(group, member_nodes, false),
       )
     }
     padded_groups
@@ -2825,78 +2838,6 @@ fn render_ascii_flow_subgraphs(
               width: node.width,
               height: node.height,
             }
-          }
-        }
-        None => ()
-      }
-    }
-    for box in mapped_nodes {
-      node_box_by_id[box.id] = box
-    }
-  }
-  if flow_with_subgraphs && flow_direction_horizontal {
-    let min_left_by_group_and_layout_x : Map[String, Int] = {}
-    for node in mapped_nodes {
-      match node_top_level_group_by_id.get(node.id) {
-        Some(top_level_group_id) => {
-          let layout_x = option_int_or(
-            node_layout_x_by_id.get(node.id),
-            node.left,
-          )
-          let layout_column = layout_x / (scale_x * 5)
-          let key = "\{top_level_group_id}|\{layout_column}"
-          let current_left = option_int_or(
-            min_left_by_group_and_layout_x.get(key),
-            node.left,
-          )
-          if !min_left_by_group_and_layout_x.contains(key) ||
-            node.left < current_left {
-            min_left_by_group_and_layout_x[key] = node.left
-          }
-        }
-        None => ()
-      }
-    }
-    for i, node in mapped_nodes {
-      match node_top_level_group_by_id.get(node.id) {
-        Some(top_level_group_id) => {
-          let layout_x = option_int_or(
-            node_layout_x_by_id.get(node.id),
-            node.left,
-          )
-          let layout_column = layout_x / (scale_x * 5)
-          let key = "\{top_level_group_id}|\{layout_column}"
-          match min_left_by_group_and_layout_x.get(key) {
-            Some(column_left) => {
-              let mut aligned_left = column_left
-              match top_level_group_by_id.get(top_level_group_id) {
-                Some(top_level_group) => {
-                  let min_left = top_level_group.left + 2
-                  let max_left = (top_level_group.left +
-                  top_level_group.width -
-                  node.width -
-                  1).max(min_left)
-                  if aligned_left < min_left {
-                    aligned_left = min_left
-                  }
-                  if aligned_left > max_left {
-                    aligned_left = max_left
-                  }
-                }
-                None => ()
-              }
-              if aligned_left != node.left {
-                mapped_nodes[i] = {
-                  id: node.id,
-                  label: node.label,
-                  left: aligned_left,
-                  top: node.top,
-                  width: node.width,
-                  height: node.height,
-                }
-              }
-            }
-            None => ()
           }
         }
         None => ()
