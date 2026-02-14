@@ -2401,13 +2401,7 @@ fn render_ascii_flow_subgraphs(
   } else {
     graph.edges.any(edge => edge.label is Some(_))
   }
-  let flow_vertical_min_node_width = if flow_with_subgraphs {
-    10
-  } else if flow_has_labeled_edges {
-    11
-  } else {
-    10
-  }
+  let flow_vertical_min_node_width = if flow_has_labeled_edges { 7 } else { 5 }
   let scale_x = if state_layout_mode { 9 } else { flow_scale_x() }
   let scale_y = if state_layout_mode { 10 } else { flow_scale_y() }
   let column_width_by_x : Map[Int, Int] = {}
@@ -2446,20 +2440,8 @@ fn render_ascii_flow_subgraphs(
   let mapped_nodes : Array[AsciiFlowNodeBox] = []
   let node_layout_x_by_id : Map[String, Int] = {}
   let node_column_key_by_id : Map[String, Int] = {}
-  let flow_horizontal_subgraph_node_inset = if !state_layout_mode &&
-    flow_with_subgraphs &&
-    flow_direction_horizontal {
-    1
-  } else {
-    0
-  }
-  let flow_horizontal_subgraph_node_vshift = if !state_layout_mode &&
-    flow_with_subgraphs &&
-    flow_direction_horizontal {
-    1
-  } else {
-    0
-  }
+  let flow_horizontal_subgraph_node_inset = 0
+  let flow_horizontal_subgraph_node_vshift = 0
   for node in positioned.nodes {
     node_layout_x_by_id[node.id] = node.x
     let label = flow_node_label(node)
@@ -3390,16 +3372,6 @@ fn render_ascii_flow_subgraphs(
 }
 
 ///|
-fn render_ascii_nodes_only(graph : MermaidGraph) -> String {
-  let lines : Array[String] = []
-  for _, node in graph.nodes {
-    let label = if node.label == "" { node.id } else { node.label }
-    lines.push("[\{label}]")
-  }
-  lines.iter().join("\n")
-}
-
-///|
 fn render_ascii_plan(
   plan : @renderer_ascii_layout_plan.AsciiLayoutPlan,
   options : AsciiRenderOptions,
@@ -3438,7 +3410,6 @@ fn render_ascii_plan(
           render_ascii_flow_subgraphs(graph, flow_layout.positioned, options)
         None => ""
       }
-    NodesOnly => render_ascii_nodes_only(graph)
   }
 }
 

@@ -8,6 +8,8 @@ import {
 }
 
 import {
+  "moonbitlang/async",
+  "moonbitlang/async/fs" @fs,
   "moonbitlang/core/strconv" @strconv,
   "moonbitlang/core/test",
 } for "test"

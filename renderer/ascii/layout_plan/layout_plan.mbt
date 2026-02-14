@@ -6,7 +6,6 @@ pub enum AsciiPlanKind {
   Er
   StateFlatGrid
   FlowSubgraph
-  NodesOnly
 }
 
 ///|
@@ -1038,18 +1037,6 @@ pub fn build_plan(graph : @model.MermaidGraph) -> AsciiLayoutPlan {
     }
   }
 
-  if graph.subgraphs.length() == 0 && td_like_direction {
-    return {
-      kind: StateFlatGrid,
-      graph,
-      sequence_layout: None,
-      class_layout: None,
-      er_layout: None,
-      state_flat_grid: Some(build_state_flat_grid_layout(graph)),
-      flow_subgraph: None,
-    }
-  }
-
   if graph.subgraphs.length() > 0 {
     return {
       kind: FlowSubgraph,
@@ -1059,18 +1046,6 @@ pub fn build_plan(graph : @model.MermaidGraph) -> AsciiLayoutPlan {
       er_layout: None,
       state_flat_grid: None,
       flow_subgraph: Some(build_flow_subgraph_layout(graph)),
-    }
-  }
-
-  if graph.edges.length() == 0 {
-    return {
-      kind: NodesOnly,
-      graph,
-      sequence_layout: None,
-      class_layout: None,
-      er_layout: None,
-      state_flat_grid: None,
-      flow_subgraph: None,
     }
   }
 
