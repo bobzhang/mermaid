@@ -2614,7 +2614,7 @@ fn render_ascii_flow_subgraphs(
                 horizontal_label_gap_by_pair.get(pair_key),
                 options.padding_x,
               )
-              let required_gap = options.padding_x + 1
+              let required_gap = options.padding_x
               if required_gap > current_gap {
                 horizontal_label_gap_by_pair[pair_key] = required_gap
               }
