@@ -142,6 +142,26 @@ fn collect_non_state_flow_lanes(
 }
 
 ///|
+fn collect_top_level_group_index_by_node_id(
+  subgraph : MermaidSubgraph,
+  top_level_group_index : Int,
+  top_level_group_index_by_node_id : Map[String, Int],
+) -> Unit {
+  for node_id in subgraph.node_ids {
+    if !top_level_group_index_by_node_id.contains(node_id) {
+      top_level_group_index_by_node_id[node_id] = top_level_group_index
+    }
+  }
+  for child in subgraph.children {
+    collect_top_level_group_index_by_node_id(
+      child,
+      top_level_group_index,
+      top_level_group_index_by_node_id,
+    )
+  }
+}
+
+///|
 fn resolve_subgraph_layout_direction(
   subgraph_direction : Direction?,
   inherited_horizontal : Bool,
@@ -1317,6 +1337,76 @@ fn layout_graph_with_subgraph_redirects(
     flow_max_rank = max_rank
     for node_id, rank in rank_by_id {
       flow_rank_by_node_id[node_id] = rank
+    }
+    if !state_graph && graph.subgraphs.length() > 0 {
+      let top_level_group_index_by_node_id : Map[String, Int] = {}
+      for i, subgraph in graph.subgraphs {
+        collect_top_level_group_index_by_node_id(
+          subgraph,
+          i,
+          top_level_group_index_by_node_id,
+        )
+      }
+
+      for group_index in 0..<graph.subgraphs.length() {
+        let mut has_member = false
+        let mut first_member_order = 0
+        let mut min_group_rank = 0
+        for order, node in nodes_in_order {
+          match top_level_group_index_by_node_id.get(node.id) {
+            Some(index) =>
+              if index == group_index {
+                let rank = option_int_or(flow_rank_by_node_id.get(node.id), 0)
+                if !has_member {
+                  has_member = true
+                  first_member_order = order
+                  min_group_rank = rank
+                } else {
+                  first_member_order = first_member_order.min(order)
+                  min_group_rank = min_group_rank.min(rank)
+                }
+              }
+            None => ()
+          }
+        }
+        if !has_member {
+          continue
+        }
+
+        let mut has_outside_before = false
+        let mut max_outside_before_rank = 0
+        for order, node in nodes_in_order {
+          if order >= first_member_order {
+            continue
+          }
+          if top_level_group_index_by_node_id.contains(node.id) {
+            continue
+          }
+          let rank = option_int_or(flow_rank_by_node_id.get(node.id), 0)
+          if !has_outside_before || rank > max_outside_before_rank {
+            max_outside_before_rank = rank
+            has_outside_before = true
+          }
+        }
+        if !has_outside_before {
+          continue
+        }
+        let desired_min_rank = max_outside_before_rank + 1
+        if min_group_rank >= desired_min_rank {
+          continue
+        }
+        let rank_delta = desired_min_rank - min_group_rank
+        for node_id, index in top_level_group_index_by_node_id {
+          if index == group_index {
+            let current_rank = option_int_or(flow_rank_by_node_id.get(node_id), 0)
+            flow_rank_by_node_id[node_id] = current_rank + rank_delta
+          }
+        }
+      }
+      flow_max_rank = 0
+      for _, rank in flow_rank_by_node_id {
+        flow_max_rank = flow_max_rank.max(rank)
+      }
     }
     let lane_by_id = collect_non_state_flow_lanes(
       nodes_in_order, flow_rank_by_node_id,
