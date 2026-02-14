@@ -2964,258 +2964,307 @@ fn render_ascii_flow_subgraphs(
       target_anchor_y = ty
     } else {
       match (node_box_by_id.get(edge.source), node_box_by_id.get(edge.target)) {
-        (Some(source_box), Some(target_box)) => {
-          let source_center_x = source_box.left + source_box.width / 2
-          let source_center_y = source_box.top + source_box.height / 2
-          let target_center_x = target_box.left + target_box.width / 2
-          let target_center_y = target_box.top + target_box.height / 2
-          let center_dx = target_center_x - source_center_x
-          let center_dy = target_center_y - source_center_y
-          let source_out_degree = option_int_or(
-            non_state_out_degree_by_source.get(edge.source),
-            0,
-          )
-          let target_out_degree = option_int_or(
-            non_state_out_degree_by_source.get(edge.target),
-            0,
-          )
-          let target_in_degree = option_int_or(
-            non_state_in_degree_by_target.get(edge.target),
-            0,
-          )
-          let merge_target = !horizontal_state_flow_mode &&
-            !flow_with_subgraphs &&
-            flow_direction_horizontal &&
-            center_dx > 0 &&
-            target_in_degree > 1 &&
-            target_out_degree <= 1 &&
-            !non_state_has_labeled_incoming_target.contains(edge.target) &&
-            edge.label is None
-          let merge_primary_edge = merge_target && center_dy == 0
-          merge_secondary_edge = merge_target && center_dy != 0
-          if merge_primary_edge {
-            merge_primary_join_x = target_box.left - 3
-          }
-          let horizontal_first = if flow_direction_horizontal {
-            if horizontal_state_flow_mode && center_dx != 0 && center_dy < 0 {
-              true
-            } else if !flow_with_subgraphs &&
-              center_dy != 0 &&
-              center_dx > 0 &&
-              (source_out_degree > 1 || target_in_degree > 1) {
-              false
-            } else {
-              !(flow_with_subgraphs && source_out_degree > 1)
-            }
-          } else {
-            source_out_degree > 1
-          }
-          let mut source_dir_dx = center_dx
-          let mut source_dir_dy = center_dy
-          let mut target_dir_dx = center_dx
-          let mut target_dir_dy = center_dy
-          if center_dx != 0 && center_dy != 0 {
-            if horizontal_first {
-              source_dir_dy = 0
-              target_dir_dx = 0
-            } else {
-              source_dir_dx = 0
-              target_dir_dy = 0
-            }
-          }
-          let labeled_back_edge_detour = flow_direction_horizontal &&
-            center_dx < 0 &&
-            (center_dy.abs() <= source_box.height || center_dy < 0) &&
-            edge.label is Some(_)
-          let labeled_left_descending_detour = flow_direction_horizontal &&
-            center_dx < 0 &&
-            center_dy > 0 &&
-            source_out_degree > 1 &&
-            edge.label is Some(_)
-          let route_points = if labeled_back_edge_detour {
-            let (sx, sy) = flow_edge_anchor(source_box, 0, 1, false)
-            let (tx, ty) = flow_edge_anchor(target_box, 0, -1, true)
-            let shared_source_x = if source_out_degree > 1 {
-              (source_box.left - 3).max(target_box.left + 1)
-            } else {
-              sx
-            }
-            source_anchor_x = shared_source_x
-            source_anchor_y = sy
-            target_anchor_x = tx
-            target_anchor_y = ty
-            let detour_start_y = if center_dy < 0 {
-              target_anchor_y + 3
-            } else {
-              source_anchor_y.max(target_anchor_y) + 3
-            }
-            let detour_y = flow_non_state_back_edge_detour_row(
-              edge.source,
-              edge.target,
-              source_anchor_x,
-              target_anchor_x,
-              detour_start_y,
-              mapped_nodes,
-            )
-            [
+        (Some(source_box), Some(target_box)) =>
+          if edge.source == edge.target {
+            source_anchor_x = source_box.left + source_box.width - 1
+            source_anchor_y = source_box.top + source_box.height / 2
+            target_anchor_x = source_box.left + 2
+            target_anchor_y = source_box.top + source_box.height - 1
+            let loop_right_x = source_anchor_x + 2
+            let loop_bottom_y = target_anchor_y + 2
+            let route_points = [
               Point::{ x: source_anchor_x, y: source_anchor_y },
-              { x: source_anchor_x, y: detour_y },
-              { x: target_anchor_x, y: detour_y },
+              { x: loop_right_x, y: source_anchor_y },
+              { x: loop_right_x, y: loop_bottom_y },
+              { x: target_anchor_x, y: loop_bottom_y },
               { x: target_anchor_x, y: target_anchor_y },
             ]
-          } else if labeled_left_descending_detour {
-            let (sx, sy) = flow_edge_anchor(source_box, center_dx, 0, false)
-            let (tx, ty) = flow_edge_anchor(target_box, 0, center_dy, true)
-            source_anchor_x = sx
-            source_anchor_y = sy
-            target_anchor_x = tx
-            target_anchor_y = ty
-            let shared_source_x = (source_box.left - 3).max(target_anchor_x + 1)
-            let bend_y = (source_anchor_y + target_anchor_y) / 2 + 1
-            flow_compact_route_points([
-              { x: source_anchor_x, y: source_anchor_y },
-              { x: shared_source_x, y: source_anchor_y },
-              { x: shared_source_x, y: bend_y },
-              { x: target_anchor_x, y: bend_y },
-              { x: target_anchor_x, y: target_anchor_y },
-            ])
-          } else if merge_primary_edge {
-            let source_anchor = flow_edge_anchor(
-              source_box, source_dir_dx, source_dir_dy, false,
-            )
-            let (sx, sy) = source_anchor
-            source_anchor_x = sx
-            source_anchor_y = sy
-            let join_x = target_box.left - 3
-            target_anchor_y = target_box.top + target_box.height / 2
-            target_anchor_x = target_box.left
-            [
-              { x: source_anchor_x, y: source_anchor_y },
-              { x: join_x, y: target_anchor_y },
-              { x: target_anchor_x, y: target_anchor_y },
-            ]
-          } else if merge_secondary_edge {
-            let source_anchor = flow_edge_anchor(
-              source_box, source_dir_dx, source_dir_dy, false,
-            )
-            let (sx, sy) = source_anchor
-            source_anchor_x = sx
-            source_anchor_y = sy
-            target_anchor_y = target_box.top + target_box.height / 2
-            target_anchor_x = (target_box.left - 3).max(source_anchor_x + 1)
-            if source_anchor_y > target_anchor_y {
-              let bend_y = (source_anchor_y + target_anchor_y) / 2 + 1
-              flow_compact_route_points([
-                { x: source_anchor_x, y: source_anchor_y },
-                { x: source_anchor_x, y: bend_y },
-                { x: target_anchor_x, y: bend_y },
-                { x: target_anchor_x, y: target_anchor_y },
-              ])
-            } else {
-              let secondary_horizontal_first = source_anchor_y < target_anchor_y
-              flow_non_state_route_points(
-                source_anchor_x, source_anchor_y, target_anchor_x, target_anchor_y,
-                secondary_horizontal_first,
+            non_state_route_points = route_points
+            for i in 1..<non_state_route_points.length() {
+              let from = non_state_route_points[i - 1]
+              let to = non_state_route_points[i]
+              flow_draw_segment(
+                canvas,
+                from.x,
+                from.y,
+                to.x,
+                to.y,
+                h_char,
+                v_char,
               )
             }
+            if options.use_ascii {
+              flow_mark_ascii_route_bends(canvas, non_state_route_points)
+            }
+            let first_point = non_state_route_points[0]
+            let next_point = non_state_route_points[1]
+            let last_point = non_state_route_points[non_state_route_points.length() -
+              1]
+            let prev_point = non_state_route_points[non_state_route_points.length() -
+              2]
+            first_x = first_point.x
+            first_y = first_point.y
+            end_x = last_point.x
+            end_y = last_point.y
+            start_dx = next_point.x - first_point.x
+            start_dy = next_point.y - first_point.y
+            end_dx = last_point.x - prev_point.x
+            end_dy = last_point.y - prev_point.y
           } else {
-            let source_anchor = flow_edge_anchor(
-              source_box, source_dir_dx, source_dir_dy, false,
+            let source_center_x = source_box.left + source_box.width / 2
+            let source_center_y = source_box.top + source_box.height / 2
+            let target_center_x = target_box.left + target_box.width / 2
+            let target_center_y = target_box.top + target_box.height / 2
+            let center_dx = target_center_x - source_center_x
+            let center_dy = target_center_y - source_center_y
+            let source_out_degree = option_int_or(
+              non_state_out_degree_by_source.get(edge.source),
+              0,
             )
-            let target_anchor = flow_edge_anchor(
-              target_box, target_dir_dx, target_dir_dy, true,
+            let target_out_degree = option_int_or(
+              non_state_out_degree_by_source.get(edge.target),
+              0,
             )
-            let (sx, sy) = source_anchor
-            let (tx, ty) = target_anchor
-            source_anchor_x = sx
-            source_anchor_y = sy
-            target_anchor_x = tx
-            target_anchor_y = ty
-            let fallback_route_points = flow_non_state_route_points(
-              source_anchor_x, source_anchor_y, target_anchor_x, target_anchor_y,
-              horizontal_first,
+            let target_in_degree = option_int_or(
+              non_state_in_degree_by_target.get(edge.target),
+              0,
             )
-            let shared_back_route = if flow_with_subgraphs &&
-              !flow_direction_horizontal &&
+            let merge_target = !horizontal_state_flow_mode &&
+              !flow_with_subgraphs &&
+              flow_direction_horizontal &&
+              center_dx > 0 &&
+              target_in_degree > 1 &&
+              target_out_degree <= 1 &&
+              !non_state_has_labeled_incoming_target.contains(edge.target) &&
+              edge.label is None
+            let merge_primary_edge = merge_target && center_dy == 0
+            merge_secondary_edge = merge_target && center_dy != 0
+            if merge_primary_edge {
+              merge_primary_join_x = target_box.left - 3
+            }
+            let horizontal_first = if flow_direction_horizontal {
+              if horizontal_state_flow_mode && center_dx != 0 && center_dy < 0 {
+                true
+              } else if !flow_with_subgraphs &&
+                center_dy != 0 &&
+                center_dx > 0 &&
+                (source_out_degree > 1 || target_in_degree > 1) {
+                false
+              } else {
+                !(flow_with_subgraphs && source_out_degree > 1)
+              }
+            } else {
+              source_out_degree > 1
+            }
+            let mut source_dir_dx = center_dx
+            let mut source_dir_dy = center_dy
+            let mut target_dir_dx = center_dx
+            let mut target_dir_dy = center_dy
+            if center_dx != 0 && center_dy != 0 {
+              if horizontal_first {
+                source_dir_dy = 0
+                target_dir_dx = 0
+              } else {
+                source_dir_dx = 0
+                target_dir_dy = 0
+              }
+            }
+            let labeled_back_edge_detour = flow_direction_horizontal &&
               center_dx < 0 &&
-              center_dy.abs() <= source_box.height &&
-              edge.label is None {
-              flow_non_state_shared_back_edge_route_points(
+              (center_dy.abs() <= source_box.height || center_dy < 0) &&
+              edge.label is Some(_)
+            let labeled_left_descending_detour = flow_direction_horizontal &&
+              center_dx < 0 &&
+              center_dy > 0 &&
+              source_out_degree > 1 &&
+              edge.label is Some(_)
+            let route_points = if labeled_back_edge_detour {
+              let (sx, sy) = flow_edge_anchor(source_box, 0, 1, false)
+              let (tx, ty) = flow_edge_anchor(target_box, 0, -1, true)
+              let shared_source_x = if source_out_degree > 1 {
+                (source_box.left - 3).max(target_box.left + 1)
+              } else {
+                sx
+              }
+              source_anchor_x = shared_source_x
+              source_anchor_y = sy
+              target_anchor_x = tx
+              target_anchor_y = ty
+              let detour_start_y = if center_dy < 0 {
+                target_anchor_y + 3
+              } else {
+                source_anchor_y.max(target_anchor_y) + 3
+              }
+              let detour_y = flow_non_state_back_edge_detour_row(
                 edge.source,
                 edge.target,
                 source_anchor_x,
-                source_anchor_y,
-                source_box.height,
                 target_anchor_x,
-                target_anchor_y,
-                source_out_degree,
-                graph.edges,
-                node_box_by_id,
+                detour_start_y,
+                mapped_nodes,
               )
+              [
+                Point::{ x: source_anchor_x, y: source_anchor_y },
+                { x: source_anchor_x, y: detour_y },
+                { x: target_anchor_x, y: detour_y },
+                { x: target_anchor_x, y: target_anchor_y },
+              ]
+            } else if labeled_left_descending_detour {
+              let (sx, sy) = flow_edge_anchor(source_box, center_dx, 0, false)
+              let (tx, ty) = flow_edge_anchor(target_box, 0, center_dy, true)
+              source_anchor_x = sx
+              source_anchor_y = sy
+              target_anchor_x = tx
+              target_anchor_y = ty
+              let shared_source_x = (source_box.left - 3).max(
+                target_anchor_x + 1,
+              )
+              let bend_y = (source_anchor_y + target_anchor_y) / 2 + 1
+              flow_compact_route_points([
+                { x: source_anchor_x, y: source_anchor_y },
+                { x: shared_source_x, y: source_anchor_y },
+                { x: shared_source_x, y: bend_y },
+                { x: target_anchor_x, y: bend_y },
+                { x: target_anchor_x, y: target_anchor_y },
+              ])
+            } else if merge_primary_edge {
+              let source_anchor = flow_edge_anchor(
+                source_box, source_dir_dx, source_dir_dy, false,
+              )
+              let (sx, sy) = source_anchor
+              source_anchor_x = sx
+              source_anchor_y = sy
+              let join_x = target_box.left - 3
+              target_anchor_y = target_box.top + target_box.height / 2
+              target_anchor_x = target_box.left
+              [
+                { x: source_anchor_x, y: source_anchor_y },
+                { x: join_x, y: target_anchor_y },
+                { x: target_anchor_x, y: target_anchor_y },
+              ]
+            } else if merge_secondary_edge {
+              let source_anchor = flow_edge_anchor(
+                source_box, source_dir_dx, source_dir_dy, false,
+              )
+              let (sx, sy) = source_anchor
+              source_anchor_x = sx
+              source_anchor_y = sy
+              target_anchor_y = target_box.top + target_box.height / 2
+              target_anchor_x = (target_box.left - 3).max(source_anchor_x + 1)
+              if source_anchor_y > target_anchor_y {
+                let bend_y = (source_anchor_y + target_anchor_y) / 2 + 1
+                flow_compact_route_points([
+                  { x: source_anchor_x, y: source_anchor_y },
+                  { x: source_anchor_x, y: bend_y },
+                  { x: target_anchor_x, y: bend_y },
+                  { x: target_anchor_x, y: target_anchor_y },
+                ])
+              } else {
+                let secondary_horizontal_first = source_anchor_y <
+                  target_anchor_y
+                flow_non_state_route_points(
+                  source_anchor_x, source_anchor_y, target_anchor_x, target_anchor_y,
+                  secondary_horizontal_first,
+                )
+              }
             } else {
-              None
+              let source_anchor = flow_edge_anchor(
+                source_box, source_dir_dx, source_dir_dy, false,
+              )
+              let target_anchor = flow_edge_anchor(
+                target_box, target_dir_dx, target_dir_dy, true,
+              )
+              let (sx, sy) = source_anchor
+              let (tx, ty) = target_anchor
+              source_anchor_x = sx
+              source_anchor_y = sy
+              target_anchor_x = tx
+              target_anchor_y = ty
+              let fallback_route_points = flow_non_state_route_points(
+                source_anchor_x, source_anchor_y, target_anchor_x, target_anchor_y,
+                horizontal_first,
+              )
+              let shared_back_route = if flow_with_subgraphs &&
+                !flow_direction_horizontal &&
+                center_dx < 0 &&
+                center_dy.abs() <= source_box.height &&
+                edge.label is None {
+                flow_non_state_shared_back_edge_route_points(
+                  edge.source,
+                  edge.target,
+                  source_anchor_x,
+                  source_anchor_y,
+                  source_box.height,
+                  target_anchor_x,
+                  target_anchor_y,
+                  source_out_degree,
+                  graph.edges,
+                  node_box_by_id,
+                )
+              } else {
+                None
+              }
+              match shared_back_route {
+                Some(route_points) => route_points
+                None =>
+                  if flow_with_subgraphs &&
+                    !flow_direction_horizontal &&
+                    flow_non_state_route_hits_blocked_cells(
+                      fallback_route_points, blocked_cells,
+                    ) {
+                    flow_non_state_route_points_with_pathfinder(
+                      source_anchor_x, source_anchor_y, target_anchor_x, target_anchor_y,
+                      horizontal_first, blocked_cells, canvas_width, canvas_height,
+                    )
+                  } else {
+                    fallback_route_points
+                  }
+              }
             }
-            match shared_back_route {
-              Some(route_points) => route_points
-              None =>
-                if flow_with_subgraphs &&
-                  !flow_direction_horizontal &&
-                  flow_non_state_route_hits_blocked_cells(
-                    fallback_route_points, blocked_cells,
-                  ) {
-                  flow_non_state_route_points_with_pathfinder(
-                    source_anchor_x, source_anchor_y, target_anchor_x, target_anchor_y,
-                    horizontal_first, blocked_cells, canvas_width, canvas_height,
-                  )
-                } else {
-                  fallback_route_points
-                }
-            }
-          }
-          non_state_route_points = route_points
-          for i in 1..<non_state_route_points.length() {
-            let from = non_state_route_points[i - 1]
-            let to = non_state_route_points[i]
-            flow_draw_segment(
-              canvas,
-              from.x,
-              from.y,
-              to.x,
-              to.y,
-              h_char,
-              v_char,
-            )
-          }
-          if options.use_ascii {
-            if flow_with_subgraphs && !flow_direction_horizontal {
-              flow_mark_ascii_route_bends(canvas, non_state_route_points)
-            } else if non_state_route_points.length() == 3 {
-              let bend = non_state_route_points[1]
-              put_canvas(canvas, bend.x, bend.y, "+")
-            }
-            if !flow_with_subgraphs &&
-              flow_direction_horizontal &&
-              edge.label is Some(_) {
-              flow_mark_ascii_route_intersections(
-                canvas, non_state_route_points,
+            non_state_route_points = route_points
+            for i in 1..<non_state_route_points.length() {
+              let from = non_state_route_points[i - 1]
+              let to = non_state_route_points[i]
+              flow_draw_segment(
+                canvas,
+                from.x,
+                from.y,
+                to.x,
+                to.y,
+                h_char,
+                v_char,
               )
             }
+            if options.use_ascii {
+              if flow_with_subgraphs && !flow_direction_horizontal {
+                flow_mark_ascii_route_bends(canvas, non_state_route_points)
+              } else if non_state_route_points.length() == 3 {
+                let bend = non_state_route_points[1]
+                put_canvas(canvas, bend.x, bend.y, "+")
+              }
+              if !flow_with_subgraphs &&
+                flow_direction_horizontal &&
+                edge.label is Some(_) {
+                flow_mark_ascii_route_intersections(
+                  canvas, non_state_route_points,
+                )
+              }
+            }
+            let first_point = non_state_route_points[0]
+            let next_point = non_state_route_points[1]
+            let last_point = non_state_route_points[non_state_route_points.length() -
+              1]
+            let prev_point = non_state_route_points[non_state_route_points.length() -
+              2]
+            first_x = first_point.x
+            first_y = first_point.y
+            end_x = last_point.x
+            end_y = last_point.y
+            start_dx = next_point.x - first_point.x
+            start_dy = next_point.y - first_point.y
+            end_dx = last_point.x - prev_point.x
+            end_dy = last_point.y - prev_point.y
           }
-          let first_point = non_state_route_points[0]
-          let next_point = non_state_route_points[1]
-          let last_point = non_state_route_points[non_state_route_points.length() -
-            1]
-          let prev_point = non_state_route_points[non_state_route_points.length() -
-            2]
-          first_x = first_point.x
-          first_y = first_point.y
-          end_x = last_point.x
-          end_y = last_point.y
-          start_dx = next_point.x - first_point.x
-          start_dy = next_point.y - first_point.y
-          end_dx = last_point.x - prev_point.x
-          end_dy = last_point.y - prev_point.y
-        }
         _ => continue
       }
     }
