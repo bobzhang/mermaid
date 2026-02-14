@@ -1,19 +1,27 @@
 ///|
 #cfg(target="native")
 async fn repos_upstream_mmd_files() -> Array[String] {
-  let read_result = try? @fs.readdir(".repos/mermaid/docs/diagrams", sort=true)
-  match read_result {
-    Ok(entries) => {
-      let files : Array[String] = []
-      for entry in entries {
-        if entry.has_suffix(".mmd") {
-          files.push(".repos/mermaid/docs/diagrams/\{entry}")
+  let roots = [
+    ".repos/mermaid/docs/diagrams", ".repos/mermaid/packages/mermaid/src/docs/diagrams",
+  ]
+  let files : Array[String] = []
+  for root in roots {
+    let read_result : Result[Array[String], Error] = try? @fs.readdir(
+      root,
+      sort=true,
+    )
+    match read_result {
+      Ok(entries) =>
+        for entry in entries {
+          if entry.has_suffix(".mmd") {
+            files.push("\{root}/\{entry}")
+          }
         }
-      }
-      files
+      Err(_) => ()
     }
-    Err(_) => []
   }
+  files.sort()
+  files
 }
 
 ///|
