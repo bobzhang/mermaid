@@ -853,7 +853,7 @@ fn collect_non_state_flow_lanes(
     ((o3 > 0 && o4 < 0) || (o3 < 0 && o4 > 0))
   }
 
-  fn forward_edge_pair_crosses(
+  fn edge_pair_crosses(
     left_edge_index : Int,
     right_edge_index : Int,
     edges : Array[MermaidEdge],
@@ -890,15 +890,10 @@ fn collect_non_state_flow_lanes(
         Some(right_source_lane),
         Some(right_target_lane),
       ) =>
-        if left_target_rank <= left_source_rank ||
-          right_target_rank <= right_source_rank {
-          false
-        } else {
-          lane_segments_properly_intersect(
-            left_source_rank, left_source_lane, left_target_rank, left_target_lane,
-            right_source_rank, right_source_lane, right_target_rank, right_target_lane,
-          )
-        }
+        lane_segments_properly_intersect(
+          left_source_rank, left_source_lane, left_target_rank, left_target_lane,
+          right_source_rank, right_source_lane, right_target_rank, right_target_lane,
+        )
       _ => false
     }
   }
@@ -924,7 +919,7 @@ fn collect_non_state_flow_lanes(
 
   fn count_crossings_involving(
     incident_edge_indexes : Array[Int],
-    forward_edge_indexes : Array[Int],
+    crossing_edge_indexes : Array[Int],
     edges : Array[MermaidEdge],
     rank_by_id : Map[String, Int],
     lane_by_id : Map[String, Int],
@@ -932,7 +927,7 @@ fn collect_non_state_flow_lanes(
     let seen_pairs : Map[String, Bool] = {}
     let mut crossings = 0
     for edge_index in incident_edge_indexes {
-      for other_edge_index in forward_edge_indexes {
+      for other_edge_index in crossing_edge_indexes {
         if other_edge_index == edge_index {
           continue
         }
@@ -943,7 +938,7 @@ fn collect_non_state_flow_lanes(
           continue
         }
         seen_pairs[key] = true
-        if forward_edge_pair_crosses(left, right, edges, rank_by_id, lane_by_id) {
+        if edge_pair_crosses(left, right, edges, rank_by_id, lane_by_id) {
           crossings += 1
         }
       }
@@ -972,18 +967,18 @@ fn collect_non_state_flow_lanes(
     node_ids.push(node.id)
   }
 
-  let forward_edge_indexes : Array[Int] = []
+  let crossing_edge_indexes : Array[Int] = []
   let incident_edge_indexes_by_node : Map[String, Array[Int]] = {}
   for node in nodes_in_order {
     incident_edge_indexes_by_node[node.id] = []
   }
   for edge_index, edge in edges {
     match (rank_by_id.get(edge.source), rank_by_id.get(edge.target)) {
-      (Some(source_rank), Some(target_rank)) =>
-        if target_rank > source_rank &&
+      (Some(_), Some(_)) =>
+        if edge.source != edge.target &&
           lane_by_id.contains(edge.source) &&
           lane_by_id.contains(edge.target) {
-          forward_edge_indexes.push(edge_index)
+          crossing_edge_indexes.push(edge_index)
           match incident_edge_indexes_by_node.get(edge.source) {
             Some(indexes) => indexes.push(edge_index)
             None => ()
@@ -1002,7 +997,7 @@ fn collect_non_state_flow_lanes(
     left_index : Int,
     right_index : Int,
     incident_edge_indexes_by_node : Map[String, Array[Int]],
-    forward_edge_indexes : Array[Int],
+    crossing_edge_indexes : Array[Int],
     edges : Array[MermaidEdge],
     rank_by_id : Map[String, Int],
     lane_by_id : Map[String, Int],
@@ -1022,14 +1017,14 @@ fn collect_non_state_flow_lanes(
     }
 
     let before = count_crossings_involving(
-      incident_edge_indexes, forward_edge_indexes, edges, rank_by_id, lane_by_id,
+      incident_edge_indexes, crossing_edge_indexes, edges, rank_by_id, lane_by_id,
     )
     let left_lane = option_int_or(lane_by_id.get(left_id), 0)
     let right_lane = option_int_or(lane_by_id.get(right_id), 0)
     lane_by_id[left_id] = right_lane
     lane_by_id[right_id] = left_lane
     let after = count_crossings_involving(
-      incident_edge_indexes, forward_edge_indexes, edges, rank_by_id, lane_by_id,
+      incident_edge_indexes, crossing_edge_indexes, edges, rank_by_id, lane_by_id,
     )
     if after < before {
       node_ids[left_index] = right_id
@@ -1042,7 +1037,7 @@ fn collect_non_state_flow_lanes(
     }
   }
 
-  if forward_edge_indexes.length() >= 2 {
+  if crossing_edge_indexes.length() >= 2 {
     for pass in 0..<10 {
       let mut changed = false
       for rank in 0..<=max_rank {
@@ -1059,7 +1054,7 @@ fn collect_non_state_flow_lanes(
                     i,
                     i + 1,
                     incident_edge_indexes_by_node,
-                    forward_edge_indexes,
+                    crossing_edge_indexes,
                     edges,
                     rank_by_id,
                     lane_by_id,
@@ -1076,7 +1071,7 @@ fn collect_non_state_flow_lanes(
                     i,
                     i + 1,
                     incident_edge_indexes_by_node,
-                    forward_edge_indexes,
+                    crossing_edge_indexes,
                     edges,
                     rank_by_id,
                     lane_by_id,
@@ -1109,7 +1104,7 @@ fn collect_non_state_flow_lanes(
             for i in 0..<(node_ids.length() - 1) {
               for j in (i + 1)..<node_ids.length() {
                 if try_lane_swap(
-                    node_ids, i, j, incident_edge_indexes_by_node, forward_edge_indexes,
+                    node_ids, i, j, incident_edge_indexes_by_node, crossing_edge_indexes,
                     edges, rank_by_id, lane_by_id,
                   ) {
                   changed = true
