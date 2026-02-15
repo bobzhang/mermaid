@@ -639,6 +639,49 @@ test "SVG renderer edge-label midpoint follows polyline segments" {
 }
 
 ///|
+test "SVG renderer uses rounded path for right-angle edges" {
+  let graph = make_svg_test_graph([
+    {
+      source: "A",
+      target: "B",
+      label: None,
+      style: Solid,
+      has_arrow_start: false,
+      has_arrow_end: true,
+      relation_operator: None,
+      points: [{ x: 0, y: 0 }, { x: 100, y: 0 }, { x: 100, y: 100 }],
+      label_position: None,
+    },
+  ])
+  let svg = render_svg(graph, DiagramColors::default(), "Inter", false)
+
+  assert_true(
+    svg.contains("<path class=\"edge\" d=\"M0 0 L95 0 Q100 0 100 5 L100 100\""),
+  )
+}
+
+///|
+test "SVG renderer keeps straight two-point edges as polyline" {
+  let graph = make_svg_test_graph([
+    {
+      source: "A",
+      target: "B",
+      label: None,
+      style: Solid,
+      has_arrow_start: false,
+      has_arrow_end: true,
+      relation_operator: None,
+      points: [{ x: 10, y: 20 }, { x: 60, y: 70 }],
+      label_position: None,
+    },
+  ])
+  let svg = render_svg(graph, DiagramColors::default(), "Inter", false)
+
+  assert_true(svg.contains("<polyline class=\"edge\""))
+  assert_true(!svg.contains("<path class=\"edge\""))
+}
+
+///|
 test "SVG renderer renders thick edge with width 1.5" {
   let graph = make_svg_test_graph([
     {

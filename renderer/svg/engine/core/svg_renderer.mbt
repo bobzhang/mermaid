@@ -23,6 +23,91 @@ fn points_to_svg(points : Array[Point]) -> String {
 }
 
 ///|
+fn sign_of(value : Int) -> Int {
+  if value > 0 {
+    1
+  } else if value < 0 {
+    -1
+  } else {
+    0
+  }
+}
+
+///|
+fn edge_turn_is_axis_aligned(prev : Point, curr : Point, next : Point) -> Bool {
+  let in_dx = curr.x - prev.x
+  let in_dy = curr.y - prev.y
+  let out_dx = next.x - curr.x
+  let out_dy = next.y - curr.y
+  let in_axis_aligned = in_dx == 0 || in_dy == 0
+  let out_axis_aligned = out_dx == 0 || out_dy == 0
+  let changes_direction = in_dx * out_dy != in_dy * out_dx
+  in_axis_aligned && out_axis_aligned && changes_direction
+}
+
+///|
+fn edge_needs_rounded_path(points : Array[Point]) -> Bool {
+  if points.length() < 3 {
+    return false
+  }
+  for i in 1..<(points.length() - 1) {
+    if edge_turn_is_axis_aligned(points[i - 1], points[i], points[i + 1]) {
+      return true
+    }
+  }
+  false
+}
+
+///|
+fn rounded_edge_path(points : Array[Point], corner_radius : Int) -> String {
+  if points.length() < 2 {
+    return ""
+  }
+  let sb = StringBuilder::new()
+  let first = points[0]
+  sb.write_string("M\{first.x} \{first.y}")
+  if points.length() == 2 {
+    let last = points[1]
+    sb.write_string(" L\{last.x} \{last.y}")
+    return sb.to_string()
+  }
+
+  for i in 1..<(points.length() - 1) {
+    let prev = points[i - 1]
+    let curr = points[i]
+    let next = points[i + 1]
+    if !edge_turn_is_axis_aligned(prev, curr, next) {
+      sb.write_string(" L\{curr.x} \{curr.y}")
+      continue
+    }
+    let in_dx = curr.x - prev.x
+    let in_dy = curr.y - prev.y
+    let out_dx = next.x - curr.x
+    let out_dy = next.y - curr.y
+    let in_len = in_dx.abs() + in_dy.abs()
+    let out_len = out_dx.abs() + out_dy.abs()
+    let cut = corner_radius.min(in_len / 2).min(out_len / 2)
+    if cut <= 0 {
+      sb.write_string(" L\{curr.x} \{curr.y}")
+      continue
+    }
+    let entry = Point::{
+      x: curr.x - sign_of(in_dx) * cut,
+      y: curr.y - sign_of(in_dy) * cut,
+    }
+    let exit_ = Point::{
+      x: curr.x + sign_of(out_dx) * cut,
+      y: curr.y + sign_of(out_dy) * cut,
+    }
+    sb.write_string(" L\{entry.x} \{entry.y}")
+    sb.write_string(" Q\{curr.x} \{curr.y} \{exit_.x} \{exit_.y}")
+  }
+  let last = points[points.length() - 1]
+  sb.write_string(" L\{last.x} \{last.y}")
+  sb.to_string()
+}
+
+///|
 fn int_sqrt(value : Int) -> Int {
   if value <= 0 {
     return 0
@@ -843,9 +928,16 @@ pub fn render_svg(
     } else {
       ("", "")
     }
-    sb.write_string(
-      "<polyline class=\"edge\" points=\"\{points_to_svg(edge.points)}\"\{edge_style}\{marker_start}\{marker_end} />",
-    )
+    if !sequence_mode && edge_needs_rounded_path(edge.points) {
+      let path_d = rounded_edge_path(edge.points, 5)
+      sb.write_string(
+        "<path class=\"edge\" d=\"\{path_d}\"\{edge_style}\{marker_start}\{marker_end} />",
+      )
+    } else {
+      sb.write_string(
+        "<polyline class=\"edge\" points=\"\{points_to_svg(edge.points)}\"\{edge_style}\{marker_start}\{marker_end} />",
+      )
+    }
     if er_mode {
       sb.write_string(er_endpoint_text_svg(edge))
     }
