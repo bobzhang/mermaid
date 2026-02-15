@@ -122,6 +122,31 @@ fn segments_properly_intersect(
 }
 
 ///|
+fn edges_have_proper_intersection(
+  left : PositionedEdge,
+  right : PositionedEdge,
+) -> Bool {
+  if left.points.length() < 2 || right.points.length() < 2 {
+    return false
+  }
+
+  for i in 1..<left.points.length() {
+    let left_start = left.points[i - 1]
+    let left_end = left.points[i]
+    for j in 1..<right.points.length() {
+      let right_start = right.points[j - 1]
+      let right_end = right.points[j]
+      if segments_properly_intersect(
+          left_start, left_end, right_start, right_end,
+        ) {
+        return true
+      }
+    }
+  }
+  false
+}
+
+///|
 fn count_logical_edge_crossings(
   positioned : PositionedGraph,
   edges : Array[MermaidEdge],
@@ -185,6 +210,51 @@ test "Layout lane collection accounts for long-span edges via virtual segments" 
   let lanes = collect_non_state_flow_lanes(nodes, rank_by_id, 2, edges)
   assert_true(
     option_int_or(lanes.get("Y"), 0) < option_int_or(lanes.get("X"), 0),
+  )
+}
+
+///|
+test "Layout lane collection uses long-span backward edges for ordering" {
+  let nodes : Array[MermaidNode] = [
+    { id: "A", label: "A", shape: Rectangle },
+    { id: "B", label: "B", shape: Rectangle },
+    { id: "C", label: "C", shape: Rectangle },
+    { id: "D", label: "D", shape: Rectangle },
+    { id: "E", label: "E", shape: Rectangle },
+    { id: "F", label: "F", shape: Rectangle },
+  ]
+  let rank_by_id : Map[String, Int] = {
+    "A": 0,
+    "B": 0,
+    "C": 1,
+    "D": 1,
+    "E": 3,
+    "F": 3,
+  }
+  let edges : Array[MermaidEdge] = [
+    {
+      source: "F",
+      target: "A",
+      label: None,
+      style: Dotted,
+      has_arrow_start: false,
+      has_arrow_end: true,
+      relation_operator: Some("-.->"),
+    },
+    {
+      source: "E",
+      target: "B",
+      label: None,
+      style: Dotted,
+      has_arrow_start: false,
+      has_arrow_end: true,
+      relation_operator: Some("-.->"),
+    },
+  ]
+
+  let lanes = collect_non_state_flow_lanes(nodes, rank_by_id, 3, edges)
+  assert_true(
+    option_int_or(lanes.get("F"), 0) < option_int_or(lanes.get("E"), 0),
   )
 }
 
@@ -522,6 +592,10 @@ test "Layout cyclic LR flowchart without metadata keeps loop routing vertically 
   assert_eq(q1.y, q2.y)
   assert_true(q1.y <= q3.y)
   assert_true(q1.x < q2.x)
+
+  let back_edge = find_positioned_edge(positioned.edges, "4", "0")
+  let return_edge = find_positioned_edge(positioned.edges, "3", "1")
+  assert_eq(edges_have_proper_intersection(back_edge, return_edge), false)
 }
 
 ///|

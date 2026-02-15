@@ -585,40 +585,73 @@ fn collect_non_state_flow_lanes(
     lane_rank_by_id[node.id] = rank
   }
 
+  fn make_lane_edge(source : String, target : String) -> MermaidEdge {
+    {
+      source,
+      target,
+      label: None,
+      style: Solid,
+      has_arrow_start: false,
+      has_arrow_end: true,
+      relation_operator: Some("-->"),
+    }
+  }
+
+  fn append_lane_path(
+    path_id_prefix : String,
+    source_id : String,
+    source_rank : Int,
+    target_id : String,
+    target_rank : Int,
+    rank_nodes : Array[Array[String]],
+    lane_rank_by_id : Map[String, Int],
+    lane_edges : Array[MermaidEdge],
+  ) -> Unit {
+    if target_rank <= source_rank {
+      return
+    }
+    let mut previous_id = source_id
+    for rank in (source_rank + 1)..<target_rank {
+      let dummy_id = "__lane_dummy_\{path_id_prefix}_\{rank}"
+      rank_nodes[rank].push(dummy_id)
+      lane_rank_by_id[dummy_id] = rank
+      lane_edges.push(make_lane_edge(previous_id, dummy_id))
+      previous_id = dummy_id
+    }
+    lane_edges.push(make_lane_edge(previous_id, target_id))
+  }
+
   let lane_edges : Array[MermaidEdge] = []
+  let back_edge_ordering_min_span = 3
   for edge_index, edge in edges {
     match (rank_by_id.get(edge.source), rank_by_id.get(edge.target)) {
       (Some(source_rank), Some(target_rank)) =>
         if target_rank > source_rank {
-          if target_rank == source_rank + 1 {
-            lane_edges.push(edge)
-          } else {
-            let mut previous_id = edge.source
-            for rank in (source_rank + 1)..<target_rank {
-              let dummy_id = "__lane_dummy_\{edge_index}_\{rank}"
-              rank_nodes[rank].push(dummy_id)
-              lane_rank_by_id[dummy_id] = rank
-              lane_edges.push({
-                source: previous_id,
-                target: dummy_id,
-                label: None,
-                style: Solid,
-                has_arrow_start: false,
-                has_arrow_end: true,
-                relation_operator: Some("-->"),
-              })
-              previous_id = dummy_id
-            }
-            lane_edges.push({
-              source: previous_id,
-              target: edge.target,
-              label: None,
-              style: Solid,
-              has_arrow_start: false,
-              has_arrow_end: true,
-              relation_operator: Some("-->"),
-            })
-          }
+          append_lane_path(
+            "f_\{edge_index}",
+            edge.source,
+            source_rank,
+            edge.target,
+            target_rank,
+            rank_nodes,
+            lane_rank_by_id,
+            lane_edges,
+          )
+        } else if source_rank > target_rank &&
+          source_rank - target_rank >= back_edge_ordering_min_span &&
+          edge.style is Dotted {
+          // Feed long-span back edges into ordering as reversed constraints so
+          // cycle-heavy graphs can reduce crossings before routing.
+          append_lane_path(
+            "b_\{edge_index}",
+            edge.target,
+            target_rank,
+            edge.source,
+            source_rank,
+            rank_nodes,
+            lane_rank_by_id,
+            lane_edges,
+          )
         }
       _ => ()
     }
