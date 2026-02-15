@@ -125,55 +125,60 @@ fn collect_non_state_flow_ranks(
       return (rank_by_id, 0)
     }
 
+    let forward_edge_indices : Array[Int] = []
+    let incoming_forward_source_ids_by_target : Map[String, Array[String]] = {}
+    for node in nodes_in_order {
+      incoming_forward_source_ids_by_target[node.id] = []
+    }
+    for i, edge in edges {
+      match
+        (node_order_by_id.get(edge.source), node_order_by_id.get(edge.target)) {
+        (Some(source_order), Some(target_order)) =>
+          if target_order > source_order {
+            forward_edge_indices.push(i)
+            match incoming_forward_source_ids_by_target.get(edge.target) {
+              Some(source_ids) => source_ids.push(edge.source)
+              None => ()
+            }
+          }
+        _ => ()
+      }
+    }
+
     if compact_fanin {
       for node in nodes_in_order {
-        let target_order = option_int_or(node_order_by_id.get(node.id), -1)
-        if target_order < 0 {
-          continue
-        }
-        let mut has_forward_incoming = false
-        let mut best_rank = 0
-        for edge in edges {
-          if edge.target != node.id {
-            continue
-          }
-          match node_order_by_id.get(edge.source) {
-            Some(source_order) =>
-              if target_order > source_order {
-                let source_rank = option_int_or(rank_by_id.get(edge.source), 0)
-                let candidate_rank = source_rank + 1
-                if !has_forward_incoming || candidate_rank < best_rank {
-                  best_rank = candidate_rank
-                  has_forward_incoming = true
-                }
+        match incoming_forward_source_ids_by_target.get(node.id) {
+          Some(source_ids) if source_ids.length() > 0 => {
+            let first_source_id = source_ids[0]
+            let mut best_rank = option_int_or(
+                rank_by_id.get(first_source_id),
+                0,
+              ) +
+              1
+            for i in 1..<source_ids.length() {
+              let source_id = source_ids[i]
+              let candidate_rank = option_int_or(rank_by_id.get(source_id), 0) +
+                1
+              if candidate_rank < best_rank {
+                best_rank = candidate_rank
               }
-            None => ()
+            }
+            rank_by_id[node.id] = best_rank
           }
-        }
-        if has_forward_incoming {
-          rank_by_id[node.id] = best_rank
+          _ => ()
         }
       }
     } else {
       for _ in 0..<nodes_in_order.length() {
         let mut changed = false
-        for edge in edges {
-          match
-            (
-              node_order_by_id.get(edge.source),
-              node_order_by_id.get(edge.target),
-            ) {
-            (Some(source_order), Some(target_order)) =>
-              if target_order > source_order {
-                let source_rank = option_int_or(rank_by_id.get(edge.source), 0)
-                let target_rank = option_int_or(rank_by_id.get(edge.target), 0)
-                let candidate_rank = source_rank + 1
-                if candidate_rank > target_rank {
-                  rank_by_id[edge.target] = candidate_rank
-                  changed = true
-                }
-              }
-            _ => ()
+        for edge_index in forward_edge_indices {
+          let edge = edges[edge_index]
+          let source_rank = option_int_or(rank_by_id.get(edge.source), 0)
+          let target_rank = option_int_or(rank_by_id.get(edge.target), 0)
+          let candidate_rank = source_rank + 1
+          if candidate_rank > target_rank {
+            rank_by_id[edge.target] = candidate_rank
+            changed = true
           }
         }
         if !changed {
@@ -193,6 +198,8 @@ fn collect_non_state_flow_ranks(
   let node_exists : Map[String, Bool] = {}
   let indegree_by_id : Map[String, Int] = {}
   let outgoing_edge_indices_by_source : Map[String, Array[Int]] = {}
+  let incoming_edge_indices_by_target : Map[String, Array[Int]] = {}
+  let considered_edge_indices : Array[Int] = []
   let rank_by_id : Map[String, Int] = {}
 
   for i, node in nodes_in_order {
@@ -200,6 +207,7 @@ fn collect_non_state_flow_ranks(
     node_exists[node.id] = true
     indegree_by_id[node.id] = 0
     outgoing_edge_indices_by_source[node.id] = []
+    incoming_edge_indices_by_target[node.id] = []
     rank_by_id[node.id] = 0
   }
 
@@ -212,7 +220,12 @@ fn collect_non_state_flow_ranks(
     if !node_exists.contains(edge.source) || !node_exists.contains(edge.target) {
       continue
     }
+    considered_edge_indices.push(i)
     match outgoing_edge_indices_by_source.get(edge.source) {
+      Some(indices) => indices.push(i)
+      None => ()
+    }
+    match incoming_edge_indices_by_target.get(edge.target) {
       Some(indices) => indices.push(i)
       None => ()
     }
@@ -220,16 +233,13 @@ fn collect_non_state_flow_ranks(
     indegree_by_id[edge.target] = current_indegree + 1
   }
   if prefer_definition_back_edges {
-    for i, edge in edges {
-      if !node_exists.contains(edge.source) ||
-        !node_exists.contains(edge.target) {
-        continue
-      }
+    for edge_index in considered_edge_indices {
+      let edge = edges[edge_index]
       match
         (node_order_by_id.get(edge.source), node_order_by_id.get(edge.target)) {
         (Some(source_order), Some(target_order)) =>
           if target_order < source_order {
-            definition_back_edge_by_index[i] = true
+            definition_back_edge_by_index[edge_index] = true
           }
         _ => ()
       }
@@ -313,22 +323,26 @@ fn collect_non_state_flow_ranks(
       for node in nodes_in_order {
         let mut has_incoming = false
         let mut best_rank = 0
-        for edge_index, edge in edges {
-          if back_edge_by_index.contains(edge_index) ||
-            definition_back_edge_by_index.contains(edge_index) ||
-            edge.target != node.id {
-            continue
-          }
-          match rank_by_id.get(edge.source) {
-            Some(source_rank) => {
-              let candidate_rank = source_rank + 1
-              if !has_incoming || candidate_rank < best_rank {
-                best_rank = candidate_rank
-                has_incoming = true
+        match incoming_edge_indices_by_target.get(node.id) {
+          Some(incoming_edge_indices) =>
+            for edge_index in incoming_edge_indices {
+              if back_edge_by_index.contains(edge_index) ||
+                definition_back_edge_by_index.contains(edge_index) {
+                continue
+              }
+              let edge = edges[edge_index]
+              match rank_by_id.get(edge.source) {
+                Some(source_rank) => {
+                  let candidate_rank = source_rank + 1
+                  if !has_incoming || candidate_rank < best_rank {
+                    best_rank = candidate_rank
+                    has_incoming = true
+                  }
+                }
+                None => ()
               }
             }
-            None => ()
-          }
+          None => ()
         }
         let current_rank = option_int_or(rank_by_id.get(node.id), 0)
         let next_rank = if has_incoming { best_rank } else { 0 }
@@ -344,11 +358,12 @@ fn collect_non_state_flow_ranks(
   } else {
     for _ in 0..<nodes_in_order.length() {
       let mut changed = false
-      for edge_index, edge in edges {
+      for edge_index in considered_edge_indices {
         if back_edge_by_index.contains(edge_index) ||
           definition_back_edge_by_index.contains(edge_index) {
           continue
         }
+        let edge = edges[edge_index]
         match (rank_by_id.get(edge.source), rank_by_id.get(edge.target)) {
           (Some(source_rank), Some(target_rank)) => {
             let candidate_rank = source_rank + 1
@@ -362,10 +377,11 @@ fn collect_non_state_flow_ranks(
       }
       // Keep definition-backward edges directional without forcing target depth.
       if prefer_definition_back_edges {
-        for edge_index, edge in edges {
+        for edge_index in considered_edge_indices {
           if !definition_back_edge_by_index.contains(edge_index) {
             continue
           }
+          let edge = edges[edge_index]
           match (rank_by_id.get(edge.source), rank_by_id.get(edge.target)) {
             (Some(source_rank), Some(target_rank)) => {
               let candidate_rank = target_rank + 1
