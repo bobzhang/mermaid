@@ -249,7 +249,7 @@ test "Layout NFA dotted back edge prefers lower lane when upper span is crowded"
 }
 
 ///|
-test "Layout dotted fanout skips extra bend when target lanes already diverge" {
+test "Layout dotted fanout follows target lanes with a single elbow" {
   let graph = @parser.parse_mermaid(
     (
       #|graph LR
@@ -282,8 +282,10 @@ test "Layout dotted fanout skips extra bend when target lanes already diverge" {
   let upper_edge = find_positioned_edge(positioned.edges, "8", "0")
   let lower_edge = find_positioned_edge(positioned.edges, "8", "4")
 
-  assert_eq(upper_edge.points.length(), 2)
-  assert_eq(lower_edge.points.length(), 2)
+  assert_eq(upper_edge.points.length(), 3)
+  assert_eq(lower_edge.points.length(), 3)
+  assert_eq(upper_edge.points[1].y, upper_edge.points[2].y)
+  assert_eq(lower_edge.points[1].y, lower_edge.points[2].y)
 }
 
 ///|

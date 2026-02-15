@@ -15,14 +15,14 @@ node id=acc0 shape=DoubleCircle center=765,170 size=54x54 label=acc0
 node id=acc1 shape=DoubleCircle center=765,260 size=54x54 label=acc1
 
 [edges]
-edge q0->q1 label=- label_pos=- points=144,125 -> 218,80
-edge q3->q6 label=- label_pos=- points=456,80 -> 530,147
-edge q0->q4 label=- label_pos=- points=144,125 -> 218,170
-edge q6->q7 label=- label_pos=- points=560,147 -> 634,170
 edge start->q0 label=- label_pos=- points=24,125 -> 114,125
 edge q4->q5 label=a label_pos=285,170 points=248,170 -> 322,170
 edge q5->q7 label=x label_pos=493,170 points=352,170 -> 634,170
 edge q7->acc0 label=d label_pos=701,170 points=664,170 -> 738,170
+edge q0->q1 label=- label_pos=- points=144,125 -> 181,80 -> 218,80
+edge q3->q6 label=- label_pos=- points=456,80 -> 493,147 -> 530,147
+edge q0->q4 label=- label_pos=- points=144,125 -> 181,170 -> 218,170
+edge q6->q7 label=- label_pos=- points=560,147 -> 597,170 -> 634,170
 edge q2->q3 label=b label_pos=370,91 points=352,102 -> 389,80 -> 426,80
 edge q1->q2 label=a label_pos=266,91 points=248,80 -> 285,102 -> 322,102
 edge q2->q7 label=x label_pos=422,136 points=352,102 -> 493,170 -> 634,170

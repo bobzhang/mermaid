@@ -1206,10 +1206,7 @@ fn edge_points_for(
         }
       None => ()
     }
-    if smooth_forward_fanout &&
-      !(style is Dotted) &&
-      moving_right &&
-      start.y != end.y {
+    if smooth_forward_fanout && moving_right && start.y != end.y {
       let mid_x = (start_x + end_x) / 2
       return [start, { x: mid_x, y: end.y }, end]
     }
