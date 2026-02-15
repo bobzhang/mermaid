@@ -562,6 +562,137 @@ fn graph_has_definition_backward_dotted_edge(
 }
 
 ///|
+fn layout_lane_orient(
+  ax : Int,
+  ay : Int,
+  bx : Int,
+  by : Int,
+  cx : Int,
+  cy : Int,
+) -> Int {
+  (bx - ax) * (cy - ay) - (by - ay) * (cx - ax)
+}
+
+///|
+fn layout_lane_segments_properly_intersect(
+  ax : Int,
+  ay : Int,
+  bx : Int,
+  by : Int,
+  cx : Int,
+  cy : Int,
+  dx : Int,
+  dy : Int,
+) -> Bool {
+  let o1 = layout_lane_orient(ax, ay, bx, by, cx, cy)
+  let o2 = layout_lane_orient(ax, ay, bx, by, dx, dy)
+  let o3 = layout_lane_orient(cx, cy, dx, dy, ax, ay)
+  let o4 = layout_lane_orient(cx, cy, dx, dy, bx, by)
+  ((o1 > 0 && o2 < 0) || (o1 < 0 && o2 > 0)) &&
+  ((o3 > 0 && o4 < 0) || (o3 < 0 && o4 > 0))
+}
+
+///|
+fn layout_edge_pair_crosses_in_lane_space(
+  left : MermaidEdge,
+  right : MermaidEdge,
+  rank_by_id : Map[String, Int],
+  lane_by_id : Map[String, Int],
+) -> Bool {
+  if left.source == right.source ||
+    left.source == right.target ||
+    left.target == right.source ||
+    left.target == right.target {
+    return false
+  }
+
+  match
+    (
+      rank_by_id.get(left.source),
+      rank_by_id.get(left.target),
+      rank_by_id.get(right.source),
+      rank_by_id.get(right.target),
+      lane_by_id.get(left.source),
+      lane_by_id.get(left.target),
+      lane_by_id.get(right.source),
+      lane_by_id.get(right.target),
+    ) {
+    (
+      Some(left_source_rank),
+      Some(left_target_rank),
+      Some(right_source_rank),
+      Some(right_target_rank),
+      Some(left_source_lane),
+      Some(left_target_lane),
+      Some(right_source_lane),
+      Some(right_target_lane),
+    ) =>
+      layout_lane_segments_properly_intersect(
+        left_source_rank, left_source_lane, left_target_rank, left_target_lane, right_source_rank,
+        right_source_lane, right_target_rank, right_target_lane,
+      )
+    _ => false
+  }
+}
+
+///|
+fn count_lane_space_edge_crossings(
+  edges : Array[MermaidEdge],
+  rank_by_id : Map[String, Int],
+  lane_by_id : Map[String, Int],
+) -> Int {
+  let mut crossings = 0
+  for i in 0..<edges.length() {
+    let left = edges[i]
+    if left.source == left.target ||
+      !lane_by_id.contains(left.source) ||
+      !lane_by_id.contains(left.target) {
+      continue
+    }
+    for j in (i + 1)..<edges.length() {
+      let right = edges[j]
+      if right.source == right.target ||
+        !lane_by_id.contains(right.source) ||
+        !lane_by_id.contains(right.target) {
+        continue
+      }
+      if layout_edge_pair_crosses_in_lane_space(
+          left, right, rank_by_id, lane_by_id,
+        ) {
+        crossings += 1
+      }
+    }
+  }
+  crossings
+}
+
+///|
+fn lane_span(
+  nodes_in_order : Array[MermaidNode],
+  lane_by_id : Map[String, Int],
+) -> Int {
+  let mut has_lane = false
+  let mut min_lane = 0
+  let mut max_lane = 0
+  for node in nodes_in_order {
+    let lane = option_int_or(lane_by_id.get(node.id), 0)
+    if !has_lane {
+      has_lane = true
+      min_lane = lane
+      max_lane = lane
+    } else {
+      min_lane = min_lane.min(lane)
+      max_lane = max_lane.max(lane)
+    }
+  }
+  if has_lane {
+    max_lane - min_lane
+  } else {
+    0
+  }
+}
+
+///|
 fn collect_non_state_flow_lanes(
   nodes_in_order : Array[MermaidNode],
   rank_by_id : Map[String, Int],
@@ -2813,11 +2944,11 @@ fn reserve_back_edge_bend_y(
 
   let horizontal_span = right - left
   let lane_step = if horizontal_span >= 520 {
-    14
+    10
   } else if horizontal_span >= 360 {
-    16
+    12
   } else if horizontal_span >= 220 {
-    18
+    14
   } else {
     20
   }
@@ -3013,11 +3144,11 @@ fn reserve_back_edge_bend_x(
 
   let vertical_span = bottom - top
   let lane_step = if vertical_span >= 520 {
-    14
+    10
   } else if vertical_span >= 360 {
-    16
+    12
   } else if vertical_span >= 220 {
-    18
+    14
   } else {
     20
   }
@@ -4439,17 +4570,45 @@ fn layout_graph_with_subgraph_redirects(
     for node_id, lane in lane_by_id {
       flow_lane_by_node_id[node_id] = lane
     }
-    let use_horizontal_lane_refinement = if state_graph {
-      horizontal && !compact_fanin
-    } else {
+    let compact_non_state_refined_spacing = !state_graph &&
       horizontal &&
       !compact_fanin &&
       graph.edges.any(edge => edge.style is Dotted) &&
       (cycle_aware_layout || promote_backward_dotted_edges)
+    let non_state_optional_lane_refinement = !state_graph &&
+      horizontal &&
+      !compact_fanin &&
+      !compact_non_state_refined_spacing &&
+      !graph.edges.any(edge => edge.label is Some(_))
+    let use_horizontal_lane_refinement = if state_graph {
+      horizontal && !compact_fanin
+    } else {
+      compact_non_state_refined_spacing || non_state_optional_lane_refinement
     }
     if use_horizontal_lane_refinement {
+      let baseline_lane_by_id : Map[String, Int] = {}
+      let baseline_lane_crossings = if non_state_optional_lane_refinement {
+        for node in nodes_in_order {
+          baseline_lane_by_id[node.id] = option_int_or(
+            flow_lane_by_node_id.get(node.id),
+            0,
+          )
+        }
+        count_lane_space_edge_crossings(
+          graph.edges,
+          flow_rank_by_node_id,
+          baseline_lane_by_id,
+        )
+      } else {
+        0
+      }
+      let baseline_lane_span = if non_state_optional_lane_refinement {
+        lane_span(nodes_in_order, baseline_lane_by_id)
+      } else {
+        0
+      }
       if !state_graph {
-        refined_horizontal_non_state_flow = true
+        refined_horizontal_non_state_flow = compact_non_state_refined_spacing
       }
       let enhanced_horizontal_flow = if state_graph {
         enhanced_horizontal_state_flow
@@ -4463,6 +4622,24 @@ fn layout_graph_with_subgraph_redirects(
         flow_lane_by_node_id,
         enhanced_horizontal_flow,
       )
+      if non_state_optional_lane_refinement {
+        let refined_lane_crossings = count_lane_space_edge_crossings(
+          graph.edges,
+          flow_rank_by_node_id,
+          flow_lane_by_node_id,
+        )
+        let refined_lane_span = lane_span(nodes_in_order, flow_lane_by_node_id)
+        if refined_lane_crossings >= baseline_lane_crossings ||
+          refined_lane_span < baseline_lane_span {
+          refined_horizontal_non_state_flow = false
+          for node in nodes_in_order {
+            flow_lane_by_node_id[node.id] = option_int_or(
+              baseline_lane_by_id.get(node.id),
+              option_int_or(flow_lane_by_node_id.get(node.id), 0),
+            )
+          }
+        }
+      }
     }
     if !horizontal &&
       graph.subgraphs.length() > 0 &&

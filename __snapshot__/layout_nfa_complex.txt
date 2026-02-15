@@ -28,7 +28,7 @@ edge q1->q2 label=a label_pos=266,91 points=248,80 -> 285,102 -> 322,102
 edge q2->q7 label=x label_pos=422,136 points=352,102 -> 493,170 -> 634,170
 edge q5->q6 label=c label_pos=396,158 points=352,170 -> 441,147 -> 530,147
 edge q7->acc1 label=e label_pos=682,215 points=664,170 -> 701,260 -> 738,260
-edge q6->q0 label=- label_pos=- points=530,147 -> 530,55 -> 144,55 -> 144,125
+edge q6->q0 label=- label_pos=- points=530,147 -> 530,51 -> 144,51 -> 144,125
 
 [groups]
 (none)
