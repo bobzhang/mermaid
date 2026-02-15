@@ -5089,7 +5089,7 @@ fn layout_graph_with_subgraph_redirects(
       )
     }
 
-    let max_seed_count = unique_deferred_order_candidates.length().min(3)
+    let max_seed_count = unique_deferred_order_candidates.length().min(4)
     let selected_seed_indices : Array[Int] = []
     let selected_seed_index_set : Map[Int, Bool] = {}
     for _ in 0..<max_seed_count {
