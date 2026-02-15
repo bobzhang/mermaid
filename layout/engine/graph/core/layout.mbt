@@ -1582,6 +1582,29 @@ fn back_edge_lane_crossing_penalty(
 }
 
 ///|
+fn back_edge_lane_score_is_better(
+  congestion : Int,
+  crossings : Int,
+  distance : Int,
+  side_priority : Int,
+  best_congestion : Int,
+  best_crossings : Int,
+  best_distance : Int,
+  best_side_priority : Int,
+) -> Bool {
+  if congestion != best_congestion {
+    return congestion < best_congestion
+  }
+  if crossings != best_crossings {
+    return crossings < best_crossings
+  }
+  if distance != best_distance {
+    return distance < best_distance
+  }
+  side_priority < best_side_priority
+}
+
+///|
 fn reserve_back_edge_bend_y(
   source : PositionedNode,
   target : PositionedNode,
@@ -1593,66 +1616,126 @@ fn reserve_back_edge_bend_y(
   let target_anchor_x = target.x + target.width / 2
   let left = source_anchor_x.min(target_anchor_x)
   let right = source_anchor_x.max(target_anchor_x)
+  let top = source.y.min(target.y)
+  let bottom = source.y.max(target.y)
 
   let lane_step = 20
-  let upper_candidate : Int? = {
-    let mut found : Int? = None
-    let mut candidate_up = source.y.min(target.y) - 42
-    while candidate_up >= 12 {
-      if !back_edge_lane_conflicts(reservations, left, right, candidate_up) {
-        found = Some(candidate_up)
-        break
-      }
-      candidate_up = candidate_up - lane_step
+  let lane_options_per_side = 3
+
+  let upper_candidates : Array[Int] = []
+  let mut candidate_up = top - 42
+  while candidate_up >= 12 && upper_candidates.length() < lane_options_per_side {
+    if !back_edge_lane_conflicts(reservations, left, right, candidate_up) {
+      upper_candidates.push(candidate_up)
     }
-    found
+    candidate_up = candidate_up - lane_step
   }
 
-  let mut candidate_down = source.y.max(target.y) + 42
-  while back_edge_lane_conflicts(reservations, left, right, candidate_down) {
+  let lower_candidates : Array[Int] = []
+  let mut candidate_down = bottom + 42
+  while lower_candidates.length() < lane_options_per_side {
+    if !back_edge_lane_conflicts(reservations, left, right, candidate_down) {
+      lower_candidates.push(candidate_down)
+    }
     candidate_down = candidate_down + lane_step
   }
-  let chosen_y = match upper_candidate {
-    Some(candidate_up) => {
-      let up_congestion = back_edge_side_node_congestion(
-        nodes, source, target, left, right, candidate_up,
-      )
-      let down_congestion = back_edge_side_node_congestion(
-        nodes, source, target, left, right, candidate_down,
-      )
 
-      if up_congestion < down_congestion {
-        candidate_up
-      } else if down_congestion < up_congestion {
-        candidate_down
-      } else {
-        let up_crossings = back_edge_lane_crossing_penalty(
-          routed_edge_segments, source, target, left, right, candidate_up,
-        )
-        let down_crossings = back_edge_lane_crossing_penalty(
-          routed_edge_segments, source, target, left, right, candidate_down,
-        )
-        if up_crossings < down_crossings {
-          candidate_up
-        } else if down_crossings < up_crossings {
-          candidate_down
-        } else {
-          let up_penalty = back_edge_lane_distance_penalty(
-            source, target, candidate_up,
-          )
-          let down_penalty = back_edge_lane_distance_penalty(
-            source, target, candidate_down,
-          )
-          if up_penalty <= down_penalty {
-            candidate_up
-          } else {
-            candidate_down
-          }
-        }
-      }
-    }
-    None => candidate_down
+  let up_congestion = if upper_candidates.length() > 0 {
+    back_edge_side_node_congestion(nodes, source, target, left, right, top - 1)
+  } else {
+    0
   }
+  let down_congestion = back_edge_side_node_congestion(
+    nodes,
+    source,
+    target,
+    left,
+    right,
+    bottom + 1,
+  )
+
+  let mut has_choice = false
+  let mut best_y = 0
+  let mut best_congestion = 0
+  let mut best_crossings = 0
+  let mut best_distance = 0
+  let mut best_side_priority = 0
+
+  fn consider_candidate(
+    candidate_y : Int,
+    congestion : Int,
+    side_priority : Int,
+    routed_edge_segments : Array[RoutedEdgeSegment],
+    source : PositionedNode,
+    target : PositionedNode,
+    left : Int,
+    right : Int,
+    has_choice : Bool,
+    best_y : Int,
+    best_congestion : Int,
+    best_crossings : Int,
+    best_distance : Int,
+    best_side_priority : Int,
+  ) -> (Bool, Int, Int, Int, Int, Int) {
+    let crossings = back_edge_lane_crossing_penalty(
+      routed_edge_segments, source, target, left, right, candidate_y,
+    )
+    let distance = back_edge_lane_distance_penalty(source, target, candidate_y)
+    if !has_choice ||
+      back_edge_lane_score_is_better(
+        congestion, crossings, distance, side_priority, best_congestion, best_crossings,
+        best_distance, best_side_priority,
+      ) {
+      (true, candidate_y, congestion, crossings, distance, side_priority)
+    } else {
+      (
+        has_choice, best_y, best_congestion, best_crossings, best_distance, best_side_priority,
+      )
+    }
+  }
+
+  for candidate_y in upper_candidates {
+    let (
+      next_has_choice,
+      next_y,
+      next_congestion,
+      next_crossings,
+      next_distance,
+      next_side_priority,
+    ) = consider_candidate(
+      candidate_y, up_congestion, 0, routed_edge_segments, source, target, left,
+      right, has_choice, best_y, best_congestion, best_crossings, best_distance,
+      best_side_priority,
+    )
+    has_choice = next_has_choice
+    best_y = next_y
+    best_congestion = next_congestion
+    best_crossings = next_crossings
+    best_distance = next_distance
+    best_side_priority = next_side_priority
+  }
+  for candidate_y in lower_candidates {
+    let (
+      next_has_choice,
+      next_y,
+      next_congestion,
+      next_crossings,
+      next_distance,
+      next_side_priority,
+    ) = consider_candidate(
+      candidate_y, down_congestion, 1, routed_edge_segments, source, target, left,
+      right, has_choice, best_y, best_congestion, best_crossings, best_distance,
+      best_side_priority,
+    )
+    has_choice = next_has_choice
+    best_y = next_y
+    best_congestion = next_congestion
+    best_crossings = next_crossings
+    best_distance = next_distance
+    best_side_priority = next_side_priority
+  }
+
+  let chosen_y = if has_choice { best_y } else { bottom + 42 }
 
   reservations.push({ left, right, y: chosen_y })
   chosen_y

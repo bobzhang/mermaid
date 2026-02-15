@@ -154,6 +154,58 @@ test "Layout segment-span intersection handles fractional crossing exactly" {
 }
 
 ///|
+test "Layout back-edge lane selection can skip nearest lane for fewer crossings" {
+  let source : PositionedNode = {
+    id: "S",
+    label: "S",
+    shape: Circle,
+    x: 200,
+    y: 100,
+    width: 24,
+    height: 24,
+    inline_style: None,
+  }
+  let target : PositionedNode = {
+    id: "T",
+    label: "T",
+    shape: Circle,
+    x: 100,
+    y: 100,
+    width: 24,
+    height: 24,
+    inline_style: None,
+  }
+
+  let routed_edge_segments : Array[RoutedEdgeSegment] = [
+    {
+      source_id: "A",
+      target_id: "B",
+      start: { x: 140, y: 45 },
+      end: { x: 140, y: 75 },
+    },
+    {
+      source_id: "C",
+      target_id: "D",
+      start: { x: 160, y: 120 },
+      end: { x: 160, y: 150 },
+    },
+  ]
+
+  let reservations : Array[BackEdgeLaneReservation] = []
+  let bend_y = reserve_back_edge_bend_y(
+    source,
+    target,
+    [source, target],
+    routed_edge_segments,
+    reservations,
+  )
+
+  assert_eq(bend_y, 38)
+  assert_eq(reservations.length(), 1)
+  assert_eq(reservations[0].y, 38)
+}
+
+///|
 test "Layout cyclic LR flowchart without metadata keeps main chain horizontal" {
   let graph = @parser.parse_mermaid(
     (
