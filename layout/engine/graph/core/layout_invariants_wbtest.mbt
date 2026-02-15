@@ -39,6 +39,180 @@ fn find_positioned_edge(
 }
 
 ///|
+test "Layout cycle detection flags simple feedback loops" {
+  let nodes : Array[MermaidNode] = [
+    { id: "A", label: "A", shape: Rectangle },
+    { id: "B", label: "B", shape: Rectangle },
+    { id: "C", label: "C", shape: Rectangle },
+  ]
+  let cyclic_edges : Array[MermaidEdge] = [
+    {
+      source: "A",
+      target: "B",
+      label: None,
+      style: Solid,
+      has_arrow_start: false,
+      has_arrow_end: true,
+      relation_operator: Some("-->"),
+    },
+    {
+      source: "B",
+      target: "C",
+      label: None,
+      style: Solid,
+      has_arrow_start: false,
+      has_arrow_end: true,
+      relation_operator: Some("-->"),
+    },
+    {
+      source: "C",
+      target: "A",
+      label: None,
+      style: Solid,
+      has_arrow_start: false,
+      has_arrow_end: true,
+      relation_operator: Some("-->"),
+    },
+  ]
+  let acyclic_edges : Array[MermaidEdge] = [
+    {
+      source: "A",
+      target: "B",
+      label: None,
+      style: Solid,
+      has_arrow_start: false,
+      has_arrow_end: true,
+      relation_operator: Some("-->"),
+    },
+    {
+      source: "B",
+      target: "C",
+      label: None,
+      style: Solid,
+      has_arrow_start: false,
+      has_arrow_end: true,
+      relation_operator: Some("-->"),
+    },
+  ]
+
+  assert_true(graph_has_cycle(nodes, cyclic_edges))
+  assert_eq(graph_has_cycle(nodes, acyclic_edges), false)
+}
+
+///|
+test "Layout cyclic LR flowchart without metadata keeps main chain horizontal" {
+  let graph = @parser.parse_mermaid(
+    (
+      #|graph LR
+      #|0
+      #|1
+      #|2
+      #|3
+      #|4
+      #|5
+      #|start --- 0
+      #|0 -- [a-b] --> 3
+      #|1 -- c --> 2
+      #|2 -- d --> 4
+      #|3 -.-> 1
+      #|3 -.-> 4
+      #|4 -.-> 0
+      #|4 -.-> 5
+      #|5 --- #0
+      #|
+    )
+    .trim_end()
+    .to_string(),
+  )
+  let positioned = layout_graph(graph, RenderOptions::default())
+
+  let start = find_positioned_node(positioned.nodes, "start")
+  let q0 = find_positioned_node(positioned.nodes, "0")
+  let q1 = find_positioned_node(positioned.nodes, "1")
+  let q2 = find_positioned_node(positioned.nodes, "2")
+  let q3 = find_positioned_node(positioned.nodes, "3")
+  let q4 = find_positioned_node(positioned.nodes, "4")
+  let q5 = find_positioned_node(positioned.nodes, "5")
+  let accept = find_positioned_node(positioned.nodes, "#0")
+
+  assert_true(start.x < q0.x)
+  assert_true(q0.x < q3.x)
+  assert_true(q3.x < q4.x)
+  assert_true(q4.x < q5.x)
+  assert_true(q5.x < accept.x)
+
+  assert_eq(start.y, q0.y)
+  assert_eq(q0.y, q3.y)
+  assert_eq(q3.y, q4.y)
+  assert_eq(q4.y, q5.y)
+  assert_true(q1.x < q2.x)
+}
+
+///|
+test "Layout cycle-aware rank collection rehydrates cyclic forward order" {
+  let nodes : Array[MermaidNode] = [
+    { id: "A", label: "A", shape: Rectangle },
+    { id: "B", label: "B", shape: Rectangle },
+    { id: "C", label: "C", shape: Rectangle },
+    { id: "D", label: "D", shape: Rectangle },
+  ]
+  let edges : Array[MermaidEdge] = [
+    {
+      source: "B",
+      target: "A",
+      label: None,
+      style: Solid,
+      has_arrow_start: false,
+      has_arrow_end: true,
+      relation_operator: Some("-->"),
+    },
+    {
+      source: "A",
+      target: "C",
+      label: None,
+      style: Solid,
+      has_arrow_start: false,
+      has_arrow_end: true,
+      relation_operator: Some("-->"),
+    },
+    {
+      source: "C",
+      target: "B",
+      label: None,
+      style: Solid,
+      has_arrow_start: false,
+      has_arrow_end: true,
+      relation_operator: Some("-->"),
+    },
+    {
+      source: "C",
+      target: "D",
+      label: None,
+      style: Solid,
+      has_arrow_start: false,
+      has_arrow_end: true,
+      relation_operator: Some("-->"),
+    },
+  ]
+
+  let (legacy_ranks, _) = collect_non_state_flow_ranks(
+    nodes, edges, false, false,
+  )
+  let (cycle_ranks, _) = collect_non_state_flow_ranks(nodes, edges, false, true)
+
+  let legacy_b = option_int_or(legacy_ranks.get("B"), -1)
+  let cycle_b = option_int_or(cycle_ranks.get("B"), -1)
+  let cycle_a = option_int_or(cycle_ranks.get("A"), -1)
+  let cycle_d = option_int_or(cycle_ranks.get("D"), -1)
+
+  assert_eq(legacy_b, 0)
+  assert_eq(cycle_b, 2)
+  assert_true(cycle_b > legacy_b)
+  assert_true(cycle_b > cycle_a)
+  assert_true(cycle_d >= cycle_b)
+}
+
+///|
 test "Layout invariants: nodes stay inside canvas" {
   let graph = @parser.parse_mermaid(
     (

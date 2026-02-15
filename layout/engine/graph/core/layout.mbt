@@ -342,6 +342,74 @@ fn collect_non_state_flow_ranks(
 }
 
 ///|
+fn graph_has_cycle(
+  nodes_in_order : Array[MermaidNode],
+  edges : Array[MermaidEdge],
+) -> Bool {
+  let node_exists : Map[String, Bool] = {}
+  let outgoing_targets_by_source : Map[String, Array[String]] = {}
+  let visit_state_by_id : Map[String, Int] = {}
+
+  for node in nodes_in_order {
+    node_exists[node.id] = true
+    outgoing_targets_by_source[node.id] = []
+  }
+
+  if nodes_in_order.length() == 0 {
+    return false
+  }
+
+  for edge in edges {
+    if !node_exists.contains(edge.source) || !node_exists.contains(edge.target) {
+      continue
+    }
+    match outgoing_targets_by_source.get(edge.source) {
+      Some(targets) => targets.push(edge.target)
+      None => ()
+    }
+  }
+
+  fn detect_cycle_from(
+    node_id : String,
+    outgoing_targets_by_source : Map[String, Array[String]],
+    visit_state_by_id : Map[String, Int],
+  ) -> Bool {
+    let state = option_int_or(visit_state_by_id.get(node_id), 0)
+    if state == 1 {
+      return true
+    }
+    if state == 2 {
+      return false
+    }
+
+    visit_state_by_id[node_id] = 1
+    match outgoing_targets_by_source.get(node_id) {
+      Some(targets) =>
+        for target_id in targets {
+          if detect_cycle_from(
+              target_id, outgoing_targets_by_source, visit_state_by_id,
+            ) {
+            return true
+          }
+        }
+      None => ()
+    }
+    visit_state_by_id[node_id] = 2
+    false
+  }
+
+  for node in nodes_in_order {
+    if option_int_or(visit_state_by_id.get(node.id), 0) != 0 {
+      continue
+    }
+    if detect_cycle_from(node.id, outgoing_targets_by_source, visit_state_by_id) {
+      return true
+    }
+  }
+  false
+}
+
+///|
 fn collect_non_state_flow_lanes(
   nodes_in_order : Array[MermaidNode],
   rank_by_id : Map[String, Int],
@@ -2144,11 +2212,13 @@ fn layout_graph_with_subgraph_redirects(
   let flow_label_y_offset_by_rank : Map[Int, Int] = {}
   let mut flow_max_rank = 0
   if !state_graph || horizontal {
+    let cycle_aware_layout = state_graph ||
+      graph_has_cycle(nodes_in_order, graph.edges)
     let (rank_by_id, max_rank) = collect_non_state_flow_ranks(
       nodes_in_order,
       graph.edges,
       compact_fanin,
-      state_graph,
+      cycle_aware_layout,
     )
     flow_max_rank = max_rank
     for node_id, rank in rank_by_id {
