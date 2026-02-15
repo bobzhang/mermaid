@@ -252,7 +252,6 @@ fn collect_non_state_flow_ranks(
   fn mark_back_edges_from(
     node_id : String,
     edges : Array[MermaidEdge],
-    node_exists : Map[String, Bool],
     outgoing_edge_indices_by_source : Map[String, Array[Int]],
     visit_state_by_id : Map[String, Int],
     back_edge_by_index : Map[Int, Bool],
@@ -267,9 +266,6 @@ fn collect_non_state_flow_ranks(
       Some(outgoing_indices) =>
         for edge_index in outgoing_indices {
           let edge = edges[edge_index]
-          if !node_exists.contains(edge.target) {
-            continue
-          }
           let target_state = option_int_or(
             visit_state_by_id.get(edge.target),
             0,
@@ -278,7 +274,6 @@ fn collect_non_state_flow_ranks(
             mark_back_edges_from(
               edge.target,
               edges,
-              node_exists,
               outgoing_edge_indices_by_source,
               visit_state_by_id,
               back_edge_by_index,
@@ -297,7 +292,6 @@ fn collect_non_state_flow_ranks(
       mark_back_edges_from(
         node.id,
         edges,
-        node_exists,
         outgoing_edge_indices_by_source,
         visit_state_by_id,
         back_edge_by_index,
@@ -309,7 +303,6 @@ fn collect_non_state_flow_ranks(
       mark_back_edges_from(
         node.id,
         edges,
-        node_exists,
         outgoing_edge_indices_by_source,
         visit_state_by_id,
         back_edge_by_index,
