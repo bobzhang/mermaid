@@ -514,6 +514,24 @@ fn collect_non_state_flow_lanes(
   }
 
   let adjacent_edge_indices_by_upper_rank : Map[Int, Array[Int]] = {}
+  let incoming_adjacent_neighbor_ids_by_rank_node : Map[
+    Int,
+    Map[String, Array[String]],
+  ] = {}
+  let outgoing_adjacent_neighbor_ids_by_rank_node : Map[
+    Int,
+    Map[String, Array[String]],
+  ] = {}
+  for rank in 0..<=max_rank {
+    let incoming_neighbor_ids_by_node : Map[String, Array[String]] = {}
+    let outgoing_neighbor_ids_by_node : Map[String, Array[String]] = {}
+    for node_id in rank_nodes[rank] {
+      incoming_neighbor_ids_by_node[node_id] = []
+      outgoing_neighbor_ids_by_node[node_id] = []
+    }
+    incoming_adjacent_neighbor_ids_by_rank_node[rank] = incoming_neighbor_ids_by_node
+    outgoing_adjacent_neighbor_ids_by_rank_node[rank] = outgoing_neighbor_ids_by_node
+  }
   for rank in 0..<max_rank {
     adjacent_edge_indices_by_upper_rank[rank] = []
   }
@@ -523,6 +541,22 @@ fn collect_non_state_flow_lanes(
         if target_rank == source_rank + 1 {
           match adjacent_edge_indices_by_upper_rank.get(source_rank) {
             Some(indices) => indices.push(edge_index)
+            None => ()
+          }
+          match outgoing_adjacent_neighbor_ids_by_rank_node.get(source_rank) {
+            Some(neighbor_ids_by_node) =>
+              match neighbor_ids_by_node.get(edge.source) {
+                Some(neighbor_ids) => neighbor_ids.push(edge.target)
+                None => ()
+              }
+            None => ()
+          }
+          match incoming_adjacent_neighbor_ids_by_rank_node.get(target_rank) {
+            Some(neighbor_ids_by_node) =>
+              match neighbor_ids_by_node.get(edge.target) {
+                Some(neighbor_ids) => neighbor_ids.push(edge.source)
+                None => ()
+              }
             None => ()
           }
         }
@@ -619,8 +653,14 @@ fn collect_non_state_flow_lanes(
     end_rank : Int,
     step : Int,
     incoming_from_neighbor : Bool,
-    adjacent_edge_indices_by_upper_rank : Map[Int, Array[Int]],
-    edges : Array[MermaidEdge],
+    incoming_adjacent_neighbor_ids_by_rank_node : Map[
+      Int,
+      Map[String, Array[String]],
+    ],
+    outgoing_adjacent_neighbor_ids_by_rank_node : Map[
+      Int,
+      Map[String, Array[String]],
+    ],
   ) -> Unit {
     let mut rank = start_rank
     while rank != end_rank {
@@ -636,6 +676,11 @@ fn collect_non_state_flow_lanes(
       }
 
       let current = rank_nodes[rank]
+      let neighbor_ids_by_node = if incoming_from_neighbor {
+        incoming_adjacent_neighbor_ids_by_rank_node.get(rank)
+      } else {
+        outgoing_adjacent_neighbor_ids_by_rank_node.get(rank)
+      }
       let numerators : Map[String, Int] = {}
       let denominators : Map[String, Int] = {}
       let current_order : Map[String, Int] = {}
@@ -648,36 +693,20 @@ fn collect_non_state_flow_lanes(
       for node_id in current {
         let mut sum = 0
         let mut count = 0
-        let related_edge_indices = if incoming_from_neighbor {
-          adjacent_edge_indices_by_upper_rank.get(neighbor_rank)
-        } else {
-          adjacent_edge_indices_by_upper_rank.get(rank)
-        }
-        match related_edge_indices {
-          Some(edge_indices) =>
-            for edge_index in edge_indices {
-              let edge = edges[edge_index]
-              let neighbor_id = if incoming_from_neighbor {
-                if edge.target == node_id {
-                  edge.source
-                } else {
-                  ""
+        match neighbor_ids_by_node {
+          Some(neighbor_ids_by_node) =>
+            match neighbor_ids_by_node.get(node_id) {
+              Some(neighbor_ids) =>
+                for neighbor_id in neighbor_ids {
+                  match neighbor_order.get(neighbor_id) {
+                    Some(order) => {
+                      sum += order
+                      count += 1
+                    }
+                    None => ()
+                  }
                 }
-              } else if edge.source == node_id {
-                edge.target
-              } else {
-                ""
-              }
-              if neighbor_id == "" {
-                continue
-              }
-              match neighbor_order.get(neighbor_id) {
-                Some(order) => {
-                  sum += order
-                  count += 1
-                }
-                None => ()
-              }
+              None => ()
             }
           None => ()
         }
@@ -715,8 +744,8 @@ fn collect_non_state_flow_lanes(
         max_rank + 1,
         1,
         true,
-        adjacent_edge_indices_by_upper_rank,
-        edges,
+        incoming_adjacent_neighbor_ids_by_rank_node,
+        outgoing_adjacent_neighbor_ids_by_rank_node,
       )
       barycenter_pass(
         rank_nodes,
@@ -724,8 +753,8 @@ fn collect_non_state_flow_lanes(
         -1,
         -1,
         false,
-        adjacent_edge_indices_by_upper_rank,
-        edges,
+        incoming_adjacent_neighbor_ids_by_rank_node,
+        outgoing_adjacent_neighbor_ids_by_rank_node,
       )
 
       for rank in 0..<=max_rank {
