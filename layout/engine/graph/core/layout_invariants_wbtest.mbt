@@ -2659,3 +2659,75 @@ test "Layout polyline crossing count counts each pair at most once" {
 
   assert_eq(count_polyline_crossings([left, right]), 1)
 }
+
+///|
+test "Layout deferred minor-axis key uses y for horizontal edges" {
+  let source : PositionedNode = {
+    id: "S",
+    label: "S",
+    shape: Rectangle,
+    x: 40,
+    y: 120,
+    width: 80,
+    height: 40,
+    inline_style: None,
+  }
+  let target : PositionedNode = {
+    id: "T",
+    label: "T",
+    shape: Rectangle,
+    x: 260,
+    y: 60,
+    width: 80,
+    height: 40,
+    inline_style: None,
+  }
+  let context : EdgeLayoutContext = {
+    edge: flow_edge("S", "T"),
+    resolved_source_id: "S",
+    resolved_target_id: "T",
+    source,
+    target,
+    edge_horizontal: true,
+  }
+
+  assert_eq(deferred_back_edge_minor_axis_key(context, 0), 120)
+  assert_eq(deferred_back_edge_minor_axis_key(context, 1), 60)
+  assert_eq(deferred_back_edge_minor_axis_key(context, 2), 180)
+}
+
+///|
+test "Layout deferred minor-axis key uses x for vertical edges" {
+  let source : PositionedNode = {
+    id: "S",
+    label: "S",
+    shape: Rectangle,
+    x: 30,
+    y: 240,
+    width: 80,
+    height: 40,
+    inline_style: None,
+  }
+  let target : PositionedNode = {
+    id: "T",
+    label: "T",
+    shape: Rectangle,
+    x: 150,
+    y: 40,
+    width: 80,
+    height: 40,
+    inline_style: None,
+  }
+  let context : EdgeLayoutContext = {
+    edge: flow_edge("S", "T"),
+    resolved_source_id: "S",
+    resolved_target_id: "T",
+    source,
+    target,
+    edge_horizontal: false,
+  }
+
+  assert_eq(deferred_back_edge_minor_axis_key(context, 0), 30)
+  assert_eq(deferred_back_edge_minor_axis_key(context, 1), 150)
+  assert_eq(deferred_back_edge_minor_axis_key(context, 2), 180)
+}

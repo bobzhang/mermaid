@@ -1921,16 +1921,26 @@ fn edge_layout_context_span(context : EdgeLayoutContext) -> Int {
 }
 
 ///|
-fn deferred_back_edge_row_key(
+fn deferred_back_edge_minor_axis_key(
   context : EdgeLayoutContext,
-  row_key_mode : Int,
+  key_mode : Int,
 ) -> Int {
-  if row_key_mode == 1 {
-    context.target.y
-  } else if row_key_mode == 2 {
-    context.source.y + context.target.y
-  } else {
+  let source_minor = if context.edge_horizontal {
     context.source.y
+  } else {
+    context.source.x
+  }
+  let target_minor = if context.edge_horizontal {
+    context.target.y
+  } else {
+    context.target.x
+  }
+  if key_mode == 1 {
+    target_minor
+  } else if key_mode == 2 {
+    source_minor + target_minor
+  } else {
+    source_minor
   }
 }
 
@@ -1951,8 +1961,12 @@ fn build_deferred_back_edge_order(
   ordered_context_indices.sort_by((left_index, right_index) => {
     let left_context = edge_layout_contexts[left_index]
     let right_context = edge_layout_contexts[right_index]
-    let left_row_key = deferred_back_edge_row_key(left_context, row_key_mode)
-    let right_row_key = deferred_back_edge_row_key(right_context, row_key_mode)
+    let left_row_key = deferred_back_edge_minor_axis_key(
+      left_context, row_key_mode,
+    )
+    let right_row_key = deferred_back_edge_minor_axis_key(
+      right_context, row_key_mode,
+    )
     let row_cmp = if row_desc {
       right_row_key.compare(left_row_key)
     } else {
@@ -4717,9 +4731,8 @@ fn layout_graph_with_subgraph_redirects(
   let deferred_back_edge_context_indices : Array[Int] = []
   for context_index, context in edge_layout_contexts {
     let defer_back_edge = context_requires_long_span_back_edge_bend(
-        context, back_edge_route_horizontal_span_threshold, back_edge_route_vertical_span_threshold,
-      ) &&
-      context.edge_horizontal
+      context, back_edge_route_horizontal_span_threshold, back_edge_route_vertical_span_threshold,
+    )
     if defer_back_edge {
       deferred_back_edge_context_indices.push(context_index)
     } else {
@@ -4903,7 +4916,7 @@ fn layout_graph_with_subgraph_redirects(
       )
     }
 
-    let max_seed_count = 3
+    let max_seed_count = unique_deferred_order_candidates.length()
     let selected_seed_indices : Array[Int] = []
     let selected_seed_index_set : Map[Int, Bool] = {}
     for _ in 0..<max_seed_count {
