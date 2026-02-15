@@ -52,6 +52,85 @@ fn flow_edge(source : String, target : String) -> MermaidEdge {
 }
 
 ///|
+fn int_sign(value : Int) -> Int {
+  if value > 0 {
+    1
+  } else if value < 0 {
+    -1
+  } else {
+    0
+  }
+}
+
+///|
+fn segments_properly_intersect(
+  a_start : Point,
+  a_end : Point,
+  b_start : Point,
+  b_end : Point,
+) -> Bool {
+  let o1 = int_sign(
+    (a_end.x - a_start.x) * (b_start.y - a_start.y) -
+    (a_end.y - a_start.y) * (b_start.x - a_start.x),
+  )
+  let o2 = int_sign(
+    (a_end.x - a_start.x) * (b_end.y - a_start.y) -
+    (a_end.y - a_start.y) * (b_end.x - a_start.x),
+  )
+  let o3 = int_sign(
+    (b_end.x - b_start.x) * (a_start.y - b_start.y) -
+    (b_end.y - b_start.y) * (a_start.x - b_start.x),
+  )
+  let o4 = int_sign(
+    (b_end.x - b_start.x) * (a_end.y - b_start.y) -
+    (b_end.y - b_start.y) * (a_end.x - b_start.x),
+  )
+  o1 != 0 && o2 != 0 && o3 != 0 && o4 != 0 && o1 != o2 && o3 != o4
+}
+
+///|
+fn count_logical_edge_crossings(
+  positioned : PositionedGraph,
+  edges : Array[MermaidEdge],
+) -> Int raise {
+  let node_by_id : Map[String, PositionedNode] = {}
+  for node in positioned.nodes {
+    node_by_id[node.id] = node
+  }
+
+  let mut crossings = 0
+  for i in 0..<edges.length() {
+    let left = edges[i]
+    match (node_by_id.get(left.source), node_by_id.get(left.target)) {
+      (Some(left_source), Some(left_target)) =>
+        for j in (i + 1)..<edges.length() {
+          let right = edges[j]
+          if left.source == right.source ||
+            left.source == right.target ||
+            left.target == right.source ||
+            left.target == right.target {
+            continue
+          }
+          match (node_by_id.get(right.source), node_by_id.get(right.target)) {
+            (Some(right_source), Some(right_target)) =>
+              if segments_properly_intersect(
+                  { x: left_source.x, y: left_source.y },
+                  { x: left_target.x, y: left_target.y },
+                  { x: right_source.x, y: right_source.y },
+                  { x: right_target.x, y: right_target.y },
+                ) {
+                crossings += 1
+              }
+            _ => ()
+          }
+        }
+      _ => ()
+    }
+  }
+  crossings
+}
+
+///|
 test "Layout lane collection accounts for long-span edges via virtual segments" {
   let nodes : Array[MermaidNode] = [
     { id: "A", label: "A", shape: Rectangle },
@@ -105,6 +184,93 @@ test "Layout LR long-span edges keep non-crossing sink order" {
 
   assert_true(a.y < b.y)
   assert_true(y.y < x.y)
+}
+
+///|
+test "Layout fanin fanout logical crossings stay bounded on stress case" {
+  let graph = @parser.parse_mermaid(
+    (
+      #|graph LR
+      #|I1[I1]
+      #|I2[I2]
+      #|I3[I3]
+      #|I4[I4]
+      #|I5[I5]
+      #|I6[I6]
+      #|I7[I7]
+      #|I8[I8]
+      #|A1[A1]
+      #|A2[A2]
+      #|A3[A3]
+      #|A4[A4]
+      #|P1[P1]
+      #|P2[P2]
+      #|P3[P3]
+      #|P4[P4]
+      #|P5[P5]
+      #|P6[P6]
+      #|G1[G1]
+      #|G2[G2]
+      #|G3[G3]
+      #|O1[O1]
+      #|O2[O2]
+      #|O3[O3]
+      #|O4[O4]
+      #|O5[O5]
+      #|I1 --> A1
+      #|I2 --> A1
+      #|I3 --> A2
+      #|I4 --> A2
+      #|I5 --> A3
+      #|I6 --> A3
+      #|I7 --> A4
+      #|I8 --> A4
+      #|I2 --> A2
+      #|I3 --> A3
+      #|I4 --> A4
+      #|I5 --> A1
+      #|I6 --> A4
+      #|I7 --> A1
+      #|A1 --> P1
+      #|A1 --> P2
+      #|A2 --> P2
+      #|A2 --> P3
+      #|A3 --> P3
+      #|A3 --> P4
+      #|A4 --> P4
+      #|A4 --> P5
+      #|A1 --> P6
+      #|A2 --> P5
+      #|A3 --> P1
+      #|A4 --> P2
+      #|P1 --> G1
+      #|P2 --> G1
+      #|P2 --> G2
+      #|P3 --> G2
+      #|P3 --> G3
+      #|P4 --> G3
+      #|P5 --> G3
+      #|P6 --> G2
+      #|G1 --> O1
+      #|G1 --> O2
+      #|G2 --> O2
+      #|G2 --> O3
+      #|G3 --> O3
+      #|G3 --> O4
+      #|G2 --> O5
+      #|O3 --> A2
+      #|O4 --> P2
+      #|O5 --> G1
+      #|P6 --> A1
+      #|G3 --> P3
+      #|
+    )
+    .trim_end()
+    .to_string(),
+  )
+  let positioned = layout_graph(graph, RenderOptions::default())
+  let crossings = count_logical_edge_crossings(positioned, graph.edges)
+  assert_true(crossings <= 40)
 }
 
 ///|

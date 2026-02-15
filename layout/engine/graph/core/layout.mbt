@@ -773,7 +773,7 @@ fn collect_non_state_flow_lanes(
   }
 
   if max_rank > 0 {
-    for _ in 0..<4 {
+    for _ in 0..<2 {
       barycenter_pass(
         rank_nodes,
         1,
@@ -1098,7 +1098,7 @@ fn collect_non_state_flow_lanes(
       }
     }
 
-    for _ in 0..<2 {
+    for _ in 0..<4 {
       let mut changed = false
       for rank in 0..<=max_rank {
         match real_node_ids_by_rank.get(rank) {
