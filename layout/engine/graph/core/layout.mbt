@@ -1555,21 +1555,13 @@ fn segment_intersects_horizontal_span(
 
 ///|
 fn back_edge_lane_crossing_penalty(
-  routed_edge_segments : Array[RoutedEdgeSegment],
-  source : PositionedNode,
-  target : PositionedNode,
+  crossing_candidates : Array[RoutedEdgeSegment],
   left : Int,
   right : Int,
   candidate_y : Int,
 ) -> Int {
   let mut penalty = 0
-  for segment in routed_edge_segments {
-    if segment.source_id == source.id ||
-      segment.target_id == source.id ||
-      segment.source_id == target.id ||
-      segment.target_id == target.id {
-      continue
-    }
+  for segment in crossing_candidates {
     if segment_intersects_horizontal_span(
         segment.start,
         segment.end,
@@ -1581,6 +1573,31 @@ fn back_edge_lane_crossing_penalty(
     }
   }
   penalty
+}
+
+///|
+fn collect_back_edge_crossing_candidates(
+  routed_edge_segments : Array[RoutedEdgeSegment],
+  source_id : String,
+  target_id : String,
+  left : Int,
+  right : Int,
+) -> Array[RoutedEdgeSegment] {
+  let crossing_candidates : Array[RoutedEdgeSegment] = []
+  for segment in routed_edge_segments {
+    if segment.source_id == source_id ||
+      segment.target_id == source_id ||
+      segment.source_id == target_id ||
+      segment.target_id == target_id {
+      continue
+    }
+    let segment_left = segment.start.x.min(segment.end.x)
+    let segment_right = segment.start.x.max(segment.end.x)
+    if spans_overlap(left, right, segment_left, segment_right) {
+      crossing_candidates.push(segment)
+    }
+  }
+  crossing_candidates
 }
 
 ///|
@@ -1620,6 +1637,13 @@ fn reserve_back_edge_bend_y(
   let right = source_anchor_x.max(target_anchor_x)
   let top = source.y.min(target.y)
   let bottom = source.y.max(target.y)
+  let crossing_candidates = collect_back_edge_crossing_candidates(
+    routed_edge_segments,
+    source.id,
+    target.id,
+    left,
+    right,
+  )
 
   let lane_step = 20
   let lane_options_per_side = 3
@@ -1667,9 +1691,7 @@ fn reserve_back_edge_bend_y(
     candidate_y : Int,
     congestion : Int,
     side_priority : Int,
-    routed_edge_segments : Array[RoutedEdgeSegment],
-    source : PositionedNode,
-    target : PositionedNode,
+    crossing_candidates : Array[RoutedEdgeSegment],
     left : Int,
     right : Int,
     has_choice : Bool,
@@ -1680,7 +1702,7 @@ fn reserve_back_edge_bend_y(
     best_side_priority : Int,
   ) -> (Bool, Int, Int, Int, Int, Int) {
     let crossings = back_edge_lane_crossing_penalty(
-      routed_edge_segments, source, target, left, right, candidate_y,
+      crossing_candidates, left, right, candidate_y,
     )
     let distance = back_edge_lane_distance_penalty(source, target, candidate_y)
     if !has_choice ||
@@ -1705,9 +1727,8 @@ fn reserve_back_edge_bend_y(
       next_distance,
       next_side_priority,
     ) = consider_candidate(
-      candidate_y, up_congestion, 0, routed_edge_segments, source, target, left,
-      right, has_choice, best_y, best_congestion, best_crossings, best_distance,
-      best_side_priority,
+      candidate_y, up_congestion, 0, crossing_candidates, left, right, has_choice,
+      best_y, best_congestion, best_crossings, best_distance, best_side_priority,
     )
     has_choice = next_has_choice
     best_y = next_y
@@ -1725,9 +1746,8 @@ fn reserve_back_edge_bend_y(
       next_distance,
       next_side_priority,
     ) = consider_candidate(
-      candidate_y, down_congestion, 1, routed_edge_segments, source, target, left,
-      right, has_choice, best_y, best_congestion, best_crossings, best_distance,
-      best_side_priority,
+      candidate_y, down_congestion, 1, crossing_candidates, left, right, has_choice,
+      best_y, best_congestion, best_crossings, best_distance, best_side_priority,
     )
     has_choice = next_has_choice
     best_y = next_y
