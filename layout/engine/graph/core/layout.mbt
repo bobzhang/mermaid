@@ -2267,7 +2267,7 @@ fn optimize_deferred_back_edge_order_locally(
     base_back_edge_lane_reservations, base_back_edge_column_reservations, base_polylines,
     enhanced_horizontal_state_flow,
   )
-  let max_evaluations = (optimized_order.length() * 14).max(42).min(224)
+  let max_evaluations = (optimized_order.length() * 16).max(48).min(256)
   let mut evaluations = 0
 
   let mut pass = 0
