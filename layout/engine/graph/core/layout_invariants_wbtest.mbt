@@ -289,6 +289,38 @@ test "Layout dotted fanout follows target lanes with a single elbow" {
 }
 
 ///|
+test "Layout dotted forward transition bends toward target lane" {
+  let graph = @parser.parse_mermaid(
+    (
+      #|graph LR
+      #|0@{shape: circ}
+      #|1@{shape: circ}
+      #|2@{shape: circ}
+      #|3@{shape: circ}
+      #|4@{shape: circ}
+      #|5@{shape: circ}
+      #|start@{shape: f-circ} --- 0
+      #|0 -- [a-b] --> 3
+      #|1 -- c --> 2
+      #|2 -- d --> 4
+      #|3 -.-> 1
+      #|3 -.-> 4
+      #|4 -.-> 0
+      #|4 -.-> 5
+      #|5 --- #0@{shape: dbl-circ}
+      #|
+    )
+    .trim_end()
+    .to_string(),
+  )
+  let positioned = layout_graph(graph, RenderOptions::default())
+  let edge = find_positioned_edge(positioned.edges, "3", "4")
+
+  assert_eq(edge.points.length(), 3)
+  assert_eq(edge.points[1].y, edge.points[2].y)
+}
+
+///|
 test "Layout invariants: nodes stay inside canvas" {
   let graph = @parser.parse_mermaid(
     (
