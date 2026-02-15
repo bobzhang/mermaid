@@ -1426,6 +1426,7 @@ priv struct BackEdgeLaneReservation {
 priv struct EdgeLayoutContext {
   edge : MermaidEdge
   resolved_source_id : String
+  resolved_target_id : String
   source : PositionedNode
   target : PositionedNode
   edge_horizontal : Bool
@@ -3246,6 +3247,7 @@ fn layout_graph_with_subgraph_redirects(
         edge_layout_contexts.push({
           edge,
           resolved_source_id,
+          resolved_target_id,
           source,
           target,
           edge_horizontal,
@@ -3351,8 +3353,8 @@ fn layout_graph_with_subgraph_redirects(
     if points.length() >= 2 {
       for i in 1..<points.length() {
         routed_edge_segments.push({
-          source_id: edge.source,
-          target_id: edge.target,
+          source_id: context.resolved_source_id,
+          target_id: context.resolved_target_id,
           start: points[i - 1],
           end: points[i],
         })
