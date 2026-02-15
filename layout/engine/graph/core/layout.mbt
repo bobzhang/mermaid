@@ -1805,7 +1805,22 @@ fn edge_points_for(
     }
     let start_y = source.y + source_delta
     let end_y = target.y + target_delta
-    [{ x: source.x, y: start_y }, { x: target.x, y: end_y }]
+    let start : Point = { x: source.x, y: start_y }
+    let end : Point = { x: target.x, y: end_y }
+    match forward_fanout_offset_y {
+      Some(offset_x) =>
+        if moving_down && offset_x != 0 {
+          let lane_x = source.x + offset_x
+          return [
+            start,
+            { x: lane_x, y: start_y },
+            { x: lane_x, y: end_y },
+            end,
+          ]
+        }
+      None => ()
+    }
+    [start, end]
   }
 }
 
@@ -3773,9 +3788,24 @@ fn layout_graph_with_subgraph_redirects(
   let routed_edge_segments : Array[RoutedEdgeSegment] = []
   let label_slots_by_anchor : Map[String, Int] = {}
   let back_edge_lane_reservations : Array[BackEdgeLaneReservation] = []
-  let forward_fanout_out_count_by_source : Map[String, Int] = {}
-  let forward_fanout_vertical_gap_threshold = (layer_spacing / 4).max(22)
-  let forward_fanout_span_threshold = (node_spacing * 2).max(140)
+  let forward_fanout_out_count_by_bucket : Map[String, Int] = {}
+  let forward_fanout_horizontal_minor_gap_threshold = (layer_spacing / 4).max(
+    22,
+  )
+  let forward_fanout_vertical_minor_gap_threshold = (node_spacing / 4).max(22)
+  let forward_fanout_horizontal_span_threshold = (node_spacing * 2).max(140)
+  let forward_fanout_vertical_span_threshold = (layer_spacing * 2).max(140)
+
+  fn forward_fanout_bucket(
+    source_id : String,
+    edge_horizontal : Bool,
+  ) -> String {
+    if edge_horizontal {
+      "h:\{source_id}"
+    } else {
+      "v:\{source_id}"
+    }
+  }
 
   let edge_layout_contexts : Array[EdgeLayoutContext] = []
   for edge in graph.edges {
@@ -3821,36 +3851,56 @@ fn layout_graph_with_subgraph_redirects(
     }
   }
 
-  if horizontal {
-    for context in edge_layout_contexts {
-      let edge = context.edge
-      if edge.label is Some(_) {
-        continue
-      }
-      if !context.edge_horizontal || context.target.x < context.source.x {
+  for context in edge_layout_contexts {
+    let edge = context.edge
+    if edge.label is Some(_) {
+      continue
+    }
+    if context.edge_horizontal {
+      if context.target.x < context.source.x {
         continue
       }
       if int_abs(context.target.x - context.source.x) <
-        forward_fanout_span_threshold {
+        forward_fanout_horizontal_span_threshold {
         continue
       }
-      if int_abs(context.target.y - context.source.y) <=
-        forward_fanout_vertical_gap_threshold {
-        let current = option_int_or(
-          forward_fanout_out_count_by_source.get(context.resolved_source_id),
-          0,
-        )
-        forward_fanout_out_count_by_source[context.resolved_source_id] = current +
-          1
+      if int_abs(context.target.y - context.source.y) >
+        forward_fanout_horizontal_minor_gap_threshold {
+        continue
+      }
+    } else {
+      if context.target.y < context.source.y {
+        continue
+      }
+      if int_abs(context.target.y - context.source.y) <
+        forward_fanout_vertical_span_threshold {
+        continue
+      }
+      if int_abs(context.target.x - context.source.x) >
+        forward_fanout_vertical_minor_gap_threshold {
+        continue
       }
     }
+    let bucket = forward_fanout_bucket(
+      context.resolved_source_id,
+      context.edge_horizontal,
+    )
+    let current = option_int_or(
+      forward_fanout_out_count_by_bucket.get(bucket),
+      0,
+    )
+    forward_fanout_out_count_by_bucket[bucket] = current + 1
   }
-  let forward_fanout_out_slot_by_source : Map[String, Int] = {}
+  let forward_fanout_out_slot_by_bucket : Map[String, Int] = {}
   for context in edge_layout_contexts {
     let edge = context.edge
     let source = context.source
     let target = context.target
     let edge_horizontal = context.edge_horizontal
+    let forward_fanout_bucket_key = forward_fanout_bucket(
+      context.resolved_source_id,
+      edge_horizontal,
+    )
     let back_edge_bend_y = if edge_horizontal &&
       edge.style is Dotted &&
       target.x < source.x {
@@ -3868,21 +3918,35 @@ fn layout_graph_with_subgraph_redirects(
       edge_horizontal,
       edge.style,
       back_edge_bend_y,
-      if edge_horizontal &&
-        edge.label is None &&
-        target.x >= source.x &&
-        int_abs(target.x - source.x) >= forward_fanout_span_threshold &&
-        int_abs(target.y - source.y) <= forward_fanout_vertical_gap_threshold {
+      if edge.label is None &&
+        (
+          (
+            edge_horizontal &&
+            target.x >= source.x &&
+            int_abs(target.x - source.x) >=
+            forward_fanout_horizontal_span_threshold &&
+            int_abs(target.y - source.y) <=
+            forward_fanout_horizontal_minor_gap_threshold
+          ) ||
+          (
+            !edge_horizontal &&
+            target.y >= source.y &&
+            int_abs(target.y - source.y) >=
+            forward_fanout_vertical_span_threshold &&
+            int_abs(target.x - source.x) <=
+            forward_fanout_vertical_minor_gap_threshold
+          )
+        ) {
         let total = option_int_or(
-          forward_fanout_out_count_by_source.get(context.resolved_source_id),
+          forward_fanout_out_count_by_bucket.get(forward_fanout_bucket_key),
           0,
         )
         if total > 1 {
           let slot = option_int_or(
-            forward_fanout_out_slot_by_source.get(context.resolved_source_id),
+            forward_fanout_out_slot_by_bucket.get(forward_fanout_bucket_key),
             0,
           )
-          forward_fanout_out_slot_by_source[context.resolved_source_id] = slot +
+          forward_fanout_out_slot_by_bucket[forward_fanout_bucket_key] = slot +
             1
           Some(forward_fanout_offset(slot, total))
         } else {
