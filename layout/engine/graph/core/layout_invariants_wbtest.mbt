@@ -39,6 +39,75 @@ fn find_positioned_edge(
 }
 
 ///|
+fn flow_edge(source : String, target : String) -> MermaidEdge {
+  {
+    source,
+    target,
+    label: None,
+    style: Solid,
+    has_arrow_start: false,
+    has_arrow_end: true,
+    relation_operator: Some("-->"),
+  }
+}
+
+///|
+test "Layout lane collection accounts for long-span edges via virtual segments" {
+  let nodes : Array[MermaidNode] = [
+    { id: "A", label: "A", shape: Rectangle },
+    { id: "B", label: "B", shape: Rectangle },
+    { id: "M", label: "M", shape: Rectangle },
+    { id: "X", label: "X", shape: Rectangle },
+    { id: "Y", label: "Y", shape: Rectangle },
+  ]
+  let rank_by_id : Map[String, Int] = { "A": 0, "B": 0, "M": 1, "X": 2, "Y": 2 }
+  let edges : Array[MermaidEdge] = [
+    flow_edge("A", "M"),
+    flow_edge("B", "M"),
+    flow_edge("M", "X"),
+    flow_edge("M", "Y"),
+    flow_edge("A", "Y"),
+    flow_edge("B", "X"),
+  ]
+
+  let lanes = collect_non_state_flow_lanes(nodes, rank_by_id, 2, edges)
+  assert_true(
+    option_int_or(lanes.get("Y"), 0) < option_int_or(lanes.get("X"), 0),
+  )
+}
+
+///|
+test "Layout LR long-span edges keep non-crossing sink order" {
+  let graph = @parser.parse_mermaid(
+    (
+      #|graph LR
+      #|A
+      #|B
+      #|M
+      #|X
+      #|Y
+      #|A --> M
+      #|B --> M
+      #|M --> X
+      #|M --> Y
+      #|A --> Y
+      #|B --> X
+      #|
+    )
+    .trim_end()
+    .to_string(),
+  )
+  let positioned = layout_graph(graph, RenderOptions::default())
+  let a = find_positioned_node(positioned.nodes, "A")
+  let b = find_positioned_node(positioned.nodes, "B")
+  let x = find_positioned_node(positioned.nodes, "X")
+  let y = find_positioned_node(positioned.nodes, "Y")
+
+  assert_true(a.y < b.y)
+  assert_true(y.y < x.y)
+}
+
+///|
 test "Layout cycle detection flags simple feedback loops" {
   let nodes : Array[MermaidNode] = [
     { id: "A", label: "A", shape: Rectangle },

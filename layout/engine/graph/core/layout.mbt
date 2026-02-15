@@ -498,12 +498,55 @@ fn collect_non_state_flow_lanes(
   }
 
   let rank_nodes : Array[Array[String]] = []
+  let real_node_ids : Map[String, Bool] = {}
+  let lane_rank_by_id : Map[String, Int] = {}
   for _ in 0..<=max_rank {
     rank_nodes.push([])
   }
   for node in nodes_in_order {
     let rank = option_int_or(rank_by_id.get(node.id), 0)
     rank_nodes[rank].push(node.id)
+    real_node_ids[node.id] = true
+    lane_rank_by_id[node.id] = rank
+  }
+
+  let lane_edges : Array[MermaidEdge] = []
+  for edge_index, edge in edges {
+    match (rank_by_id.get(edge.source), rank_by_id.get(edge.target)) {
+      (Some(source_rank), Some(target_rank)) =>
+        if target_rank > source_rank {
+          if target_rank == source_rank + 1 {
+            lane_edges.push(edge)
+          } else {
+            let mut previous_id = edge.source
+            for rank in (source_rank + 1)..<target_rank {
+              let dummy_id = "__lane_dummy_\{edge_index}_\{rank}"
+              rank_nodes[rank].push(dummy_id)
+              lane_rank_by_id[dummy_id] = rank
+              lane_edges.push({
+                source: previous_id,
+                target: dummy_id,
+                label: None,
+                style: Solid,
+                has_arrow_start: false,
+                has_arrow_end: true,
+                relation_operator: Some("-->"),
+              })
+              previous_id = dummy_id
+            }
+            lane_edges.push({
+              source: previous_id,
+              target: edge.target,
+              label: None,
+              style: Solid,
+              has_arrow_start: false,
+              has_arrow_end: true,
+              relation_operator: Some("-->"),
+            })
+          }
+        }
+      _ => ()
+    }
   }
 
   let adjacent_edge_indices_by_upper_rank : Map[Int, Array[Int]] = {}
@@ -528,8 +571,8 @@ fn collect_non_state_flow_lanes(
   for rank in 0..<max_rank {
     adjacent_edge_indices_by_upper_rank[rank] = []
   }
-  for edge_index, edge in edges {
-    match (rank_by_id.get(edge.source), rank_by_id.get(edge.target)) {
+  for edge_index, edge in lane_edges {
+    match (lane_rank_by_id.get(edge.source), lane_rank_by_id.get(edge.target)) {
       (Some(source_rank), Some(target_rank)) =>
         if target_rank == source_rank + 1 {
           match adjacent_edge_indices_by_upper_rank.get(source_rank) {
@@ -571,7 +614,7 @@ fn collect_non_state_flow_lanes(
     upper_rank : Int,
     lower_rank : Int,
     adjacent_edge_indices_by_upper_rank : Map[Int, Array[Int]],
-    edges : Array[MermaidEdge],
+    lane_edges : Array[MermaidEdge],
   ) -> Int {
     let upper_order : Map[String, Int] = {}
     let lower_order : Map[String, Int] = {}
@@ -586,7 +629,7 @@ fn collect_non_state_flow_lanes(
     match adjacent_edge_indices_by_upper_rank.get(upper_rank) {
       Some(edge_indices) =>
         for edge_index in edge_indices {
-          let edge = edges[edge_index]
+          let edge = lane_edges[edge_index]
           match (upper_order.get(edge.source), lower_order.get(edge.target)) {
             (Some(source_order), Some(target_order)) =>
               pairs.push({ x: source_order, y: target_order })
@@ -616,7 +659,7 @@ fn collect_non_state_flow_lanes(
     rank : Int,
     max_rank : Int,
     adjacent_edge_indices_by_upper_rank : Map[Int, Array[Int]],
-    edges : Array[MermaidEdge],
+    lane_edges : Array[MermaidEdge],
   ) -> Int {
     let mut total = 0
     if rank > 0 {
@@ -625,7 +668,7 @@ fn collect_non_state_flow_lanes(
         rank - 1,
         rank,
         adjacent_edge_indices_by_upper_rank,
-        edges,
+        lane_edges,
       )
     }
     if rank < max_rank {
@@ -634,7 +677,7 @@ fn collect_non_state_flow_lanes(
         rank,
         rank + 1,
         adjacent_edge_indices_by_upper_rank,
-        edges,
+        lane_edges,
       )
     }
     total
@@ -756,7 +799,7 @@ fn collect_non_state_flow_lanes(
           continue
         }
         let mut current_crossings = crossings_around_rank(
-          rank_nodes, rank, max_rank, adjacent_edge_indices_by_upper_rank, edges,
+          rank_nodes, rank, max_rank, adjacent_edge_indices_by_upper_rank, lane_edges,
         )
         let mut i = 0
         while i + 1 < nodes.length() {
@@ -766,7 +809,7 @@ fn collect_non_state_flow_lanes(
           nodes[i + 1] = left
           rank_nodes[rank] = nodes
           let swapped_crossings = crossings_around_rank(
-            rank_nodes, rank, max_rank, adjacent_edge_indices_by_upper_rank, edges,
+            rank_nodes, rank, max_rank, adjacent_edge_indices_by_upper_rank, lane_edges,
           )
           if swapped_crossings < current_crossings {
             current_crossings = swapped_crossings
@@ -783,8 +826,12 @@ fn collect_non_state_flow_lanes(
 
   let lane_by_id : Map[String, Int] = {}
   for rank in 0..<=max_rank {
-    for lane, node_id in rank_nodes[rank] {
-      lane_by_id[node_id] = lane
+    let mut lane = 0
+    for node_id in rank_nodes[rank] {
+      if real_node_ids.contains(node_id) {
+        lane_by_id[node_id] = lane
+        lane += 1
+      }
     }
   }
   lane_by_id
