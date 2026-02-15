@@ -1737,6 +1737,7 @@ fn edge_points_for(
   target : PositionedNode,
   horizontal : Bool,
   back_edge_bend_y : Int?,
+  back_edge_bend_x : Int?,
   forward_fanout_offset_y : Int?,
   smooth_forward_fanout : Bool,
 ) -> Array[Point] {
@@ -1806,6 +1807,18 @@ fn edge_points_for(
     let end_y = target.y + target_delta
     let start : Point = { x: source.x, y: start_y }
     let end : Point = { x: target.x, y: end_y }
+    match back_edge_bend_x {
+      Some(bend_x) =>
+        if !moving_down {
+          return [
+            start,
+            { x: bend_x, y: start_y },
+            { x: bend_x, y: end_y },
+            end,
+          ]
+        }
+      None => ()
+    }
     match forward_fanout_offset_y {
       Some(offset_x) =>
         if moving_down && offset_x != 0 {
@@ -1838,6 +1851,13 @@ priv struct BackEdgeLaneReservation {
   left : Int
   right : Int
   y : Int
+}
+
+///|
+priv struct BackEdgeColumnReservation {
+  top : Int
+  bottom : Int
+  x : Int
 }
 
 ///|
@@ -1881,6 +1901,18 @@ fn back_edge_lane_conflicts(
 }
 
 ///|
+fn back_edge_column_conflicts(
+  reservations : Array[BackEdgeColumnReservation],
+  top : Int,
+  bottom : Int,
+  x : Int,
+) -> Bool {
+  reservations.any(item => {
+    item.x == x && spans_overlap(top, bottom, item.top, item.bottom)
+  })
+}
+
+///|
 fn back_edge_side_node_congestion(
   nodes : Array[PositionedNode],
   source : PositionedNode,
@@ -1920,6 +1952,45 @@ fn back_edge_side_node_congestion(
 }
 
 ///|
+fn back_edge_column_side_node_congestion(
+  nodes : Array[PositionedNode],
+  source : PositionedNode,
+  target : PositionedNode,
+  top : Int,
+  bottom : Int,
+  candidate_x : Int,
+) -> Int {
+  let left = source.x.min(target.x)
+  let right = source.x.max(target.x)
+  let route_left = candidate_x < left
+  let route_right = candidate_x > right
+
+  if !route_left && !route_right {
+    return 0
+  }
+
+  let mut congestion = 0
+  for node in nodes {
+    if node.id == source.id || node.id == target.id {
+      continue
+    }
+    let node_top = node.y - node.height / 2
+    let node_bottom = node.y + node.height / 2
+    if !spans_overlap(top, bottom, node_top, node_bottom) {
+      continue
+    }
+    if route_left {
+      if node.x < left {
+        congestion += 1
+      }
+    } else if node.x > right {
+      congestion += 1
+    }
+  }
+  congestion
+}
+
+///|
 fn back_edge_lane_distance_penalty(
   source : PositionedNode,
   target : PositionedNode,
@@ -1931,6 +2002,23 @@ fn back_edge_lane_distance_penalty(
     top - candidate_y
   } else if candidate_y > bottom {
     candidate_y - bottom
+  } else {
+    0
+  }
+}
+
+///|
+fn back_edge_column_distance_penalty(
+  source : PositionedNode,
+  target : PositionedNode,
+  candidate_x : Int,
+) -> Int {
+  let left = source.x.min(target.x)
+  let right = source.x.max(target.x)
+  if candidate_x < left {
+    left - candidate_x
+  } else if candidate_x > right {
+    candidate_x - right
   } else {
     0
   }
@@ -1996,6 +2084,45 @@ fn back_edge_lane_crossing_penalty(
 }
 
 ///|
+fn back_edge_column_crossing_penalty(
+  crossing_candidates : Array[RoutedEdgeSegment],
+  source_x : Int,
+  source_anchor_y : Int,
+  target_x : Int,
+  target_anchor_y : Int,
+  candidate_x : Int,
+) -> Int {
+  let start : Point = { x: source_x, y: source_anchor_y }
+  let bend_start : Point = { x: candidate_x, y: source_anchor_y }
+  let bend_end : Point = { x: candidate_x, y: target_anchor_y }
+  let end : Point = { x: target_x, y: target_anchor_y }
+  let mut penalty = 0
+  for segment in crossing_candidates {
+    if back_edge_segments_properly_intersect(
+        segment.start,
+        segment.end,
+        start,
+        bend_start,
+      ) ||
+      back_edge_segments_properly_intersect(
+        segment.start,
+        segment.end,
+        bend_start,
+        bend_end,
+      ) ||
+      back_edge_segments_properly_intersect(
+        segment.start,
+        segment.end,
+        bend_end,
+        end,
+      ) {
+      penalty += 1
+    }
+  }
+  penalty
+}
+
+///|
 fn collect_back_edge_crossing_candidates(
   routed_edge_segments : Array[RoutedEdgeSegment],
   source_id : String,
@@ -2014,6 +2141,31 @@ fn collect_back_edge_crossing_candidates(
     let segment_left = segment.start.x.min(segment.end.x)
     let segment_right = segment.start.x.max(segment.end.x)
     if spans_overlap(left, right, segment_left, segment_right) {
+      crossing_candidates.push(segment)
+    }
+  }
+  crossing_candidates
+}
+
+///|
+fn collect_back_edge_vertical_crossing_candidates(
+  routed_edge_segments : Array[RoutedEdgeSegment],
+  source_id : String,
+  target_id : String,
+  top : Int,
+  bottom : Int,
+) -> Array[RoutedEdgeSegment] {
+  let crossing_candidates : Array[RoutedEdgeSegment] = []
+  for segment in routed_edge_segments {
+    if segment.source_id == source_id ||
+      segment.target_id == source_id ||
+      segment.source_id == target_id ||
+      segment.target_id == target_id {
+      continue
+    }
+    let segment_top = segment.start.y.min(segment.end.y)
+    let segment_bottom = segment.start.y.max(segment.end.y)
+    if spans_overlap(top, bottom, segment_top, segment_bottom) {
       crossing_candidates.push(segment)
     }
   }
@@ -2208,6 +2360,182 @@ fn reserve_back_edge_bend_y(
 
   reservations.push({ left, right, y: chosen_y })
   chosen_y
+}
+
+///|
+fn reserve_back_edge_bend_x(
+  source : PositionedNode,
+  target : PositionedNode,
+  nodes : Array[PositionedNode],
+  routed_edge_segments : Array[RoutedEdgeSegment],
+  reservations : Array[BackEdgeColumnReservation],
+) -> Int {
+  let source_anchor_y = source.y - source.height / 2
+  let target_anchor_y = target.y + target.height / 2
+  let top = source_anchor_y.min(target_anchor_y)
+  let bottom = source_anchor_y.max(target_anchor_y)
+  let left = source.x.min(target.x)
+  let right = source.x.max(target.x)
+  let crossing_candidates = collect_back_edge_vertical_crossing_candidates(
+    routed_edge_segments,
+    source.id,
+    target.id,
+    top,
+    bottom,
+  )
+
+  let lane_step = 20
+  let lane_options_per_side = 3
+
+  let left_candidates : Array[Int] = []
+  let mut candidate_left = left - 42
+  while candidate_left >= 12 && left_candidates.length() < lane_options_per_side {
+    if !back_edge_column_conflicts(reservations, top, bottom, candidate_left) {
+      left_candidates.push(candidate_left)
+    }
+    candidate_left = candidate_left - lane_step
+  }
+
+  let right_candidates : Array[Int] = []
+  let mut candidate_right = right + 42
+  while right_candidates.length() < lane_options_per_side {
+    if !back_edge_column_conflicts(reservations, top, bottom, candidate_right) {
+      right_candidates.push(candidate_right)
+    }
+    candidate_right = candidate_right + lane_step
+  }
+
+  let left_congestion = if left_candidates.length() > 0 {
+    back_edge_column_side_node_congestion(
+      nodes,
+      source,
+      target,
+      top,
+      bottom,
+      left - 1,
+    )
+  } else {
+    0
+  }
+  let right_congestion = back_edge_column_side_node_congestion(
+    nodes,
+    source,
+    target,
+    top,
+    bottom,
+    right + 1,
+  )
+
+  let mut has_choice = false
+  let mut best_x = 0
+  let mut best_congestion = 0
+  let mut best_crossings = 0
+  let mut best_distance = 0
+  let mut best_side_priority = 0
+
+  fn consider_candidate(
+    candidate_x : Int,
+    congestion : Int,
+    side_priority : Int,
+    crossing_candidates : Array[RoutedEdgeSegment],
+    source_x : Int,
+    source_anchor_y : Int,
+    target_x : Int,
+    target_anchor_y : Int,
+    has_choice : Bool,
+    best_x : Int,
+    best_congestion : Int,
+    best_crossings : Int,
+    best_distance : Int,
+    best_side_priority : Int,
+  ) -> (Bool, Int, Int, Int, Int, Int) {
+    let crossings = back_edge_column_crossing_penalty(
+      crossing_candidates, source_x, source_anchor_y, target_x, target_anchor_y,
+      candidate_x,
+    )
+    let distance = back_edge_column_distance_penalty(
+      source, target, candidate_x,
+    )
+    if !has_choice ||
+      back_edge_lane_score_is_better(
+        congestion, crossings, distance, side_priority, best_congestion, best_crossings,
+        best_distance, best_side_priority,
+      ) {
+      (true, candidate_x, congestion, crossings, distance, side_priority)
+    } else {
+      (
+        has_choice, best_x, best_congestion, best_crossings, best_distance, best_side_priority,
+      )
+    }
+  }
+
+  for candidate_x in left_candidates {
+    let (
+      next_has_choice,
+      next_x,
+      next_congestion,
+      next_crossings,
+      next_distance,
+      next_side_priority,
+    ) = consider_candidate(
+      candidate_x,
+      left_congestion,
+      0,
+      crossing_candidates,
+      source.x,
+      source_anchor_y,
+      target.x,
+      target_anchor_y,
+      has_choice,
+      best_x,
+      best_congestion,
+      best_crossings,
+      best_distance,
+      best_side_priority,
+    )
+    has_choice = next_has_choice
+    best_x = next_x
+    best_congestion = next_congestion
+    best_crossings = next_crossings
+    best_distance = next_distance
+    best_side_priority = next_side_priority
+  }
+  for candidate_x in right_candidates {
+    let (
+      next_has_choice,
+      next_x,
+      next_congestion,
+      next_crossings,
+      next_distance,
+      next_side_priority,
+    ) = consider_candidate(
+      candidate_x,
+      right_congestion,
+      1,
+      crossing_candidates,
+      source.x,
+      source_anchor_y,
+      target.x,
+      target_anchor_y,
+      has_choice,
+      best_x,
+      best_congestion,
+      best_crossings,
+      best_distance,
+      best_side_priority,
+    )
+    has_choice = next_has_choice
+    best_x = next_x
+    best_congestion = next_congestion
+    best_crossings = next_crossings
+    best_distance = next_distance
+    best_side_priority = next_side_priority
+  }
+
+  let chosen_x = if has_choice { best_x } else { right + 42 }
+
+  reservations.push({ top, bottom, x: chosen_x })
+  chosen_x
 }
 
 ///|
@@ -3787,6 +4115,7 @@ fn layout_graph_with_subgraph_redirects(
   let routed_edge_segments : Array[RoutedEdgeSegment] = []
   let label_slots_by_anchor : Map[String, Int] = {}
   let back_edge_lane_reservations : Array[BackEdgeLaneReservation] = []
+  let back_edge_column_reservations : Array[BackEdgeColumnReservation] = []
   let forward_fanout_out_count_by_bucket : Map[String, Int] = {}
   let forward_fanout_horizontal_minor_gap_threshold = (layer_spacing / 4).max(
     22,
@@ -3794,7 +4123,8 @@ fn layout_graph_with_subgraph_redirects(
   let forward_fanout_vertical_minor_gap_threshold = (node_spacing / 4).max(22)
   let forward_fanout_horizontal_span_threshold = (node_spacing * 2).max(140)
   let forward_fanout_vertical_span_threshold = (layer_spacing * 2).max(140)
-  let back_edge_route_span_threshold = (node_spacing * 4).max(260)
+  let back_edge_route_horizontal_span_threshold = (node_spacing * 4).max(260)
+  let back_edge_route_vertical_span_threshold = (layer_spacing * 4).max(260)
 
   fn forward_fanout_bucket(
     source_id : String,
@@ -3904,10 +4234,22 @@ fn layout_graph_with_subgraph_redirects(
     let back_edge_bend_y = if edge_horizontal &&
       edge.label is None &&
       target.x < source.x &&
-      int_abs(target.x - source.x) >= back_edge_route_span_threshold {
+      int_abs(target.x - source.x) >= back_edge_route_horizontal_span_threshold {
       Some(
         reserve_back_edge_bend_y(
           source, target, positioned_nodes, routed_edge_segments, back_edge_lane_reservations,
+        ),
+      )
+    } else {
+      None
+    }
+    let back_edge_bend_x = if !edge_horizontal &&
+      edge.label is None &&
+      target.y < source.y &&
+      int_abs(target.y - source.y) >= back_edge_route_vertical_span_threshold {
+      Some(
+        reserve_back_edge_bend_x(
+          source, target, positioned_nodes, routed_edge_segments, back_edge_column_reservations,
         ),
       )
     } else {
@@ -3918,6 +4260,7 @@ fn layout_graph_with_subgraph_redirects(
       target,
       edge_horizontal,
       back_edge_bend_y,
+      back_edge_bend_x,
       if edge.label is None &&
         (
           (

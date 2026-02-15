@@ -701,6 +701,38 @@ test "Layout long-span solid back edge uses reserved bend lane" {
 }
 
 ///|
+test "Layout long-span vertical solid back edge uses reserved bend column" {
+  let graph = @parser.parse_mermaid(
+    (
+      #|graph TD
+      #|A
+      #|B
+      #|C
+      #|D
+      #|E
+      #|F
+      #|G
+      #|A --> B
+      #|B --> C
+      #|C --> D
+      #|D --> E
+      #|E --> F
+      #|F --> G
+      #|G --> A
+      #|
+    )
+    .trim_end()
+    .to_string(),
+  )
+  let positioned = layout_graph(graph, RenderOptions::default())
+  let back_edge = find_positioned_edge(positioned.edges, "G", "A")
+
+  assert_true(back_edge.points.length() >= 4)
+  assert_true(back_edge.points[1].x != back_edge.points[0].x)
+  assert_eq(back_edge.points[1].x, back_edge.points[2].x)
+}
+
+///|
 test "Layout dotted fanout follows target lanes with a single elbow" {
   let graph = @parser.parse_mermaid(
     (
