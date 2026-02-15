@@ -679,6 +679,7 @@ fn edge_points_for(
   horizontal : Bool,
   style : EdgeStyle,
   back_edge_bend_y : Int?,
+  forward_fanout_offset_y : Int?,
 ) -> Array[Point] {
   if horizontal {
     let moving_right = target.x >= source.x
@@ -708,6 +709,19 @@ fn edge_points_for(
         }
       None => ()
     }
+    match forward_fanout_offset_y {
+      Some(offset_y) =>
+        if style is Dotted && moving_right && offset_y != 0 {
+          let lane_y = source.y + offset_y
+          return [
+            start,
+            { x: start_x, y: lane_y },
+            { x: end_x, y: lane_y },
+            end,
+          ]
+        }
+      None => ()
+    }
     [start, end]
   } else {
     let moving_down = target.y >= source.y
@@ -725,6 +739,16 @@ fn edge_points_for(
     let end_y = target.y + target_delta
     [{ x: source.x, y: start_y }, { x: target.x, y: end_y }]
   }
+}
+
+///|
+fn forward_fanout_offset(slot : Int, total : Int) -> Int {
+  if total <= 1 {
+    return 0
+  }
+  let spacing = 16
+  let centered = slot * 2 - (total - 1)
+  centered * spacing / 2
 }
 
 ///|
@@ -2258,6 +2282,46 @@ fn layout_graph_with_subgraph_redirects(
   let positioned_edges : Array[PositionedEdge] = []
   let label_slots_by_anchor : Map[String, Int] = {}
   let back_edge_lane_reservations : Array[BackEdgeLaneReservation] = []
+  let dotted_forward_out_count_by_source : Map[String, Int] = {}
+  if horizontal {
+    for edge in graph.edges {
+      if edge.label is Some(_) || !(edge.style is Dotted) {
+        continue
+      }
+      let resolved_source_id = if use_subgraph_redirects {
+        match subgraph_exit_by_id.get(edge.source) {
+          Some(found) => found
+          None => edge.source
+        }
+      } else {
+        edge.source
+      }
+      let resolved_target_id = if use_subgraph_redirects {
+        match subgraph_entry_by_id.get(edge.target) {
+          Some(found) => found
+          None => edge.target
+        }
+      } else {
+        edge.target
+      }
+      match
+        (
+          positioned_by_id.get(resolved_source_id),
+          positioned_by_id.get(resolved_target_id),
+        ) {
+        (Some(source), Some(target)) =>
+          if target.x >= source.x {
+            let current = option_int_or(
+              dotted_forward_out_count_by_source.get(resolved_source_id),
+              0,
+            )
+            dotted_forward_out_count_by_source[resolved_source_id] = current + 1
+          }
+        _ => ()
+      }
+    }
+  }
+  let dotted_forward_out_slot_by_source : Map[String, Int] = {}
   for edge in graph.edges {
     let resolved_source_id = if use_subgraph_redirects {
       match subgraph_exit_by_id.get(edge.source) {
@@ -2311,6 +2375,27 @@ fn layout_graph_with_subgraph_redirects(
           edge_horizontal,
           edge.style,
           back_edge_bend_y,
+          if edge_horizontal &&
+            edge.style is Dotted &&
+            edge.label is None &&
+            target.x >= source.x {
+            let total = option_int_or(
+              dotted_forward_out_count_by_source.get(resolved_source_id),
+              0,
+            )
+            if total > 1 {
+              let slot = option_int_or(
+                dotted_forward_out_slot_by_source.get(resolved_source_id),
+                0,
+              )
+              dotted_forward_out_slot_by_source[resolved_source_id] = slot + 1
+              Some(forward_fanout_offset(slot, total))
+            } else {
+              None
+            }
+          } else {
+            None
+          },
         )
         let label_position = match edge.label {
           Some(_) => {
