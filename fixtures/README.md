@@ -43,6 +43,10 @@ bun run scripts/compare_layout_stress.ts \
 
 Any explicit CLI threshold flag overrides the profile defaults.
 
+By default, the comparator fails fast if a fixture contains edge-like syntax it
+cannot parse for logical-edge analysis. Use
+`--allow-unparsed-edge-lines` only for exploratory/debug runs.
+
 When local rendering is under load (e.g. concurrent Moon jobs), you can make
 the watchdog more resilient to transient lock contention:
 

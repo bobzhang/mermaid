@@ -7,6 +7,7 @@
  *   bun run scripts/compare_layout_stress.ts --json /tmp/layout_stress_metrics.json
  *   bun run scripts/compare_layout_stress.ts --profile strict
  *   bun run scripts/compare_layout_stress.ts --max-logical-crossing-multiplier 1.8
+ *   bun run scripts/compare_layout_stress.ts --allow-unparsed-edge-lines
  *   bun run scripts/compare_layout_stress.ts --max-polyline-crossing-multiplier 4.6 --min-span-area-ratio 0.04
  *   bun run scripts/compare_layout_stress.ts --max-avg-rmse 0.70 --max-avg-inversion-rate 0.35 --max-avg-polyline-crossing-multiplier 3.6 --min-avg-span-area-ratio 0.18
  *   bun run scripts/compare_layout_stress.ts --max-major-inversion-rate 0.55 --max-avg-major-inversion-rate 0.20
@@ -24,6 +25,7 @@ import { tmpdir } from 'node:os'
 type Point = { x: number; y: number }
 type Bounds = { minX: number; maxX: number; minY: number; maxY: number }
 type FixtureEdge = { source: string; target: string }
+type ParsedFixtureEdges = { edges: FixtureEdge[]; unparsedEdgeLines: string[] }
 type Axis = 'x' | 'y'
 type LogicalEdgeSegment = {
   source: string
@@ -73,6 +75,7 @@ type CliOptions = {
   profile?: string
   fixtures: string[]
   jsonPath?: string
+  allowUnparsedEdgeLines: boolean
   maxLogicalCrossingMultiplier?: number
   maxPolylineCrossingMultiplier?: number
   minSpanXRatio?: number
@@ -836,7 +839,7 @@ function parseOfficialEdges(svg: string): Point[][] {
   return [...edgeById.values()]
 }
 
-function parseFixtureEdges(source: string): FixtureEdge[] {
+function parseFixtureEdges(source: string): ParsedFixtureEdges {
   const parseEndpoint = (raw: string): string | null => {
     let token = raw.trim()
     if (token === '') return null
@@ -862,7 +865,94 @@ function parseFixtureEdges(source: string): FixtureEdge[] {
     return null
   }
 
-  const parseEdgeLine = (line: string): FixtureEdge | null => {
+  const splitTopLevelByAmpersand = (raw: string): string[] => {
+    const parts: string[] = []
+    let current = ''
+    let squareDepth = 0
+    let curlyDepth = 0
+    let parenDepth = 0
+    let quote: '"' | "'" | '' = ''
+
+    for (let i = 0; i < raw.length; i += 1) {
+      const ch = raw[i]!
+      if (quote !== '') {
+        current += ch
+        const escaped = i > 0 && raw[i - 1] === '\\'
+        if (ch === quote && !escaped) {
+          quote = ''
+        }
+        continue
+      }
+
+      if (ch === '"' || ch === "'") {
+        quote = ch
+        current += ch
+        continue
+      }
+
+      if (ch === '[') {
+        squareDepth += 1
+        current += ch
+        continue
+      }
+      if (ch === ']') {
+        squareDepth = Math.max(0, squareDepth - 1)
+        current += ch
+        continue
+      }
+      if (ch === '{') {
+        curlyDepth += 1
+        current += ch
+        continue
+      }
+      if (ch === '}') {
+        curlyDepth = Math.max(0, curlyDepth - 1)
+        current += ch
+        continue
+      }
+      if (ch === '(') {
+        parenDepth += 1
+        current += ch
+        continue
+      }
+      if (ch === ')') {
+        parenDepth = Math.max(0, parenDepth - 1)
+        current += ch
+        continue
+      }
+
+      if (ch === '&' && squareDepth === 0 && curlyDepth === 0 && parenDepth === 0) {
+        const trimmed = current.trim()
+        if (trimmed !== '') {
+          parts.push(trimmed)
+        }
+        current = ''
+        continue
+      }
+
+      current += ch
+    }
+
+    const tail = current.trim()
+    if (tail !== '') {
+      parts.push(tail)
+    }
+    return parts
+  }
+
+  const parseEndpointList = (raw: string): string[] | null => {
+    const segments = splitTopLevelByAmpersand(raw)
+    if (segments.length === 0) return null
+    const ids: string[] = []
+    for (const segment of segments) {
+      const id = parseEndpoint(segment)
+      if (!id) return null
+      ids.push(id)
+    }
+    return ids
+  }
+
+  const parseEdgeLine = (line: string): FixtureEdge[] | null => {
     const patterns: RegExp[] = [
       /^\s*(.+?)\s*--\s*(?:\[[^\]]*\]|"[^"]*"|'[^']*'|\|[^|]*\|)?\s*-->\s*(.+?)\s*$/,
       /^\s*(.+?)\s*-\.\->\s*(.+?)\s*$/,
@@ -874,15 +964,25 @@ function parseFixtureEdges(source: string): FixtureEdge[] {
     for (const pattern of patterns) {
       const match = line.match(pattern)
       if (!match) continue
-      const sourceId = parseEndpoint(match[1]!)
-      const targetId = parseEndpoint(match[2]!)
-      if (!sourceId || !targetId) return null
-      return { source: sourceId, target: targetId }
+      const sourceIds = parseEndpointList(match[1]!)
+      const targetIds = parseEndpointList(match[2]!)
+      if (!sourceIds || !targetIds) return null
+      const expanded: FixtureEdge[] = []
+      for (const sourceId of sourceIds) {
+        for (const targetId of targetIds) {
+          expanded.push({ source: sourceId, target: targetId })
+        }
+      }
+      return expanded
     }
     return null
   }
 
+  const looksLikeEdgeCandidate = (line: string): boolean =>
+    /-->|-\.\->|==>|===>|---/.test(line)
+
   const edges: FixtureEdge[] = []
+  const unparsedEdgeLines: string[] = []
   const dedupe = new Set<string>()
   const lines = source.split('\n')
   for (const rawLine of lines) {
@@ -897,13 +997,20 @@ function parseFixtureEdges(source: string): FixtureEdge[] {
       continue
     }
     const parsed = parseEdgeLine(line)
-    if (!parsed) continue
-    const key = `${parsed.source}->${parsed.target}`
-    if (dedupe.has(key)) continue
-    dedupe.add(key)
-    edges.push(parsed)
+    if (!parsed) {
+      if (looksLikeEdgeCandidate(line)) {
+        unparsedEdgeLines.push(line)
+      }
+      continue
+    }
+    for (const edge of parsed) {
+      const key = `${edge.source}->${edge.target}`
+      if (dedupe.has(key)) continue
+      dedupe.add(key)
+      edges.push(edge)
+    }
   }
-  return edges
+  return { edges, unparsedEdgeLines }
 }
 
 function parseGraphDirection(source: string): string {
@@ -1256,7 +1363,23 @@ function compareFixture(
   renderLocal(path, localPath, options)
 
   const fixtureSource = readFileSync(path, 'utf8')
-  const fixtureEdges = parseFixtureEdges(fixtureSource)
+  const parsedFixtureEdges = parseFixtureEdges(fixtureSource)
+  if (!options.allowUnparsedEdgeLines && parsedFixtureEdges.unparsedEdgeLines.length > 0) {
+    const sample = parsedFixtureEdges.unparsedEdgeLines.slice(0, 6)
+    fail(
+      [
+        `fixture contains unparsed edge lines: ${path}`,
+        ...sample.map(line => `  ${line}`),
+        ...(parsedFixtureEdges.unparsedEdgeLines.length > sample.length
+          ? [
+              `  ... (${parsedFixtureEdges.unparsedEdgeLines.length - sample.length} more lines)`,
+            ]
+          : []),
+        'If this is expected, rerun with --allow-unparsed-edge-lines.',
+      ].join('\n'),
+    )
+  }
+  const fixtureEdges = parsedFixtureEdges.edges
   const graphDirection = parseGraphDirection(fixtureSource)
   const majorAxis = majorAxisForDirection(graphDirection)
 
@@ -1451,6 +1574,7 @@ function parseCliOptions(args: string[]): CliOptions {
   let profile: string | undefined = undefined
   const fixtures: string[] = []
   let jsonPath: string | undefined = undefined
+  let allowUnparsedEdgeLines = false
   let maxLogicalCrossingMultiplier: number | undefined = undefined
   let maxPolylineCrossingMultiplier: number | undefined = undefined
   let minSpanXRatio: number | undefined = undefined
@@ -1490,6 +1614,10 @@ function parseCliOptions(args: string[]): CliOptions {
       if (!next) fail('missing path after --json')
       jsonPath = next
       i += 1
+      continue
+    }
+    if (arg === '--allow-unparsed-edge-lines') {
+      allowUnparsedEdgeLines = true
       continue
     }
     if (arg === '--max-logical-crossing-multiplier') {
@@ -1781,6 +1909,7 @@ function parseCliOptions(args: string[]): CliOptions {
     profile,
     fixtures,
     jsonPath,
+    allowUnparsedEdgeLines,
     maxLogicalCrossingMultiplier,
     maxPolylineCrossingMultiplier,
     minSpanXRatio,
@@ -1933,6 +2062,7 @@ function main(): void {
       renderedSvgDir: tempRoot,
       options: {
         profile: options.profile ?? null,
+        allowUnparsedEdgeLines: options.allowUnparsedEdgeLines,
         maxLogicalCrossingMultiplier: options.maxLogicalCrossingMultiplier ?? null,
         maxPolylineCrossingMultiplier: options.maxPolylineCrossingMultiplier ?? null,
         minSpanXRatio: options.minSpanXRatio ?? null,
