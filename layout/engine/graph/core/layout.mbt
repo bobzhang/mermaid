@@ -2250,11 +2250,19 @@ fn reserve_back_edge_bend_y(
     right,
   )
 
-  let lane_step = 20
-  let lane_options_per_side = 6
+  let horizontal_span = right - left
+  let lane_step = if horizontal_span >= 520 { 18 } else { 20 }
+  let lane_options_per_side = if horizontal_span >= 520 {
+    8
+  } else if horizontal_span >= 320 {
+    7
+  } else {
+    6
+  }
+  let base_clearance = 42
 
   let upper_candidates : Array[Int] = []
-  let mut candidate_up = top - 42
+  let mut candidate_up = top - base_clearance
   while candidate_up >= 12 && upper_candidates.length() < lane_options_per_side {
     if !back_edge_lane_conflicts(reservations, left, right, candidate_up) {
       upper_candidates.push(candidate_up)
@@ -2263,7 +2271,7 @@ fn reserve_back_edge_bend_y(
   }
 
   let lower_candidates : Array[Int] = []
-  let mut candidate_down = bottom + 42
+  let mut candidate_down = bottom + base_clearance
   while lower_candidates.length() < lane_options_per_side {
     if !back_edge_lane_conflicts(reservations, left, right, candidate_down) {
       lower_candidates.push(candidate_down)
@@ -2417,11 +2425,19 @@ fn reserve_back_edge_bend_x(
     bottom,
   )
 
-  let lane_step = 20
-  let lane_options_per_side = 6
+  let vertical_span = bottom - top
+  let lane_step = if vertical_span >= 520 { 18 } else { 20 }
+  let lane_options_per_side = if vertical_span >= 520 {
+    8
+  } else if vertical_span >= 320 {
+    7
+  } else {
+    6
+  }
+  let base_clearance = 42
 
   let left_candidates : Array[Int] = []
-  let mut candidate_left = left - 42
+  let mut candidate_left = left - base_clearance
   while candidate_left >= 12 && left_candidates.length() < lane_options_per_side {
     if !back_edge_column_conflicts(reservations, top, bottom, candidate_left) {
       left_candidates.push(candidate_left)
@@ -2430,7 +2446,7 @@ fn reserve_back_edge_bend_x(
   }
 
   let right_candidates : Array[Int] = []
-  let mut candidate_right = right + 42
+  let mut candidate_right = right + base_clearance
   while right_candidates.length() < lane_options_per_side {
     if !back_edge_column_conflicts(reservations, top, bottom, candidate_right) {
       right_candidates.push(candidate_right)

@@ -544,6 +544,56 @@ test "Layout back-edge lane selection can skip nearest lane for fewer crossings"
 }
 
 ///|
+test "Layout long-span back-edge lane search can use extended candidates" {
+  let source : PositionedNode = {
+    id: "S",
+    label: "S",
+    shape: Circle,
+    x: 700,
+    y: 100,
+    width: 24,
+    height: 24,
+    inline_style: None,
+  }
+  let target : PositionedNode = {
+    id: "T",
+    label: "T",
+    shape: Circle,
+    x: 100,
+    y: 100,
+    width: 24,
+    height: 24,
+    inline_style: None,
+  }
+
+  let reservations : Array[BackEdgeLaneReservation] = []
+  for blocked_y in [58, 40, 22] {
+    reservations.push({ left: 112, right: 688, y: blocked_y })
+  }
+
+  let routed_edge_segments : Array[RoutedEdgeSegment] = [
+    {
+      source_id: "U",
+      target_id: "V",
+      start: { x: 400, y: 120 },
+      end: { x: 400, y: 260 },
+    },
+  ]
+
+  let bend_y = reserve_back_edge_bend_y(
+    source,
+    target,
+    [source, target],
+    routed_edge_segments,
+    reservations,
+  )
+
+  assert_eq(bend_y, 268)
+  assert_eq(reservations.length(), 4)
+  assert_eq(reservations[3].y, 268)
+}
+
+///|
 test "Layout cyclic LR flowchart without metadata keeps loop routing vertically separated" {
   let graph = @parser.parse_mermaid(
     (
