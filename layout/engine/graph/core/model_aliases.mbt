@@ -23,6 +23,10 @@ type Direction = @model.Direction
 type NodeShape = @model.NodeShape
 
 ///|
+/// Visual style of a diagram edge.
+type EdgeStyle = @model.EdgeStyle
+
+///|
 /// Configuration options for SVG rendering.
 type RenderOptions = @model.RenderOptions
 

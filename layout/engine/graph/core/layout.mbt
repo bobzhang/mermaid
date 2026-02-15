@@ -295,6 +295,7 @@ fn edge_points_for(
   source : PositionedNode,
   target : PositionedNode,
   horizontal : Bool,
+  style : EdgeStyle,
 ) -> Array[Point] {
   if horizontal {
     let moving_right = target.x >= source.x
@@ -310,7 +311,14 @@ fn edge_points_for(
     }
     let start_x = source.x + source_delta
     let end_x = target.x + target_delta
-    [{ x: start_x, y: source.y }, { x: end_x, y: target.y }]
+    let start : Point = { x: start_x, y: source.y }
+    let end : Point = { x: end_x, y: target.y }
+    if style is Dotted && !moving_right {
+      let candidate_bend_y = source.y.min(target.y) - 42
+      let bend_y = if candidate_bend_y < 12 { 12 } else { candidate_bend_y }
+      return [start, { x: start_x, y: bend_y }, { x: end_x, y: bend_y }, end]
+    }
+    [start, end]
   } else {
     let moving_down = target.y >= source.y
     let source_delta = if moving_down {
@@ -1833,7 +1841,12 @@ fn layout_graph_with_subgraph_redirects(
             }
           _ => horizontal
         }
-        let points = edge_points_for(source, target, edge_horizontal)
+        let points = edge_points_for(
+          source,
+          target,
+          edge_horizontal,
+          edge.style,
+        )
         let label_position = match edge.label {
           Some(_) => {
             let base = midpoint(points[0], points[1])
