@@ -1,0 +1,97 @@
+graph TB
+ROOT[ROOT]
+TAIL[TAIL]
+
+subgraph OUTER_LEFT
+L1[L1]
+L2[L2]
+L3[L3]
+subgraph LEFT_CORE
+LC1[LC1]
+LC2[LC2]
+LC3[LC3]
+end
+L4[L4]
+L5[L5]
+end
+
+subgraph OUTER_RIGHT
+R1[R1]
+R2[R2]
+R3[R3]
+subgraph RIGHT_CORE
+RC1[RC1]
+RC2[RC2]
+RC3[RC3]
+end
+R4[R4]
+R5[R5]
+end
+
+subgraph OUTER_MID
+M1[M1]
+M2[M2]
+M3[M3]
+M4[M4]
+M5[M5]
+end
+
+ROOT --> L1
+ROOT --> M1
+ROOT --> R1
+
+L1 --> L2
+L2 --> L3
+L3 --> L4
+L4 --> L5
+L5 --> L2
+
+R1 --> R2
+R2 --> R3
+R3 --> R4
+R4 --> R5
+R5 --> R2
+
+M1 --> M2
+M2 --> M3
+M3 --> M4
+M4 --> M5
+M5 --> M2
+
+L2 --> LC1
+LC1 --> LC2
+LC2 --> LC3
+LC3 --> L4
+
+R2 --> RC1
+RC1 --> RC2
+RC2 --> RC3
+RC3 --> R4
+
+L3 --> M2
+L4 --> M3
+L5 --> M4
+LC2 --> M5
+
+M2 --> R2
+M3 --> R3
+M4 --> R4
+M5 --> R5
+
+R3 --> M1
+R4 --> M2
+RC2 --> M3
+R5 --> M4
+
+M3 --> LC1
+M4 --> LC2
+M5 --> LC3
+RC3 --> L3
+
+L5 --> TAIL
+M5 --> TAIL
+R5 --> TAIL
+
+TAIL --> M2
+TAIL --> L2
+RC3 --> M1
