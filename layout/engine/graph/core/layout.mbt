@@ -5309,7 +5309,21 @@ fn layout_graph_with_subgraph_redirects(
     forward_fanout_slots_resolved_by_bucket[bucket_key] = true
   }
 
+  let non_deferred_non_fanout_context_indices : Array[Int] = []
+  let non_deferred_fanout_context_indices : Array[Int] = []
   for context_index in non_deferred_route_context_indices {
+    let context = edge_layout_contexts[context_index]
+    if context_uses_forward_fanout_lane(
+        context, forward_fanout_horizontal_span_threshold, forward_fanout_horizontal_minor_gap_threshold,
+        forward_fanout_vertical_span_threshold, forward_fanout_vertical_minor_gap_threshold,
+      ) {
+      non_deferred_fanout_context_indices.push(context_index)
+    } else {
+      non_deferred_non_fanout_context_indices.push(context_index)
+    }
+  }
+
+  fn route_non_deferred_context(context_index : Int) -> Unit {
     let context = edge_layout_contexts[context_index]
     let source = context.source
     let target = context.target
@@ -5380,6 +5394,13 @@ fn layout_graph_with_subgraph_redirects(
       points,
     )
     routed_polylines.push(points)
+  }
+
+  for context_index in non_deferred_non_fanout_context_indices {
+    route_non_deferred_context(context_index)
+  }
+  for context_index in non_deferred_fanout_context_indices {
+    route_non_deferred_context(context_index)
   }
 
   if deferred_back_edge_context_indices.length() > 0 {
