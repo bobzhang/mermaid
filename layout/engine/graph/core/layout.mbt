@@ -762,20 +762,22 @@ fn collect_non_state_flow_lanes(
         if nodes.length() < 2 {
           continue
         }
+        let mut current_crossings = crossings_around_rank(
+          rank_nodes, rank, max_rank, adjacent_edge_indices_by_upper_rank, edges,
+        )
         let mut i = 0
         while i + 1 < nodes.length() {
-          let before = crossings_around_rank(
-            rank_nodes, rank, max_rank, adjacent_edge_indices_by_upper_rank, edges,
-          )
           let left = nodes[i]
           let right = nodes[i + 1]
           nodes[i] = right
           nodes[i + 1] = left
           rank_nodes[rank] = nodes
-          let after = crossings_around_rank(
+          let swapped_crossings = crossings_around_rank(
             rank_nodes, rank, max_rank, adjacent_edge_indices_by_upper_rank, edges,
           )
-          if after >= before {
+          if swapped_crossings < current_crossings {
+            current_crossings = swapped_crossings
+          } else {
             nodes[i] = left
             nodes[i + 1] = right
             rank_nodes[rank] = nodes
