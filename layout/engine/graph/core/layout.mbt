@@ -1432,6 +1432,14 @@ priv struct EdgeLayoutContext {
 }
 
 ///|
+priv struct RoutedEdgeSegment {
+  source_id : String
+  target_id : String
+  start : Point
+  end : Point
+}
+
+///|
 fn spans_overlap(
   a_left : Int,
   a_right : Int,
@@ -1540,7 +1548,7 @@ fn segment_intersects_horizontal_span(
 
 ///|
 fn back_edge_lane_crossing_penalty(
-  positioned_edges : Array[PositionedEdge],
+  routed_edge_segments : Array[RoutedEdgeSegment],
   source : PositionedNode,
   target : PositionedNode,
   left : Int,
@@ -1548,24 +1556,21 @@ fn back_edge_lane_crossing_penalty(
   candidate_y : Int,
 ) -> Int {
   let mut penalty = 0
-  for edge in positioned_edges {
-    if edge.source == source.id ||
-      edge.target == source.id ||
-      edge.source == target.id ||
-      edge.target == target.id ||
-      edge.points.length() < 2 {
+  for segment in routed_edge_segments {
+    if segment.source_id == source.id ||
+      segment.target_id == source.id ||
+      segment.source_id == target.id ||
+      segment.target_id == target.id {
       continue
     }
-    for i in 1..<edge.points.length() {
-      if segment_intersects_horizontal_span(
-          edge.points[i - 1],
-          edge.points[i],
-          left,
-          right,
-          candidate_y,
-        ) {
-        penalty += 1
-      }
+    if segment_intersects_horizontal_span(
+        segment.start,
+        segment.end,
+        left,
+        right,
+        candidate_y,
+      ) {
+      penalty += 1
     }
   }
   penalty
@@ -1576,7 +1581,7 @@ fn reserve_back_edge_bend_y(
   source : PositionedNode,
   target : PositionedNode,
   nodes : Array[PositionedNode],
-  positioned_edges : Array[PositionedEdge],
+  routed_edge_segments : Array[RoutedEdgeSegment],
   reservations : Array[BackEdgeLaneReservation],
 ) -> Int {
   let source_anchor_x = source.x - source.width / 2
@@ -1617,10 +1622,10 @@ fn reserve_back_edge_bend_y(
         candidate_down
       } else {
         let up_crossings = back_edge_lane_crossing_penalty(
-          positioned_edges, source, target, left, right, candidate_up,
+          routed_edge_segments, source, target, left, right, candidate_up,
         )
         let down_crossings = back_edge_lane_crossing_penalty(
-          positioned_edges, source, target, left, right, candidate_down,
+          routed_edge_segments, source, target, left, right, candidate_down,
         )
         if up_crossings < down_crossings {
           candidate_up
@@ -3197,6 +3202,7 @@ fn layout_graph_with_subgraph_redirects(
   }
 
   let positioned_edges : Array[PositionedEdge] = []
+  let routed_edge_segments : Array[RoutedEdgeSegment] = []
   let label_slots_by_anchor : Map[String, Int] = {}
   let back_edge_lane_reservations : Array[BackEdgeLaneReservation] = []
   let dotted_forward_out_count_by_source : Map[String, Int] = {}
@@ -3274,7 +3280,7 @@ fn layout_graph_with_subgraph_redirects(
       target.x < source.x {
       Some(
         reserve_back_edge_bend_y(
-          source, target, positioned_nodes, positioned_edges, back_edge_lane_reservations,
+          source, target, positioned_nodes, routed_edge_segments, back_edge_lane_reservations,
         ),
       )
     } else {
@@ -3326,7 +3332,7 @@ fn layout_graph_with_subgraph_redirects(
       }
       None => None
     }
-    positioned_edges.push({
+    let positioned_edge : PositionedEdge = {
       source: edge.source,
       target: edge.target,
       label: edge.label,
@@ -3336,7 +3342,18 @@ fn layout_graph_with_subgraph_redirects(
       relation_operator: edge.relation_operator,
       points,
       label_position,
-    })
+    }
+    positioned_edges.push(positioned_edge)
+    if points.length() >= 2 {
+      for i in 1..<points.length() {
+        routed_edge_segments.push({
+          source_id: edge.source,
+          target_id: edge.target,
+          start: points[i - 1],
+          end: points[i],
+        })
+      }
+    }
   }
 
   let mut global_min_x = padding

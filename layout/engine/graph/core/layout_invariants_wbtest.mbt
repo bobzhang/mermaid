@@ -121,16 +121,11 @@ test "Layout back-edge lane selection avoids existing segment crossings" {
     height: 24,
     inline_style: None,
   }
-  let blocker : PositionedEdge = {
-    source: "X",
-    target: "Y",
-    label: None,
-    style: Solid,
-    has_arrow_start: false,
-    has_arrow_end: true,
-    relation_operator: Some("-->"),
-    points: [{ x: 140, y: 20 }, { x: 140, y: 80 }],
-    label_position: None,
+  let blocker : RoutedEdgeSegment = {
+    source_id: "X",
+    target_id: "Y",
+    start: { x: 140, y: 20 },
+    end: { x: 140, y: 80 },
   }
 
   let reservations : Array[BackEdgeLaneReservation] = []
