@@ -1807,12 +1807,7 @@ pub fn layout_graph(
   graph : MermaidGraph,
   options : RenderOptions,
 ) -> PositionedGraph {
-  layout_graph_with_subgraph_redirects(
-    graph,
-    options,
-    true,
-    is_state_graph(graph),
-  )
+  layout_graph_with_subgraph_redirects(graph, options, true, false)
 }
 
 ///|
