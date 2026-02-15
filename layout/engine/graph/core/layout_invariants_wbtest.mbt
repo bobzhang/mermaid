@@ -594,6 +594,59 @@ test "Layout long-span back-edge lane search can use extended candidates" {
 }
 
 ///|
+test "Layout mid-long span back-edge lane search upgrades to dense candidate spacing" {
+  let source : PositionedNode = {
+    id: "S",
+    label: "S",
+    shape: Circle,
+    x: 580,
+    y: 100,
+    width: 24,
+    height: 24,
+    inline_style: None,
+  }
+  let target : PositionedNode = {
+    id: "T",
+    label: "T",
+    shape: Circle,
+    x: 100,
+    y: 100,
+    width: 24,
+    height: 24,
+    inline_style: None,
+  }
+
+  let reservations : Array[BackEdgeLaneReservation] = []
+  for
+    blocked_y in [
+      58, 40, 38, 22, 18, 142, 160, 162, 178, 182, 196, 202, 214, 222, 232, 242,
+      262,
+    ] {
+    reservations.push({ left: 112, right: 568, y: blocked_y })
+  }
+  let routed_edge_segments : Array[RoutedEdgeSegment] = [
+    {
+      source_id: "U",
+      target_id: "V",
+      start: { x: 300, y: 236 },
+      end: { x: 300, y: 246 },
+    },
+  ]
+
+  let bend_y = reserve_back_edge_bend_y(
+    source,
+    target,
+    [source, target],
+    routed_edge_segments,
+    reservations,
+  )
+
+  assert_eq(bend_y, 250)
+  assert_eq(reservations.length(), 18)
+  assert_eq(reservations[17].y, 250)
+}
+
+///|
 test "Layout cyclic LR flowchart without metadata keeps loop routing vertically separated" {
   let graph = @parser.parse_mermaid(
     (

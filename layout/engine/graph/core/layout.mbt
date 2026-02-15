@@ -2251,10 +2251,10 @@ fn reserve_back_edge_bend_y(
   )
 
   let horizontal_span = right - left
-  let lane_step = if horizontal_span >= 520 { 18 } else { 20 }
-  let lane_options_per_side = if horizontal_span >= 520 {
+  let lane_step = if horizontal_span >= 440 { 18 } else { 20 }
+  let lane_options_per_side = if horizontal_span >= 440 {
     8
-  } else if horizontal_span >= 320 {
+  } else if horizontal_span >= 280 {
     7
   } else {
     6
@@ -2426,10 +2426,10 @@ fn reserve_back_edge_bend_x(
   )
 
   let vertical_span = bottom - top
-  let lane_step = if vertical_span >= 520 { 18 } else { 20 }
-  let lane_options_per_side = if vertical_span >= 520 {
+  let lane_step = if vertical_span >= 440 { 18 } else { 20 }
+  let lane_options_per_side = if vertical_span >= 440 {
     8
-  } else if vertical_span >= 320 {
+  } else if vertical_span >= 280 {
     7
   } else {
     6
