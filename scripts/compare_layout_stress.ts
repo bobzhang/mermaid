@@ -215,6 +215,12 @@ function parsePathPoints(pathD: string): Point[] {
   let currentY = 0
   let subpathStartX = 0
   let subpathStartY = 0
+  let previousCommandUpper = ''
+  let previousCubicControlX: number | null = null
+  let previousCubicControlY: number | null = null
+  let previousQuadraticControlX: number | null = null
+  let previousQuadraticControlY: number | null = null
+  const curveSamples = 4
 
   const pushPoint = (x: number, y: number): void => {
     if (Number.isNaN(x) || Number.isNaN(y)) return
@@ -223,6 +229,57 @@ function parsePathPoints(pathD: string): Point[] {
       return
     }
     points.push({ x, y })
+  }
+
+  const clearCurveControls = (): void => {
+    previousCubicControlX = null
+    previousCubicControlY = null
+    previousQuadraticControlX = null
+    previousQuadraticControlY = null
+  }
+
+  const sampleQuadraticTo = (
+    startX: number,
+    startY: number,
+    controlX: number,
+    controlY: number,
+    endX: number,
+    endY: number,
+  ): void => {
+    for (let step = 1; step <= curveSamples; step += 1) {
+      const t = step / curveSamples
+      const mt = 1 - t
+      const x = mt * mt * startX + 2 * mt * t * controlX + t * t * endX
+      const y = mt * mt * startY + 2 * mt * t * controlY + t * t * endY
+      pushPoint(x, y)
+    }
+  }
+
+  const sampleCubicTo = (
+    startX: number,
+    startY: number,
+    control1X: number,
+    control1Y: number,
+    control2X: number,
+    control2Y: number,
+    endX: number,
+    endY: number,
+  ): void => {
+    for (let step = 1; step <= curveSamples; step += 1) {
+      const t = step / curveSamples
+      const mt = 1 - t
+      const x =
+        mt * mt * mt * startX +
+        3 * mt * mt * t * control1X +
+        3 * mt * t * t * control2X +
+        t * t * t * endX
+      const y =
+        mt * mt * mt * startY +
+        3 * mt * mt * t * control1Y +
+        3 * mt * t * t * control2Y +
+        t * t * t * endY
+      pushPoint(x, y)
+    }
   }
 
   const readNumber = (): number | null => {
@@ -256,6 +313,8 @@ function parsePathPoints(pathD: string): Point[] {
         subpathStartX = currentX
         subpathStartY = currentY
         pushPoint(currentX, currentY)
+        clearCurveControls()
+        previousCommandUpper = 'M'
 
         while (true) {
           const x = readNumber()
@@ -264,6 +323,8 @@ function parsePathPoints(pathD: string): Point[] {
           currentX = isRelative ? currentX + x : x
           currentY = isRelative ? currentY + y : y
           pushPoint(currentX, currentY)
+          clearCurveControls()
+          previousCommandUpper = 'L'
         }
         break
       }
@@ -277,6 +338,8 @@ function parsePathPoints(pathD: string): Point[] {
           currentX = isRelative ? currentX + x : x
           currentY = isRelative ? currentY + y : y
           pushPoint(currentX, currentY)
+          clearCurveControls()
+          previousCommandUpper = 'L'
         }
         break
       }
@@ -288,6 +351,8 @@ function parsePathPoints(pathD: string): Point[] {
           if (x == null) break
           currentX = isRelative ? currentX + x : x
           pushPoint(currentX, currentY)
+          clearCurveControls()
+          previousCommandUpper = 'H'
         }
         break
       }
@@ -299,6 +364,8 @@ function parsePathPoints(pathD: string): Point[] {
           if (y == null) break
           currentY = isRelative ? currentY + y : y
           pushPoint(currentX, currentY)
+          clearCurveControls()
+          previousCommandUpper = 'V'
         }
         break
       }
@@ -313,9 +380,31 @@ function parsePathPoints(pathD: string): Point[] {
           const x = readNumber()
           const y = readNumber()
           if (x1 == null || y1 == null || x2 == null || y2 == null || x == null || y == null) break
-          currentX = isRelative ? currentX + x : x
-          currentY = isRelative ? currentY + y : y
-          pushPoint(currentX, currentY)
+          const startX = currentX
+          const startY = currentY
+          const control1X = isRelative ? currentX + x1 : x1
+          const control1Y = isRelative ? currentY + y1 : y1
+          const control2X = isRelative ? currentX + x2 : x2
+          const control2Y = isRelative ? currentY + y2 : y2
+          const endX = isRelative ? currentX + x : x
+          const endY = isRelative ? currentY + y : y
+          sampleCubicTo(
+            startX,
+            startY,
+            control1X,
+            control1Y,
+            control2X,
+            control2Y,
+            endX,
+            endY,
+          )
+          currentX = endX
+          currentY = endY
+          previousCubicControlX = control2X
+          previousCubicControlY = control2Y
+          previousQuadraticControlX = null
+          previousQuadraticControlY = null
+          previousCommandUpper = 'C'
         }
         break
       }
@@ -328,9 +417,39 @@ function parsePathPoints(pathD: string): Point[] {
           const x = readNumber()
           const y = readNumber()
           if (x2 == null || y2 == null || x == null || y == null) break
-          currentX = isRelative ? currentX + x : x
-          currentY = isRelative ? currentY + y : y
-          pushPoint(currentX, currentY)
+          const startX = currentX
+          const startY = currentY
+          const control1X =
+            (previousCommandUpper === 'C' || previousCommandUpper === 'S') &&
+            previousCubicControlX != null
+              ? 2 * currentX - previousCubicControlX
+              : currentX
+          const control1Y =
+            (previousCommandUpper === 'C' || previousCommandUpper === 'S') &&
+            previousCubicControlY != null
+              ? 2 * currentY - previousCubicControlY
+              : currentY
+          const control2X = isRelative ? currentX + x2 : x2
+          const control2Y = isRelative ? currentY + y2 : y2
+          const endX = isRelative ? currentX + x : x
+          const endY = isRelative ? currentY + y : y
+          sampleCubicTo(
+            startX,
+            startY,
+            control1X,
+            control1Y,
+            control2X,
+            control2Y,
+            endX,
+            endY,
+          )
+          currentX = endX
+          currentY = endY
+          previousCubicControlX = control2X
+          previousCubicControlY = control2Y
+          previousQuadraticControlX = null
+          previousQuadraticControlY = null
+          previousCommandUpper = 'S'
         }
         break
       }
@@ -343,9 +462,20 @@ function parsePathPoints(pathD: string): Point[] {
           const x = readNumber()
           const y = readNumber()
           if (x1 == null || y1 == null || x == null || y == null) break
-          currentX = isRelative ? currentX + x : x
-          currentY = isRelative ? currentY + y : y
-          pushPoint(currentX, currentY)
+          const startX = currentX
+          const startY = currentY
+          const controlX = isRelative ? currentX + x1 : x1
+          const controlY = isRelative ? currentY + y1 : y1
+          const endX = isRelative ? currentX + x : x
+          const endY = isRelative ? currentY + y : y
+          sampleQuadraticTo(startX, startY, controlX, controlY, endX, endY)
+          currentX = endX
+          currentY = endY
+          previousQuadraticControlX = controlX
+          previousQuadraticControlY = controlY
+          previousCubicControlX = null
+          previousCubicControlY = null
+          previousCommandUpper = 'Q'
         }
         break
       }
@@ -356,9 +486,28 @@ function parsePathPoints(pathD: string): Point[] {
           const x = readNumber()
           const y = readNumber()
           if (x == null || y == null) break
-          currentX = isRelative ? currentX + x : x
-          currentY = isRelative ? currentY + y : y
-          pushPoint(currentX, currentY)
+          const startX = currentX
+          const startY = currentY
+          const controlX =
+            (previousCommandUpper === 'Q' || previousCommandUpper === 'T') &&
+            previousQuadraticControlX != null
+              ? 2 * currentX - previousQuadraticControlX
+              : currentX
+          const controlY =
+            (previousCommandUpper === 'Q' || previousCommandUpper === 'T') &&
+            previousQuadraticControlY != null
+              ? 2 * currentY - previousQuadraticControlY
+              : currentY
+          const endX = isRelative ? currentX + x : x
+          const endY = isRelative ? currentY + y : y
+          sampleQuadraticTo(startX, startY, controlX, controlY, endX, endY)
+          currentX = endX
+          currentY = endY
+          previousQuadraticControlX = controlX
+          previousQuadraticControlY = controlY
+          previousCubicControlX = null
+          previousCubicControlY = null
+          previousCommandUpper = 'T'
         }
         break
       }
@@ -387,6 +536,8 @@ function parsePathPoints(pathD: string): Point[] {
           currentX = isRelative ? currentX + x : x
           currentY = isRelative ? currentY + y : y
           pushPoint(currentX, currentY)
+          clearCurveControls()
+          previousCommandUpper = 'A'
         }
         break
       }
@@ -395,6 +546,8 @@ function parsePathPoints(pathD: string): Point[] {
         currentX = subpathStartX
         currentY = subpathStartY
         pushPoint(currentX, currentY)
+        clearCurveControls()
+        previousCommandUpper = 'Z'
         break
       }
       default: {
