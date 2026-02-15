@@ -735,25 +735,48 @@ function parsePathPoints(pathD: string): Point[] {
 }
 
 function parseOfficialEdges(svg: string): Point[][] {
-  const edges: Point[][] = []
-  const re = /data-points="([^"]+)"/g
-  for (const match of svg.matchAll(re)) {
-    try {
-      const raw = Buffer.from(match[1]!, 'base64').toString('utf8')
-      const parsed = JSON.parse(raw) as Array<{ x: number; y: number }>
-      if (!Array.isArray(parsed)) continue
-      const points = parsed
-        .map(point => ({
-          x: Number(point.x),
-          y: Number(point.y),
-        }))
-        .filter(p => !Number.isNaN(p.x) && !Number.isNaN(p.y))
-      if (points.length >= 2) edges.push(points)
-    } catch {
-      // Ignore malformed edge payloads.
+  const edgeById = new Map<string, Point[]>()
+  const pathTagRe = /<path\b([^>]*)>/g
+  let syntheticId = 0
+
+  for (const match of svg.matchAll(pathTagRe)) {
+    const attrs = match[1]!
+    if (!/\bdata-edge="true"/.test(attrs)) continue
+
+    const id = attrs.match(/\bdata-id="([^"]+)"/)?.[1] ?? `__edge_${syntheticId++}`
+
+    let points: Point[] = []
+    const dataPoints = attrs.match(/\bdata-points="([^"]+)"/)?.[1]
+    if (dataPoints) {
+      try {
+        const raw = Buffer.from(dataPoints, 'base64').toString('utf8')
+        const parsed = JSON.parse(raw) as Array<{ x: number; y: number }>
+        if (Array.isArray(parsed)) {
+          points = parsed
+            .map(point => ({
+              x: Number(point.x),
+              y: Number(point.y),
+            }))
+            .filter(p => !Number.isNaN(p.x) && !Number.isNaN(p.y))
+        }
+      } catch {
+        points = []
+      }
+    }
+
+    if (points.length < 2) {
+      const d = attrs.match(/\bd="([^"]+)"/)?.[1]
+      if (d) {
+        points = parsePathPoints(d)
+      }
+    }
+
+    if (points.length >= 2) {
+      edgeById.set(id, points)
     }
   }
-  return edges
+
+  return [...edgeById.values()]
 }
 
 function parseFixtureEdges(source: string): FixtureEdge[] {
