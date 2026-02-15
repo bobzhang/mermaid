@@ -728,6 +728,34 @@ test "SVG renderer keeps collinear orthogonal segments without curve corners" {
 }
 
 ///|
+test "SVG renderer removes duplicate consecutive edge points before rendering" {
+  let graph = make_svg_test_graph([
+    {
+      source: "A",
+      target: "B",
+      label: None,
+      style: Solid,
+      has_arrow_start: false,
+      has_arrow_end: true,
+      relation_operator: None,
+      points: [
+        { x: 0, y: 0 },
+        { x: 100, y: 0 },
+        { x: 100, y: 0 },
+        { x: 100, y: 100 },
+      ],
+      label_position: None,
+    },
+  ])
+  let svg = render_svg(graph, DiagramColors::default(), "Inter", false)
+
+  assert_true(
+    svg.contains("<path class=\"edge\" d=\"M0 0 L90 0 Q100 0 100 10 L100 100\""),
+  )
+  assert_true(!svg.contains("L100 0 L100 0"))
+}
+
+///|
 test "SVG renderer keeps straight two-point edges as polyline" {
   let graph = make_svg_test_graph([
     {

@@ -23,6 +23,23 @@ fn points_to_svg(points : Array[Point]) -> String {
 }
 
 ///|
+fn dedupe_consecutive_points(points : Array[Point]) -> Array[Point] {
+  let deduped : Array[Point] = []
+  for point in points {
+    if deduped.length() == 0 {
+      deduped.push(point)
+      continue
+    }
+    let last = deduped[deduped.length() - 1]
+    if last.x == point.x && last.y == point.y {
+      continue
+    }
+    deduped.push(point)
+  }
+  deduped
+}
+
+///|
 fn int_sign(value : Int) -> Int {
   if value > 0 {
     1
@@ -981,7 +998,8 @@ pub fn render_svg(
   }
 
   for edge in graph.edges {
-    if edge.points.length() < 2 {
+    let rendered_points = dedupe_consecutive_points(edge.points)
+    if rendered_points.length() < 2 {
       continue
     }
     let edge_style = if class_mode && edge.style == Dotted {
@@ -1021,28 +1039,40 @@ pub fn render_svg(
     } else {
       ("", "")
     }
-    if !sequence_mode && edge_needs_curve_path(edge.points) {
-      let path_d = if edge_is_axis_aligned_polyline(edge.points) {
-        rounded_orthogonal_path(edge.points, 10)
+    if !sequence_mode && edge_needs_curve_path(rendered_points) {
+      let path_d = if edge_is_axis_aligned_polyline(rendered_points) {
+        rounded_orthogonal_path(rendered_points, 10)
       } else {
-        basis_curve_path(edge.points)
+        basis_curve_path(rendered_points)
       }
       sb.write_string(
         "<path class=\"edge\" d=\"\{path_d}\"\{edge_style}\{marker_start}\{marker_end} />",
       )
     } else {
       sb.write_string(
-        "<polyline class=\"edge\" points=\"\{points_to_svg(edge.points)}\"\{edge_style}\{marker_start}\{marker_end} />",
+        "<polyline class=\"edge\" points=\"\{points_to_svg(rendered_points)}\"\{edge_style}\{marker_start}\{marker_end} />",
       )
     }
     if er_mode {
-      sb.write_string(er_endpoint_text_svg(edge))
+      sb.write_string(
+        er_endpoint_text_svg({
+          source: edge.source,
+          target: edge.target,
+          label: edge.label,
+          style: edge.style,
+          has_arrow_start: edge.has_arrow_start,
+          has_arrow_end: edge.has_arrow_end,
+          relation_operator: edge.relation_operator,
+          points: rendered_points,
+          label_position: edge.label_position,
+        }),
+      )
     }
     match edge.label {
       Some(label) => {
         let resolved_pos = match edge.label_position {
           Some(pos) => Some(pos)
-          None => edge_midpoint(edge.points)
+          None => edge_midpoint(rendered_points)
         }
         match resolved_pos {
           Some(pos) => {
