@@ -1095,9 +1095,66 @@ fn back_edge_lane_conflicts(
 }
 
 ///|
+fn back_edge_side_node_congestion(
+  nodes : Array[PositionedNode],
+  source : PositionedNode,
+  target : PositionedNode,
+  left : Int,
+  right : Int,
+  candidate_y : Int,
+) -> Int {
+  let top = source.y.min(target.y)
+  let bottom = source.y.max(target.y)
+  let route_above = candidate_y < top
+  let route_below = candidate_y > bottom
+
+  if !route_above && !route_below {
+    return 0
+  }
+
+  let mut congestion = 0
+  for node in nodes {
+    if node.id == source.id || node.id == target.id {
+      continue
+    }
+    let node_left = node.x - node.width / 2
+    let node_right = node.x + node.width / 2
+    if !spans_overlap(left, right, node_left, node_right) {
+      continue
+    }
+    if route_above {
+      if node.y < top {
+        congestion += 1
+      }
+    } else if node.y > bottom {
+      congestion += 1
+    }
+  }
+  congestion
+}
+
+///|
+fn back_edge_lane_distance_penalty(
+  source : PositionedNode,
+  target : PositionedNode,
+  candidate_y : Int,
+) -> Int {
+  let top = source.y.min(target.y)
+  let bottom = source.y.max(target.y)
+  if candidate_y < top {
+    top - candidate_y
+  } else if candidate_y > bottom {
+    candidate_y - bottom
+  } else {
+    0
+  }
+}
+
+///|
 fn reserve_back_edge_bend_y(
   source : PositionedNode,
   target : PositionedNode,
+  nodes : Array[PositionedNode],
   reservations : Array[BackEdgeLaneReservation],
 ) -> Int {
   let source_anchor_x = source.x - source.width / 2
@@ -1106,21 +1163,55 @@ fn reserve_back_edge_bend_y(
   let right = source_anchor_x.max(target_anchor_x)
 
   let lane_step = 20
-  let mut candidate_up = source.y.min(target.y) - 42
-  while candidate_up >= 12 {
-    if !back_edge_lane_conflicts(reservations, left, right, candidate_up) {
-      reservations.push({ left, right, y: candidate_up })
-      return candidate_up
+  let upper_candidate : Int? = {
+    let mut found : Int? = None
+    let mut candidate_up = source.y.min(target.y) - 42
+    while candidate_up >= 12 {
+      if !back_edge_lane_conflicts(reservations, left, right, candidate_up) {
+        found = Some(candidate_up)
+        break
+      }
+      candidate_up = candidate_up - lane_step
     }
-    candidate_up = candidate_up - lane_step
+    found
   }
 
   let mut candidate_down = source.y.max(target.y) + 42
   while back_edge_lane_conflicts(reservations, left, right, candidate_down) {
     candidate_down = candidate_down + lane_step
   }
-  reservations.push({ left, right, y: candidate_down })
-  candidate_down
+  let chosen_y = match upper_candidate {
+    Some(candidate_up) => {
+      let up_congestion = back_edge_side_node_congestion(
+        nodes, source, target, left, right, candidate_up,
+      )
+      let down_congestion = back_edge_side_node_congestion(
+        nodes, source, target, left, right, candidate_down,
+      )
+
+      if up_congestion < down_congestion {
+        candidate_up
+      } else if down_congestion < up_congestion {
+        candidate_down
+      } else {
+        let up_penalty = back_edge_lane_distance_penalty(
+          source, target, candidate_up,
+        )
+        let down_penalty = back_edge_lane_distance_penalty(
+          source, target, candidate_down,
+        )
+        if up_penalty <= down_penalty {
+          candidate_up
+        } else {
+          candidate_down
+        }
+      }
+    }
+    None => candidate_down
+  }
+
+  reservations.push({ left, right, y: chosen_y })
+  chosen_y
 }
 
 ///|
@@ -2699,7 +2790,7 @@ fn layout_graph_with_subgraph_redirects(
           target.x < source.x {
           Some(
             reserve_back_edge_bend_y(
-              source, target, back_edge_lane_reservations,
+              source, target, positioned_nodes, back_edge_lane_reservations,
             ),
           )
         } else {

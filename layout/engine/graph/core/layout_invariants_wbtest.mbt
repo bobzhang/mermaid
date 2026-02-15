@@ -213,6 +213,42 @@ test "Layout cycle-aware rank collection rehydrates cyclic forward order" {
 }
 
 ///|
+test "Layout NFA dotted back edge prefers lower lane when upper span is crowded" {
+  let graph = @parser.parse_mermaid(
+    (
+      #|graph LR
+      #|0@{shape: circ}
+      #|1@{shape: circ}
+      #|2@{shape: circ}
+      #|3@{shape: circ}
+      #|4@{shape: circ}
+      #|5@{shape: circ}
+      #|start@{shape: f-circ} --- 0
+      #|0 -- [a-b] --> 3
+      #|1 -- c --> 2
+      #|2 -- d --> 4
+      #|3 -.-> 1
+      #|3 -.-> 4
+      #|4 -.-> 0
+      #|4 -.-> 5
+      #|5 --- #0@{shape: dbl-circ}
+      #|
+    )
+    .trim_end()
+    .to_string(),
+  )
+  let positioned = layout_graph(graph, RenderOptions::default())
+
+  let q0 = find_positioned_node(positioned.nodes, "0")
+  let q4 = find_positioned_node(positioned.nodes, "4")
+  let back_edge = find_positioned_edge(positioned.edges, "4", "0")
+
+  assert_true(back_edge.points.length() >= 4)
+  assert_true(back_edge.points[1].y > q0.y)
+  assert_true(back_edge.points[2].y > q4.y)
+}
+
+///|
 test "Layout invariants: nodes stay inside canvas" {
   let graph = @parser.parse_mermaid(
     (
