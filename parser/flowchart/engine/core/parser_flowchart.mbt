@@ -30,6 +30,61 @@ fn strip_node_metadata(raw_token : String) -> String {
 }
 
 ///|
+fn parse_shape_alias(raw_shape : String) -> @model.NodeShape? {
+  match raw_shape.trim().to_lower() {
+    "circ" | "circle" => Some(Circle)
+    "f-circ" | "filled-circle" | "filledcircle" | "junction" => Some(StateStart)
+    "dbl-circ" | "double-circle" | "doublecircle" | "stop" => Some(DoubleCircle)
+    _ => None
+  }
+}
+
+///|
+fn parse_node_shape_metadata(raw_token : String) -> @model.NodeShape? {
+  let node_part = match raw_token.find(":::") {
+    Some(index) => (try! raw_token[:index]).to_string()
+    None => raw_token
+  }
+  let token = node_part.trim().to_string()
+  match token.find("@{") {
+    Some(start_index) => {
+      let after = (try! token[start_index + 2:]).to_string()
+      match after.find("}") {
+        Some(end_index) => {
+          let metadata = @parser_common_engine_core.trim_owned(
+            (try! after[:end_index]).to_string(),
+          )
+          for entry in metadata.split(",") {
+            let kv = entry.trim().to_string()
+            if kv == "" {
+              continue
+            }
+            match kv.find(":") {
+              Some(colon_index) => {
+                let key = @parser_common_engine_core.trim_owned(
+                  (try! kv[:colon_index]).to_string(),
+                )
+                if key.to_lower() != "shape" {
+                  continue
+                }
+                let value = @parser_common_engine_core.trim_owned(
+                  (try! kv[colon_index + 1:]).to_string(),
+                )
+                return parse_shape_alias(value)
+              }
+              None => ()
+            }
+          }
+          None
+        }
+        None => None
+      }
+    }
+    None => None
+  }
+}
+
+///|
 fn split_node_and_class(raw_token : String) -> (String, String?) {
   lexmatch raw_token[:] {
     (token, ":::", class_name) => {
@@ -48,7 +103,12 @@ fn split_node_and_class(raw_token : String) -> (String, String?) {
 ///|
 fn parse_node_and_class(raw_token : String) -> (MermaidNode, String?) {
   let (token, class_name) = split_node_and_class(raw_token)
-  (@parser_common_engine_core.parse_node_token(token), class_name)
+  let parsed = @parser_common_engine_core.parse_node_token(token)
+  let node : MermaidNode = match parse_node_shape_metadata(raw_token) {
+    Some(shape) => { id: parsed.id, label: parsed.label, shape }
+    None => parsed
+  }
+  (node, class_name)
 }
 
 ///|
@@ -698,6 +758,42 @@ test "split_node_and_class" {
       #|("accept", Some("final"))
     ),
   )
+}
+
+///|
+test "parse_node_shape_metadata" {
+  assert_eq(parse_node_shape_metadata("A@{shape: circ}"), Some(Circle))
+  assert_eq(
+    parse_node_shape_metadata("start@{ shape: f-circ, label: \"J\" }"),
+    Some(StateStart),
+  )
+  assert_eq(
+    parse_node_shape_metadata("end@{shape: dbl-circ}:::done"),
+    Some(DoubleCircle),
+  )
+  assert_eq(parse_node_shape_metadata("A@{shape: junction}"), Some(StateStart))
+  assert_eq(parse_node_shape_metadata("A@{shape: unknown}"), None)
+  assert_eq(parse_node_shape_metadata("A"), None)
+}
+
+///|
+test "parse_node_and_class applies shape metadata" {
+  let (start_node, start_class) = parse_node_and_class("start@{shape: f-circ}")
+  assert_eq(start_node.id, "start")
+  assert_eq(start_node.shape, StateStart)
+  assert_eq(start_class, None)
+
+  let (accept_node, accept_class) = parse_node_and_class(
+    "accept@{shape: dbl-circ}:::final",
+  )
+  assert_eq(accept_node.id, "accept")
+  assert_eq(accept_node.shape, DoubleCircle)
+  assert_eq(accept_class, Some("final"))
+
+  let (normal_node, normal_class) = parse_node_and_class("q0@{shape: circ}")
+  assert_eq(normal_node.id, "q0")
+  assert_eq(normal_node.shape, Circle)
+  assert_eq(normal_class, None)
 }
 
 ///|

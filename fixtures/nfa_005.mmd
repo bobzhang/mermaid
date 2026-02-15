@@ -1,0 +1,17 @@
+graph LR
+start@{shape: f-circ}
+i0@{shape: circ}
+i1@{shape: circ}
+i2@{shape: circ}
+i3@{shape: circ}
+i4@{shape: circ}
+i5@{shape: circ}
+acc@{shape: dbl-circ}
+start --- i0
+i0 --> i1 --> i2
+i0 --> i3 --> i4
+i2 & i4 -->|z| i5
+i5 -->|0-9| i5
+i5 -.-> acc
+i1 -.-> i3
+i3 -.-> i1
