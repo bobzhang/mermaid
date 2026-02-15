@@ -475,9 +475,9 @@ test "Layout back-edge lane selection avoids existing segment crossings" {
     reservations,
   )
 
-  assert_eq(bend_y, 142)
+  assert_eq(bend_y, 138)
   assert_eq(reservations.length(), 1)
-  assert_eq(reservations[0].y, 142)
+  assert_eq(reservations[0].y, 138)
 }
 
 ///|
@@ -538,9 +538,9 @@ test "Layout back-edge lane selection can skip nearest lane for fewer crossings"
     reservations,
   )
 
-  assert_eq(bend_y, 38)
+  assert_eq(bend_y, 42)
   assert_eq(reservations.length(), 1)
-  assert_eq(reservations[0].y, 38)
+  assert_eq(reservations[0].y, 42)
 }
 
 ///|
@@ -714,9 +714,9 @@ test "Layout long-span back-edge lane search can use extended candidates" {
     reservations,
   )
 
-  assert_eq(bend_y, 44)
+  assert_eq(bend_y, 62)
   assert_eq(reservations.length(), 4)
-  assert_eq(reservations[3].y, 44)
+  assert_eq(reservations[3].y, 62)
 }
 
 ///|
@@ -767,9 +767,9 @@ test "Layout mid-long span back-edge lane search upgrades to dense candidate spa
     reservations,
   )
 
-  assert_eq(bend_y, 42)
+  assert_eq(bend_y, 62)
   assert_eq(reservations.length(), 18)
-  assert_eq(reservations[17].y, 42)
+  assert_eq(reservations[17].y, 62)
 }
 
 ///|

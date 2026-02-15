@@ -2830,7 +2830,7 @@ fn reserve_back_edge_bend_y(
   } else {
     6
   }
-  let base_clearance = 42
+  let base_clearance = 38
 
   let upper_candidates : Array[Int] = []
   let mut candidate_up = top - base_clearance
@@ -3030,7 +3030,7 @@ fn reserve_back_edge_bend_x(
   } else {
     6
   }
-  let base_clearance = 42
+  let base_clearance = 38
 
   let left_candidates : Array[Int] = []
   let mut candidate_left = left - base_clearance
