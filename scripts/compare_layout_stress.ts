@@ -6,6 +6,7 @@
  *   bun run scripts/compare_layout_stress.ts fixtures/layout_stress_001_dense_dag.mmd
  *   bun run scripts/compare_layout_stress.ts --json /tmp/layout_stress_metrics.json
  *   bun run scripts/compare_layout_stress.ts --max-logical-crossing-multiplier 1.8
+ *   bun run scripts/compare_layout_stress.ts fixtures/layout_challenge_001_nested_portal_mesh.mmd --explain-logical-crossings
  */
 
 import { mkdtempSync, readFileSync, readdirSync, writeFileSync } from 'node:fs'
@@ -43,12 +44,22 @@ type Metrics = {
   spanXRatio: number
   spanYRatio: number
   status: 'ok' | 'mismatch'
+  logicalCrossingPairShared?: number
+  logicalCrossingPairLocalOnly?: number
+  logicalCrossingPairOfficialOnly?: number
+  logicalCrossingPairLocalOnlySample?: string[]
+  logicalCrossingPairOfficialOnlySample?: string[]
+  logicalCrossingLocalOnlyTopEdges?: Array<{ edge: string; count: number }>
+  logicalCrossingOfficialOnlyTopEdges?: Array<{ edge: string; count: number }>
 }
 
 type CliOptions = {
   fixtures: string[]
   jsonPath?: string
   maxLogicalCrossingMultiplier?: number
+  explainLogicalCrossings: boolean
+  topCrossingPairs: number
+  topCrossingEdges: number
 }
 
 const OFFICIAL_TIMEOUT_MS = 120_000
@@ -403,9 +414,22 @@ function logicalEdgesShareEndpoint(left: LogicalEdgeSegment, right: LogicalEdgeS
 }
 
 function countLogicalCrossings(segments: LogicalEdgeSegment[]): number {
-  let crossings = 0
+  return collectLogicalCrossingPairKeys(segments).length
+}
+
+function edgeSegmentKey(edge: LogicalEdgeSegment): string {
+  return `${edge.source}->${edge.target}`
+}
+
+function normalizedPairKey(left: string, right: string): string {
+  return left < right ? `${left} || ${right}` : `${right} || ${left}`
+}
+
+function collectLogicalCrossingPairKeys(segments: LogicalEdgeSegment[]): string[] {
+  const pairs = new Set<string>()
   for (let i = 0; i < segments.length; i += 1) {
     const left = segments[i]!
+    const leftKey = edgeSegmentKey(left)
     for (let j = i + 1; j < segments.length; j += 1) {
       const right = segments[j]!
       if (logicalEdgesShareEndpoint(left, right)) {
@@ -419,11 +443,52 @@ function countLogicalCrossings(segments: LogicalEdgeSegment[]): number {
           right.end,
         )
       ) {
-        crossings += 1
+        const rightKey = edgeSegmentKey(right)
+        pairs.add(normalizedPairKey(leftKey, rightKey))
       }
     }
   }
-  return crossings
+  return [...pairs].sort()
+}
+
+function splitPairKey(pairKey: string): [string, string] {
+  const [left, right] = pairKey.split(' || ')
+  return [left!, right!]
+}
+
+function countEdgeParticipation(pairKeys: string[]): Map<string, number> {
+  const counts = new Map<string, number>()
+  for (const pairKey of pairKeys) {
+    const [left, right] = splitPairKey(pairKey)
+    counts.set(left, (counts.get(left) ?? 0) + 1)
+    counts.set(right, (counts.get(right) ?? 0) + 1)
+  }
+  return counts
+}
+
+function topEdgeCounts(pairKeys: string[], limit: number): Array<{ edge: string; count: number }> {
+  const counts = countEdgeParticipation(pairKeys)
+  return [...counts.entries()]
+    .sort((a, b) => {
+      if (a[1] !== b[1]) return b[1] - a[1]
+      return a[0].localeCompare(b[0])
+    })
+    .slice(0, limit)
+    .map(([edge, count]) => ({ edge, count }))
+}
+
+function pairSetDiff(left: string[], right: string[]): string[] {
+  const rightSet = new Set(right)
+  return left.filter(key => !rightSet.has(key))
+}
+
+function pairSetIntersection(left: string[], right: string[]): string[] {
+  const rightSet = new Set(right)
+  return left.filter(key => rightSet.has(key))
+}
+
+function samplePairs(pairs: string[], limit: number): string[] {
+  return pairs.slice(0, limit)
 }
 
 function renderOfficial(inputPath: string, outPath: string, npmCacheDir: string): void {
@@ -448,7 +513,12 @@ function renderLocal(inputPath: string, outPath: string): void {
   writeFileSync(outPath, svg)
 }
 
-function compareFixture(path: string, tempRoot: string, npmCacheDir: string): Metrics {
+function compareFixture(
+  path: string,
+  tempRoot: string,
+  npmCacheDir: string,
+  options: CliOptions,
+): Metrics {
   const safe = path.replaceAll(/[^A-Za-z0-9._/-]/g, '_').replaceAll('/', '__')
   const officialPath = join(tempRoot, `${safe}.official.svg`)
   const localPath = join(tempRoot, `${safe}.local.svg`)
@@ -478,8 +548,10 @@ function compareFixture(path: string, tempRoot: string, npmCacheDir: string): Me
     officialLogicalSegments.length,
     localLogicalSegments.length,
   )
-  const officialLogicalCrossings = countLogicalCrossings(officialLogicalSegments)
-  const localLogicalCrossings = countLogicalCrossings(localLogicalSegments)
+  const officialLogicalPairKeys = collectLogicalCrossingPairKeys(officialLogicalSegments)
+  const localLogicalPairKeys = collectLogicalCrossingPairKeys(localLogicalSegments)
+  const officialLogicalCrossings = officialLogicalPairKeys.length
+  const localLogicalCrossings = localLogicalPairKeys.length
   const logicalCrossingMultiplier =
     officialLogicalCrossings === 0
       ? localLogicalCrossings === 0
@@ -488,6 +560,9 @@ function compareFixture(path: string, tempRoot: string, npmCacheDir: string): Me
       : localLogicalCrossings / officialLogicalCrossings
 
   if (sharedLabels.length < 2) {
+    const sharedPairs = pairSetIntersection(localLogicalPairKeys, officialLogicalPairKeys)
+    const localOnlyPairs = pairSetDiff(localLogicalPairKeys, officialLogicalPairKeys)
+    const officialOnlyPairs = pairSetDiff(officialLogicalPairKeys, localLogicalPairKeys)
     return {
       fixture: path,
       fixtureEdges: fixtureEdges.length,
@@ -508,6 +583,23 @@ function compareFixture(path: string, tempRoot: string, npmCacheDir: string): Me
       spanXRatio: Number.NaN,
       spanYRatio: Number.NaN,
       status: structuralOk ? 'ok' : 'mismatch',
+      ...(options.explainLogicalCrossings
+        ? {
+            logicalCrossingPairShared: sharedPairs.length,
+            logicalCrossingPairLocalOnly: localOnlyPairs.length,
+            logicalCrossingPairOfficialOnly: officialOnlyPairs.length,
+            logicalCrossingPairLocalOnlySample: samplePairs(localOnlyPairs, options.topCrossingPairs),
+            logicalCrossingPairOfficialOnlySample: samplePairs(
+              officialOnlyPairs,
+              options.topCrossingPairs,
+            ),
+            logicalCrossingLocalOnlyTopEdges: topEdgeCounts(localOnlyPairs, options.topCrossingEdges),
+            logicalCrossingOfficialOnlyTopEdges: topEdgeCounts(
+              officialOnlyPairs,
+              options.topCrossingEdges,
+            ),
+          }
+        : {}),
     }
   }
 
@@ -538,6 +630,10 @@ function compareFixture(path: string, tempRoot: string, npmCacheDir: string): Me
   const localSpanX = localBounds.maxX - localBounds.minX
   const localSpanY = localBounds.maxY - localBounds.minY
 
+  const sharedPairs = pairSetIntersection(localLogicalPairKeys, officialLogicalPairKeys)
+  const localOnlyPairs = pairSetDiff(localLogicalPairKeys, officialLogicalPairKeys)
+  const officialOnlyPairs = pairSetDiff(officialLogicalPairKeys, localLogicalPairKeys)
+
   return {
     fixture: path,
     fixtureEdges: fixtureEdges.length,
@@ -558,6 +654,23 @@ function compareFixture(path: string, tempRoot: string, npmCacheDir: string): Me
     spanXRatio: localSpanX / Math.max(officialSpanX, 1e-9),
     spanYRatio: localSpanY / Math.max(officialSpanY, 1e-9),
     status: structuralOk ? 'ok' : 'mismatch',
+    ...(options.explainLogicalCrossings
+      ? {
+          logicalCrossingPairShared: sharedPairs.length,
+          logicalCrossingPairLocalOnly: localOnlyPairs.length,
+          logicalCrossingPairOfficialOnly: officialOnlyPairs.length,
+          logicalCrossingPairLocalOnlySample: samplePairs(localOnlyPairs, options.topCrossingPairs),
+          logicalCrossingPairOfficialOnlySample: samplePairs(
+            officialOnlyPairs,
+            options.topCrossingPairs,
+          ),
+          logicalCrossingLocalOnlyTopEdges: topEdgeCounts(localOnlyPairs, options.topCrossingEdges),
+          logicalCrossingOfficialOnlyTopEdges: topEdgeCounts(
+            officialOnlyPairs,
+            options.topCrossingEdges,
+          ),
+        }
+      : {}),
   }
 }
 
@@ -577,6 +690,9 @@ function parseCliOptions(args: string[]): CliOptions {
   const fixtures: string[] = []
   let jsonPath: string | undefined = undefined
   let maxLogicalCrossingMultiplier: number | undefined = undefined
+  let explainLogicalCrossings = false
+  let topCrossingPairs = 8
+  let topCrossingEdges = 8
 
   for (let i = 0; i < args.length; i += 1) {
     const arg = args[i]!
@@ -598,10 +714,43 @@ function parseCliOptions(args: string[]): CliOptions {
       i += 1
       continue
     }
+    if (arg === '--explain-logical-crossings') {
+      explainLogicalCrossings = true
+      continue
+    }
+    if (arg === '--top-crossing-pairs') {
+      const next = args[i + 1]
+      if (!next) fail('missing number after --top-crossing-pairs')
+      const parsed = Number.parseInt(next, 10)
+      if (!Number.isFinite(parsed) || parsed <= 0) {
+        fail('invalid --top-crossing-pairs value, expected positive integer')
+      }
+      topCrossingPairs = parsed
+      i += 1
+      continue
+    }
+    if (arg === '--top-crossing-edges') {
+      const next = args[i + 1]
+      if (!next) fail('missing number after --top-crossing-edges')
+      const parsed = Number.parseInt(next, 10)
+      if (!Number.isFinite(parsed) || parsed <= 0) {
+        fail('invalid --top-crossing-edges value, expected positive integer')
+      }
+      topCrossingEdges = parsed
+      i += 1
+      continue
+    }
     fixtures.push(arg)
   }
 
-  return { fixtures, jsonPath, maxLogicalCrossingMultiplier }
+  return {
+    fixtures,
+    jsonPath,
+    maxLogicalCrossingMultiplier,
+    explainLogicalCrossings,
+    topCrossingPairs,
+    topCrossingEdges,
+  }
 }
 
 function main(): void {
@@ -613,7 +762,7 @@ function main(): void {
 
   const tempRoot = mkdtempSync(join(tmpdir(), 'mermaid-layout-stress-'))
   const npmCacheDir = join(tempRoot, '.npm-cache')
-  const results = targets.map(path => compareFixture(path, tempRoot, npmCacheDir))
+  const results = targets.map(path => compareFixture(path, tempRoot, npmCacheDir, options))
 
   for (const result of results) {
     console.log(`\n=== ${result.fixture} ===`)
@@ -630,6 +779,33 @@ function main(): void {
     console.log(
       `logicalCrossings local=${result.localLogicalCrossings} official=${result.officialLogicalCrossings} multiplier=${round(result.logicalCrossingMultiplier)}`,
     )
+    if (options.explainLogicalCrossings) {
+      console.log(
+        `logicalCrossingPairs shared=${result.logicalCrossingPairShared ?? 0} localOnly=${result.logicalCrossingPairLocalOnly ?? 0} officialOnly=${result.logicalCrossingPairOfficialOnly ?? 0}`,
+      )
+      const localEdgeSummary =
+        result.logicalCrossingLocalOnlyTopEdges
+          ?.map(item => `${item.edge}:${item.count}`)
+          .join(', ') ?? ''
+      const officialEdgeSummary =
+        result.logicalCrossingOfficialOnlyTopEdges
+          ?.map(item => `${item.edge}:${item.count}`)
+          .join(', ') ?? ''
+      if (localEdgeSummary !== '') {
+        console.log(`localOnlyTopEdges ${localEdgeSummary}`)
+      }
+      if (officialEdgeSummary !== '') {
+        console.log(`officialOnlyTopEdges ${officialEdgeSummary}`)
+      }
+      const localPairs = result.logicalCrossingPairLocalOnlySample ?? []
+      const officialPairs = result.logicalCrossingPairOfficialOnlySample ?? []
+      if (localPairs.length > 0) {
+        console.log(`localOnlyPairs ${localPairs.join(' | ')}`)
+      }
+      if (officialPairs.length > 0) {
+        console.log(`officialOnlyPairs ${officialPairs.join(' | ')}`)
+      }
+    }
   }
 
   const okCount = results.filter(r => r.status === 'ok').length
@@ -665,6 +841,9 @@ function main(): void {
       renderedSvgDir: tempRoot,
       options: {
         maxLogicalCrossingMultiplier: options.maxLogicalCrossingMultiplier ?? null,
+        explainLogicalCrossings: options.explainLogicalCrossings,
+        topCrossingPairs: options.topCrossingPairs,
+        topCrossingEdges: options.topCrossingEdges,
       },
       summary: {
         fixtures: results.length,
