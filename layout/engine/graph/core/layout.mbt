@@ -4156,8 +4156,8 @@ fn layout_graph_with_subgraph_redirects(
   let forward_fanout_vertical_minor_gap_threshold = (node_spacing / 4).max(22)
   let forward_fanout_horizontal_span_threshold = (node_spacing * 2).max(140)
   let forward_fanout_vertical_span_threshold = (layer_spacing * 2).max(140)
-  let back_edge_route_horizontal_span_threshold = (node_spacing * 4).max(260)
-  let back_edge_route_vertical_span_threshold = (layer_spacing * 4).max(260)
+  let back_edge_route_horizontal_span_threshold = (node_spacing * 3).max(220)
+  let back_edge_route_vertical_span_threshold = (layer_spacing * 3).max(220)
 
   fn forward_fanout_bucket(
     source_id : String,

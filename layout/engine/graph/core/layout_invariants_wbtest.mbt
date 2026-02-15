@@ -807,6 +807,60 @@ test "Layout long-span vertical solid back edge uses reserved bend column" {
 }
 
 ///|
+test "Layout medium-span horizontal solid back edge uses reserved bend lane" {
+  let graph = @parser.parse_mermaid(
+    (
+      #|graph LR
+      #|A
+      #|B
+      #|C
+      #|D
+      #|E
+      #|A --> B
+      #|B --> C
+      #|C --> D
+      #|D --> E
+      #|E --> B
+      #|
+    )
+    .trim_end()
+    .to_string(),
+  )
+  let positioned = layout_graph(graph, RenderOptions::default())
+  let back_edge = find_positioned_edge(positioned.edges, "E", "B")
+
+  assert_true(back_edge.points.length() >= 4)
+  assert_true(back_edge.points[1].y != back_edge.points[0].y)
+  assert_eq(back_edge.points[1].y, back_edge.points[2].y)
+}
+
+///|
+test "Layout medium-span vertical solid back edge uses reserved bend column" {
+  let graph = @parser.parse_mermaid(
+    (
+      #|graph TD
+      #|A
+      #|B
+      #|C
+      #|D
+      #|A --> B
+      #|B --> C
+      #|C --> D
+      #|D --> A
+      #|
+    )
+    .trim_end()
+    .to_string(),
+  )
+  let positioned = layout_graph(graph, RenderOptions::default())
+  let back_edge = find_positioned_edge(positioned.edges, "D", "A")
+
+  assert_true(back_edge.points.length() >= 4)
+  assert_true(back_edge.points[1].x != back_edge.points[0].x)
+  assert_eq(back_edge.points[1].x, back_edge.points[2].x)
+}
+
+///|
 test "Layout preserves declared edge order after deferred back-edge routing" {
   let graph = @parser.parse_mermaid(
     (
