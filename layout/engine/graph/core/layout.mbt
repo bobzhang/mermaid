@@ -1501,10 +1501,73 @@ fn back_edge_lane_distance_penalty(
 }
 
 ///|
+fn segment_intersects_horizontal_span(
+  start : Point,
+  end : Point,
+  left : Int,
+  right : Int,
+  y : Int,
+) -> Bool {
+  let top = start.y.min(end.y)
+  let bottom = start.y.max(end.y)
+  if y < top || y > bottom {
+    return false
+  }
+
+  if start.y == end.y {
+    if start.y != y {
+      return false
+    }
+    let segment_left = start.x.min(end.x)
+    let segment_right = start.x.max(end.x)
+    return spans_overlap(left, right, segment_left, segment_right)
+  }
+
+  let dx = end.x - start.x
+  let dy = end.y - start.y
+  let x_at_y = start.x + dx * (y - start.y) / dy
+  x_at_y >= left && x_at_y <= right
+}
+
+///|
+fn back_edge_lane_crossing_penalty(
+  positioned_edges : Array[PositionedEdge],
+  source : PositionedNode,
+  target : PositionedNode,
+  left : Int,
+  right : Int,
+  candidate_y : Int,
+) -> Int {
+  let mut penalty = 0
+  for edge in positioned_edges {
+    if edge.source == source.id ||
+      edge.target == source.id ||
+      edge.source == target.id ||
+      edge.target == target.id ||
+      edge.points.length() < 2 {
+      continue
+    }
+    for i in 1..<edge.points.length() {
+      if segment_intersects_horizontal_span(
+          edge.points[i - 1],
+          edge.points[i],
+          left,
+          right,
+          candidate_y,
+        ) {
+        penalty += 1
+      }
+    }
+  }
+  penalty
+}
+
+///|
 fn reserve_back_edge_bend_y(
   source : PositionedNode,
   target : PositionedNode,
   nodes : Array[PositionedNode],
+  positioned_edges : Array[PositionedEdge],
   reservations : Array[BackEdgeLaneReservation],
 ) -> Int {
   let source_anchor_x = source.x - source.width / 2
@@ -1544,16 +1607,28 @@ fn reserve_back_edge_bend_y(
       } else if down_congestion < up_congestion {
         candidate_down
       } else {
-        let up_penalty = back_edge_lane_distance_penalty(
-          source, target, candidate_up,
+        let up_crossings = back_edge_lane_crossing_penalty(
+          positioned_edges, source, target, left, right, candidate_up,
         )
-        let down_penalty = back_edge_lane_distance_penalty(
-          source, target, candidate_down,
+        let down_crossings = back_edge_lane_crossing_penalty(
+          positioned_edges, source, target, left, right, candidate_down,
         )
-        if up_penalty <= down_penalty {
+        if up_crossings < down_crossings {
           candidate_up
-        } else {
+        } else if down_crossings < up_crossings {
           candidate_down
+        } else {
+          let up_penalty = back_edge_lane_distance_penalty(
+            source, target, candidate_up,
+          )
+          let down_penalty = back_edge_lane_distance_penalty(
+            source, target, candidate_down,
+          )
+          if up_penalty <= down_penalty {
+            candidate_up
+          } else {
+            candidate_down
+          }
         }
       }
     }
@@ -3183,7 +3258,7 @@ fn layout_graph_with_subgraph_redirects(
           target.x < source.x {
           Some(
             reserve_back_edge_bend_y(
-              source, target, positioned_nodes, back_edge_lane_reservations,
+              source, target, positioned_nodes, positioned_edges, back_edge_lane_reservations,
             ),
           )
         } else {

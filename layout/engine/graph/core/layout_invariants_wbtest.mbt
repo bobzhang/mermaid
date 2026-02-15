@@ -100,6 +100,54 @@ test "Layout cycle detection flags simple feedback loops" {
 }
 
 ///|
+test "Layout back-edge lane selection avoids existing segment crossings" {
+  let source : PositionedNode = {
+    id: "S",
+    label: "S",
+    shape: Circle,
+    x: 200,
+    y: 100,
+    width: 24,
+    height: 24,
+    inline_style: None,
+  }
+  let target : PositionedNode = {
+    id: "T",
+    label: "T",
+    shape: Circle,
+    x: 100,
+    y: 100,
+    width: 24,
+    height: 24,
+    inline_style: None,
+  }
+  let blocker : PositionedEdge = {
+    source: "X",
+    target: "Y",
+    label: None,
+    style: Solid,
+    has_arrow_start: false,
+    has_arrow_end: true,
+    relation_operator: Some("-->"),
+    points: [{ x: 140, y: 20 }, { x: 140, y: 80 }],
+    label_position: None,
+  }
+
+  let reservations : Array[BackEdgeLaneReservation] = []
+  let bend_y = reserve_back_edge_bend_y(
+    source,
+    target,
+    [source, target],
+    [blocker],
+    reservations,
+  )
+
+  assert_eq(bend_y, 142)
+  assert_eq(reservations.length(), 1)
+  assert_eq(reservations[0].y, 142)
+}
+
+///|
 test "Layout cyclic LR flowchart without metadata keeps main chain horizontal" {
   let graph = @parser.parse_mermaid(
     (
