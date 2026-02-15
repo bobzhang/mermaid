@@ -249,6 +249,44 @@ test "Layout NFA dotted back edge prefers lower lane when upper span is crowded"
 }
 
 ///|
+test "Layout dotted fanout skips extra bend when target lanes already diverge" {
+  let graph = @parser.parse_mermaid(
+    (
+      #|graph LR
+      #|0@{shape: circ}
+      #|1@{shape: circ}
+      #|2@{shape: circ}
+      #|3@{shape: circ}
+      #|4@{shape: circ}
+      #|5@{shape: circ}
+      #|6@{shape: circ}
+      #|7@{shape: circ}
+      #|8@{shape: circ}
+      #|start@{shape: f-circ} --- 8
+      #|0 -- A --> 1
+      #|1 -- B --> 2
+      #|2 -- C --> 3
+      #|3 --- #0@{shape: dbl-circ}
+      #|4 -- A --> 5
+      #|5 -- B --> 6
+      #|6 -- C --> 7
+      #|7 --- #1@{shape: dbl-circ}
+      #|8 -.-> 0
+      #|8 -.-> 4
+      #|
+    )
+    .trim_end()
+    .to_string(),
+  )
+  let positioned = layout_graph(graph, RenderOptions::default())
+  let upper_edge = find_positioned_edge(positioned.edges, "8", "0")
+  let lower_edge = find_positioned_edge(positioned.edges, "8", "4")
+
+  assert_eq(upper_edge.points.length(), 2)
+  assert_eq(lower_edge.points.length(), 2)
+}
+
+///|
 test "Layout invariants: nodes stay inside canvas" {
   let graph = @parser.parse_mermaid(
     (

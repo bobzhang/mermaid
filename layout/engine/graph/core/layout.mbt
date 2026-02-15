@@ -7,6 +7,15 @@ fn option_int_or(value : Int?, fallback : Int) -> Int {
 }
 
 ///|
+fn int_abs(value : Int) -> Int {
+  if value < 0 {
+    -value
+  } else {
+    value
+  }
+}
+
+///|
 fn resolve_padding(options : RenderOptions) -> Int {
   option_int_or(options.padding, 40)
 }
@@ -2710,6 +2719,7 @@ fn layout_graph_with_subgraph_redirects(
   let label_slots_by_anchor : Map[String, Int] = {}
   let back_edge_lane_reservations : Array[BackEdgeLaneReservation] = []
   let dotted_forward_out_count_by_source : Map[String, Int] = {}
+  let forward_fanout_vertical_gap_threshold = (layer_spacing / 4).max(22)
   if horizontal {
     for edge in graph.edges {
       if edge.label is Some(_) || !(edge.style is Dotted) {
@@ -2737,7 +2747,9 @@ fn layout_graph_with_subgraph_redirects(
           positioned_by_id.get(resolved_target_id),
         ) {
         (Some(source), Some(target)) =>
-          if target.x >= source.x {
+          if target.x >= source.x &&
+            int_abs(target.y - source.y) <=
+            forward_fanout_vertical_gap_threshold {
             let current = option_int_or(
               dotted_forward_out_count_by_source.get(resolved_source_id),
               0,
@@ -2805,7 +2817,9 @@ fn layout_graph_with_subgraph_redirects(
           if edge_horizontal &&
             edge.style is Dotted &&
             edge.label is None &&
-            target.x >= source.x {
+            target.x >= source.x &&
+            int_abs(target.y - source.y) <=
+            forward_fanout_vertical_gap_threshold {
             let total = option_int_or(
               dotted_forward_out_count_by_source.get(resolved_source_id),
               0,
