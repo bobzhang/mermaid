@@ -372,6 +372,11 @@ fn graph_has_cycle(
     if !node_exists.contains(edge.source) || !node_exists.contains(edge.target) {
       continue
     }
+    // Self-loops are routed independently and should not trigger global
+    // cycle-aware ranking for otherwise acyclic graphs.
+    if edge.source == edge.target {
+      continue
+    }
     match outgoing_targets_by_source.get(edge.source) {
       Some(targets) => targets.push(edge.target)
       None => ()
