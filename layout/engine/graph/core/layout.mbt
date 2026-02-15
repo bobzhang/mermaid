@@ -1912,6 +1912,208 @@ priv struct RoutedEdgeSegment {
 }
 
 ///|
+fn edge_layout_context_span(context : EdgeLayoutContext) -> Int {
+  if context.edge_horizontal {
+    int_abs(context.target.x - context.source.x)
+  } else {
+    int_abs(context.target.y - context.source.y)
+  }
+}
+
+///|
+fn deferred_back_edge_row_key(
+  context : EdgeLayoutContext,
+  row_key_mode : Int,
+) -> Int {
+  if row_key_mode == 1 {
+    context.target.y
+  } else if row_key_mode == 2 {
+    context.source.y + context.target.y
+  } else {
+    context.source.y
+  }
+}
+
+///|
+fn build_deferred_back_edge_order(
+  deferred_context_indices : Array[Int],
+  edge_layout_contexts : Array[EdgeLayoutContext],
+  row_key_mode : Int,
+  row_first : Bool,
+  row_desc : Bool,
+  span_desc : Bool,
+) -> Array[Int] {
+  let ordered_context_indices : Array[Int] = []
+  for context_index in deferred_context_indices {
+    ordered_context_indices.push(context_index)
+  }
+
+  ordered_context_indices.sort_by((left_index, right_index) => {
+    let left_context = edge_layout_contexts[left_index]
+    let right_context = edge_layout_contexts[right_index]
+    let left_row_key = deferred_back_edge_row_key(left_context, row_key_mode)
+    let right_row_key = deferred_back_edge_row_key(right_context, row_key_mode)
+    let row_cmp = if row_desc {
+      right_row_key.compare(left_row_key)
+    } else {
+      left_row_key.compare(right_row_key)
+    }
+    let left_span = edge_layout_context_span(left_context)
+    let right_span = edge_layout_context_span(right_context)
+    let span_cmp = if span_desc {
+      right_span.compare(left_span)
+    } else {
+      left_span.compare(right_span)
+    }
+    if row_first {
+      if row_cmp != 0 {
+        return row_cmp
+      }
+      if span_cmp != 0 {
+        return span_cmp
+      }
+    } else {
+      if span_cmp != 0 {
+        return span_cmp
+      }
+      if row_cmp != 0 {
+        return row_cmp
+      }
+    }
+    left_index.compare(right_index)
+  })
+  ordered_context_indices
+}
+
+///|
+fn append_routed_segments_for_points(
+  routed_edge_segments : Array[RoutedEdgeSegment],
+  source_id : String,
+  target_id : String,
+  points : Array[Point],
+) -> Unit {
+  if points.length() < 2 {
+    return
+  }
+  for i in 1..<points.length() {
+    routed_edge_segments.push({
+      source_id,
+      target_id,
+      start: points[i - 1],
+      end: points[i],
+    })
+  }
+}
+
+///|
+fn points_equal(left : Point, right : Point) -> Bool {
+  left.x == right.x && left.y == right.y
+}
+
+///|
+fn point_on_segment(a : Point, b : Point, c : Point) -> Bool {
+  b.x >= a.x.min(c.x) &&
+  b.x <= a.x.max(c.x) &&
+  b.y >= a.y.min(c.y) &&
+  b.y <= a.y.max(c.y)
+}
+
+///|
+fn back_edge_segments_intersect(
+  left_start : Point,
+  left_end : Point,
+  right_start : Point,
+  right_end : Point,
+) -> Bool {
+  let o1 = back_edge_segment_orientation(left_start, left_end, right_start)
+  let o2 = back_edge_segment_orientation(left_start, left_end, right_end)
+  let o3 = back_edge_segment_orientation(right_start, right_end, left_start)
+  let o4 = back_edge_segment_orientation(right_start, right_end, left_end)
+
+  let opposite = ((o1 > 0 && o2 < 0) || (o1 < 0 && o2 > 0)) &&
+    ((o3 > 0 && o4 < 0) || (o3 < 0 && o4 > 0))
+  if opposite {
+    return true
+  }
+
+  if o1 == 0 && point_on_segment(left_start, right_start, left_end) {
+    return true
+  }
+  if o2 == 0 && point_on_segment(left_start, right_end, left_end) {
+    return true
+  }
+  if o3 == 0 && point_on_segment(right_start, left_start, right_end) {
+    return true
+  }
+  if o4 == 0 && point_on_segment(right_start, left_end, right_end) {
+    return true
+  }
+  false
+}
+
+///|
+fn polylines_share_endpoint(
+  left_polyline : Array[Point],
+  right_polyline : Array[Point],
+) -> Bool {
+  if left_polyline.length() < 2 || right_polyline.length() < 2 {
+    return false
+  }
+
+  let left_start = left_polyline[0]
+  let left_end = left_polyline[left_polyline.length() - 1]
+  let right_start = right_polyline[0]
+  let right_end = right_polyline[right_polyline.length() - 1]
+
+  points_equal(left_start, right_start) ||
+  points_equal(left_start, right_end) ||
+  points_equal(left_end, right_start) ||
+  points_equal(left_end, right_end)
+}
+
+///|
+fn count_polyline_crossings(polylines : Array[Array[Point]]) -> Int {
+  let mut crossings = 0
+  for i in 0..<polylines.length() {
+    let left_polyline = polylines[i]
+    for j in (i + 1)..<polylines.length() {
+      let right_polyline = polylines[j]
+      if polylines_share_endpoint(left_polyline, right_polyline) {
+        continue
+      }
+
+      let mut crossed = false
+      let mut left_segment_index = 0
+      while left_segment_index + 1 < left_polyline.length() && !crossed {
+        let left_start = left_polyline[left_segment_index]
+        let left_end = left_polyline[left_segment_index + 1]
+        let mut right_segment_index = 0
+        while right_segment_index + 1 < right_polyline.length() && !crossed {
+          let right_start = right_polyline[right_segment_index]
+          let right_end = right_polyline[right_segment_index + 1]
+          if points_equal(left_start, right_start) ||
+            points_equal(left_start, right_end) ||
+            points_equal(left_end, right_start) ||
+            points_equal(left_end, right_end) {
+            right_segment_index = right_segment_index + 1
+            continue
+          }
+          if back_edge_segments_intersect(
+              left_start, left_end, right_start, right_end,
+            ) {
+            crossings += 1
+            crossed = true
+          }
+          right_segment_index = right_segment_index + 1
+        }
+        left_segment_index = left_segment_index + 1
+      }
+    }
+  }
+  crossings
+}
+
+///|
 fn spans_overlap(
   a_left : Int,
   a_right : Int,
@@ -4289,7 +4491,7 @@ fn layout_graph_with_subgraph_redirects(
     forward_fanout_out_count_by_bucket[bucket] = current + 1
   }
   let forward_fanout_out_slot_by_bucket : Map[String, Int] = {}
-  let route_context_indices : Array[Int] = []
+  let non_deferred_route_context_indices : Array[Int] = []
   let deferred_back_edge_context_indices : Array[Int] = []
   for context_index, context in edge_layout_contexts {
     let defer_back_edge = context_requires_long_span_back_edge_bend(
@@ -4299,38 +4501,12 @@ fn layout_graph_with_subgraph_redirects(
     if defer_back_edge {
       deferred_back_edge_context_indices.push(context_index)
     } else {
-      route_context_indices.push(context_index)
+      non_deferred_route_context_indices.push(context_index)
     }
-  }
-  deferred_back_edge_context_indices.sort_by((left_index, right_index) => {
-    let left_context = edge_layout_contexts[left_index]
-    let right_context = edge_layout_contexts[right_index]
-    let row_cmp = left_context.source.y.compare(right_context.source.y)
-    if row_cmp != 0 {
-      return row_cmp
-    }
-    let left_span = if left_context.edge_horizontal {
-      int_abs(left_context.target.x - left_context.source.x)
-    } else {
-      int_abs(left_context.target.y - left_context.source.y)
-    }
-    let right_span = if right_context.edge_horizontal {
-      int_abs(right_context.target.x - right_context.source.x)
-    } else {
-      int_abs(right_context.target.y - right_context.source.y)
-    }
-    let span_cmp = left_span.compare(right_span)
-    if span_cmp != 0 {
-      return span_cmp
-    }
-    left_index.compare(right_index)
-  })
-  for context_index in deferred_back_edge_context_indices {
-    route_context_indices.push(context_index)
   }
 
   let points_by_context_index : Map[Int, Array[Point]] = {}
-  for context_index in route_context_indices {
+  for context_index in non_deferred_route_context_indices {
     let context = edge_layout_contexts[context_index]
     let edge = context.edge
     let source = context.source
@@ -4407,15 +4583,199 @@ fn layout_graph_with_subgraph_redirects(
       enhanced_horizontal_state_flow,
     )
     points_by_context_index[context_index] = points
-    if points.length() >= 2 {
-      for i in 1..<points.length() {
-        routed_edge_segments.push({
-          source_id: context.resolved_source_id,
-          target_id: context.resolved_target_id,
-          start: points[i - 1],
-          end: points[i],
-        })
+    append_routed_segments_for_points(
+      routed_edge_segments,
+      context.resolved_source_id,
+      context.resolved_target_id,
+      points,
+    )
+  }
+
+  if deferred_back_edge_context_indices.length() > 0 {
+    let deferred_order_candidates : Array[Array[Int]] = []
+    fn append_order_family(row_key_mode : Int) -> Unit {
+      // Row-first variants.
+      deferred_order_candidates.push(
+        build_deferred_back_edge_order(
+          deferred_back_edge_context_indices, edge_layout_contexts, row_key_mode,
+          true, false, false,
+        ),
+      )
+      deferred_order_candidates.push(
+        build_deferred_back_edge_order(
+          deferred_back_edge_context_indices, edge_layout_contexts, row_key_mode,
+          true, false, true,
+        ),
+      )
+      deferred_order_candidates.push(
+        build_deferred_back_edge_order(
+          deferred_back_edge_context_indices, edge_layout_contexts, row_key_mode,
+          true, true, false,
+        ),
+      )
+      deferred_order_candidates.push(
+        build_deferred_back_edge_order(
+          deferred_back_edge_context_indices, edge_layout_contexts, row_key_mode,
+          true, true, true,
+        ),
+      )
+      // Span-first variants.
+      deferred_order_candidates.push(
+        build_deferred_back_edge_order(
+          deferred_back_edge_context_indices, edge_layout_contexts, row_key_mode,
+          false, false, false,
+        ),
+      )
+      deferred_order_candidates.push(
+        build_deferred_back_edge_order(
+          deferred_back_edge_context_indices, edge_layout_contexts, row_key_mode,
+          false, true, false,
+        ),
+      )
+      deferred_order_candidates.push(
+        build_deferred_back_edge_order(
+          deferred_back_edge_context_indices, edge_layout_contexts, row_key_mode,
+          false, false, true,
+        ),
+      )
+      deferred_order_candidates.push(
+        build_deferred_back_edge_order(
+          deferred_back_edge_context_indices, edge_layout_contexts, row_key_mode,
+          false, true, true,
+        ),
+      )
+    }
+
+    // Keep source-row family first to preserve baseline ordering candidate.
+    append_order_family(0)
+    append_order_family(1)
+    append_order_family(2)
+
+    let base_polylines : Array[Array[Point]] = []
+    for context_index in non_deferred_route_context_indices {
+      match points_by_context_index.get(context_index) {
+        Some(points) => base_polylines.push(points)
+        None => ()
       }
+    }
+
+    let mut has_best_order = false
+    let mut best_order_index = 0
+    let mut best_crossings = 0
+
+    for candidate_index, candidate_order in deferred_order_candidates {
+      let candidate_routed_edge_segments : Array[RoutedEdgeSegment] = []
+      let candidate_back_edge_lane_reservations : Array[BackEdgeLaneReservation] = []
+      let candidate_back_edge_column_reservations : Array[
+        BackEdgeColumnReservation,
+      ] = []
+      for segment in routed_edge_segments {
+        candidate_routed_edge_segments.push(segment)
+      }
+      for reservation in back_edge_lane_reservations {
+        candidate_back_edge_lane_reservations.push(reservation)
+      }
+      for reservation in back_edge_column_reservations {
+        candidate_back_edge_column_reservations.push(reservation)
+      }
+
+      let candidate_polylines : Array[Array[Point]] = []
+      for polyline in base_polylines {
+        candidate_polylines.push(polyline)
+      }
+
+      for context_index in candidate_order {
+        let context = edge_layout_contexts[context_index]
+        let source = context.source
+        let target = context.target
+        let back_edge_bend_y = if context.edge_horizontal {
+          Some(
+            reserve_back_edge_bend_y(
+              source, target, positioned_nodes, candidate_routed_edge_segments, candidate_back_edge_lane_reservations,
+            ),
+          )
+        } else {
+          None
+        }
+        let back_edge_bend_x = if !context.edge_horizontal {
+          Some(
+            reserve_back_edge_bend_x(
+              source, target, positioned_nodes, candidate_routed_edge_segments, candidate_back_edge_column_reservations,
+            ),
+          )
+        } else {
+          None
+        }
+        let points = edge_points_for(
+          source,
+          target,
+          context.edge_horizontal,
+          back_edge_bend_y,
+          back_edge_bend_x,
+          None,
+          enhanced_horizontal_state_flow,
+        )
+        candidate_polylines.push(points)
+        append_routed_segments_for_points(
+          candidate_routed_edge_segments,
+          context.resolved_source_id,
+          context.resolved_target_id,
+          points,
+        )
+      }
+
+      let candidate_crossings = count_polyline_crossings(candidate_polylines)
+      if !has_best_order || candidate_crossings < best_crossings {
+        has_best_order = true
+        best_order_index = candidate_index
+        best_crossings = candidate_crossings
+      }
+    }
+
+    let selected_deferred_order = if has_best_order {
+      deferred_order_candidates[best_order_index]
+    } else {
+      deferred_back_edge_context_indices
+    }
+
+    for context_index in selected_deferred_order {
+      let context = edge_layout_contexts[context_index]
+      let source = context.source
+      let target = context.target
+      let back_edge_bend_y = if context.edge_horizontal {
+        Some(
+          reserve_back_edge_bend_y(
+            source, target, positioned_nodes, routed_edge_segments, back_edge_lane_reservations,
+          ),
+        )
+      } else {
+        None
+      }
+      let back_edge_bend_x = if !context.edge_horizontal {
+        Some(
+          reserve_back_edge_bend_x(
+            source, target, positioned_nodes, routed_edge_segments, back_edge_column_reservations,
+          ),
+        )
+      } else {
+        None
+      }
+      let points = edge_points_for(
+        source,
+        target,
+        context.edge_horizontal,
+        back_edge_bend_y,
+        back_edge_bend_x,
+        None,
+        enhanced_horizontal_state_flow,
+      )
+      points_by_context_index[context_index] = points
+      append_routed_segments_for_points(
+        routed_edge_segments,
+        context.resolved_source_id,
+        context.resolved_target_id,
+        points,
+      )
     }
   }
   for context_index, context in edge_layout_contexts {

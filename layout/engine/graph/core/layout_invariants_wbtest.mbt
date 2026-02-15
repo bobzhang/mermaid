@@ -2639,3 +2639,23 @@ test "Layout sequence short divider labels keep default offset" {
 
   assert_eq(baseline_clearance, 8)
 }
+
+///|
+test "Layout polyline crossing count ignores shared endpoints" {
+  let left : Array[Point] = [{ x: 0, y: 0 }, { x: 10, y: 10 }]
+  let right : Array[Point] = [{ x: 0, y: 0 }, { x: 10, y: 0 }, { x: 0, y: 10 }]
+
+  assert_eq(count_polyline_crossings([left, right]), 0)
+}
+
+///|
+test "Layout polyline crossing count counts each pair at most once" {
+  let left : Array[Point] = [{ x: 0, y: 0 }, { x: 10, y: 10 }, { x: 0, y: 20 }]
+  let right : Array[Point] = [
+    { x: 10, y: 0 },
+    { x: 0, y: 10 },
+    { x: 10, y: 20 },
+  ]
+
+  assert_eq(count_polyline_crossings([left, right]), 1)
+}
