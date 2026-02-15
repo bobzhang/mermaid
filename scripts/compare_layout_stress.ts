@@ -271,7 +271,7 @@ function parsePointPairs(raw: string): Point[] {
 }
 
 function parsePathPoints(pathD: string): Point[] {
-  const tokenRe = /[a-zA-Z]|-?\d+(?:\.\d+)?(?:e[-+]?\d+)?/g
+  const tokenRe = /[a-zA-Z]|-?(?:\d+\.?\d*|\.\d+)(?:e[-+]?\d+)?/g
   const tokens = [...pathD.matchAll(tokenRe)].map(match => match[0]!)
   const points: Point[] = []
 
@@ -344,6 +344,98 @@ function parsePathPoints(pathD: string): Point[] {
         3 * mt * mt * t * control1Y +
         3 * mt * t * t * control2Y +
         t * t * t * endY
+      pushPoint(x, y)
+    }
+  }
+
+  const clamp = (value: number, min: number, max: number): number =>
+    Math.min(max, Math.max(min, value))
+
+  const vectorAngle = (ux: number, uy: number, vx: number, vy: number): number => {
+    const dot = ux * vx + uy * vy
+    const det = ux * vy - uy * vx
+    const lenU = Math.hypot(ux, uy)
+    const lenV = Math.hypot(vx, vy)
+    if (lenU <= 1e-12 || lenV <= 1e-12) return 0
+    const ratio = clamp(dot / (lenU * lenV), -1, 1)
+    const angle = Math.acos(ratio)
+    return det < 0 ? -angle : angle
+  }
+
+  const sampleArcTo = (
+    startX: number,
+    startY: number,
+    rawRx: number,
+    rawRy: number,
+    axisRotationDeg: number,
+    largeArcFlag: number,
+    sweepFlag: number,
+    endX: number,
+    endY: number,
+  ): void => {
+    let rx = Math.abs(rawRx)
+    let ry = Math.abs(rawRy)
+    if (rx <= 1e-12 || ry <= 1e-12) {
+      pushPoint(endX, endY)
+      return
+    }
+    if (Math.abs(startX - endX) <= 1e-12 && Math.abs(startY - endY) <= 1e-12) {
+      pushPoint(endX, endY)
+      return
+    }
+
+    const phi = (axisRotationDeg * Math.PI) / 180
+    const cosPhi = Math.cos(phi)
+    const sinPhi = Math.sin(phi)
+    const dx2 = (startX - endX) / 2
+    const dy2 = (startY - endY) / 2
+    const x1p = cosPhi * dx2 + sinPhi * dy2
+    const y1p = -sinPhi * dx2 + cosPhi * dy2
+
+    const x1pSq = x1p * x1p
+    const y1pSq = y1p * y1p
+    let rxSq = rx * rx
+    let rySq = ry * ry
+
+    const lambda = x1pSq / rxSq + y1pSq / rySq
+    if (lambda > 1) {
+      const scale = Math.sqrt(lambda)
+      rx *= scale
+      ry *= scale
+      rxSq = rx * rx
+      rySq = ry * ry
+    }
+
+    const fa = Math.abs(largeArcFlag) > 0.5 ? 1 : 0
+    const fs = Math.abs(sweepFlag) > 0.5 ? 1 : 0
+    const sign = fa === fs ? -1 : 1
+    const numerator = rxSq * rySq - rxSq * y1pSq - rySq * x1pSq
+    const denominator = rxSq * y1pSq + rySq * x1pSq
+    const coeff =
+      denominator <= 1e-12 ? 0 : sign * Math.sqrt(Math.max(0, numerator / denominator))
+    const cxp = coeff * ((rx * y1p) / ry)
+    const cyp = coeff * (-(ry * x1p) / rx)
+
+    const centerX = cosPhi * cxp - sinPhi * cyp + (startX + endX) / 2
+    const centerY = sinPhi * cxp + cosPhi * cyp + (startY + endY) / 2
+
+    const ux = (x1p - cxp) / rx
+    const uy = (y1p - cyp) / ry
+    const vx = (-x1p - cxp) / rx
+    const vy = (-y1p - cyp) / ry
+    const theta1 = vectorAngle(1, 0, ux, uy)
+    let deltaTheta = vectorAngle(ux, uy, vx, vy)
+    if (fs === 0 && deltaTheta > 0) deltaTheta -= 2 * Math.PI
+    if (fs === 1 && deltaTheta < 0) deltaTheta += 2 * Math.PI
+
+    const segmentCount = Math.max(1, Math.ceil(Math.abs(deltaTheta) / (Math.PI / 8)))
+    for (let step = 1; step <= segmentCount; step += 1) {
+      const t = step / segmentCount
+      const theta = theta1 + deltaTheta * t
+      const cosTheta = Math.cos(theta)
+      const sinTheta = Math.sin(theta)
+      const x = centerX + cosPhi * rx * cosTheta - sinPhi * ry * sinTheta
+      const y = centerY + sinPhi * rx * cosTheta + cosPhi * ry * sinTheta
       pushPoint(x, y)
     }
   }
@@ -599,9 +691,23 @@ function parsePathPoints(pathD: string): Point[] {
           ) {
             break
           }
-          currentX = isRelative ? currentX + x : x
-          currentY = isRelative ? currentY + y : y
-          pushPoint(currentX, currentY)
+          const startX = currentX
+          const startY = currentY
+          const endX = isRelative ? currentX + x : x
+          const endY = isRelative ? currentY + y : y
+          sampleArcTo(
+            startX,
+            startY,
+            rx,
+            ry,
+            axisRotation,
+            largeArcFlag,
+            sweepFlag,
+            endX,
+            endY,
+          )
+          currentX = endX
+          currentY = endY
           clearCurveControls()
           previousCommandUpper = 'A'
         }
