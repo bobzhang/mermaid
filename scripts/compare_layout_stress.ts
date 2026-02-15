@@ -7,6 +7,7 @@
  *   bun run scripts/compare_layout_stress.ts --json /tmp/layout_stress_metrics.json
  *   bun run scripts/compare_layout_stress.ts --max-logical-crossing-multiplier 1.8
  *   bun run scripts/compare_layout_stress.ts --max-polyline-crossing-multiplier 4.6 --min-span-area-ratio 0.04
+ *   bun run scripts/compare_layout_stress.ts --max-avg-rmse 0.70 --max-avg-inversion-rate 0.35 --max-avg-polyline-crossing-multiplier 3.6 --min-avg-span-area-ratio 0.18
  *   bun run scripts/compare_layout_stress.ts --local-timeout-ms 120000 --local-render-retries 2 --retry-backoff-ms 500
  *   bun run scripts/compare_layout_stress.ts fixtures/layout_challenge_001_nested_portal_mesh.mmd --explain-logical-crossings
  *   bun run scripts/compare_layout_stress.ts --max-logical-crossing-multiplier 1.0 --explain-on-failure
@@ -66,6 +67,11 @@ type CliOptions = {
   minSpanXRatio?: number
   minSpanYRatio?: number
   minSpanAreaRatio?: number
+  maxAvgRmse?: number
+  maxAvgInversionRate?: number
+  maxAvgPolylineCrossingMultiplier?: number
+  maxAvgLogicalCrossingMultiplier?: number
+  minAvgSpanAreaRatio?: number
   officialTimeoutMs: number
   localTimeoutMs: number
   localRenderRetries: number
@@ -1198,6 +1204,11 @@ function parseCliOptions(args: string[]): CliOptions {
   let minSpanXRatio: number | undefined = undefined
   let minSpanYRatio: number | undefined = undefined
   let minSpanAreaRatio: number | undefined = undefined
+  let maxAvgRmse: number | undefined = undefined
+  let maxAvgInversionRate: number | undefined = undefined
+  let maxAvgPolylineCrossingMultiplier: number | undefined = undefined
+  let maxAvgLogicalCrossingMultiplier: number | undefined = undefined
+  let minAvgSpanAreaRatio: number | undefined = undefined
   let officialTimeoutMs = DEFAULT_OFFICIAL_TIMEOUT_MS
   let localTimeoutMs = DEFAULT_LOCAL_TIMEOUT_MS
   let localRenderRetries = DEFAULT_LOCAL_RENDER_RETRIES
@@ -1268,6 +1279,61 @@ function parseCliOptions(args: string[]): CliOptions {
         fail('invalid --min-span-area-ratio value, expected positive number')
       }
       minSpanAreaRatio = parsed
+      i += 1
+      continue
+    }
+    if (arg === '--max-avg-rmse') {
+      const next = args[i + 1]
+      if (!next) fail('missing number after --max-avg-rmse')
+      const parsed = Number.parseFloat(next)
+      if (!Number.isFinite(parsed) || parsed <= 0) {
+        fail('invalid --max-avg-rmse value, expected positive number')
+      }
+      maxAvgRmse = parsed
+      i += 1
+      continue
+    }
+    if (arg === '--max-avg-inversion-rate') {
+      const next = args[i + 1]
+      if (!next) fail('missing number after --max-avg-inversion-rate')
+      const parsed = Number.parseFloat(next)
+      if (!Number.isFinite(parsed) || parsed <= 0 || parsed > 1) {
+        fail('invalid --max-avg-inversion-rate value, expected number in (0, 1]')
+      }
+      maxAvgInversionRate = parsed
+      i += 1
+      continue
+    }
+    if (arg === '--max-avg-polyline-crossing-multiplier') {
+      const next = args[i + 1]
+      if (!next) fail('missing number after --max-avg-polyline-crossing-multiplier')
+      const parsed = Number.parseFloat(next)
+      if (!Number.isFinite(parsed) || parsed <= 0) {
+        fail('invalid --max-avg-polyline-crossing-multiplier value, expected positive number')
+      }
+      maxAvgPolylineCrossingMultiplier = parsed
+      i += 1
+      continue
+    }
+    if (arg === '--max-avg-logical-crossing-multiplier') {
+      const next = args[i + 1]
+      if (!next) fail('missing number after --max-avg-logical-crossing-multiplier')
+      const parsed = Number.parseFloat(next)
+      if (!Number.isFinite(parsed) || parsed <= 0) {
+        fail('invalid --max-avg-logical-crossing-multiplier value, expected positive number')
+      }
+      maxAvgLogicalCrossingMultiplier = parsed
+      i += 1
+      continue
+    }
+    if (arg === '--min-avg-span-area-ratio') {
+      const next = args[i + 1]
+      if (!next) fail('missing number after --min-avg-span-area-ratio')
+      const parsed = Number.parseFloat(next)
+      if (!Number.isFinite(parsed) || parsed <= 0) {
+        fail('invalid --min-avg-span-area-ratio value, expected positive number')
+      }
+      minAvgSpanAreaRatio = parsed
       i += 1
       continue
     }
@@ -1356,6 +1422,11 @@ function parseCliOptions(args: string[]): CliOptions {
     minSpanXRatio,
     minSpanYRatio,
     minSpanAreaRatio,
+    maxAvgRmse,
+    maxAvgInversionRate,
+    maxAvgPolylineCrossingMultiplier,
+    maxAvgLogicalCrossingMultiplier,
+    minAvgSpanAreaRatio,
     officialTimeoutMs,
     localTimeoutMs,
     localRenderRetries,
@@ -1480,6 +1551,11 @@ function main(): void {
         minSpanXRatio: options.minSpanXRatio ?? null,
         minSpanYRatio: options.minSpanYRatio ?? null,
         minSpanAreaRatio: options.minSpanAreaRatio ?? null,
+        maxAvgRmse: options.maxAvgRmse ?? null,
+        maxAvgInversionRate: options.maxAvgInversionRate ?? null,
+        maxAvgPolylineCrossingMultiplier: options.maxAvgPolylineCrossingMultiplier ?? null,
+        maxAvgLogicalCrossingMultiplier: options.maxAvgLogicalCrossingMultiplier ?? null,
+        minAvgSpanAreaRatio: options.minAvgSpanAreaRatio ?? null,
         officialTimeoutMs: options.officialTimeoutMs,
         localTimeoutMs: options.localTimeoutMs,
         localRenderRetries: options.localRenderRetries,
@@ -1604,6 +1680,55 @@ function main(): void {
       )
       process.exitCode = 7
     }
+  }
+
+  if (options.maxAvgRmse !== undefined && (!Number.isFinite(avgRmse) || avgRmse > options.maxAvgRmse)) {
+    console.error(
+      `average RMSE threshold exceeded: threshold=${options.maxAvgRmse} avgRmse=${round(avgRmse)}`,
+    )
+    process.exitCode = 8
+  }
+
+  if (
+    options.maxAvgInversionRate !== undefined &&
+    (!Number.isFinite(avgInversion) || avgInversion > options.maxAvgInversionRate)
+  ) {
+    console.error(
+      `average inversion rate threshold exceeded: threshold=${options.maxAvgInversionRate} avgInversionRate=${round(avgInversion)}`,
+    )
+    process.exitCode = 9
+  }
+
+  if (
+    options.maxAvgPolylineCrossingMultiplier !== undefined &&
+    (!Number.isFinite(avgPolylineMultiplier) ||
+      avgPolylineMultiplier > options.maxAvgPolylineCrossingMultiplier)
+  ) {
+    console.error(
+      `average polyline crossing multiplier threshold exceeded: threshold=${options.maxAvgPolylineCrossingMultiplier} avgPolylineCrossingMultiplier=${round(avgPolylineMultiplier)}`,
+    )
+    process.exitCode = 10
+  }
+
+  if (
+    options.maxAvgLogicalCrossingMultiplier !== undefined &&
+    (!Number.isFinite(avgLogicalMultiplier) ||
+      avgLogicalMultiplier > options.maxAvgLogicalCrossingMultiplier)
+  ) {
+    console.error(
+      `average logical crossing multiplier threshold exceeded: threshold=${options.maxAvgLogicalCrossingMultiplier} avgLogicalCrossingMultiplier=${round(avgLogicalMultiplier)}`,
+    )
+    process.exitCode = 11
+  }
+
+  if (
+    options.minAvgSpanAreaRatio !== undefined &&
+    (!Number.isFinite(avgSpanAreaRatio) || avgSpanAreaRatio < options.minAvgSpanAreaRatio)
+  ) {
+    console.error(
+      `average span area ratio minimum not met: threshold=${options.minAvgSpanAreaRatio} avgSpanAreaRatio=${round(avgSpanAreaRatio)}`,
+    )
+    process.exitCode = 12
   }
 }
 

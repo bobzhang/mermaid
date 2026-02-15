@@ -21,7 +21,12 @@ bun run scripts/compare_layout_stress.ts \
   --max-polyline-crossing-multiplier 4.6 \
   --min-span-x-ratio 0.12 \
   --min-span-y-ratio 0.05 \
-  --min-span-area-ratio 0.04
+  --min-span-area-ratio 0.04 \
+  --max-avg-rmse 0.70 \
+  --max-avg-inversion-rate 0.35 \
+  --max-avg-polyline-crossing-multiplier 3.6 \
+  --max-avg-logical-crossing-multiplier 0.8 \
+  --min-avg-span-area-ratio 0.18
 ```
 
 When local rendering is under load (e.g. concurrent Moon jobs), you can make
