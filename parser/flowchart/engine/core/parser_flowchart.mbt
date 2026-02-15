@@ -139,26 +139,76 @@ fn split_parallel_nodes_with_classes(
 
 ///|
 fn is_clean_flow_node_token(raw_token : String) -> Bool {
-  let token = raw_token.trim().to_string()
-  if token == "" || token.contains("@{") {
+  let (token, _) = split_node_and_class(raw_token)
+  if token == "" {
     return false
   }
-
   let parsed = @parser_common_engine_core.parse_node_token(token)
-  if !is_subgraph_id_token(parsed.id) {
-    return false
+  if parsed.shape == Asymmetric &&
+    @parser_common_engine_core.is_plain_identifier(parsed.id) &&
+    token.has_suffix("]") {
+    return true
+  }
+  let mut square_depth = 0
+  let mut round_depth = 0
+  let mut curly_depth = 0
+  let mut in_single_quote = false
+  let mut in_double_quote = false
+  for i in 0..<token.length() {
+    let unit = token[i]
+    if unit == '"' && !in_single_quote {
+      in_double_quote = !in_double_quote
+      continue
+    }
+    if unit == '\'' && !in_double_quote {
+      in_single_quote = !in_single_quote
+      continue
+    }
+    if in_single_quote || in_double_quote {
+      continue
+    }
+    if unit == '[' {
+      square_depth = square_depth + 1
+      continue
+    }
+    if unit == ']' {
+      if square_depth > 0 {
+        square_depth = square_depth - 1
+      }
+      continue
+    }
+    if unit == '(' {
+      round_depth = round_depth + 1
+      continue
+    }
+    if unit == ')' {
+      if round_depth > 0 {
+        round_depth = round_depth - 1
+      }
+      continue
+    }
+    if unit == '{' {
+      curly_depth = curly_depth + 1
+      continue
+    }
+    if unit == '}' {
+      if curly_depth > 0 {
+        curly_depth = curly_depth - 1
+      }
+      continue
+    }
+    if square_depth == 0 &&
+      round_depth == 0 &&
+      curly_depth == 0 &&
+      (unit == ' ' || unit == '\t') {
+      return false
+    }
   }
 
-  if parsed.shape == Rectangle && parsed.label == parsed.id {
-    return token == parsed.id
+  match find_top_level_edge_operator(token, edge_operators()) {
+    Some(_) => false
+    None => true
   }
-
-  if parsed.id.length() >= token.length() {
-    return false
-  }
-
-  let delimiter = token[parsed.id.length()]
-  delimiter == '[' || delimiter == '(' || delimiter == '{' || delimiter == '>'
 }
 
 ///|
@@ -170,7 +220,7 @@ fn is_clean_parallel_node_group(segment : String) -> Bool {
 
   for part in parts {
     let trimmed = part.trim().to_string()
-    if trimmed == "" || trimmed.contains("@{") {
+    if trimmed == "" {
       return false
     }
     let (token, _) = split_node_and_class(trimmed)
@@ -297,8 +347,236 @@ fn edge_operators() -> Array[EdgeOp] {
 }
 
 ///|
+fn top_level_operator_at(
+  line : String,
+  index : Int,
+  operators : Array[EdgeOp],
+) -> EdgeOp? {
+  let mut found : EdgeOp? = None
+  for op in operators {
+    let op_len = op.symbol.length()
+    if index + op_len > line.length() {
+      continue
+    }
+    let slice = (try! line[index:index + op_len]).to_string()
+    if slice != op.symbol {
+      continue
+    }
+    match found {
+      Some(best) =>
+        if op.symbol.length() > best.symbol.length() {
+          found = Some(op)
+        }
+      None => found = Some(op)
+    }
+  }
+  found
+}
+
+///|
+fn find_top_level_edge_operator(
+  line : String,
+  operators : Array[EdgeOp],
+) -> FoundEdgeOp? {
+  let mut square_depth = 0
+  let mut round_depth = 0
+  let mut curly_depth = 0
+  let mut in_single_quote = false
+  let mut in_double_quote = false
+
+  for i in 0..<line.length() {
+    let unit = line[i]
+    if unit == '"' && !in_single_quote {
+      in_double_quote = !in_double_quote
+      continue
+    }
+    if unit == '\'' && !in_double_quote {
+      in_single_quote = !in_single_quote
+      continue
+    }
+    if in_single_quote || in_double_quote {
+      continue
+    }
+    if unit == '[' {
+      square_depth = square_depth + 1
+      continue
+    }
+    if unit == ']' {
+      if square_depth > 0 {
+        square_depth = square_depth - 1
+      }
+      continue
+    }
+    if unit == '(' {
+      round_depth = round_depth + 1
+      continue
+    }
+    if unit == ')' {
+      if round_depth > 0 {
+        round_depth = round_depth - 1
+      }
+      continue
+    }
+    if unit == '{' {
+      curly_depth = curly_depth + 1
+      continue
+    }
+    if unit == '}' {
+      if curly_depth > 0 {
+        curly_depth = curly_depth - 1
+      }
+      continue
+    }
+    if square_depth != 0 || round_depth != 0 || curly_depth != 0 {
+      continue
+    }
+    match top_level_operator_at(line, i, operators) {
+      Some(op) => return Some({ op, index: i })
+      None => ()
+    }
+  }
+  None
+}
+
+///|
 fn find_earliest_edge_operator(line : String) -> FoundEdgeOp? {
-  find_earliest_operator(line, edge_operators())
+  find_top_level_edge_operator(line, edge_operators())
+}
+
+///|
+fn mid_label_left_marker(edge_symbol : String) -> String? {
+  match edge_symbol {
+    "<==>" => Some("<==")
+    "<-.->" => Some("<-.")
+    "<-->" => Some("<--")
+    "==>" => Some("==")
+    "-.->" => Some("-.")
+    "-->" => Some("--")
+    _ => None
+  }
+}
+
+///|
+fn top_level_last_index(text : String, marker : String) -> Int? {
+  let mut square_depth = 0
+  let mut round_depth = 0
+  let mut curly_depth = 0
+  let mut in_single_quote = false
+  let mut in_double_quote = false
+  let mut found : Int? = None
+
+  for i in 0..<text.length() {
+    let unit = text[i]
+    if unit == '"' && !in_single_quote {
+      in_double_quote = !in_double_quote
+      continue
+    }
+    if unit == '\'' && !in_double_quote {
+      in_single_quote = !in_single_quote
+      continue
+    }
+    if in_single_quote || in_double_quote {
+      continue
+    }
+    if unit == '[' {
+      square_depth = square_depth + 1
+      continue
+    }
+    if unit == ']' {
+      if square_depth > 0 {
+        square_depth = square_depth - 1
+      }
+      continue
+    }
+    if unit == '(' {
+      round_depth = round_depth + 1
+      continue
+    }
+    if unit == ')' {
+      if round_depth > 0 {
+        round_depth = round_depth - 1
+      }
+      continue
+    }
+    if unit == '{' {
+      curly_depth = curly_depth + 1
+      continue
+    }
+    if unit == '}' {
+      if curly_depth > 0 {
+        curly_depth = curly_depth - 1
+      }
+      continue
+    }
+    if square_depth != 0 || round_depth != 0 || curly_depth != 0 {
+      continue
+    }
+    let marker_len = marker.length()
+    if i + marker_len > text.length() {
+      continue
+    }
+    if (try! text[i:i + marker_len]).to_string() == marker {
+      found = Some(i)
+    }
+  }
+  found
+}
+
+///|
+fn parse_mid_label_edge(
+  line : String,
+) -> (
+  Array[(MermaidNode, String?)],
+  EdgeOp,
+  String,
+  Array[(MermaidNode, String?)],
+)? {
+  let candidates : Array[EdgeOp] = []
+  for op in edge_operators() {
+    if op.has_arrow_end {
+      candidates.push(op)
+    }
+  }
+  match find_top_level_edge_operator(line, candidates) {
+    Some(found) =>
+      match mid_label_left_marker(found.op.symbol) {
+        Some(marker) => {
+          let lhs = @parser_common_engine_core.trim_owned(
+            (try! line[:found.index]).to_string(),
+          )
+          let rhs = @parser_common_engine_core.trim_owned(
+            (try! line[found.index + found.op.symbol.length():]).to_string(),
+          )
+          if !is_clean_parallel_node_group(rhs) {
+            return None
+          }
+          match top_level_last_index(lhs, marker) {
+            Some(marker_index) => {
+              let source_segment = @parser_common_engine_core.trim_owned(
+                (try! lhs[:marker_index]).to_string(),
+              )
+              let label = @parser_common_engine_core.trim_owned(
+                (try! lhs[marker_index + marker.length():]).to_string(),
+              )
+              if label == "" || !is_clean_parallel_node_group(source_segment) {
+                return None
+              }
+              Some(
+                (
+                  split_parallel_nodes_with_classes(source_segment),
+                  found.op,
+                  label,
+                  split_parallel_nodes_with_classes(rhs),
+                ),
+              )
+            }
+            None => None
+          }
+        }
+        None => None
+      }
+    None => None
+  }
 }
 
 ///|
@@ -482,7 +760,7 @@ test "is_subgraph_id_token" {
 }
 
 ///|
-test "parse_flow_line skips malformed edge labels and metadata edge tails" {
+test "parse_flow_line parses metadata nodes and middle labels" {
   let nodes : Map[String, MermaidNode] = {}
   let edges : Array[MermaidEdge] = []
   let class_defs : Map[String, Map[String, String]] = {}
@@ -496,8 +774,11 @@ test "parse_flow_line skips malformed edge labels and metadata edge tails" {
     ),
   )
   assert_true(nodes.contains("start"))
-  assert_false(nodes.contains("0"))
-  assert_eq(edges.length(), 0)
+  assert_true(nodes.contains("0"))
+  assert_eq(edges.length(), 1)
+  assert_eq(edges[0].source, "start")
+  assert_eq(edges[0].target, "0")
+  assert_eq(edges[0].label, None)
 
   ignore(
     parse_flow_line(
@@ -505,8 +786,11 @@ test "parse_flow_line skips malformed edge labels and metadata edge tails" {
     ),
   )
   assert_true(nodes.contains("0"))
-  assert_false(nodes.contains("3"))
-  assert_eq(edges.length(), 0)
+  assert_true(nodes.contains("3"))
+  assert_eq(edges.length(), 2)
+  assert_eq(edges[1].source, "0")
+  assert_eq(edges[1].target, "3")
+  assert_eq(edges[1].label, Some("[a-b]"))
 
   ignore(
     parse_flow_line(
@@ -515,8 +799,11 @@ test "parse_flow_line skips malformed edge labels and metadata edge tails" {
     ),
   )
   assert_true(nodes.contains("5"))
-  assert_false(nodes.contains("#0"))
-  assert_eq(edges.length(), 0)
+  assert_true(nodes.contains("#0"))
+  assert_eq(edges.length(), 3)
+  assert_eq(edges[2].source, "5")
+  assert_eq(edges[2].target, "#0")
+  assert_eq(edges[2].label, None)
 
   ignore(
     parse_flow_line(
@@ -525,7 +812,32 @@ test "parse_flow_line skips malformed edge labels and metadata edge tails" {
   )
   assert_true(nodes.contains("A"))
   assert_true(nodes.contains("B"))
-  assert_eq(edges.length(), 1)
+  assert_eq(edges.length(), 4)
+}
+
+///|
+test "parse_flow_line keeps malformed edge statements non-fatal" {
+  let nodes : Map[String, MermaidNode] = {}
+  let edges : Array[MermaidEdge] = []
+  let class_defs : Map[String, Map[String, String]] = {}
+  let class_assignments : Map[String, String] = {}
+  let node_styles : Map[String, Map[String, String]] = {}
+
+  ignore(
+    parse_flow_line(
+      "0 -- [a-b] -->", nodes, edges, class_defs, class_assignments, node_styles,
+    ),
+  )
+  assert_true(nodes.contains("0"))
+  assert_eq(edges.length(), 0)
+
+  ignore(
+    parse_flow_line(
+      "A[Label contains --> text]", nodes, edges, class_defs, class_assignments,
+      node_styles,
+    ),
+  )
+  assert_eq(edges.length(), 0)
 }
 
 ///|
@@ -736,6 +1048,22 @@ fn parse_flow_line(
   if line.has_prefix("style ") {
     parse_style_line(line, node_styles)
     return []
+  }
+  match parse_mid_label_edge(line) {
+    Some((source_entries, op, label, target_entries)) => {
+      let touched_node_ids : Array[String] = []
+      let sources = ensure_nodes_from_entries(
+        nodes, class_assignments, source_entries,
+      )
+      push_unique_node_ids(touched_node_ids, sources)
+      let targets = ensure_nodes_from_entries(
+        nodes, class_assignments, target_entries,
+      )
+      push_unique_node_ids(touched_node_ids, targets)
+      append_edges(sources, targets, op, Some(label), edges)
+      return touched_node_ids
+    }
+    None => ()
   }
 
   match find_earliest_edge_operator(line) {
