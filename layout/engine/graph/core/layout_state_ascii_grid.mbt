@@ -698,10 +698,6 @@ fn layout_flat_state_graph_for_ascii_grid(
                 None,
                 None,
                 false,
-                0,
-                0,
-                0,
-                false,
               )
             }
           }
@@ -713,10 +709,6 @@ fn layout_flat_state_graph_for_ascii_grid(
               edge.style,
               None,
               None,
-              false,
-              0,
-              0,
-              0,
               false,
             )
         }

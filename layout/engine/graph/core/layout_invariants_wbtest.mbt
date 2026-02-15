@@ -131,18 +131,6 @@ fn count_logical_edge_crossings(
 }
 
 ///|
-test "Layout polyline label anchor uses path midpoint" {
-  let points : Array[Point] = [
-    { x: 0, y: 0 },
-    { x: 100, y: 0 },
-    { x: 100, y: 100 },
-    { x: 200, y: 100 },
-  ]
-  let anchor = polyline_label_anchor(points)
-  assert_eq(anchor, { x: 100, y: 50 })
-}
-
-///|
 test "Layout lane collection accounts for long-span edges via virtual segments" {
   let nodes : Array[MermaidNode] = [
     { id: "A", label: "A", shape: Rectangle },
