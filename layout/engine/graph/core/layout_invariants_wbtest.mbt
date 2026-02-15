@@ -215,6 +215,48 @@ test "Layout cycle-aware rank collection rehydrates cyclic forward order" {
 }
 
 ///|
+test "Layout class cycle keeps controller and model in the same row" {
+  let graph = @parser.parse_mermaid(
+    (
+      #|classDiagram
+      #|  class Model {
+      #|    -data Map
+      #|    +getData() Map
+      #|    +setData(key, val) void
+      #|    +notify() void
+      #|  }
+      #|  class View {
+      #|    -model Model
+      #|    +render() void
+      #|    +update() void
+      #|  }
+      #|  class Controller {
+      #|    -model Model
+      #|    -view View
+      #|    +handleInput(event) void
+      #|    +updateModel(data) void
+      #|  }
+      #|  Controller --> Model : updates
+      #|  Controller --> View : refreshes
+      #|  View --> Model : reads
+      #|  Model ..> View : notifies
+      #|
+    )
+    .trim_end()
+    .to_string(),
+  )
+  let positioned = layout_graph(graph, RenderOptions::default())
+
+  let model = find_positioned_node(positioned.nodes, "Model")
+  let view = find_positioned_node(positioned.nodes, "View")
+  let controller = find_positioned_node(positioned.nodes, "Controller")
+
+  assert_eq(controller.y, model.y)
+  assert_true(view.y > model.y)
+  assert_true(controller.x != model.x)
+}
+
+///|
 test "Layout NFA dotted back edge prefers lower lane when upper span is crowded" {
   let graph = @parser.parse_mermaid(
     (

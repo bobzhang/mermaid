@@ -2215,6 +2215,17 @@ fn is_state_graph(graph : MermaidGraph) -> Bool {
 }
 
 ///|
+fn is_class_or_er_graph(graph : MermaidGraph) -> Bool {
+  for _, node in graph.nodes {
+    match node.shape {
+      ClassEntity | ErEntity => return true
+      _ => ()
+    }
+  }
+  false
+}
+
+///|
 fn use_enhanced_horizontal_state_flow_lanes(
   nodes_in_order : Array[MermaidNode],
 ) -> Bool {
@@ -2491,6 +2502,7 @@ fn layout_graph_with_subgraph_redirects(
   let horizontal = layout_direction_is_horizontal(graph.direction)
   let reverse = layout_direction_is_reverse(graph.direction)
   let state_graph = is_state_graph(graph)
+  let class_or_er_graph = is_class_or_er_graph(graph)
   let flat_state_graph = state_graph &&
     !horizontal &&
     graph.subgraphs.length() == 0
@@ -2548,7 +2560,7 @@ fn layout_graph_with_subgraph_redirects(
   let mut flow_max_rank = 0
   if !state_graph || horizontal {
     let cycle_aware_layout = state_graph ||
-      graph_has_cycle(nodes_in_order, graph.edges)
+      (!class_or_er_graph && graph_has_cycle(nodes_in_order, graph.edges))
     let (rank_by_id, max_rank) = collect_non_state_flow_ranks(
       nodes_in_order,
       graph.edges,
