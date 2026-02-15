@@ -23,6 +23,30 @@ fn assert_has_edge(
 }
 
 ///|
+fn assert_nfa_node_shape(
+  graph : @beautiful_mermaid.MermaidGraph,
+  node_id : String,
+  expected_shape : String,
+) -> Unit raise {
+  match graph.nodes.get(node_id) {
+    Some(node) => assert_eq(node.shape.to_string(), expected_shape)
+    None => fail("missing node \{node_id}")
+  }
+}
+
+///|
+fn assert_render_smoke(source : String, token : String) -> Unit raise {
+  let ascii = @beautiful_mermaid.render_mermaid_ascii(
+    source,
+    options=nfa_ascii_options(),
+  )
+  let svg = @beautiful_mermaid.render_mermaid(source)
+  assert_true(ascii.contains(token))
+  assert_true(svg.has_prefix("<svg "))
+  assert_true(svg.contains(token))
+}
+
+///|
 #cfg(target="native")
 async test "NFA fixture 004 parses and renders expected structure" {
   let source = nfa_fixture_source("nfa_004")
@@ -32,31 +56,14 @@ async test "NFA fixture 004 parses and renders expected structure" {
   assert_eq(graph.nodes.length(), 8)
   assert_eq(graph.edges.length(), 10)
 
-  match graph.nodes.get("s") {
-    Some(node) => assert_eq(node.shape.to_string(), "StateStart")
-    None => fail("missing start node s")
-  }
-  match graph.nodes.get("q0") {
-    Some(node) => assert_eq(node.shape.to_string(), "Circle")
-    None => fail("missing node q0")
-  }
-  match graph.nodes.get("a0") {
-    Some(node) => assert_eq(node.shape.to_string(), "DoubleCircle")
-    None => fail("missing accepting node a0")
-  }
+  assert_nfa_node_shape(graph, "s", "StateStart")
+  assert_nfa_node_shape(graph, "q0", "Circle")
+  assert_nfa_node_shape(graph, "a0", "DoubleCircle")
 
   assert_has_edge(graph, "q1", "q2", Some("a"))
   assert_has_edge(graph, "q2", "q2", Some("b"))
   assert_has_edge(graph, "q2", "a0", None)
-
-  let ascii = @beautiful_mermaid.render_mermaid_ascii(
-    source,
-    options=nfa_ascii_options(),
-  )
-  let svg = @beautiful_mermaid.render_mermaid(source)
-  assert_true(ascii.contains("q0"))
-  assert_true(svg.has_prefix("<svg "))
-  assert_true(svg.contains("a0"))
+  assert_render_smoke(source, "a0")
 }
 
 ///|
@@ -69,30 +76,84 @@ async test "NFA fixture 005 parses and renders expected structure" {
   assert_eq(graph.nodes.length(), 8)
   assert_eq(graph.edges.length(), 11)
 
-  match graph.nodes.get("start") {
-    Some(node) => assert_eq(node.shape.to_string(), "StateStart")
-    None => fail("missing start node")
-  }
-  match graph.nodes.get("i5") {
-    Some(node) => assert_eq(node.shape.to_string(), "Circle")
-    None => fail("missing node i5")
-  }
-  match graph.nodes.get("acc") {
-    Some(node) => assert_eq(node.shape.to_string(), "DoubleCircle")
-    None => fail("missing accepting node")
-  }
+  assert_nfa_node_shape(graph, "start", "StateStart")
+  assert_nfa_node_shape(graph, "i5", "Circle")
+  assert_nfa_node_shape(graph, "acc", "DoubleCircle")
 
   assert_has_edge(graph, "i2", "i5", Some("z"))
   assert_has_edge(graph, "i4", "i5", Some("z"))
   assert_has_edge(graph, "i5", "i5", Some("0-9"))
   assert_has_edge(graph, "i5", "acc", None)
+  assert_render_smoke(source, "acc")
+}
 
-  let ascii = @beautiful_mermaid.render_mermaid_ascii(
-    source,
-    options=nfa_ascii_options(),
-  )
-  let svg = @beautiful_mermaid.render_mermaid(source)
-  assert_true(ascii.contains("i5"))
-  assert_true(svg.has_prefix("<svg "))
-  assert_true(svg.contains("acc"))
+///|
+#cfg(target="native")
+async test "NFA fixture 006 parses branch-loop-merge topology" {
+  let source = nfa_fixture_source("nfa_006")
+  let graph = @parser_header_core.parse_mermaid(source)
+
+  assert_eq(graph.direction.to_string(), "LR")
+  assert_eq(graph.nodes.length(), 9)
+  assert_eq(graph.edges.length(), 10)
+
+  assert_nfa_node_shape(graph, "s", "StateStart")
+  assert_nfa_node_shape(graph, "p0", "Circle")
+  assert_nfa_node_shape(graph, "f", "DoubleCircle")
+
+  assert_has_edge(graph, "p1", "p2", Some("a"))
+  assert_has_edge(graph, "p2", "p3", Some("b"))
+  assert_has_edge(graph, "p5", "p6", Some("c"))
+  assert_has_edge(graph, "p7", "f", Some("d"))
+  assert_has_edge(graph, "p6", "p0", None)
+  assert_has_edge(graph, "p6", "p7", None)
+  assert_render_smoke(source, "p7")
+}
+
+///|
+#cfg(target="native")
+async test "NFA fixture 007 parses parallel-source labels and epsilon exits" {
+  let source = nfa_fixture_source("nfa_007")
+  let graph = @parser_header_core.parse_mermaid(source)
+
+  assert_eq(graph.direction.to_string(), "LR")
+  assert_eq(graph.nodes.length(), 10)
+  assert_eq(graph.edges.length(), 12)
+
+  assert_nfa_node_shape(graph, "start", "StateStart")
+  assert_nfa_node_shape(graph, "n5", "Circle")
+  assert_nfa_node_shape(graph, "acc0", "DoubleCircle")
+  assert_nfa_node_shape(graph, "acc1", "DoubleCircle")
+
+  assert_has_edge(graph, "n2", "n5", Some("y"))
+  assert_has_edge(graph, "n4", "n5", Some("y"))
+  assert_has_edge(graph, "n5", "n5", Some("w"))
+  assert_has_edge(graph, "n5", "n6", Some("z"))
+  assert_has_edge(graph, "n6", "acc0", None)
+  assert_has_edge(graph, "n6", "acc1", None)
+  assert_render_smoke(source, "acc1")
+}
+
+///|
+#cfg(target="native")
+async test "All NFA fixtures parse and render smoke" {
+  let fixture_names = [
+    "nfa_001", "nfa_002", "nfa_003", "nfa_004", "nfa_005", "nfa_006", "nfa_007",
+  ]
+  for name in fixture_names {
+    let source = nfa_fixture_source(name)
+    if source.trim().to_string() == "" {
+      continue
+    }
+    let graph = @parser_header_core.parse_mermaid(source)
+    assert_true(graph.nodes.length() > 0)
+    assert_true(graph.edges.length() > 0)
+    let ascii = @beautiful_mermaid.render_mermaid_ascii(
+      source,
+      options=nfa_ascii_options(),
+    )
+    let svg = @beautiful_mermaid.render_mermaid(source)
+    assert_true(ascii.length() > 0)
+    assert_true(svg.has_prefix("<svg "))
+  }
 }

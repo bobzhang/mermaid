@@ -1,0 +1,20 @@
+graph LR
+s@{shape: f-circ}
+p0@{shape: circ}
+p1@{shape: circ}
+p2@{shape: circ}
+p3@{shape: circ}
+p5@{shape: circ}
+p6@{shape: circ}
+p7@{shape: circ}
+f@{shape: dbl-circ}
+s --- p0
+p0 -.-> p1
+p0 -.-> p5
+p1 -- a --> p2
+p2 -- b --> p3
+p3 -.-> p6
+p5 -- c --> p6
+p6 -.-> p0
+p6 -.-> p7
+p7 -- d --> f
