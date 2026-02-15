@@ -2218,7 +2218,7 @@ fn reserve_back_edge_bend_y(
   )
 
   let lane_step = 20
-  let lane_options_per_side = 3
+  let lane_options_per_side = 4
 
   let upper_candidates : Array[Int] = []
   let mut candidate_up = top - 42
@@ -2385,7 +2385,7 @@ fn reserve_back_edge_bend_x(
   )
 
   let lane_step = 20
-  let lane_options_per_side = 3
+  let lane_options_per_side = 4
 
   let left_candidates : Array[Int] = []
   let mut candidate_left = left - 42
