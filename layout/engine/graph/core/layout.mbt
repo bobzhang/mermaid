@@ -5150,67 +5150,9 @@ fn layout_graph_with_subgraph_redirects(
       return
     }
 
-    let candidate_orders : Array[Array[Int]] = []
-    candidate_orders.push(copy_context_index_order(bucket_context_indices))
-
-    let ascending_minor = copy_context_index_order(bucket_context_indices)
-    ascending_minor.sort_by((left_index, right_index) => {
-      let left_context = edge_layout_contexts[left_index]
-      let right_context = edge_layout_contexts[right_index]
-      let left_minor = context_forward_fanout_minor_key(left_context)
-      let right_minor = context_forward_fanout_minor_key(right_context)
-      let minor_cmp = left_minor.compare(right_minor)
-      if minor_cmp != 0 {
-        return minor_cmp
-      }
-      let left_major = context_forward_fanout_major_key(left_context)
-      let right_major = context_forward_fanout_major_key(right_context)
-      let major_cmp = left_major.compare(right_major)
-      if major_cmp != 0 {
-        return major_cmp
-      }
-      left_index.compare(right_index)
-    })
-    candidate_orders.push(ascending_minor)
-
-    let descending_minor = copy_context_index_order(bucket_context_indices)
-    descending_minor.sort_by((left_index, right_index) => {
-      let left_context = edge_layout_contexts[left_index]
-      let right_context = edge_layout_contexts[right_index]
-      let left_minor = context_forward_fanout_minor_key(left_context)
-      let right_minor = context_forward_fanout_minor_key(right_context)
-      let minor_cmp = right_minor.compare(left_minor)
-      if minor_cmp != 0 {
-        return minor_cmp
-      }
-      let left_major = context_forward_fanout_major_key(left_context)
-      let right_major = context_forward_fanout_major_key(right_context)
-      let major_cmp = left_major.compare(right_major)
-      if major_cmp != 0 {
-        return major_cmp
-      }
-      left_index.compare(right_index)
-    })
-    candidate_orders.push(descending_minor)
-
-    let unique_candidate_orders : Array[Array[Int]] = []
-    let seen_candidate_signatures : Map[String, Bool] = {}
-    for candidate_order in candidate_orders {
-      let signature = deferred_order_signature(candidate_order)
-      if seen_candidate_signatures.contains(signature) {
-        continue
-      }
-      seen_candidate_signatures[signature] = true
-      unique_candidate_orders.push(candidate_order)
-    }
-
-    let mut has_best_order = false
-    let mut best_order : Array[Int] = []
-    let mut best_crossings = 0
-
-    for candidate_order in unique_candidate_orders {
+    fn evaluate_order_crossings(order : Array[Int]) -> Int {
       let candidate_slot_by_context_index : Map[Int, Int] = {}
-      for slot, context_index in candidate_order {
+      for slot, context_index in order {
         candidate_slot_by_context_index[context_index] = slot
       }
       let candidate_polylines : Array[Array[Point]] = []
@@ -5234,20 +5176,134 @@ fn layout_graph_with_subgraph_redirects(
         )
         candidate_polylines.push(points)
       }
-      let candidate_crossings = count_polyline_crossings(candidate_polylines)
-      if !has_best_order || candidate_crossings < best_crossings {
-        has_best_order = true
+      count_polyline_crossings(candidate_polylines)
+    }
+
+    fn sort_forward_fanout_order(
+      order : Array[Int],
+      minor_desc : Bool,
+      major_desc : Bool,
+      major_first : Bool,
+    ) -> Unit {
+      order.sort_by((left_index, right_index) => {
+        let left_context = edge_layout_contexts[left_index]
+        let right_context = edge_layout_contexts[right_index]
+        let left_minor = context_forward_fanout_minor_key(left_context)
+        let right_minor = context_forward_fanout_minor_key(right_context)
+        let minor_cmp = if minor_desc {
+          right_minor.compare(left_minor)
+        } else {
+          left_minor.compare(right_minor)
+        }
+        let left_major = context_forward_fanout_major_key(left_context)
+        let right_major = context_forward_fanout_major_key(right_context)
+        let major_cmp = if major_desc {
+          right_major.compare(left_major)
+        } else {
+          left_major.compare(right_major)
+        }
+        if major_first {
+          if major_cmp != 0 {
+            return major_cmp
+          }
+          if minor_cmp != 0 {
+            return minor_cmp
+          }
+        } else {
+          if minor_cmp != 0 {
+            return minor_cmp
+          }
+          if major_cmp != 0 {
+            return major_cmp
+          }
+        }
+        left_index.compare(right_index)
+      })
+    }
+
+    let candidate_orders : Array[Array[Int]] = []
+    candidate_orders.push(copy_context_index_order(bucket_context_indices))
+
+    let ascending_minor = copy_context_index_order(bucket_context_indices)
+    sort_forward_fanout_order(ascending_minor, false, false, false)
+    candidate_orders.push(ascending_minor)
+
+    let descending_minor = copy_context_index_order(bucket_context_indices)
+    sort_forward_fanout_order(descending_minor, true, false, false)
+    candidate_orders.push(descending_minor)
+
+    let ascending_major = copy_context_index_order(bucket_context_indices)
+    sort_forward_fanout_order(ascending_major, false, false, true)
+    candidate_orders.push(ascending_major)
+
+    let descending_major = copy_context_index_order(bucket_context_indices)
+    sort_forward_fanout_order(descending_major, false, true, true)
+    candidate_orders.push(descending_major)
+
+    let unique_candidate_orders : Array[Array[Int]] = []
+    let seen_candidate_signatures : Map[String, Bool] = {}
+    for candidate_order in candidate_orders {
+      let signature = deferred_order_signature(candidate_order)
+      if seen_candidate_signatures.contains(signature) {
+        continue
+      }
+      seen_candidate_signatures[signature] = true
+      unique_candidate_orders.push(candidate_order)
+    }
+
+    let mut best_order = copy_context_index_order(bucket_context_indices)
+    let mut best_crossings = evaluate_order_crossings(best_order)
+
+    for candidate_order in unique_candidate_orders {
+      let candidate_crossings = evaluate_order_crossings(candidate_order)
+      if candidate_crossings < best_crossings {
         best_crossings = candidate_crossings
         best_order = candidate_order
+        if best_crossings == 0 {
+          break
+        }
       }
     }
 
-    let selected_order = if has_best_order {
-      best_order
-    } else {
-      bucket_context_indices
+    let optimized_order = copy_context_index_order(best_order)
+    if optimized_order.length() > 2 && best_crossings > 0 {
+      let max_adjacent_passes = if optimized_order.length() >= 20 {
+        2
+      } else if optimized_order.length() >= 10 {
+        4
+      } else {
+        6
+      }
+      let mut pass = 0
+      while pass < max_adjacent_passes && best_crossings > 0 {
+        let mut improved = false
+        let mut i = 0
+        while i + 1 < optimized_order.length() {
+          let left = optimized_order[i]
+          let right = optimized_order[i + 1]
+          optimized_order[i] = right
+          optimized_order[i + 1] = left
+          let swapped_crossings = evaluate_order_crossings(optimized_order)
+          if swapped_crossings < best_crossings {
+            best_crossings = swapped_crossings
+            improved = true
+            if best_crossings == 0 {
+              break
+            }
+          } else {
+            optimized_order[i] = left
+            optimized_order[i + 1] = right
+          }
+          i = i + 1
+        }
+        if !improved {
+          break
+        }
+        pass += 1
+      }
     }
-    for slot, context_index in selected_order {
+
+    for slot, context_index in optimized_order {
       forward_fanout_slot_by_context_index[context_index] = slot
     }
     forward_fanout_slots_resolved_by_bucket[bucket_key] = true
