@@ -4,6 +4,8 @@
  * Usage:
  *   bun run scripts/compare_layout_stress.ts
  *   bun run scripts/compare_layout_stress.ts fixtures/layout_stress_001_dense_dag.mmd
+ *   bun run scripts/compare_layout_stress.ts --json /tmp/layout_stress_metrics.json
+ *   bun run scripts/compare_layout_stress.ts --max-logical-crossing-multiplier 1.8
  */
 
 import { mkdtempSync, readFileSync, readdirSync, writeFileSync } from 'node:fs'
@@ -13,8 +15,18 @@ import { tmpdir } from 'node:os'
 
 type Point = { x: number; y: number }
 type Bounds = { minX: number; maxX: number; minY: number; maxY: number }
+type FixtureEdge = { source: string; target: string }
+type LogicalEdgeSegment = {
+  source: string
+  target: string
+  start: Point
+  end: Point
+}
+
 type Metrics = {
   fixture: string
+  fixtureEdges: number
+  comparableLogicalEdges: number
   officialNodes: number
   localNodes: number
   sharedNodes: number
@@ -23,11 +35,20 @@ type Metrics = {
   rmse: number
   maxDist: number
   inversionRate: number
-  localCrossings: number
-  officialCrossings: number
+  localPolylineCrossings: number
+  officialPolylineCrossings: number
+  localLogicalCrossings: number
+  officialLogicalCrossings: number
+  logicalCrossingMultiplier: number
   spanXRatio: number
   spanYRatio: number
   status: 'ok' | 'mismatch'
+}
+
+type CliOptions = {
+  fixtures: string[]
+  jsonPath?: string
+  maxLogicalCrossingMultiplier?: number
 }
 
 const OFFICIAL_TIMEOUT_MS = 120_000
@@ -46,7 +67,9 @@ function runOrThrow(cmd: string, args: string[], timeoutMs: number, env?: NodeJS
     env,
   })
   if (result.error) {
-    fail(`command failed: ${cmd} ${args.join(' ')}\nerror: ${String(result.error.message ?? result.error)}`)
+    fail(
+      `command failed: ${cmd} ${args.join(' ')}\nerror: ${String(result.error.message ?? result.error)}`,
+    )
   }
   if (result.status !== 0) {
     const stderr = (result.stderr ?? '').toString().trim()
@@ -71,6 +94,14 @@ function decodeHtml(text: string): string {
     .replaceAll('&amp;', '&')
     .replaceAll('&quot;', '"')
     .replaceAll('&#39;', "'")
+}
+
+function normalizeLabel(label: string): string {
+  const trimmed = label.trim()
+  if (trimmed.length >= 2 && trimmed.startsWith('"') && trimmed.endsWith('"')) {
+    return trimmed.slice(1, -1)
+  }
+  return trimmed
 }
 
 function findMatchingGEnd(svg: string, gStartIndex: number): number {
@@ -108,8 +139,10 @@ function parseOfficialNodePositions(svg: string): Map<string, Point> {
     if (transformMatch && labelMatch) {
       const x = Number.parseFloat(transformMatch[1]!.trim())
       const y = Number.parseFloat(transformMatch[2]!.trim())
-      const label = decodeHtml(labelMatch[1]!.trim())
-      if (!Number.isNaN(x) && !Number.isNaN(y) && label !== '') nodes.set(label, { x, y })
+      const label = normalizeLabel(decodeHtml(labelMatch[1]!.trim()))
+      if (!Number.isNaN(x) && !Number.isNaN(y) && label !== '') {
+        nodes.set(label, { x, y })
+      }
     }
     searchIndex = gEnd
   }
@@ -122,7 +155,7 @@ function parseLocalNodePositions(svg: string): Map<string, Point> {
   for (const match of svg.matchAll(re)) {
     const x = Number.parseFloat(match[1]!.trim())
     const y = Number.parseFloat(match[2]!.trim())
-    const label = decodeHtml(match[3]!.trim())
+    const label = normalizeLabel(decodeHtml(match[3]!.trim()))
     if (Number.isNaN(x) || Number.isNaN(y) || label === '') continue
     nodes.set(label, { x, y })
   }
@@ -171,6 +204,26 @@ function parseOfficialEdges(svg: string): Point[][] {
   return edges
 }
 
+function parseFixtureEdges(source: string): FixtureEdge[] {
+  const edges: FixtureEdge[] = []
+  const lines = source.split('\n')
+  const edgeLine =
+    /^\s*([A-Za-z0-9_./:-]+)(?:\[[^\]]*\])?\s*(?:-->|-.->|==>|===>|-.->)\s*(?:\|[^|]*\|)?\s*([A-Za-z0-9_./:-]+)(?:\[[^\]]*\])?\s*$/
+  for (const rawLine of lines) {
+    const line = rawLine.split('%%')[0]!.trim()
+    if (line === '' || line.startsWith('graph ') || line === 'end' || line.startsWith('subgraph ')) {
+      continue
+    }
+    const match = line.match(edgeLine)
+    if (!match) continue
+    const sourceId = normalizeLabel(match[1]!)
+    const targetId = normalizeLabel(match[2]!)
+    if (sourceId === '' || targetId === '') continue
+    edges.push({ source: sourceId, target: targetId })
+  }
+  return edges
+}
+
 function boundsOf(points: Point[]): Bounds {
   if (points.length === 0) return { minX: 0, maxX: 0, minY: 0, maxY: 0 }
   let minX = points[0]!.x
@@ -189,7 +242,10 @@ function boundsOf(points: Point[]): Bounds {
 function normalize(point: Point, bounds: Bounds): Point {
   const width = Math.max(bounds.maxX - bounds.minX, 1e-9)
   const height = Math.max(bounds.maxY - bounds.minY, 1e-9)
-  return { x: (point.x - bounds.minX) / width, y: (point.y - bounds.minY) / height }
+  return {
+    x: (point.x - bounds.minX) / width,
+    y: (point.y - bounds.minY) / height,
+  }
 }
 
 function pairOrderByX(labels: string[], positions: Map<string, Point>): string[] {
@@ -255,7 +311,19 @@ function segmentsIntersect(a1: Point, a2: Point, b1: Point, b2: Point): boolean 
   return false
 }
 
-function countCrossings(polylines: Point[][]): number {
+function segmentsProperlyIntersect(a1: Point, a2: Point, b1: Point, b2: Point): boolean {
+  const eps = 1e-9
+  const o1 = orientation(a1, a2, b1)
+  const o2 = orientation(a1, a2, b2)
+  const o3 = orientation(b1, b2, a1)
+  const o4 = orientation(b1, b2, a2)
+  return (
+    ((o1 > eps && o2 < -eps) || (o1 < -eps && o2 > eps)) &&
+    ((o3 > eps && o4 < -eps) || (o3 < -eps && o4 > eps))
+  )
+}
+
+function countPolylineCrossings(polylines: Point[][]): number {
   let crossings = 0
   for (let i = 0; i < polylines.length; i += 1) {
     const a = polylines[i]!
@@ -287,6 +355,57 @@ function countCrossings(polylines: Point[][]): number {
   return crossings
 }
 
+function toLogicalEdgeSegments(edges: FixtureEdge[], nodes: Map<string, Point>): LogicalEdgeSegment[] {
+  const segments: LogicalEdgeSegment[] = []
+  for (const edge of edges) {
+    const sourcePoint = nodes.get(edge.source)
+    const targetPoint = nodes.get(edge.target)
+    if (!sourcePoint || !targetPoint) {
+      continue
+    }
+    segments.push({
+      source: edge.source,
+      target: edge.target,
+      start: sourcePoint,
+      end: targetPoint,
+    })
+  }
+  return segments
+}
+
+function logicalEdgesShareEndpoint(left: LogicalEdgeSegment, right: LogicalEdgeSegment): boolean {
+  return (
+    left.source === right.source ||
+    left.source === right.target ||
+    left.target === right.source ||
+    left.target === right.target
+  )
+}
+
+function countLogicalCrossings(segments: LogicalEdgeSegment[]): number {
+  let crossings = 0
+  for (let i = 0; i < segments.length; i += 1) {
+    const left = segments[i]!
+    for (let j = i + 1; j < segments.length; j += 1) {
+      const right = segments[j]!
+      if (logicalEdgesShareEndpoint(left, right)) {
+        continue
+      }
+      if (
+        segmentsProperlyIntersect(
+          left.start,
+          left.end,
+          right.start,
+          right.end,
+        )
+      ) {
+        crossings += 1
+      }
+    }
+  }
+  return crossings
+}
+
 function renderOfficial(inputPath: string, outPath: string, npmCacheDir: string): void {
   runOrThrow(
     'npx',
@@ -301,7 +420,11 @@ function renderOfficial(inputPath: string, outPath: string, npmCacheDir: string)
 
 function renderLocal(inputPath: string, outPath: string): void {
   const source = readFileSync(inputPath, 'utf8')
-  const svg = runOrThrow('moon', ['run', 'cmd/main', '--target', 'native', '--', source], LOCAL_TIMEOUT_MS)
+  const svg = runOrThrow(
+    'moon',
+    ['run', 'cmd/main', '--target', 'native', '--', source],
+    LOCAL_TIMEOUT_MS,
+  )
   writeFileSync(outPath, svg)
 }
 
@@ -312,6 +435,9 @@ function compareFixture(path: string, tempRoot: string, npmCacheDir: string): Me
 
   renderOfficial(path, officialPath, npmCacheDir)
   renderLocal(path, localPath)
+
+  const fixtureSource = readFileSync(path, 'utf8')
+  const fixtureEdges = parseFixtureEdges(fixtureSource)
 
   const officialSvg = readFileSync(officialPath, 'utf8')
   const localSvg = readFileSync(localPath, 'utf8')
@@ -326,9 +452,26 @@ function compareFixture(path: string, tempRoot: string, npmCacheDir: string): Me
     sharedLabels.length === localNodes.size &&
     officialEdges.length === localEdges.length
 
+  const officialLogicalSegments = toLogicalEdgeSegments(fixtureEdges, officialNodes)
+  const localLogicalSegments = toLogicalEdgeSegments(fixtureEdges, localNodes)
+  const comparableLogicalEdges = Math.min(
+    officialLogicalSegments.length,
+    localLogicalSegments.length,
+  )
+  const officialLogicalCrossings = countLogicalCrossings(officialLogicalSegments)
+  const localLogicalCrossings = countLogicalCrossings(localLogicalSegments)
+  const logicalCrossingMultiplier =
+    officialLogicalCrossings === 0
+      ? localLogicalCrossings === 0
+        ? 1
+        : Number.POSITIVE_INFINITY
+      : localLogicalCrossings / officialLogicalCrossings
+
   if (sharedLabels.length < 2) {
     return {
       fixture: path,
+      fixtureEdges: fixtureEdges.length,
+      comparableLogicalEdges,
       officialNodes: officialNodes.size,
       localNodes: localNodes.size,
       sharedNodes: sharedLabels.length,
@@ -337,8 +480,11 @@ function compareFixture(path: string, tempRoot: string, npmCacheDir: string): Me
       rmse: Number.NaN,
       maxDist: Number.NaN,
       inversionRate: Number.NaN,
-      localCrossings: countCrossings(localEdges),
-      officialCrossings: countCrossings(officialEdges),
+      localPolylineCrossings: countPolylineCrossings(localEdges),
+      officialPolylineCrossings: countPolylineCrossings(officialEdges),
+      localLogicalCrossings,
+      officialLogicalCrossings,
+      logicalCrossingMultiplier,
       spanXRatio: Number.NaN,
       spanYRatio: Number.NaN,
       status: structuralOk ? 'ok' : 'mismatch',
@@ -374,6 +520,8 @@ function compareFixture(path: string, tempRoot: string, npmCacheDir: string): Me
 
   return {
     fixture: path,
+    fixtureEdges: fixtureEdges.length,
+    comparableLogicalEdges,
     officialNodes: officialNodes.size,
     localNodes: localNodes.size,
     sharedNodes: sharedLabels.length,
@@ -382,8 +530,11 @@ function compareFixture(path: string, tempRoot: string, npmCacheDir: string): Me
     rmse,
     maxDist,
     inversionRate,
-    localCrossings: countCrossings(localEdges),
-    officialCrossings: countCrossings(officialEdges),
+    localPolylineCrossings: countPolylineCrossings(localEdges),
+    officialPolylineCrossings: countPolylineCrossings(officialEdges),
+    localLogicalCrossings,
+    officialLogicalCrossings,
+    logicalCrossingMultiplier,
     spanXRatio: localSpanX / Math.max(officialSpanX, 1e-9),
     spanYRatio: localSpanY / Math.max(officialSpanY, 1e-9),
     status: structuralOk ? 'ok' : 'mismatch',
@@ -402,9 +553,40 @@ function discoverDefaultFixtures(): string[] {
     .map(name => join('fixtures', name))
 }
 
+function parseCliOptions(args: string[]): CliOptions {
+  const fixtures: string[] = []
+  let jsonPath: string | undefined = undefined
+  let maxLogicalCrossingMultiplier: number | undefined = undefined
+
+  for (let i = 0; i < args.length; i += 1) {
+    const arg = args[i]!
+    if (arg === '--json') {
+      const next = args[i + 1]
+      if (!next) fail('missing path after --json')
+      jsonPath = next
+      i += 1
+      continue
+    }
+    if (arg === '--max-logical-crossing-multiplier') {
+      const next = args[i + 1]
+      if (!next) fail('missing number after --max-logical-crossing-multiplier')
+      const parsed = Number.parseFloat(next)
+      if (!Number.isFinite(parsed) || parsed <= 0) {
+        fail('invalid --max-logical-crossing-multiplier value, expected positive number')
+      }
+      maxLogicalCrossingMultiplier = parsed
+      i += 1
+      continue
+    }
+    fixtures.push(arg)
+  }
+
+  return { fixtures, jsonPath, maxLogicalCrossingMultiplier }
+}
+
 function main(): void {
-  const fixtures = process.argv.slice(2)
-  const targets = fixtures.length > 0 ? fixtures : discoverDefaultFixtures()
+  const options = parseCliOptions(process.argv.slice(2))
+  const targets = options.fixtures.length > 0 ? options.fixtures : discoverDefaultFixtures()
   if (targets.length === 0) {
     fail('no stress fixtures found (expected fixtures/layout_stress_*.mmd)')
   }
@@ -416,31 +598,92 @@ function main(): void {
   for (const result of results) {
     console.log(`\n=== ${result.fixture} ===`)
     console.log(
-      `status=${result.status} nodes shared/local/official=${result.sharedNodes}/${result.localNodes}/${result.officialNodes} edges local/official=${result.localEdges}/${result.officialEdges}`,
+      `status=${result.status} nodes shared/local/official=${result.sharedNodes}/${result.localNodes}/${result.officialNodes} edges local/official=${result.localEdges}/${result.officialEdges} fixtureEdges=${result.fixtureEdges}`,
     )
-    console.log(`rmse=${round(result.rmse)} maxDist=${round(result.maxDist)} inversionRate=${round(result.inversionRate)}`)
+    console.log(
+      `rmse=${round(result.rmse)} maxDist=${round(result.maxDist)} inversionRate=${round(result.inversionRate)}`,
+    )
     console.log(`spanRatio x=${round(result.spanXRatio)} y=${round(result.spanYRatio)}`)
     console.log(
-      `edgeCrossings local=${result.localCrossings} official=${result.officialCrossings} delta=${result.localCrossings - result.officialCrossings}`,
+      `polylineCrossings local=${result.localPolylineCrossings} official=${result.officialPolylineCrossings} delta=${result.localPolylineCrossings - result.officialPolylineCrossings}`,
+    )
+    console.log(
+      `logicalCrossings local=${result.localLogicalCrossings} official=${result.officialLogicalCrossings} multiplier=${round(result.logicalCrossingMultiplier)}`,
     )
   }
 
   const okCount = results.filter(r => r.status === 'ok').length
   const avgRmse =
-    results.reduce((acc, row) => acc + (Number.isFinite(row.rmse) ? row.rmse : 0), 0) / Math.max(results.length, 1)
+    results.reduce((acc, row) => acc + (Number.isFinite(row.rmse) ? row.rmse : 0), 0) /
+    Math.max(results.length, 1)
   const avgInversion =
     results.reduce((acc, row) => acc + (Number.isFinite(row.inversionRate) ? row.inversionRate : 0), 0) /
     Math.max(results.length, 1)
-  const totalLocalCrossings = results.reduce((acc, row) => acc + row.localCrossings, 0)
-  const totalOfficialCrossings = results.reduce((acc, row) => acc + row.officialCrossings, 0)
+  const avgLogicalMultiplier =
+    results.reduce((acc, row) => acc + (Number.isFinite(row.logicalCrossingMultiplier) ? row.logicalCrossingMultiplier : 0), 0) /
+    Math.max(results.length, 1)
+  const totalLocalPolylineCrossings = results.reduce((acc, row) => acc + row.localPolylineCrossings, 0)
+  const totalOfficialPolylineCrossings = results.reduce((acc, row) => acc + row.officialPolylineCrossings, 0)
+  const totalLocalLogicalCrossings = results.reduce((acc, row) => acc + row.localLogicalCrossings, 0)
+  const totalOfficialLogicalCrossings = results.reduce((acc, row) => acc + row.officialLogicalCrossings, 0)
 
   console.log('\n=== summary ===')
   console.log(`fixtures=${results.length} structural_ok=${okCount}/${results.length}`)
   console.log(`avg_rmse=${round(avgRmse)} avg_inversion_rate=${round(avgInversion)}`)
   console.log(
-    `total_crossings local=${totalLocalCrossings} official=${totalOfficialCrossings} delta=${totalLocalCrossings - totalOfficialCrossings}`,
+    `total_polyline_crossings local=${totalLocalPolylineCrossings} official=${totalOfficialPolylineCrossings} delta=${totalLocalPolylineCrossings - totalOfficialPolylineCrossings}`,
   )
+  console.log(
+    `total_logical_crossings local=${totalLocalLogicalCrossings} official=${totalOfficialLogicalCrossings} delta=${totalLocalLogicalCrossings - totalOfficialLogicalCrossings}`,
+  )
+  console.log(`avg_logical_crossing_multiplier=${round(avgLogicalMultiplier)}`)
   console.log(`rendered_svgs_dir=${tempRoot}`)
+
+  if (options.jsonPath) {
+    const payload = {
+      generatedAt: new Date().toISOString(),
+      renderedSvgDir: tempRoot,
+      options: {
+        maxLogicalCrossingMultiplier: options.maxLogicalCrossingMultiplier ?? null,
+      },
+      summary: {
+        fixtures: results.length,
+        structuralOk: okCount,
+        avgRmse,
+        avgInversionRate: avgInversion,
+        totalLocalPolylineCrossings,
+        totalOfficialPolylineCrossings,
+        totalLocalLogicalCrossings,
+        totalOfficialLogicalCrossings,
+        avgLogicalCrossingMultiplier: avgLogicalMultiplier,
+      },
+      results,
+    }
+    writeFileSync(options.jsonPath, JSON.stringify(payload, null, 2))
+    console.log(`json_report=${options.jsonPath}`)
+  }
+
+  const structuralMismatch = results.some(result => result.status !== 'ok')
+  if (structuralMismatch) {
+    process.exitCode = 2
+  }
+
+  if (options.maxLogicalCrossingMultiplier !== undefined) {
+    const threshold = options.maxLogicalCrossingMultiplier
+    const violating = results.filter(result => result.logicalCrossingMultiplier > threshold)
+    if (violating.length > 0) {
+      console.error(
+        [
+          `logical crossing multiplier threshold exceeded: threshold=${threshold}`,
+          ...violating.map(
+            result =>
+              `  ${result.fixture}: multiplier=${round(result.logicalCrossingMultiplier)} local=${result.localLogicalCrossings} official=${result.officialLogicalCrossings}`,
+          ),
+        ].join('\n'),
+      )
+      process.exitCode = 3
+    }
+  }
 }
 
 main()
