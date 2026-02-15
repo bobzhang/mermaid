@@ -1,0 +1,113 @@
+graph BT
+TOP[TOP]
+BOTTOM[BOTTOM]
+
+subgraph STAGE_ALPHA
+A1[A1]
+A2[A2]
+A3[A3]
+A4[A4]
+subgraph ALPHA_CORE
+AC1[AC1]
+AC2[AC2]
+AC3[AC3]
+end
+A5[A5]
+A6[A6]
+end
+
+subgraph STAGE_BETA
+B1[B1]
+B2[B2]
+B3[B3]
+B4[B4]
+B5[B5]
+B6[B6]
+end
+
+subgraph STAGE_GAMMA
+G1[G1]
+G2[G2]
+G3[G3]
+G4[G4]
+subgraph GAMMA_CORE
+GC1[GC1]
+GC2[GC2]
+GC3[GC3]
+end
+G5[G5]
+G6[G6]
+end
+
+TOP --> A1
+TOP --> B1
+TOP --> G1
+
+A1 --> A2
+A2 --> A3
+A3 --> A4
+A4 --> A5
+A5 --> A6
+A6 --> A2
+
+G1 --> G2
+G2 --> G3
+G3 --> G4
+G4 --> G5
+G5 --> G6
+G6 --> G2
+
+B1 --> B2
+B2 --> B3
+B3 --> B4
+B4 --> B5
+B5 --> B6
+B6 --> B2
+
+A2 --> AC1
+AC1 --> AC2
+AC2 --> AC3
+AC3 --> A5
+
+G2 --> GC1
+GC1 --> GC2
+GC2 --> GC3
+GC3 --> G5
+
+A3 --> B2
+A4 --> B3
+A5 --> B4
+AC2 --> B5
+
+B2 --> G2
+B3 --> G3
+B4 --> G4
+B5 --> G5
+
+G3 --> B1
+G4 --> B2
+G5 --> B3
+GC2 --> B4
+
+B3 --> AC1
+B4 --> AC2
+B5 --> AC3
+
+B2 --> GC1
+B3 --> GC2
+B4 --> GC3
+
+A6 --> BOTTOM
+B6 --> BOTTOM
+G6 --> BOTTOM
+
+BOTTOM --> B3
+BOTTOM --> A3
+BOTTOM --> G3
+
+A6 --> G2
+G6 --> A2
+A4 --> GC2
+G4 --> AC2
+B6 --> A2
+B6 --> G2

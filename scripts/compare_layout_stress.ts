@@ -6,6 +6,7 @@
  *   bun run scripts/compare_layout_stress.ts fixtures/layout_stress_001_dense_dag.mmd
  *   bun run scripts/compare_layout_stress.ts --json /tmp/layout_stress_metrics.json
  *   bun run scripts/compare_layout_stress.ts --max-logical-crossing-multiplier 1.8
+ *   bun run scripts/compare_layout_stress.ts --max-polyline-crossing-multiplier 4.6 --min-span-area-ratio 0.04
  *   bun run scripts/compare_layout_stress.ts fixtures/layout_challenge_001_nested_portal_mesh.mmd --explain-logical-crossings
  *   bun run scripts/compare_layout_stress.ts --max-logical-crossing-multiplier 1.0 --explain-on-failure
  */
@@ -39,11 +40,13 @@ type Metrics = {
   inversionRate: number
   localPolylineCrossings: number
   officialPolylineCrossings: number
+  polylineCrossingMultiplier: number
   localLogicalCrossings: number
   officialLogicalCrossings: number
   logicalCrossingMultiplier: number
   spanXRatio: number
   spanYRatio: number
+  spanAreaRatio: number
   status: 'ok' | 'mismatch'
   logicalCrossingPairShared?: number
   logicalCrossingPairLocalOnly?: number
@@ -58,6 +61,10 @@ type CliOptions = {
   fixtures: string[]
   jsonPath?: string
   maxLogicalCrossingMultiplier?: number
+  maxPolylineCrossingMultiplier?: number
+  minSpanXRatio?: number
+  minSpanYRatio?: number
+  minSpanAreaRatio?: number
   explainLogicalCrossings: boolean
   explainOnFailure: boolean
   topCrossingPairs: number
@@ -901,6 +908,13 @@ function samplePairs(pairs: string[], limit: number): string[] {
   return pairs.slice(0, limit)
 }
 
+function crossingMultiplier(local: number, official: number): number {
+  if (official === 0) {
+    return local === 0 ? 1 : Number.POSITIVE_INFINITY
+  }
+  return local / official
+}
+
 function renderOfficial(inputPath: string, outPath: string, npmCacheDir: string): void {
   runOrThrow(
     'npx',
@@ -962,12 +976,16 @@ function compareFixture(
   const localLogicalPairKeys = collectLogicalCrossingPairKeys(localLogicalSegments)
   const officialLogicalCrossings = officialLogicalPairKeys.length
   const localLogicalCrossings = localLogicalPairKeys.length
-  const logicalCrossingMultiplier =
-    officialLogicalCrossings === 0
-      ? localLogicalCrossings === 0
-        ? 1
-        : Number.POSITIVE_INFINITY
-      : localLogicalCrossings / officialLogicalCrossings
+  const logicalCrossingMultiplier = crossingMultiplier(
+    localLogicalCrossings,
+    officialLogicalCrossings,
+  )
+  const localPolylineCrossings = countPolylineCrossings(localEdges)
+  const officialPolylineCrossings = countPolylineCrossings(officialEdges)
+  const polylineCrossingMultiplier = crossingMultiplier(
+    localPolylineCrossings,
+    officialPolylineCrossings,
+  )
 
   if (sharedLabels.length < 2) {
     const sharedPairs = pairSetIntersection(localLogicalPairKeys, officialLogicalPairKeys)
@@ -985,13 +1003,15 @@ function compareFixture(
       rmse: Number.NaN,
       maxDist: Number.NaN,
       inversionRate: Number.NaN,
-      localPolylineCrossings: countPolylineCrossings(localEdges),
-      officialPolylineCrossings: countPolylineCrossings(officialEdges),
+      localPolylineCrossings,
+      officialPolylineCrossings,
+      polylineCrossingMultiplier,
       localLogicalCrossings,
       officialLogicalCrossings,
       logicalCrossingMultiplier,
       spanXRatio: Number.NaN,
       spanYRatio: Number.NaN,
+      spanAreaRatio: Number.NaN,
       status: structuralOk ? 'ok' : 'mismatch',
       ...(options.explainLogicalCrossings
         ? {
@@ -1039,6 +1059,9 @@ function compareFixture(
   const officialSpanY = officialBounds.maxY - officialBounds.minY
   const localSpanX = localBounds.maxX - localBounds.minX
   const localSpanY = localBounds.maxY - localBounds.minY
+  const spanXRatio = localSpanX / Math.max(officialSpanX, 1e-9)
+  const spanYRatio = localSpanY / Math.max(officialSpanY, 1e-9)
+  const spanAreaRatio = spanXRatio * spanYRatio
 
   const sharedPairs = pairSetIntersection(localLogicalPairKeys, officialLogicalPairKeys)
   const localOnlyPairs = pairSetDiff(localLogicalPairKeys, officialLogicalPairKeys)
@@ -1056,13 +1079,15 @@ function compareFixture(
     rmse,
     maxDist,
     inversionRate,
-    localPolylineCrossings: countPolylineCrossings(localEdges),
-    officialPolylineCrossings: countPolylineCrossings(officialEdges),
+    localPolylineCrossings,
+    officialPolylineCrossings,
+    polylineCrossingMultiplier,
     localLogicalCrossings,
     officialLogicalCrossings,
     logicalCrossingMultiplier,
-    spanXRatio: localSpanX / Math.max(officialSpanX, 1e-9),
-    spanYRatio: localSpanY / Math.max(officialSpanY, 1e-9),
+    spanXRatio,
+    spanYRatio,
+    spanAreaRatio,
     status: structuralOk ? 'ok' : 'mismatch',
     ...(options.explainLogicalCrossings
       ? {
@@ -1100,6 +1125,10 @@ function parseCliOptions(args: string[]): CliOptions {
   const fixtures: string[] = []
   let jsonPath: string | undefined = undefined
   let maxLogicalCrossingMultiplier: number | undefined = undefined
+  let maxPolylineCrossingMultiplier: number | undefined = undefined
+  let minSpanXRatio: number | undefined = undefined
+  let minSpanYRatio: number | undefined = undefined
+  let minSpanAreaRatio: number | undefined = undefined
   let explainLogicalCrossings = false
   let explainOnFailure = false
   let topCrossingPairs = 8
@@ -1122,6 +1151,50 @@ function parseCliOptions(args: string[]): CliOptions {
         fail('invalid --max-logical-crossing-multiplier value, expected positive number')
       }
       maxLogicalCrossingMultiplier = parsed
+      i += 1
+      continue
+    }
+    if (arg === '--max-polyline-crossing-multiplier') {
+      const next = args[i + 1]
+      if (!next) fail('missing number after --max-polyline-crossing-multiplier')
+      const parsed = Number.parseFloat(next)
+      if (!Number.isFinite(parsed) || parsed <= 0) {
+        fail('invalid --max-polyline-crossing-multiplier value, expected positive number')
+      }
+      maxPolylineCrossingMultiplier = parsed
+      i += 1
+      continue
+    }
+    if (arg === '--min-span-x-ratio') {
+      const next = args[i + 1]
+      if (!next) fail('missing number after --min-span-x-ratio')
+      const parsed = Number.parseFloat(next)
+      if (!Number.isFinite(parsed) || parsed <= 0) {
+        fail('invalid --min-span-x-ratio value, expected positive number')
+      }
+      minSpanXRatio = parsed
+      i += 1
+      continue
+    }
+    if (arg === '--min-span-y-ratio') {
+      const next = args[i + 1]
+      if (!next) fail('missing number after --min-span-y-ratio')
+      const parsed = Number.parseFloat(next)
+      if (!Number.isFinite(parsed) || parsed <= 0) {
+        fail('invalid --min-span-y-ratio value, expected positive number')
+      }
+      minSpanYRatio = parsed
+      i += 1
+      continue
+    }
+    if (arg === '--min-span-area-ratio') {
+      const next = args[i + 1]
+      if (!next) fail('missing number after --min-span-area-ratio')
+      const parsed = Number.parseFloat(next)
+      if (!Number.isFinite(parsed) || parsed <= 0) {
+        fail('invalid --min-span-area-ratio value, expected positive number')
+      }
+      minSpanAreaRatio = parsed
       i += 1
       continue
     }
@@ -1162,6 +1235,10 @@ function parseCliOptions(args: string[]): CliOptions {
     fixtures,
     jsonPath,
     maxLogicalCrossingMultiplier,
+    maxPolylineCrossingMultiplier,
+    minSpanXRatio,
+    minSpanYRatio,
+    minSpanAreaRatio,
     explainLogicalCrossings,
     explainOnFailure,
     topCrossingPairs,
@@ -1223,9 +1300,11 @@ function main(): void {
     console.log(
       `rmse=${round(result.rmse)} maxDist=${round(result.maxDist)} inversionRate=${round(result.inversionRate)}`,
     )
-    console.log(`spanRatio x=${round(result.spanXRatio)} y=${round(result.spanYRatio)}`)
     console.log(
-      `polylineCrossings local=${result.localPolylineCrossings} official=${result.officialPolylineCrossings} delta=${result.localPolylineCrossings - result.officialPolylineCrossings}`,
+      `spanRatio x=${round(result.spanXRatio)} y=${round(result.spanYRatio)} area=${round(result.spanAreaRatio)}`,
+    )
+    console.log(
+      `polylineCrossings local=${result.localPolylineCrossings} official=${result.officialPolylineCrossings} delta=${result.localPolylineCrossings - result.officialPolylineCrossings} multiplier=${round(result.polylineCrossingMultiplier)}`,
     )
     console.log(
       `logicalCrossings local=${result.localLogicalCrossings} official=${result.officialLogicalCrossings} multiplier=${round(result.logicalCrossingMultiplier)}`,
@@ -1245,6 +1324,12 @@ function main(): void {
   const avgLogicalMultiplier =
     results.reduce((acc, row) => acc + (Number.isFinite(row.logicalCrossingMultiplier) ? row.logicalCrossingMultiplier : 0), 0) /
     Math.max(results.length, 1)
+  const avgPolylineMultiplier =
+    results.reduce((acc, row) => acc + (Number.isFinite(row.polylineCrossingMultiplier) ? row.polylineCrossingMultiplier : 0), 0) /
+    Math.max(results.length, 1)
+  const avgSpanAreaRatio =
+    results.reduce((acc, row) => acc + (Number.isFinite(row.spanAreaRatio) ? row.spanAreaRatio : 0), 0) /
+    Math.max(results.length, 1)
   const totalLocalPolylineCrossings = results.reduce((acc, row) => acc + row.localPolylineCrossings, 0)
   const totalOfficialPolylineCrossings = results.reduce((acc, row) => acc + row.officialPolylineCrossings, 0)
   const totalLocalLogicalCrossings = results.reduce((acc, row) => acc + row.localLogicalCrossings, 0)
@@ -1259,7 +1344,9 @@ function main(): void {
   console.log(
     `total_logical_crossings local=${totalLocalLogicalCrossings} official=${totalOfficialLogicalCrossings} delta=${totalLocalLogicalCrossings - totalOfficialLogicalCrossings}`,
   )
+  console.log(`avg_polyline_crossing_multiplier=${round(avgPolylineMultiplier)}`)
   console.log(`avg_logical_crossing_multiplier=${round(avgLogicalMultiplier)}`)
+  console.log(`avg_span_area_ratio=${round(avgSpanAreaRatio)}`)
   console.log(`rendered_svgs_dir=${tempRoot}`)
 
   if (options.jsonPath) {
@@ -1268,6 +1355,10 @@ function main(): void {
       renderedSvgDir: tempRoot,
       options: {
         maxLogicalCrossingMultiplier: options.maxLogicalCrossingMultiplier ?? null,
+        maxPolylineCrossingMultiplier: options.maxPolylineCrossingMultiplier ?? null,
+        minSpanXRatio: options.minSpanXRatio ?? null,
+        minSpanYRatio: options.minSpanYRatio ?? null,
+        minSpanAreaRatio: options.minSpanAreaRatio ?? null,
         explainLogicalCrossings: includeExplanations,
         explainOnFailure: options.explainOnFailure,
         topCrossingPairs: options.topCrossingPairs,
@@ -1282,7 +1373,9 @@ function main(): void {
         totalOfficialPolylineCrossings,
         totalLocalLogicalCrossings,
         totalOfficialLogicalCrossings,
+        avgPolylineCrossingMultiplier: avgPolylineMultiplier,
         avgLogicalCrossingMultiplier: avgLogicalMultiplier,
+        avgSpanAreaRatio,
       },
       results,
     }
@@ -1315,6 +1408,76 @@ function main(): void {
         }
       }
       process.exitCode = 3
+    }
+  }
+
+  if (options.maxPolylineCrossingMultiplier !== undefined) {
+    const threshold = options.maxPolylineCrossingMultiplier
+    const violating = results.filter(result => result.polylineCrossingMultiplier > threshold)
+    if (violating.length > 0) {
+      console.error(
+        [
+          `polyline crossing multiplier threshold exceeded: threshold=${threshold}`,
+          ...violating.map(
+            result =>
+              `  ${result.fixture}: multiplier=${round(result.polylineCrossingMultiplier)} local=${result.localPolylineCrossings} official=${result.officialPolylineCrossings}`,
+          ),
+        ].join('\n'),
+      )
+      process.exitCode = 4
+    }
+  }
+
+  if (options.minSpanXRatio !== undefined) {
+    const threshold = options.minSpanXRatio
+    const violating = results.filter(result => !Number.isFinite(result.spanXRatio) || result.spanXRatio < threshold)
+    if (violating.length > 0) {
+      console.error(
+        [
+          `span x ratio minimum not met: threshold=${threshold}`,
+          ...violating.map(
+            result =>
+              `  ${result.fixture}: spanXRatio=${round(result.spanXRatio)}`,
+          ),
+        ].join('\n'),
+      )
+      process.exitCode = 5
+    }
+  }
+
+  if (options.minSpanYRatio !== undefined) {
+    const threshold = options.minSpanYRatio
+    const violating = results.filter(result => !Number.isFinite(result.spanYRatio) || result.spanYRatio < threshold)
+    if (violating.length > 0) {
+      console.error(
+        [
+          `span y ratio minimum not met: threshold=${threshold}`,
+          ...violating.map(
+            result =>
+              `  ${result.fixture}: spanYRatio=${round(result.spanYRatio)}`,
+          ),
+        ].join('\n'),
+      )
+      process.exitCode = 6
+    }
+  }
+
+  if (options.minSpanAreaRatio !== undefined) {
+    const threshold = options.minSpanAreaRatio
+    const violating = results.filter(
+      result => !Number.isFinite(result.spanAreaRatio) || result.spanAreaRatio < threshold,
+    )
+    if (violating.length > 0) {
+      console.error(
+        [
+          `span area ratio minimum not met: threshold=${threshold}`,
+          ...violating.map(
+            result =>
+              `  ${result.fixture}: spanAreaRatio=${round(result.spanAreaRatio)} x=${round(result.spanXRatio)} y=${round(result.spanYRatio)}`,
+          ),
+        ].join('\n'),
+      )
+      process.exitCode = 7
     }
   }
 }

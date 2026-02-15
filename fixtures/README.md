@@ -13,6 +13,17 @@ bun run scripts/compare_layout_stress.ts --max-logical-crossing-multiplier 1.0
 
 These fixtures are intended to stay stable under a strict quality gate.
 
+For a broader quality watchdog (still based on current pre-alpha baseline), run:
+
+```bash
+bun run scripts/compare_layout_stress.ts \
+  --max-logical-crossing-multiplier 1.0 \
+  --max-polyline-crossing-multiplier 4.6 \
+  --min-span-x-ratio 0.12 \
+  --min-span-y-ratio 0.05 \
+  --min-span-area-ratio 0.04
+```
+
 ## Challenge Fixtures
 
 Files named `layout_challenge_*.mmd` are intentionally difficult topologies used
@@ -41,7 +52,11 @@ modes instead of random graph noise.
   network with diagonal and reverse links.
 - `layout_stress_012_interleaved_subgraph_feedback.mmd`: nested subgraphs with
   interleaved bidirectional cross-cluster feedback and sink back-links.
+- `layout_stress_013_rl_dual_scc_weave.mmd`: right-to-left dual-SCC weave used
+  to validate `graph RL` directional behavior and long-range cross-cluster flow.
 - `layout_challenge_002_multicluster_hyperloop.mmd`: high-density
   multi-cluster portal mesh for exploratory comparison.
 - `layout_challenge_003_quad_cluster_pinwheel.mmd`: four-cluster pinwheel with
   nested cores and long-range reciprocal bridges.
+- `layout_challenge_004_bt_multistage_crosswind.mmd`: bottom-to-top staged mesh
+  with nested cores to stress `graph BT` rank assignment and backflow routing.
