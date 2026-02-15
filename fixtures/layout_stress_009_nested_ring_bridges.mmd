@@ -1,0 +1,92 @@
+graph TB
+SRC[SRC]
+SNK[SNK]
+
+subgraph ALPHA
+A1[A1]
+A2[A2]
+A3[A3]
+A4[A4]
+A5[A5]
+A6[A6]
+end
+
+subgraph BETA
+B1[B1]
+B2[B2]
+B3[B3]
+B4[B4]
+B5[B5]
+B6[B6]
+end
+
+subgraph GAMMA
+C1[C1]
+C2[C2]
+C3[C3]
+C4[C4]
+C5[C5]
+C6[C6]
+end
+
+SRC --> A1
+SRC --> B1
+SRC --> C1
+
+A1 --> A2
+A2 --> A3
+A3 --> A4
+A4 --> A5
+A5 --> A6
+A6 --> A1
+
+B1 --> B2
+B2 --> B3
+B3 --> B4
+B4 --> B5
+B5 --> B6
+B6 --> B1
+
+C1 --> C2
+C2 --> C3
+C3 --> C4
+C4 --> C5
+C5 --> C6
+C6 --> C1
+
+A2 --> B1
+A3 --> B2
+A4 --> B3
+A5 --> B4
+A6 --> B5
+A1 --> B6
+
+B2 --> C1
+B3 --> C2
+B4 --> C3
+B5 --> C4
+B6 --> C5
+B1 --> C6
+
+C2 --> A1
+C3 --> A2
+C4 --> A3
+C5 --> A4
+C6 --> A5
+C1 --> A6
+
+A3 --> C5
+B4 --> A2
+C4 --> B1
+A5 --> C2
+B6 --> A4
+C6 --> B3
+
+A6 --> SNK
+B6 --> SNK
+C6 --> SNK
+
+SNK --> B3
+C5 --> SRC
+B5 --> A1
+A4 --> C1
