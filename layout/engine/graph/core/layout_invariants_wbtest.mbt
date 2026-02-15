@@ -709,6 +709,41 @@ test "Layout dotted fanout follows target lanes with a single elbow" {
 }
 
 ///|
+test "Layout solid long-span fanout separates branch routes" {
+  let graph = @parser.parse_mermaid(
+    (
+      #|graph LR
+      #|A
+      #|B
+      #|C
+      #|D
+      #|E
+      #|A --> B
+      #|B --> C
+      #|C --> D
+      #|D --> E
+      #|A --> D
+      #|A --> E
+      #|
+    )
+    .trim_end()
+    .to_string(),
+  )
+  let positioned = layout_graph(graph, RenderOptions::default())
+  let a = find_positioned_node(positioned.nodes, "A")
+  let branch_d = find_positioned_edge(positioned.edges, "A", "D")
+  let branch_e = find_positioned_edge(positioned.edges, "A", "E")
+
+  assert_eq(branch_d.points.length(), 4)
+  assert_eq(branch_e.points.length(), 4)
+  assert_true(branch_d.points[1].y != a.y)
+  assert_true(branch_e.points[1].y != a.y)
+  assert_true(branch_d.points[1].y != branch_e.points[1].y)
+  assert_eq(branch_d.points[1].y, branch_d.points[2].y)
+  assert_eq(branch_e.points[1].y, branch_e.points[2].y)
+}
+
+///|
 test "Layout LR promotes late-defined source for dotted back-reference" {
   let graph = @parser.parse_mermaid(
     (

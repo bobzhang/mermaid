@@ -1771,7 +1771,7 @@ fn edge_points_for(
     }
     match forward_fanout_offset_y {
       Some(offset_y) =>
-        if style is Dotted && moving_right && offset_y != 0 {
+        if moving_right && offset_y != 0 {
           let lane_y = source.y + offset_y
           if smooth_forward_fanout {
             let mid_x = (start_x + end_x) / 2
@@ -3773,8 +3773,9 @@ fn layout_graph_with_subgraph_redirects(
   let routed_edge_segments : Array[RoutedEdgeSegment] = []
   let label_slots_by_anchor : Map[String, Int] = {}
   let back_edge_lane_reservations : Array[BackEdgeLaneReservation] = []
-  let dotted_forward_out_count_by_source : Map[String, Int] = {}
+  let forward_fanout_out_count_by_source : Map[String, Int] = {}
   let forward_fanout_vertical_gap_threshold = (layer_spacing / 4).max(22)
+  let forward_fanout_span_threshold = (node_spacing * 2).max(140)
 
   let edge_layout_contexts : Array[EdgeLayoutContext] = []
   for edge in graph.edges {
@@ -3823,22 +3824,28 @@ fn layout_graph_with_subgraph_redirects(
   if horizontal {
     for context in edge_layout_contexts {
       let edge = context.edge
-      if edge.label is Some(_) || !(edge.style is Dotted) {
+      if edge.label is Some(_) {
         continue
       }
-      if context.target.x >= context.source.x &&
-        int_abs(context.target.y - context.source.y) <=
+      if !context.edge_horizontal || context.target.x < context.source.x {
+        continue
+      }
+      if int_abs(context.target.x - context.source.x) <
+        forward_fanout_span_threshold {
+        continue
+      }
+      if int_abs(context.target.y - context.source.y) <=
         forward_fanout_vertical_gap_threshold {
         let current = option_int_or(
-          dotted_forward_out_count_by_source.get(context.resolved_source_id),
+          forward_fanout_out_count_by_source.get(context.resolved_source_id),
           0,
         )
-        dotted_forward_out_count_by_source[context.resolved_source_id] = current +
+        forward_fanout_out_count_by_source[context.resolved_source_id] = current +
           1
       }
     }
   }
-  let dotted_forward_out_slot_by_source : Map[String, Int] = {}
+  let forward_fanout_out_slot_by_source : Map[String, Int] = {}
   for context in edge_layout_contexts {
     let edge = context.edge
     let source = context.source
@@ -3862,20 +3869,20 @@ fn layout_graph_with_subgraph_redirects(
       edge.style,
       back_edge_bend_y,
       if edge_horizontal &&
-        edge.style is Dotted &&
         edge.label is None &&
         target.x >= source.x &&
+        int_abs(target.x - source.x) >= forward_fanout_span_threshold &&
         int_abs(target.y - source.y) <= forward_fanout_vertical_gap_threshold {
         let total = option_int_or(
-          dotted_forward_out_count_by_source.get(context.resolved_source_id),
+          forward_fanout_out_count_by_source.get(context.resolved_source_id),
           0,
         )
         if total > 1 {
           let slot = option_int_or(
-            dotted_forward_out_slot_by_source.get(context.resolved_source_id),
+            forward_fanout_out_slot_by_source.get(context.resolved_source_id),
             0,
           )
-          dotted_forward_out_slot_by_source[context.resolved_source_id] = slot +
+          forward_fanout_out_slot_by_source[context.resolved_source_id] = slot +
             1
           Some(forward_fanout_offset(slot, total))
         } else {
