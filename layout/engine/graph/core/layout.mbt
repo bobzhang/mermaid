@@ -1542,8 +1542,12 @@ fn segment_intersects_horizontal_span(
 
   let dx = end.x - start.x
   let dy = end.y - start.y
-  let x_at_y = start.x + dx * (y - start.y) / dy
-  x_at_y >= left && x_at_y <= right
+  let numerator = start.x * dy + dx * (y - start.y)
+  if dy > 0 {
+    left * dy <= numerator && numerator <= right * dy
+  } else {
+    right * dy <= numerator && numerator <= left * dy
+  }
 }
 
 ///|

@@ -143,6 +143,17 @@ test "Layout back-edge lane selection avoids existing segment crossings" {
 }
 
 ///|
+test "Layout segment-span intersection handles fractional crossing exactly" {
+  assert_true(
+    segment_intersects_horizontal_span({ x: 0, y: 0 }, { x: 3, y: 2 }, 1, 2, 1),
+  )
+  assert_eq(
+    segment_intersects_horizontal_span({ x: 0, y: 0 }, { x: 3, y: 2 }, 2, 3, 1),
+    false,
+  )
+}
+
+///|
 test "Layout cyclic LR flowchart without metadata keeps main chain horizontal" {
   let graph = @parser.parse_mermaid(
     (
