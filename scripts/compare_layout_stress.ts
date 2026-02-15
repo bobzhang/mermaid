@@ -7,6 +7,7 @@
  *   bun run scripts/compare_layout_stress.ts --json /tmp/layout_stress_metrics.json
  *   bun run scripts/compare_layout_stress.ts --max-logical-crossing-multiplier 1.8
  *   bun run scripts/compare_layout_stress.ts fixtures/layout_challenge_001_nested_portal_mesh.mmd --explain-logical-crossings
+ *   bun run scripts/compare_layout_stress.ts --max-logical-crossing-multiplier 1.0 --explain-on-failure
  */
 
 import { mkdtempSync, readFileSync, readdirSync, writeFileSync } from 'node:fs'
@@ -58,6 +59,7 @@ type CliOptions = {
   jsonPath?: string
   maxLogicalCrossingMultiplier?: number
   explainLogicalCrossings: boolean
+  explainOnFailure: boolean
   topCrossingPairs: number
   topCrossingEdges: number
 }
@@ -691,6 +693,7 @@ function parseCliOptions(args: string[]): CliOptions {
   let jsonPath: string | undefined = undefined
   let maxLogicalCrossingMultiplier: number | undefined = undefined
   let explainLogicalCrossings = false
+  let explainOnFailure = false
   let topCrossingPairs = 8
   let topCrossingEdges = 8
 
@@ -716,6 +719,10 @@ function parseCliOptions(args: string[]): CliOptions {
     }
     if (arg === '--explain-logical-crossings') {
       explainLogicalCrossings = true
+      continue
+    }
+    if (arg === '--explain-on-failure') {
+      explainOnFailure = true
       continue
     }
     if (arg === '--top-crossing-pairs') {
@@ -748,13 +755,43 @@ function parseCliOptions(args: string[]): CliOptions {
     jsonPath,
     maxLogicalCrossingMultiplier,
     explainLogicalCrossings,
+    explainOnFailure,
     topCrossingPairs,
     topCrossingEdges,
   }
 }
 
+function printLogicalCrossingExplanation(result: Metrics): void {
+  console.log(
+    `logicalCrossingPairs shared=${result.logicalCrossingPairShared ?? 0} localOnly=${result.logicalCrossingPairLocalOnly ?? 0} officialOnly=${result.logicalCrossingPairOfficialOnly ?? 0}`,
+  )
+  const localEdgeSummary =
+    result.logicalCrossingLocalOnlyTopEdges
+      ?.map(item => `${item.edge}:${item.count}`)
+      .join(', ') ?? ''
+  const officialEdgeSummary =
+    result.logicalCrossingOfficialOnlyTopEdges
+      ?.map(item => `${item.edge}:${item.count}`)
+      .join(', ') ?? ''
+  if (localEdgeSummary !== '') {
+    console.log(`localOnlyTopEdges ${localEdgeSummary}`)
+  }
+  if (officialEdgeSummary !== '') {
+    console.log(`officialOnlyTopEdges ${officialEdgeSummary}`)
+  }
+  const localPairs = result.logicalCrossingPairLocalOnlySample ?? []
+  const officialPairs = result.logicalCrossingPairOfficialOnlySample ?? []
+  if (localPairs.length > 0) {
+    console.log(`localOnlyPairs ${localPairs.join(' | ')}`)
+  }
+  if (officialPairs.length > 0) {
+    console.log(`officialOnlyPairs ${officialPairs.join(' | ')}`)
+  }
+}
+
 function main(): void {
   const options = parseCliOptions(process.argv.slice(2))
+  const includeExplanations = options.explainLogicalCrossings || options.explainOnFailure
   const targets = options.fixtures.length > 0 ? options.fixtures : discoverDefaultFixtures()
   if (targets.length === 0) {
     fail('no stress fixtures found (expected fixtures/layout_stress_*.mmd)')
@@ -762,7 +799,13 @@ function main(): void {
 
   const tempRoot = mkdtempSync(join(tmpdir(), 'mermaid-layout-stress-'))
   const npmCacheDir = join(tempRoot, '.npm-cache')
-  const results = targets.map(path => compareFixture(path, tempRoot, npmCacheDir, options))
+  const compareOptions = {
+    ...options,
+    explainLogicalCrossings: includeExplanations,
+  }
+  const results = targets.map(path =>
+    compareFixture(path, tempRoot, npmCacheDir, compareOptions),
+  )
 
   for (const result of results) {
     console.log(`\n=== ${result.fixture} ===`)
@@ -780,31 +823,7 @@ function main(): void {
       `logicalCrossings local=${result.localLogicalCrossings} official=${result.officialLogicalCrossings} multiplier=${round(result.logicalCrossingMultiplier)}`,
     )
     if (options.explainLogicalCrossings) {
-      console.log(
-        `logicalCrossingPairs shared=${result.logicalCrossingPairShared ?? 0} localOnly=${result.logicalCrossingPairLocalOnly ?? 0} officialOnly=${result.logicalCrossingPairOfficialOnly ?? 0}`,
-      )
-      const localEdgeSummary =
-        result.logicalCrossingLocalOnlyTopEdges
-          ?.map(item => `${item.edge}:${item.count}`)
-          .join(', ') ?? ''
-      const officialEdgeSummary =
-        result.logicalCrossingOfficialOnlyTopEdges
-          ?.map(item => `${item.edge}:${item.count}`)
-          .join(', ') ?? ''
-      if (localEdgeSummary !== '') {
-        console.log(`localOnlyTopEdges ${localEdgeSummary}`)
-      }
-      if (officialEdgeSummary !== '') {
-        console.log(`officialOnlyTopEdges ${officialEdgeSummary}`)
-      }
-      const localPairs = result.logicalCrossingPairLocalOnlySample ?? []
-      const officialPairs = result.logicalCrossingPairOfficialOnlySample ?? []
-      if (localPairs.length > 0) {
-        console.log(`localOnlyPairs ${localPairs.join(' | ')}`)
-      }
-      if (officialPairs.length > 0) {
-        console.log(`officialOnlyPairs ${officialPairs.join(' | ')}`)
-      }
+      printLogicalCrossingExplanation(result)
     }
   }
 
@@ -841,7 +860,8 @@ function main(): void {
       renderedSvgDir: tempRoot,
       options: {
         maxLogicalCrossingMultiplier: options.maxLogicalCrossingMultiplier ?? null,
-        explainLogicalCrossings: options.explainLogicalCrossings,
+        explainLogicalCrossings: includeExplanations,
+        explainOnFailure: options.explainOnFailure,
         topCrossingPairs: options.topCrossingPairs,
         topCrossingEdges: options.topCrossingEdges,
       },
@@ -880,6 +900,12 @@ function main(): void {
           ),
         ].join('\n'),
       )
+      if (options.explainOnFailure && !options.explainLogicalCrossings) {
+        for (const result of violating) {
+          console.error(`\n--- explain ${result.fixture} ---`)
+          printLogicalCrossingExplanation(result)
+        }
+      }
       process.exitCode = 3
     }
   }
