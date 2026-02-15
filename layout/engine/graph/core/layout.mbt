@@ -785,17 +785,29 @@ fn refine_horizontal_state_flow_lanes(
   let indegree_by_id : Map[String, Int] = {}
   let outdegree_by_id : Map[String, Int] = {}
   let has_self_loop_by_id : Map[String, Bool] = {}
+  let outgoing_edge_indices_by_source : Map[String, Array[Int]] = {}
+  let incoming_edge_indices_by_target : Map[String, Array[Int]] = {}
   let lane_scale = if enhanced_mode { 2 } else { 1 }
   for node in nodes_in_order {
     node_exists[node.id] = true
     indegree_by_id[node.id] = 0
     outdegree_by_id[node.id] = 0
     has_self_loop_by_id[node.id] = false
+    outgoing_edge_indices_by_source[node.id] = []
+    incoming_edge_indices_by_target[node.id] = []
     lane_by_id[node.id] = option_int_or(lane_by_id.get(node.id), 0) * lane_scale
   }
-  for edge in edges {
+  for edge_index, edge in edges {
     if !node_exists.contains(edge.source) || !node_exists.contains(edge.target) {
       continue
+    }
+    match outgoing_edge_indices_by_source.get(edge.source) {
+      Some(indices) => indices.push(edge_index)
+      None => ()
+    }
+    match incoming_edge_indices_by_target.get(edge.target) {
+      Some(indices) => indices.push(edge_index)
+      None => ()
     }
     if edge.source == edge.target {
       has_self_loop_by_id[edge.source] = true
@@ -817,15 +829,20 @@ fn refine_horizontal_state_flow_lanes(
     let source_rank = option_int_or(rank_by_id.get(node.id), 0)
     let source_lane = option_int_or(lane_by_id.get(node.id), 0)
     let forward_targets : Array[String] = []
-    for edge in edges {
-      if edge.source != node.id || !node_exists.contains(edge.target) {
-        continue
-      }
-      let target_rank = option_int_or(rank_by_id.get(edge.target), source_rank)
-      if target_rank <= source_rank || forward_targets.contains(edge.target) {
-        continue
-      }
-      forward_targets.push(edge.target)
+    match outgoing_edge_indices_by_source.get(node.id) {
+      Some(outgoing_edge_indices) =>
+        for edge_index in outgoing_edge_indices {
+          let edge = edges[edge_index]
+          let target_rank = option_int_or(
+            rank_by_id.get(edge.target),
+            source_rank,
+          )
+          if target_rank <= source_rank || forward_targets.contains(edge.target) {
+            continue
+          }
+          forward_targets.push(edge.target)
+        }
+      None => ()
     }
     forward_targets.sort_by((left, right) => {
       let left_rank = option_int_or(rank_by_id.get(left), 0)
@@ -887,14 +904,23 @@ fn refine_horizontal_state_flow_lanes(
 
       let mut sum = 0
       let mut count = 0
-      for edge in edges {
-        if edge.source == node.id && node_exists.contains(edge.target) {
-          sum += option_int_or(lane_by_id.get(edge.target), 0)
-          count += 1
-        } else if edge.target == node.id && node_exists.contains(edge.source) {
-          sum += option_int_or(lane_by_id.get(edge.source), 0)
-          count += 1
-        }
+      match outgoing_edge_indices_by_source.get(node.id) {
+        Some(outgoing_edge_indices) =>
+          for edge_index in outgoing_edge_indices {
+            let edge = edges[edge_index]
+            sum += option_int_or(lane_by_id.get(edge.target), 0)
+            count += 1
+          }
+        None => ()
+      }
+      match incoming_edge_indices_by_target.get(node.id) {
+        Some(incoming_edge_indices) =>
+          for edge_index in incoming_edge_indices {
+            let edge = edges[edge_index]
+            sum += option_int_or(lane_by_id.get(edge.source), 0)
+            count += 1
+          }
+        None => ()
       }
 
       if count == 0 {
@@ -949,23 +975,25 @@ fn refine_horizontal_state_flow_lanes(
       }
 
       let mut incoming_source : String? = None
-      for edge in edges {
-        if edge.target != node.id || !node_exists.contains(edge.source) {
-          continue
-        }
-        if edge.style is Dotted {
-          continue
-        }
-        let source_rank = option_int_or(rank_by_id.get(edge.source), 0)
-        let target_rank = option_int_or(
-          rank_by_id.get(edge.target),
-          source_rank,
-        )
-        if target_rank <= source_rank {
-          continue
-        }
-        incoming_source = Some(edge.source)
-        break
+      match incoming_edge_indices_by_target.get(node.id) {
+        Some(incoming_edge_indices) =>
+          for edge_index in incoming_edge_indices {
+            let edge = edges[edge_index]
+            if edge.style is Dotted {
+              continue
+            }
+            let source_rank = option_int_or(rank_by_id.get(edge.source), 0)
+            let target_rank = option_int_or(
+              rank_by_id.get(edge.target),
+              source_rank,
+            )
+            if target_rank <= source_rank {
+              continue
+            }
+            incoming_source = Some(edge.source)
+            break
+          }
+        None => ()
       }
 
       let source_id = match incoming_source {
@@ -980,22 +1008,24 @@ fn refine_horizontal_state_flow_lanes(
 
       if outdegree == 1 {
         let mut has_forward_solid_outgoing = false
-        for edge in edges {
-          if edge.source != node.id || !node_exists.contains(edge.target) {
-            continue
-          }
-          if edge.style is Dotted {
-            continue
-          }
-          let source_rank = option_int_or(rank_by_id.get(edge.source), 0)
-          let target_rank = option_int_or(
-            rank_by_id.get(edge.target),
-            source_rank,
-          )
-          if target_rank > source_rank {
-            has_forward_solid_outgoing = true
-            break
-          }
+        match outgoing_edge_indices_by_source.get(node.id) {
+          Some(outgoing_edge_indices) =>
+            for edge_index in outgoing_edge_indices {
+              let edge = edges[edge_index]
+              if edge.style is Dotted {
+                continue
+              }
+              let source_rank = option_int_or(rank_by_id.get(edge.source), 0)
+              let target_rank = option_int_or(
+                rank_by_id.get(edge.target),
+                source_rank,
+              )
+              if target_rank > source_rank {
+                has_forward_solid_outgoing = true
+                break
+              }
+            }
+          None => ()
         }
         if !has_forward_solid_outgoing {
           continue
@@ -1018,23 +1048,25 @@ fn refine_horizontal_state_flow_lanes(
         continue
       }
 
-      for edge in edges {
-        if edge.target != node.id || !node_exists.contains(edge.source) {
-          continue
-        }
-        if edge.style is Dotted {
-          continue
-        }
-        let source_rank = option_int_or(rank_by_id.get(edge.source), 0)
-        let target_rank = option_int_or(
-          rank_by_id.get(edge.target),
-          source_rank,
-        )
-        if target_rank <= source_rank {
-          continue
-        }
-        lane_by_id[node.id] = option_int_or(lane_by_id.get(edge.source), 0)
-        break
+      match incoming_edge_indices_by_target.get(node.id) {
+        Some(incoming_edge_indices) =>
+          for edge_index in incoming_edge_indices {
+            let edge = edges[edge_index]
+            if edge.style is Dotted {
+              continue
+            }
+            let source_rank = option_int_or(rank_by_id.get(edge.source), 0)
+            let target_rank = option_int_or(
+              rank_by_id.get(edge.target),
+              source_rank,
+            )
+            if target_rank <= source_rank {
+              continue
+            }
+            lane_by_id[node.id] = option_int_or(lane_by_id.get(edge.source), 0)
+            break
+          }
+        None => ()
       }
     }
   }
