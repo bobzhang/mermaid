@@ -1,0 +1,16 @@
+[canvas]
+width=336 height=352
+
+[nodes]
+node id=A shape=Rectangle center=130,98 size=70x44 label=Build
+node id=B shape=Rectangle center=130,188 size=70x44 label=Test
+node id=D shape=Rectangle center=260,188 size=72x44 label=Notify
+node id=C shape=Rectangle center=130,278 size=80x44 label=Package
+
+[edges]
+edge A->B label=- label_pos=- points=130,120 -> 130,166
+edge A->D label=- label_pos=- points=130,120 -> 260,166
+edge B->C label=- label_pos=- points=130,210 -> 130,256
+
+[groups]
+group parent=- id=Pipeline frame=78,40,104,272 label=Pipeline
