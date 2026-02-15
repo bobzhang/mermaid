@@ -824,6 +824,133 @@ fn collect_non_state_flow_lanes(
     }
   }
 
+  fn lane_orient(
+    ax : Int,
+    ay : Int,
+    bx : Int,
+    by : Int,
+    cx : Int,
+    cy : Int,
+  ) -> Int {
+    (bx - ax) * (cy - ay) - (by - ay) * (cx - ax)
+  }
+
+  fn lane_segments_properly_intersect(
+    ax : Int,
+    ay : Int,
+    bx : Int,
+    by : Int,
+    cx : Int,
+    cy : Int,
+    dx : Int,
+    dy : Int,
+  ) -> Bool {
+    let o1 = lane_orient(ax, ay, bx, by, cx, cy)
+    let o2 = lane_orient(ax, ay, bx, by, dx, dy)
+    let o3 = lane_orient(cx, cy, dx, dy, ax, ay)
+    let o4 = lane_orient(cx, cy, dx, dy, bx, by)
+    ((o1 > 0 && o2 < 0) || (o1 < 0 && o2 > 0)) &&
+    ((o3 > 0 && o4 < 0) || (o3 < 0 && o4 > 0))
+  }
+
+  fn forward_edge_pair_crosses(
+    left_edge_index : Int,
+    right_edge_index : Int,
+    edges : Array[MermaidEdge],
+    rank_by_id : Map[String, Int],
+    lane_by_id : Map[String, Int],
+  ) -> Bool {
+    let left = edges[left_edge_index]
+    let right = edges[right_edge_index]
+    if left.source == right.source ||
+      left.source == right.target ||
+      left.target == right.source ||
+      left.target == right.target {
+      return false
+    }
+
+    match
+      (
+        rank_by_id.get(left.source),
+        rank_by_id.get(left.target),
+        rank_by_id.get(right.source),
+        rank_by_id.get(right.target),
+        lane_by_id.get(left.source),
+        lane_by_id.get(left.target),
+        lane_by_id.get(right.source),
+        lane_by_id.get(right.target),
+      ) {
+      (
+        Some(left_source_rank),
+        Some(left_target_rank),
+        Some(right_source_rank),
+        Some(right_target_rank),
+        Some(left_source_lane),
+        Some(left_target_lane),
+        Some(right_source_lane),
+        Some(right_target_lane),
+      ) =>
+        if left_target_rank <= left_source_rank ||
+          right_target_rank <= right_source_rank {
+          false
+        } else {
+          lane_segments_properly_intersect(
+            left_source_rank, left_source_lane, left_target_rank, left_target_lane,
+            right_source_rank, right_source_lane, right_target_rank, right_target_lane,
+          )
+        }
+      _ => false
+    }
+  }
+
+  fn append_incident_edge_indexes(
+    node_id : String,
+    incident_edge_indexes_by_node : Map[String, Array[Int]],
+    incident_edge_indexes : Array[Int],
+    seen_incident_edge_indexes : Map[Int, Bool],
+  ) -> Unit {
+    match incident_edge_indexes_by_node.get(node_id) {
+      Some(edge_indexes) =>
+        for edge_index in edge_indexes {
+          if seen_incident_edge_indexes.contains(edge_index) {
+            continue
+          }
+          seen_incident_edge_indexes[edge_index] = true
+          incident_edge_indexes.push(edge_index)
+        }
+      None => ()
+    }
+  }
+
+  fn count_crossings_involving(
+    incident_edge_indexes : Array[Int],
+    forward_edge_indexes : Array[Int],
+    edges : Array[MermaidEdge],
+    rank_by_id : Map[String, Int],
+    lane_by_id : Map[String, Int],
+  ) -> Int {
+    let seen_pairs : Map[String, Bool] = {}
+    let mut crossings = 0
+    for edge_index in incident_edge_indexes {
+      for other_edge_index in forward_edge_indexes {
+        if other_edge_index == edge_index {
+          continue
+        }
+        let left = edge_index.min(other_edge_index)
+        let right = edge_index.max(other_edge_index)
+        let key = "\{left}:\{right}"
+        if seen_pairs.contains(key) {
+          continue
+        }
+        seen_pairs[key] = true
+        if forward_edge_pair_crosses(left, right, edges, rank_by_id, lane_by_id) {
+          crossings += 1
+        }
+      }
+    }
+    crossings
+  }
+
   let lane_by_id : Map[String, Int] = {}
   for rank in 0..<=max_rank {
     let mut lane = 0
@@ -834,6 +961,171 @@ fn collect_non_state_flow_lanes(
       }
     }
   }
+
+  let real_node_ids_by_rank : Map[Int, Array[String]] = {}
+  for node in nodes_in_order {
+    let rank = option_int_or(rank_by_id.get(node.id), 0)
+    if !real_node_ids_by_rank.contains(rank) {
+      real_node_ids_by_rank[rank] = []
+    }
+    let node_ids = real_node_ids_by_rank[rank]
+    node_ids.push(node.id)
+  }
+
+  let forward_edge_indexes : Array[Int] = []
+  let incident_edge_indexes_by_node : Map[String, Array[Int]] = {}
+  for node in nodes_in_order {
+    incident_edge_indexes_by_node[node.id] = []
+  }
+  for edge_index, edge in edges {
+    match (rank_by_id.get(edge.source), rank_by_id.get(edge.target)) {
+      (Some(source_rank), Some(target_rank)) =>
+        if target_rank > source_rank &&
+          lane_by_id.contains(edge.source) &&
+          lane_by_id.contains(edge.target) {
+          forward_edge_indexes.push(edge_index)
+          match incident_edge_indexes_by_node.get(edge.source) {
+            Some(indexes) => indexes.push(edge_index)
+            None => ()
+          }
+          match incident_edge_indexes_by_node.get(edge.target) {
+            Some(indexes) => indexes.push(edge_index)
+            None => ()
+          }
+        }
+      _ => ()
+    }
+  }
+
+  fn try_lane_swap(
+    node_ids : Array[String],
+    left_index : Int,
+    right_index : Int,
+    incident_edge_indexes_by_node : Map[String, Array[Int]],
+    forward_edge_indexes : Array[Int],
+    edges : Array[MermaidEdge],
+    rank_by_id : Map[String, Int],
+    lane_by_id : Map[String, Int],
+  ) -> Bool {
+    let left_id = node_ids[left_index]
+    let right_id = node_ids[right_index]
+    let incident_edge_indexes : Array[Int] = []
+    let seen_incident_edge_indexes : Map[Int, Bool] = {}
+    append_incident_edge_indexes(
+      left_id, incident_edge_indexes_by_node, incident_edge_indexes, seen_incident_edge_indexes,
+    )
+    append_incident_edge_indexes(
+      right_id, incident_edge_indexes_by_node, incident_edge_indexes, seen_incident_edge_indexes,
+    )
+    if incident_edge_indexes.length() == 0 {
+      return false
+    }
+
+    let before = count_crossings_involving(
+      incident_edge_indexes, forward_edge_indexes, edges, rank_by_id, lane_by_id,
+    )
+    let left_lane = option_int_or(lane_by_id.get(left_id), 0)
+    let right_lane = option_int_or(lane_by_id.get(right_id), 0)
+    lane_by_id[left_id] = right_lane
+    lane_by_id[right_id] = left_lane
+    let after = count_crossings_involving(
+      incident_edge_indexes, forward_edge_indexes, edges, rank_by_id, lane_by_id,
+    )
+    if after < before {
+      node_ids[left_index] = right_id
+      node_ids[right_index] = left_id
+      true
+    } else {
+      lane_by_id[left_id] = left_lane
+      lane_by_id[right_id] = right_lane
+      false
+    }
+  }
+
+  if forward_edge_indexes.length() >= 2 {
+    for pass in 0..<10 {
+      let mut changed = false
+      for rank in 0..<=max_rank {
+        match real_node_ids_by_rank.get(rank) {
+          Some(node_ids) => {
+            if node_ids.length() < 2 {
+              continue
+            }
+            if pass % 2 == 0 {
+              let mut i = 0
+              while i + 1 < node_ids.length() {
+                if try_lane_swap(
+                    node_ids,
+                    i,
+                    i + 1,
+                    incident_edge_indexes_by_node,
+                    forward_edge_indexes,
+                    edges,
+                    rank_by_id,
+                    lane_by_id,
+                  ) {
+                  changed = true
+                }
+                i = i + 1
+              }
+            } else {
+              let mut i = node_ids.length() - 2
+              while true {
+                if try_lane_swap(
+                    node_ids,
+                    i,
+                    i + 1,
+                    incident_edge_indexes_by_node,
+                    forward_edge_indexes,
+                    edges,
+                    rank_by_id,
+                    lane_by_id,
+                  ) {
+                  changed = true
+                }
+                if i == 0 {
+                  break
+                }
+                i = i - 1
+              }
+            }
+          }
+          None => ()
+        }
+      }
+      if !changed {
+        break
+      }
+    }
+
+    for _ in 0..<2 {
+      let mut changed = false
+      for rank in 0..<=max_rank {
+        match real_node_ids_by_rank.get(rank) {
+          Some(node_ids) => {
+            if node_ids.length() < 3 {
+              continue
+            }
+            for i in 0..<(node_ids.length() - 1) {
+              for j in (i + 1)..<node_ids.length() {
+                if try_lane_swap(
+                    node_ids, i, j, incident_edge_indexes_by_node, forward_edge_indexes,
+                    edges, rank_by_id, lane_by_id,
+                  ) {
+                  changed = true
+                }
+              }
+            }
+          }
+          None => ()
+        }
+      }
+      if !changed {
+        break
+      }
+    }
+  }
+
   lane_by_id
 }
 
