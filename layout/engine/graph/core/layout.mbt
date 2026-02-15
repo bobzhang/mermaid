@@ -1986,6 +1986,11 @@ fn build_deferred_back_edge_order(
 }
 
 ///|
+fn deferred_order_signature(order : Array[Int]) -> String {
+  order.iter().map(context_index => context_index.to_string()).join(",")
+}
+
+///|
 fn append_routed_segments_for_points(
   routed_edge_segments : Array[RoutedEdgeSegment],
   source_id : String,
@@ -4876,33 +4881,92 @@ fn layout_graph_with_subgraph_redirects(
       }
     }
 
-    let mut has_best_order = false
-    let mut best_order_index = 0
-    let mut best_crossings = 0
+    let unique_deferred_order_candidates : Array[Array[Int]] = []
+    let seen_candidate_signatures : Map[String, Bool] = {}
+    for candidate_order in deferred_order_candidates {
+      let signature = deferred_order_signature(candidate_order)
+      if seen_candidate_signatures.contains(signature) {
+        continue
+      }
+      seen_candidate_signatures[signature] = true
+      unique_deferred_order_candidates.push(candidate_order)
+    }
 
-    for candidate_index, candidate_order in deferred_order_candidates {
-      let candidate_crossings = simulate_deferred_back_edge_order_crossings(
-        candidate_order, edge_layout_contexts, positioned_nodes, routed_edge_segments,
+    let candidate_crossings : Array[Int] = []
+    for candidate_order in unique_deferred_order_candidates {
+      candidate_crossings.push(
+        simulate_deferred_back_edge_order_crossings(
+          candidate_order, edge_layout_contexts, positioned_nodes, routed_edge_segments,
+          back_edge_lane_reservations, back_edge_column_reservations, base_polylines,
+          enhanced_horizontal_state_flow,
+        ),
+      )
+    }
+
+    let max_seed_count = 3
+    let selected_seed_indices : Array[Int] = []
+    let selected_seed_index_set : Map[Int, Bool] = {}
+    for _ in 0..<max_seed_count {
+      let mut has_seed = false
+      let mut best_seed_index = 0
+      let mut best_seed_crossings = 0
+      for seed_index, seed_crossings in candidate_crossings {
+        if selected_seed_index_set.contains(seed_index) {
+          continue
+        }
+        if !has_seed || seed_crossings < best_seed_crossings {
+          has_seed = true
+          best_seed_index = seed_index
+          best_seed_crossings = seed_crossings
+        }
+      }
+      if !has_seed {
+        break
+      }
+      selected_seed_index_set[best_seed_index] = true
+      selected_seed_indices.push(best_seed_index)
+    }
+
+    let mut has_best_optimized_order = false
+    let mut best_optimized_order : Array[Int] = []
+    let mut best_optimized_crossings = 0
+
+    for seed_index in selected_seed_indices {
+      let seed_order = unique_deferred_order_candidates[seed_index]
+      let optimized_order = optimize_deferred_back_edge_order_locally(
+        seed_order, edge_layout_contexts, positioned_nodes, routed_edge_segments,
         back_edge_lane_reservations, back_edge_column_reservations, base_polylines,
         enhanced_horizontal_state_flow,
       )
-      if !has_best_order || candidate_crossings < best_crossings {
-        has_best_order = true
-        best_order_index = candidate_index
-        best_crossings = candidate_crossings
+      let optimized_crossings = simulate_deferred_back_edge_order_crossings(
+        optimized_order, edge_layout_contexts, positioned_nodes, routed_edge_segments,
+        back_edge_lane_reservations, back_edge_column_reservations, base_polylines,
+        enhanced_horizontal_state_flow,
+      )
+      if !has_best_optimized_order ||
+        optimized_crossings < best_optimized_crossings {
+        has_best_optimized_order = true
+        best_optimized_order = optimized_order
+        best_optimized_crossings = optimized_crossings
       }
     }
 
-    let selected_deferred_order = if has_best_order {
-      deferred_order_candidates[best_order_index]
+    let optimized_deferred_order = if has_best_optimized_order {
+      best_optimized_order
+    } else if unique_deferred_order_candidates.length() > 0 {
+      optimize_deferred_back_edge_order_locally(
+        unique_deferred_order_candidates[0],
+        edge_layout_contexts,
+        positioned_nodes,
+        routed_edge_segments,
+        back_edge_lane_reservations,
+        back_edge_column_reservations,
+        base_polylines,
+        enhanced_horizontal_state_flow,
+      )
     } else {
       deferred_back_edge_context_indices
     }
-    let optimized_deferred_order = optimize_deferred_back_edge_order_locally(
-      selected_deferred_order, edge_layout_contexts, positioned_nodes, routed_edge_segments,
-      back_edge_lane_reservations, back_edge_column_reservations, base_polylines,
-      enhanced_horizontal_state_flow,
-    )
 
     for context_index in optimized_deferred_order {
       let context = edge_layout_contexts[context_index]
