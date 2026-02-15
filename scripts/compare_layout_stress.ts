@@ -164,22 +164,42 @@ function parseLocalNodePositions(svg: string): Map<string, Point> {
 
 function parseLocalEdges(svg: string): Point[][] {
   const edges: Point[][] = []
-  const re = /<polyline class="edge" points="([^"]+)"/g
-  for (const match of svg.matchAll(re)) {
-    const points = match[1]!
-      .trim()
-      .split(/\s+/)
-      .map(pair => {
-        const [x, y] = pair.split(',')
-        return {
-          x: Number.parseFloat(x!),
-          y: Number.parseFloat(y!),
-        }
-      })
-      .filter(p => !Number.isNaN(p.x) && !Number.isNaN(p.y))
+  const polylineRe = /<polyline class="edge" points="([^"]+)"/g
+  for (const match of svg.matchAll(polylineRe)) {
+    const points = parsePointPairs(match[1]!)
+    if (points.length >= 2) edges.push(points)
+  }
+  const pathRe = /<path class="edge" d="([^"]+)"/g
+  for (const match of svg.matchAll(pathRe)) {
+    const points = parsePathPoints(match[1]!)
     if (points.length >= 2) edges.push(points)
   }
   return edges
+}
+
+function parsePointPairs(raw: string): Point[] {
+  return raw
+    .trim()
+    .split(/\s+/)
+    .map(pair => {
+      const [x, y] = pair.split(',')
+      return {
+        x: Number.parseFloat(x!),
+        y: Number.parseFloat(y!),
+      }
+    })
+    .filter(p => !Number.isNaN(p.x) && !Number.isNaN(p.y))
+}
+
+function parsePathPoints(pathD: string): Point[] {
+  const numbers = [...pathD.matchAll(/-?\d+(?:\.\d+)?/g)]
+    .map(match => Number.parseFloat(match[0]))
+    .filter(value => !Number.isNaN(value))
+  const points: Point[] = []
+  for (let index = 0; index + 1 < numbers.length; index += 2) {
+    points.push({ x: numbers[index]!, y: numbers[index + 1]! })
+  }
+  return points
 }
 
 function parseOfficialEdges(svg: string): Point[][] {

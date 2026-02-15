@@ -1670,6 +1670,10 @@ fn edge_points_for(
   back_edge_bend_y : Int?,
   forward_fanout_offset_y : Int?,
   smooth_forward_fanout : Bool,
+  source_port_offset_y : Int,
+  target_port_offset_y : Int,
+  forward_channel_x_offset : Int,
+  use_forward_channel_routing : Bool,
 ) -> Array[Point] {
   if horizontal {
     let moving_right = target.x >= source.x
@@ -1685,8 +1689,8 @@ fn edge_points_for(
     }
     let start_x = source.x + source_delta
     let end_x = target.x + target_delta
-    let start : Point = { x: start_x, y: source.y }
-    let end : Point = { x: end_x, y: target.y }
+    let start : Point = { x: start_x, y: source.y + source_port_offset_y }
+    let end : Point = { x: end_x, y: target.y + target_port_offset_y }
     match back_edge_bend_y {
       Some(bend_y) =>
         if style is Dotted && !moving_right {
@@ -1702,7 +1706,7 @@ fn edge_points_for(
     match forward_fanout_offset_y {
       Some(offset_y) =>
         if style is Dotted && moving_right && offset_y != 0 {
-          let lane_y = source.y + offset_y
+          let lane_y = start.y + offset_y
           if smooth_forward_fanout {
             let mid_x = (start_x + end_x) / 2
             return [start, { x: mid_x, y: lane_y }, end]
@@ -1715,6 +1719,18 @@ fn edge_points_for(
           ]
         }
       None => ()
+    }
+    if use_forward_channel_routing &&
+      style is Solid &&
+      moving_right &&
+      start.y != end.y {
+      let min_mid_x = start_x + 8
+      let max_mid_x = end_x - 8
+      if max_mid_x > min_mid_x {
+        let candidate_mid_x = (start_x + end_x) / 2 + forward_channel_x_offset
+        let mid_x = clamp_int(candidate_mid_x, min_mid_x, max_mid_x)
+        return [start, { x: mid_x, y: start.y }, { x: mid_x, y: end.y }, end]
+      }
     }
     if smooth_forward_fanout && moving_right && start.y != end.y {
       let mid_x = (start_x + end_x) / 2
@@ -1737,6 +1753,32 @@ fn edge_points_for(
     let end_y = target.y + target_delta
     [{ x: source.x, y: start_y }, { x: target.x, y: end_y }]
   }
+}
+
+///|
+fn clamp_int(value : Int, min_value : Int, max_value : Int) -> Int {
+  if value < min_value {
+    min_value
+  } else if value > max_value {
+    max_value
+  } else {
+    value
+  }
+}
+
+///|
+fn distributed_slot_offset(
+  slot : Int,
+  total : Int,
+  spacing : Int,
+  max_abs : Int,
+) -> Int {
+  if total <= 1 || max_abs <= 0 {
+    return 0
+  }
+  let centered = slot * 2 - (total - 1)
+  let raw = centered * spacing / 2
+  clamp_int(raw, -max_abs, max_abs)
 }
 
 ///|
@@ -2098,6 +2140,44 @@ fn reserve_back_edge_bend_y(
 ///|
 fn midpoint(a : Point, b : Point) -> Point {
   { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }
+}
+
+///|
+fn polyline_label_anchor(points : Array[Point]) -> Point {
+  if points.length() < 2 {
+    return { x: 0, y: 0 }
+  }
+  if points.length() == 2 {
+    return midpoint(points[0], points[1])
+  }
+  let mut total = 0
+  for index in 1..<points.length() {
+    let start = points[index - 1]
+    let end_ = points[index]
+    total += int_abs(end_.x - start.x) + int_abs(end_.y - start.y)
+  }
+  if total <= 0 {
+    return midpoint(points[0], points[1])
+  }
+  let target = total / 2
+  let mut traversed = 0
+  for index in 1..<points.length() {
+    let start = points[index - 1]
+    let end_ = points[index]
+    let segment = int_abs(end_.x - start.x) + int_abs(end_.y - start.y)
+    if traversed + segment >= target {
+      if segment == 0 {
+        return midpoint(start, end_)
+      }
+      let offset = target - traversed
+      return {
+        x: start.x + (end_.x - start.x) * offset / segment,
+        y: start.y + (end_.y - start.y) * offset / segment,
+      }
+    }
+    traversed += segment
+  }
+  midpoint(points[points.length() - 2], points[points.length() - 1])
 }
 
 ///|
@@ -3648,6 +3728,9 @@ fn layout_graph_with_subgraph_redirects(
   let label_slots_by_anchor : Map[String, Int] = {}
   let back_edge_lane_reservations : Array[BackEdgeLaneReservation] = []
   let dotted_forward_out_count_by_source : Map[String, Int] = {}
+  let forward_source_port_offset_by_context : Map[Int, Int] = {}
+  let forward_target_port_offset_by_context : Map[Int, Int] = {}
+  let forward_channel_x_offset_by_context : Map[Int, Int] = {}
   let forward_fanout_vertical_gap_threshold = (layer_spacing / 4).max(22)
 
   let edge_layout_contexts : Array[EdgeLayoutContext] = []
@@ -3694,6 +3777,101 @@ fn layout_graph_with_subgraph_redirects(
     }
   }
 
+  if horizontal && !state_graph {
+    let outgoing_forward_context_indexes_by_source : Map[String, Array[Int]] = {}
+    let incoming_forward_context_indexes_by_target : Map[String, Array[Int]] = {}
+    for context_index, context in edge_layout_contexts {
+      if !context.edge_horizontal ||
+        context.target.x < context.source.x ||
+        context.resolved_source_id == context.resolved_target_id {
+        continue
+      }
+      if !outgoing_forward_context_indexes_by_source.contains(
+          context.resolved_source_id,
+        ) {
+        outgoing_forward_context_indexes_by_source[context.resolved_source_id] = []
+      }
+      if !incoming_forward_context_indexes_by_target.contains(
+          context.resolved_target_id,
+        ) {
+        incoming_forward_context_indexes_by_target[context.resolved_target_id] = []
+      }
+      match
+        outgoing_forward_context_indexes_by_source.get(
+          context.resolved_source_id,
+        ) {
+        Some(indexes) => indexes.push(context_index)
+        None => ()
+      }
+      match
+        incoming_forward_context_indexes_by_target.get(
+          context.resolved_target_id,
+        ) {
+        Some(indexes) => indexes.push(context_index)
+        None => ()
+      }
+    }
+
+    for _, context_indexes in outgoing_forward_context_indexes_by_source {
+      context_indexes.sort_by((left_index, right_index) => {
+        let left = edge_layout_contexts[left_index]
+        let right = edge_layout_contexts[right_index]
+        let y_cmp = left.target.y.compare(right.target.y)
+        if y_cmp != 0 {
+          return y_cmp
+        }
+        let x_cmp = left.target.x.compare(right.target.x)
+        if x_cmp != 0 {
+          return x_cmp
+        }
+        left.edge.target.compare(right.edge.target)
+      })
+      let total = context_indexes.length()
+      if total == 0 {
+        continue
+      }
+      let source_max_port_offset = (edge_layout_contexts[context_indexes[0]].source.height /
+      2 -
+      8).max(0)
+      for slot, context_index in context_indexes {
+        forward_source_port_offset_by_context[context_index] = distributed_slot_offset(
+          slot, total, 10, source_max_port_offset,
+        )
+        forward_channel_x_offset_by_context[context_index] = distributed_slot_offset(
+          slot, total, 8, 26,
+        )
+      }
+    }
+
+    for _, context_indexes in incoming_forward_context_indexes_by_target {
+      context_indexes.sort_by((left_index, right_index) => {
+        let left = edge_layout_contexts[left_index]
+        let right = edge_layout_contexts[right_index]
+        let y_cmp = left.source.y.compare(right.source.y)
+        if y_cmp != 0 {
+          return y_cmp
+        }
+        let x_cmp = left.source.x.compare(right.source.x)
+        if x_cmp != 0 {
+          return x_cmp
+        }
+        left.edge.source.compare(right.edge.source)
+      })
+      let total = context_indexes.length()
+      if total == 0 {
+        continue
+      }
+      let target_max_port_offset = (edge_layout_contexts[context_indexes[0]].target.height /
+      2 -
+      8).max(0)
+      for slot, context_index in context_indexes {
+        forward_target_port_offset_by_context[context_index] = distributed_slot_offset(
+          slot, total, 10, target_max_port_offset,
+        )
+      }
+    }
+  }
+
   if horizontal {
     for context in edge_layout_contexts {
       let edge = context.edge
@@ -3713,7 +3891,7 @@ fn layout_graph_with_subgraph_redirects(
     }
   }
   let dotted_forward_out_slot_by_source : Map[String, Int] = {}
-  for context in edge_layout_contexts {
+  for context_index, context in edge_layout_contexts {
     let edge = context.edge
     let source = context.source
     let target = context.target
@@ -3759,10 +3937,14 @@ fn layout_graph_with_subgraph_redirects(
         None
       },
       enhanced_horizontal_state_flow,
+      option_int_or(forward_source_port_offset_by_context.get(context_index), 0),
+      option_int_or(forward_target_port_offset_by_context.get(context_index), 0),
+      option_int_or(forward_channel_x_offset_by_context.get(context_index), 0),
+      horizontal && !state_graph,
     )
     let label_position = match edge.label {
       Some(_) => {
-        let base = midpoint(points[0], points[1])
+        let base = polyline_label_anchor(points)
         let key = label_anchor_key(base)
         let slot = option_int_or(label_slots_by_anchor.get(key), 0)
         label_slots_by_anchor[key] = slot + 1
