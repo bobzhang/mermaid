@@ -4170,6 +4170,24 @@ fn layout_graph_with_subgraph_redirects(
     }
   }
 
+  fn context_requires_long_span_back_edge_bend(
+    context : EdgeLayoutContext,
+    horizontal_span_threshold : Int,
+    vertical_span_threshold : Int,
+  ) -> Bool {
+    let edge = context.edge
+    if edge.label is Some(_) {
+      return false
+    }
+    if context.edge_horizontal {
+      context.target.x < context.source.x &&
+      int_abs(context.target.x - context.source.x) >= horizontal_span_threshold
+    } else {
+      context.target.y < context.source.y &&
+      int_abs(context.target.y - context.source.y) >= vertical_span_threshold
+    }
+  }
+
   let edge_layout_contexts : Array[EdgeLayoutContext] = []
   for edge in graph.edges {
     let resolved_source_id = resolve_edge_endpoint_id(
@@ -4255,19 +4273,57 @@ fn layout_graph_with_subgraph_redirects(
     forward_fanout_out_count_by_bucket[bucket] = current + 1
   }
   let forward_fanout_out_slot_by_bucket : Map[String, Int] = {}
-  for context in edge_layout_contexts {
+  let route_context_indices : Array[Int] = []
+  let deferred_back_edge_context_indices : Array[Int] = []
+  for context_index, context in edge_layout_contexts {
+    let defer_back_edge = context_requires_long_span_back_edge_bend(
+        context, back_edge_route_horizontal_span_threshold, back_edge_route_vertical_span_threshold,
+      ) &&
+      context.edge_horizontal
+    if defer_back_edge {
+      deferred_back_edge_context_indices.push(context_index)
+    } else {
+      route_context_indices.push(context_index)
+    }
+  }
+  deferred_back_edge_context_indices.sort_by((left_index, right_index) => {
+    let left_context = edge_layout_contexts[left_index]
+    let right_context = edge_layout_contexts[right_index]
+    let left_span = if left_context.edge_horizontal {
+      int_abs(left_context.target.x - left_context.source.x)
+    } else {
+      int_abs(left_context.target.y - left_context.source.y)
+    }
+    let right_span = if right_context.edge_horizontal {
+      int_abs(right_context.target.x - right_context.source.x)
+    } else {
+      int_abs(right_context.target.y - right_context.source.y)
+    }
+    let span_cmp = left_span.compare(right_span)
+    if span_cmp != 0 {
+      return span_cmp
+    }
+    left_index.compare(right_index)
+  })
+  for context_index in deferred_back_edge_context_indices {
+    route_context_indices.push(context_index)
+  }
+
+  let points_by_context_index : Map[Int, Array[Point]] = {}
+  for context_index in route_context_indices {
+    let context = edge_layout_contexts[context_index]
     let edge = context.edge
     let source = context.source
     let target = context.target
     let edge_horizontal = context.edge_horizontal
+    let route_as_back_edge = context_requires_long_span_back_edge_bend(
+      context, back_edge_route_horizontal_span_threshold, back_edge_route_vertical_span_threshold,
+    )
     let forward_fanout_bucket_key = forward_fanout_bucket(
       context.resolved_source_id,
       edge_horizontal,
     )
-    let back_edge_bend_y = if edge_horizontal &&
-      edge.label is None &&
-      target.x < source.x &&
-      int_abs(target.x - source.x) >= back_edge_route_horizontal_span_threshold {
+    let back_edge_bend_y = if route_as_back_edge && edge_horizontal {
       Some(
         reserve_back_edge_bend_y(
           source, target, positioned_nodes, routed_edge_segments, back_edge_lane_reservations,
@@ -4276,10 +4332,7 @@ fn layout_graph_with_subgraph_redirects(
     } else {
       None
     }
-    let back_edge_bend_x = if !edge_horizontal &&
-      edge.label is None &&
-      target.y < source.y &&
-      int_abs(target.y - source.y) >= back_edge_route_vertical_span_threshold {
+    let back_edge_bend_x = if route_as_back_edge && !edge_horizontal {
       Some(
         reserve_back_edge_bend_x(
           source, target, positioned_nodes, routed_edge_segments, back_edge_column_reservations,
@@ -4333,33 +4386,7 @@ fn layout_graph_with_subgraph_redirects(
       },
       enhanced_horizontal_state_flow,
     )
-    let label_position = match edge.label {
-      Some(_) => {
-        let base = midpoint(points[0], points[1])
-        let key = label_anchor_key(base)
-        let slot = option_int_or(label_slots_by_anchor.get(key), 0)
-        label_slots_by_anchor[key] = slot + 1
-        let label_x = if state_graph {
-          base.x + label_overlap_offset_x(slot)
-        } else {
-          base.x
-        }
-        Some(Point::{ x: label_x, y: base.y + label_overlap_offset(slot) })
-      }
-      None => None
-    }
-    let positioned_edge : PositionedEdge = {
-      source: edge.source,
-      target: edge.target,
-      label: edge.label,
-      style: edge.style,
-      has_arrow_start: edge.has_arrow_start,
-      has_arrow_end: edge.has_arrow_end,
-      relation_operator: edge.relation_operator,
-      points,
-      label_position,
-    }
-    positioned_edges.push(positioned_edge)
+    points_by_context_index[context_index] = points
     if points.length() >= 2 {
       for i in 1..<points.length() {
         routed_edge_segments.push({
@@ -4369,6 +4396,40 @@ fn layout_graph_with_subgraph_redirects(
           end: points[i],
         })
       }
+    }
+  }
+  for context_index, context in edge_layout_contexts {
+    match points_by_context_index.get(context_index) {
+      Some(points) => {
+        let edge = context.edge
+        let label_position = match edge.label {
+          Some(_) => {
+            let base = midpoint(points[0], points[1])
+            let key = label_anchor_key(base)
+            let slot = option_int_or(label_slots_by_anchor.get(key), 0)
+            label_slots_by_anchor[key] = slot + 1
+            let label_x = if state_graph {
+              base.x + label_overlap_offset_x(slot)
+            } else {
+              base.x
+            }
+            Some(Point::{ x: label_x, y: base.y + label_overlap_offset(slot) })
+          }
+          None => None
+        }
+        positioned_edges.push({
+          source: edge.source,
+          target: edge.target,
+          label: edge.label,
+          style: edge.style,
+          has_arrow_start: edge.has_arrow_start,
+          has_arrow_end: edge.has_arrow_end,
+          relation_operator: edge.relation_operator,
+          points,
+          label_position,
+        })
+      }
+      None => ()
     }
   }
 

@@ -807,6 +807,36 @@ test "Layout long-span vertical solid back edge uses reserved bend column" {
 }
 
 ///|
+test "Layout preserves declared edge order after deferred back-edge routing" {
+  let graph = @parser.parse_mermaid(
+    (
+      #|graph LR
+      #|A
+      #|B
+      #|C
+      #|D
+      #|A --> B
+      #|B --> C
+      #|C --> A
+      #|A --> D
+      #|D --> B
+      #|
+    )
+    .trim_end()
+    .to_string(),
+  )
+  let positioned = layout_graph(graph, RenderOptions::default())
+
+  assert_eq(positioned.edges.length(), graph.edges.length())
+  for i in 0..<graph.edges.length() {
+    let expected = graph.edges[i]
+    let actual = positioned.edges[i]
+    assert_eq(actual.source, expected.source)
+    assert_eq(actual.target, expected.target)
+  }
+}
+
+///|
 test "Layout dotted fanout follows target lanes with a single elbow" {
   let graph = @parser.parse_mermaid(
     (
