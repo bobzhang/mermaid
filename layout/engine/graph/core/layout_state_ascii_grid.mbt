@@ -690,27 +690,10 @@ fn layout_flat_state_graph_for_ascii_grid(
                 path, origin_x, origin_y, cell_x_step, cell_y,
               )
             } else {
-              edge_points_for(
-                source,
-                target,
-                false,
-                edge.style,
-                None,
-                None,
-                false,
-              )
+              edge_points_for(source, target, false, None, None, false)
             }
           }
-          None =>
-            edge_points_for(
-              source,
-              target,
-              false,
-              edge.style,
-              None,
-              None,
-              false,
-            )
+          None => edge_points_for(source, target, false, None, None, false)
         }
         let label_position = match edge.label {
           Some(_) =>

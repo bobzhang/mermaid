@@ -1736,7 +1736,6 @@ fn edge_points_for(
   source : PositionedNode,
   target : PositionedNode,
   horizontal : Bool,
-  style : EdgeStyle,
   back_edge_bend_y : Int?,
   forward_fanout_offset_y : Int?,
   smooth_forward_fanout : Bool,
@@ -1759,7 +1758,7 @@ fn edge_points_for(
     let end : Point = { x: end_x, y: target.y }
     match back_edge_bend_y {
       Some(bend_y) =>
-        if style is Dotted && !moving_right {
+        if !moving_right {
           return [
             start,
             { x: start_x, y: bend_y },
@@ -3795,6 +3794,7 @@ fn layout_graph_with_subgraph_redirects(
   let forward_fanout_vertical_minor_gap_threshold = (node_spacing / 4).max(22)
   let forward_fanout_horizontal_span_threshold = (node_spacing * 2).max(140)
   let forward_fanout_vertical_span_threshold = (layer_spacing * 2).max(140)
+  let back_edge_route_span_threshold = (node_spacing * 4).max(260)
 
   fn forward_fanout_bucket(
     source_id : String,
@@ -3902,8 +3902,9 @@ fn layout_graph_with_subgraph_redirects(
       edge_horizontal,
     )
     let back_edge_bend_y = if edge_horizontal &&
-      edge.style is Dotted &&
-      target.x < source.x {
+      edge.label is None &&
+      target.x < source.x &&
+      int_abs(target.x - source.x) >= back_edge_route_span_threshold {
       Some(
         reserve_back_edge_bend_y(
           source, target, positioned_nodes, routed_edge_segments, back_edge_lane_reservations,
@@ -3916,7 +3917,6 @@ fn layout_graph_with_subgraph_redirects(
       source,
       target,
       edge_horizontal,
-      edge.style,
       back_edge_bend_y,
       if edge.label is None &&
         (
