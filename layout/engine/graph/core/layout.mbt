@@ -2496,6 +2496,124 @@ fn back_edge_column_distance_penalty(
 }
 
 ///|
+fn back_edge_horizontal_segment_intersects_node_box(
+  left : Int,
+  right : Int,
+  y : Int,
+  node_left : Int,
+  node_right : Int,
+  node_top : Int,
+  node_bottom : Int,
+) -> Bool {
+  y >= node_top &&
+  y <= node_bottom &&
+  spans_overlap(left, right, node_left, node_right)
+}
+
+///|
+fn back_edge_vertical_segment_intersects_node_box(
+  top : Int,
+  bottom : Int,
+  x : Int,
+  node_left : Int,
+  node_right : Int,
+  node_top : Int,
+  node_bottom : Int,
+) -> Bool {
+  x >= node_left &&
+  x <= node_right &&
+  spans_overlap(top, bottom, node_top, node_bottom)
+}
+
+///|
+fn back_edge_lane_node_box_penalty(
+  nodes : Array[PositionedNode],
+  source : PositionedNode,
+  target : PositionedNode,
+  source_anchor_x : Int,
+  source_y : Int,
+  target_anchor_x : Int,
+  target_y : Int,
+  candidate_y : Int,
+) -> Int {
+  let box_margin = 6
+  let left = source_anchor_x.min(target_anchor_x)
+  let right = source_anchor_x.max(target_anchor_x)
+  let source_top = source_y.min(candidate_y)
+  let source_bottom = source_y.max(candidate_y)
+  let target_top = target_y.min(candidate_y)
+  let target_bottom = target_y.max(candidate_y)
+  let mut penalty = 0
+  for node in nodes {
+    if node.id == source.id || node.id == target.id {
+      continue
+    }
+    let node_left = node.x - node.width / 2 - box_margin
+    let node_right = node.x + node.width / 2 + box_margin
+    let node_top = node.y - node.height / 2 - box_margin
+    let node_bottom = node.y + node.height / 2 + box_margin
+    if back_edge_vertical_segment_intersects_node_box(
+        source_top, source_bottom, source_anchor_x, node_left, node_right, node_top,
+        node_bottom,
+      ) ||
+      back_edge_horizontal_segment_intersects_node_box(
+        left, right, candidate_y, node_left, node_right, node_top, node_bottom,
+      ) ||
+      back_edge_vertical_segment_intersects_node_box(
+        target_top, target_bottom, target_anchor_x, node_left, node_right, node_top,
+        node_bottom,
+      ) {
+      penalty += 1
+    }
+  }
+  penalty
+}
+
+///|
+fn back_edge_column_node_box_penalty(
+  nodes : Array[PositionedNode],
+  source : PositionedNode,
+  target : PositionedNode,
+  source_x : Int,
+  source_anchor_y : Int,
+  target_x : Int,
+  target_anchor_y : Int,
+  candidate_x : Int,
+) -> Int {
+  let box_margin = 6
+  let top = source_anchor_y.min(target_anchor_y)
+  let bottom = source_anchor_y.max(target_anchor_y)
+  let source_left = source_x.min(candidate_x)
+  let source_right = source_x.max(candidate_x)
+  let target_left = target_x.min(candidate_x)
+  let target_right = target_x.max(candidate_x)
+  let mut penalty = 0
+  for node in nodes {
+    if node.id == source.id || node.id == target.id {
+      continue
+    }
+    let node_left = node.x - node.width / 2 - box_margin
+    let node_right = node.x + node.width / 2 + box_margin
+    let node_top = node.y - node.height / 2 - box_margin
+    let node_bottom = node.y + node.height / 2 + box_margin
+    if back_edge_horizontal_segment_intersects_node_box(
+        source_left, source_right, source_anchor_y, node_left, node_right, node_top,
+        node_bottom,
+      ) ||
+      back_edge_vertical_segment_intersects_node_box(
+        top, bottom, candidate_x, node_left, node_right, node_top, node_bottom,
+      ) ||
+      back_edge_horizontal_segment_intersects_node_box(
+        target_left, target_right, target_anchor_y, node_left, node_right, node_top,
+        node_bottom,
+      ) {
+      penalty += 1
+    }
+  }
+  penalty
+}
+
+///|
 fn back_edge_segment_orientation(a : Point, b : Point, c : Point) -> Int {
   (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x)
 }
@@ -2645,23 +2763,28 @@ fn collect_back_edge_vertical_crossing_candidates(
 
 ///|
 fn back_edge_lane_score_is_better(
-  congestion : Int,
+  node_box_hits : Int,
   crossings : Int,
   distance : Int,
+  congestion : Int,
   side_priority : Int,
-  best_congestion : Int,
+  best_node_box_hits : Int,
   best_crossings : Int,
   best_distance : Int,
+  best_congestion : Int,
   best_side_priority : Int,
 ) -> Bool {
-  if congestion != best_congestion {
-    return congestion < best_congestion
-  }
   if crossings != best_crossings {
     return crossings < best_crossings
   }
+  if node_box_hits != best_node_box_hits {
+    return node_box_hits < best_node_box_hits
+  }
   if distance != best_distance {
     return distance < best_distance
+  }
+  if congestion != best_congestion {
+    return congestion < best_congestion
   }
   side_priority < best_side_priority
 }
@@ -2733,6 +2856,7 @@ fn reserve_back_edge_bend_y(
 
   let mut has_choice = false
   let mut best_y = 0
+  let mut best_node_box_hits = 0
   let mut best_congestion = 0
   let mut best_crossings = 0
   let mut best_distance = 0
@@ -2749,11 +2873,16 @@ fn reserve_back_edge_bend_y(
     target_y : Int,
     has_choice : Bool,
     best_y : Int,
+    best_node_box_hits : Int,
     best_congestion : Int,
     best_crossings : Int,
     best_distance : Int,
     best_side_priority : Int,
-  ) -> (Bool, Int, Int, Int, Int, Int) {
+  ) -> (Bool, Int, Int, Int, Int, Int, Int) {
+    let node_box_hits = back_edge_lane_node_box_penalty(
+      nodes, source, target, source_anchor_x, source_y, target_anchor_x, target_y,
+      candidate_y,
+    )
     let crossings = back_edge_lane_crossing_penalty(
       crossing_candidates, source_anchor_x, source_y, target_anchor_x, target_y,
       candidate_y,
@@ -2761,13 +2890,16 @@ fn reserve_back_edge_bend_y(
     let distance = back_edge_lane_distance_penalty(source, target, candidate_y)
     if !has_choice ||
       back_edge_lane_score_is_better(
-        congestion, crossings, distance, side_priority, best_congestion, best_crossings,
-        best_distance, best_side_priority,
+        node_box_hits, crossings, distance, congestion, side_priority, best_node_box_hits,
+        best_crossings, best_distance, best_congestion, best_side_priority,
       ) {
-      (true, candidate_y, congestion, crossings, distance, side_priority)
+      (
+        true, candidate_y, node_box_hits, congestion, crossings, distance, side_priority,
+      )
     } else {
       (
-        has_choice, best_y, best_congestion, best_crossings, best_distance, best_side_priority,
+        has_choice, best_y, best_node_box_hits, best_congestion, best_crossings,
+        best_distance, best_side_priority,
       )
     }
   }
@@ -2776,6 +2908,7 @@ fn reserve_back_edge_bend_y(
     let (
       next_has_choice,
       next_y,
+      next_node_box_hits,
       next_congestion,
       next_crossings,
       next_distance,
@@ -2791,6 +2924,7 @@ fn reserve_back_edge_bend_y(
       target.y,
       has_choice,
       best_y,
+      best_node_box_hits,
       best_congestion,
       best_crossings,
       best_distance,
@@ -2798,6 +2932,7 @@ fn reserve_back_edge_bend_y(
     )
     has_choice = next_has_choice
     best_y = next_y
+    best_node_box_hits = next_node_box_hits
     best_congestion = next_congestion
     best_crossings = next_crossings
     best_distance = next_distance
@@ -2807,6 +2942,7 @@ fn reserve_back_edge_bend_y(
     let (
       next_has_choice,
       next_y,
+      next_node_box_hits,
       next_congestion,
       next_crossings,
       next_distance,
@@ -2822,6 +2958,7 @@ fn reserve_back_edge_bend_y(
       target.y,
       has_choice,
       best_y,
+      best_node_box_hits,
       best_congestion,
       best_crossings,
       best_distance,
@@ -2829,6 +2966,7 @@ fn reserve_back_edge_bend_y(
     )
     has_choice = next_has_choice
     best_y = next_y
+    best_node_box_hits = next_node_box_hits
     best_congestion = next_congestion
     best_crossings = next_crossings
     best_distance = next_distance
@@ -2915,6 +3053,7 @@ fn reserve_back_edge_bend_x(
 
   let mut has_choice = false
   let mut best_x = 0
+  let mut best_node_box_hits = 0
   let mut best_congestion = 0
   let mut best_crossings = 0
   let mut best_distance = 0
@@ -2931,11 +3070,16 @@ fn reserve_back_edge_bend_x(
     target_anchor_y : Int,
     has_choice : Bool,
     best_x : Int,
+    best_node_box_hits : Int,
     best_congestion : Int,
     best_crossings : Int,
     best_distance : Int,
     best_side_priority : Int,
-  ) -> (Bool, Int, Int, Int, Int, Int) {
+  ) -> (Bool, Int, Int, Int, Int, Int, Int) {
+    let node_box_hits = back_edge_column_node_box_penalty(
+      nodes, source, target, source_x, source_anchor_y, target_x, target_anchor_y,
+      candidate_x,
+    )
     let crossings = back_edge_column_crossing_penalty(
       crossing_candidates, source_x, source_anchor_y, target_x, target_anchor_y,
       candidate_x,
@@ -2945,13 +3089,16 @@ fn reserve_back_edge_bend_x(
     )
     if !has_choice ||
       back_edge_lane_score_is_better(
-        congestion, crossings, distance, side_priority, best_congestion, best_crossings,
-        best_distance, best_side_priority,
+        node_box_hits, crossings, distance, congestion, side_priority, best_node_box_hits,
+        best_crossings, best_distance, best_congestion, best_side_priority,
       ) {
-      (true, candidate_x, congestion, crossings, distance, side_priority)
+      (
+        true, candidate_x, node_box_hits, congestion, crossings, distance, side_priority,
+      )
     } else {
       (
-        has_choice, best_x, best_congestion, best_crossings, best_distance, best_side_priority,
+        has_choice, best_x, best_node_box_hits, best_congestion, best_crossings,
+        best_distance, best_side_priority,
       )
     }
   }
@@ -2960,6 +3107,7 @@ fn reserve_back_edge_bend_x(
     let (
       next_has_choice,
       next_x,
+      next_node_box_hits,
       next_congestion,
       next_crossings,
       next_distance,
@@ -2975,6 +3123,7 @@ fn reserve_back_edge_bend_x(
       target_anchor_y,
       has_choice,
       best_x,
+      best_node_box_hits,
       best_congestion,
       best_crossings,
       best_distance,
@@ -2982,6 +3131,7 @@ fn reserve_back_edge_bend_x(
     )
     has_choice = next_has_choice
     best_x = next_x
+    best_node_box_hits = next_node_box_hits
     best_congestion = next_congestion
     best_crossings = next_crossings
     best_distance = next_distance
@@ -2991,6 +3141,7 @@ fn reserve_back_edge_bend_x(
     let (
       next_has_choice,
       next_x,
+      next_node_box_hits,
       next_congestion,
       next_crossings,
       next_distance,
@@ -3006,6 +3157,7 @@ fn reserve_back_edge_bend_x(
       target_anchor_y,
       has_choice,
       best_x,
+      best_node_box_hits,
       best_congestion,
       best_crossings,
       best_distance,
@@ -3013,6 +3165,7 @@ fn reserve_back_edge_bend_x(
     )
     has_choice = next_has_choice
     best_x = next_x
+    best_node_box_hits = next_node_box_hits
     best_congestion = next_congestion
     best_crossings = next_crossings
     best_distance = next_distance

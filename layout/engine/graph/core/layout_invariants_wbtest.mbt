@@ -544,6 +544,132 @@ test "Layout back-edge lane selection can skip nearest lane for fewer crossings"
 }
 
 ///|
+test "Layout back-edge lane node-box penalty counts intersected nodes" {
+  let source : PositionedNode = {
+    id: "S",
+    label: "S",
+    shape: Circle,
+    x: 200,
+    y: 100,
+    width: 24,
+    height: 24,
+    inline_style: None,
+  }
+  let target : PositionedNode = {
+    id: "T",
+    label: "T",
+    shape: Circle,
+    x: 100,
+    y: 100,
+    width: 24,
+    height: 24,
+    inline_style: None,
+  }
+  let obstacle : PositionedNode = {
+    id: "O",
+    label: "O",
+    shape: Rectangle,
+    x: 150,
+    y: 58,
+    width: 40,
+    height: 24,
+    inline_style: None,
+  }
+
+  let blocked = back_edge_lane_node_box_penalty(
+    [source, target, obstacle],
+    source,
+    target,
+    source.x - source.width / 2,
+    source.y,
+    target.x + target.width / 2,
+    target.y,
+    58,
+  )
+  let clear = back_edge_lane_node_box_penalty(
+    [source, target, obstacle],
+    source,
+    target,
+    source.x - source.width / 2,
+    source.y,
+    target.x + target.width / 2,
+    target.y,
+    38,
+  )
+
+  assert_eq(blocked, 1)
+  assert_eq(clear, 0)
+}
+
+///|
+test "Layout back-edge column node-box penalty counts intersected nodes" {
+  let source : PositionedNode = {
+    id: "S",
+    label: "S",
+    shape: Circle,
+    x: 100,
+    y: 200,
+    width: 24,
+    height: 24,
+    inline_style: None,
+  }
+  let target : PositionedNode = {
+    id: "T",
+    label: "T",
+    shape: Circle,
+    x: 100,
+    y: 100,
+    width: 24,
+    height: 24,
+    inline_style: None,
+  }
+  let obstacle : PositionedNode = {
+    id: "O",
+    label: "O",
+    shape: Rectangle,
+    x: 58,
+    y: 150,
+    width: 24,
+    height: 48,
+    inline_style: None,
+  }
+
+  let blocked = back_edge_column_node_box_penalty(
+    [source, target, obstacle],
+    source,
+    target,
+    source.x,
+    source.y - source.height / 2,
+    target.x,
+    target.y + target.height / 2,
+    58,
+  )
+  let clear = back_edge_column_node_box_penalty(
+    [source, target, obstacle],
+    source,
+    target,
+    source.x,
+    source.y - source.height / 2,
+    target.x,
+    target.y + target.height / 2,
+    38,
+  )
+
+  assert_eq(blocked, 1)
+  assert_eq(clear, 0)
+}
+
+///|
+test "Layout back-edge lane score prefers fewer crossings over side congestion" {
+  assert_true(back_edge_lane_score_is_better(0, 1, 80, 3, 1, 0, 2, 20, 0, 0))
+}
+
+///|
+test "Layout back-edge lane score uses node-box avoidance as crossing tie-breaker" {
+  assert_true(back_edge_lane_score_is_better(0, 2, 20, 0, 0, 1, 2, 20, 0, 1))
+}
+
+///|
 test "Layout long-span back-edge lane search can use extended candidates" {
   let source : PositionedNode = {
     id: "S",
