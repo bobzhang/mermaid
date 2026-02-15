@@ -25,3 +25,23 @@ bun run scripts/compare_layout_stress.ts fixtures/layout_challenge_001_nested_po
 ```
 
 This separation keeps CI-quality signals stable while still tracking hard cases.
+
+## Topology Coverage
+
+These fixtures are intentionally designed to cover different layout failure
+modes instead of random graph noise.
+
+- `layout_stress_008_hyper_weave_pipeline.mmd`: dense multi-stage weave with
+  heavy cross-layer fan-in/fan-out.
+- `layout_stress_009_nested_ring_bridges.mmd`: nested cyclic rings bridged
+  across subgraphs.
+- `layout_stress_010_bipartite_crossfire.mmd`: layered bipartite crossfire with
+  many lateral and feedback links.
+- `layout_stress_011_feedback_lattice.mmd`: lattice-style four-layer feedback
+  network with diagonal and reverse links.
+- `layout_stress_012_interleaved_subgraph_feedback.mmd`: nested subgraphs with
+  interleaved bidirectional cross-cluster feedback and sink back-links.
+- `layout_challenge_002_multicluster_hyperloop.mmd`: high-density
+  multi-cluster portal mesh for exploratory comparison.
+- `layout_challenge_003_quad_cluster_pinwheel.mmd`: four-cluster pinwheel with
+  nested cores and long-range reciprocal bridges.

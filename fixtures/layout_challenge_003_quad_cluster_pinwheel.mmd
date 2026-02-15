@@ -1,0 +1,139 @@
+graph TB
+ROOT[ROOT]
+TAIL[TAIL]
+
+subgraph NORTH
+N1[N1]
+N2[N2]
+N3[N3]
+N4[N4]
+N5[N5]
+subgraph NORTH_CORE
+NC1[NC1]
+NC2[NC2]
+NC3[NC3]
+end
+end
+
+subgraph EAST
+E1[E1]
+E2[E2]
+E3[E3]
+E4[E4]
+E5[E5]
+subgraph EAST_CORE
+EC1[EC1]
+EC2[EC2]
+EC3[EC3]
+end
+end
+
+subgraph SOUTH
+S1[S1]
+S2[S2]
+S3[S3]
+S4[S4]
+S5[S5]
+subgraph SOUTH_CORE
+SC1[SC1]
+SC2[SC2]
+SC3[SC3]
+end
+end
+
+subgraph WEST
+W1[W1]
+W2[W2]
+W3[W3]
+W4[W4]
+W5[W5]
+subgraph WEST_CORE
+WC1[WC1]
+WC2[WC2]
+WC3[WC3]
+end
+end
+
+ROOT --> N1
+ROOT --> E1
+ROOT --> S1
+ROOT --> W1
+
+N1 --> N2
+N2 --> N3
+N3 --> N4
+N4 --> N5
+N5 --> N2
+
+E1 --> E2
+E2 --> E3
+E3 --> E4
+E4 --> E5
+E5 --> E2
+
+S1 --> S2
+S2 --> S3
+S3 --> S4
+S4 --> S5
+S5 --> S2
+
+W1 --> W2
+W2 --> W3
+W3 --> W4
+W4 --> W5
+W5 --> W2
+
+N2 --> NC1
+NC1 --> NC2
+NC2 --> NC3
+NC3 --> N4
+
+E2 --> EC1
+EC1 --> EC2
+EC2 --> EC3
+EC3 --> E4
+
+S2 --> SC1
+SC1 --> SC2
+SC2 --> SC3
+SC3 --> S4
+
+W2 --> WC1
+WC1 --> WC2
+WC2 --> WC3
+WC3 --> W4
+
+N3 --> E2
+E3 --> S2
+S3 --> W2
+W3 --> N2
+
+N4 --> E3
+E4 --> S3
+S4 --> W3
+W4 --> N3
+
+NC2 --> SC2
+EC2 --> WC2
+SC2 --> NC2
+WC2 --> EC2
+
+N5 --> TAIL
+E5 --> TAIL
+S5 --> TAIL
+W5 --> TAIL
+
+TAIL --> N3
+TAIL --> E3
+TAIL --> S3
+TAIL --> W3
+
+NC3 --> E1
+EC3 --> S1
+SC3 --> W1
+WC3 --> N1
+
+N5 --> SC1
+E5 --> WC1
+S5 --> NC1
+W5 --> EC1
