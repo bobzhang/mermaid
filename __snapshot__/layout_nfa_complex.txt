@@ -1,5 +1,5 @@
 [canvas]
-width=1054 height=272
+width=794 height=360
 
 [nodes]
 node id=q0 shape=Circle center=200,110 size=60x60 label=q0
@@ -8,25 +8,25 @@ node id=q2 shape=Circle center=460,110 size=60x60 label=q2
 node id=q3 shape=Circle center=590,110 size=60x60 label=q3
 node id=q4 shape=Circle center=330,200 size=60x60 label=q4
 node id=q5 shape=Circle center=460,200 size=60x60 label=q5
-node id=q6 shape=Circle center=720,110 size=60x60 label=q6
-node id=q7 shape=Circle center=850,110 size=60x60 label=q7
+node id=q6 shape=Circle center=590,290 size=60x60 label=q6
+node id=q7 shape=Circle center=590,200 size=60x60 label=q7
 node id=start shape=StateStart center=51,110 size=22x22 label=start
-node id=acc0 shape=DoubleCircle center=982,110 size=64x64 label=acc0
-node id=acc1 shape=DoubleCircle center=982,200 size=64x64 label=acc1
+node id=acc0 shape=DoubleCircle center=722,110 size=64x64 label=acc0
+node id=acc1 shape=DoubleCircle center=722,200 size=64x64 label=acc1
 
 [edges]
-edge q3->q6 label=- label_pos=- points=620,110 -> 690,110
-edge q6->q7 label=- label_pos=- points=750,110 -> 820,110
+edge q3->q6 label=- label_pos=- points=620,110 -> 560,290
+edge q6->q7 label=- label_pos=- points=620,290 -> 560,200
 edge start->q0 label=- label_pos=- points=62,110 -> 170,110
 edge q1->q2 label=a label_pos=395,110 points=360,110 -> 430,110
 edge q2->q3 label=b label_pos=525,110 points=490,110 -> 560,110
-edge q2->q7 label=x label_pos=655,110 points=490,110 -> 820,110
+edge q2->q7 label=x label_pos=525,155 points=490,110 -> 560,200
 edge q4->q5 label=a label_pos=395,200 points=360,200 -> 430,200
-edge q5->q6 label=c label_pos=590,155 points=490,200 -> 690,110
-edge q5->q7 label=x label_pos=655,155 points=490,200 -> 820,110
-edge q7->acc0 label=d label_pos=915,110 points=880,110 -> 950,110
-edge q7->acc1 label=e label_pos=915,155 points=880,110 -> 950,200
-edge q6->q0 label=- label_pos=- points=690,110 -> 690,68 -> 230,68 -> 230,110
+edge q5->q6 label=c label_pos=525,245 points=490,200 -> 560,290
+edge q5->q7 label=x label_pos=525,200 points=490,200 -> 560,200
+edge q7->acc0 label=d label_pos=655,155 points=620,200 -> 690,110
+edge q7->acc1 label=e label_pos=655,200 points=620,200 -> 690,200
+edge q6->q0 label=- label_pos=- points=560,290 -> 560,68 -> 230,68 -> 230,110
 edge q0->q1 label=- label_pos=- points=230,110 -> 230,102 -> 300,102 -> 300,110
 edge q0->q4 label=- label_pos=- points=230,110 -> 230,118 -> 300,118 -> 300,200
 
