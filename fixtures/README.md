@@ -23,9 +23,13 @@ bun run scripts/compare_layout_stress.ts \
   --min-span-y-ratio 0.05 \
   --min-span-area-ratio 0.04 \
   --max-major-inversion-rate 0.55 \
+  --min-major-span-ratio 0.25 \
+  --min-minor-span-ratio 0.05 \
   --max-avg-rmse 0.70 \
   --max-avg-inversion-rate 0.35 \
   --max-avg-major-inversion-rate 0.20 \
+  --min-avg-major-span-ratio 0.80 \
+  --min-avg-minor-span-ratio 0.20 \
   --max-avg-polyline-crossing-multiplier 3.6 \
   --max-avg-logical-crossing-multiplier 0.8 \
   --min-avg-span-area-ratio 0.18

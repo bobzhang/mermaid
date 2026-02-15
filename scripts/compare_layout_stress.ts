@@ -9,6 +9,7 @@
  *   bun run scripts/compare_layout_stress.ts --max-polyline-crossing-multiplier 4.6 --min-span-area-ratio 0.04
  *   bun run scripts/compare_layout_stress.ts --max-avg-rmse 0.70 --max-avg-inversion-rate 0.35 --max-avg-polyline-crossing-multiplier 3.6 --min-avg-span-area-ratio 0.18
  *   bun run scripts/compare_layout_stress.ts --max-major-inversion-rate 0.55 --max-avg-major-inversion-rate 0.20
+ *   bun run scripts/compare_layout_stress.ts --min-major-span-ratio 0.25 --min-minor-span-ratio 0.05 --min-avg-major-span-ratio 0.80 --min-avg-minor-span-ratio 0.20
  *   bun run scripts/compare_layout_stress.ts --local-timeout-ms 120000 --local-render-retries 2 --retry-backoff-ms 500
  *   bun run scripts/compare_layout_stress.ts fixtures/layout_challenge_001_nested_portal_mesh.mmd --explain-logical-crossings
  *   bun run scripts/compare_layout_stress.ts --max-logical-crossing-multiplier 1.0 --explain-on-failure
@@ -45,6 +46,8 @@ type Metrics = {
   inversionRateY: number
   majorAxis: Axis
   majorInversionRate: number
+  majorSpanRatio: number
+  minorSpanRatio: number
   graphDirection: string
   localPolylineCrossings: number
   officialPolylineCrossings: number
@@ -73,10 +76,14 @@ type CliOptions = {
   minSpanXRatio?: number
   minSpanYRatio?: number
   minSpanAreaRatio?: number
+  minMajorSpanRatio?: number
+  minMinorSpanRatio?: number
   maxMajorInversionRate?: number
   maxAvgRmse?: number
   maxAvgInversionRate?: number
   maxAvgMajorInversionRate?: number
+  minAvgMajorSpanRatio?: number
+  minAvgMinorSpanRatio?: number
   maxAvgPolylineCrossingMultiplier?: number
   maxAvgLogicalCrossingMultiplier?: number
   minAvgSpanAreaRatio?: number
@@ -1264,6 +1271,8 @@ function compareFixture(
       inversionRateY: Number.NaN,
       majorAxis,
       majorInversionRate: Number.NaN,
+      majorSpanRatio: Number.NaN,
+      minorSpanRatio: Number.NaN,
       graphDirection,
       localPolylineCrossings,
       officialPolylineCrossings,
@@ -1329,6 +1338,8 @@ function compareFixture(
   const spanXRatio = localSpanX / Math.max(officialSpanX, 1e-9)
   const spanYRatio = localSpanY / Math.max(officialSpanY, 1e-9)
   const spanAreaRatio = spanXRatio * spanYRatio
+  const majorSpanRatio = majorAxis === 'x' ? spanXRatio : spanYRatio
+  const minorSpanRatio = majorAxis === 'x' ? spanYRatio : spanXRatio
 
   const sharedPairs = pairSetIntersection(localLogicalPairKeys, officialLogicalPairKeys)
   const localOnlyPairs = pairSetDiff(localLogicalPairKeys, officialLogicalPairKeys)
@@ -1349,6 +1360,8 @@ function compareFixture(
     inversionRateY,
     majorAxis,
     majorInversionRate,
+    majorSpanRatio,
+    minorSpanRatio,
     graphDirection,
     localPolylineCrossings,
     officialPolylineCrossings,
@@ -1400,10 +1413,14 @@ function parseCliOptions(args: string[]): CliOptions {
   let minSpanXRatio: number | undefined = undefined
   let minSpanYRatio: number | undefined = undefined
   let minSpanAreaRatio: number | undefined = undefined
+  let minMajorSpanRatio: number | undefined = undefined
+  let minMinorSpanRatio: number | undefined = undefined
   let maxMajorInversionRate: number | undefined = undefined
   let maxAvgRmse: number | undefined = undefined
   let maxAvgInversionRate: number | undefined = undefined
   let maxAvgMajorInversionRate: number | undefined = undefined
+  let minAvgMajorSpanRatio: number | undefined = undefined
+  let minAvgMinorSpanRatio: number | undefined = undefined
   let maxAvgPolylineCrossingMultiplier: number | undefined = undefined
   let maxAvgLogicalCrossingMultiplier: number | undefined = undefined
   let minAvgSpanAreaRatio: number | undefined = undefined
@@ -1480,6 +1497,28 @@ function parseCliOptions(args: string[]): CliOptions {
       i += 1
       continue
     }
+    if (arg === '--min-major-span-ratio') {
+      const next = args[i + 1]
+      if (!next) fail('missing number after --min-major-span-ratio')
+      const parsed = Number.parseFloat(next)
+      if (!Number.isFinite(parsed) || parsed <= 0) {
+        fail('invalid --min-major-span-ratio value, expected positive number')
+      }
+      minMajorSpanRatio = parsed
+      i += 1
+      continue
+    }
+    if (arg === '--min-minor-span-ratio') {
+      const next = args[i + 1]
+      if (!next) fail('missing number after --min-minor-span-ratio')
+      const parsed = Number.parseFloat(next)
+      if (!Number.isFinite(parsed) || parsed <= 0) {
+        fail('invalid --min-minor-span-ratio value, expected positive number')
+      }
+      minMinorSpanRatio = parsed
+      i += 1
+      continue
+    }
     if (arg === '--max-major-inversion-rate') {
       const next = args[i + 1]
       if (!next) fail('missing number after --max-major-inversion-rate')
@@ -1521,6 +1560,28 @@ function parseCliOptions(args: string[]): CliOptions {
         fail('invalid --max-avg-major-inversion-rate value, expected number in (0, 1]')
       }
       maxAvgMajorInversionRate = parsed
+      i += 1
+      continue
+    }
+    if (arg === '--min-avg-major-span-ratio') {
+      const next = args[i + 1]
+      if (!next) fail('missing number after --min-avg-major-span-ratio')
+      const parsed = Number.parseFloat(next)
+      if (!Number.isFinite(parsed) || parsed <= 0) {
+        fail('invalid --min-avg-major-span-ratio value, expected positive number')
+      }
+      minAvgMajorSpanRatio = parsed
+      i += 1
+      continue
+    }
+    if (arg === '--min-avg-minor-span-ratio') {
+      const next = args[i + 1]
+      if (!next) fail('missing number after --min-avg-minor-span-ratio')
+      const parsed = Number.parseFloat(next)
+      if (!Number.isFinite(parsed) || parsed <= 0) {
+        fail('invalid --min-avg-minor-span-ratio value, expected positive number')
+      }
+      minAvgMinorSpanRatio = parsed
       i += 1
       continue
     }
@@ -1642,10 +1703,14 @@ function parseCliOptions(args: string[]): CliOptions {
     minSpanXRatio,
     minSpanYRatio,
     minSpanAreaRatio,
+    minMajorSpanRatio,
+    minMinorSpanRatio,
     maxMajorInversionRate,
     maxAvgRmse,
     maxAvgInversionRate,
     maxAvgMajorInversionRate,
+    minAvgMajorSpanRatio,
+    minAvgMinorSpanRatio,
     maxAvgPolylineCrossingMultiplier,
     maxAvgLogicalCrossingMultiplier,
     minAvgSpanAreaRatio,
@@ -1715,7 +1780,7 @@ function main(): void {
       `rmse=${round(result.rmse)} maxDist=${round(result.maxDist)} inversionRateX=${round(result.inversionRate)} inversionRateY=${round(result.inversionRateY)} majorAxis=${result.majorAxis} majorInversionRate=${round(result.majorInversionRate)}`,
     )
     console.log(
-      `spanRatio x=${round(result.spanXRatio)} y=${round(result.spanYRatio)} area=${round(result.spanAreaRatio)}`,
+      `spanRatio x=${round(result.spanXRatio)} y=${round(result.spanYRatio)} area=${round(result.spanAreaRatio)} major=${round(result.majorSpanRatio)} minor=${round(result.minorSpanRatio)}`,
     )
     console.log(
       `polylineCrossings local=${result.localPolylineCrossings} official=${result.officialPolylineCrossings} delta=${result.localPolylineCrossings - result.officialPolylineCrossings} multiplier=${round(result.polylineCrossingMultiplier)}`,
@@ -1750,6 +1815,12 @@ function main(): void {
   const avgSpanAreaRatio =
     results.reduce((acc, row) => acc + (Number.isFinite(row.spanAreaRatio) ? row.spanAreaRatio : 0), 0) /
     Math.max(results.length, 1)
+  const avgMajorSpanRatio =
+    results.reduce((acc, row) => acc + (Number.isFinite(row.majorSpanRatio) ? row.majorSpanRatio : 0), 0) /
+    Math.max(results.length, 1)
+  const avgMinorSpanRatio =
+    results.reduce((acc, row) => acc + (Number.isFinite(row.minorSpanRatio) ? row.minorSpanRatio : 0), 0) /
+    Math.max(results.length, 1)
   const totalLocalPolylineCrossings = results.reduce((acc, row) => acc + row.localPolylineCrossings, 0)
   const totalOfficialPolylineCrossings = results.reduce((acc, row) => acc + row.officialPolylineCrossings, 0)
   const totalLocalLogicalCrossings = results.reduce((acc, row) => acc + row.localLogicalCrossings, 0)
@@ -1769,6 +1840,7 @@ function main(): void {
   console.log(`avg_polyline_crossing_multiplier=${round(avgPolylineMultiplier)}`)
   console.log(`avg_logical_crossing_multiplier=${round(avgLogicalMultiplier)}`)
   console.log(`avg_span_area_ratio=${round(avgSpanAreaRatio)}`)
+  console.log(`avg_major_span_ratio=${round(avgMajorSpanRatio)} avg_minor_span_ratio=${round(avgMinorSpanRatio)}`)
   console.log(`rendered_svgs_dir=${tempRoot}`)
 
   if (options.jsonPath) {
@@ -1781,10 +1853,14 @@ function main(): void {
         minSpanXRatio: options.minSpanXRatio ?? null,
         minSpanYRatio: options.minSpanYRatio ?? null,
         minSpanAreaRatio: options.minSpanAreaRatio ?? null,
+        minMajorSpanRatio: options.minMajorSpanRatio ?? null,
+        minMinorSpanRatio: options.minMinorSpanRatio ?? null,
         maxMajorInversionRate: options.maxMajorInversionRate ?? null,
         maxAvgRmse: options.maxAvgRmse ?? null,
         maxAvgInversionRate: options.maxAvgInversionRate ?? null,
         maxAvgMajorInversionRate: options.maxAvgMajorInversionRate ?? null,
+        minAvgMajorSpanRatio: options.minAvgMajorSpanRatio ?? null,
+        minAvgMinorSpanRatio: options.minAvgMinorSpanRatio ?? null,
         maxAvgPolylineCrossingMultiplier: options.maxAvgPolylineCrossingMultiplier ?? null,
         maxAvgLogicalCrossingMultiplier: options.maxAvgLogicalCrossingMultiplier ?? null,
         minAvgSpanAreaRatio: options.minAvgSpanAreaRatio ?? null,
@@ -1804,6 +1880,8 @@ function main(): void {
         avgInversionRateX: avgInversion,
         avgInversionRateY: avgInversionY,
         avgMajorInversionRate: avgMajorInversion,
+        avgMajorSpanRatio,
+        avgMinorSpanRatio,
         totalLocalPolylineCrossings,
         totalOfficialPolylineCrossings,
         totalLocalLogicalCrossings,
@@ -1916,6 +1994,44 @@ function main(): void {
     }
   }
 
+  if (options.minMajorSpanRatio !== undefined) {
+    const threshold = options.minMajorSpanRatio
+    const violating = results.filter(
+      result => !Number.isFinite(result.majorSpanRatio) || result.majorSpanRatio < threshold,
+    )
+    if (violating.length > 0) {
+      console.error(
+        [
+          `major span ratio minimum not met: threshold=${threshold}`,
+          ...violating.map(
+            result =>
+              `  ${result.fixture}: direction=${result.graphDirection} majorAxis=${result.majorAxis} majorSpanRatio=${round(result.majorSpanRatio)} x=${round(result.spanXRatio)} y=${round(result.spanYRatio)}`,
+          ),
+        ].join('\n'),
+      )
+      process.exitCode = 15
+    }
+  }
+
+  if (options.minMinorSpanRatio !== undefined) {
+    const threshold = options.minMinorSpanRatio
+    const violating = results.filter(
+      result => !Number.isFinite(result.minorSpanRatio) || result.minorSpanRatio < threshold,
+    )
+    if (violating.length > 0) {
+      console.error(
+        [
+          `minor span ratio minimum not met: threshold=${threshold}`,
+          ...violating.map(
+            result =>
+              `  ${result.fixture}: direction=${result.graphDirection} majorAxis=${result.majorAxis} minorSpanRatio=${round(result.minorSpanRatio)} x=${round(result.spanXRatio)} y=${round(result.spanYRatio)}`,
+          ),
+        ].join('\n'),
+      )
+      process.exitCode = 16
+    }
+  }
+
   if (options.maxMajorInversionRate !== undefined) {
     const threshold = options.maxMajorInversionRate
     const violating = results.filter(
@@ -1962,6 +2078,26 @@ function main(): void {
       `average major inversion rate threshold exceeded: threshold=${options.maxAvgMajorInversionRate} avgMajorInversionRate=${round(avgMajorInversion)}`,
     )
     process.exitCode = 14
+  }
+
+  if (
+    options.minAvgMajorSpanRatio !== undefined &&
+    (!Number.isFinite(avgMajorSpanRatio) || avgMajorSpanRatio < options.minAvgMajorSpanRatio)
+  ) {
+    console.error(
+      `average major span ratio minimum not met: threshold=${options.minAvgMajorSpanRatio} avgMajorSpanRatio=${round(avgMajorSpanRatio)}`,
+    )
+    process.exitCode = 17
+  }
+
+  if (
+    options.minAvgMinorSpanRatio !== undefined &&
+    (!Number.isFinite(avgMinorSpanRatio) || avgMinorSpanRatio < options.minAvgMinorSpanRatio)
+  ) {
+    console.error(
+      `average minor span ratio minimum not met: threshold=${options.minAvgMinorSpanRatio} avgMinorSpanRatio=${round(avgMinorSpanRatio)}`,
+    )
+    process.exitCode = 18
   }
 
   if (
