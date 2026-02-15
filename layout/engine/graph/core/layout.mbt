@@ -2114,6 +2114,138 @@ fn count_polyline_crossings(polylines : Array[Array[Point]]) -> Int {
 }
 
 ///|
+fn simulate_deferred_back_edge_order_crossings(
+  deferred_order : Array[Int],
+  edge_layout_contexts : Array[EdgeLayoutContext],
+  positioned_nodes : Array[PositionedNode],
+  base_routed_edge_segments : Array[RoutedEdgeSegment],
+  base_back_edge_lane_reservations : Array[BackEdgeLaneReservation],
+  base_back_edge_column_reservations : Array[BackEdgeColumnReservation],
+  base_polylines : Array[Array[Point]],
+  enhanced_horizontal_state_flow : Bool,
+) -> Int {
+  let candidate_routed_edge_segments : Array[RoutedEdgeSegment] = []
+  let candidate_back_edge_lane_reservations : Array[BackEdgeLaneReservation] = []
+  let candidate_back_edge_column_reservations : Array[BackEdgeColumnReservation] = []
+  for segment in base_routed_edge_segments {
+    candidate_routed_edge_segments.push(segment)
+  }
+  for reservation in base_back_edge_lane_reservations {
+    candidate_back_edge_lane_reservations.push(reservation)
+  }
+  for reservation in base_back_edge_column_reservations {
+    candidate_back_edge_column_reservations.push(reservation)
+  }
+
+  let candidate_polylines : Array[Array[Point]] = []
+  for polyline in base_polylines {
+    candidate_polylines.push(polyline)
+  }
+
+  for context_index in deferred_order {
+    let context = edge_layout_contexts[context_index]
+    let source = context.source
+    let target = context.target
+    let back_edge_bend_y = if context.edge_horizontal {
+      Some(
+        reserve_back_edge_bend_y(
+          source, target, positioned_nodes, candidate_routed_edge_segments, candidate_back_edge_lane_reservations,
+        ),
+      )
+    } else {
+      None
+    }
+    let back_edge_bend_x = if !context.edge_horizontal {
+      Some(
+        reserve_back_edge_bend_x(
+          source, target, positioned_nodes, candidate_routed_edge_segments, candidate_back_edge_column_reservations,
+        ),
+      )
+    } else {
+      None
+    }
+    let points = edge_points_for(
+      source,
+      target,
+      context.edge_horizontal,
+      back_edge_bend_y,
+      back_edge_bend_x,
+      None,
+      enhanced_horizontal_state_flow,
+    )
+    candidate_polylines.push(points)
+    append_routed_segments_for_points(
+      candidate_routed_edge_segments,
+      context.resolved_source_id,
+      context.resolved_target_id,
+      points,
+    )
+  }
+
+  count_polyline_crossings(candidate_polylines)
+}
+
+///|
+fn optimize_deferred_back_edge_order_locally(
+  initial_order : Array[Int],
+  edge_layout_contexts : Array[EdgeLayoutContext],
+  positioned_nodes : Array[PositionedNode],
+  base_routed_edge_segments : Array[RoutedEdgeSegment],
+  base_back_edge_lane_reservations : Array[BackEdgeLaneReservation],
+  base_back_edge_column_reservations : Array[BackEdgeColumnReservation],
+  base_polylines : Array[Array[Point]],
+  enhanced_horizontal_state_flow : Bool,
+) -> Array[Int] {
+  let optimized_order : Array[Int] = []
+  for context_index in initial_order {
+    optimized_order.push(context_index)
+  }
+  if optimized_order.length() < 2 {
+    return optimized_order
+  }
+
+  let mut best_crossings = simulate_deferred_back_edge_order_crossings(
+    optimized_order, edge_layout_contexts, positioned_nodes, base_routed_edge_segments,
+    base_back_edge_lane_reservations, base_back_edge_column_reservations, base_polylines,
+    enhanced_horizontal_state_flow,
+  )
+  let max_evaluations = (optimized_order.length() * 8).max(24).min(128)
+  let mut evaluations = 0
+  let mut pass = 0
+  while pass < 6 && evaluations < max_evaluations {
+    let mut changed = false
+    let mut i = 0
+    while i + 1 < optimized_order.length() && evaluations < max_evaluations {
+      let left_context_index = optimized_order[i]
+      let right_context_index = optimized_order[i + 1]
+      optimized_order[i] = right_context_index
+      optimized_order[i + 1] = left_context_index
+
+      let candidate_crossings = simulate_deferred_back_edge_order_crossings(
+        optimized_order, edge_layout_contexts, positioned_nodes, base_routed_edge_segments,
+        base_back_edge_lane_reservations, base_back_edge_column_reservations, base_polylines,
+        enhanced_horizontal_state_flow,
+      )
+      evaluations = evaluations + 1
+
+      if candidate_crossings < best_crossings {
+        best_crossings = candidate_crossings
+        changed = true
+      } else {
+        optimized_order[i] = left_context_index
+        optimized_order[i + 1] = right_context_index
+      }
+      i = i + 1
+    }
+    if !changed {
+      break
+    }
+    pass = pass + 1
+  }
+  optimized_order
+}
+
+///|
 fn spans_overlap(
   a_left : Int,
   a_right : Int,
@@ -4664,67 +4796,11 @@ fn layout_graph_with_subgraph_redirects(
     let mut best_crossings = 0
 
     for candidate_index, candidate_order in deferred_order_candidates {
-      let candidate_routed_edge_segments : Array[RoutedEdgeSegment] = []
-      let candidate_back_edge_lane_reservations : Array[BackEdgeLaneReservation] = []
-      let candidate_back_edge_column_reservations : Array[
-        BackEdgeColumnReservation,
-      ] = []
-      for segment in routed_edge_segments {
-        candidate_routed_edge_segments.push(segment)
-      }
-      for reservation in back_edge_lane_reservations {
-        candidate_back_edge_lane_reservations.push(reservation)
-      }
-      for reservation in back_edge_column_reservations {
-        candidate_back_edge_column_reservations.push(reservation)
-      }
-
-      let candidate_polylines : Array[Array[Point]] = []
-      for polyline in base_polylines {
-        candidate_polylines.push(polyline)
-      }
-
-      for context_index in candidate_order {
-        let context = edge_layout_contexts[context_index]
-        let source = context.source
-        let target = context.target
-        let back_edge_bend_y = if context.edge_horizontal {
-          Some(
-            reserve_back_edge_bend_y(
-              source, target, positioned_nodes, candidate_routed_edge_segments, candidate_back_edge_lane_reservations,
-            ),
-          )
-        } else {
-          None
-        }
-        let back_edge_bend_x = if !context.edge_horizontal {
-          Some(
-            reserve_back_edge_bend_x(
-              source, target, positioned_nodes, candidate_routed_edge_segments, candidate_back_edge_column_reservations,
-            ),
-          )
-        } else {
-          None
-        }
-        let points = edge_points_for(
-          source,
-          target,
-          context.edge_horizontal,
-          back_edge_bend_y,
-          back_edge_bend_x,
-          None,
-          enhanced_horizontal_state_flow,
-        )
-        candidate_polylines.push(points)
-        append_routed_segments_for_points(
-          candidate_routed_edge_segments,
-          context.resolved_source_id,
-          context.resolved_target_id,
-          points,
-        )
-      }
-
-      let candidate_crossings = count_polyline_crossings(candidate_polylines)
+      let candidate_crossings = simulate_deferred_back_edge_order_crossings(
+        candidate_order, edge_layout_contexts, positioned_nodes, routed_edge_segments,
+        back_edge_lane_reservations, back_edge_column_reservations, base_polylines,
+        enhanced_horizontal_state_flow,
+      )
       if !has_best_order || candidate_crossings < best_crossings {
         has_best_order = true
         best_order_index = candidate_index
@@ -4737,8 +4813,13 @@ fn layout_graph_with_subgraph_redirects(
     } else {
       deferred_back_edge_context_indices
     }
+    let optimized_deferred_order = optimize_deferred_back_edge_order_locally(
+      selected_deferred_order, edge_layout_contexts, positioned_nodes, routed_edge_segments,
+      back_edge_lane_reservations, back_edge_column_reservations, base_polylines,
+      enhanced_horizontal_state_flow,
+    )
 
-    for context_index in selected_deferred_order {
+    for context_index in optimized_deferred_order {
       let context = edge_layout_contexts[context_index]
       let source = context.source
       let target = context.target
