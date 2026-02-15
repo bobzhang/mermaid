@@ -4289,6 +4289,10 @@ fn layout_graph_with_subgraph_redirects(
   deferred_back_edge_context_indices.sort_by((left_index, right_index) => {
     let left_context = edge_layout_contexts[left_index]
     let right_context = edge_layout_contexts[right_index]
+    let row_cmp = left_context.source.y.compare(right_context.source.y)
+    if row_cmp != 0 {
+      return row_cmp
+    }
     let left_span = if left_context.edge_horizontal {
       int_abs(left_context.target.x - left_context.source.x)
     } else {
