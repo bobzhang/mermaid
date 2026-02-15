@@ -628,6 +628,43 @@ fn flow_non_state_back_edge_detour_row(
 }
 
 ///|
+priv struct AsciiBackEdgeRowReservation {
+  left : Int
+  right : Int
+  y : Int
+}
+
+///|
+fn flow_back_edge_row_conflicts(
+  reservations : Array[AsciiBackEdgeRowReservation],
+  left : Int,
+  right : Int,
+  row_y : Int,
+) -> Bool {
+  reservations.any(item => {
+    item.y == row_y && !(item.right < left || right < item.left)
+  })
+}
+
+///|
+fn flow_reserve_back_edge_detour_row(
+  source_x : Int,
+  target_x : Int,
+  preferred_row_y : Int,
+  reservations : Array[AsciiBackEdgeRowReservation],
+) -> Int {
+  let left = source_x.min(target_x)
+  let right = source_x.max(target_x)
+  let step = 2
+  let mut row_y = preferred_row_y
+  while flow_back_edge_row_conflicts(reservations, left, right, row_y) {
+    row_y = row_y + step
+  }
+  reservations.push({ left, right, y: row_y })
+  row_y
+}
+
+///|
 fn flow_non_state_label_anchor_from_points(
   points : Array[Point],
   source_x : Int,
@@ -3451,6 +3488,7 @@ fn render_ascii_flow_subgraphs(
   let non_state_in_degree_by_target : Map[String, Int] = {}
   let non_state_has_labeled_incoming_target : Map[String, Bool] = {}
   let non_state_targets_by_source : Map[String, Array[String]] = {}
+  let non_state_back_edge_row_reservations : Array[AsciiBackEdgeRowReservation] = []
   if !state_layout_mode {
     for edge in graph.edges {
       let current = option_int_or(
@@ -3735,10 +3773,13 @@ fn render_ascii_flow_subgraphs(
                 detour_start_y,
                 mapped_nodes,
               )
+              let reserved_detour_y = flow_reserve_back_edge_detour_row(
+                source_anchor_x, target_anchor_x, detour_y, non_state_back_edge_row_reservations,
+              )
               [
                 Point::{ x: source_anchor_x, y: source_anchor_y },
-                { x: source_anchor_x, y: detour_y },
-                { x: target_anchor_x, y: detour_y },
+                { x: source_anchor_x, y: reserved_detour_y },
+                { x: target_anchor_x, y: reserved_detour_y },
                 { x: target_anchor_x, y: target_anchor_y },
               ]
             } else if unlabeled_back_edge_detour {
@@ -3757,10 +3798,13 @@ fn render_ascii_flow_subgraphs(
                 detour_start_y,
                 mapped_nodes,
               )
+              let reserved_detour_y = flow_reserve_back_edge_detour_row(
+                source_anchor_x, target_anchor_x, detour_y, non_state_back_edge_row_reservations,
+              )
               [
                 { x: source_anchor_x, y: source_anchor_y },
-                { x: source_anchor_x, y: detour_y },
-                { x: target_anchor_x, y: detour_y },
+                { x: source_anchor_x, y: reserved_detour_y },
+                { x: target_anchor_x, y: reserved_detour_y },
                 { x: target_anchor_x, y: target_anchor_y },
               ]
             } else if labeled_left_descending_detour {

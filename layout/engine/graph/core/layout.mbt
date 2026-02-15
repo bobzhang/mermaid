@@ -75,12 +75,94 @@ fn collect_non_state_flow_ranks(
   nodes_in_order : Array[MermaidNode],
   edges : Array[MermaidEdge],
   compact_fanin : Bool,
+  cycle_aware : Bool,
 ) -> (Map[String, Int], Int) {
-  let node_order_by_id : Map[String, Int] = {}
+  if !cycle_aware {
+    let node_order_by_id : Map[String, Int] = {}
+    let rank_by_id : Map[String, Int] = {}
+
+    for i, node in nodes_in_order {
+      node_order_by_id[node.id] = i
+      rank_by_id[node.id] = 0
+    }
+
+    if nodes_in_order.length() == 0 {
+      return (rank_by_id, 0)
+    }
+
+    if compact_fanin {
+      for node in nodes_in_order {
+        let target_order = option_int_or(node_order_by_id.get(node.id), -1)
+        if target_order < 0 {
+          continue
+        }
+        let mut has_forward_incoming = false
+        let mut best_rank = 0
+        for edge in edges {
+          if edge.target != node.id {
+            continue
+          }
+          match node_order_by_id.get(edge.source) {
+            Some(source_order) =>
+              if target_order > source_order {
+                let source_rank = option_int_or(rank_by_id.get(edge.source), 0)
+                let candidate_rank = source_rank + 1
+                if !has_forward_incoming || candidate_rank < best_rank {
+                  best_rank = candidate_rank
+                  has_forward_incoming = true
+                }
+              }
+            None => ()
+          }
+        }
+        if has_forward_incoming {
+          rank_by_id[node.id] = best_rank
+        }
+      }
+    } else {
+      for _ in 0..<nodes_in_order.length() {
+        let mut changed = false
+        for edge in edges {
+          match
+            (
+              node_order_by_id.get(edge.source),
+              node_order_by_id.get(edge.target),
+            ) {
+            (Some(source_order), Some(target_order)) =>
+              if target_order > source_order {
+                let source_rank = option_int_or(rank_by_id.get(edge.source), 0)
+                let target_rank = option_int_or(rank_by_id.get(edge.target), 0)
+                let candidate_rank = source_rank + 1
+                if candidate_rank > target_rank {
+                  rank_by_id[edge.target] = candidate_rank
+                  changed = true
+                }
+              }
+            _ => ()
+          }
+        }
+        if !changed {
+          break
+        }
+      }
+    }
+
+    let mut max_rank = 0
+    for _, rank in rank_by_id {
+      max_rank = max_rank.max(rank)
+    }
+    return (rank_by_id, max_rank)
+  }
+
+  let node_exists : Map[String, Bool] = {}
+  let indegree_by_id : Map[String, Int] = {}
+  let outgoing_edge_indices_by_source : Map[String, Array[Int]] = {}
   let rank_by_id : Map[String, Int] = {}
 
-  for i, node in nodes_in_order {
-    node_order_by_id[node.id] = i
+  for node in nodes_in_order {
+    node_exists[node.id] = true
+    indegree_by_id[node.id] = 0
+    outgoing_edge_indices_by_source[node.id] = []
     rank_by_id[node.id] = 0
   }
 
@@ -88,51 +170,136 @@ fn collect_non_state_flow_ranks(
     return (rank_by_id, 0)
   }
 
-  if compact_fanin {
-    for node in nodes_in_order {
-      let target_order = option_int_or(node_order_by_id.get(node.id), -1)
-      if target_order < 0 {
-        continue
-      }
-      let mut has_forward_incoming = false
-      let mut best_rank = 0
-      for edge in edges {
-        if edge.target != node.id {
-          continue
+  for i, edge in edges {
+    if !node_exists.contains(edge.source) || !node_exists.contains(edge.target) {
+      continue
+    }
+    match outgoing_edge_indices_by_source.get(edge.source) {
+      Some(indices) => indices.push(i)
+      None => ()
+    }
+    let current_indegree = option_int_or(indegree_by_id.get(edge.target), 0)
+    indegree_by_id[edge.target] = current_indegree + 1
+  }
+
+  let visit_state_by_id : Map[String, Int] = {}
+  let back_edge_by_index : Map[Int, Bool] = {}
+
+  fn mark_back_edges_from(
+    node_id : String,
+    edges : Array[MermaidEdge],
+    node_exists : Map[String, Bool],
+    outgoing_edge_indices_by_source : Map[String, Array[Int]],
+    visit_state_by_id : Map[String, Int],
+    back_edge_by_index : Map[Int, Bool],
+  ) -> Unit {
+    let state = option_int_or(visit_state_by_id.get(node_id), 0)
+    if state != 0 {
+      return
+    }
+
+    visit_state_by_id[node_id] = 1
+    match outgoing_edge_indices_by_source.get(node_id) {
+      Some(outgoing_indices) =>
+        for edge_index in outgoing_indices {
+          let edge = edges[edge_index]
+          if !node_exists.contains(edge.target) {
+            continue
+          }
+          let target_state = option_int_or(
+            visit_state_by_id.get(edge.target),
+            0,
+          )
+          if target_state == 0 {
+            mark_back_edges_from(
+              edge.target,
+              edges,
+              node_exists,
+              outgoing_edge_indices_by_source,
+              visit_state_by_id,
+              back_edge_by_index,
+            )
+          } else if target_state == 1 {
+            back_edge_by_index[edge_index] = true
+          }
         }
-        match node_order_by_id.get(edge.source) {
-          Some(source_order) =>
-            if target_order > source_order {
-              let source_rank = option_int_or(rank_by_id.get(edge.source), 0)
+      None => ()
+    }
+    visit_state_by_id[node_id] = 2
+  }
+
+  for node in nodes_in_order {
+    if option_int_or(indegree_by_id.get(node.id), 0) == 0 {
+      mark_back_edges_from(
+        node.id,
+        edges,
+        node_exists,
+        outgoing_edge_indices_by_source,
+        visit_state_by_id,
+        back_edge_by_index,
+      )
+    }
+  }
+  for node in nodes_in_order {
+    if option_int_or(visit_state_by_id.get(node.id), 0) == 0 {
+      mark_back_edges_from(
+        node.id,
+        edges,
+        node_exists,
+        outgoing_edge_indices_by_source,
+        visit_state_by_id,
+        back_edge_by_index,
+      )
+    }
+  }
+
+  if compact_fanin {
+    for _ in 0..<nodes_in_order.length() {
+      let mut changed = false
+      for node in nodes_in_order {
+        let mut has_incoming = false
+        let mut best_rank = 0
+        for edge_index, edge in edges {
+          if back_edge_by_index.contains(edge_index) || edge.target != node.id {
+            continue
+          }
+          match rank_by_id.get(edge.source) {
+            Some(source_rank) => {
               let candidate_rank = source_rank + 1
-              if !has_forward_incoming || candidate_rank < best_rank {
+              if !has_incoming || candidate_rank < best_rank {
                 best_rank = candidate_rank
-                has_forward_incoming = true
+                has_incoming = true
               }
             }
-          None => ()
+            None => ()
+          }
+        }
+        let current_rank = option_int_or(rank_by_id.get(node.id), 0)
+        let next_rank = if has_incoming { best_rank } else { 0 }
+        if next_rank != current_rank {
+          rank_by_id[node.id] = next_rank
+          changed = true
         }
       }
-      if has_forward_incoming {
-        rank_by_id[node.id] = best_rank
+      if !changed {
+        break
       }
     }
   } else {
     for _ in 0..<nodes_in_order.length() {
       let mut changed = false
-      for edge in edges {
-        match
-          (node_order_by_id.get(edge.source), node_order_by_id.get(edge.target)) {
-          (Some(source_order), Some(target_order)) =>
-            if target_order > source_order {
-              let source_rank = option_int_or(rank_by_id.get(edge.source), 0)
-              let target_rank = option_int_or(rank_by_id.get(edge.target), 0)
-              let candidate_rank = source_rank + 1
-              if candidate_rank > target_rank {
-                rank_by_id[edge.target] = candidate_rank
-                changed = true
-              }
+      for edge_index, edge in edges {
+        if back_edge_by_index.contains(edge_index) {
+          continue
+        }
+        match (rank_by_id.get(edge.source), rank_by_id.get(edge.target)) {
+          (Some(source_rank), Some(target_rank)) => {
+            let candidate_rank = source_rank + 1
+            if candidate_rank > target_rank {
+              rank_by_id[edge.target] = candidate_rank
+              changed = true
             }
+          }
           _ => ()
         }
       }
@@ -153,17 +320,232 @@ fn collect_non_state_flow_ranks(
 fn collect_non_state_flow_lanes(
   nodes_in_order : Array[MermaidNode],
   rank_by_id : Map[String, Int],
+  max_rank : Int,
+  edges : Array[MermaidEdge],
 ) -> Map[String, Int] {
-  let lane_by_id : Map[String, Int] = {}
-  let next_lane_by_rank : Map[Int, Int] = {}
-
-  for node in nodes_in_order {
-    let rank = option_int_or(rank_by_id.get(node.id), 0)
-    let lane = option_int_or(next_lane_by_rank.get(rank), 0)
-    lane_by_id[node.id] = lane
-    next_lane_by_rank[rank] = lane + 1
+  if nodes_in_order.length() == 0 {
+    return {}
   }
 
+  let rank_nodes : Array[Array[String]] = []
+  for _ in 0..<=max_rank {
+    rank_nodes.push([])
+  }
+  for node in nodes_in_order {
+    let rank = option_int_or(rank_by_id.get(node.id), 0)
+    rank_nodes[rank].push(node.id)
+  }
+
+  fn compare_rational(
+    left_num : Int,
+    left_den : Int,
+    right_num : Int,
+    right_den : Int,
+  ) -> Int {
+    (left_num * right_den).compare(right_num * left_den)
+  }
+
+  fn adjacent_crossings(
+    rank_nodes : Array[Array[String]],
+    upper_rank : Int,
+    lower_rank : Int,
+    rank_by_id : Map[String, Int],
+    edges : Array[MermaidEdge],
+  ) -> Int {
+    let upper_order : Map[String, Int] = {}
+    let lower_order : Map[String, Int] = {}
+    for i, node_id in rank_nodes[upper_rank] {
+      upper_order[node_id] = i
+    }
+    for i, node_id in rank_nodes[lower_rank] {
+      lower_order[node_id] = i
+    }
+
+    let pairs : Array[Point] = []
+    for edge in edges {
+      match (rank_by_id.get(edge.source), rank_by_id.get(edge.target)) {
+        (Some(source_rank), Some(target_rank)) =>
+          if source_rank == upper_rank && target_rank == lower_rank {
+            match (upper_order.get(edge.source), lower_order.get(edge.target)) {
+              (Some(source_order), Some(target_order)) =>
+                pairs.push({ x: source_order, y: target_order })
+              _ => ()
+            }
+          }
+        _ => ()
+      }
+    }
+
+    let mut crossings = 0
+    for i in 0..<pairs.length() {
+      let left = pairs[i]
+      for j in (i + 1)..<pairs.length() {
+        let right = pairs[j]
+        let crossed = (left.x < right.x && left.y > right.y) ||
+          (left.x > right.x && left.y < right.y)
+        if crossed {
+          crossings += 1
+        }
+      }
+    }
+    crossings
+  }
+
+  fn crossings_around_rank(
+    rank_nodes : Array[Array[String]],
+    rank : Int,
+    max_rank : Int,
+    rank_by_id : Map[String, Int],
+    edges : Array[MermaidEdge],
+  ) -> Int {
+    let mut total = 0
+    if rank > 0 {
+      total += adjacent_crossings(rank_nodes, rank - 1, rank, rank_by_id, edges)
+    }
+    if rank < max_rank {
+      total += adjacent_crossings(rank_nodes, rank, rank + 1, rank_by_id, edges)
+    }
+    total
+  }
+
+  fn barycenter_pass(
+    rank_nodes : Array[Array[String]],
+    start_rank : Int,
+    end_rank : Int,
+    step : Int,
+    incoming_from_neighbor : Bool,
+    rank_by_id : Map[String, Int],
+    edges : Array[MermaidEdge],
+  ) -> Unit {
+    let mut rank = start_rank
+    while rank != end_rank {
+      let neighbor_rank = rank - step
+      if neighbor_rank < 0 || neighbor_rank >= rank_nodes.length() {
+        rank = rank + step
+        continue
+      }
+
+      let neighbor_order : Map[String, Int] = {}
+      for i, node_id in rank_nodes[neighbor_rank] {
+        neighbor_order[node_id] = i
+      }
+
+      let current = rank_nodes[rank]
+      let numerators : Map[String, Int] = {}
+      let denominators : Map[String, Int] = {}
+      let current_order : Map[String, Int] = {}
+      for i, node_id in current {
+        current_order[node_id] = i
+        numerators[node_id] = i
+        denominators[node_id] = 1
+      }
+
+      for node_id in current {
+        let mut sum = 0
+        let mut count = 0
+        for edge in edges {
+          let neighbor_id = if incoming_from_neighbor {
+            if edge.target == node_id {
+              edge.source
+            } else {
+              ""
+            }
+          } else if edge.source == node_id {
+            edge.target
+          } else {
+            ""
+          }
+          if neighbor_id == "" {
+            continue
+          }
+          match (rank_by_id.get(node_id), rank_by_id.get(neighbor_id)) {
+            (Some(current_rank), Some(linked_rank)) =>
+              if current_rank == rank && linked_rank == neighbor_rank {
+                match neighbor_order.get(neighbor_id) {
+                  Some(order) => {
+                    sum += order
+                    count += 1
+                  }
+                  None => ()
+                }
+              }
+            _ => ()
+          }
+        }
+        if count > 0 {
+          numerators[node_id] = sum
+          denominators[node_id] = count
+        }
+      }
+
+      current.sort_by((left_id, right_id) => {
+        let left_num = option_int_or(numerators.get(left_id), 0)
+        let left_den = option_int_or(denominators.get(left_id), 1)
+        let right_num = option_int_or(numerators.get(right_id), 0)
+        let right_den = option_int_or(denominators.get(right_id), 1)
+        let ratio_cmp = compare_rational(
+          left_num, left_den, right_num, right_den,
+        )
+        if ratio_cmp != 0 {
+          return ratio_cmp
+        }
+        let left_order = option_int_or(current_order.get(left_id), 0)
+        let right_order = option_int_or(current_order.get(right_id), 0)
+        left_order.compare(right_order)
+      })
+      rank_nodes[rank] = current
+      rank = rank + step
+    }
+  }
+
+  if max_rank > 0 {
+    for _ in 0..<4 {
+      barycenter_pass(rank_nodes, 1, max_rank + 1, 1, true, rank_by_id, edges)
+      barycenter_pass(
+        rank_nodes,
+        max_rank - 1,
+        -1,
+        -1,
+        false,
+        rank_by_id,
+        edges,
+      )
+
+      for rank in 0..<=max_rank {
+        let nodes = rank_nodes[rank]
+        if nodes.length() < 2 {
+          continue
+        }
+        let mut i = 0
+        while i + 1 < nodes.length() {
+          let before = crossings_around_rank(
+            rank_nodes, rank, max_rank, rank_by_id, edges,
+          )
+          let left = nodes[i]
+          let right = nodes[i + 1]
+          nodes[i] = right
+          nodes[i + 1] = left
+          rank_nodes[rank] = nodes
+          let after = crossings_around_rank(
+            rank_nodes, rank, max_rank, rank_by_id, edges,
+          )
+          if after >= before {
+            nodes[i] = left
+            nodes[i + 1] = right
+            rank_nodes[rank] = nodes
+          }
+          i = i + 1
+        }
+      }
+    }
+  }
+
+  let lane_by_id : Map[String, Int] = {}
+  for rank in 0..<=max_rank {
+    for lane, node_id in rank_nodes[rank] {
+      lane_by_id[node_id] = lane
+    }
+  }
   lane_by_id
 }
 
@@ -296,6 +678,7 @@ fn edge_points_for(
   target : PositionedNode,
   horizontal : Bool,
   style : EdgeStyle,
+  back_edge_bend_y : Int?,
 ) -> Array[Point] {
   if horizontal {
     let moving_right = target.x >= source.x
@@ -313,10 +696,17 @@ fn edge_points_for(
     let end_x = target.x + target_delta
     let start : Point = { x: start_x, y: source.y }
     let end : Point = { x: end_x, y: target.y }
-    if style is Dotted && !moving_right {
-      let candidate_bend_y = source.y.min(target.y) - 42
-      let bend_y = if candidate_bend_y < 12 { 12 } else { candidate_bend_y }
-      return [start, { x: start_x, y: bend_y }, { x: end_x, y: bend_y }, end]
+    match back_edge_bend_y {
+      Some(bend_y) =>
+        if style is Dotted && !moving_right {
+          return [
+            start,
+            { x: start_x, y: bend_y },
+            { x: end_x, y: bend_y },
+            end,
+          ]
+        }
+      None => ()
     }
     [start, end]
   } else {
@@ -335,6 +725,64 @@ fn edge_points_for(
     let end_y = target.y + target_delta
     [{ x: source.x, y: start_y }, { x: target.x, y: end_y }]
   }
+}
+
+///|
+priv struct BackEdgeLaneReservation {
+  left : Int
+  right : Int
+  y : Int
+}
+
+///|
+fn spans_overlap(
+  a_left : Int,
+  a_right : Int,
+  b_left : Int,
+  b_right : Int,
+) -> Bool {
+  !(a_right < b_left || b_right < a_left)
+}
+
+///|
+fn back_edge_lane_conflicts(
+  reservations : Array[BackEdgeLaneReservation],
+  left : Int,
+  right : Int,
+  y : Int,
+) -> Bool {
+  reservations.any(item => {
+    item.y == y && spans_overlap(left, right, item.left, item.right)
+  })
+}
+
+///|
+fn reserve_back_edge_bend_y(
+  source : PositionedNode,
+  target : PositionedNode,
+  reservations : Array[BackEdgeLaneReservation],
+) -> Int {
+  let source_anchor_x = source.x - source.width / 2
+  let target_anchor_x = target.x + target.width / 2
+  let left = source_anchor_x.min(target_anchor_x)
+  let right = source_anchor_x.max(target_anchor_x)
+
+  let lane_step = 20
+  let mut candidate_up = source.y.min(target.y) - 42
+  while candidate_up >= 12 {
+    if !back_edge_lane_conflicts(reservations, left, right, candidate_up) {
+      reservations.push({ left, right, y: candidate_up })
+      return candidate_up
+    }
+    candidate_up = candidate_up - lane_step
+  }
+
+  let mut candidate_down = source.y.max(target.y) + 42
+  while back_edge_lane_conflicts(reservations, left, right, candidate_down) {
+    candidate_down = candidate_down + lane_step
+  }
+  reservations.push({ left, right, y: candidate_down })
+  candidate_down
 }
 
 ///|
@@ -1422,6 +1870,7 @@ fn layout_graph_with_subgraph_redirects(
       nodes_in_order,
       graph.edges,
       compact_fanin,
+      state_graph,
     )
     flow_max_rank = max_rank
     for node_id, rank in rank_by_id {
@@ -1499,7 +1948,10 @@ fn layout_graph_with_subgraph_redirects(
       }
     }
     let lane_by_id = collect_non_state_flow_lanes(
-      nodes_in_order, flow_rank_by_node_id,
+      nodes_in_order,
+      flow_rank_by_node_id,
+      flow_max_rank,
+      graph.edges,
     )
     for node_id, lane in lane_by_id {
       flow_lane_by_node_id[node_id] = lane
@@ -1805,6 +2257,7 @@ fn layout_graph_with_subgraph_redirects(
 
   let positioned_edges : Array[PositionedEdge] = []
   let label_slots_by_anchor : Map[String, Int] = {}
+  let back_edge_lane_reservations : Array[BackEdgeLaneReservation] = []
   for edge in graph.edges {
     let resolved_source_id = if use_subgraph_redirects {
       match subgraph_exit_by_id.get(edge.source) {
@@ -1841,11 +2294,23 @@ fn layout_graph_with_subgraph_redirects(
             }
           _ => horizontal
         }
+        let back_edge_bend_y = if edge_horizontal &&
+          edge.style is Dotted &&
+          target.x < source.x {
+          Some(
+            reserve_back_edge_bend_y(
+              source, target, back_edge_lane_reservations,
+            ),
+          )
+        } else {
+          None
+        }
         let points = edge_points_for(
           source,
           target,
           edge_horizontal,
           edge.style,
+          back_edge_bend_y,
         )
         let label_position = match edge.label {
           Some(_) => {
