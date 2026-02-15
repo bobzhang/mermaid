@@ -652,11 +652,68 @@ fn collect_non_state_flow_lanes(
 }
 
 ///|
+fn enforce_unique_lanes_per_rank(
+  nodes_in_order : Array[MermaidNode],
+  rank_by_id : Map[String, Int],
+  lane_by_id : Map[String, Int],
+) -> Unit {
+  let node_ids_by_rank : Map[Int, Array[String]] = {}
+  for node in nodes_in_order {
+    let rank = option_int_or(rank_by_id.get(node.id), 0)
+    if !node_ids_by_rank.contains(rank) {
+      node_ids_by_rank[rank] = []
+    }
+    let node_ids = node_ids_by_rank[rank]
+    node_ids.push(node.id)
+  }
+
+  for _, node_ids in node_ids_by_rank {
+    if node_ids.length() <= 1 {
+      continue
+    }
+    let original_order_by_node_id : Map[String, Int] = {}
+    for i, node_id in node_ids {
+      original_order_by_node_id[node_id] = i
+    }
+
+    node_ids.sort_by((left_id, right_id) => {
+      let left_lane = option_int_or(lane_by_id.get(left_id), 0)
+      let right_lane = option_int_or(lane_by_id.get(right_id), 0)
+      let lane_cmp = left_lane.compare(right_lane)
+      if lane_cmp != 0 {
+        return lane_cmp
+      }
+      let left_order = option_int_or(original_order_by_node_id.get(left_id), 0)
+      let right_order = option_int_or(
+        original_order_by_node_id.get(right_id),
+        0,
+      )
+      left_order.compare(right_order)
+    })
+
+    let mut previous_lane = option_int_or(lane_by_id.get(node_ids[0]), 0)
+    lane_by_id[node_ids[0]] = previous_lane
+    for i in 1..<node_ids.length() {
+      let node_id = node_ids[i]
+      let desired_lane = option_int_or(lane_by_id.get(node_id), 0)
+      let assigned_lane = if desired_lane > previous_lane {
+        desired_lane
+      } else {
+        previous_lane + 1
+      }
+      lane_by_id[node_id] = assigned_lane
+      previous_lane = assigned_lane
+    }
+  }
+}
+
+///|
 fn refine_horizontal_state_flow_lanes(
   nodes_in_order : Array[MermaidNode],
   edges : Array[MermaidEdge],
   rank_by_id : Map[String, Int],
   lane_by_id : Map[String, Int],
+  enhanced_mode : Bool,
 ) -> Unit {
   if nodes_in_order.length() == 0 {
     return
@@ -666,12 +723,13 @@ fn refine_horizontal_state_flow_lanes(
   let indegree_by_id : Map[String, Int] = {}
   let outdegree_by_id : Map[String, Int] = {}
   let has_self_loop_by_id : Map[String, Bool] = {}
+  let lane_scale = if enhanced_mode { 2 } else { 1 }
   for node in nodes_in_order {
     node_exists[node.id] = true
     indegree_by_id[node.id] = 0
     outdegree_by_id[node.id] = 0
     has_self_loop_by_id[node.id] = false
-    lane_by_id[node.id] = option_int_or(lane_by_id.get(node.id), 0)
+    lane_by_id[node.id] = option_int_or(lane_by_id.get(node.id), 0) * lane_scale
   }
   for edge in edges {
     if !node_exists.contains(edge.source) || !node_exists.contains(edge.target) {
@@ -721,7 +779,7 @@ fn refine_horizontal_state_flow_lanes(
     if forward_targets.length() > 1 {
       for i, target_id in forward_targets {
         let centered = i * 2 - (forward_targets.length() - 1)
-        let seeded_lane = source_lane + centered
+        let seeded_lane = source_lane + centered * lane_scale
         lane_by_id[target_id] = seeded_lane
         seeded_lane_by_id[target_id] = seeded_lane
       }
@@ -732,9 +790,12 @@ fn refine_horizontal_state_flow_lanes(
   for node in nodes_in_order {
     match node.shape {
       StateStart => {
-        let anchored_lane = option_int_or(lane_by_id.get(node.id), 0)
-        anchored_lane_by_id[node.id] = anchored_lane
-        lane_by_id[node.id] = anchored_lane
+        let outgoing = option_int_or(outdegree_by_id.get(node.id), 0)
+        if !enhanced_mode || outgoing > 1 {
+          let anchored_lane = option_int_or(lane_by_id.get(node.id), 0)
+          anchored_lane_by_id[node.id] = anchored_lane
+          lane_by_id[node.id] = anchored_lane
+        }
       }
       _ => ()
     }
@@ -793,18 +854,11 @@ fn refine_horizontal_state_flow_lanes(
     }
   }
 
-  for node in nodes_in_order {
-    if anchored_lane_by_id.contains(node.id) {
-      continue
-    }
-    let indegree = option_int_or(indegree_by_id.get(node.id), 0)
-    let outdegree = option_int_or(outdegree_by_id.get(node.id), 0)
-    if indegree != 1 || outdegree != 0 {
-      continue
-    }
-
+  if enhanced_mode {
+    let forward_solid_out_degree_by_source : Map[String, Int] = {}
     for edge in edges {
-      if edge.target != node.id || !node_exists.contains(edge.source) {
+      if !node_exists.contains(edge.source) ||
+        !node_exists.contains(edge.target) {
         continue
       }
       if edge.style is Dotted {
@@ -815,8 +869,111 @@ fn refine_horizontal_state_flow_lanes(
       if target_rank <= source_rank {
         continue
       }
-      lane_by_id[node.id] = option_int_or(lane_by_id.get(edge.source), 0)
-      break
+      let current = option_int_or(
+        forward_solid_out_degree_by_source.get(edge.source),
+        0,
+      )
+      forward_solid_out_degree_by_source[edge.source] = current + 1
+    }
+
+    for node in nodes_in_order {
+      if anchored_lane_by_id.contains(node.id) {
+        continue
+      }
+      let indegree = option_int_or(indegree_by_id.get(node.id), 0)
+      let outdegree = option_int_or(outdegree_by_id.get(node.id), 0)
+      if indegree != 1 || outdegree > 1 {
+        continue
+      }
+
+      let mut incoming_source : String? = None
+      for edge in edges {
+        if edge.target != node.id || !node_exists.contains(edge.source) {
+          continue
+        }
+        if edge.style is Dotted {
+          continue
+        }
+        let source_rank = option_int_or(rank_by_id.get(edge.source), 0)
+        let target_rank = option_int_or(
+          rank_by_id.get(edge.target),
+          source_rank,
+        )
+        if target_rank <= source_rank {
+          continue
+        }
+        incoming_source = Some(edge.source)
+        break
+      }
+
+      let source_id = match incoming_source {
+        Some(found) => found
+        None => continue
+      }
+
+      if option_int_or(forward_solid_out_degree_by_source.get(source_id), 0) !=
+        1 {
+        continue
+      }
+
+      if outdegree == 1 {
+        let mut has_forward_solid_outgoing = false
+        for edge in edges {
+          if edge.source != node.id || !node_exists.contains(edge.target) {
+            continue
+          }
+          if edge.style is Dotted {
+            continue
+          }
+          let source_rank = option_int_or(rank_by_id.get(edge.source), 0)
+          let target_rank = option_int_or(
+            rank_by_id.get(edge.target),
+            source_rank,
+          )
+          if target_rank > source_rank {
+            has_forward_solid_outgoing = true
+            break
+          }
+        }
+        if !has_forward_solid_outgoing {
+          continue
+        }
+      }
+
+      lane_by_id[node.id] = option_int_or(
+        lane_by_id.get(source_id),
+        option_int_or(lane_by_id.get(node.id), 0),
+      )
+    }
+  } else {
+    for node in nodes_in_order {
+      if anchored_lane_by_id.contains(node.id) {
+        continue
+      }
+      let indegree = option_int_or(indegree_by_id.get(node.id), 0)
+      let outdegree = option_int_or(outdegree_by_id.get(node.id), 0)
+      if indegree != 1 || outdegree != 0 {
+        continue
+      }
+
+      for edge in edges {
+        if edge.target != node.id || !node_exists.contains(edge.source) {
+          continue
+        }
+        if edge.style is Dotted {
+          continue
+        }
+        let source_rank = option_int_or(rank_by_id.get(edge.source), 0)
+        let target_rank = option_int_or(
+          rank_by_id.get(edge.target),
+          source_rank,
+        )
+        if target_rank <= source_rank {
+          continue
+        }
+        lane_by_id[node.id] = option_int_or(lane_by_id.get(edge.source), 0)
+        break
+      }
     }
   }
 
@@ -839,12 +996,16 @@ fn refine_horizontal_state_flow_lanes(
     }
 
     let source_lane = option_int_or(lane_by_id.get(edge.source), 0)
-    let lifted_lane = source_lane - 2
+    let lane_lift = if enhanced_mode { 4 } else { 2 }
+    let lifted_lane = source_lane - lane_lift
     let current_target_lane = option_int_or(
       lane_by_id.get(edge.target),
       lifted_lane,
     )
     lane_by_id[edge.target] = current_target_lane.min(lifted_lane)
+  }
+  if enhanced_mode {
+    enforce_unique_lanes_per_rank(nodes_in_order, rank_by_id, lane_by_id)
   }
 
   let mut min_lane = 0
@@ -1044,6 +1205,13 @@ fn edge_points_for(
           ]
         }
       None => ()
+    }
+    if smooth_forward_fanout &&
+      !(style is Dotted) &&
+      moving_right &&
+      start.y != end.y {
+      let mid_x = (start_x + end_x) / 2
+      return [start, { x: mid_x, y: end.y }, end]
     }
     [start, end]
   } else {
@@ -2004,6 +2172,22 @@ fn is_state_graph(graph : MermaidGraph) -> Bool {
 }
 
 ///|
+fn use_enhanced_horizontal_state_flow_lanes(
+  nodes_in_order : Array[MermaidNode],
+) -> Bool {
+  let mut circle_node_count = 0
+  for node in nodes_in_order {
+    match node.shape {
+      Circle => circle_node_count += 1
+      DoubleCircle => circle_node_count += 1
+      StateStart | StateEnd => ()
+      _ => return false
+    }
+  }
+  circle_node_count >= 3
+}
+
+///|
 fn find_positioned_group_index(
   groups : Array[PositionedGroup],
   group_id : String,
@@ -2258,7 +2442,7 @@ fn layout_graph_with_subgraph_redirects(
     return @layout_engine_sequence_core.layout_sequence_graph(graph, options)
   }
 
-  let padding = resolve_padding(options)
+  let base_padding = resolve_padding(options)
   let base_node_spacing = resolve_node_spacing(options)
   let base_layer_spacing = resolve_layer_spacing(options)
   let horizontal = layout_direction_is_horizontal(graph.direction)
@@ -2295,6 +2479,14 @@ fn layout_graph_with_subgraph_redirects(
     }
   }
   nodes_in_order = reorder_nodes_for_flow_layout(nodes_in_order, graph.edges)
+  let enhanced_horizontal_state_flow = state_graph &&
+    horizontal &&
+    !compact_fanin &&
+    use_enhanced_horizontal_state_flow_lanes(nodes_in_order)
+  let padding = match options.padding {
+    Some(_) => base_padding
+    None => if enhanced_horizontal_state_flow { 10 } else { base_padding }
+  }
   let node_spacing = if state_graph && horizontal && !compact_fanin {
     resolve_horizontal_state_node_spacing(
       options, nodes_in_order, base_node_spacing,
@@ -2410,6 +2602,7 @@ fn layout_graph_with_subgraph_redirects(
         graph.edges,
         flow_rank_by_node_id,
         flow_lane_by_node_id,
+        enhanced_horizontal_state_flow,
       )
     }
     if !horizontal &&
@@ -2620,7 +2813,9 @@ fn layout_graph_with_subgraph_redirects(
       padding + 90 + flow_lane * node_spacing
     }
     let y = if horizontal {
-      if state_graph && !compact_fanin {
+      if enhanced_horizontal_state_flow {
+        padding + 70 + flow_lane * layer_spacing / 4
+      } else if state_graph && !compact_fanin {
         padding + 70 + flow_lane * layer_spacing / 2
       } else {
         padding + 70 + flow_lane * layer_spacing
@@ -2837,7 +3032,7 @@ fn layout_graph_with_subgraph_redirects(
           } else {
             None
           },
-          state_graph && !compact_fanin,
+          enhanced_horizontal_state_flow,
         )
         let label_position = match edge.label {
           Some(_) => {

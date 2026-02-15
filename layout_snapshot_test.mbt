@@ -41,6 +41,19 @@ fn layout_snapshot_section(title : String, lines : Array[String]) -> String {
 }
 
 ///|
+fn find_positioned_node(
+  nodes : Array[@model.PositionedNode],
+  node_id : String,
+) -> @model.PositionedNode raise {
+  for node in nodes {
+    if node.id == node_id {
+      return node
+    }
+  }
+  fail("missing positioned node \{node_id}")
+}
+
+///|
 fn positioned_graph_layout_snapshot(
   positioned : @model.PositionedGraph,
 ) -> String {
@@ -158,4 +171,41 @@ test "Layout snapshot: complex NFA-like graph geometry" (it : @test.Test) {
       #|q6 -.-> q7
     ),
   )
+}
+
+///|
+test "Layout: complex NFA accept nodes keep distinct positions" {
+  let graph = @parser_header_core.parse_mermaid(
+    (
+      #|graph LR
+      #|start@{shape: f-circ}
+      #|q0@{shape: circ}
+      #|q1@{shape: circ}
+      #|q2@{shape: circ}
+      #|q3@{shape: circ}
+      #|q4@{shape: circ}
+      #|q5@{shape: circ}
+      #|q6@{shape: circ}
+      #|q7@{shape: circ}
+      #|acc0@{shape: dbl-circ}
+      #|acc1@{shape: dbl-circ}
+      #|start --- q0
+      #|q0 -.-> q1
+      #|q0 -.-> q4
+      #|q1 -- a --> q2
+      #|q2 -->|b| q3
+      #|q3 -.-> q6
+      #|q4 -- a --> q5
+      #|q5 -->|c| q6
+      #|q2 & q5 -->|x| q7
+      #|q7 -- d --> acc0
+      #|q7 -- e --> acc1
+      #|q6 -.-> q0
+      #|q6 -.-> q7
+    ),
+  )
+  let positioned = @layout.layout_graph(graph, @model.RenderOptions::default())
+  let acc0 = find_positioned_node(positioned.nodes, "acc0")
+  let acc1 = find_positioned_node(positioned.nodes, "acc1")
+  assert_true(acc0.x != acc1.x || acc0.y != acc1.y)
 }

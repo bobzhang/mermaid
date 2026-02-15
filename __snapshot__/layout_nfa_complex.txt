@@ -1,34 +1,34 @@
 [canvas]
-width=862 height=267
+width=802 height=297
 
 [nodes]
-node id=q0 shape=Circle center=159,155 size=30x30 label=q0
-node id=q1 shape=Circle center=263,110 size=30x30 label=q1
-node id=q2 shape=Circle center=367,155 size=30x30 label=q2
-node id=q3 shape=Circle center=471,110 size=30x30 label=q3
-node id=q4 shape=Circle center=263,200 size=30x30 label=q4
-node id=q5 shape=Circle center=367,200 size=30x30 label=q5
-node id=q6 shape=Circle center=575,155 size=30x30 label=q6
-node id=q7 shape=Circle center=679,200 size=30x30 label=q7
-node id=start shape=StateStart center=47,155 size=14x14 label=start
-node id=acc0 shape=DoubleCircle center=795,200 size=54x54 label=acc0
-node id=acc1 shape=DoubleCircle center=795,200 size=54x54 label=acc1
+node id=q1 shape=Circle center=233,80 size=30x30 label=q1
+node id=q3 shape=Circle center=441,80 size=30x30 label=q3
+node id=q0 shape=Circle center=129,125 size=30x30 label=q0
+node id=q2 shape=Circle center=337,102 size=30x30 label=q2
+node id=q4 shape=Circle center=233,170 size=30x30 label=q4
+node id=q5 shape=Circle center=337,170 size=30x30 label=q5
+node id=q6 shape=Circle center=545,147 size=30x30 label=q6
+node id=q7 shape=Circle center=649,170 size=30x30 label=q7
+node id=start shape=StateStart center=17,125 size=14x14 label=start
+node id=acc0 shape=DoubleCircle center=765,170 size=54x54 label=acc0
+node id=acc1 shape=DoubleCircle center=765,260 size=54x54 label=acc1
 
 [edges]
-edge q0->q1 label=- label_pos=- points=174,155 -> 248,110
-edge q0->q4 label=- label_pos=- points=174,155 -> 248,200
-edge q3->q6 label=- label_pos=- points=486,110 -> 560,155
-edge q6->q7 label=- label_pos=- points=590,155 -> 664,200
-edge start->q0 label=- label_pos=- points=54,155 -> 144,155
-edge q1->q2 label=a label_pos=315,132 points=278,110 -> 352,155
-edge q2->q3 label=b label_pos=419,132 points=382,155 -> 456,110
-edge q2->q7 label=x label_pos=523,177 points=382,155 -> 664,200
-edge q4->q5 label=a label_pos=315,200 points=278,200 -> 352,200
-edge q5->q6 label=c label_pos=471,177 points=382,200 -> 560,155
-edge q5->q7 label=x label_pos=523,200 points=382,200 -> 664,200
-edge q7->acc0 label=d label_pos=731,200 points=694,200 -> 768,200
-edge q7->acc1 label=e label_pos=691,170 points=694,200 -> 768,200
-edge q6->q0 label=- label_pos=- points=560,155 -> 560,113 -> 174,113 -> 174,155
+edge q0->q1 label=- label_pos=- points=144,125 -> 218,80
+edge q3->q6 label=- label_pos=- points=456,80 -> 530,147
+edge q0->q4 label=- label_pos=- points=144,125 -> 218,170
+edge q6->q7 label=- label_pos=- points=560,147 -> 634,170
+edge start->q0 label=- label_pos=- points=24,125 -> 114,125
+edge q4->q5 label=a label_pos=285,170 points=248,170 -> 322,170
+edge q5->q7 label=x label_pos=493,170 points=352,170 -> 634,170
+edge q7->acc0 label=d label_pos=701,170 points=664,170 -> 738,170
+edge q2->q3 label=b label_pos=370,91 points=352,102 -> 389,80 -> 426,80
+edge q1->q2 label=a label_pos=266,91 points=248,80 -> 285,102 -> 322,102
+edge q2->q7 label=x label_pos=422,136 points=352,102 -> 493,170 -> 634,170
+edge q5->q6 label=c label_pos=396,158 points=352,170 -> 441,147 -> 530,147
+edge q7->acc1 label=e label_pos=682,215 points=664,170 -> 701,260 -> 738,260
+edge q6->q0 label=- label_pos=- points=530,147 -> 530,189 -> 144,189 -> 144,125
 
 [groups]
 (none)
