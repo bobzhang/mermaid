@@ -8,6 +8,7 @@
  *   bun run scripts/compare_layout_stress.ts --max-logical-crossing-multiplier 1.8
  *   bun run scripts/compare_layout_stress.ts --max-polyline-crossing-multiplier 4.6 --min-span-area-ratio 0.04
  *   bun run scripts/compare_layout_stress.ts --max-avg-rmse 0.70 --max-avg-inversion-rate 0.35 --max-avg-polyline-crossing-multiplier 3.6 --min-avg-span-area-ratio 0.18
+ *   bun run scripts/compare_layout_stress.ts --max-major-inversion-rate 0.55 --max-avg-major-inversion-rate 0.20
  *   bun run scripts/compare_layout_stress.ts --local-timeout-ms 120000 --local-render-retries 2 --retry-backoff-ms 500
  *   bun run scripts/compare_layout_stress.ts fixtures/layout_challenge_001_nested_portal_mesh.mmd --explain-logical-crossings
  *   bun run scripts/compare_layout_stress.ts --max-logical-crossing-multiplier 1.0 --explain-on-failure
@@ -21,6 +22,7 @@ import { tmpdir } from 'node:os'
 type Point = { x: number; y: number }
 type Bounds = { minX: number; maxX: number; minY: number; maxY: number }
 type FixtureEdge = { source: string; target: string }
+type Axis = 'x' | 'y'
 type LogicalEdgeSegment = {
   source: string
   target: string
@@ -40,6 +42,10 @@ type Metrics = {
   rmse: number
   maxDist: number
   inversionRate: number
+  inversionRateY: number
+  majorAxis: Axis
+  majorInversionRate: number
+  graphDirection: string
   localPolylineCrossings: number
   officialPolylineCrossings: number
   polylineCrossingMultiplier: number
@@ -67,8 +73,10 @@ type CliOptions = {
   minSpanXRatio?: number
   minSpanYRatio?: number
   minSpanAreaRatio?: number
+  maxMajorInversionRate?: number
   maxAvgRmse?: number
   maxAvgInversionRate?: number
+  maxAvgMajorInversionRate?: number
   maxAvgPolylineCrossingMultiplier?: number
   maxAvgLogicalCrossingMultiplier?: number
   minAvgSpanAreaRatio?: number
@@ -830,7 +838,13 @@ function parseFixtureEdges(source: string): FixtureEdge[] {
   const lines = source.split('\n')
   for (const rawLine of lines) {
     const line = rawLine.split('%%')[0]!.trim()
-    if (line === '' || line.startsWith('graph ') || line === 'end' || line.startsWith('subgraph ')) {
+    if (
+      line === '' ||
+      line.startsWith('graph ') ||
+      line.startsWith('flowchart ') ||
+      line === 'end' ||
+      line.startsWith('subgraph ')
+    ) {
       continue
     }
     const parsed = parseEdgeLine(line)
@@ -841,6 +855,33 @@ function parseFixtureEdges(source: string): FixtureEdge[] {
     edges.push(parsed)
   }
   return edges
+}
+
+function parseGraphDirection(source: string): string {
+  const lines = source.split('\n')
+  for (const rawLine of lines) {
+    const line = rawLine.split('%%')[0]!.trim()
+    if (line === '') continue
+    const match = line.match(/^(?:graph|flowchart)\s+([A-Za-z]+)/i)
+    if (match) {
+      return match[1]!.toUpperCase()
+    }
+  }
+  return 'UNKNOWN'
+}
+
+function majorAxisForDirection(direction: string): Axis {
+  switch (direction) {
+    case 'LR':
+    case 'RL':
+      return 'x'
+    case 'TB':
+    case 'TD':
+    case 'BT':
+      return 'y'
+    default:
+      return 'x'
+  }
 }
 
 function boundsOf(points: Point[]): Bounds {
@@ -875,6 +916,17 @@ function pairOrderByX(labels: string[], positions: Map<string, Point>): string[]
       const pb = positions.get(b)!
       if (pa.x !== pb.x) return pa.x - pb.x
       return pa.y - pb.y
+    })
+}
+
+function pairOrderByY(labels: string[], positions: Map<string, Point>): string[] {
+  return labels
+    .slice()
+    .sort((a, b) => {
+      const pa = positions.get(a)!
+      const pb = positions.get(b)!
+      if (pa.y !== pb.y) return pa.y - pb.y
+      return pa.x - pb.x
     })
 }
 
@@ -1156,6 +1208,8 @@ function compareFixture(
 
   const fixtureSource = readFileSync(path, 'utf8')
   const fixtureEdges = parseFixtureEdges(fixtureSource)
+  const graphDirection = parseGraphDirection(fixtureSource)
+  const majorAxis = majorAxisForDirection(graphDirection)
 
   const officialSvg = readFileSync(officialPath, 'utf8')
   const localSvg = readFileSync(localPath, 'utf8')
@@ -1207,6 +1261,10 @@ function compareFixture(
       rmse: Number.NaN,
       maxDist: Number.NaN,
       inversionRate: Number.NaN,
+      inversionRateY: Number.NaN,
+      majorAxis,
+      majorInversionRate: Number.NaN,
+      graphDirection,
       localPolylineCrossings,
       officialPolylineCrossings,
       polylineCrossingMultiplier,
@@ -1255,9 +1313,14 @@ function compareFixture(
 
   const officialOrderX = pairOrderByX(sharedLabels, officialNodes)
   const localOrderX = pairOrderByX(sharedLabels, localNodes)
-  const inversions = countPairInversions(officialOrderX, localOrderX)
+  const officialOrderY = pairOrderByY(sharedLabels, officialNodes)
+  const localOrderY = pairOrderByY(sharedLabels, localNodes)
+  const inversionsX = countPairInversions(officialOrderX, localOrderX)
+  const inversionsY = countPairInversions(officialOrderY, localOrderY)
   const pairCount = (sharedLabels.length * (sharedLabels.length - 1)) / 2
-  const inversionRate = pairCount === 0 ? 0 : inversions / pairCount
+  const inversionRate = pairCount === 0 ? 0 : inversionsX / pairCount
+  const inversionRateY = pairCount === 0 ? 0 : inversionsY / pairCount
+  const majorInversionRate = majorAxis === 'x' ? inversionRate : inversionRateY
 
   const officialSpanX = officialBounds.maxX - officialBounds.minX
   const officialSpanY = officialBounds.maxY - officialBounds.minY
@@ -1283,6 +1346,10 @@ function compareFixture(
     rmse,
     maxDist,
     inversionRate,
+    inversionRateY,
+    majorAxis,
+    majorInversionRate,
+    graphDirection,
     localPolylineCrossings,
     officialPolylineCrossings,
     polylineCrossingMultiplier,
@@ -1333,8 +1400,10 @@ function parseCliOptions(args: string[]): CliOptions {
   let minSpanXRatio: number | undefined = undefined
   let minSpanYRatio: number | undefined = undefined
   let minSpanAreaRatio: number | undefined = undefined
+  let maxMajorInversionRate: number | undefined = undefined
   let maxAvgRmse: number | undefined = undefined
   let maxAvgInversionRate: number | undefined = undefined
+  let maxAvgMajorInversionRate: number | undefined = undefined
   let maxAvgPolylineCrossingMultiplier: number | undefined = undefined
   let maxAvgLogicalCrossingMultiplier: number | undefined = undefined
   let minAvgSpanAreaRatio: number | undefined = undefined
@@ -1411,6 +1480,17 @@ function parseCliOptions(args: string[]): CliOptions {
       i += 1
       continue
     }
+    if (arg === '--max-major-inversion-rate') {
+      const next = args[i + 1]
+      if (!next) fail('missing number after --max-major-inversion-rate')
+      const parsed = Number.parseFloat(next)
+      if (!Number.isFinite(parsed) || parsed <= 0 || parsed > 1) {
+        fail('invalid --max-major-inversion-rate value, expected number in (0, 1]')
+      }
+      maxMajorInversionRate = parsed
+      i += 1
+      continue
+    }
     if (arg === '--max-avg-rmse') {
       const next = args[i + 1]
       if (!next) fail('missing number after --max-avg-rmse')
@@ -1430,6 +1510,17 @@ function parseCliOptions(args: string[]): CliOptions {
         fail('invalid --max-avg-inversion-rate value, expected number in (0, 1]')
       }
       maxAvgInversionRate = parsed
+      i += 1
+      continue
+    }
+    if (arg === '--max-avg-major-inversion-rate') {
+      const next = args[i + 1]
+      if (!next) fail('missing number after --max-avg-major-inversion-rate')
+      const parsed = Number.parseFloat(next)
+      if (!Number.isFinite(parsed) || parsed <= 0 || parsed > 1) {
+        fail('invalid --max-avg-major-inversion-rate value, expected number in (0, 1]')
+      }
+      maxAvgMajorInversionRate = parsed
       i += 1
       continue
     }
@@ -1551,8 +1642,10 @@ function parseCliOptions(args: string[]): CliOptions {
     minSpanXRatio,
     minSpanYRatio,
     minSpanAreaRatio,
+    maxMajorInversionRate,
     maxAvgRmse,
     maxAvgInversionRate,
+    maxAvgMajorInversionRate,
     maxAvgPolylineCrossingMultiplier,
     maxAvgLogicalCrossingMultiplier,
     minAvgSpanAreaRatio,
@@ -1619,7 +1712,7 @@ function main(): void {
       `status=${result.status} nodes shared/local/official=${result.sharedNodes}/${result.localNodes}/${result.officialNodes} edges local/official=${result.localEdges}/${result.officialEdges} fixtureEdges=${result.fixtureEdges}`,
     )
     console.log(
-      `rmse=${round(result.rmse)} maxDist=${round(result.maxDist)} inversionRate=${round(result.inversionRate)}`,
+      `rmse=${round(result.rmse)} maxDist=${round(result.maxDist)} inversionRateX=${round(result.inversionRate)} inversionRateY=${round(result.inversionRateY)} majorAxis=${result.majorAxis} majorInversionRate=${round(result.majorInversionRate)}`,
     )
     console.log(
       `spanRatio x=${round(result.spanXRatio)} y=${round(result.spanYRatio)} area=${round(result.spanAreaRatio)}`,
@@ -1642,6 +1735,12 @@ function main(): void {
   const avgInversion =
     results.reduce((acc, row) => acc + (Number.isFinite(row.inversionRate) ? row.inversionRate : 0), 0) /
     Math.max(results.length, 1)
+  const avgInversionY =
+    results.reduce((acc, row) => acc + (Number.isFinite(row.inversionRateY) ? row.inversionRateY : 0), 0) /
+    Math.max(results.length, 1)
+  const avgMajorInversion =
+    results.reduce((acc, row) => acc + (Number.isFinite(row.majorInversionRate) ? row.majorInversionRate : 0), 0) /
+    Math.max(results.length, 1)
   const avgLogicalMultiplier =
     results.reduce((acc, row) => acc + (Number.isFinite(row.logicalCrossingMultiplier) ? row.logicalCrossingMultiplier : 0), 0) /
     Math.max(results.length, 1)
@@ -1658,7 +1757,9 @@ function main(): void {
 
   console.log('\n=== summary ===')
   console.log(`fixtures=${results.length} structural_ok=${okCount}/${results.length}`)
-  console.log(`avg_rmse=${round(avgRmse)} avg_inversion_rate=${round(avgInversion)}`)
+  console.log(
+    `avg_rmse=${round(avgRmse)} avg_inversion_rate_x=${round(avgInversion)} avg_inversion_rate_y=${round(avgInversionY)} avg_major_inversion_rate=${round(avgMajorInversion)}`,
+  )
   console.log(
     `total_polyline_crossings local=${totalLocalPolylineCrossings} official=${totalOfficialPolylineCrossings} delta=${totalLocalPolylineCrossings - totalOfficialPolylineCrossings}`,
   )
@@ -1680,8 +1781,10 @@ function main(): void {
         minSpanXRatio: options.minSpanXRatio ?? null,
         minSpanYRatio: options.minSpanYRatio ?? null,
         minSpanAreaRatio: options.minSpanAreaRatio ?? null,
+        maxMajorInversionRate: options.maxMajorInversionRate ?? null,
         maxAvgRmse: options.maxAvgRmse ?? null,
         maxAvgInversionRate: options.maxAvgInversionRate ?? null,
+        maxAvgMajorInversionRate: options.maxAvgMajorInversionRate ?? null,
         maxAvgPolylineCrossingMultiplier: options.maxAvgPolylineCrossingMultiplier ?? null,
         maxAvgLogicalCrossingMultiplier: options.maxAvgLogicalCrossingMultiplier ?? null,
         minAvgSpanAreaRatio: options.minAvgSpanAreaRatio ?? null,
@@ -1698,7 +1801,9 @@ function main(): void {
         fixtures: results.length,
         structuralOk: okCount,
         avgRmse,
-        avgInversionRate: avgInversion,
+        avgInversionRateX: avgInversion,
+        avgInversionRateY: avgInversionY,
+        avgMajorInversionRate: avgMajorInversion,
         totalLocalPolylineCrossings,
         totalOfficialPolylineCrossings,
         totalLocalLogicalCrossings,
@@ -1811,6 +1916,26 @@ function main(): void {
     }
   }
 
+  if (options.maxMajorInversionRate !== undefined) {
+    const threshold = options.maxMajorInversionRate
+    const violating = results.filter(
+      result =>
+        !Number.isFinite(result.majorInversionRate) || result.majorInversionRate > threshold,
+    )
+    if (violating.length > 0) {
+      console.error(
+        [
+          `major inversion rate threshold exceeded: threshold=${threshold}`,
+          ...violating.map(
+            result =>
+              `  ${result.fixture}: majorAxis=${result.majorAxis} majorInversionRate=${round(result.majorInversionRate)} x=${round(result.inversionRate)} y=${round(result.inversionRateY)}`,
+          ),
+        ].join('\n'),
+      )
+      process.exitCode = 13
+    }
+  }
+
   if (options.maxAvgRmse !== undefined && (!Number.isFinite(avgRmse) || avgRmse > options.maxAvgRmse)) {
     console.error(
       `average RMSE threshold exceeded: threshold=${options.maxAvgRmse} avgRmse=${round(avgRmse)}`,
@@ -1826,6 +1951,17 @@ function main(): void {
       `average inversion rate threshold exceeded: threshold=${options.maxAvgInversionRate} avgInversionRate=${round(avgInversion)}`,
     )
     process.exitCode = 9
+  }
+
+  if (
+    options.maxAvgMajorInversionRate !== undefined &&
+    (!Number.isFinite(avgMajorInversion) ||
+      avgMajorInversion > options.maxAvgMajorInversionRate)
+  ) {
+    console.error(
+      `average major inversion rate threshold exceeded: threshold=${options.maxAvgMajorInversionRate} avgMajorInversionRate=${round(avgMajorInversion)}`,
+    )
+    process.exitCode = 14
   }
 
   if (
