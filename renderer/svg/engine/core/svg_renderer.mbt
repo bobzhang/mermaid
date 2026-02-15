@@ -428,6 +428,9 @@ fn render_node_label(node : PositionedNode) -> String {
   if node.label == "" {
     return ""
   }
+  if node.shape == StateStart {
+    return ""
+  }
   if node.shape == SequenceParticipant && sequence_is_actor_node(node) {
     return "<text class=\"label\" x=\"\{node.x}\" y=\"\{node.y + node.height / 2 + 14}\" text-anchor=\"middle\"\{node_label_attrs(node)}>\{xml_escape(node.label)}</text>"
   }

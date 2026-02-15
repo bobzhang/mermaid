@@ -745,6 +745,47 @@ test "SVG renderer state pseudostates use text color fills" {
 }
 
 ///|
+test "SVG renderer hides labels for state start nodes" {
+  let graph = PositionedGraph::{
+    width: 400,
+    height: 300,
+    nodes: [
+      {
+        id: "start",
+        label: "start",
+        shape: StateStart,
+        x: 80,
+        y: 80,
+        width: 28,
+        height: 28,
+        inline_style: None,
+      },
+      {
+        id: "q0",
+        label: "q0",
+        shape: Circle,
+        x: 160,
+        y: 80,
+        width: 40,
+        height: 40,
+        inline_style: None,
+      },
+    ],
+    edges: [],
+    groups: [],
+    sequence_lifelines: [],
+    sequence_activations: [],
+    sequence_blocks: [],
+    sequence_notes: [],
+  }
+  let svg = render_svg(graph, DiagramColors::default(), "Inter", false)
+
+  assert_true(svg.contains("class=\"state-start\""))
+  assert_true(!svg.contains(">start</text>"))
+  assert_true(svg.contains(">q0</text>"))
+}
+
+///|
 test "SVG renderer solid edges omit dasharray" {
   let graph = make_svg_test_graph([
     {
