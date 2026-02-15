@@ -649,7 +649,7 @@ test "SVG renderer uses basis-curve path for multi-point edges" {
       has_arrow_start: false,
       has_arrow_end: true,
       relation_operator: None,
-      points: [{ x: 0, y: 0 }, { x: 100, y: 0 }, { x: 100, y: 100 }],
+      points: [{ x: 0, y: 0 }, { x: 80, y: 20 }, { x: 120, y: 100 }],
       label_position: None,
     },
   ])
@@ -657,8 +657,30 @@ test "SVG renderer uses basis-curve path for multi-point edges" {
 
   assert_true(
     svg.contains(
-      "<path class=\"edge\" d=\"M0 0 L16 0 C33 0 66 0 83 16 C100 33 100 66 100 83 L100 100\"",
+      "<path class=\"edge\" d=\"M0 0 L13 3 C26 6 53 13 73 30 C93 46 106 73 113 86 L120 100\"",
     ),
+  )
+}
+
+///|
+test "SVG renderer rounds corners for orthogonal multi-point edges" {
+  let graph = make_svg_test_graph([
+    {
+      source: "A",
+      target: "B",
+      label: None,
+      style: Solid,
+      has_arrow_start: false,
+      has_arrow_end: true,
+      relation_operator: None,
+      points: [{ x: 0, y: 0 }, { x: 100, y: 0 }, { x: 100, y: 100 }],
+      label_position: None,
+    },
+  ])
+  let svg = render_svg(graph, DiagramColors::default(), "Inter", false)
+
+  assert_true(
+    svg.contains("<path class=\"edge\" d=\"M0 0 L90 0 Q100 0 100 10 L100 100\""),
   )
 }
 

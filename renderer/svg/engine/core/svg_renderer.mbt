@@ -23,6 +23,107 @@ fn points_to_svg(points : Array[Point]) -> String {
 }
 
 ///|
+fn int_sign(value : Int) -> Int {
+  if value > 0 {
+    1
+  } else if value < 0 {
+    -1
+  } else {
+    0
+  }
+}
+
+///|
+fn int_abs(value : Int) -> Int {
+  if value < 0 {
+    -value
+  } else {
+    value
+  }
+}
+
+///|
+fn edge_segment_is_axis_aligned(start : Point, end_ : Point) -> Bool {
+  let dx = end_.x - start.x
+  let dy = end_.y - start.y
+  (dx == 0 && dy != 0) || (dy == 0 && dx != 0)
+}
+
+///|
+fn edge_is_axis_aligned_polyline(points : Array[Point]) -> Bool {
+  if points.length() < 2 {
+    return false
+  }
+  for i in 1..<points.length() {
+    if !edge_segment_is_axis_aligned(points[i - 1], points[i]) {
+      return false
+    }
+  }
+  true
+}
+
+///|
+fn rounded_orthogonal_path(
+  points : Array[Point],
+  corner_radius : Int,
+) -> String {
+  if points.length() < 2 {
+    return ""
+  }
+  let first = points[0]
+  let sb = StringBuilder::new()
+  sb.write_string("M\{first.x} \{first.y}")
+
+  if points.length() == 2 {
+    let last = points[1]
+    sb.write_string(" L\{last.x} \{last.y}")
+    return sb.to_string()
+  }
+
+  for i in 1..<(points.length() - 1) {
+    let prev = points[i - 1]
+    let curr = points[i]
+    let next = points[i + 1]
+
+    let in_dx = curr.x - prev.x
+    let in_dy = curr.y - prev.y
+    let out_dx = next.x - curr.x
+    let out_dy = next.y - curr.y
+    let in_len = int_abs(in_dx) + int_abs(in_dy)
+    let out_len = int_abs(out_dx) + int_abs(out_dy)
+    let turn_is_valid = in_len > 0 &&
+      out_len > 0 &&
+      ((in_dx == 0 && out_dx != 0) || (in_dy == 0 && out_dy != 0))
+    if !turn_is_valid {
+      sb.write_string(" L\{curr.x} \{curr.y}")
+      continue
+    }
+
+    let max_corner = in_len.min(out_len) / 2
+    let applied_corner = corner_radius.min(max_corner)
+    if applied_corner <= 0 {
+      sb.write_string(" L\{curr.x} \{curr.y}")
+      continue
+    }
+
+    let in_step_x = int_sign(in_dx)
+    let in_step_y = int_sign(in_dy)
+    let out_step_x = int_sign(out_dx)
+    let out_step_y = int_sign(out_dy)
+    let entry_x = curr.x - in_step_x * applied_corner
+    let entry_y = curr.y - in_step_y * applied_corner
+    let exit_x = curr.x + out_step_x * applied_corner
+    let exit_y = curr.y + out_step_y * applied_corner
+    sb.write_string(" L\{entry_x} \{entry_y}")
+    sb.write_string(" Q\{curr.x} \{curr.y} \{exit_x} \{exit_y}")
+  }
+
+  let last = points[points.length() - 1]
+  sb.write_string(" L\{last.x} \{last.y}")
+  sb.to_string()
+}
+
+///|
 fn edge_needs_curve_path(points : Array[Point]) -> Bool {
   points.length() >= 3
 }
@@ -921,7 +1022,11 @@ pub fn render_svg(
       ("", "")
     }
     if !sequence_mode && edge_needs_curve_path(edge.points) {
-      let path_d = basis_curve_path(edge.points)
+      let path_d = if edge_is_axis_aligned_polyline(edge.points) {
+        rounded_orthogonal_path(edge.points, 10)
+      } else {
+        basis_curve_path(edge.points)
+      }
       sb.write_string(
         "<path class=\"edge\" d=\"\{path_d}\"\{edge_style}\{marker_start}\{marker_end} />",
       )
