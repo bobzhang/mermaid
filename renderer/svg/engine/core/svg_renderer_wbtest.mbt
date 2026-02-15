@@ -685,6 +685,49 @@ test "SVG renderer rounds corners for orthogonal multi-point edges" {
 }
 
 ///|
+test "SVG renderer clamps rounded corners on short orthogonal segments" {
+  let graph = make_svg_test_graph([
+    {
+      source: "A",
+      target: "B",
+      label: None,
+      style: Solid,
+      has_arrow_start: false,
+      has_arrow_end: true,
+      relation_operator: None,
+      points: [{ x: 0, y: 0 }, { x: 12, y: 0 }, { x: 12, y: 8 }],
+      label_position: None,
+    },
+  ])
+  let svg = render_svg(graph, DiagramColors::default(), "Inter", false)
+
+  assert_true(
+    svg.contains("<path class=\"edge\" d=\"M0 0 L8 0 Q12 0 12 4 L12 8\""),
+  )
+}
+
+///|
+test "SVG renderer keeps collinear orthogonal segments without curve corners" {
+  let graph = make_svg_test_graph([
+    {
+      source: "A",
+      target: "B",
+      label: None,
+      style: Solid,
+      has_arrow_start: false,
+      has_arrow_end: true,
+      relation_operator: None,
+      points: [{ x: 0, y: 0 }, { x: 20, y: 0 }, { x: 40, y: 0 }],
+      label_position: None,
+    },
+  ])
+  let svg = render_svg(graph, DiagramColors::default(), "Inter", false)
+
+  assert_true(svg.contains("<path class=\"edge\" d=\"M0 0 L20 0 L40 0\""))
+  assert_true(!svg.contains(" Q20 0 "))
+}
+
+///|
 test "SVG renderer keeps straight two-point edges as polyline" {
   let graph = make_svg_test_graph([
     {
