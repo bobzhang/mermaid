@@ -2196,7 +2196,46 @@ fn optimize_deferred_back_edge_order_locally(
   base_polylines : Array[Array[Point]],
   enhanced_horizontal_state_flow : Bool,
 ) -> Array[Int] {
-  let optimized_order : Array[Int] = []
+  fn copy_order(order : Array[Int]) -> Array[Int] {
+    let copied : Array[Int] = []
+    for context_index in order {
+      copied.push(context_index)
+    }
+    copied
+  }
+
+  fn build_relocated_order(
+    order : Array[Int],
+    from_index : Int,
+    to_index : Int,
+  ) -> Array[Int] {
+    if from_index == to_index ||
+      from_index < 0 ||
+      from_index >= order.length() ||
+      to_index < 0 ||
+      to_index >= order.length() {
+      return copy_order(order)
+    }
+    let moved_context_index = order[from_index]
+    let relocated : Array[Int] = []
+    let mut inserted = false
+    for i, context_index in order {
+      if i == from_index {
+        continue
+      }
+      if !inserted && relocated.length() == to_index {
+        relocated.push(moved_context_index)
+        inserted = true
+      }
+      relocated.push(context_index)
+    }
+    if !inserted {
+      relocated.push(moved_context_index)
+    }
+    relocated
+  }
+
+  let mut optimized_order : Array[Int] = []
   for context_index in initial_order {
     optimized_order.push(context_index)
   }
@@ -2209,8 +2248,9 @@ fn optimize_deferred_back_edge_order_locally(
     base_back_edge_lane_reservations, base_back_edge_column_reservations, base_polylines,
     enhanced_horizontal_state_flow,
   )
-  let max_evaluations = (optimized_order.length() * 8).max(24).min(128)
+  let max_evaluations = (optimized_order.length() * 12).max(36).min(192)
   let mut evaluations = 0
+
   let mut pass = 0
   while pass < 6 && evaluations < max_evaluations {
     let mut changed = false
@@ -2242,6 +2282,51 @@ fn optimize_deferred_back_edge_order_locally(
     }
     pass = pass + 1
   }
+
+  if optimized_order.length() >= 3 && evaluations < max_evaluations {
+    let mut insertion_round = 0
+    while insertion_round < 2 && evaluations < max_evaluations {
+      let mut has_round_best = false
+      let mut round_best_crossings = best_crossings
+      let mut round_best_order : Array[Int] = []
+
+      for from_index in 0..<optimized_order.length() {
+        if evaluations >= max_evaluations {
+          break
+        }
+        for to_index in 0..<optimized_order.length() {
+          if evaluations >= max_evaluations {
+            break
+          }
+          if from_index == to_index {
+            continue
+          }
+          let relocated_order = build_relocated_order(
+            optimized_order, from_index, to_index,
+          )
+          let candidate_crossings = simulate_deferred_back_edge_order_crossings(
+            relocated_order, edge_layout_contexts, positioned_nodes, base_routed_edge_segments,
+            base_back_edge_lane_reservations, base_back_edge_column_reservations,
+            base_polylines, enhanced_horizontal_state_flow,
+          )
+          evaluations = evaluations + 1
+          if candidate_crossings < round_best_crossings {
+            round_best_crossings = candidate_crossings
+            round_best_order = relocated_order
+            has_round_best = true
+          }
+        }
+      }
+
+      if !has_round_best {
+        break
+      }
+      optimized_order = round_best_order
+      best_crossings = round_best_crossings
+      insertion_round = insertion_round + 1
+    }
+  }
+
   optimized_order
 }
 
