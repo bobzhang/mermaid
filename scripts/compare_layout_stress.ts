@@ -5,6 +5,7 @@
  *   bun run scripts/compare_layout_stress.ts
  *   bun run scripts/compare_layout_stress.ts fixtures/layout_stress_001_dense_dag.mmd
  *   bun run scripts/compare_layout_stress.ts --json /tmp/layout_stress_metrics.json
+ *   bun run scripts/compare_layout_stress.ts --profile strict
  *   bun run scripts/compare_layout_stress.ts --max-logical-crossing-multiplier 1.8
  *   bun run scripts/compare_layout_stress.ts --max-polyline-crossing-multiplier 4.6 --min-span-area-ratio 0.04
  *   bun run scripts/compare_layout_stress.ts --max-avg-rmse 0.70 --max-avg-inversion-rate 0.35 --max-avg-polyline-crossing-multiplier 3.6 --min-avg-span-area-ratio 0.18
@@ -69,6 +70,7 @@ type Metrics = {
 }
 
 type CliOptions = {
+  profile?: string
   fixtures: string[]
   jsonPath?: string
   maxLogicalCrossingMultiplier?: number
@@ -101,6 +103,46 @@ const DEFAULT_OFFICIAL_TIMEOUT_MS = 120_000
 const DEFAULT_LOCAL_TIMEOUT_MS = 60_000
 const DEFAULT_LOCAL_RENDER_RETRIES = 1
 const DEFAULT_RETRY_BACKOFF_MS = 250
+
+type QualityProfile = {
+  maxLogicalCrossingMultiplier?: number
+  maxPolylineCrossingMultiplier?: number
+  minSpanXRatio?: number
+  minSpanYRatio?: number
+  minSpanAreaRatio?: number
+  minMajorSpanRatio?: number
+  minMinorSpanRatio?: number
+  maxMajorInversionRate?: number
+  maxAvgRmse?: number
+  maxAvgInversionRate?: number
+  maxAvgMajorInversionRate?: number
+  minAvgMajorSpanRatio?: number
+  minAvgMinorSpanRatio?: number
+  maxAvgPolylineCrossingMultiplier?: number
+  maxAvgLogicalCrossingMultiplier?: number
+  minAvgSpanAreaRatio?: number
+}
+
+const QUALITY_PROFILES: Record<string, QualityProfile> = {
+  strict: {
+    maxLogicalCrossingMultiplier: 1.0,
+    maxPolylineCrossingMultiplier: 4.6,
+    minSpanXRatio: 0.12,
+    minSpanYRatio: 0.05,
+    minSpanAreaRatio: 0.04,
+    minMajorSpanRatio: 0.25,
+    minMinorSpanRatio: 0.05,
+    maxMajorInversionRate: 0.55,
+    maxAvgRmse: 0.70,
+    maxAvgInversionRate: 0.35,
+    maxAvgMajorInversionRate: 0.20,
+    minAvgMajorSpanRatio: 0.80,
+    minAvgMinorSpanRatio: 0.20,
+    maxAvgPolylineCrossingMultiplier: 3.6,
+    maxAvgLogicalCrossingMultiplier: 0.8,
+    minAvgSpanAreaRatio: 0.18,
+  },
+}
 
 function fail(message: string): never {
   throw new Error(message)
@@ -1406,6 +1448,7 @@ function discoverDefaultFixtures(): string[] {
 }
 
 function parseCliOptions(args: string[]): CliOptions {
+  let profile: string | undefined = undefined
   const fixtures: string[] = []
   let jsonPath: string | undefined = undefined
   let maxLogicalCrossingMultiplier: number | undefined = undefined
@@ -1435,6 +1478,13 @@ function parseCliOptions(args: string[]): CliOptions {
 
   for (let i = 0; i < args.length; i += 1) {
     const arg = args[i]!
+    if (arg === '--profile') {
+      const next = args[i + 1]
+      if (!next) fail('missing profile name after --profile')
+      profile = next
+      i += 1
+      continue
+    }
     if (arg === '--json') {
       const next = args[i + 1]
       if (!next) fail('missing path after --json')
@@ -1695,7 +1745,40 @@ function parseCliOptions(args: string[]): CliOptions {
     fixtures.push(arg)
   }
 
+  if (profile !== undefined) {
+    const normalizedProfile = profile.toLowerCase()
+    const selectedProfile = QUALITY_PROFILES[normalizedProfile]
+    if (!selectedProfile) {
+      fail(
+        `unknown profile '${profile}', available profiles: ${Object.keys(QUALITY_PROFILES).sort().join(', ')}`,
+      )
+    }
+    profile = normalizedProfile
+    maxLogicalCrossingMultiplier =
+      maxLogicalCrossingMultiplier ?? selectedProfile.maxLogicalCrossingMultiplier
+    maxPolylineCrossingMultiplier =
+      maxPolylineCrossingMultiplier ?? selectedProfile.maxPolylineCrossingMultiplier
+    minSpanXRatio = minSpanXRatio ?? selectedProfile.minSpanXRatio
+    minSpanYRatio = minSpanYRatio ?? selectedProfile.minSpanYRatio
+    minSpanAreaRatio = minSpanAreaRatio ?? selectedProfile.minSpanAreaRatio
+    minMajorSpanRatio = minMajorSpanRatio ?? selectedProfile.minMajorSpanRatio
+    minMinorSpanRatio = minMinorSpanRatio ?? selectedProfile.minMinorSpanRatio
+    maxMajorInversionRate = maxMajorInversionRate ?? selectedProfile.maxMajorInversionRate
+    maxAvgRmse = maxAvgRmse ?? selectedProfile.maxAvgRmse
+    maxAvgInversionRate = maxAvgInversionRate ?? selectedProfile.maxAvgInversionRate
+    maxAvgMajorInversionRate =
+      maxAvgMajorInversionRate ?? selectedProfile.maxAvgMajorInversionRate
+    minAvgMajorSpanRatio = minAvgMajorSpanRatio ?? selectedProfile.minAvgMajorSpanRatio
+    minAvgMinorSpanRatio = minAvgMinorSpanRatio ?? selectedProfile.minAvgMinorSpanRatio
+    maxAvgPolylineCrossingMultiplier =
+      maxAvgPolylineCrossingMultiplier ?? selectedProfile.maxAvgPolylineCrossingMultiplier
+    maxAvgLogicalCrossingMultiplier =
+      maxAvgLogicalCrossingMultiplier ?? selectedProfile.maxAvgLogicalCrossingMultiplier
+    minAvgSpanAreaRatio = minAvgSpanAreaRatio ?? selectedProfile.minAvgSpanAreaRatio
+  }
+
   return {
+    profile,
     fixtures,
     jsonPath,
     maxLogicalCrossingMultiplier,
@@ -1827,6 +1910,7 @@ function main(): void {
   const totalOfficialLogicalCrossings = results.reduce((acc, row) => acc + row.officialLogicalCrossings, 0)
 
   console.log('\n=== summary ===')
+  console.log(`profile=${options.profile ?? 'custom'}`)
   console.log(`fixtures=${results.length} structural_ok=${okCount}/${results.length}`)
   console.log(
     `avg_rmse=${round(avgRmse)} avg_inversion_rate_x=${round(avgInversion)} avg_inversion_rate_y=${round(avgInversionY)} avg_major_inversion_rate=${round(avgMajorInversion)}`,
@@ -1848,6 +1932,7 @@ function main(): void {
       generatedAt: new Date().toISOString(),
       renderedSvgDir: tempRoot,
       options: {
+        profile: options.profile ?? null,
         maxLogicalCrossingMultiplier: options.maxLogicalCrossingMultiplier ?? null,
         maxPolylineCrossingMultiplier: options.maxPolylineCrossingMultiplier ?? null,
         minSpanXRatio: options.minSpanXRatio ?? null,

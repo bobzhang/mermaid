@@ -16,6 +16,12 @@ These fixtures are intended to stay stable under a strict quality gate.
 For a broader quality watchdog (still based on current pre-alpha baseline), run:
 
 ```bash
+bun run scripts/compare_layout_stress.ts --profile strict
+```
+
+Equivalent expanded thresholds:
+
+```bash
 bun run scripts/compare_layout_stress.ts \
   --max-logical-crossing-multiplier 1.0 \
   --max-polyline-crossing-multiplier 4.6 \
@@ -34,6 +40,8 @@ bun run scripts/compare_layout_stress.ts \
   --max-avg-logical-crossing-multiplier 0.8 \
   --min-avg-span-area-ratio 0.18
 ```
+
+Any explicit CLI threshold flag overrides the profile defaults.
 
 When local rendering is under load (e.g. concurrent Moon jobs), you can make
 the watchdog more resilient to transient lock contention:
