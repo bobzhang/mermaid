@@ -317,19 +317,39 @@ fn collect_non_state_flow_ranks(
     }
   }
 
+  let relaxed_edge_indices : Array[Int] = []
+  let definition_backward_edge_indices : Array[Int] = []
+  let incoming_relaxed_edge_indices_by_target : Map[String, Array[Int]] = {}
+  for node in nodes_in_order {
+    incoming_relaxed_edge_indices_by_target[node.id] = []
+  }
+  for edge_index in considered_edge_indices {
+    let is_definition_back_edge = definition_back_edge_by_index.contains(
+      edge_index,
+    )
+    if is_definition_back_edge {
+      definition_backward_edge_indices.push(edge_index)
+    }
+    if back_edge_by_index.contains(edge_index) || is_definition_back_edge {
+      continue
+    }
+    relaxed_edge_indices.push(edge_index)
+    let edge = edges[edge_index]
+    match incoming_relaxed_edge_indices_by_target.get(edge.target) {
+      Some(indices) => indices.push(edge_index)
+      None => ()
+    }
+  }
+
   if compact_fanin {
     for _ in 0..<nodes_in_order.length() {
       let mut changed = false
       for node in nodes_in_order {
         let mut has_incoming = false
         let mut best_rank = 0
-        match incoming_edge_indices_by_target.get(node.id) {
+        match incoming_relaxed_edge_indices_by_target.get(node.id) {
           Some(incoming_edge_indices) =>
             for edge_index in incoming_edge_indices {
-              if back_edge_by_index.contains(edge_index) ||
-                definition_back_edge_by_index.contains(edge_index) {
-                continue
-              }
               let edge = edges[edge_index]
               match rank_by_id.get(edge.source) {
                 Some(source_rank) => {
@@ -358,11 +378,7 @@ fn collect_non_state_flow_ranks(
   } else {
     for _ in 0..<nodes_in_order.length() {
       let mut changed = false
-      for edge_index in considered_edge_indices {
-        if back_edge_by_index.contains(edge_index) ||
-          definition_back_edge_by_index.contains(edge_index) {
-          continue
-        }
+      for edge_index in relaxed_edge_indices {
         let edge = edges[edge_index]
         match (rank_by_id.get(edge.source), rank_by_id.get(edge.target)) {
           (Some(source_rank), Some(target_rank)) => {
@@ -377,10 +393,7 @@ fn collect_non_state_flow_ranks(
       }
       // Keep definition-backward edges directional without forcing target depth.
       if prefer_definition_back_edges {
-        for edge_index in considered_edge_indices {
-          if !definition_back_edge_by_index.contains(edge_index) {
-            continue
-          }
+        for edge_index in definition_backward_edge_indices {
           let edge = edges[edge_index]
           match (rank_by_id.get(edge.source), rank_by_id.get(edge.target)) {
             (Some(source_rank), Some(target_rank)) => {
