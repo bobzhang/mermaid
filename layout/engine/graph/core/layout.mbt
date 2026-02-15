@@ -168,6 +168,59 @@ fn collect_non_state_flow_lanes(
 }
 
 ///|
+fn reorder_nodes_for_flow_layout(
+  nodes_in_order : Array[MermaidNode],
+  edges : Array[MermaidEdge],
+) -> Array[MermaidNode] {
+  let indegree_by_id : Map[String, Int] = {}
+  let outdegree_by_id : Map[String, Int] = {}
+  for node in nodes_in_order {
+    indegree_by_id[node.id] = 0
+    outdegree_by_id[node.id] = 0
+  }
+
+  for edge in edges {
+    match indegree_by_id.get(edge.target) {
+      Some(indegree) => indegree_by_id[edge.target] = indegree + 1
+      None => ()
+    }
+    match outdegree_by_id.get(edge.source) {
+      Some(outdegree) => outdegree_by_id[edge.source] = outdegree + 1
+      None => ()
+    }
+  }
+
+  let leading_state_starts : Array[MermaidNode] = []
+  let trailing_nodes : Array[MermaidNode] = []
+  for node in nodes_in_order {
+    let indegree = option_int_or(indegree_by_id.get(node.id), 0)
+    let outdegree = option_int_or(outdegree_by_id.get(node.id), 0)
+    let user_defined_state_start = match node.shape {
+      StateStart => !node.id.has_prefix("state_start_")
+      _ => false
+    }
+    if user_defined_state_start && indegree == 0 && outdegree > 0 {
+      leading_state_starts.push(node)
+    } else {
+      trailing_nodes.push(node)
+    }
+  }
+
+  if leading_state_starts.length() == 0 {
+    return nodes_in_order
+  }
+
+  let reordered : Array[MermaidNode] = []
+  for node in leading_state_starts {
+    reordered.push(node)
+  }
+  for node in trailing_nodes {
+    reordered.push(node)
+  }
+  reordered
+}
+
+///|
 fn collect_top_level_group_index_by_node_id(
   subgraph : MermaidSubgraph,
   top_level_group_index : Int,
@@ -1340,13 +1393,14 @@ fn layout_graph_with_subgraph_redirects(
     )
   }
 
-  let nodes_in_order : Array[MermaidNode] = []
+  let mut nodes_in_order : Array[MermaidNode] = []
   for entry in graph.nodes.to_array() {
     let (node_id, node) = entry
     if !hidden_subgraph_node_ids.contains(node_id) {
       nodes_in_order.push(node)
     }
   }
+  nodes_in_order = reorder_nodes_for_flow_layout(nodes_in_order, graph.edges)
   let positioned_nodes : Array[PositionedNode] = []
   let positioned_by_id : Map[String, PositionedNode] = {}
   let state_lane_by_node_id : Map[String, Int] = {}

@@ -77,6 +77,19 @@ fn nfa_fixture_003_source() -> String {
 }
 
 ///|
+fn nfa_find_positioned_node(
+  nodes : Array[@model.PositionedNode],
+  node_id : String,
+) -> @model.PositionedNode raise {
+  for node in nodes {
+    if node.id == node_id {
+      return node
+    }
+  }
+  fail("missing positioned node \{node_id}")
+}
+
+///|
 test "NFA fixture 001: basic automaton with epsilon transitions" (
   it : @test.Test,
 ) {
@@ -104,4 +117,13 @@ test "NFA fixture 003: SVG renders all nodes and edges" (it : @test.Test) {
   let svg = @beautiful_mermaid.render_mermaid(nfa_fixture_003_source())
   it.write(svg)
   it.snapshot(filename="nfa_003_svg.svg")
+}
+
+///|
+test "NFA fixture 001: layout places start before first state" {
+  let graph = @parser_header_core.parse_mermaid(nfa_fixture_001_source())
+  let positioned = @layout.layout_graph(graph, @model.RenderOptions::default())
+  let start = nfa_find_positioned_node(positioned.nodes, "start")
+  let q0 = nfa_find_positioned_node(positioned.nodes, "0")
+  assert_true(start.x < q0.x)
 }
