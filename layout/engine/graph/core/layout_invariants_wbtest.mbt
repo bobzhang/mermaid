@@ -196,9 +196,11 @@ test "Layout cycle-aware rank collection rehydrates cyclic forward order" {
   ]
 
   let (legacy_ranks, _) = collect_non_state_flow_ranks(
-    nodes, edges, false, false,
+    nodes, edges, false, false, false,
   )
-  let (cycle_ranks, _) = collect_non_state_flow_ranks(nodes, edges, false, true)
+  let (cycle_ranks, _) = collect_non_state_flow_ranks(
+    nodes, edges, false, true, false,
+  )
 
   let legacy_b = option_int_or(legacy_ranks.get("B"), -1)
   let cycle_b = option_int_or(cycle_ranks.get("B"), -1)

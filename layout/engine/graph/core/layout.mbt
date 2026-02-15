@@ -110,6 +110,7 @@ fn collect_non_state_flow_ranks(
   edges : Array[MermaidEdge],
   compact_fanin : Bool,
   cycle_aware : Bool,
+  prefer_definition_back_edges : Bool,
 ) -> (Map[String, Int], Int) {
   if !cycle_aware {
     let node_order_by_id : Map[String, Int] = {}
@@ -188,12 +189,14 @@ fn collect_non_state_flow_ranks(
     return (rank_by_id, max_rank)
   }
 
+  let node_order_by_id : Map[String, Int] = {}
   let node_exists : Map[String, Bool] = {}
   let indegree_by_id : Map[String, Int] = {}
   let outgoing_edge_indices_by_source : Map[String, Array[Int]] = {}
   let rank_by_id : Map[String, Int] = {}
 
-  for node in nodes_in_order {
+  for i, node in nodes_in_order {
+    node_order_by_id[node.id] = i
     node_exists[node.id] = true
     indegree_by_id[node.id] = 0
     outgoing_edge_indices_by_source[node.id] = []
@@ -204,6 +207,7 @@ fn collect_non_state_flow_ranks(
     return (rank_by_id, 0)
   }
 
+  let definition_back_edge_by_index : Map[Int, Bool] = {}
   for i, edge in edges {
     if !node_exists.contains(edge.source) || !node_exists.contains(edge.target) {
       continue
@@ -214,6 +218,25 @@ fn collect_non_state_flow_ranks(
     }
     let current_indegree = option_int_or(indegree_by_id.get(edge.target), 0)
     indegree_by_id[edge.target] = current_indegree + 1
+  }
+  if prefer_definition_back_edges {
+    for i, edge in edges {
+      if !node_exists.contains(edge.source) ||
+        !node_exists.contains(edge.target) {
+        continue
+      }
+      if option_int_or(indegree_by_id.get(edge.source), 0) == 0 {
+        continue
+      }
+      match
+        (node_order_by_id.get(edge.source), node_order_by_id.get(edge.target)) {
+        (Some(source_order), Some(target_order)) =>
+          if target_order < source_order {
+            definition_back_edge_by_index[i] = true
+          }
+        _ => ()
+      }
+    }
   }
 
   let visit_state_by_id : Map[String, Int] = {}
@@ -294,7 +317,9 @@ fn collect_non_state_flow_ranks(
         let mut has_incoming = false
         let mut best_rank = 0
         for edge_index, edge in edges {
-          if back_edge_by_index.contains(edge_index) || edge.target != node.id {
+          if back_edge_by_index.contains(edge_index) ||
+            definition_back_edge_by_index.contains(edge_index) ||
+            edge.target != node.id {
             continue
           }
           match rank_by_id.get(edge.source) {
@@ -323,7 +348,8 @@ fn collect_non_state_flow_ranks(
     for _ in 0..<nodes_in_order.length() {
       let mut changed = false
       for edge_index, edge in edges {
-        if back_edge_by_index.contains(edge_index) {
+        if back_edge_by_index.contains(edge_index) ||
+          definition_back_edge_by_index.contains(edge_index) {
           continue
         }
         match (rank_by_id.get(edge.source), rank_by_id.get(edge.target)) {
@@ -335,6 +361,24 @@ fn collect_non_state_flow_ranks(
             }
           }
           _ => ()
+        }
+      }
+      // Keep definition-backward edges directional without forcing target depth.
+      if prefer_definition_back_edges {
+        for edge_index, edge in edges {
+          if !definition_back_edge_by_index.contains(edge_index) {
+            continue
+          }
+          match (rank_by_id.get(edge.source), rank_by_id.get(edge.target)) {
+            (Some(source_rank), Some(target_rank)) => {
+              let candidate_rank = target_rank + 1
+              if candidate_rank > source_rank {
+                rank_by_id[edge.source] = candidate_rank
+                changed = true
+              }
+            }
+            _ => ()
+          }
         }
       }
       if !changed {
@@ -2174,6 +2218,17 @@ fn is_state_graph(graph : MermaidGraph) -> Bool {
 }
 
 ///|
+fn is_class_or_er_graph(graph : MermaidGraph) -> Bool {
+  for _, node in graph.nodes {
+    match node.shape {
+      ClassEntity | ErEntity => return true
+      _ => ()
+    }
+  }
+  false
+}
+
+///|
 fn use_enhanced_horizontal_state_flow_lanes(
   nodes_in_order : Array[MermaidNode],
 ) -> Bool {
@@ -2450,6 +2505,7 @@ fn layout_graph_with_subgraph_redirects(
   let horizontal = layout_direction_is_horizontal(graph.direction)
   let reverse = layout_direction_is_reverse(graph.direction)
   let state_graph = is_state_graph(graph)
+  let class_or_er_graph = is_class_or_er_graph(graph)
   let flat_state_graph = state_graph &&
     !horizontal &&
     graph.subgraphs.length() == 0
@@ -2513,6 +2569,7 @@ fn layout_graph_with_subgraph_redirects(
       graph.edges,
       compact_fanin,
       cycle_aware_layout,
+      !state_graph && !class_or_er_graph && cycle_aware_layout && !horizontal,
     )
     flow_max_rank = max_rank
     for node_id, rank in rank_by_id {
