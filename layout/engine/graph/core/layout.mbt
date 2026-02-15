@@ -921,6 +921,7 @@ fn edge_points_for(
   style : EdgeStyle,
   back_edge_bend_y : Int?,
   forward_fanout_offset_y : Int?,
+  smooth_forward_fanout : Bool,
 ) -> Array[Point] {
   if horizontal {
     let moving_right = target.x >= source.x
@@ -954,6 +955,10 @@ fn edge_points_for(
       Some(offset_y) =>
         if style is Dotted && moving_right && offset_y != 0 {
           let lane_y = source.y + offset_y
+          if smooth_forward_fanout {
+            let mid_x = (start_x + end_x) / 2
+            return [start, { x: mid_x, y: lane_y }, end]
+          }
           return [
             start,
             { x: start_x, y: lane_y },
@@ -2657,6 +2662,7 @@ fn layout_graph_with_subgraph_redirects(
           } else {
             None
           },
+          state_graph && !compact_fanin,
         )
         let label_position = match edge.label {
           Some(_) => {
