@@ -366,7 +366,9 @@ fn ci_cd_pipeline_expected_ascii() -> String {
     #|  +----------------+
     #|           |
     #|           |
+    #|           |
     #|          Yes
+    #|           |
     #|           |
     #|           v
     #|  +----------------+
@@ -435,7 +437,9 @@ fn ci_cd_pipeline_expected_unicode() -> String {
     #|  └────────┬───────┘
     #|           │
     #|           │
+    #|           │
     #|          Yes
+    #|           │
     #|           │
     #|           ▼
     #|  ┌────────────────┐

@@ -1,17 +1,17 @@
 [canvas]
-width=562 height=507
+width=562 height=499
 
 [nodes]
 node id=Idle shape=Rounded center=130,197 size=70x44 label=Idle
 node id=Commit shape=Rounded center=474,98 size=72x44 label=Commit
-node id=state_end_1 shape=StateEnd center=130,456 size=22x22 label=
+node id=state_end_1 shape=StateEnd center=130,452 size=14x14 label=
 node id=Validate shape=Rounded center=264,98 size=88x44 label=Validate
-node id=state_start_1 shape=StateStart center=130,96 size=22x22 label=
+node id=state_start_1 shape=StateStart center=130,92 size=14x14 label=
 
 [edges]
 edge Validate->Commit label=- label_pos=- points=308,98 -> 438,98
+edge state_start_1->Idle label=- label_pos=- points=130,99 -> 130,175
 edge Active->state_end_1 label=- label_pos=- points=474,120 -> 130,445
-edge state_start_1->Idle label=- label_pos=- points=130,107 -> 130,175
 edge Idle->Active label=start label_pos=197,147 points=130,175 -> 264,120
 edge Commit->Validate label=retry label_pos=373,98 points=438,98 -> 308,98
 
