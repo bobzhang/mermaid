@@ -432,21 +432,65 @@ function parseOfficialEdges(svg: string): Point[][] {
 }
 
 function parseFixtureEdges(source: string): FixtureEdge[] {
+  const parseEndpoint = (raw: string): string | null => {
+    let token = raw.trim()
+    if (token === '') return null
+    token = token.split(':::')[0]!.trim()
+    const shapeMetaIndex = token.indexOf('@{')
+    if (shapeMetaIndex >= 0) {
+      token = token.slice(0, shapeMetaIndex).trim()
+    }
+
+    const idMatch = token.match(/^([A-Za-z0-9_./:#-]+)/)
+    if (idMatch) {
+      const normalized = normalizeLabel(idMatch[1]!)
+      return normalized === '' ? null : normalized
+    }
+
+    if (
+      (token.startsWith('"') && token.endsWith('"')) ||
+      (token.startsWith("'") && token.endsWith("'"))
+    ) {
+      const normalized = normalizeLabel(token.slice(1, -1))
+      return normalized === '' ? null : normalized
+    }
+    return null
+  }
+
+  const parseEdgeLine = (line: string): FixtureEdge | null => {
+    const patterns: RegExp[] = [
+      /^\s*(.+?)\s*--\s*(?:\[[^\]]*\]|"[^"]*"|'[^']*'|\|[^|]*\|)?\s*-->\s*(.+?)\s*$/,
+      /^\s*(.+?)\s*-\.\->\s*(.+?)\s*$/,
+      /^\s*(.+?)\s*-->\s*(.+?)\s*$/,
+      /^\s*(.+?)\s*---\s*(.+?)\s*$/,
+      /^\s*(.+?)\s*===>\s*(.+?)\s*$/,
+      /^\s*(.+?)\s*==>\s*(.+?)\s*$/,
+    ]
+    for (const pattern of patterns) {
+      const match = line.match(pattern)
+      if (!match) continue
+      const sourceId = parseEndpoint(match[1]!)
+      const targetId = parseEndpoint(match[2]!)
+      if (!sourceId || !targetId) return null
+      return { source: sourceId, target: targetId }
+    }
+    return null
+  }
+
   const edges: FixtureEdge[] = []
+  const dedupe = new Set<string>()
   const lines = source.split('\n')
-  const edgeLine =
-    /^\s*([A-Za-z0-9_./:-]+)(?:\[[^\]]*\])?\s*(?:-->|-.->|==>|===>|-.->)\s*(?:\|[^|]*\|)?\s*([A-Za-z0-9_./:-]+)(?:\[[^\]]*\])?\s*$/
   for (const rawLine of lines) {
     const line = rawLine.split('%%')[0]!.trim()
     if (line === '' || line.startsWith('graph ') || line === 'end' || line.startsWith('subgraph ')) {
       continue
     }
-    const match = line.match(edgeLine)
-    if (!match) continue
-    const sourceId = normalizeLabel(match[1]!)
-    const targetId = normalizeLabel(match[2]!)
-    if (sourceId === '' || targetId === '') continue
-    edges.push({ source: sourceId, target: targetId })
+    const parsed = parseEdgeLine(line)
+    if (!parsed) continue
+    const key = `${parsed.source}->${parsed.target}`
+    if (dedupe.has(key)) continue
+    dedupe.add(key)
+    edges.push(parsed)
   }
   return edges
 }
