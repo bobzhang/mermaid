@@ -2267,7 +2267,7 @@ fn optimize_deferred_back_edge_order_locally(
     base_back_edge_lane_reservations, base_back_edge_column_reservations, base_polylines,
     enhanced_horizontal_state_flow,
   )
-  let max_evaluations = (optimized_order.length() * 12).max(36).min(192)
+  let max_evaluations = (optimized_order.length() * 14).max(42).min(224)
   let mut evaluations = 0
 
   let mut pass = 0
@@ -4916,7 +4916,7 @@ fn layout_graph_with_subgraph_redirects(
       )
     }
 
-    let max_seed_count = unique_deferred_order_candidates.length()
+    let max_seed_count = unique_deferred_order_candidates.length().min(3)
     let selected_seed_indices : Array[Int] = []
     let selected_seed_index_set : Map[Int, Bool] = {}
     for _ in 0..<max_seed_count {
