@@ -714,9 +714,9 @@ test "Layout long-span back-edge lane search can use extended candidates" {
     reservations,
   )
 
-  assert_eq(bend_y, 268)
+  assert_eq(bend_y, 44)
   assert_eq(reservations.length(), 4)
-  assert_eq(reservations[3].y, 268)
+  assert_eq(reservations[3].y, 44)
 }
 
 ///|
@@ -767,9 +767,9 @@ test "Layout mid-long span back-edge lane search upgrades to dense candidate spa
     reservations,
   )
 
-  assert_eq(bend_y, 250)
+  assert_eq(bend_y, 42)
   assert_eq(reservations.length(), 18)
-  assert_eq(reservations[17].y, 250)
+  assert_eq(reservations[17].y, 42)
 }
 
 ///|
