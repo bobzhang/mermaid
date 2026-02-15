@@ -23,43 +23,31 @@ fn points_to_svg(points : Array[Point]) -> String {
 }
 
 ///|
-fn sign_of(value : Int) -> Int {
-  if value > 0 {
-    1
-  } else if value < 0 {
-    -1
-  } else {
-    0
-  }
+fn edge_needs_curve_path(points : Array[Point]) -> Bool {
+  points.length() >= 3
 }
 
 ///|
-fn edge_turn_is_axis_aligned(prev : Point, curr : Point, next : Point) -> Bool {
-  let in_dx = curr.x - prev.x
-  let in_dy = curr.y - prev.y
-  let out_dx = next.x - curr.x
-  let out_dy = next.y - curr.y
-  let in_axis_aligned = in_dx == 0 || in_dy == 0
-  let out_axis_aligned = out_dx == 0 || out_dy == 0
-  let changes_direction = in_dx * out_dy != in_dy * out_dx
-  in_axis_aligned && out_axis_aligned && changes_direction
+fn basis_bezier_segment(
+  sb : StringBuilder,
+  x0 : Int,
+  y0 : Int,
+  x1 : Int,
+  y1 : Int,
+  x2 : Int,
+  y2 : Int,
+) -> Unit {
+  let c1x = (2 * x0 + x1) / 3
+  let c1y = (2 * y0 + y1) / 3
+  let c2x = (x0 + 2 * x1) / 3
+  let c2y = (y0 + 2 * y1) / 3
+  let ex = (x0 + 4 * x1 + x2) / 6
+  let ey = (y0 + 4 * y1 + y2) / 6
+  sb.write_string(" C\{c1x} \{c1y} \{c2x} \{c2y} \{ex} \{ey}")
 }
 
 ///|
-fn edge_needs_rounded_path(points : Array[Point]) -> Bool {
-  if points.length() < 3 {
-    return false
-  }
-  for i in 1..<(points.length() - 1) {
-    if edge_turn_is_axis_aligned(points[i - 1], points[i], points[i + 1]) {
-      return true
-    }
-  }
-  false
-}
-
-///|
-fn rounded_edge_path(points : Array[Point], corner_radius : Int) -> String {
+fn basis_curve_path(points : Array[Point]) -> String {
   if points.length() < 2 {
     return ""
   }
@@ -72,38 +60,39 @@ fn rounded_edge_path(points : Array[Point], corner_radius : Int) -> String {
     return sb.to_string()
   }
 
-  for i in 1..<(points.length() - 1) {
-    let prev = points[i - 1]
-    let curr = points[i]
-    let next = points[i + 1]
-    if !edge_turn_is_axis_aligned(prev, curr, next) {
-      sb.write_string(" L\{curr.x} \{curr.y}")
-      continue
+  let mut x0 = 0
+  let mut y0 = 0
+  let mut x1 = 0
+  let mut y1 = 0
+  let mut stage = 0
+  for point in points {
+    let x = point.x
+    let y = point.y
+    match stage {
+      0 => stage = 1
+      1 => stage = 2
+      2 => {
+        stage = 3
+        let lead_x = (5 * x0 + x1) / 6
+        let lead_y = (5 * y0 + y1) / 6
+        sb.write_string(" L\{lead_x} \{lead_y}")
+        basis_bezier_segment(sb, x0, y0, x1, y1, x, y)
+      }
+      _ => basis_bezier_segment(sb, x0, y0, x1, y1, x, y)
     }
-    let in_dx = curr.x - prev.x
-    let in_dy = curr.y - prev.y
-    let out_dx = next.x - curr.x
-    let out_dy = next.y - curr.y
-    let in_len = in_dx.abs() + in_dy.abs()
-    let out_len = out_dx.abs() + out_dy.abs()
-    let cut = corner_radius.min(in_len / 2).min(out_len / 2)
-    if cut <= 0 {
-      sb.write_string(" L\{curr.x} \{curr.y}")
-      continue
-    }
-    let entry = Point::{
-      x: curr.x - sign_of(in_dx) * cut,
-      y: curr.y - sign_of(in_dy) * cut,
-    }
-    let exit_ = Point::{
-      x: curr.x + sign_of(out_dx) * cut,
-      y: curr.y + sign_of(out_dy) * cut,
-    }
-    sb.write_string(" L\{entry.x} \{entry.y}")
-    sb.write_string(" Q\{curr.x} \{curr.y} \{exit_.x} \{exit_.y}")
+    x0 = x1
+    y0 = y1
+    x1 = x
+    y1 = y
   }
-  let last = points[points.length() - 1]
-  sb.write_string(" L\{last.x} \{last.y}")
+  match stage {
+    3 => {
+      basis_bezier_segment(sb, x0, y0, x1, y1, x1, y1)
+      sb.write_string(" L\{x1} \{y1}")
+    }
+    2 => sb.write_string(" L\{x1} \{y1}")
+    _ => ()
+  }
   sb.to_string()
 }
 
@@ -928,8 +917,8 @@ pub fn render_svg(
     } else {
       ("", "")
     }
-    if !sequence_mode && edge_needs_rounded_path(edge.points) {
-      let path_d = rounded_edge_path(edge.points, 5)
+    if !sequence_mode && edge_needs_curve_path(edge.points) {
+      let path_d = basis_curve_path(edge.points)
       sb.write_string(
         "<path class=\"edge\" d=\"\{path_d}\"\{edge_style}\{marker_start}\{marker_end} />",
       )

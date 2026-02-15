@@ -639,7 +639,7 @@ test "SVG renderer edge-label midpoint follows polyline segments" {
 }
 
 ///|
-test "SVG renderer uses rounded path for right-angle edges" {
+test "SVG renderer uses basis-curve path for multi-point edges" {
   let graph = make_svg_test_graph([
     {
       source: "A",
@@ -656,7 +656,9 @@ test "SVG renderer uses rounded path for right-angle edges" {
   let svg = render_svg(graph, DiagramColors::default(), "Inter", false)
 
   assert_true(
-    svg.contains("<path class=\"edge\" d=\"M0 0 L95 0 Q100 0 100 5 L100 100\""),
+    svg.contains(
+      "<path class=\"edge\" d=\"M0 0 L16 0 C33 0 66 0 83 16 C100 33 100 66 100 83 L100 100\"",
+    ),
   )
 }
 
