@@ -1,0 +1,71 @@
+graph LR
+SRC[SRC]
+SNK[SNK]
+
+subgraph LEFT
+L1[L1]
+L2[L2]
+L3[L3]
+L4[L4]
+L5[L5]
+end
+
+subgraph MID
+M1[M1]
+M2[M2]
+M3[M3]
+M4[M4]
+M5[M5]
+end
+
+subgraph RIGHT
+R1[R1]
+R2[R2]
+R3[R3]
+R4[R4]
+R5[R5]
+end
+
+SRC --> L1
+SRC --> M1
+SRC --> R1
+
+L1 --> L2
+L2 --> L3
+L3 --> L4
+L4 --> L5
+L5 --> L2
+
+M1 --> M2
+M2 --> M3
+M3 --> M4
+M4 --> M5
+M5 --> M2
+
+R1 --> R2
+R2 --> R3
+R3 --> R4
+R4 --> R5
+R5 --> R2
+
+L2 --> M1
+L3 --> M2
+L4 --> M3
+L5 --> M4
+L1 --> M5
+
+M2 --> R1
+M3 --> R2
+M4 --> R3
+M5 --> R4
+M1 --> R5
+
+R4 --> M1
+R3 --> L2
+M3 --> L1
+R2 --> L4
+
+L5 --> SNK
+M5 --> SNK
+R5 --> SNK
+SNK --> M2
