@@ -16,6 +16,16 @@ pub(all) enum Direction {
 } derive(Eq, Show, ToJson)
 
 ///|
+/// High-level Mermaid diagram category from the parsed header.
+pub(all) enum DiagramKind {
+  Flowchart
+  State
+  Sequence
+  Class
+  Er
+} derive(Eq, Show, ToJson)
+
+///|
 /// Normalized node shapes used by parser and renderers.
 pub(all) enum NodeShape {
   Rectangle
@@ -139,6 +149,7 @@ pub(all) struct SequenceActivationCommand {
 ///|
 /// Normalized parsed Mermaid model consumed by layout/render stages.
 pub(all) struct MermaidGraph {
+  diagram_kind : DiagramKind
   direction : Direction
   nodes : Map[String, MermaidNode]
   edges : Array[MermaidEdge]

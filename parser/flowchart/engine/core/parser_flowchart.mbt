@@ -1334,6 +1334,7 @@ pub fn parse_flowchart(
   }
 
   {
+    diagram_kind: Flowchart,
     direction,
     nodes,
     edges,

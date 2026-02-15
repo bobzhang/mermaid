@@ -469,6 +469,7 @@ pub fn parse_class_diagram(lines : Array[String]) -> MermaidGraph {
   apply_details_to_nodes(nodes, details)
 
   {
+    diagram_kind: Class,
     direction: TD,
     nodes,
     edges,
@@ -602,6 +603,7 @@ pub fn parse_er_diagram(lines : Array[String]) -> MermaidGraph {
   apply_details_to_nodes(nodes, details)
 
   {
+    diagram_kind: Er,
     direction: TD,
     nodes,
     edges,

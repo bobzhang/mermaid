@@ -38,6 +38,17 @@ pub impl Eq for DiagramColors
 pub impl Show for DiagramColors
 pub impl ToJson for DiagramColors
 
+pub(all) enum DiagramKind {
+  Flowchart
+  State
+  Sequence
+  Class
+  Er
+}
+pub impl Eq for DiagramKind
+pub impl Show for DiagramKind
+pub impl ToJson for DiagramKind
+
 pub(all) enum Direction {
   TD
   TB
@@ -72,6 +83,7 @@ pub impl Show for MermaidEdge
 pub impl ToJson for MermaidEdge
 
 pub(all) struct MermaidGraph {
+  diagram_kind : DiagramKind
   direction : Direction
   nodes : Map[String, MermaidNode]
   edges : Array[MermaidEdge]
