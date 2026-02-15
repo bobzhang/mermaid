@@ -110,6 +110,7 @@ fn collect_non_state_flow_ranks(
   edges : Array[MermaidEdge],
   compact_fanin : Bool,
   cycle_aware : Bool,
+  promote_backward_dotted_edges : Bool,
   prefer_definition_back_edges : Bool,
 ) -> (Map[String, Int], Int) {
   if !cycle_aware {
@@ -183,6 +184,54 @@ fn collect_non_state_flow_ranks(
         }
         if !changed {
           break
+        }
+      }
+    }
+
+    if promote_backward_dotted_edges && !compact_fanin {
+      let backward_promoted_edge_indices : Array[Int] = []
+      for i, edge in edges {
+        let promote_edge = edge.style is Dotted ||
+          edge.relation_operator is Some("---")
+        if !promote_edge {
+          continue
+        }
+        match
+          (node_order_by_id.get(edge.source), node_order_by_id.get(edge.target)) {
+          (Some(source_order), Some(target_order)) =>
+            if target_order < source_order {
+              backward_promoted_edge_indices.push(i)
+            }
+          _ => ()
+        }
+      }
+
+      if backward_promoted_edge_indices.length() > 0 {
+        for _ in 0..<nodes_in_order.length() {
+          let mut changed = false
+          for edge_index in backward_promoted_edge_indices {
+            let edge = edges[edge_index]
+            let source_rank = option_int_or(rank_by_id.get(edge.source), 0)
+            let target_rank = option_int_or(rank_by_id.get(edge.target), 0)
+            let candidate_rank = source_rank + 1
+            if candidate_rank > target_rank {
+              rank_by_id[edge.target] = candidate_rank
+              changed = true
+            }
+          }
+          for edge_index in forward_edge_indices {
+            let edge = edges[edge_index]
+            let source_rank = option_int_or(rank_by_id.get(edge.source), 0)
+            let target_rank = option_int_or(rank_by_id.get(edge.target), 0)
+            let candidate_rank = source_rank + 1
+            if candidate_rank > target_rank {
+              rank_by_id[edge.target] = candidate_rank
+              changed = true
+            }
+          }
+          if !changed {
+            break
+          }
         }
       }
     }
@@ -481,6 +530,32 @@ fn graph_has_cycle(
     }
     if detect_cycle_from(node.id, outgoing_targets_by_source, visit_state_by_id) {
       return true
+    }
+  }
+  false
+}
+
+///|
+fn graph_has_definition_backward_dotted_edge(
+  nodes_in_order : Array[MermaidNode],
+  edges : Array[MermaidEdge],
+) -> Bool {
+  let node_order_by_id : Map[String, Int] = {}
+  for i, node in nodes_in_order {
+    node_order_by_id[node.id] = i
+  }
+
+  for edge in edges {
+    if !(edge.style is Dotted) {
+      continue
+    }
+    match
+      (node_order_by_id.get(edge.source), node_order_by_id.get(edge.target)) {
+      (Some(source_order), Some(target_order)) =>
+        if target_order < source_order {
+          return true
+        }
+      _ => ()
     }
   }
   false
@@ -3260,15 +3335,22 @@ fn layout_graph_with_subgraph_redirects(
   let flow_rank_by_node_id : Map[String, Int] = {}
   let flow_lane_by_node_id : Map[String, Int] = {}
   let flow_label_y_offset_by_rank : Map[Int, Int] = {}
+  let mut refined_horizontal_non_state_flow = false
   let mut flow_max_rank = 0
   if !state_graph || horizontal {
     let cycle_aware_layout = state_graph ||
       (!class_or_er_graph && graph_has_cycle(nodes_in_order, graph.edges))
+    let promote_backward_dotted_edges = horizontal &&
+      !state_graph &&
+      !class_or_er_graph &&
+      !cycle_aware_layout &&
+      graph_has_definition_backward_dotted_edge(nodes_in_order, graph.edges)
     let (rank_by_id, max_rank) = collect_non_state_flow_ranks(
       nodes_in_order,
       graph.edges,
       compact_fanin,
       cycle_aware_layout,
+      promote_backward_dotted_edges,
       !state_graph && cycle_aware_layout && !horizontal,
     )
     flow_max_rank = max_rank
@@ -3355,13 +3437,29 @@ fn layout_graph_with_subgraph_redirects(
     for node_id, lane in lane_by_id {
       flow_lane_by_node_id[node_id] = lane
     }
-    if state_graph && horizontal && !compact_fanin {
+    let use_horizontal_lane_refinement = if state_graph {
+      horizontal && !compact_fanin
+    } else {
+      horizontal &&
+      !compact_fanin &&
+      graph.edges.any(edge => edge.style is Dotted) &&
+      (cycle_aware_layout || promote_backward_dotted_edges)
+    }
+    if use_horizontal_lane_refinement {
+      if !state_graph {
+        refined_horizontal_non_state_flow = true
+      }
+      let enhanced_horizontal_flow = if state_graph {
+        enhanced_horizontal_state_flow
+      } else {
+        cycle_aware_layout
+      }
       refine_horizontal_state_flow_lanes(
         nodes_in_order,
         graph.edges,
         flow_rank_by_node_id,
         flow_lane_by_node_id,
-        enhanced_horizontal_state_flow,
+        enhanced_horizontal_flow,
       )
     }
     if !horizontal &&
@@ -3576,6 +3674,8 @@ fn layout_graph_with_subgraph_redirects(
         padding + 70 + flow_lane * layer_spacing / 4
       } else if state_graph && !compact_fanin {
         padding + 70 + flow_lane * layer_spacing / 2
+      } else if refined_horizontal_non_state_flow {
+        padding + 70 + flow_lane * layer_spacing / 3
       } else {
         padding + 70 + flow_lane * layer_spacing
       }

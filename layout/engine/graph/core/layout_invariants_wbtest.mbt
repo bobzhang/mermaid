@@ -474,7 +474,7 @@ test "Layout back-edge lane selection can skip nearest lane for fewer crossings"
 }
 
 ///|
-test "Layout cyclic LR flowchart without metadata keeps main chain horizontal" {
+test "Layout cyclic LR flowchart without metadata keeps loop routing vertically separated" {
   let graph = @parser.parse_mermaid(
     (
       #|graph LR
@@ -516,9 +516,11 @@ test "Layout cyclic LR flowchart without metadata keeps main chain horizontal" {
   assert_true(q5.x < accept.x)
 
   assert_eq(start.y, q0.y)
-  assert_eq(q0.y, q3.y)
-  assert_eq(q3.y, q4.y)
+  assert_true(q3.y < q0.y)
+  assert_eq(q0.y, q4.y)
   assert_eq(q4.y, q5.y)
+  assert_eq(q1.y, q2.y)
+  assert_true(q1.y <= q3.y)
   assert_true(q1.x < q2.x)
 }
 
@@ -570,10 +572,10 @@ test "Layout cycle-aware rank collection rehydrates cyclic forward order" {
   ]
 
   let (legacy_ranks, _) = collect_non_state_flow_ranks(
-    nodes, edges, false, false, false,
+    nodes, edges, false, false, false, false,
   )
   let (cycle_ranks, _) = collect_non_state_flow_ranks(
-    nodes, edges, false, true, false,
+    nodes, edges, false, true, false, false,
   )
 
   let legacy_b = option_int_or(legacy_ranks.get("B"), -1)
@@ -704,6 +706,72 @@ test "Layout dotted fanout follows target lanes with a single elbow" {
   assert_eq(lower_edge.points.length(), 3)
   assert_eq(upper_edge.points[1].y, upper_edge.points[2].y)
   assert_eq(lower_edge.points[1].y, lower_edge.points[2].y)
+}
+
+///|
+test "Layout LR promotes late-defined source for dotted back-reference" {
+  let graph = @parser.parse_mermaid(
+    (
+      #|graph LR
+      #|A
+      #|B
+      #|C
+      #|C -.-> A
+      #|A --> B
+      #|
+    )
+    .trim_end()
+    .to_string(),
+  )
+  let positioned = layout_graph(graph, RenderOptions::default())
+  let a = find_positioned_node(positioned.nodes, "A")
+  let b = find_positioned_node(positioned.nodes, "B")
+  let c = find_positioned_node(positioned.nodes, "C")
+
+  assert_true(c.x < a.x)
+  assert_true(a.x < b.x)
+}
+
+///|
+test "Layout LR late-defined fanout source still places branches to the right" {
+  let graph = @parser.parse_mermaid(
+    (
+      #|graph LR
+      #|0
+      #|1
+      #|2
+      #|3
+      #|4
+      #|5
+      #|6
+      #|7
+      #|8
+      #|start --- 8
+      #|0 -- A --> 1
+      #|1 -- B --> 2
+      #|2 -- C --> 3
+      #|3 --- #0
+      #|4 -- A --> 5
+      #|5 -- B --> 6
+      #|6 -- C --> 7
+      #|7 --- #1
+      #|8 -.-> 0
+      #|8 -.-> 4
+      #|
+    )
+    .trim_end()
+    .to_string(),
+  )
+  let positioned = layout_graph(graph, RenderOptions::default())
+  let start = find_positioned_node(positioned.nodes, "start")
+  let branch = find_positioned_node(positioned.nodes, "8")
+  let upper = find_positioned_node(positioned.nodes, "0")
+  let lower = find_positioned_node(positioned.nodes, "4")
+
+  assert_true(start.x < branch.x)
+  assert_true(branch.x < upper.x)
+  assert_true(branch.x < lower.x)
+  assert_true(upper.y < lower.y)
 }
 
 ///|
