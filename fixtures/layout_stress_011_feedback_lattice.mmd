@@ -1,0 +1,105 @@
+graph TB
+S[S]
+T[T]
+
+subgraph LAYER_A
+A1[A1]
+A2[A2]
+A3[A3]
+A4[A4]
+end
+
+subgraph LAYER_B
+B1[B1]
+B2[B2]
+B3[B3]
+B4[B4]
+end
+
+subgraph LAYER_C
+C1[C1]
+C2[C2]
+C3[C3]
+C4[C4]
+end
+
+subgraph LAYER_D
+D1[D1]
+D2[D2]
+D3[D3]
+D4[D4]
+end
+
+S --> A1
+S --> A2
+S --> A3
+S --> A4
+
+A1 --> B1
+A1 --> B2
+A1 --> B4
+A2 --> B1
+A2 --> B2
+A2 --> B3
+A3 --> B2
+A3 --> B3
+A3 --> B4
+A4 --> B1
+A4 --> B3
+A4 --> B4
+
+B1 --> C1
+B1 --> C2
+B1 --> C4
+B2 --> C1
+B2 --> C2
+B2 --> C3
+B3 --> C2
+B3 --> C3
+B3 --> C4
+B4 --> C1
+B4 --> C3
+B4 --> C4
+
+C1 --> D1
+C1 --> D2
+C1 --> D4
+C2 --> D1
+C2 --> D2
+C2 --> D3
+C3 --> D2
+C3 --> D3
+C3 --> D4
+C4 --> D1
+C4 --> D3
+C4 --> D4
+
+D1 --> T
+D2 --> T
+D3 --> T
+D4 --> T
+
+A1 --> C3
+A2 --> C4
+A3 --> C1
+A4 --> C2
+
+B1 --> D3
+B2 --> D4
+B3 --> D1
+B4 --> D2
+
+D1 --> B2
+D2 --> B3
+D3 --> B4
+D4 --> B1
+
+C1 --> A4
+C2 --> A1
+C3 --> A2
+C4 --> A3
+
+B4 --> A2
+C3 --> B1
+D2 --> C4
+D4 --> C1

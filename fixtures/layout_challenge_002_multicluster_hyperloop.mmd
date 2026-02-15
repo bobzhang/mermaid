@@ -1,0 +1,115 @@
+graph LR
+ENTRY[ENTRY]
+EXIT[EXIT]
+
+subgraph LEFT_BANK
+L1[L1]
+L2[L2]
+L3[L3]
+L4[L4]
+subgraph LEFT_DEEP
+LD1[LD1]
+LD2[LD2]
+LD3[LD3]
+end
+L5[L5]
+L6[L6]
+end
+
+subgraph MID_BANK
+M1[M1]
+M2[M2]
+M3[M3]
+M4[M4]
+M5[M5]
+M6[M6]
+end
+
+subgraph RIGHT_BANK
+R1[R1]
+R2[R2]
+R3[R3]
+R4[R4]
+subgraph RIGHT_DEEP
+RD1[RD1]
+RD2[RD2]
+RD3[RD3]
+end
+R5[R5]
+R6[R6]
+end
+
+ENTRY --> L1
+ENTRY --> M1
+ENTRY --> R1
+
+L1 --> L2
+L2 --> L3
+L3 --> L4
+L4 --> L5
+L5 --> L6
+L6 --> L2
+
+R1 --> R2
+R2 --> R3
+R3 --> R4
+R4 --> R5
+R5 --> R6
+R6 --> R2
+
+M1 --> M2
+M2 --> M3
+M3 --> M4
+M4 --> M5
+M5 --> M6
+M6 --> M2
+
+L2 --> LD1
+LD1 --> LD2
+LD2 --> LD3
+LD3 --> L5
+
+R2 --> RD1
+RD1 --> RD2
+RD2 --> RD3
+RD3 --> R5
+
+L3 --> M2
+L4 --> M3
+L5 --> M4
+LD2 --> M5
+
+M2 --> R2
+M3 --> R3
+M4 --> R4
+M5 --> R5
+
+R3 --> M1
+R4 --> M2
+R5 --> M3
+RD2 --> M4
+
+M3 --> LD1
+M4 --> LD2
+M5 --> LD3
+
+M2 --> RD1
+M3 --> RD2
+M4 --> RD3
+
+L6 --> EXIT
+M6 --> EXIT
+R6 --> EXIT
+
+EXIT --> M2
+EXIT --> L3
+EXIT --> R3
+
+LD3 --> R1
+RD3 --> L1
+L4 --> RD2
+R4 --> LD2
+M6 --> L2
+M6 --> R2
+R6 --> M4
+L6 --> M4
