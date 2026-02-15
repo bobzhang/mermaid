@@ -90,6 +90,68 @@ fn nfa_find_positioned_node(
 }
 
 ///|
+fn nfa_segment_orientation(
+  a : @model.Point,
+  b : @model.Point,
+  c : @model.Point,
+) -> Int {
+  (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x)
+}
+
+///|
+fn nfa_segments_properly_intersect(
+  left_start : @model.Point,
+  left_end : @model.Point,
+  right_start : @model.Point,
+  right_end : @model.Point,
+) -> Bool {
+  let o1 = nfa_segment_orientation(left_start, left_end, right_start)
+  let o2 = nfa_segment_orientation(left_start, left_end, right_end)
+  let o3 = nfa_segment_orientation(right_start, right_end, left_start)
+  let o4 = nfa_segment_orientation(right_start, right_end, left_end)
+  ((o1 > 0 && o2 < 0) || (o1 < 0 && o2 > 0)) &&
+  ((o3 > 0 && o4 < 0) || (o3 < 0 && o4 > 0))
+}
+
+///|
+fn nfa_edges_share_endpoint(
+  left : @model.PositionedEdge,
+  right : @model.PositionedEdge,
+) -> Bool {
+  left.source == right.source ||
+  left.source == right.target ||
+  left.target == right.source ||
+  left.target == right.target
+}
+
+///|
+fn nfa_edge_pair_crosses(
+  left : @model.PositionedEdge,
+  right : @model.PositionedEdge,
+) -> Bool {
+  if nfa_edges_share_endpoint(left, right) {
+    return false
+  }
+  if left.points.length() < 2 || right.points.length() < 2 {
+    return false
+  }
+  for left_index in 1..<left.points.length() {
+    let left_start = left.points[left_index - 1]
+    let left_end = left.points[left_index]
+    for right_index in 1..<right.points.length() {
+      let right_start = right.points[right_index - 1]
+      let right_end = right.points[right_index]
+      if nfa_segments_properly_intersect(
+          left_start, left_end, right_start, right_end,
+        ) {
+        return true
+      }
+    }
+  }
+  false
+}
+
+///|
 test "NFA fixture 001: basic automaton with epsilon transitions" (
   it : @test.Test,
 ) {
@@ -126,4 +188,26 @@ test "NFA fixture 001: layout places start before first state" {
   let start = nfa_find_positioned_node(positioned.nodes, "start")
   let q0 = nfa_find_positioned_node(positioned.nodes, "0")
   assert_true(start.x < q0.x)
+}
+
+///|
+test "NFA fixture 001: disjoint edge routes avoid crossings" {
+  let graph = @parser_header_core.parse_mermaid(nfa_fixture_001_source())
+  let positioned = @layout.layout_graph(graph, @model.RenderOptions::default())
+  let crossings : Array[String] = []
+  for i in 0..<positioned.edges.length() {
+    let left = positioned.edges[i]
+    for j in (i + 1)..<positioned.edges.length() {
+      let right = positioned.edges[j]
+      if nfa_edge_pair_crosses(left, right) {
+        crossings.push(
+          "\{left.source}->\{left.target} || \{right.source}->\{right.target}",
+        )
+      }
+    }
+  }
+  if crossings.length() > 0 {
+    let details = crossings.join(", ")
+    fail("unexpected NFA crossings: \{details}")
+  }
 }

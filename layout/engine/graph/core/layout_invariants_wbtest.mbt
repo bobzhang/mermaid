@@ -63,6 +63,39 @@ fn int_sign(value : Int) -> Int {
 }
 
 ///|
+fn segment_intersects_horizontal_span(
+  start : Point,
+  end : Point,
+  left : Int,
+  right : Int,
+  y : Int,
+) -> Bool {
+  let top = start.y.min(end.y)
+  let bottom = start.y.max(end.y)
+  if y < top || y > bottom {
+    return false
+  }
+
+  if start.y == end.y {
+    if start.y != y {
+      return false
+    }
+    let segment_left = start.x.min(end.x)
+    let segment_right = start.x.max(end.x)
+    return spans_overlap(left, right, segment_left, segment_right)
+  }
+
+  let dx = end.x - start.x
+  let dy = end.y - start.y
+  let numerator = start.x * dy + dx * (y - start.y)
+  if dy > 0 {
+    left * dy <= numerator && numerator <= right * dy
+  } else {
+    right * dy <= numerator && numerator <= left * dy
+  }
+}
+
+///|
 fn segments_properly_intersect(
   a_start : Point,
   a_end : Point,

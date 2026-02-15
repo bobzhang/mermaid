@@ -205,13 +205,207 @@ function parsePointPairs(raw: string): Point[] {
 }
 
 function parsePathPoints(pathD: string): Point[] {
-  const numbers = [...pathD.matchAll(/-?\d+(?:\.\d+)?/g)]
-    .map(match => Number.parseFloat(match[0]))
-    .filter(value => !Number.isNaN(value))
+  const tokenRe = /[a-zA-Z]|-?\d+(?:\.\d+)?(?:e[-+]?\d+)?/g
+  const tokens = [...pathD.matchAll(tokenRe)].map(match => match[0]!)
   const points: Point[] = []
-  for (let index = 0; index + 1 < numbers.length; index += 2) {
-    points.push({ x: numbers[index]!, y: numbers[index + 1]! })
+
+  let index = 0
+  let command = ''
+  let currentX = 0
+  let currentY = 0
+  let subpathStartX = 0
+  let subpathStartY = 0
+
+  const pushPoint = (x: number, y: number): void => {
+    if (Number.isNaN(x) || Number.isNaN(y)) return
+    const previous = points[points.length - 1]
+    if (previous && Math.abs(previous.x - x) <= 1e-9 && Math.abs(previous.y - y) <= 1e-9) {
+      return
+    }
+    points.push({ x, y })
   }
+
+  const readNumber = (): number | null => {
+    if (index >= tokens.length) return null
+    const token = tokens[index]!
+    if (/^[a-zA-Z]$/.test(token)) return null
+    const parsed = Number.parseFloat(token)
+    if (Number.isNaN(parsed)) return null
+    index += 1
+    return parsed
+  }
+
+  while (index < tokens.length) {
+    const token = tokens[index]!
+    if (/^[a-zA-Z]$/.test(token)) {
+      command = token
+      index += 1
+    } else if (command === '') {
+      break
+    }
+
+    switch (command) {
+      case 'M':
+      case 'm': {
+        const isRelative = command === 'm'
+        const firstX = readNumber()
+        const firstY = readNumber()
+        if (firstX == null || firstY == null) break
+        currentX = isRelative ? currentX + firstX : firstX
+        currentY = isRelative ? currentY + firstY : firstY
+        subpathStartX = currentX
+        subpathStartY = currentY
+        pushPoint(currentX, currentY)
+
+        while (true) {
+          const x = readNumber()
+          const y = readNumber()
+          if (x == null || y == null) break
+          currentX = isRelative ? currentX + x : x
+          currentY = isRelative ? currentY + y : y
+          pushPoint(currentX, currentY)
+        }
+        break
+      }
+      case 'L':
+      case 'l': {
+        const isRelative = command === 'l'
+        while (true) {
+          const x = readNumber()
+          const y = readNumber()
+          if (x == null || y == null) break
+          currentX = isRelative ? currentX + x : x
+          currentY = isRelative ? currentY + y : y
+          pushPoint(currentX, currentY)
+        }
+        break
+      }
+      case 'H':
+      case 'h': {
+        const isRelative = command === 'h'
+        while (true) {
+          const x = readNumber()
+          if (x == null) break
+          currentX = isRelative ? currentX + x : x
+          pushPoint(currentX, currentY)
+        }
+        break
+      }
+      case 'V':
+      case 'v': {
+        const isRelative = command === 'v'
+        while (true) {
+          const y = readNumber()
+          if (y == null) break
+          currentY = isRelative ? currentY + y : y
+          pushPoint(currentX, currentY)
+        }
+        break
+      }
+      case 'C':
+      case 'c': {
+        const isRelative = command === 'c'
+        while (true) {
+          const x1 = readNumber()
+          const y1 = readNumber()
+          const x2 = readNumber()
+          const y2 = readNumber()
+          const x = readNumber()
+          const y = readNumber()
+          if (x1 == null || y1 == null || x2 == null || y2 == null || x == null || y == null) break
+          currentX = isRelative ? currentX + x : x
+          currentY = isRelative ? currentY + y : y
+          pushPoint(currentX, currentY)
+        }
+        break
+      }
+      case 'S':
+      case 's': {
+        const isRelative = command === 's'
+        while (true) {
+          const x2 = readNumber()
+          const y2 = readNumber()
+          const x = readNumber()
+          const y = readNumber()
+          if (x2 == null || y2 == null || x == null || y == null) break
+          currentX = isRelative ? currentX + x : x
+          currentY = isRelative ? currentY + y : y
+          pushPoint(currentX, currentY)
+        }
+        break
+      }
+      case 'Q':
+      case 'q': {
+        const isRelative = command === 'q'
+        while (true) {
+          const x1 = readNumber()
+          const y1 = readNumber()
+          const x = readNumber()
+          const y = readNumber()
+          if (x1 == null || y1 == null || x == null || y == null) break
+          currentX = isRelative ? currentX + x : x
+          currentY = isRelative ? currentY + y : y
+          pushPoint(currentX, currentY)
+        }
+        break
+      }
+      case 'T':
+      case 't': {
+        const isRelative = command === 't'
+        while (true) {
+          const x = readNumber()
+          const y = readNumber()
+          if (x == null || y == null) break
+          currentX = isRelative ? currentX + x : x
+          currentY = isRelative ? currentY + y : y
+          pushPoint(currentX, currentY)
+        }
+        break
+      }
+      case 'A':
+      case 'a': {
+        const isRelative = command === 'a'
+        while (true) {
+          const rx = readNumber()
+          const ry = readNumber()
+          const axisRotation = readNumber()
+          const largeArcFlag = readNumber()
+          const sweepFlag = readNumber()
+          const x = readNumber()
+          const y = readNumber()
+          if (
+            rx == null ||
+            ry == null ||
+            axisRotation == null ||
+            largeArcFlag == null ||
+            sweepFlag == null ||
+            x == null ||
+            y == null
+          ) {
+            break
+          }
+          currentX = isRelative ? currentX + x : x
+          currentY = isRelative ? currentY + y : y
+          pushPoint(currentX, currentY)
+        }
+        break
+      }
+      case 'Z':
+      case 'z': {
+        currentX = subpathStartX
+        currentY = subpathStartY
+        pushPoint(currentX, currentY)
+        break
+      }
+      default: {
+        // Unknown command: consume one numeric token and continue.
+        if (readNumber() == null) {
+          index += 1
+        }
+      }
+    }
+  }
+
   return points
 }
 
@@ -356,12 +550,29 @@ function segmentsProperlyIntersect(a1: Point, a2: Point, b1: Point, b2: Point): 
   )
 }
 
+function polylineEndpointPoints(points: Point[]): [Point, Point] | null {
+  if (points.length < 2) return null
+  return [points[0]!, points[points.length - 1]!]
+}
+
+function polylinesShareEndpoint(a: Point[], b: Point[]): boolean {
+  const aEndpoints = polylineEndpointPoints(a)
+  const bEndpoints = polylineEndpointPoints(b)
+  if (!aEndpoints || !bEndpoints) return false
+  const [aStart, aEnd] = aEndpoints
+  const [bStart, bEnd] = bEndpoints
+  return pointsEqual(aStart, bStart) || pointsEqual(aStart, bEnd) || pointsEqual(aEnd, bStart) || pointsEqual(aEnd, bEnd)
+}
+
 function countPolylineCrossings(polylines: Point[][]): number {
   let crossings = 0
   for (let i = 0; i < polylines.length; i += 1) {
     const a = polylines[i]!
     for (let j = i + 1; j < polylines.length; j += 1) {
       const b = polylines[j]!
+      if (polylinesShareEndpoint(a, b)) {
+        continue
+      }
       let crossed = false
       for (let ai = 0; ai < a.length - 1 && !crossed; ai += 1) {
         const a1 = a[ai]!

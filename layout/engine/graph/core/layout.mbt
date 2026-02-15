@@ -1848,53 +1848,57 @@ fn back_edge_lane_distance_penalty(
 }
 
 ///|
-fn segment_intersects_horizontal_span(
-  start : Point,
-  end : Point,
-  left : Int,
-  right : Int,
-  y : Int,
+fn back_edge_segment_orientation(a : Point, b : Point, c : Point) -> Int {
+  (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x)
+}
+
+///|
+fn back_edge_segments_properly_intersect(
+  left_start : Point,
+  left_end : Point,
+  right_start : Point,
+  right_end : Point,
 ) -> Bool {
-  let top = start.y.min(end.y)
-  let bottom = start.y.max(end.y)
-  if y < top || y > bottom {
-    return false
-  }
-
-  if start.y == end.y {
-    if start.y != y {
-      return false
-    }
-    let segment_left = start.x.min(end.x)
-    let segment_right = start.x.max(end.x)
-    return spans_overlap(left, right, segment_left, segment_right)
-  }
-
-  let dx = end.x - start.x
-  let dy = end.y - start.y
-  let numerator = start.x * dy + dx * (y - start.y)
-  if dy > 0 {
-    left * dy <= numerator && numerator <= right * dy
-  } else {
-    right * dy <= numerator && numerator <= left * dy
-  }
+  let o1 = back_edge_segment_orientation(left_start, left_end, right_start)
+  let o2 = back_edge_segment_orientation(left_start, left_end, right_end)
+  let o3 = back_edge_segment_orientation(right_start, right_end, left_start)
+  let o4 = back_edge_segment_orientation(right_start, right_end, left_end)
+  ((o1 > 0 && o2 < 0) || (o1 < 0 && o2 > 0)) &&
+  ((o3 > 0 && o4 < 0) || (o3 < 0 && o4 > 0))
 }
 
 ///|
 fn back_edge_lane_crossing_penalty(
   crossing_candidates : Array[RoutedEdgeSegment],
-  left : Int,
-  right : Int,
+  source_anchor_x : Int,
+  source_y : Int,
+  target_anchor_x : Int,
+  target_y : Int,
   candidate_y : Int,
 ) -> Int {
+  let start : Point = { x: source_anchor_x, y: source_y }
+  let bend_start : Point = { x: source_anchor_x, y: candidate_y }
+  let bend_end : Point = { x: target_anchor_x, y: candidate_y }
+  let end : Point = { x: target_anchor_x, y: target_y }
   let mut penalty = 0
   for segment in crossing_candidates {
-    if segment_intersects_horizontal_span(
+    if back_edge_segments_properly_intersect(
         segment.start,
         segment.end,
-        left,
-        right,
-        candidate_y,
+        start,
+        bend_start,
+      ) ||
+      back_edge_segments_properly_intersect(
+        segment.start,
+        segment.end,
+        bend_start,
+        bend_end,
+      ) ||
+      back_edge_segments_properly_intersect(
+        segment.start,
+        segment.end,
+        bend_end,
+        end,
       ) {
       penalty += 1
     }
@@ -2019,8 +2023,10 @@ fn reserve_back_edge_bend_y(
     congestion : Int,
     side_priority : Int,
     crossing_candidates : Array[RoutedEdgeSegment],
-    left : Int,
-    right : Int,
+    source_anchor_x : Int,
+    source_y : Int,
+    target_anchor_x : Int,
+    target_y : Int,
     has_choice : Bool,
     best_y : Int,
     best_congestion : Int,
@@ -2029,7 +2035,8 @@ fn reserve_back_edge_bend_y(
     best_side_priority : Int,
   ) -> (Bool, Int, Int, Int, Int, Int) {
     let crossings = back_edge_lane_crossing_penalty(
-      crossing_candidates, left, right, candidate_y,
+      crossing_candidates, source_anchor_x, source_y, target_anchor_x, target_y,
+      candidate_y,
     )
     let distance = back_edge_lane_distance_penalty(source, target, candidate_y)
     if !has_choice ||
@@ -2054,8 +2061,20 @@ fn reserve_back_edge_bend_y(
       next_distance,
       next_side_priority,
     ) = consider_candidate(
-      candidate_y, up_congestion, 0, crossing_candidates, left, right, has_choice,
-      best_y, best_congestion, best_crossings, best_distance, best_side_priority,
+      candidate_y,
+      up_congestion,
+      0,
+      crossing_candidates,
+      source_anchor_x,
+      source.y,
+      target_anchor_x,
+      target.y,
+      has_choice,
+      best_y,
+      best_congestion,
+      best_crossings,
+      best_distance,
+      best_side_priority,
     )
     has_choice = next_has_choice
     best_y = next_y
@@ -2073,8 +2092,20 @@ fn reserve_back_edge_bend_y(
       next_distance,
       next_side_priority,
     ) = consider_candidate(
-      candidate_y, down_congestion, 1, crossing_candidates, left, right, has_choice,
-      best_y, best_congestion, best_crossings, best_distance, best_side_priority,
+      candidate_y,
+      down_congestion,
+      1,
+      crossing_candidates,
+      source_anchor_x,
+      source.y,
+      target_anchor_x,
+      target.y,
+      has_choice,
+      best_y,
+      best_congestion,
+      best_crossings,
+      best_distance,
+      best_side_priority,
     )
     has_choice = next_has_choice
     best_y = next_y
