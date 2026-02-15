@@ -24,6 +24,16 @@ bun run scripts/compare_layout_stress.ts \
   --min-span-area-ratio 0.04
 ```
 
+When local rendering is under load (e.g. concurrent Moon jobs), you can make
+the watchdog more resilient to transient lock contention:
+
+```bash
+bun run scripts/compare_layout_stress.ts \
+  --local-timeout-ms 120000 \
+  --local-render-retries 2 \
+  --retry-backoff-ms 500
+```
+
 ## Challenge Fixtures
 
 Files named `layout_challenge_*.mmd` are intentionally difficult topologies used

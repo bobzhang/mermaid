@@ -7,6 +7,7 @@
  *   bun run scripts/compare_layout_stress.ts --json /tmp/layout_stress_metrics.json
  *   bun run scripts/compare_layout_stress.ts --max-logical-crossing-multiplier 1.8
  *   bun run scripts/compare_layout_stress.ts --max-polyline-crossing-multiplier 4.6 --min-span-area-ratio 0.04
+ *   bun run scripts/compare_layout_stress.ts --local-timeout-ms 120000 --local-render-retries 2 --retry-backoff-ms 500
  *   bun run scripts/compare_layout_stress.ts fixtures/layout_challenge_001_nested_portal_mesh.mmd --explain-logical-crossings
  *   bun run scripts/compare_layout_stress.ts --max-logical-crossing-multiplier 1.0 --explain-on-failure
  */
@@ -65,17 +66,52 @@ type CliOptions = {
   minSpanXRatio?: number
   minSpanYRatio?: number
   minSpanAreaRatio?: number
+  officialTimeoutMs: number
+  localTimeoutMs: number
+  localRenderRetries: number
+  retryBackoffMs: number
   explainLogicalCrossings: boolean
   explainOnFailure: boolean
   topCrossingPairs: number
   topCrossingEdges: number
 }
 
-const OFFICIAL_TIMEOUT_MS = 120_000
-const LOCAL_TIMEOUT_MS = 60_000
+const DEFAULT_OFFICIAL_TIMEOUT_MS = 120_000
+const DEFAULT_LOCAL_TIMEOUT_MS = 60_000
+const DEFAULT_LOCAL_RENDER_RETRIES = 1
+const DEFAULT_RETRY_BACKOFF_MS = 250
 
 function fail(message: string): never {
   throw new Error(message)
+}
+
+class CommandExecutionError extends Error {
+  cmd: string
+  args: string[]
+  stdout: string
+  stderr: string
+  timedOut: boolean
+
+  constructor(
+    cmd: string,
+    args: string[],
+    stdout: string,
+    stderr: string,
+    timedOut: boolean,
+    detail?: string,
+  ) {
+    const parts = [`command failed: ${cmd} ${args.join(' ')}`]
+    if (detail) parts.push(`error: ${detail}`)
+    if (stderr !== '') parts.push(`stderr: ${stderr}`)
+    if (stdout !== '') parts.push(`stdout: ${stdout}`)
+    super(parts.join('\n'))
+    this.name = 'CommandExecutionError'
+    this.cmd = cmd
+    this.args = args
+    this.stdout = stdout
+    this.stderr = stderr
+    this.timedOut = timedOut
+  }
 }
 
 function runOrThrow(cmd: string, args: string[], timeoutMs: number, env?: NodeJS.ProcessEnv): string {
@@ -86,25 +122,42 @@ function runOrThrow(cmd: string, args: string[], timeoutMs: number, env?: NodeJS
     maxBuffer: 16 * 1024 * 1024,
     env,
   })
+  const stdout = (result.stdout ?? '').toString().trim()
+  const stderr = (result.stderr ?? '').toString().trim()
+  const timedOut =
+    (result.error as { code?: string } | null)?.code === 'ETIMEDOUT' ||
+    (result.signal ?? '') === 'SIGTERM'
+
   if (result.error) {
-    fail(
-      `command failed: ${cmd} ${args.join(' ')}\nerror: ${String(result.error.message ?? result.error)}`,
+    throw new CommandExecutionError(
+      cmd,
+      args,
+      stdout,
+      stderr,
+      timedOut,
+      String(result.error.message ?? result.error),
     )
   }
   if (result.status !== 0) {
-    const stderr = (result.stderr ?? '').toString().trim()
-    const stdout = (result.stdout ?? '').toString().trim()
-    fail(
-      [
-        `command failed: ${cmd} ${args.join(' ')}`,
-        stderr ? `stderr: ${stderr}` : '',
-        stdout ? `stdout: ${stdout}` : '',
-      ]
-        .filter(Boolean)
-        .join('\n'),
+    throw new CommandExecutionError(
+      cmd,
+      args,
+      stdout,
+      stderr,
+      timedOut,
+      `exit status ${result.status}`,
     )
   }
   return (result.stdout ?? '').toString()
+}
+
+function sleepMs(ms: number): void {
+  if (ms <= 0) return
+  Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms)
+}
+
+function isTimeoutError(error: unknown): error is CommandExecutionError {
+  return error instanceof CommandExecutionError && error.timedOut
 }
 
 function decodeHtml(text: string): string {
@@ -915,11 +968,16 @@ function crossingMultiplier(local: number, official: number): number {
   return local / official
 }
 
-function renderOfficial(inputPath: string, outPath: string, npmCacheDir: string): void {
+function renderOfficial(
+  inputPath: string,
+  outPath: string,
+  npmCacheDir: string,
+  options: CliOptions,
+): void {
   runOrThrow(
     'npx',
     ['-y', '@mermaid-js/mermaid-cli', '-i', inputPath, '-o', outPath, '-b', 'transparent'],
-    OFFICIAL_TIMEOUT_MS,
+    options.officialTimeoutMs,
     {
       ...process.env,
       npm_config_cache: npmCacheDir,
@@ -927,14 +985,25 @@ function renderOfficial(inputPath: string, outPath: string, npmCacheDir: string)
   )
 }
 
-function renderLocal(inputPath: string, outPath: string): void {
+function renderLocal(inputPath: string, outPath: string, options: CliOptions): void {
   const source = readFileSync(inputPath, 'utf8')
-  const svg = runOrThrow(
-    'moon',
-    ['run', 'cmd/main', '--target', 'native', '--', source],
-    LOCAL_TIMEOUT_MS,
-  )
-  writeFileSync(outPath, svg)
+  for (let attempt = 0; attempt <= options.localRenderRetries; attempt += 1) {
+    try {
+      const svg = runOrThrow(
+        'moon',
+        ['run', 'cmd/main', '--target', 'native', '--', source],
+        options.localTimeoutMs,
+      )
+      writeFileSync(outPath, svg)
+      return
+    } catch (error) {
+      const hasRetry = attempt < options.localRenderRetries
+      if (!hasRetry || !isTimeoutError(error)) {
+        throw error
+      }
+      sleepMs(options.retryBackoffMs * (attempt + 1))
+    }
+  }
 }
 
 function compareFixture(
@@ -947,8 +1016,8 @@ function compareFixture(
   const officialPath = join(tempRoot, `${safe}.official.svg`)
   const localPath = join(tempRoot, `${safe}.local.svg`)
 
-  renderOfficial(path, officialPath, npmCacheDir)
-  renderLocal(path, localPath)
+  renderOfficial(path, officialPath, npmCacheDir, options)
+  renderLocal(path, localPath, options)
 
   const fixtureSource = readFileSync(path, 'utf8')
   const fixtureEdges = parseFixtureEdges(fixtureSource)
@@ -1129,6 +1198,10 @@ function parseCliOptions(args: string[]): CliOptions {
   let minSpanXRatio: number | undefined = undefined
   let minSpanYRatio: number | undefined = undefined
   let minSpanAreaRatio: number | undefined = undefined
+  let officialTimeoutMs = DEFAULT_OFFICIAL_TIMEOUT_MS
+  let localTimeoutMs = DEFAULT_LOCAL_TIMEOUT_MS
+  let localRenderRetries = DEFAULT_LOCAL_RENDER_RETRIES
+  let retryBackoffMs = DEFAULT_RETRY_BACKOFF_MS
   let explainLogicalCrossings = false
   let explainOnFailure = false
   let topCrossingPairs = 8
@@ -1198,6 +1271,50 @@ function parseCliOptions(args: string[]): CliOptions {
       i += 1
       continue
     }
+    if (arg === '--official-timeout-ms') {
+      const next = args[i + 1]
+      if (!next) fail('missing number after --official-timeout-ms')
+      const parsed = Number.parseInt(next, 10)
+      if (!Number.isFinite(parsed) || parsed <= 0) {
+        fail('invalid --official-timeout-ms value, expected positive integer')
+      }
+      officialTimeoutMs = parsed
+      i += 1
+      continue
+    }
+    if (arg === '--local-timeout-ms') {
+      const next = args[i + 1]
+      if (!next) fail('missing number after --local-timeout-ms')
+      const parsed = Number.parseInt(next, 10)
+      if (!Number.isFinite(parsed) || parsed <= 0) {
+        fail('invalid --local-timeout-ms value, expected positive integer')
+      }
+      localTimeoutMs = parsed
+      i += 1
+      continue
+    }
+    if (arg === '--local-render-retries') {
+      const next = args[i + 1]
+      if (!next) fail('missing number after --local-render-retries')
+      const parsed = Number.parseInt(next, 10)
+      if (!Number.isFinite(parsed) || parsed < 0) {
+        fail('invalid --local-render-retries value, expected non-negative integer')
+      }
+      localRenderRetries = parsed
+      i += 1
+      continue
+    }
+    if (arg === '--retry-backoff-ms') {
+      const next = args[i + 1]
+      if (!next) fail('missing number after --retry-backoff-ms')
+      const parsed = Number.parseInt(next, 10)
+      if (!Number.isFinite(parsed) || parsed <= 0) {
+        fail('invalid --retry-backoff-ms value, expected positive integer')
+      }
+      retryBackoffMs = parsed
+      i += 1
+      continue
+    }
     if (arg === '--explain-logical-crossings') {
       explainLogicalCrossings = true
       continue
@@ -1239,6 +1356,10 @@ function parseCliOptions(args: string[]): CliOptions {
     minSpanXRatio,
     minSpanYRatio,
     minSpanAreaRatio,
+    officialTimeoutMs,
+    localTimeoutMs,
+    localRenderRetries,
+    retryBackoffMs,
     explainLogicalCrossings,
     explainOnFailure,
     topCrossingPairs,
@@ -1359,6 +1480,10 @@ function main(): void {
         minSpanXRatio: options.minSpanXRatio ?? null,
         minSpanYRatio: options.minSpanYRatio ?? null,
         minSpanAreaRatio: options.minSpanAreaRatio ?? null,
+        officialTimeoutMs: options.officialTimeoutMs,
+        localTimeoutMs: options.localTimeoutMs,
+        localRenderRetries: options.localRenderRetries,
+        retryBackoffMs: options.retryBackoffMs,
         explainLogicalCrossings: includeExplanations,
         explainOnFailure: options.explainOnFailure,
         topCrossingPairs: options.topCrossingPairs,
