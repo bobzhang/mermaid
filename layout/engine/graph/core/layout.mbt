@@ -4992,6 +4992,46 @@ fn layout_graph_with_subgraph_redirects(
     }
   }
 
+  fn context_uses_forward_fanout_lane(
+    context : EdgeLayoutContext,
+    horizontal_span_threshold : Int,
+    horizontal_minor_gap_threshold : Int,
+    vertical_span_threshold : Int,
+    vertical_minor_gap_threshold : Int,
+  ) -> Bool {
+    let edge = context.edge
+    if edge.label is Some(_) {
+      return false
+    }
+    if context.edge_horizontal {
+      context.target.x >= context.source.x &&
+      int_abs(context.target.x - context.source.x) >= horizontal_span_threshold &&
+      int_abs(context.target.y - context.source.y) <=
+      horizontal_minor_gap_threshold
+    } else {
+      context.target.y >= context.source.y &&
+      int_abs(context.target.y - context.source.y) >= vertical_span_threshold &&
+      int_abs(context.target.x - context.source.x) <=
+      vertical_minor_gap_threshold
+    }
+  }
+
+  fn context_forward_fanout_minor_key(context : EdgeLayoutContext) -> Int {
+    if context.edge_horizontal {
+      context.target.y
+    } else {
+      context.target.x
+    }
+  }
+
+  fn context_forward_fanout_major_key(context : EdgeLayoutContext) -> Int {
+    if context.edge_horizontal {
+      context.target.x
+    } else {
+      context.target.y
+    }
+  }
+
   let edge_layout_contexts : Array[EdgeLayoutContext] = []
   for edge in graph.edges {
     let resolved_source_id = resolve_edge_endpoint_id(
@@ -5036,47 +5076,28 @@ fn layout_graph_with_subgraph_redirects(
     }
   }
 
-  for context in edge_layout_contexts {
-    let edge = context.edge
-    if edge.label is Some(_) {
+  let forward_fanout_context_indices_by_bucket : Map[String, Array[Int]] = {}
+  for context_index, context in edge_layout_contexts {
+    if !context_uses_forward_fanout_lane(
+        context, forward_fanout_horizontal_span_threshold, forward_fanout_horizontal_minor_gap_threshold,
+        forward_fanout_vertical_span_threshold, forward_fanout_vertical_minor_gap_threshold,
+      ) {
       continue
-    }
-    if context.edge_horizontal {
-      if context.target.x < context.source.x {
-        continue
-      }
-      if int_abs(context.target.x - context.source.x) <
-        forward_fanout_horizontal_span_threshold {
-        continue
-      }
-      if int_abs(context.target.y - context.source.y) >
-        forward_fanout_horizontal_minor_gap_threshold {
-        continue
-      }
-    } else {
-      if context.target.y < context.source.y {
-        continue
-      }
-      if int_abs(context.target.y - context.source.y) <
-        forward_fanout_vertical_span_threshold {
-        continue
-      }
-      if int_abs(context.target.x - context.source.x) >
-        forward_fanout_vertical_minor_gap_threshold {
-        continue
-      }
     }
     let bucket = forward_fanout_bucket(
       context.resolved_source_id,
       context.edge_horizontal,
     )
-    let current = option_int_or(
-      forward_fanout_out_count_by_bucket.get(bucket),
-      0,
-    )
-    forward_fanout_out_count_by_bucket[bucket] = current + 1
+    if !forward_fanout_context_indices_by_bucket.contains(bucket) {
+      forward_fanout_context_indices_by_bucket[bucket] = []
+    }
+    forward_fanout_context_indices_by_bucket[bucket].push(context_index)
   }
-  let forward_fanout_out_slot_by_bucket : Map[String, Int] = {}
+  for bucket, context_indices in forward_fanout_context_indices_by_bucket {
+    forward_fanout_out_count_by_bucket[bucket] = context_indices.length()
+  }
+  let forward_fanout_slot_by_context_index : Map[Int, Int] = {}
+  let forward_fanout_slots_resolved_by_bucket : Map[String, Bool] = {}
   let non_deferred_route_context_indices : Array[Int] = []
   let deferred_back_edge_context_indices : Array[Int] = []
   for context_index, context in edge_layout_contexts {
@@ -5091,9 +5112,149 @@ fn layout_graph_with_subgraph_redirects(
   }
 
   let points_by_context_index : Map[Int, Array[Point]] = {}
+  let routed_polylines : Array[Array[Point]] = []
+
+  fn copy_context_index_order(order : Array[Int]) -> Array[Int] {
+    let copied : Array[Int] = []
+    for context_index in order {
+      copied.push(context_index)
+    }
+    copied
+  }
+
+  fn maybe_resolve_forward_fanout_slots_for_bucket(
+    bucket_key : String,
+    total : Int,
+    edge_layout_contexts : Array[EdgeLayoutContext],
+    forward_fanout_context_indices_by_bucket : Map[String, Array[Int]],
+    forward_fanout_slot_by_context_index : Map[Int, Int],
+    forward_fanout_slots_resolved_by_bucket : Map[String, Bool],
+    routed_polylines : Array[Array[Point]],
+    enhanced_horizontal_state_flow : Bool,
+  ) -> Unit {
+    if total <= 1 ||
+      forward_fanout_slots_resolved_by_bucket.contains(bucket_key) {
+      return
+    }
+
+    let bucket_context_indices = match
+      forward_fanout_context_indices_by_bucket.get(bucket_key) {
+      Some(context_indices) => context_indices
+      None => {
+        forward_fanout_slots_resolved_by_bucket[bucket_key] = true
+        return
+      }
+    }
+    if bucket_context_indices.length() <= 1 {
+      forward_fanout_slots_resolved_by_bucket[bucket_key] = true
+      return
+    }
+
+    let candidate_orders : Array[Array[Int]] = []
+    candidate_orders.push(copy_context_index_order(bucket_context_indices))
+
+    let ascending_minor = copy_context_index_order(bucket_context_indices)
+    ascending_minor.sort_by((left_index, right_index) => {
+      let left_context = edge_layout_contexts[left_index]
+      let right_context = edge_layout_contexts[right_index]
+      let left_minor = context_forward_fanout_minor_key(left_context)
+      let right_minor = context_forward_fanout_minor_key(right_context)
+      let minor_cmp = left_minor.compare(right_minor)
+      if minor_cmp != 0 {
+        return minor_cmp
+      }
+      let left_major = context_forward_fanout_major_key(left_context)
+      let right_major = context_forward_fanout_major_key(right_context)
+      let major_cmp = left_major.compare(right_major)
+      if major_cmp != 0 {
+        return major_cmp
+      }
+      left_index.compare(right_index)
+    })
+    candidate_orders.push(ascending_minor)
+
+    let descending_minor = copy_context_index_order(bucket_context_indices)
+    descending_minor.sort_by((left_index, right_index) => {
+      let left_context = edge_layout_contexts[left_index]
+      let right_context = edge_layout_contexts[right_index]
+      let left_minor = context_forward_fanout_minor_key(left_context)
+      let right_minor = context_forward_fanout_minor_key(right_context)
+      let minor_cmp = right_minor.compare(left_minor)
+      if minor_cmp != 0 {
+        return minor_cmp
+      }
+      let left_major = context_forward_fanout_major_key(left_context)
+      let right_major = context_forward_fanout_major_key(right_context)
+      let major_cmp = left_major.compare(right_major)
+      if major_cmp != 0 {
+        return major_cmp
+      }
+      left_index.compare(right_index)
+    })
+    candidate_orders.push(descending_minor)
+
+    let unique_candidate_orders : Array[Array[Int]] = []
+    let seen_candidate_signatures : Map[String, Bool] = {}
+    for candidate_order in candidate_orders {
+      let signature = deferred_order_signature(candidate_order)
+      if seen_candidate_signatures.contains(signature) {
+        continue
+      }
+      seen_candidate_signatures[signature] = true
+      unique_candidate_orders.push(candidate_order)
+    }
+
+    let mut has_best_order = false
+    let mut best_order : Array[Int] = []
+    let mut best_crossings = 0
+
+    for candidate_order in unique_candidate_orders {
+      let candidate_slot_by_context_index : Map[Int, Int] = {}
+      for slot, context_index in candidate_order {
+        candidate_slot_by_context_index[context_index] = slot
+      }
+      let candidate_polylines : Array[Array[Point]] = []
+      for polyline in routed_polylines {
+        candidate_polylines.push(polyline)
+      }
+      for context_index in bucket_context_indices {
+        let context = edge_layout_contexts[context_index]
+        let slot = option_int_or(
+          candidate_slot_by_context_index.get(context_index),
+          0,
+        )
+        let points = edge_points_for(
+          context.source,
+          context.target,
+          context.edge_horizontal,
+          None,
+          None,
+          Some(forward_fanout_offset(slot, total)),
+          enhanced_horizontal_state_flow,
+        )
+        candidate_polylines.push(points)
+      }
+      let candidate_crossings = count_polyline_crossings(candidate_polylines)
+      if !has_best_order || candidate_crossings < best_crossings {
+        has_best_order = true
+        best_crossings = candidate_crossings
+        best_order = candidate_order
+      }
+    }
+
+    let selected_order = if has_best_order {
+      best_order
+    } else {
+      bucket_context_indices
+    }
+    for slot, context_index in selected_order {
+      forward_fanout_slot_by_context_index[context_index] = slot
+    }
+    forward_fanout_slots_resolved_by_bucket[bucket_key] = true
+  }
+
   for context_index in non_deferred_route_context_indices {
     let context = edge_layout_contexts[context_index]
-    let edge = context.edge
     let source = context.source
     let target = context.target
     let edge_horizontal = context.edge_horizontal
@@ -5122,43 +5283,31 @@ fn layout_graph_with_subgraph_redirects(
     } else {
       None
     }
+    let use_forward_fanout_lane = context_uses_forward_fanout_lane(
+      context, forward_fanout_horizontal_span_threshold, forward_fanout_horizontal_minor_gap_threshold,
+      forward_fanout_vertical_span_threshold, forward_fanout_vertical_minor_gap_threshold,
+    )
     let points = edge_points_for(
       source,
       target,
       edge_horizontal,
       back_edge_bend_y,
       back_edge_bend_x,
-      if edge.label is None &&
-        (
-          (
-            edge_horizontal &&
-            target.x >= source.x &&
-            int_abs(target.x - source.x) >=
-            forward_fanout_horizontal_span_threshold &&
-            int_abs(target.y - source.y) <=
-            forward_fanout_horizontal_minor_gap_threshold
-          ) ||
-          (
-            !edge_horizontal &&
-            target.y >= source.y &&
-            int_abs(target.y - source.y) >=
-            forward_fanout_vertical_span_threshold &&
-            int_abs(target.x - source.x) <=
-            forward_fanout_vertical_minor_gap_threshold
-          )
-        ) {
+      if use_forward_fanout_lane {
         let total = option_int_or(
           forward_fanout_out_count_by_bucket.get(forward_fanout_bucket_key),
           0,
         )
         if total > 1 {
-          let slot = option_int_or(
-            forward_fanout_out_slot_by_bucket.get(forward_fanout_bucket_key),
-            0,
+          maybe_resolve_forward_fanout_slots_for_bucket(
+            forward_fanout_bucket_key, total, edge_layout_contexts, forward_fanout_context_indices_by_bucket,
+            forward_fanout_slot_by_context_index, forward_fanout_slots_resolved_by_bucket,
+            routed_polylines, enhanced_horizontal_state_flow,
           )
-          forward_fanout_out_slot_by_bucket[forward_fanout_bucket_key] = slot +
-            1
-          Some(forward_fanout_offset(slot, total))
+          match forward_fanout_slot_by_context_index.get(context_index) {
+            Some(slot) => Some(forward_fanout_offset(slot, total))
+            None => None
+          }
         } else {
           None
         }
@@ -5174,6 +5323,7 @@ fn layout_graph_with_subgraph_redirects(
       context.resolved_target_id,
       points,
     )
+    routed_polylines.push(points)
   }
 
   if deferred_back_edge_context_indices.length() > 0 {
