@@ -1423,6 +1423,15 @@ priv struct BackEdgeLaneReservation {
 }
 
 ///|
+priv struct EdgeLayoutContext {
+  edge : MermaidEdge
+  resolved_source_id : String
+  source : PositionedNode
+  target : PositionedNode
+  edge_horizontal : Bool
+}
+
+///|
 fn spans_overlap(
   a_left : Int,
   a_right : Int,
@@ -1673,6 +1682,22 @@ fn label_overlap_offset_x(slot : Int) -> Int {
 ///|
 fn label_anchor_key(point : Point) -> String {
   "\{point.x}:\{point.y}"
+}
+
+///|
+fn resolve_edge_endpoint_id(
+  node_id : String,
+  use_subgraph_redirects : Bool,
+  redirects : Map[String, String],
+) -> String {
+  if use_subgraph_redirects {
+    match redirects.get(node_id) {
+      Some(found) => found
+      None => node_id
+    }
+  } else {
+    node_id
+  }
 }
 
 ///|
@@ -3176,64 +3201,19 @@ fn layout_graph_with_subgraph_redirects(
   let back_edge_lane_reservations : Array[BackEdgeLaneReservation] = []
   let dotted_forward_out_count_by_source : Map[String, Int] = {}
   let forward_fanout_vertical_gap_threshold = (layer_spacing / 4).max(22)
-  if horizontal {
-    for edge in graph.edges {
-      if edge.label is Some(_) || !(edge.style is Dotted) {
-        continue
-      }
-      let resolved_source_id = if use_subgraph_redirects {
-        match subgraph_exit_by_id.get(edge.source) {
-          Some(found) => found
-          None => edge.source
-        }
-      } else {
-        edge.source
-      }
-      let resolved_target_id = if use_subgraph_redirects {
-        match subgraph_entry_by_id.get(edge.target) {
-          Some(found) => found
-          None => edge.target
-        }
-      } else {
-        edge.target
-      }
-      match
-        (
-          positioned_by_id.get(resolved_source_id),
-          positioned_by_id.get(resolved_target_id),
-        ) {
-        (Some(source), Some(target)) =>
-          if target.x >= source.x &&
-            int_abs(target.y - source.y) <=
-            forward_fanout_vertical_gap_threshold {
-            let current = option_int_or(
-              dotted_forward_out_count_by_source.get(resolved_source_id),
-              0,
-            )
-            dotted_forward_out_count_by_source[resolved_source_id] = current + 1
-          }
-        _ => ()
-      }
-    }
-  }
-  let dotted_forward_out_slot_by_source : Map[String, Int] = {}
+
+  let edge_layout_contexts : Array[EdgeLayoutContext] = []
   for edge in graph.edges {
-    let resolved_source_id = if use_subgraph_redirects {
-      match subgraph_exit_by_id.get(edge.source) {
-        Some(found) => found
-        None => edge.source
-      }
-    } else {
-      edge.source
-    }
-    let resolved_target_id = if use_subgraph_redirects {
-      match subgraph_entry_by_id.get(edge.target) {
-        Some(found) => found
-        None => edge.target
-      }
-    } else {
-      edge.target
-    }
+    let resolved_source_id = resolve_edge_endpoint_id(
+      edge.source,
+      use_subgraph_redirects,
+      subgraph_exit_by_id,
+    )
+    let resolved_target_id = resolve_edge_endpoint_id(
+      edge.target,
+      use_subgraph_redirects,
+      subgraph_entry_by_id,
+    )
     match
       (
         positioned_by_id.get(resolved_source_id),
@@ -3253,77 +3233,110 @@ fn layout_graph_with_subgraph_redirects(
             }
           _ => horizontal
         }
-        let back_edge_bend_y = if edge_horizontal &&
-          edge.style is Dotted &&
-          target.x < source.x {
-          Some(
-            reserve_back_edge_bend_y(
-              source, target, positioned_nodes, positioned_edges, back_edge_lane_reservations,
-            ),
-          )
-        } else {
-          None
-        }
-        let points = edge_points_for(
+        edge_layout_contexts.push({
+          edge,
+          resolved_source_id,
           source,
           target,
           edge_horizontal,
-          edge.style,
-          back_edge_bend_y,
-          if edge_horizontal &&
-            edge.style is Dotted &&
-            edge.label is None &&
-            target.x >= source.x &&
-            int_abs(target.y - source.y) <=
-            forward_fanout_vertical_gap_threshold {
-            let total = option_int_or(
-              dotted_forward_out_count_by_source.get(resolved_source_id),
-              0,
-            )
-            if total > 1 {
-              let slot = option_int_or(
-                dotted_forward_out_slot_by_source.get(resolved_source_id),
-                0,
-              )
-              dotted_forward_out_slot_by_source[resolved_source_id] = slot + 1
-              Some(forward_fanout_offset(slot, total))
-            } else {
-              None
-            }
-          } else {
-            None
-          },
-          enhanced_horizontal_state_flow,
-        )
-        let label_position = match edge.label {
-          Some(_) => {
-            let base = midpoint(points[0], points[1])
-            let key = label_anchor_key(base)
-            let slot = option_int_or(label_slots_by_anchor.get(key), 0)
-            label_slots_by_anchor[key] = slot + 1
-            let label_x = if state_graph {
-              base.x + label_overlap_offset_x(slot)
-            } else {
-              base.x
-            }
-            Some(Point::{ x: label_x, y: base.y + label_overlap_offset(slot) })
-          }
-          None => None
-        }
-        positioned_edges.push({
-          source: edge.source,
-          target: edge.target,
-          label: edge.label,
-          style: edge.style,
-          has_arrow_start: edge.has_arrow_start,
-          has_arrow_end: edge.has_arrow_end,
-          relation_operator: edge.relation_operator,
-          points,
-          label_position,
         })
       }
       _ => ()
     }
+  }
+
+  if horizontal {
+    for context in edge_layout_contexts {
+      let edge = context.edge
+      if edge.label is Some(_) || !(edge.style is Dotted) {
+        continue
+      }
+      if context.target.x >= context.source.x &&
+        int_abs(context.target.y - context.source.y) <=
+        forward_fanout_vertical_gap_threshold {
+        let current = option_int_or(
+          dotted_forward_out_count_by_source.get(context.resolved_source_id),
+          0,
+        )
+        dotted_forward_out_count_by_source[context.resolved_source_id] = current +
+          1
+      }
+    }
+  }
+  let dotted_forward_out_slot_by_source : Map[String, Int] = {}
+  for context in edge_layout_contexts {
+    let edge = context.edge
+    let source = context.source
+    let target = context.target
+    let edge_horizontal = context.edge_horizontal
+    let back_edge_bend_y = if edge_horizontal &&
+      edge.style is Dotted &&
+      target.x < source.x {
+      Some(
+        reserve_back_edge_bend_y(
+          source, target, positioned_nodes, positioned_edges, back_edge_lane_reservations,
+        ),
+      )
+    } else {
+      None
+    }
+    let points = edge_points_for(
+      source,
+      target,
+      edge_horizontal,
+      edge.style,
+      back_edge_bend_y,
+      if edge_horizontal &&
+        edge.style is Dotted &&
+        edge.label is None &&
+        target.x >= source.x &&
+        int_abs(target.y - source.y) <= forward_fanout_vertical_gap_threshold {
+        let total = option_int_or(
+          dotted_forward_out_count_by_source.get(context.resolved_source_id),
+          0,
+        )
+        if total > 1 {
+          let slot = option_int_or(
+            dotted_forward_out_slot_by_source.get(context.resolved_source_id),
+            0,
+          )
+          dotted_forward_out_slot_by_source[context.resolved_source_id] = slot +
+            1
+          Some(forward_fanout_offset(slot, total))
+        } else {
+          None
+        }
+      } else {
+        None
+      },
+      enhanced_horizontal_state_flow,
+    )
+    let label_position = match edge.label {
+      Some(_) => {
+        let base = midpoint(points[0], points[1])
+        let key = label_anchor_key(base)
+        let slot = option_int_or(label_slots_by_anchor.get(key), 0)
+        label_slots_by_anchor[key] = slot + 1
+        let label_x = if state_graph {
+          base.x + label_overlap_offset_x(slot)
+        } else {
+          base.x
+        }
+        Some(Point::{ x: label_x, y: base.y + label_overlap_offset(slot) })
+      }
+      None => None
+    }
+    positioned_edges.push({
+      source: edge.source,
+      target: edge.target,
+      label: edge.label,
+      style: edge.style,
+      has_arrow_start: edge.has_arrow_start,
+      has_arrow_end: edge.has_arrow_end,
+      relation_operator: edge.relation_operator,
+      points,
+      label_position,
+    })
   }
 
   let mut global_min_x = padding
