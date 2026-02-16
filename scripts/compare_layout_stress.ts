@@ -17,6 +17,8 @@
  *   bun run scripts/compare_layout_stress.ts fixtures/layout_challenge_001_nested_portal_mesh.mmd --explain-logical-crossings
  *   bun run scripts/compare_layout_stress.ts fixtures/layout_stress_010_bipartite_crossfire.mmd --explain-rank-order
  *   bun run scripts/compare_layout_stress.ts --max-logical-crossing-multiplier 1.0 --explain-on-failure
+ *   bun run scripts/compare_layout_stress.ts --max-weighted-gap-index 0.85
+ *   bun run scripts/compare_layout_stress.ts --max-avg-weighted-gap-index 0.60
  */
 
 import { mkdtempSync, readFileSync, readdirSync, writeFileSync } from 'node:fs'
@@ -34,6 +36,16 @@ type LogicalEdgeSegment = {
   target: string
   start: Point
   end: Point
+}
+
+type WeightedGapBreakdown = {
+  logicalCrossings: number
+  polylineCrossings: number
+  rankExactMismatch: number
+  rankDisplacement: number
+  majorInversion: number
+  majorSpanDistortion: number
+  minorSpanDistortion: number
 }
 
 type Metrics = {
@@ -68,6 +80,8 @@ type Metrics = {
   spanXRatio: number
   spanYRatio: number
   spanAreaRatio: number
+  weightedGapIndex: number
+  weightedGapBreakdown: WeightedGapBreakdown
   status: 'ok' | 'mismatch'
   logicalCrossingPairShared?: number
   logicalCrossingPairLocalOnly?: number
@@ -102,6 +116,8 @@ type CliOptions = {
   maxAvgPolylineCrossingMultiplier?: number
   maxAvgLogicalCrossingMultiplier?: number
   minAvgSpanAreaRatio?: number
+  maxWeightedGapIndex?: number
+  maxAvgWeightedGapIndex?: number
   officialTimeoutMs: number
   localTimeoutMs: number
   localRenderRetries: number
@@ -135,6 +151,7 @@ type QualityProfile = {
   maxAvgPolylineCrossingMultiplier?: number
   maxAvgLogicalCrossingMultiplier?: number
   minAvgSpanAreaRatio?: number
+  maxAvgWeightedGapIndex?: number
 }
 
 const QUALITY_PROFILES: Record<string, QualityProfile> = {
@@ -156,6 +173,16 @@ const QUALITY_PROFILES: Record<string, QualityProfile> = {
     maxAvgLogicalCrossingMultiplier: 0.8,
     minAvgSpanAreaRatio: 0.18,
   },
+}
+
+const WEIGHTED_GAP_WEIGHTS: WeightedGapBreakdown = {
+  logicalCrossings: 0.30,
+  polylineCrossings: 0.20,
+  rankExactMismatch: 0.15,
+  rankDisplacement: 0.10,
+  majorInversion: 0.10,
+  majorSpanDistortion: 0.10,
+  minorSpanDistortion: 0.05,
 }
 
 function fail(message: string): never {
@@ -1532,6 +1559,95 @@ function crossingMultiplier(local: number, official: number): number {
   return local / official
 }
 
+type WeightedGapInputs = {
+  status: Metrics['status']
+  logicalCrossingMultiplier: number
+  polylineCrossingMultiplier: number
+  majorRankExactMatchRate: number
+  majorRankAvgDisplacement: number
+  majorRankLayersOfficial: number
+  majorInversionRate: number
+  majorSpanRatio: number
+  minorSpanRatio: number
+}
+
+function clamp01(value: number): number {
+  if (!Number.isFinite(value)) return 1
+  if (value <= 0) return 0
+  if (value >= 1) return 1
+  return value
+}
+
+function normalizedMultiplierGap(multiplier: number, cap: number): number {
+  if (!Number.isFinite(multiplier)) return 1
+  const overshoot = Math.max(multiplier - 1, 0)
+  return clamp01(overshoot / cap)
+}
+
+function normalizedRatioDistortion(ratio: number, capLog2Distance: number): number {
+  if (!Number.isFinite(ratio) || ratio <= 0) return 1
+  return clamp01(Math.abs(Math.log2(ratio)) / capLog2Distance)
+}
+
+function normalizedByCap(value: number, cap: number): number {
+  if (!Number.isFinite(value)) return 1
+  return clamp01(value / cap)
+}
+
+function computeWeightedGap(inputs: WeightedGapInputs): {
+  weightedGapIndex: number
+  weightedGapBreakdown: WeightedGapBreakdown
+} {
+  if (inputs.status !== 'ok') {
+    const failureBreakdown: WeightedGapBreakdown = {
+      logicalCrossings: 1,
+      polylineCrossings: 1,
+      rankExactMismatch: 1,
+      rankDisplacement: 1,
+      majorInversion: 1,
+      majorSpanDistortion: 1,
+      minorSpanDistortion: 1,
+    }
+    return {
+      weightedGapIndex: 1,
+      weightedGapBreakdown: failureBreakdown,
+    }
+  }
+
+  const rankExactMismatch = Number.isFinite(inputs.majorRankExactMatchRate)
+    ? 1 - clamp01(inputs.majorRankExactMatchRate)
+    : 1
+  const officialLayers = Math.max(inputs.majorRankLayersOfficial, 1)
+  const rankDisplacement = normalizedByCap(inputs.majorRankAvgDisplacement, officialLayers)
+  const majorInversion = Number.isFinite(inputs.majorInversionRate)
+    ? clamp01(inputs.majorInversionRate)
+    : 1
+
+  const breakdown: WeightedGapBreakdown = {
+    logicalCrossings: normalizedMultiplierGap(inputs.logicalCrossingMultiplier, 2.0),
+    polylineCrossings: normalizedMultiplierGap(inputs.polylineCrossingMultiplier, 4.0),
+    rankExactMismatch,
+    rankDisplacement,
+    majorInversion,
+    majorSpanDistortion: normalizedRatioDistortion(inputs.majorSpanRatio, 1.5),
+    minorSpanDistortion: normalizedRatioDistortion(inputs.minorSpanRatio, 1.5),
+  }
+
+  const weightedGapIndex =
+    breakdown.logicalCrossings * WEIGHTED_GAP_WEIGHTS.logicalCrossings +
+    breakdown.polylineCrossings * WEIGHTED_GAP_WEIGHTS.polylineCrossings +
+    breakdown.rankExactMismatch * WEIGHTED_GAP_WEIGHTS.rankExactMismatch +
+    breakdown.rankDisplacement * WEIGHTED_GAP_WEIGHTS.rankDisplacement +
+    breakdown.majorInversion * WEIGHTED_GAP_WEIGHTS.majorInversion +
+    breakdown.majorSpanDistortion * WEIGHTED_GAP_WEIGHTS.majorSpanDistortion +
+    breakdown.minorSpanDistortion * WEIGHTED_GAP_WEIGHTS.minorSpanDistortion
+
+  return {
+    weightedGapIndex,
+    weightedGapBreakdown: breakdown,
+  }
+}
+
 function renderOfficial(
   inputPath: string,
   outPath: string,
@@ -1681,6 +1797,17 @@ function compareFixture(
     const sharedPairs = pairSetIntersection(localLogicalPairKeys, officialLogicalPairKeys)
     const localOnlyPairs = pairSetDiff(localLogicalPairKeys, officialLogicalPairKeys)
     const officialOnlyPairs = pairSetDiff(officialLogicalPairKeys, localLogicalPairKeys)
+    const weightedGap = computeWeightedGap({
+      status: structuralOk ? 'ok' : 'mismatch',
+      logicalCrossingMultiplier,
+      polylineCrossingMultiplier,
+      majorRankExactMatchRate: rankDiagnostics.exactMatchRate,
+      majorRankAvgDisplacement: rankDiagnostics.avgDisplacement,
+      majorRankLayersOfficial: rankDiagnostics.officialLayers,
+      majorInversionRate: Number.NaN,
+      majorSpanRatio: Number.NaN,
+      minorSpanRatio: Number.NaN,
+    })
     return {
       fixture: path,
       fixtureEdges: fixtureEdges.length,
@@ -1713,6 +1840,8 @@ function compareFixture(
       spanXRatio: Number.NaN,
       spanYRatio: Number.NaN,
       spanAreaRatio: Number.NaN,
+      weightedGapIndex: weightedGap.weightedGapIndex,
+      weightedGapBreakdown: weightedGap.weightedGapBreakdown,
       status: structuralOk ? 'ok' : 'mismatch',
       ...(options.explainLogicalCrossings
         ? {
@@ -1780,6 +1909,17 @@ function compareFixture(
   const sharedPairs = pairSetIntersection(localLogicalPairKeys, officialLogicalPairKeys)
   const localOnlyPairs = pairSetDiff(localLogicalPairKeys, officialLogicalPairKeys)
   const officialOnlyPairs = pairSetDiff(officialLogicalPairKeys, localLogicalPairKeys)
+  const weightedGap = computeWeightedGap({
+    status: structuralOk ? 'ok' : 'mismatch',
+    logicalCrossingMultiplier,
+    polylineCrossingMultiplier,
+    majorRankExactMatchRate: rankDiagnostics.exactMatchRate,
+    majorRankAvgDisplacement: rankDiagnostics.avgDisplacement,
+    majorRankLayersOfficial: rankDiagnostics.officialLayers,
+    majorInversionRate,
+    majorSpanRatio,
+    minorSpanRatio,
+  })
 
   return {
     fixture: path,
@@ -1813,6 +1953,8 @@ function compareFixture(
     spanXRatio,
     spanYRatio,
     spanAreaRatio,
+    weightedGapIndex: weightedGap.weightedGapIndex,
+    weightedGapBreakdown: weightedGap.weightedGapBreakdown,
     status: structuralOk ? 'ok' : 'mismatch',
     ...(options.explainLogicalCrossings
       ? {
@@ -1874,6 +2016,8 @@ function parseCliOptions(args: string[]): CliOptions {
   let maxAvgPolylineCrossingMultiplier: number | undefined = undefined
   let maxAvgLogicalCrossingMultiplier: number | undefined = undefined
   let minAvgSpanAreaRatio: number | undefined = undefined
+  let maxWeightedGapIndex: number | undefined = undefined
+  let maxAvgWeightedGapIndex: number | undefined = undefined
   let officialTimeoutMs = DEFAULT_OFFICIAL_TIMEOUT_MS
   let localTimeoutMs = DEFAULT_LOCAL_TIMEOUT_MS
   let localRenderRetries = DEFAULT_LOCAL_RENDER_RETRIES
@@ -2084,6 +2228,28 @@ function parseCliOptions(args: string[]): CliOptions {
       i += 1
       continue
     }
+    if (arg === '--max-weighted-gap-index') {
+      const next = args[i + 1]
+      if (!next) fail('missing number after --max-weighted-gap-index')
+      const parsed = Number.parseFloat(next)
+      if (!Number.isFinite(parsed) || parsed <= 0 || parsed > 1) {
+        fail('invalid --max-weighted-gap-index value, expected number in (0, 1]')
+      }
+      maxWeightedGapIndex = parsed
+      i += 1
+      continue
+    }
+    if (arg === '--max-avg-weighted-gap-index') {
+      const next = args[i + 1]
+      if (!next) fail('missing number after --max-avg-weighted-gap-index')
+      const parsed = Number.parseFloat(next)
+      if (!Number.isFinite(parsed) || parsed <= 0 || parsed > 1) {
+        fail('invalid --max-avg-weighted-gap-index value, expected number in (0, 1]')
+      }
+      maxAvgWeightedGapIndex = parsed
+      i += 1
+      continue
+    }
     if (arg === '--official-timeout-ms') {
       const next = args[i + 1]
       if (!next) fail('missing number after --official-timeout-ms')
@@ -2195,6 +2361,8 @@ function parseCliOptions(args: string[]): CliOptions {
     maxAvgLogicalCrossingMultiplier =
       maxAvgLogicalCrossingMultiplier ?? selectedProfile.maxAvgLogicalCrossingMultiplier
     minAvgSpanAreaRatio = minAvgSpanAreaRatio ?? selectedProfile.minAvgSpanAreaRatio
+    maxAvgWeightedGapIndex =
+      maxAvgWeightedGapIndex ?? selectedProfile.maxAvgWeightedGapIndex
   }
 
   return {
@@ -2219,6 +2387,8 @@ function parseCliOptions(args: string[]): CliOptions {
     maxAvgPolylineCrossingMultiplier,
     maxAvgLogicalCrossingMultiplier,
     minAvgSpanAreaRatio,
+    maxWeightedGapIndex,
+    maxAvgWeightedGapIndex,
     officialTimeoutMs,
     localTimeoutMs,
     localRenderRetries,
@@ -2305,6 +2475,9 @@ function main(): void {
       `spanRatio x=${round(result.spanXRatio)} y=${round(result.spanYRatio)} area=${round(result.spanAreaRatio)} major=${round(result.majorSpanRatio)} minor=${round(result.minorSpanRatio)}`,
     )
     console.log(
+      `weightedGapIndex=${round(result.weightedGapIndex)} components logical=${round(result.weightedGapBreakdown.logicalCrossings)} polyline=${round(result.weightedGapBreakdown.polylineCrossings)} rank=${round(result.weightedGapBreakdown.rankExactMismatch)} disp=${round(result.weightedGapBreakdown.rankDisplacement)} majorInv=${round(result.weightedGapBreakdown.majorInversion)} majorSpan=${round(result.weightedGapBreakdown.majorSpanDistortion)} minorSpan=${round(result.weightedGapBreakdown.minorSpanDistortion)}`,
+    )
+    console.log(
       `polylineCrossings local=${result.localPolylineCrossings} official=${result.officialPolylineCrossings} delta=${result.localPolylineCrossings - result.officialPolylineCrossings} multiplier=${round(result.polylineCrossingMultiplier)}`,
     )
     console.log(
@@ -2350,6 +2523,13 @@ function main(): void {
   const avgSpanAreaRatio =
     results.reduce((acc, row) => acc + (Number.isFinite(row.spanAreaRatio) ? row.spanAreaRatio : 0), 0) /
     Math.max(results.length, 1)
+  const avgWeightedGapIndex =
+    results.reduce((acc, row) => acc + (Number.isFinite(row.weightedGapIndex) ? row.weightedGapIndex : 1), 0) /
+    Math.max(results.length, 1)
+  const maxWeightedGapIndex = results.reduce(
+    (acc, row) => Math.max(acc, Number.isFinite(row.weightedGapIndex) ? row.weightedGapIndex : 1),
+    0,
+  )
   const avgMajorSpanRatio =
     results.reduce((acc, row) => acc + (Number.isFinite(row.majorSpanRatio) ? row.majorSpanRatio : 0), 0) /
     Math.max(results.length, 1)
@@ -2360,6 +2540,11 @@ function main(): void {
   const totalOfficialPolylineCrossings = results.reduce((acc, row) => acc + row.officialPolylineCrossings, 0)
   const totalLocalLogicalCrossings = results.reduce((acc, row) => acc + row.localLogicalCrossings, 0)
   const totalOfficialLogicalCrossings = results.reduce((acc, row) => acc + row.officialLogicalCrossings, 0)
+  const topWeightedGapFixtures = results
+    .slice()
+    .sort((left, right) => right.weightedGapIndex - left.weightedGapIndex)
+    .slice(0, 5)
+    .map(result => `${result.fixture}:${round(result.weightedGapIndex)}`)
 
   console.log('\n=== summary ===')
   console.log(`profile=${options.profile ?? 'custom'}`)
@@ -2378,8 +2563,10 @@ function main(): void {
   )
   console.log(`avg_polyline_crossing_multiplier=${round(avgPolylineMultiplier)}`)
   console.log(`avg_logical_crossing_multiplier=${round(avgLogicalMultiplier)}`)
+  console.log(`avg_weighted_gap_index=${round(avgWeightedGapIndex)} max_weighted_gap_index=${round(maxWeightedGapIndex)}`)
   console.log(`avg_span_area_ratio=${round(avgSpanAreaRatio)}`)
   console.log(`avg_major_span_ratio=${round(avgMajorSpanRatio)} avg_minor_span_ratio=${round(avgMinorSpanRatio)}`)
+  console.log(`top_weighted_gap_fixtures=${topWeightedGapFixtures.join(', ')}`)
   console.log(`rendered_svgs_dir=${tempRoot}`)
 
   if (options.jsonPath) {
@@ -2405,6 +2592,8 @@ function main(): void {
         maxAvgPolylineCrossingMultiplier: options.maxAvgPolylineCrossingMultiplier ?? null,
         maxAvgLogicalCrossingMultiplier: options.maxAvgLogicalCrossingMultiplier ?? null,
         minAvgSpanAreaRatio: options.minAvgSpanAreaRatio ?? null,
+        maxWeightedGapIndex: options.maxWeightedGapIndex ?? null,
+        maxAvgWeightedGapIndex: options.maxAvgWeightedGapIndex ?? null,
         officialTimeoutMs: options.officialTimeoutMs,
         localTimeoutMs: options.localTimeoutMs,
         localRenderRetries: options.localRenderRetries,
@@ -2434,6 +2623,9 @@ function main(): void {
         avgPolylineCrossingMultiplier: avgPolylineMultiplier,
         avgLogicalCrossingMultiplier: avgLogicalMultiplier,
         avgSpanAreaRatio,
+        avgWeightedGapIndex,
+        maxWeightedGapIndex,
+        topWeightedGapFixtures,
       },
       results,
     }
@@ -2486,6 +2678,25 @@ function main(): void {
         ].join('\n'),
       )
       process.exitCode = 4
+    }
+  }
+
+  if (options.maxWeightedGapIndex !== undefined) {
+    const threshold = options.maxWeightedGapIndex
+    const violating = results.filter(
+      result => !Number.isFinite(result.weightedGapIndex) || result.weightedGapIndex > threshold,
+    )
+    if (violating.length > 0) {
+      console.error(
+        [
+          `weighted gap index threshold exceeded: threshold=${threshold}`,
+          ...violating.map(
+            result =>
+              `  ${result.fixture}: weightedGapIndex=${round(result.weightedGapIndex)}`,
+          ),
+        ].join('\n'),
+      )
+      process.exitCode = 19
     }
   }
 
@@ -2668,6 +2879,17 @@ function main(): void {
       `average logical crossing multiplier threshold exceeded: threshold=${options.maxAvgLogicalCrossingMultiplier} avgLogicalCrossingMultiplier=${round(avgLogicalMultiplier)}`,
     )
     process.exitCode = 11
+  }
+
+  if (
+    options.maxAvgWeightedGapIndex !== undefined &&
+    (!Number.isFinite(avgWeightedGapIndex) ||
+      avgWeightedGapIndex > options.maxAvgWeightedGapIndex)
+  ) {
+    console.error(
+      `average weighted gap index threshold exceeded: threshold=${options.maxAvgWeightedGapIndex} avgWeightedGapIndex=${round(avgWeightedGapIndex)}`,
+    )
+    process.exitCode = 20
   }
 
   if (
