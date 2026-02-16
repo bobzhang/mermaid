@@ -1792,6 +1792,138 @@ fn collect_non_state_flow_lanes(
         }
       }
     }
+
+    fn reverse_rank_order_in_place(
+      node_ids : Array[String],
+      lane_by_id : Map[String, Int],
+    ) -> Unit {
+      if node_ids.length() <= 1 {
+        return
+      }
+      let lane_slots : Array[Int] = []
+      for node_id in node_ids {
+        lane_slots.push(option_int_or(lane_by_id.get(node_id), 0))
+      }
+      lane_slots.sort()
+      let mut left = 0
+      let mut right = node_ids.length() - 1
+      while left < right {
+        let left_id = node_ids[left]
+        let right_id = node_ids[right]
+        node_ids[left] = right_id
+        node_ids[right] = left_id
+        left = left + 1
+        right = right - 1
+      }
+      assign_rank_order_to_lane_slots(node_ids, lane_slots, lane_by_id)
+    }
+
+    let enable_rank_toggle_search = crossing_edge_indexes.length() >= 40 &&
+      crossing_edge_indexes.length() <= 220
+    if enable_rank_toggle_search {
+      let reversible_ranks : Array[Int] = []
+      for rank in 0..<=max_rank {
+        match real_node_ids_by_rank.get(rank) {
+          Some(node_ids) =>
+            if node_ids.length() >= 2 && node_ids.length() <= 8 {
+              reversible_ranks.push(rank)
+            }
+          None => ()
+        }
+      }
+
+      if reversible_ranks.length() >= 2 {
+        let mut best_crossings = count_lane_space_edge_crossings(
+          edges,
+          rank_by_id,
+          lane_by_id,
+        )
+
+        let single_pass_budget = if reversible_ranks.length() >= 12 {
+          1
+        } else {
+          2
+        }
+        for _ in 0..<single_pass_budget {
+          let mut changed = false
+          for rank in reversible_ranks {
+            match real_node_ids_by_rank.get(rank) {
+              Some(node_ids) => {
+                reverse_rank_order_in_place(node_ids, lane_by_id)
+                let candidate_crossings = count_lane_space_edge_crossings(
+                  edges,
+                  rank_by_id,
+                  lane_by_id,
+                )
+                if candidate_crossings < best_crossings {
+                  best_crossings = candidate_crossings
+                  changed = true
+                } else {
+                  reverse_rank_order_in_place(node_ids, lane_by_id)
+                }
+              }
+              None => ()
+            }
+          }
+          if !changed {
+            break
+          }
+        }
+
+        if reversible_ranks.length() >= 3 && reversible_ranks.length() <= 14 {
+          let mut pair_changed = false
+          for left_index in 0..<(reversible_ranks.length() - 1) {
+            let left_rank = reversible_ranks[left_index]
+            for right_index in (left_index + 1)..<reversible_ranks.length() {
+              let right_rank = reversible_ranks[right_index]
+              match
+                (
+                  real_node_ids_by_rank.get(left_rank),
+                  real_node_ids_by_rank.get(right_rank),
+                ) {
+                (Some(left_nodes), Some(right_nodes)) => {
+                  reverse_rank_order_in_place(left_nodes, lane_by_id)
+                  reverse_rank_order_in_place(right_nodes, lane_by_id)
+                  let candidate_crossings = count_lane_space_edge_crossings(
+                    edges,
+                    rank_by_id,
+                    lane_by_id,
+                  )
+                  if candidate_crossings < best_crossings {
+                    best_crossings = candidate_crossings
+                    pair_changed = true
+                  } else {
+                    reverse_rank_order_in_place(right_nodes, lane_by_id)
+                    reverse_rank_order_in_place(left_nodes, lane_by_id)
+                  }
+                }
+                _ => ()
+              }
+            }
+          }
+          if pair_changed {
+            for rank in reversible_ranks {
+              match real_node_ids_by_rank.get(rank) {
+                Some(node_ids) => {
+                  reverse_rank_order_in_place(node_ids, lane_by_id)
+                  let candidate_crossings = count_lane_space_edge_crossings(
+                    edges,
+                    rank_by_id,
+                    lane_by_id,
+                  )
+                  if candidate_crossings < best_crossings {
+                    best_crossings = candidate_crossings
+                  } else {
+                    reverse_rank_order_in_place(node_ids, lane_by_id)
+                  }
+                }
+                None => ()
+              }
+            }
+          }
+        }
+      }
+    }
   }
 
   lane_by_id
