@@ -1007,6 +1007,10 @@ function parseFixtureEdges(source: string): ParsedFixtureEdges {
 
   const parseEdgeLine = (line: string): FixtureEdge[] | null => {
     const patterns: RegExp[] = [
+      /^\s*(.+?)\s*-->\s*\|[^|]*\|\s*(.+?)\s*$/,
+      /^\s*(.+?)\s*-\.\->\s*\|[^|]*\|\s*(.+?)\s*$/,
+      /^\s*(.+?)\s*===>\s*\|[^|]*\|\s*(.+?)\s*$/,
+      /^\s*(.+?)\s*==>\s*\|[^|]*\|\s*(.+?)\s*$/,
       /^\s*(.+?)\s*--\s*(?:\[[^\]]*\]|"[^"]*"|'[^']*'|\|[^|]*\|)?\s*-->\s*(.+?)\s*$/,
       /^\s*(.+?)\s*-\.\->\s*(.+?)\s*$/,
       /^\s*(.+?)\s*-->\s*(.+?)\s*$/,
