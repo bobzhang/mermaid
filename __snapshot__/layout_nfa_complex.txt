@@ -17,18 +17,18 @@ node id=acc1 shape=DoubleCircle center=765,260 size=54x54 label=acc1
 [edges]
 edge start->q0 label=- label_pos=- points=24,125 -> 114,125
 edge q4->q5 label=a label_pos=285,170 points=248,170 -> 322,170
+edge q5->q7 label=x label_pos=493,173 points=352,176 -> 634,170
+edge q7->acc0 label=d label_pos=701,167 points=664,164 -> 738,170
+edge q0->q1 label=- label_pos=- points=144,119 -> 181,80 -> 218,80
 edge q3->q6 label=- label_pos=- points=456,80 -> 493,147 -> 530,147
+edge q0->q4 label=- label_pos=- points=144,131 -> 181,170 -> 218,170
 edge q6->q7 label=- label_pos=- points=560,147 -> 597,170 -> 634,170
+edge q2->q3 label=b label_pos=383,83 points=352,96 -> 389,80 -> 426,80
 edge q1->q2 label=a label_pos=278,97 points=248,80 -> 285,102 -> 322,102
-edge q5->q7 label=x label_pos=496,176 points=352,176 -> 634,176 -> 634,170
-edge q7->acc0 label=d label_pos=704,164 points=664,164 -> 738,164 -> 738,170
-edge q0->q1 label=- label_pos=- points=144,119 -> 144,125 -> 181,80 -> 218,80
-edge q0->q4 label=- label_pos=- points=144,131 -> 144,125 -> 181,170 -> 218,170
+edge q2->q7 label=x label_pos=510,79 points=352,108 -> 493,66 -> 634,170
+edge q5->q6 label=c label_pos=433,149 points=352,164 -> 441,147 -> 530,147
+edge q7->acc1 label=e label_pos=688,230 points=664,176 -> 701,260 -> 738,260
 edge q6->q0 label=- label_pos=- points=530,147 -> 530,197 -> 144,197 -> 144,125
-edge q2->q3 label=b label_pos=380,86 points=352,96 -> 352,102 -> 389,80 -> 426,80
-edge q2->q7 label=x label_pos=510,79 points=352,108 -> 352,102 -> 493,66 -> 634,170
-edge q5->q6 label=c label_pos=429,151 points=352,164 -> 352,170 -> 441,147 -> 530,147
-edge q7->acc1 label=e label_pos=687,225 points=664,176 -> 664,170 -> 701,260 -> 738,260
 
 [groups]
 (none)

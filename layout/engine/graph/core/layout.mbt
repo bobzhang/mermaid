@@ -2997,6 +2997,28 @@ fn simplify_polyline_points(points : Array[Point]) -> Array[Point] {
 }
 
 ///|
+fn shift_endpoint_boundary_run_to_anchor(
+  points : Array[Point],
+  anchor : Point,
+  source_endpoint : Bool,
+) -> Unit {
+  if points.length() == 0 {
+    return
+  }
+  let endpoint_index = if source_endpoint { 0 } else { points.length() - 1 }
+  let endpoint = points[endpoint_index]
+  let delta_x = anchor.x - endpoint.x
+  let delta_y = anchor.y - endpoint.y
+  if delta_x == 0 && delta_y == 0 {
+    return
+  }
+  if delta_x != 0 && delta_y != 0 {
+    return
+  }
+  points[endpoint_index] = anchor
+}
+
+///|
 fn apply_endpoint_port_stubs(
   core_points : Array[Point],
   source_anchor : Point,
@@ -3010,19 +3032,28 @@ fn apply_endpoint_port_stubs(
     }
   } else {
     let routed_points : Array[Point] = []
-    if !point_equals(source_anchor, core_points[0]) {
-      routed_points.push(source_anchor)
-    }
     for point in core_points {
       if routed_points.length() == 0 ||
         !point_equals(routed_points[routed_points.length() - 1], point) {
         routed_points.push(point)
       }
     }
-    if !point_equals(target_anchor, routed_points[routed_points.length() - 1]) {
-      routed_points.push(target_anchor)
+    shift_endpoint_boundary_run_to_anchor(routed_points, source_anchor, true)
+    shift_endpoint_boundary_run_to_anchor(routed_points, target_anchor, false)
+    let final_points : Array[Point] = []
+    if !point_equals(source_anchor, routed_points[0]) {
+      final_points.push(source_anchor)
     }
-    simplify_polyline_points(routed_points)
+    for point in routed_points {
+      if final_points.length() == 0 ||
+        !point_equals(final_points[final_points.length() - 1], point) {
+        final_points.push(point)
+      }
+    }
+    if !point_equals(target_anchor, final_points[final_points.length() - 1]) {
+      final_points.push(target_anchor)
+    }
+    simplify_polyline_points(final_points)
   }
 }
 

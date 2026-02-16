@@ -328,6 +328,26 @@ test "Layout simplify polyline preserves turnback cusp points" {
 }
 
 ///|
+test "Layout endpoint stubs preserve source fanout boundary separation" {
+  let points = apply_endpoint_port_stubs(
+    [{ x: 290, y: 155 }, { x: 290, y: 155 }, { x: 344, y: 200 }],
+    { x: 290, y: 161 },
+    { x: 344, y: 200 },
+  )
+  assert_eq(points, [{ x: 290, y: 161 }, { x: 344, y: 200 }])
+}
+
+///|
+test "Layout endpoint stubs preserve reciprocal endpoint separation" {
+  let points = apply_endpoint_port_stubs(
+    [{ x: 290, y: 155 }, { x: 290, y: 155 }, { x: 360, y: 110 }],
+    { x: 290, y: 149 },
+    { x: 360, y: 116 },
+  )
+  assert_eq(points, [{ x: 290, y: 149 }, { x: 360, y: 116 }])
+}
+
+///|
 test "Layout engine dagre-parity mode preserves legacy output in scaffold phase" {
   let graph = @parser.parse_mermaid(
     (
