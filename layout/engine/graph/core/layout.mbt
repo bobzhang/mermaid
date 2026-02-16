@@ -2538,18 +2538,19 @@ fn apply_endpoint_port_stubs(
       [source_anchor, target_anchor]
     }
   } else {
-    let routed_points : Array[Point] = []
-    if !point_equals(source_anchor, core_points[0]) {
-      routed_points.push(source_anchor)
-    }
+    let adjusted_points : Array[Point] = []
     for point in core_points {
+      adjusted_points.push(point)
+    }
+    adjusted_points[0] = source_anchor
+    adjusted_points[adjusted_points.length() - 1] = target_anchor
+
+    let routed_points : Array[Point] = []
+    for point in adjusted_points {
       if routed_points.length() == 0 ||
         !point_equals(routed_points[routed_points.length() - 1], point) {
         routed_points.push(point)
       }
-    }
-    if !point_equals(target_anchor, routed_points[routed_points.length() - 1]) {
-      routed_points.push(target_anchor)
     }
     routed_points
   }
@@ -2755,6 +2756,7 @@ priv struct EdgeLayoutContext {
   source : PositionedNode
   target : PositionedNode
   edge_horizontal : Bool
+  compact_endpoint_port_priority : Bool
   source_boundary_offset_minor : Int
   target_boundary_offset_minor : Int
 }
@@ -2783,6 +2785,8 @@ priv struct RoutedEdgeSegment {
   target_id : String
   start : Point
   end : Point
+  is_source_stub : Bool
+  is_target_stub : Bool
 }
 
 ///|
@@ -2835,6 +2839,11 @@ fn opposite_boundary_side(side : NodeBoundarySide) -> NodeBoundarySide {
 }
 
 ///|
+fn boundary_side_is_horizontal(side : NodeBoundarySide) -> Bool {
+  side is (Left | Right)
+}
+
+///|
 fn context_source_boundary_side(
   context : EdgeLayoutContext,
 ) -> NodeBoundarySide {
@@ -2873,7 +2882,7 @@ fn distributed_boundary_port_offset(
   }
   let max_span = half_span_limit * 2
   let min_step = 2
-  let preferred_step = 16
+  let preferred_step = 12
   let fit_step = if total <= 1 {
     preferred_step
   } else {
@@ -2985,12 +2994,15 @@ fn append_routed_segments_for_points(
   if points.length() < 2 {
     return
   }
+  let last_segment_index = points.length() - 1
   for i in 1..<points.length() {
     routed_edge_segments.push({
       source_id,
       target_id,
       start: points[i - 1],
       end: points[i],
+      is_source_stub: i == 1,
+      is_target_stub: i == last_segment_index,
     })
   }
 }
@@ -4176,6 +4188,8 @@ priv struct LabelRouteScore {
   label_node_overlaps : Int
   label_edge_overlaps : Int
   label_label_overlaps : Int
+  endpoint_anchor_conflicts : Int
+  reciprocal_segment_overlaps : Int
   route_crossings : Int
   route_length : Int
   offset_abs : Int
@@ -4530,6 +4544,113 @@ fn route_length(points : Array[Point]) -> Int {
 }
 
 ///|
+fn segments_equal_undirected(
+  left_start : Point,
+  left_end : Point,
+  right_start : Point,
+  right_end : Point,
+) -> Bool {
+  (point_equals(left_start, right_start) && point_equals(left_end, right_end)) ||
+  (point_equals(left_start, right_end) && point_equals(left_end, right_start))
+}
+
+///|
+fn segments_share_positive_axis_overlap(
+  left_start : Point,
+  left_end : Point,
+  right_start : Point,
+  right_end : Point,
+) -> Bool {
+  let left_vertical = left_start.x == left_end.x
+  let left_horizontal = left_start.y == left_end.y
+  let right_vertical = right_start.x == right_end.x
+  let right_horizontal = right_start.y == right_end.y
+
+  if left_vertical && right_vertical && left_start.x == right_start.x {
+    let left_top = left_start.y.min(left_end.y)
+    let left_bottom = left_start.y.max(left_end.y)
+    let right_top = right_start.y.min(right_end.y)
+    let right_bottom = right_start.y.max(right_end.y)
+    let overlap_top = left_top.max(right_top)
+    let overlap_bottom = left_bottom.min(right_bottom)
+    return overlap_bottom > overlap_top
+  }
+
+  if left_horizontal && right_horizontal && left_start.y == right_start.y {
+    let left_left = left_start.x.min(left_end.x)
+    let left_right = left_start.x.max(left_end.x)
+    let right_left = right_start.x.min(right_end.x)
+    let right_right = right_start.x.max(right_end.x)
+    let overlap_left = left_left.max(right_left)
+    let overlap_right = left_right.min(right_right)
+    return overlap_right > overlap_left
+  }
+
+  false
+}
+
+///|
+fn route_endpoint_anchor_conflicts(
+  context : EdgeLayoutContext,
+  points : Array[Point],
+  routed_edge_segments : Array[RoutedEdgeSegment],
+) -> Int {
+  if points.length() < 2 {
+    return 0
+  }
+  let source_anchor = points[0]
+  let target_anchor = points[points.length() - 1]
+  let mut conflicts = 0
+  for segment in routed_edge_segments {
+    if segment.is_source_stub &&
+      segment.source_id == context.resolved_source_id &&
+      point_equals(source_anchor, segment.start) {
+      conflicts += 1
+    }
+    if segment.is_target_stub &&
+      segment.target_id == context.resolved_target_id &&
+      point_equals(target_anchor, segment.end) {
+      conflicts += 1
+    }
+  }
+  conflicts
+}
+
+///|
+fn route_reciprocal_segment_overlaps(
+  context : EdgeLayoutContext,
+  points : Array[Point],
+  routed_edge_segments : Array[RoutedEdgeSegment],
+) -> Int {
+  let mut overlaps = 0
+  for i in 1..<points.length() {
+    let candidate_start = points[i - 1]
+    let candidate_end = points[i]
+    for segment in routed_edge_segments {
+      if segment.source_id != context.resolved_target_id ||
+        segment.target_id != context.resolved_source_id {
+        continue
+      }
+      if segments_equal_undirected(
+          candidate_start,
+          candidate_end,
+          segment.start,
+          segment.end,
+        ) ||
+        segments_share_positive_axis_overlap(
+          candidate_start,
+          candidate_end,
+          segment.start,
+          segment.end,
+        ) {
+        overlaps += 1
+      }
+    }
+  }
+  overlaps
+}
+
+///|
 fn route_crossings_against_routed_segments(
   points : Array[Point],
   source_id : String,
@@ -4569,6 +4690,16 @@ fn evaluate_labeled_route_score(
   routed_edge_segments : Array[RoutedEdgeSegment],
   routed_label_boxes : Array[RoutedLabelBox],
 ) -> LabelRouteScore {
+  let endpoint_anchor_conflicts = if context.compact_endpoint_port_priority {
+    route_endpoint_anchor_conflicts(context, points, routed_edge_segments)
+  } else {
+    0
+  }
+  let reciprocal_segment_overlaps = if context.compact_endpoint_port_priority {
+    route_reciprocal_segment_overlaps(context, points, routed_edge_segments)
+  } else {
+    0
+  }
   let route_crossings = route_crossings_against_routed_segments(
     points,
     context.resolved_source_id,
@@ -4608,6 +4739,8 @@ fn evaluate_labeled_route_score(
         label_node_overlaps,
         label_edge_overlaps,
         label_label_overlaps,
+        endpoint_anchor_conflicts,
+        reciprocal_segment_overlaps,
         route_crossings,
         route_length: route_length(points),
         offset_abs,
@@ -4618,6 +4751,8 @@ fn evaluate_labeled_route_score(
         label_node_overlaps: 0,
         label_edge_overlaps: 0,
         label_label_overlaps: 0,
+        endpoint_anchor_conflicts,
+        reciprocal_segment_overlaps,
         route_crossings,
         route_length: route_length(points),
         offset_abs,
@@ -4638,6 +4773,13 @@ fn label_route_score_is_better(
   }
   if candidate.label_label_overlaps != best.label_label_overlaps {
     return candidate.label_label_overlaps < best.label_label_overlaps
+  }
+  if candidate.endpoint_anchor_conflicts != best.endpoint_anchor_conflicts {
+    return candidate.endpoint_anchor_conflicts < best.endpoint_anchor_conflicts
+  }
+  if candidate.reciprocal_segment_overlaps != best.reciprocal_segment_overlaps {
+    return candidate.reciprocal_segment_overlaps <
+      best.reciprocal_segment_overlaps
   }
   if candidate.route_crossings != best.route_crossings {
     return candidate.route_crossings < best.route_crossings
@@ -6697,6 +6839,7 @@ fn layout_graph_with_subgraph_redirects(
           source,
           target,
           edge_horizontal,
+          compact_endpoint_port_priority: graph.edges.length() <= 20,
           source_boundary_offset_minor: 0,
           target_boundary_offset_minor: 0,
         })
@@ -6784,10 +6927,13 @@ fn layout_graph_with_subgraph_redirects(
       continue
     }
     let assignments_by_peer_minor : Map[Int, Array[BoundaryEndpointAssignment]] = {}
-    let mut has_source_endpoint = false
+    let mut source_endpoint_count = 0
+    let mut target_endpoint_count = 0
     for assignment in assignments {
       if assignment.source_endpoint {
-        has_source_endpoint = true
+        source_endpoint_count += 1
+      } else {
+        target_endpoint_count += 1
       }
       if !assignments_by_peer_minor.contains(assignment.peer_minor) {
         assignments_by_peer_minor[assignment.peer_minor] = []
@@ -6856,7 +7002,11 @@ fn layout_graph_with_subgraph_redirects(
       }
     }
 
-    if assignments.length() <= 3 && has_source_endpoint {
+    if graph.edges.length() <= 20 &&
+      assignments.length() <= 3 &&
+      source_endpoint_count == assignments.length() &&
+      target_endpoint_count == 0 &&
+      boundary_side_is_horizontal(assignments[0].side) {
       assignments.sort_by((left, right) => {
         if left.peer_minor != right.peer_minor {
           return left.peer_minor.compare(right.peer_minor)
@@ -6891,11 +7041,7 @@ fn layout_graph_with_subgraph_redirects(
           assignments.length(),
           half_span_limit,
         )
-        if assignment.source_endpoint {
-          source_boundary_offset_by_context_index[assignment.context_index] = offset
-        } else {
-          target_boundary_offset_by_context_index[assignment.context_index] = offset
-        }
+        source_boundary_offset_by_context_index[assignment.context_index] = offset
       }
     }
   }
@@ -6907,14 +7053,12 @@ fn layout_graph_with_subgraph_redirects(
       source: context.source,
       target: context.target,
       edge_horizontal: context.edge_horizontal,
+      compact_endpoint_port_priority: context.compact_endpoint_port_priority,
       source_boundary_offset_minor: option_int_or(
         source_boundary_offset_by_context_index.get(context_index),
         0,
       ),
-      target_boundary_offset_minor: option_int_or(
-        target_boundary_offset_by_context_index.get(context_index),
-        0,
-      ),
+      target_boundary_offset_minor: 0,
     }
   }
 
@@ -7272,31 +7416,31 @@ fn layout_graph_with_subgraph_redirects(
       context.source_boundary_offset_minor,
       context.target_boundary_offset_minor,
     )
+    let force_compact_source_ports = graph.edges.length() <= 20 &&
+      context.source_boundary_offset_minor != 0 &&
+      context.target_boundary_offset_minor == 0
     let base_points = if context.source_boundary_offset_minor != 0 ||
       context.target_boundary_offset_minor != 0 {
-      let base_points_without_ports = edge_points_for_with_ports(
-        source,
-        target,
-        edge_horizontal,
-        back_edge_bend_y,
-        back_edge_bend_x,
-        resolved_forward_fanout_offset,
-        enhanced_horizontal_state_flow,
-        0,
-        0,
-      )
-      let with_ports_score = evaluate_labeled_route_score(
-        context, base_points_with_ports, 0, positioned_nodes, routed_edge_segments,
-        routed_label_boxes,
-      )
-      let without_ports_score = evaluate_labeled_route_score(
-        context, base_points_without_ports, 0, positioned_nodes, routed_edge_segments,
-        routed_label_boxes,
-      )
-      if label_route_score_is_better(without_ports_score, with_ports_score) {
-        base_points_without_ports
-      } else {
+      if force_compact_source_ports {
         base_points_with_ports
+      } else {
+        let base_points_without_ports = edge_points_for_with_ports(
+          source, target, edge_horizontal, back_edge_bend_y, back_edge_bend_x, resolved_forward_fanout_offset,
+          enhanced_horizontal_state_flow, 0, 0,
+        )
+        let with_ports_score = evaluate_labeled_route_score(
+          context, base_points_with_ports, 0, positioned_nodes, routed_edge_segments,
+          routed_label_boxes,
+        )
+        let without_ports_score = evaluate_labeled_route_score(
+          context, base_points_without_ports, 0, positioned_nodes, routed_edge_segments,
+          routed_label_boxes,
+        )
+        if label_route_score_is_better(without_ports_score, with_ports_score) {
+          base_points_without_ports
+        } else {
+          base_points_with_ports
+        }
       }
     } else {
       base_points_with_ports

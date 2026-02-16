@@ -555,6 +555,8 @@ test "Layout back-edge lane selection avoids existing segment crossings" {
     target_id: "Y",
     start: { x: 140, y: 20 },
     end: { x: 140, y: 80 },
+    is_source_stub: false,
+    is_target_stub: false,
   }
 
   let reservations : Array[BackEdgeLaneReservation] = []
@@ -611,12 +613,16 @@ test "Layout back-edge lane selection can skip nearest lane for fewer crossings"
       target_id: "B",
       start: { x: 140, y: 45 },
       end: { x: 140, y: 75 },
+      is_source_stub: false,
+      is_target_stub: false,
     },
     {
       source_id: "C",
       target_id: "D",
       start: { x: 160, y: 120 },
       end: { x: 160, y: 150 },
+      is_source_stub: false,
+      is_target_stub: false,
     },
   ]
 
@@ -794,6 +800,8 @@ test "Layout long-span back-edge lane search can use extended candidates" {
       target_id: "V",
       start: { x: 400, y: 120 },
       end: { x: 400, y: 260 },
+      is_source_stub: false,
+      is_target_stub: false,
     },
   ]
 
@@ -847,6 +855,8 @@ test "Layout mid-long span back-edge lane search upgrades to dense candidate spa
       target_id: "V",
       start: { x: 300, y: 236 },
       end: { x: 300, y: 246 },
+      is_source_stub: false,
+      is_target_stub: false,
     },
   ]
 
@@ -1228,9 +1238,11 @@ test "Layout separates reciprocal short LR edges to avoid exact overlap" {
   let positioned = layout_graph(graph, RenderOptions::default())
   let forward = find_positioned_edge(positioned.edges, "Check", "Fix")
   let backward = find_positioned_edge(positioned.edges, "Fix", "Check")
+  let branch_yes = find_positioned_edge(positioned.edges, "Check", "Build")
 
   assert_true(backward.points.length() > 2)
   assert_eq(points_form_exact_reverse(forward.points, backward.points), false)
+  assert_true(!point_equals(forward.points[0], branch_yes.points[0]))
 }
 
 ///|
@@ -1374,6 +1386,9 @@ test "Layout spreads source anchors for horizontal fanout edges" {
   assert_true(edge_ab.points.length() >= 2)
   assert_true(edge_ac.points.length() >= 2)
   assert_true(edge_ad.points.length() >= 2)
+  assert_true(!point_equals(edge_ab.points[0], edge_ac.points[0]))
+  assert_true(!point_equals(edge_ab.points[0], edge_ad.points[0]))
+  assert_true(!point_equals(edge_ac.points[0], edge_ad.points[0]))
   assert_true(!points_arrays_equal(edge_ab.points, edge_ac.points))
   assert_true(!points_arrays_equal(edge_ac.points, edge_ad.points))
 }
@@ -3068,6 +3083,7 @@ test "Layout deferred minor-axis key uses y for horizontal edges" {
     source,
     target,
     edge_horizontal: true,
+    compact_endpoint_port_priority: false,
     source_boundary_offset_minor: 0,
     target_boundary_offset_minor: 0,
   }
@@ -3106,6 +3122,7 @@ test "Layout deferred minor-axis key uses x for vertical edges" {
     source,
     target,
     edge_horizontal: false,
+    compact_endpoint_port_priority: false,
     source_boundary_offset_minor: 0,
     target_boundary_offset_minor: 0,
   }
