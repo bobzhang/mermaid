@@ -66,6 +66,45 @@ fn test_rects_overlap(
 }
 
 ///|
+fn diamond_boundary_x_at_y(
+  node : PositionedNode,
+  y : Int,
+  right_side : Bool,
+) -> Int {
+  let half_height = node.height / 2
+  if half_height <= 0 {
+    return node.x
+  }
+  let half_width = node.width / 2
+  let y_offset = (y - node.y).abs().min(half_height)
+  let x_offset = half_width * (half_height - y_offset) / half_height
+  if right_side {
+    node.x + x_offset
+  } else {
+    node.x - x_offset
+  }
+}
+
+///|
+fn point_near_diamond_side(
+  node : PositionedNode,
+  point : Point,
+  right_side : Bool,
+) -> Bool {
+  let top = node.y - node.height / 2
+  let bottom = node.y + node.height / 2
+  if point.y < top || point.y > bottom {
+    return false
+  }
+  let boundary_x = diamond_boundary_x_at_y(node, point.y, right_side)
+  if right_side {
+    point.x >= node.x && (point.x - boundary_x).abs() <= 1
+  } else {
+    point.x <= node.x && (point.x - boundary_x).abs() <= 1
+  }
+}
+
+///|
 fn flow_edge(source : String, target : String) -> MermaidEdge {
   {
     source,
@@ -413,7 +452,7 @@ test "Layout lane collection accounts for long-span edges via virtual segments" 
   ]
 
   let lanes = collect_non_state_flow_lanes(
-    nodes, rank_by_id, 2, edges, false, false,
+    nodes, rank_by_id, 2, edges, false, false, true,
   )
   assert_true(
     option_int_or(lanes.get("Y"), 0) < option_int_or(lanes.get("X"), 0),
@@ -460,7 +499,7 @@ test "Layout lane collection uses long-span backward edges for ordering" {
   ]
 
   let lanes = collect_non_state_flow_lanes(
-    nodes, rank_by_id, 3, edges, false, false,
+    nodes, rank_by_id, 3, edges, false, false, true,
   )
   assert_true(
     option_int_or(lanes.get("F"), 0) < option_int_or(lanes.get("E"), 0),
@@ -1532,6 +1571,34 @@ test "Layout separates reciprocal short LR edges to avoid exact overlap" {
   )
   assert_true(!point_equals(forward.points[0], branch_yes.points[0]))
   assert_true(!point_equals(backward_target_anchor, branch_yes.points[0]))
+}
+
+///|
+test "Layout keeps diamond anchors on shape boundary for reciprocal fanout" {
+  let graph = @parser.parse_mermaid(
+    (
+      #|flowchart LR
+      #|Start([Start]) --> Check{Valid input?}
+      #|Check -->|yes| Build[Build artifact]
+      #|Check -->|no| Fix[Fix source]
+      #|Fix --> Check
+      #|Build --> Ship([Ship])
+      #|
+    )
+    .trim_end()
+    .to_string(),
+  )
+  let positioned = layout_graph(graph, RenderOptions::default())
+  let check = find_positioned_node(positioned.nodes, "Check")
+  let check_build = find_positioned_edge(positioned.edges, "Check", "Build")
+  let check_fix = find_positioned_edge(positioned.edges, "Check", "Fix")
+  let fix_check = find_positioned_edge(positioned.edges, "Fix", "Check")
+  let fix_check_target = fix_check.points[fix_check.points.length() - 1]
+
+  assert_true(check.shape is Diamond)
+  assert_true(point_near_diamond_side(check, check_build.points[0], true))
+  assert_true(point_near_diamond_side(check, check_fix.points[0], true))
+  assert_true(point_near_diamond_side(check, fix_check_target, true))
 }
 
 ///|

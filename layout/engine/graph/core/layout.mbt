@@ -1256,6 +1256,7 @@ fn collect_non_state_flow_lanes(
   edges : Array[MermaidEdge],
   preserve_dummy_lane_channels : Bool,
   enable_feedback_back_edge_ordering : Bool,
+  preserve_fanout_order_ties : Bool,
 ) -> Map[String, Int] {
   if nodes_in_order.length() == 0 {
     return {}
@@ -1953,6 +1954,68 @@ fn collect_non_state_flow_lanes(
     crossings
   }
 
+  fn edge_lane_span_cost(
+    edge_index : Int,
+    edges : Array[MermaidEdge],
+    rank_by_id : Map[String, Int],
+    lane_by_id : Map[String, Int],
+  ) -> Int {
+    let edge = edges[edge_index]
+    match
+      (
+        rank_by_id.get(edge.source),
+        rank_by_id.get(edge.target),
+        lane_by_id.get(edge.source),
+        lane_by_id.get(edge.target),
+      ) {
+      (
+        Some(source_rank),
+        Some(target_rank),
+        Some(source_lane),
+        Some(target_lane),
+      ) => {
+        let rank_span = int_abs(target_rank - source_rank)
+        let lane_span = int_abs(target_lane - source_lane)
+        lane_span * (rank_span + 1)
+      }
+      _ => 0
+    }
+  }
+
+  fn lane_span_cost_for_edges(
+    edge_indexes : Array[Int],
+    edges : Array[MermaidEdge],
+    rank_by_id : Map[String, Int],
+    lane_by_id : Map[String, Int],
+  ) -> Int {
+    let mut total = 0
+    for edge_index in edge_indexes {
+      total += edge_lane_span_cost(edge_index, edges, rank_by_id, lane_by_id)
+    }
+    total
+  }
+
+  fn count_fanout_order_violations(
+    constraint_indexes : Array[Int],
+    fanout_constraint_left_target_ids : Array[String],
+    fanout_constraint_right_target_ids : Array[String],
+    lane_by_id : Map[String, Int],
+  ) -> Int {
+    let mut violations = 0
+    for constraint_index in constraint_indexes {
+      let left_target = fanout_constraint_left_target_ids[constraint_index]
+      let right_target = fanout_constraint_right_target_ids[constraint_index]
+      match (lane_by_id.get(left_target), lane_by_id.get(right_target)) {
+        (Some(left_lane), Some(right_lane)) =>
+          if left_lane > right_lane {
+            violations += 1
+          }
+        _ => ()
+      }
+    }
+    violations
+  }
+
   fn copy_node_id_order(node_ids : Array[String]) -> Array[String] {
     let copied : Array[String] = []
     for node_id in node_ids {
@@ -1971,10 +2034,17 @@ fn collect_non_state_flow_lanes(
     }
   }
 
+  // Keep tie-break refinements for large flowchart-style graphs only.
+  let enable_lane_tie_breaks = preserve_fanout_order_ties &&
+    edges.length() >= 30
+
   fn optimize_rank_order_exact(
     node_ids : Array[String],
     incident_edge_indexes_by_node : Map[String, Array[Int]],
     crossing_edge_indexes : Array[Int],
+    fanout_constraint_indexes_by_target_id : Map[String, Array[Int]],
+    fanout_constraint_left_target_ids : Array[String],
+    fanout_constraint_right_target_ids : Array[String],
     edges : Array[MermaidEdge],
     rank_by_id : Map[String, Int],
     lane_by_id : Map[String, Int],
@@ -2000,12 +2070,42 @@ fn collect_non_state_flow_lanes(
     if rank_incident_edge_indexes.length() == 0 {
       return false
     }
+    let rank_fanout_constraint_indexes : Array[Int] = []
+    let seen_rank_fanout_constraint_indexes : Map[Int, Bool] = {}
+    for node_id in node_ids {
+      match fanout_constraint_indexes_by_target_id.get(node_id) {
+        Some(indexes) =>
+          for index in indexes {
+            if seen_rank_fanout_constraint_indexes.contains(index) {
+              continue
+            }
+            seen_rank_fanout_constraint_indexes[index] = true
+            rank_fanout_constraint_indexes.push(index)
+          }
+        None => ()
+      }
+    }
 
     let candidate_order = copy_node_id_order(node_ids)
     assign_rank_order_to_lane_slots(candidate_order, lane_slots, lane_by_id)
     let mut best_crossings = count_crossings_involving(
       rank_incident_edge_indexes, crossing_edge_indexes, edges, rank_by_id, lane_by_id,
     )
+    let mut best_span_cost = if enable_lane_tie_breaks {
+      lane_span_cost_for_edges(
+        rank_incident_edge_indexes, edges, rank_by_id, lane_by_id,
+      )
+    } else {
+      0
+    }
+    let mut best_fanout_violations = if enable_lane_tie_breaks {
+      count_fanout_order_violations(
+        rank_fanout_constraint_indexes, fanout_constraint_left_target_ids, fanout_constraint_right_target_ids,
+        lane_by_id,
+      )
+    } else {
+      0
+    }
     let best_order = copy_node_id_order(candidate_order)
     let mut improved = false
 
@@ -2028,8 +2128,36 @@ fn collect_non_state_flow_lanes(
         let candidate_crossings = count_crossings_involving(
           rank_incident_edge_indexes, crossing_edge_indexes, edges, rank_by_id, lane_by_id,
         )
-        if candidate_crossings < best_crossings {
+        let candidate_span_cost = if enable_lane_tie_breaks {
+          lane_span_cost_for_edges(
+            rank_incident_edge_indexes, edges, rank_by_id, lane_by_id,
+          )
+        } else {
+          0
+        }
+        let candidate_fanout_violations = if enable_lane_tie_breaks {
+          count_fanout_order_violations(
+            rank_fanout_constraint_indexes, fanout_constraint_left_target_ids, fanout_constraint_right_target_ids,
+            lane_by_id,
+          )
+        } else {
+          0
+        }
+        if candidate_crossings < best_crossings ||
+          (
+            enable_lane_tie_breaks &&
+            candidate_crossings == best_crossings &&
+            (
+              candidate_fanout_violations < best_fanout_violations ||
+              (
+                candidate_fanout_violations == best_fanout_violations &&
+                candidate_span_cost < best_span_cost
+              )
+            )
+          ) {
           best_crossings = candidate_crossings
+          best_span_cost = candidate_span_cost
+          best_fanout_violations = candidate_fanout_violations
           improved = true
           for i, node_id in candidate_order {
             best_order[i] = node_id
@@ -2109,12 +2237,70 @@ fn collect_non_state_flow_lanes(
     }
   }
 
+  let fanout_targets_by_source_rank : Map[String, Array[String]] = {}
+  if enable_lane_tie_breaks {
+    for _, edge in edges {
+      match (rank_by_id.get(edge.source), rank_by_id.get(edge.target)) {
+        (Some(source_rank), Some(target_rank)) =>
+          if target_rank > source_rank && lane_by_id.contains(edge.target) {
+            let key = "\{edge.source}@\{target_rank}"
+            if !fanout_targets_by_source_rank.contains(key) {
+              fanout_targets_by_source_rank[key] = []
+            }
+            let targets = fanout_targets_by_source_rank[key]
+            if !targets.contains(edge.target) {
+              targets.push(edge.target)
+            }
+          }
+        _ => ()
+      }
+    }
+  }
+  let fanout_constraint_left_target_ids : Array[String] = []
+  let fanout_constraint_right_target_ids : Array[String] = []
+  let fanout_constraint_indexes_by_target_id : Map[String, Array[Int]] = {}
+  for _, targets in fanout_targets_by_source_rank {
+    if targets.length() < 2 {
+      continue
+    }
+    for left_index in 0..<(targets.length() - 1) {
+      for right_index in (left_index + 1)..<targets.length() {
+        let left_target = targets[left_index]
+        let right_target = targets[right_index]
+        let constraint_index = fanout_constraint_left_target_ids.length()
+        fanout_constraint_left_target_ids.push(left_target)
+        fanout_constraint_right_target_ids.push(right_target)
+        if !fanout_constraint_indexes_by_target_id.contains(left_target) {
+          fanout_constraint_indexes_by_target_id[left_target] = []
+        }
+        if !fanout_constraint_indexes_by_target_id.contains(right_target) {
+          fanout_constraint_indexes_by_target_id[right_target] = []
+        }
+        match fanout_constraint_indexes_by_target_id.get(left_target) {
+          Some(indexes) => indexes.push(constraint_index)
+          None => ()
+        }
+        match fanout_constraint_indexes_by_target_id.get(right_target) {
+          Some(indexes) => indexes.push(constraint_index)
+          None => ()
+        }
+      }
+    }
+  }
+  let all_fanout_constraint_indexes : Array[Int] = []
+  for index in 0..<fanout_constraint_left_target_ids.length() {
+    all_fanout_constraint_indexes.push(index)
+  }
+
   fn try_lane_swap(
     node_ids : Array[String],
     left_index : Int,
     right_index : Int,
     incident_edge_indexes_by_node : Map[String, Array[Int]],
     crossing_edge_indexes : Array[Int],
+    fanout_constraint_indexes_by_target_id : Map[String, Array[Int]],
+    fanout_constraint_left_target_ids : Array[String],
+    fanout_constraint_right_target_ids : Array[String],
     edges : Array[MermaidEdge],
     rank_by_id : Map[String, Int],
     lane_by_id : Map[String, Int],
@@ -2136,6 +2322,45 @@ fn collect_non_state_flow_lanes(
     let before = count_crossings_involving(
       incident_edge_indexes, crossing_edge_indexes, edges, rank_by_id, lane_by_id,
     )
+    let before_span_cost = if enable_lane_tie_breaks {
+      lane_span_cost_for_edges(
+        incident_edge_indexes, edges, rank_by_id, lane_by_id,
+      )
+    } else {
+      0
+    }
+    let fanout_constraint_indexes : Array[Int] = []
+    let seen_fanout_constraint_indexes : Map[Int, Bool] = {}
+    match fanout_constraint_indexes_by_target_id.get(left_id) {
+      Some(indexes) =>
+        for index in indexes {
+          if seen_fanout_constraint_indexes.contains(index) {
+            continue
+          }
+          seen_fanout_constraint_indexes[index] = true
+          fanout_constraint_indexes.push(index)
+        }
+      None => ()
+    }
+    match fanout_constraint_indexes_by_target_id.get(right_id) {
+      Some(indexes) =>
+        for index in indexes {
+          if seen_fanout_constraint_indexes.contains(index) {
+            continue
+          }
+          seen_fanout_constraint_indexes[index] = true
+          fanout_constraint_indexes.push(index)
+        }
+      None => ()
+    }
+    let before_fanout_violations = if enable_lane_tie_breaks {
+      count_fanout_order_violations(
+        fanout_constraint_indexes, fanout_constraint_left_target_ids, fanout_constraint_right_target_ids,
+        lane_by_id,
+      )
+    } else {
+      0
+    }
     let left_lane = option_int_or(lane_by_id.get(left_id), 0)
     let right_lane = option_int_or(lane_by_id.get(right_id), 0)
     lane_by_id[left_id] = right_lane
@@ -2143,7 +2368,33 @@ fn collect_non_state_flow_lanes(
     let after = count_crossings_involving(
       incident_edge_indexes, crossing_edge_indexes, edges, rank_by_id, lane_by_id,
     )
-    if after < before {
+    let after_span_cost = if enable_lane_tie_breaks {
+      lane_span_cost_for_edges(
+        incident_edge_indexes, edges, rank_by_id, lane_by_id,
+      )
+    } else {
+      0
+    }
+    let after_fanout_violations = if enable_lane_tie_breaks {
+      count_fanout_order_violations(
+        fanout_constraint_indexes, fanout_constraint_left_target_ids, fanout_constraint_right_target_ids,
+        lane_by_id,
+      )
+    } else {
+      0
+    }
+    if after < before ||
+      (
+        enable_lane_tie_breaks &&
+        after == before &&
+        (
+          after_fanout_violations < before_fanout_violations ||
+          (
+            after_fanout_violations == before_fanout_violations &&
+            after_span_cost < before_span_cost
+          )
+        )
+      ) {
       node_ids[left_index] = right_id
       node_ids[right_index] = left_id
       true
@@ -2179,6 +2430,9 @@ fn collect_non_state_flow_lanes(
                     i + 1,
                     incident_edge_indexes_by_node,
                     crossing_edge_indexes,
+                    fanout_constraint_indexes_by_target_id,
+                    fanout_constraint_left_target_ids,
+                    fanout_constraint_right_target_ids,
                     edges,
                     rank_by_id,
                     lane_by_id,
@@ -2196,6 +2450,9 @@ fn collect_non_state_flow_lanes(
                     i + 1,
                     incident_edge_indexes_by_node,
                     crossing_edge_indexes,
+                    fanout_constraint_indexes_by_target_id,
+                    fanout_constraint_left_target_ids,
+                    fanout_constraint_right_target_ids,
                     edges,
                     rank_by_id,
                     lane_by_id,
@@ -2236,7 +2493,8 @@ fn collect_non_state_flow_lanes(
               for j in (i + 1)..<node_ids.length() {
                 if try_lane_swap(
                     node_ids, i, j, incident_edge_indexes_by_node, crossing_edge_indexes,
-                    edges, rank_by_id, lane_by_id,
+                    fanout_constraint_indexes_by_target_id, fanout_constraint_left_target_ids,
+                    fanout_constraint_right_target_ids, edges, rank_by_id, lane_by_id,
                   ) {
                   changed = true
                 }
@@ -2266,7 +2524,8 @@ fn collect_non_state_flow_lanes(
             Some(node_ids) =>
               if optimize_rank_order_exact(
                   node_ids, incident_edge_indexes_by_node, crossing_edge_indexes,
-                  edges, rank_by_id, lane_by_id,
+                  fanout_constraint_indexes_by_target_id, fanout_constraint_left_target_ids,
+                  fanout_constraint_right_target_ids, edges, rank_by_id, lane_by_id,
                 ) {
                 changed = true
               }
@@ -2322,6 +2581,10 @@ fn collect_non_state_flow_lanes(
         let mut best_crossings = count_lane_space_edge_crossings(
           edges, rank_by_id, lane_by_id,
         )
+        let mut best_fanout_violations = count_fanout_order_violations(
+          all_fanout_constraint_indexes, fanout_constraint_left_target_ids, fanout_constraint_right_target_ids,
+          lane_by_id,
+        )
 
         let single_pass_budget = if reversible_ranks.length() >= 12 {
           1
@@ -2337,8 +2600,17 @@ fn collect_non_state_flow_lanes(
                 let candidate_crossings = count_lane_space_edge_crossings(
                   edges, rank_by_id, lane_by_id,
                 )
-                if candidate_crossings < best_crossings {
+                let candidate_fanout_violations = count_fanout_order_violations(
+                  all_fanout_constraint_indexes, fanout_constraint_left_target_ids,
+                  fanout_constraint_right_target_ids, lane_by_id,
+                )
+                if candidate_crossings < best_crossings ||
+                  (
+                    candidate_crossings == best_crossings &&
+                    candidate_fanout_violations < best_fanout_violations
+                  ) {
                   best_crossings = candidate_crossings
+                  best_fanout_violations = candidate_fanout_violations
                   changed = true
                 } else {
                   reverse_rank_order_in_place(node_ids, lane_by_id)
@@ -2369,8 +2641,17 @@ fn collect_non_state_flow_lanes(
                   let candidate_crossings = count_lane_space_edge_crossings(
                     edges, rank_by_id, lane_by_id,
                   )
-                  if candidate_crossings < best_crossings {
+                  let candidate_fanout_violations = count_fanout_order_violations(
+                    all_fanout_constraint_indexes, fanout_constraint_left_target_ids,
+                    fanout_constraint_right_target_ids, lane_by_id,
+                  )
+                  if candidate_crossings < best_crossings ||
+                    (
+                      candidate_crossings == best_crossings &&
+                      candidate_fanout_violations < best_fanout_violations
+                    ) {
                     best_crossings = candidate_crossings
+                    best_fanout_violations = candidate_fanout_violations
                     pair_changed = true
                   } else {
                     reverse_rank_order_in_place(right_nodes, lane_by_id)
@@ -2389,8 +2670,17 @@ fn collect_non_state_flow_lanes(
                   let candidate_crossings = count_lane_space_edge_crossings(
                     edges, rank_by_id, lane_by_id,
                   )
-                  if candidate_crossings < best_crossings {
+                  let candidate_fanout_violations = count_fanout_order_violations(
+                    all_fanout_constraint_indexes, fanout_constraint_left_target_ids,
+                    fanout_constraint_right_target_ids, lane_by_id,
+                  )
+                  if candidate_crossings < best_crossings ||
+                    (
+                      candidate_crossings == best_crossings &&
+                      candidate_fanout_violations < best_fanout_violations
+                    ) {
                     best_crossings = candidate_crossings
+                    best_fanout_violations = candidate_fanout_violations
                   } else {
                     reverse_rank_order_in_place(node_ids, lane_by_id)
                   }
@@ -2952,6 +3242,184 @@ fn boundary_side_minor_limit(
 }
 
 ///|
+fn rounded_div(numerator : Int, denominator : Int) -> Int {
+  if denominator == 0 {
+    return 0
+  }
+  let abs_numerator = int_abs(numerator)
+  let abs_denominator = int_abs(denominator)
+  let quotient = (abs_numerator + abs_denominator / 2) / abs_denominator
+  if (numerator < 0) != (denominator < 0) {
+    -quotient
+  } else {
+    quotient
+  }
+}
+
+///|
+fn segment_x_at_y(start : Point, end_ : Point, y : Int) -> Int? {
+  if start.y == end_.y {
+    if start.y != y {
+      return None
+    }
+    return Some((start.x + end_.x) / 2)
+  }
+  let min_y = start.y.min(end_.y)
+  let max_y = start.y.max(end_.y)
+  if y < min_y || y > max_y {
+    return None
+  }
+  let numerator = (y - start.y) * (end_.x - start.x)
+  let denominator = end_.y - start.y
+  let interpolated = start.x + rounded_div(numerator, denominator)
+  Some(interpolated.max(start.x.min(end_.x)).min(start.x.max(end_.x)))
+}
+
+///|
+fn segment_y_at_x(start : Point, end_ : Point, x : Int) -> Int? {
+  if start.x == end_.x {
+    if start.x != x {
+      return None
+    }
+    return Some((start.y + end_.y) / 2)
+  }
+  let min_x = start.x.min(end_.x)
+  let max_x = start.x.max(end_.x)
+  if x < min_x || x > max_x {
+    return None
+  }
+  let numerator = (x - start.x) * (end_.y - start.y)
+  let denominator = end_.x - start.x
+  let interpolated = start.y + rounded_div(numerator, denominator)
+  Some(interpolated.max(start.y.min(end_.y)).min(start.y.max(end_.y)))
+}
+
+///|
+fn boundary_polygon_points(node : PositionedNode) -> Array[Point]? {
+  let left = node.x - node.width / 2
+  let right = node.x + node.width / 2
+  let top = node.y - node.height / 2
+  let bottom = node.y + node.height / 2
+  match node.shape {
+    Diamond =>
+      Some([
+        { x: node.x, y: top },
+        { x: right, y: node.y },
+        { x: node.x, y: bottom },
+        { x: left, y: node.y },
+      ])
+    Hexagon => {
+      let offset = node.height / 4
+      Some([
+        { x: left + offset, y: top },
+        { x: right - offset, y: top },
+        { x: right, y: node.y },
+        { x: right - offset, y: bottom },
+        { x: left + offset, y: bottom },
+        { x: left, y: node.y },
+      ])
+    }
+    Asymmetric =>
+      Some([
+        { x: left + 12, y: top },
+        { x: right, y: top },
+        { x: right, y: bottom },
+        { x: left + 12, y: bottom },
+        { x: left, y: node.y },
+      ])
+    Trapezoid => {
+      let offset = node.width * 15 / 100
+      Some([
+        { x: left + offset, y: top },
+        { x: right - offset, y: top },
+        { x: right, y: bottom },
+        { x: left, y: bottom },
+      ])
+    }
+    TrapezoidAlt => {
+      let offset = node.width * 15 / 100
+      Some([
+        { x: left, y: top },
+        { x: right, y: top },
+        { x: right - offset, y: bottom },
+        { x: left + offset, y: bottom },
+      ])
+    }
+    _ => None
+  }
+}
+
+///|
+fn polygon_boundary_x_for_y(
+  polygon : Array[Point],
+  y : Int,
+  choose_max : Bool,
+) -> Int? {
+  if polygon.length() < 2 {
+    return None
+  }
+  let mut has_candidate = false
+  let mut selected = 0
+  for i in 0..<polygon.length() {
+    let start = polygon[i]
+    let next_index = if i + 1 < polygon.length() { i + 1 } else { 0 }
+    let end_ = polygon[next_index]
+    match segment_x_at_y(start, end_, y) {
+      Some(x) =>
+        if !has_candidate {
+          selected = x
+          has_candidate = true
+        } else if choose_max {
+          selected = selected.max(x)
+        } else {
+          selected = selected.min(x)
+        }
+      None => ()
+    }
+  }
+  if has_candidate {
+    Some(selected)
+  } else {
+    None
+  }
+}
+
+///|
+fn polygon_boundary_y_for_x(
+  polygon : Array[Point],
+  x : Int,
+  choose_max : Bool,
+) -> Int? {
+  if polygon.length() < 2 {
+    return None
+  }
+  let mut has_candidate = false
+  let mut selected = 0
+  for i in 0..<polygon.length() {
+    let start = polygon[i]
+    let next_index = if i + 1 < polygon.length() { i + 1 } else { 0 }
+    let end_ = polygon[next_index]
+    match segment_y_at_x(start, end_, x) {
+      Some(y) =>
+        if !has_candidate {
+          selected = y
+          has_candidate = true
+        } else if choose_max {
+          selected = selected.max(y)
+        } else {
+          selected = selected.min(y)
+        }
+      None => ()
+    }
+  }
+  if has_candidate {
+    Some(selected)
+  } else {
+    None
+  }
+}
+
+///|
 fn clamp_minor_boundary_offset(
   node : PositionedNode,
   side_is_vertical : Bool,
@@ -2968,6 +3436,45 @@ fn clamp_minor_boundary_offset(
 }
 
 ///|
+fn rectangular_boundary_anchor_point(
+  node : PositionedNode,
+  horizontal : Bool,
+  source_endpoint : Bool,
+  moving_forward : Bool,
+  minor_offset : Int,
+) -> Point {
+  if horizontal {
+    let clamped_minor = clamp_minor_boundary_offset(node, true, minor_offset)
+    let delta_x = if source_endpoint {
+      if moving_forward {
+        node.width / 2
+      } else {
+        -node.width / 2
+      }
+    } else if moving_forward {
+      -node.width / 2
+    } else {
+      node.width / 2
+    }
+    { x: node.x + delta_x, y: node.y + clamped_minor }
+  } else {
+    let clamped_minor = clamp_minor_boundary_offset(node, false, minor_offset)
+    let delta_y = if source_endpoint {
+      if moving_forward {
+        node.height / 2
+      } else {
+        -node.height / 2
+      }
+    } else if moving_forward {
+      -node.height / 2
+    } else {
+      node.height / 2
+    }
+    { x: node.x + clamped_minor, y: node.y + delta_y }
+  }
+}
+
+///|
 fn boundary_anchor_point(
   source : PositionedNode,
   horizontal : Bool,
@@ -2975,35 +3482,51 @@ fn boundary_anchor_point(
   moving_forward : Bool,
   minor_offset : Int,
 ) -> Point {
+  let polygon = boundary_polygon_points(source)
   if horizontal {
+    let side_is_right = if source_endpoint {
+      moving_forward
+    } else {
+      !moving_forward
+    }
     let clamped_minor = clamp_minor_boundary_offset(source, true, minor_offset)
-    let delta_x = if source_endpoint {
-      if moving_forward {
-        source.width / 2
-      } else {
-        -source.width / 2
-      }
-    } else if moving_forward {
-      -source.width / 2
-    } else {
-      source.width / 2
+    let y = source.y + clamped_minor
+    match polygon {
+      Some(points) =>
+        match polygon_boundary_x_for_y(points, y, side_is_right) {
+          Some(x) => return { x, y }
+          None => ()
+        }
+      None => ()
     }
-    { x: source.x + delta_x, y: source.y + clamped_minor }
+    rectangular_boundary_anchor_point(
+      source, horizontal, source_endpoint, moving_forward, minor_offset,
+    )
   } else {
-    let clamped_minor = clamp_minor_boundary_offset(source, false, minor_offset)
-    let delta_y = if source_endpoint {
-      if moving_forward {
-        source.height / 2
-      } else {
-        -source.height / 2
-      }
-    } else if moving_forward {
-      -source.height / 2
+    let side_is_bottom = if source_endpoint {
+      moving_forward
     } else {
-      source.height / 2
+      !moving_forward
     }
-    { x: source.x + clamped_minor, y: source.y + delta_y }
+    let clamped_minor = clamp_minor_boundary_offset(source, false, minor_offset)
+    let x = source.x + clamped_minor
+    match polygon {
+      Some(points) =>
+        match polygon_boundary_y_for_x(points, x, side_is_bottom) {
+          Some(y) => return { x, y }
+          None => ()
+        }
+      None => ()
+    }
+    rectangular_boundary_anchor_point(
+      source, horizontal, source_endpoint, moving_forward, minor_offset,
+    )
   }
+}
+
+///|
+fn boundary_anchor_prefers_direct_base(node : PositionedNode) -> Bool {
+  boundary_polygon_points(node) is Some(_)
 }
 
 ///|
@@ -3127,11 +3650,19 @@ fn edge_points_with_minor_lane_offset_with_ports(
     let start_anchor = boundary_anchor_point(
       source, true, true, moving_right, source_port_minor_offset,
     )
-    let start_base = boundary_anchor_point(source, true, true, moving_right, 0)
+    let start_base = if boundary_anchor_prefers_direct_base(source) {
+      start_anchor
+    } else {
+      boundary_anchor_point(source, true, true, moving_right, 0)
+    }
     let end_anchor = boundary_anchor_point(
       target, true, false, moving_right, target_port_minor_offset,
     )
-    let end_base = boundary_anchor_point(target, true, false, moving_right, 0)
+    let end_base = if boundary_anchor_prefers_direct_base(target) {
+      end_anchor
+    } else {
+      boundary_anchor_point(target, true, false, moving_right, 0)
+    }
     let lane_y = source.y + minor_offset
     if smooth_forward_fanout {
       let mid_x = (start_base.x + end_base.x) / 2
@@ -3157,11 +3688,19 @@ fn edge_points_with_minor_lane_offset_with_ports(
   let start_anchor = boundary_anchor_point(
     source, false, true, moving_down, source_port_minor_offset,
   )
-  let start_base = boundary_anchor_point(source, false, true, moving_down, 0)
+  let start_base = if boundary_anchor_prefers_direct_base(source) {
+    start_anchor
+  } else {
+    boundary_anchor_point(source, false, true, moving_down, 0)
+  }
   let end_anchor = boundary_anchor_point(
     target, false, false, moving_down, target_port_minor_offset,
   )
-  let end_base = boundary_anchor_point(target, false, false, moving_down, 0)
+  let end_base = if boundary_anchor_prefers_direct_base(target) {
+    end_anchor
+  } else {
+    boundary_anchor_point(target, false, false, moving_down, 0)
+  }
   let lane_x = source.x + minor_offset
   apply_endpoint_port_stubs(
     [
@@ -3192,11 +3731,19 @@ fn edge_points_for_with_ports(
     let start_anchor = boundary_anchor_point(
       source, true, true, moving_right, source_port_minor_offset,
     )
-    let start_base = boundary_anchor_point(source, true, true, moving_right, 0)
+    let start_base = if boundary_anchor_prefers_direct_base(source) {
+      start_anchor
+    } else {
+      boundary_anchor_point(source, true, true, moving_right, 0)
+    }
     let end_anchor = boundary_anchor_point(
       target, true, false, moving_right, target_port_minor_offset,
     )
-    let end_base = boundary_anchor_point(target, true, false, moving_right, 0)
+    let end_base = if boundary_anchor_prefers_direct_base(target) {
+      end_anchor
+    } else {
+      boundary_anchor_point(target, true, false, moving_right, 0)
+    }
     match back_edge_bend_y {
       Some(bend_y) =>
         if !moving_right {
@@ -3237,11 +3784,19 @@ fn edge_points_for_with_ports(
     let start_anchor = boundary_anchor_point(
       source, false, true, moving_down, source_port_minor_offset,
     )
-    let start_base = boundary_anchor_point(source, false, true, moving_down, 0)
+    let start_base = if boundary_anchor_prefers_direct_base(source) {
+      start_anchor
+    } else {
+      boundary_anchor_point(source, false, true, moving_down, 0)
+    }
     let end_anchor = boundary_anchor_point(
       target, false, false, moving_down, target_port_minor_offset,
     )
-    let end_base = boundary_anchor_point(target, false, false, moving_down, 0)
+    let end_base = if boundary_anchor_prefers_direct_base(target) {
+      end_anchor
+    } else {
+      boundary_anchor_point(target, false, false, moving_down, 0)
+    }
     match back_edge_bend_x {
       Some(bend_x) =>
         if !moving_down {
@@ -7271,6 +7826,7 @@ fn layout_graph_legacy_with_subgraph_redirects(
         graph.edges,
         preserve_dummy_lane_channels,
         enable_feedback_back_edge_ordering,
+        !class_or_er_graph,
       )
       let compacted_lane_by_id = collect_non_state_flow_lanes(
         nodes_in_order,
@@ -7279,6 +7835,7 @@ fn layout_graph_legacy_with_subgraph_redirects(
         graph.edges,
         preserve_dummy_lane_channels,
         enable_feedback_back_edge_ordering,
+        !class_or_er_graph,
       )
       let baseline_lane_crossings = count_lane_space_edge_crossings(
         graph.edges,
@@ -7392,6 +7949,7 @@ fn layout_graph_legacy_with_subgraph_redirects(
         graph.edges,
         preserve_dummy_lane_channels,
         enable_feedback_back_edge_ordering,
+        !class_or_er_graph,
       )
     }
     for node_id, lane in lane_by_id {
