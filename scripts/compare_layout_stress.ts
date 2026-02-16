@@ -15,6 +15,7 @@
  *   bun run scripts/compare_layout_stress.ts --min-major-span-ratio 0.25 --min-minor-span-ratio 0.05 --min-avg-major-span-ratio 0.80 --min-avg-minor-span-ratio 0.20
  *   bun run scripts/compare_layout_stress.ts --local-timeout-ms 120000 --local-render-retries 2 --retry-backoff-ms 500
  *   bun run scripts/compare_layout_stress.ts fixtures/layout_challenge_001_nested_portal_mesh.mmd --explain-logical-crossings
+ *   bun run scripts/compare_layout_stress.ts fixtures/layout_stress_010_bipartite_crossfire.mmd --explain-rank-order
  *   bun run scripts/compare_layout_stress.ts --max-logical-crossing-multiplier 1.0 --explain-on-failure
  */
 
@@ -49,6 +50,11 @@ type Metrics = {
   inversionRate: number
   inversionRateY: number
   majorAxis: Axis
+  majorRankLayersLocal: number
+  majorRankLayersOfficial: number
+  majorRankExactMatchRate: number
+  majorRankAvgDisplacement: number
+  majorRankCompositionMismatchCount: number
   majorInversionRate: number
   majorSpanRatio: number
   minorSpanRatio: number
@@ -70,6 +76,8 @@ type Metrics = {
   logicalCrossingPairOfficialOnlySample?: string[]
   logicalCrossingLocalOnlyTopEdges?: Array<{ edge: string; count: number }>
   logicalCrossingOfficialOnlyTopEdges?: Array<{ edge: string; count: number }>
+  majorRankOrderMismatchSample?: string[]
+  majorRankCompositionMismatchSample?: string[]
 }
 
 type CliOptions = {
@@ -99,6 +107,7 @@ type CliOptions = {
   localRenderRetries: number
   retryBackoffMs: number
   explainLogicalCrossings: boolean
+  explainRankOrder: boolean
   explainOnFailure: boolean
   topCrossingPairs: number
   topCrossingEdges: number
@@ -1115,6 +1124,203 @@ function countPairInversions(reference: string[], actual: string[]): number {
   return inversions
 }
 
+function majorCoord(point: Point, majorAxis: Axis): number {
+  return majorAxis === 'x' ? point.x : point.y
+}
+
+function minorCoord(point: Point, majorAxis: Axis): number {
+  return majorAxis === 'x' ? point.y : point.x
+}
+
+function orderByMinorAxis(labels: string[], positions: Map<string, Point>, majorAxis: Axis): string[] {
+  return labels
+    .slice()
+    .sort((left, right) => {
+      const leftPoint = positions.get(left)!
+      const rightPoint = positions.get(right)!
+      const minorDelta = minorCoord(leftPoint, majorAxis) - minorCoord(rightPoint, majorAxis)
+      if (minorDelta !== 0) return minorDelta
+      const majorDelta = majorCoord(leftPoint, majorAxis) - majorCoord(rightPoint, majorAxis)
+      if (majorDelta !== 0) return majorDelta
+      return left.localeCompare(right)
+    })
+}
+
+function buildMajorRankLayers(
+  labels: string[],
+  positions: Map<string, Point>,
+  majorAxis: Axis,
+): string[][] {
+  if (labels.length === 0) return []
+  const entries = labels
+    .map(label => ({ label, major: majorCoord(positions.get(label)!, majorAxis) }))
+    .sort((left, right) => {
+      if (left.major !== right.major) return left.major - right.major
+      return left.label.localeCompare(right.label)
+    })
+
+  const layers: string[][] = []
+  const epsilon = 0.5
+  let anchor = entries[0]!.major
+  let currentLayer: string[] = []
+  for (const entry of entries) {
+    if (Math.abs(entry.major - anchor) > epsilon && currentLayer.length > 0) {
+      layers.push(currentLayer)
+      currentLayer = []
+      anchor = entry.major
+    }
+    currentLayer.push(entry.label)
+  }
+  if (currentLayer.length > 0) {
+    layers.push(currentLayer)
+  }
+  return layers
+}
+
+function buildRankIndexByLabel(layers: string[][]): Map<string, number> {
+  const rankByLabel = new Map<string, number>()
+  for (let rank = 0; rank < layers.length; rank += 1) {
+    for (const label of layers[rank]!) {
+      rankByLabel.set(label, rank)
+    }
+  }
+  return rankByLabel
+}
+
+function sortedLayerLabels(layer: string[]): string[] {
+  return layer.slice().sort((left, right) => left.localeCompare(right))
+}
+
+function sampleLayerLabels(layer: string[], maxLabels: number): string {
+  if (layer.length <= maxLabels) return layer.join(',')
+  const head = layer.slice(0, maxLabels).join(',')
+  return `${head},...(${layer.length - maxLabels} more)`
+}
+
+type MajorRankDiagnostics = {
+  localLayers: number
+  officialLayers: number
+  exactMatchRate: number
+  avgDisplacement: number
+  compositionMismatchCount: number
+  orderMismatchSample?: string[]
+  compositionMismatchSample?: string[]
+}
+
+function computeMajorRankDiagnostics(
+  sharedLabels: string[],
+  officialNodes: Map<string, Point>,
+  localNodes: Map<string, Point>,
+  majorAxis: Axis,
+  includeSamples: boolean,
+): MajorRankDiagnostics {
+  if (sharedLabels.length === 0) {
+    return {
+      localLayers: 0,
+      officialLayers: 0,
+      exactMatchRate: Number.NaN,
+      avgDisplacement: Number.NaN,
+      compositionMismatchCount: 0,
+      ...(includeSamples
+        ? {
+            orderMismatchSample: [],
+            compositionMismatchSample: [],
+          }
+        : {}),
+    }
+  }
+
+  const officialLayers = buildMajorRankLayers(sharedLabels, officialNodes, majorAxis)
+  const localLayers = buildMajorRankLayers(sharedLabels, localNodes, majorAxis)
+  const officialRankByLabel = buildRankIndexByLabel(officialLayers)
+  const localRankByLabel = buildRankIndexByLabel(localLayers)
+
+  let exactMatches = 0
+  let displacementSum = 0
+  let displacementCount = 0
+  for (const label of sharedLabels) {
+    const officialRank = officialRankByLabel.get(label)
+    const localRank = localRankByLabel.get(label)
+    if (officialRank === undefined || localRank === undefined) continue
+    if (officialRank === localRank) exactMatches += 1
+    displacementSum += Math.abs(localRank - officialRank)
+    displacementCount += 1
+  }
+
+  const maxLayerCount = Math.max(officialLayers.length, localLayers.length)
+  let compositionMismatchCount = 0
+  const compositionMismatchSample: string[] = []
+  const orderMismatches: Array<{
+    rank: number
+    inversionRate: number
+    officialOrder: string[]
+    localOrder: string[]
+  }> = []
+
+  for (let rank = 0; rank < maxLayerCount; rank += 1) {
+    const officialLayer = officialLayers[rank] ?? []
+    const localLayer = localLayers[rank] ?? []
+    const sortedOfficial = sortedLayerLabels(officialLayer)
+    const sortedLocal = sortedLayerLabels(localLayer)
+    const sameComposition =
+      sortedOfficial.length === sortedLocal.length &&
+      sortedOfficial.every((label, i) => label === sortedLocal[i])
+
+    if (!sameComposition) {
+      compositionMismatchCount += 1
+      if (includeSamples && compositionMismatchSample.length < 5) {
+        compositionMismatchSample.push(
+          `r${rank}: local=[${sampleLayerLabels(sortedLocal, 6)}] official=[${sampleLayerLabels(sortedOfficial, 6)}]`,
+        )
+      }
+      continue
+    }
+
+    if (officialLayer.length < 2) continue
+    const officialOrder = orderByMinorAxis(officialLayer, officialNodes, majorAxis)
+    const localOrder = orderByMinorAxis(officialLayer, localNodes, majorAxis)
+    const inversions = countPairInversions(officialOrder, localOrder)
+    const pairCount = (officialOrder.length * (officialOrder.length - 1)) / 2
+    if (pairCount <= 0 || inversions <= 0) continue
+    orderMismatches.push({
+      rank,
+      inversionRate: inversions / pairCount,
+      officialOrder,
+      localOrder,
+    })
+  }
+
+  orderMismatches.sort((left, right) => {
+    if (left.inversionRate !== right.inversionRate) {
+      return right.inversionRate - left.inversionRate
+    }
+    return left.rank - right.rank
+  })
+
+  const orderMismatchSample = includeSamples
+    ? orderMismatches.slice(0, 5).map(
+        mismatch =>
+          `r${mismatch.rank} inv=${mismatch.inversionRate.toFixed(4)} local=[${sampleLayerLabels(mismatch.localOrder, 6)}] official=[${sampleLayerLabels(mismatch.officialOrder, 6)}]`,
+      )
+    : undefined
+
+  return {
+    localLayers: localLayers.length,
+    officialLayers: officialLayers.length,
+    exactMatchRate:
+      displacementCount === 0 ? Number.NaN : exactMatches / Math.max(displacementCount, 1),
+    avgDisplacement:
+      displacementCount === 0 ? Number.NaN : displacementSum / Math.max(displacementCount, 1),
+    compositionMismatchCount,
+    ...(includeSamples
+      ? {
+          orderMismatchSample,
+          compositionMismatchSample,
+        }
+      : {}),
+  }
+}
+
 function pointsEqual(a: Point, b: Point): boolean {
   return Math.abs(a.x - b.x) <= 1e-6 && Math.abs(a.y - b.y) <= 1e-6
 }
@@ -1438,6 +1644,13 @@ function compareFixture(
   }
 
   const sharedLabels = [...officialNodes.keys()].filter(label => localNodes.has(label)).sort()
+  const rankDiagnostics = computeMajorRankDiagnostics(
+    sharedLabels,
+    officialNodes,
+    localNodes,
+    majorAxis,
+    options.explainRankOrder,
+  )
   const structuralOk =
     sharedLabels.length === officialNodes.size &&
     sharedLabels.length === localNodes.size &&
@@ -1482,6 +1695,11 @@ function compareFixture(
       inversionRate: Number.NaN,
       inversionRateY: Number.NaN,
       majorAxis,
+      majorRankLayersLocal: rankDiagnostics.localLayers,
+      majorRankLayersOfficial: rankDiagnostics.officialLayers,
+      majorRankExactMatchRate: rankDiagnostics.exactMatchRate,
+      majorRankAvgDisplacement: rankDiagnostics.avgDisplacement,
+      majorRankCompositionMismatchCount: rankDiagnostics.compositionMismatchCount,
       majorInversionRate: Number.NaN,
       majorSpanRatio: Number.NaN,
       minorSpanRatio: Number.NaN,
@@ -1511,6 +1729,12 @@ function compareFixture(
               officialOnlyPairs,
               options.topCrossingEdges,
             ),
+          }
+        : {}),
+      ...(options.explainRankOrder
+        ? {
+            majorRankOrderMismatchSample: rankDiagnostics.orderMismatchSample,
+            majorRankCompositionMismatchSample: rankDiagnostics.compositionMismatchSample,
           }
         : {}),
     }
@@ -1571,6 +1795,11 @@ function compareFixture(
     inversionRate,
     inversionRateY,
     majorAxis,
+    majorRankLayersLocal: rankDiagnostics.localLayers,
+    majorRankLayersOfficial: rankDiagnostics.officialLayers,
+    majorRankExactMatchRate: rankDiagnostics.exactMatchRate,
+    majorRankAvgDisplacement: rankDiagnostics.avgDisplacement,
+    majorRankCompositionMismatchCount: rankDiagnostics.compositionMismatchCount,
     majorInversionRate,
     majorSpanRatio,
     minorSpanRatio,
@@ -1600,6 +1829,12 @@ function compareFixture(
             officialOnlyPairs,
             options.topCrossingEdges,
           ),
+        }
+      : {}),
+    ...(options.explainRankOrder
+      ? {
+          majorRankOrderMismatchSample: rankDiagnostics.orderMismatchSample,
+          majorRankCompositionMismatchSample: rankDiagnostics.compositionMismatchSample,
         }
       : {}),
   }
@@ -1644,6 +1879,7 @@ function parseCliOptions(args: string[]): CliOptions {
   let localRenderRetries = DEFAULT_LOCAL_RENDER_RETRIES
   let retryBackoffMs = DEFAULT_RETRY_BACKOFF_MS
   let explainLogicalCrossings = false
+  let explainRankOrder = false
   let explainOnFailure = false
   let topCrossingPairs = 8
   let topCrossingEdges = 8
@@ -1896,6 +2132,10 @@ function parseCliOptions(args: string[]): CliOptions {
       explainLogicalCrossings = true
       continue
     }
+    if (arg === '--explain-rank-order') {
+      explainRankOrder = true
+      continue
+    }
     if (arg === '--explain-on-failure') {
       explainOnFailure = true
       continue
@@ -1984,6 +2224,7 @@ function parseCliOptions(args: string[]): CliOptions {
     localRenderRetries,
     retryBackoffMs,
     explainLogicalCrossings,
+    explainRankOrder,
     explainOnFailure,
     topCrossingPairs,
     topCrossingEdges,
@@ -2018,9 +2259,21 @@ function printLogicalCrossingExplanation(result: Metrics): void {
   }
 }
 
+function printRankOrderExplanation(result: Metrics): void {
+  const composition = result.majorRankCompositionMismatchSample ?? []
+  const order = result.majorRankOrderMismatchSample ?? []
+  if (composition.length > 0) {
+    console.log(`majorRankCompositionMismatch ${composition.join(' | ')}`)
+  }
+  if (order.length > 0) {
+    console.log(`majorRankOrderMismatch ${order.join(' | ')}`)
+  }
+}
+
 function main(): void {
   const options = parseCliOptions(process.argv.slice(2))
-  const includeExplanations = options.explainLogicalCrossings || options.explainOnFailure
+  const includeLogicalExplanations = options.explainLogicalCrossings || options.explainOnFailure
+  const includeRankExplanations = options.explainRankOrder || options.explainOnFailure
   const targets = options.fixtures.length > 0 ? options.fixtures : discoverDefaultFixtures()
   if (targets.length === 0) {
     fail('no stress fixtures found (expected fixtures/layout_stress_*.mmd)')
@@ -2030,7 +2283,8 @@ function main(): void {
   const npmCacheDir = join(tempRoot, '.npm-cache')
   const compareOptions = {
     ...options,
-    explainLogicalCrossings: includeExplanations,
+    explainLogicalCrossings: includeLogicalExplanations,
+    explainRankOrder: includeRankExplanations,
   }
   const results = targets.map(path =>
     compareFixture(path, tempRoot, npmCacheDir, compareOptions),
@@ -2045,6 +2299,9 @@ function main(): void {
       `rmse=${round(result.rmse)} maxDist=${round(result.maxDist)} inversionRateX=${round(result.inversionRate)} inversionRateY=${round(result.inversionRateY)} majorAxis=${result.majorAxis} majorInversionRate=${round(result.majorInversionRate)}`,
     )
     console.log(
+      `majorRankAlignment layers local/official=${result.majorRankLayersLocal}/${result.majorRankLayersOfficial} exact=${round(result.majorRankExactMatchRate)} avgDisp=${round(result.majorRankAvgDisplacement)} compositionMismatch=${result.majorRankCompositionMismatchCount}`,
+    )
+    console.log(
       `spanRatio x=${round(result.spanXRatio)} y=${round(result.spanYRatio)} area=${round(result.spanAreaRatio)} major=${round(result.majorSpanRatio)} minor=${round(result.minorSpanRatio)}`,
     )
     console.log(
@@ -2055,6 +2312,9 @@ function main(): void {
     )
     if (options.explainLogicalCrossings) {
       printLogicalCrossingExplanation(result)
+    }
+    if (options.explainRankOrder) {
+      printRankOrderExplanation(result)
     }
   }
 
@@ -2071,6 +2331,16 @@ function main(): void {
   const avgMajorInversion =
     results.reduce((acc, row) => acc + (Number.isFinite(row.majorInversionRate) ? row.majorInversionRate : 0), 0) /
     Math.max(results.length, 1)
+  const avgMajorRankExactMatchRate =
+    results.reduce((acc, row) => acc + (Number.isFinite(row.majorRankExactMatchRate) ? row.majorRankExactMatchRate : 0), 0) /
+    Math.max(results.length, 1)
+  const avgMajorRankDisplacement =
+    results.reduce((acc, row) => acc + (Number.isFinite(row.majorRankAvgDisplacement) ? row.majorRankAvgDisplacement : 0), 0) /
+    Math.max(results.length, 1)
+  const totalMajorRankCompositionMismatches = results.reduce(
+    (acc, row) => acc + row.majorRankCompositionMismatchCount,
+    0,
+  )
   const avgLogicalMultiplier =
     results.reduce((acc, row) => acc + (Number.isFinite(row.logicalCrossingMultiplier) ? row.logicalCrossingMultiplier : 0), 0) /
     Math.max(results.length, 1)
@@ -2096,6 +2366,9 @@ function main(): void {
   console.log(`fixtures=${results.length} structural_ok=${okCount}/${results.length}`)
   console.log(
     `avg_rmse=${round(avgRmse)} avg_inversion_rate_x=${round(avgInversion)} avg_inversion_rate_y=${round(avgInversionY)} avg_major_inversion_rate=${round(avgMajorInversion)}`,
+  )
+  console.log(
+    `avg_major_rank_exact_match_rate=${round(avgMajorRankExactMatchRate)} avg_major_rank_displacement=${round(avgMajorRankDisplacement)} total_major_rank_composition_mismatches=${totalMajorRankCompositionMismatches}`,
   )
   console.log(
     `total_polyline_crossings local=${totalLocalPolylineCrossings} official=${totalOfficialPolylineCrossings} delta=${totalLocalPolylineCrossings - totalOfficialPolylineCrossings}`,
@@ -2136,7 +2409,8 @@ function main(): void {
         localTimeoutMs: options.localTimeoutMs,
         localRenderRetries: options.localRenderRetries,
         retryBackoffMs: options.retryBackoffMs,
-        explainLogicalCrossings: includeExplanations,
+        explainLogicalCrossings: includeLogicalExplanations,
+        explainRankOrder: includeRankExplanations,
         explainOnFailure: options.explainOnFailure,
         topCrossingPairs: options.topCrossingPairs,
         topCrossingEdges: options.topCrossingEdges,
@@ -2148,6 +2422,9 @@ function main(): void {
         avgInversionRateX: avgInversion,
         avgInversionRateY: avgInversionY,
         avgMajorInversionRate: avgMajorInversion,
+        avgMajorRankExactMatchRate,
+        avgMajorRankDisplacement,
+        totalMajorRankCompositionMismatches,
         avgMajorSpanRatio,
         avgMinorSpanRatio,
         totalLocalPolylineCrossings,
@@ -2186,6 +2463,9 @@ function main(): void {
         for (const result of violating) {
           console.error(`\n--- explain ${result.fixture} ---`)
           printLogicalCrossingExplanation(result)
+          if (!options.explainRankOrder) {
+            printRankOrderExplanation(result)
+          }
         }
       }
       process.exitCode = 3
