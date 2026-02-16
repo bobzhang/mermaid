@@ -663,6 +663,29 @@ test "SVG renderer uses basis-curve path for multi-point edges" {
 }
 
 ///|
+test "SVG renderer keeps short terminal stub mixed edges as polyline" {
+  let graph = make_svg_test_graph([
+    {
+      source: "A",
+      target: "B",
+      label: None,
+      style: Solid,
+      has_arrow_start: false,
+      has_arrow_end: true,
+      relation_operator: None,
+      points: [{ x: 290, y: 104 }, { x: 290, y: 110 }, { x: 344, y: 200 }],
+      label_position: None,
+    },
+  ])
+  let svg = render_svg(graph, DiagramColors::default(), "Inter", false)
+
+  assert_true(
+    svg.contains("<polyline class=\"edge\" points=\"290,104 290,110 344,200\""),
+  )
+  assert_true(!svg.contains("<path class=\"edge\""))
+}
+
+///|
 test "SVG renderer rounds corners for orthogonal multi-point edges" {
   let graph = make_svg_test_graph([
     {

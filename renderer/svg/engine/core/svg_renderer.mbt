@@ -67,6 +67,11 @@ fn edge_segment_is_axis_aligned(start : Point, end_ : Point) -> Bool {
 }
 
 ///|
+fn edge_segment_manhattan_length(start : Point, end_ : Point) -> Int {
+  int_abs(end_.x - start.x) + int_abs(end_.y - start.y)
+}
+
+///|
 fn edge_is_axis_aligned_polyline(points : Array[Point]) -> Bool {
   if points.length() < 2 {
     return false
@@ -77,6 +82,30 @@ fn edge_is_axis_aligned_polyline(points : Array[Point]) -> Bool {
     }
   }
   true
+}
+
+///|
+fn edge_has_short_terminal_stub_for_basis(points : Array[Point]) -> Bool {
+  if points.length() < 3 {
+    return false
+  }
+  let short_stub_limit = 12
+
+  let first = points[0]
+  let second = points[1]
+  let third = points[2]
+  if edge_segment_is_axis_aligned(first, second) &&
+    !edge_segment_is_axis_aligned(second, third) &&
+    edge_segment_manhattan_length(first, second) <= short_stub_limit {
+    return true
+  }
+
+  let last = points[points.length() - 1]
+  let before_last = points[points.length() - 2]
+  let before_before_last = points[points.length() - 3]
+  edge_segment_is_axis_aligned(before_last, last) &&
+  !edge_segment_is_axis_aligned(before_before_last, before_last) &&
+  edge_segment_manhattan_length(before_last, last) <= short_stub_limit
 }
 
 ///|
@@ -142,7 +171,7 @@ fn rounded_orthogonal_path(
 
 ///|
 fn edge_needs_curve_path(points : Array[Point]) -> Bool {
-  points.length() >= 3
+  points.length() >= 3 && !edge_has_short_terminal_stub_for_basis(points)
 }
 
 ///|

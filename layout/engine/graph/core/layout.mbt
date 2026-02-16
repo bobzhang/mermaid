@@ -2538,19 +2538,18 @@ fn apply_endpoint_port_stubs(
       [source_anchor, target_anchor]
     }
   } else {
-    let adjusted_points : Array[Point] = []
-    for point in core_points {
-      adjusted_points.push(point)
-    }
-    adjusted_points[0] = source_anchor
-    adjusted_points[adjusted_points.length() - 1] = target_anchor
-
     let routed_points : Array[Point] = []
-    for point in adjusted_points {
+    if !point_equals(source_anchor, core_points[0]) {
+      routed_points.push(source_anchor)
+    }
+    for point in core_points {
       if routed_points.length() == 0 ||
         !point_equals(routed_points[routed_points.length() - 1], point) {
         routed_points.push(point)
       }
+    }
+    if !point_equals(target_anchor, routed_points[routed_points.length() - 1]) {
+      routed_points.push(target_anchor)
     }
     routed_points
   }
