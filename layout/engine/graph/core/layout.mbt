@@ -548,132 +548,323 @@ fn collect_greedy_feedback_edge_indices(
   edges : Array[MermaidEdge],
   considered_edge_indices : Array[Int],
 ) -> Map[Int, Bool] {
-  let active_node_by_id : Map[String, Int] = {}
-  let active_edge_by_index : Map[Int, Int] = {}
-  let incoming_edge_indices_by_target : Map[String, Array[Int]] = {}
-  let outgoing_edge_indices_by_source : Map[String, Array[Int]] = {}
-  let incoming_weight_by_id : Map[String, Int] = {}
-  let outgoing_weight_by_id : Map[String, Int] = {}
+  let node_index_by_id : Map[String, Int] = {}
+  let active_node_by_index : Array[Bool] = []
+  let incoming_aggregated_edge_indices_by_target : Array[Array[Int]] = []
+  let outgoing_aggregated_edge_indices_by_source : Array[Array[Int]] = []
+  let incoming_weight_by_index : Array[Int] = []
+  let outgoing_weight_by_index : Array[Int] = []
   let back_edge_by_index : Map[Int, Bool] = {}
-  let mut remaining_node_count = 0
 
-  for node in nodes_in_order {
-    active_node_by_id[node.id] = 1
-    incoming_edge_indices_by_target[node.id] = []
-    outgoing_edge_indices_by_source[node.id] = []
-    incoming_weight_by_id[node.id] = 0
-    outgoing_weight_by_id[node.id] = 0
-    remaining_node_count += 1
+  for i, node in nodes_in_order {
+    node_index_by_id[node.id] = i
+    active_node_by_index.push(true)
+    incoming_aggregated_edge_indices_by_target.push([])
+    outgoing_aggregated_edge_indices_by_source.push([])
+    incoming_weight_by_index.push(0)
+    outgoing_weight_by_index.push(0)
   }
+  let mut remaining_node_count = nodes_in_order.length()
 
   if remaining_node_count <= 1 {
     return back_edge_by_index
   }
 
+  // Aggregate multi-edges so greedy FAS decisions match dagre's weighted pass.
+  let aggregated_source_index : Array[Int] = []
+  let aggregated_target_index : Array[Int] = []
+  let aggregated_weight : Array[Int] = []
+  let aggregated_original_edge_indices : Array[Array[Int]] = []
+  let aggregated_edge_index_by_key : Map[String, Int] = {}
   for edge_index in considered_edge_indices {
     let edge = edges[edge_index]
-    if !active_node_by_id.contains(edge.source) ||
-      !active_node_by_id.contains(edge.target) {
-      continue
-    }
-    active_edge_by_index[edge_index] = 1
-    match incoming_edge_indices_by_target.get(edge.target) {
-      Some(indices) => indices.push(edge_index)
-      None => ()
-    }
-    match outgoing_edge_indices_by_source.get(edge.source) {
-      Some(indices) => indices.push(edge_index)
-      None => ()
-    }
-    incoming_weight_by_id[edge.target] = option_int_or(
-        incoming_weight_by_id.get(edge.target),
-        0,
-      ) +
-      1
-    outgoing_weight_by_id[edge.source] = option_int_or(
-        outgoing_weight_by_id.get(edge.source),
-        0,
-      ) +
-      1
-  }
-
-  fn deactivate_node(node_id : String, collect_incoming_edges : Bool) -> Bool {
-    if option_int_or(active_node_by_id.get(node_id), 0) == 0 {
-      return false
-    }
-    active_node_by_id[node_id] = 0
-
-    match incoming_edge_indices_by_target.get(node_id) {
-      Some(incoming_edge_indices) =>
-        for edge_index in incoming_edge_indices {
-          if option_int_or(active_edge_by_index.get(edge_index), 0) == 0 {
-            continue
+    match
+      (node_index_by_id.get(edge.source), node_index_by_id.get(edge.target)) {
+      (Some(source_index), Some(target_index)) => {
+        let key = "\{edge.source}->\{edge.target}"
+        match aggregated_edge_index_by_key.get(key) {
+          Some(aggregated_index) => {
+            aggregated_weight[aggregated_index] = aggregated_weight[aggregated_index] +
+              1
+            aggregated_original_edge_indices[aggregated_index].push(edge_index)
           }
-          active_edge_by_index[edge_index] = 0
-          let edge = edges[edge_index]
-          incoming_weight_by_id[node_id] = option_int_or(
-              incoming_weight_by_id.get(node_id),
-              0,
-            ) -
-            1
-          outgoing_weight_by_id[edge.source] = option_int_or(
-              outgoing_weight_by_id.get(edge.source),
-              0,
-            ) -
-            1
-          if collect_incoming_edges {
-            back_edge_by_index[edge_index] = true
+          None => {
+            let aggregated_index = aggregated_source_index.length()
+            aggregated_edge_index_by_key[key] = aggregated_index
+            aggregated_source_index.push(source_index)
+            aggregated_target_index.push(target_index)
+            aggregated_weight.push(1)
+            aggregated_original_edge_indices.push([edge_index])
+            outgoing_aggregated_edge_indices_by_source[source_index].push(
+              aggregated_index,
+            )
+            incoming_aggregated_edge_indices_by_target[target_index].push(
+              aggregated_index,
+            )
           }
-        }
-      None => ()
-    }
-    match outgoing_edge_indices_by_source.get(node_id) {
-      Some(outgoing_edge_indices) =>
-        for edge_index in outgoing_edge_indices {
-          if option_int_or(active_edge_by_index.get(edge_index), 0) == 0 {
-            continue
-          }
-          active_edge_by_index[edge_index] = 0
-          let edge = edges[edge_index]
-          outgoing_weight_by_id[node_id] = option_int_or(
-              outgoing_weight_by_id.get(node_id),
-              0,
-            ) -
-            1
-          incoming_weight_by_id[edge.target] = option_int_or(
-              incoming_weight_by_id.get(edge.target),
-              0,
-            ) -
-            1
-        }
-      None => ()
-    }
-    true
-  }
-
-  while remaining_node_count > 0 {
-    let mut removed_any = true
-    while removed_any {
-      removed_any = false
-      for node in nodes_in_order {
-        if option_int_or(active_node_by_id.get(node.id), 0) == 0 {
-          continue
-        }
-        if option_int_or(outgoing_weight_by_id.get(node.id), 0) == 0 &&
-          deactivate_node(node.id, false) {
-          remaining_node_count = remaining_node_count - 1
-          removed_any = true
         }
       }
-      for node in nodes_in_order {
-        if option_int_or(active_node_by_id.get(node.id), 0) == 0 {
-          continue
+      _ => ()
+    }
+  }
+
+  if aggregated_source_index.length() == 0 {
+    return back_edge_by_index
+  }
+
+  let mut max_incoming_weight = 0
+  let mut max_outgoing_weight = 0
+  for aggregated_index in 0..<aggregated_source_index.length() {
+    let source_index = aggregated_source_index[aggregated_index]
+    let target_index = aggregated_target_index[aggregated_index]
+    let weight = aggregated_weight[aggregated_index]
+    outgoing_weight_by_index[source_index] = outgoing_weight_by_index[source_index] +
+      weight
+    incoming_weight_by_index[target_index] = incoming_weight_by_index[target_index] +
+      weight
+    max_outgoing_weight = max_outgoing_weight.max(
+      outgoing_weight_by_index[source_index],
+    )
+    max_incoming_weight = max_incoming_weight.max(
+      incoming_weight_by_index[target_index],
+    )
+  }
+
+  let bucket_count = max_incoming_weight + max_outgoing_weight + 3
+  let zero_bucket_index = max_incoming_weight + 1
+  let bucket_head_by_index : Array[Int] = []
+  let bucket_tail_by_index : Array[Int] = []
+  for _ in 0..<bucket_count {
+    bucket_head_by_index.push(-1)
+    bucket_tail_by_index.push(-1)
+  }
+
+  let entry_prev_by_node_index : Array[Int] = []
+  let entry_next_by_node_index : Array[Int] = []
+  let entry_bucket_by_node_index : Array[Int] = []
+  for _ in 0..<nodes_in_order.length() {
+    entry_prev_by_node_index.push(-1)
+    entry_next_by_node_index.push(-1)
+    entry_bucket_by_node_index.push(-1)
+  }
+
+  let active_aggregated_edge_by_index : Array[Bool] = []
+  for _ in 0..<aggregated_source_index.length() {
+    active_aggregated_edge_by_index.push(true)
+  }
+
+  fn unlink_bucket_entry(
+    node_index : Int,
+    bucket_head_by_index : Array[Int],
+    bucket_tail_by_index : Array[Int],
+    entry_prev_by_node_index : Array[Int],
+    entry_next_by_node_index : Array[Int],
+    entry_bucket_by_node_index : Array[Int],
+  ) -> Unit {
+    let bucket_index = entry_bucket_by_node_index[node_index]
+    if bucket_index < 0 {
+      return
+    }
+    let previous = entry_prev_by_node_index[node_index]
+    let next = entry_next_by_node_index[node_index]
+    if previous >= 0 {
+      entry_next_by_node_index[previous] = next
+    } else {
+      bucket_head_by_index[bucket_index] = next
+    }
+    if next >= 0 {
+      entry_prev_by_node_index[next] = previous
+    } else {
+      bucket_tail_by_index[bucket_index] = previous
+    }
+    entry_prev_by_node_index[node_index] = -1
+    entry_next_by_node_index[node_index] = -1
+    entry_bucket_by_node_index[node_index] = -1
+  }
+
+  fn enqueue_bucket_entry(
+    node_index : Int,
+    bucket_index : Int,
+    bucket_head_by_index : Array[Int],
+    bucket_tail_by_index : Array[Int],
+    entry_prev_by_node_index : Array[Int],
+    entry_next_by_node_index : Array[Int],
+    entry_bucket_by_node_index : Array[Int],
+  ) -> Unit {
+    if entry_bucket_by_node_index[node_index] >= 0 {
+      unlink_bucket_entry(
+        node_index, bucket_head_by_index, bucket_tail_by_index, entry_prev_by_node_index,
+        entry_next_by_node_index, entry_bucket_by_node_index,
+      )
+    }
+    let current_head = bucket_head_by_index[bucket_index]
+    entry_prev_by_node_index[node_index] = -1
+    entry_next_by_node_index[node_index] = current_head
+    if current_head >= 0 {
+      entry_prev_by_node_index[current_head] = node_index
+    } else {
+      bucket_tail_by_index[bucket_index] = node_index
+    }
+    bucket_head_by_index[bucket_index] = node_index
+    entry_bucket_by_node_index[node_index] = bucket_index
+  }
+
+  fn dequeue_bucket_entry(
+    bucket_index : Int,
+    bucket_head_by_index : Array[Int],
+    bucket_tail_by_index : Array[Int],
+    entry_prev_by_node_index : Array[Int],
+    entry_next_by_node_index : Array[Int],
+    entry_bucket_by_node_index : Array[Int],
+  ) -> Int? {
+    let node_index = bucket_tail_by_index[bucket_index]
+    if node_index < 0 {
+      return None
+    }
+    unlink_bucket_entry(
+      node_index, bucket_head_by_index, bucket_tail_by_index, entry_prev_by_node_index,
+      entry_next_by_node_index, entry_bucket_by_node_index,
+    )
+    Some(node_index)
+  }
+
+  fn assign_bucket_for_node(
+    node_index : Int,
+    active_node_by_index : Array[Bool],
+    incoming_weight_by_index : Array[Int],
+    outgoing_weight_by_index : Array[Int],
+    zero_bucket_index : Int,
+    bucket_count : Int,
+    bucket_head_by_index : Array[Int],
+    bucket_tail_by_index : Array[Int],
+    entry_prev_by_node_index : Array[Int],
+    entry_next_by_node_index : Array[Int],
+    entry_bucket_by_node_index : Array[Int],
+  ) -> Unit {
+    if !active_node_by_index[node_index] {
+      unlink_bucket_entry(
+        node_index, bucket_head_by_index, bucket_tail_by_index, entry_prev_by_node_index,
+        entry_next_by_node_index, entry_bucket_by_node_index,
+      )
+      return
+    }
+
+    let incoming_weight = incoming_weight_by_index[node_index]
+    let outgoing_weight = outgoing_weight_by_index[node_index]
+    let bucket_index = if outgoing_weight == 0 {
+      0
+    } else if incoming_weight == 0 {
+      bucket_count - 1
+    } else {
+      outgoing_weight - incoming_weight + zero_bucket_index
+    }
+    enqueue_bucket_entry(
+      node_index, bucket_index, bucket_head_by_index, bucket_tail_by_index, entry_prev_by_node_index,
+      entry_next_by_node_index, entry_bucket_by_node_index,
+    )
+  }
+
+  for node_index in 0..<nodes_in_order.length() {
+    assign_bucket_for_node(
+      node_index, active_node_by_index, incoming_weight_by_index, outgoing_weight_by_index,
+      zero_bucket_index, bucket_count, bucket_head_by_index, bucket_tail_by_index,
+      entry_prev_by_node_index, entry_next_by_node_index, entry_bucket_by_node_index,
+    )
+  }
+
+  fn remove_node(node_index : Int, collect_incoming_edges : Bool) -> Unit {
+    if !active_node_by_index[node_index] {
+      return
+    }
+    active_node_by_index[node_index] = false
+    unlink_bucket_entry(
+      node_index, bucket_head_by_index, bucket_tail_by_index, entry_prev_by_node_index,
+      entry_next_by_node_index, entry_bucket_by_node_index,
+    )
+    remaining_node_count = remaining_node_count - 1
+
+    for
+      aggregated_index in incoming_aggregated_edge_indices_by_target[node_index] {
+      if !active_aggregated_edge_by_index[aggregated_index] {
+        continue
+      }
+      active_aggregated_edge_by_index[aggregated_index] = false
+      let source_index = aggregated_source_index[aggregated_index]
+      let weight = aggregated_weight[aggregated_index]
+      incoming_weight_by_index[node_index] = incoming_weight_by_index[node_index] -
+        weight
+      outgoing_weight_by_index[source_index] = outgoing_weight_by_index[source_index] -
+        weight
+      if collect_incoming_edges {
+        for edge_index in aggregated_original_edge_indices[aggregated_index] {
+          back_edge_by_index[edge_index] = true
         }
-        if option_int_or(incoming_weight_by_id.get(node.id), 0) == 0 &&
-          deactivate_node(node.id, false) {
-          remaining_node_count = remaining_node_count - 1
-          removed_any = true
+      }
+      if active_node_by_index[source_index] {
+        assign_bucket_for_node(
+          source_index, active_node_by_index, incoming_weight_by_index, outgoing_weight_by_index,
+          zero_bucket_index, bucket_count, bucket_head_by_index, bucket_tail_by_index,
+          entry_prev_by_node_index, entry_next_by_node_index, entry_bucket_by_node_index,
+        )
+      }
+    }
+
+    for
+      aggregated_index in outgoing_aggregated_edge_indices_by_source[node_index] {
+      if !active_aggregated_edge_by_index[aggregated_index] {
+        continue
+      }
+      active_aggregated_edge_by_index[aggregated_index] = false
+      let target_index = aggregated_target_index[aggregated_index]
+      let weight = aggregated_weight[aggregated_index]
+      outgoing_weight_by_index[node_index] = outgoing_weight_by_index[node_index] -
+        weight
+      incoming_weight_by_index[target_index] = incoming_weight_by_index[target_index] -
+        weight
+      if active_node_by_index[target_index] {
+        assign_bucket_for_node(
+          target_index, active_node_by_index, incoming_weight_by_index, outgoing_weight_by_index,
+          zero_bucket_index, bucket_count, bucket_head_by_index, bucket_tail_by_index,
+          entry_prev_by_node_index, entry_next_by_node_index, entry_bucket_by_node_index,
+        )
+      }
+    }
+  }
+
+  let sink_bucket_index = 0
+  let source_bucket_index = bucket_count - 1
+  while remaining_node_count > 0 {
+    let mut maybe_sink = dequeue_bucket_entry(
+      sink_bucket_index, bucket_head_by_index, bucket_tail_by_index, entry_prev_by_node_index,
+      entry_next_by_node_index, entry_bucket_by_node_index,
+    )
+    while true {
+      match maybe_sink {
+        Some(node_index) => {
+          remove_node(node_index, false)
+          maybe_sink = dequeue_bucket_entry(
+            sink_bucket_index, bucket_head_by_index, bucket_tail_by_index, entry_prev_by_node_index,
+            entry_next_by_node_index, entry_bucket_by_node_index,
+          )
         }
+        None => break
+      }
+    }
+
+    let mut maybe_source = dequeue_bucket_entry(
+      source_bucket_index, bucket_head_by_index, bucket_tail_by_index, entry_prev_by_node_index,
+      entry_next_by_node_index, entry_bucket_by_node_index,
+    )
+    while true {
+      match maybe_source {
+        Some(node_index) => {
+          remove_node(node_index, false)
+          maybe_source = dequeue_bucket_entry(
+            source_bucket_index, bucket_head_by_index, bucket_tail_by_index, entry_prev_by_node_index,
+            entry_next_by_node_index, entry_bucket_by_node_index,
+          )
+        }
+        None => break
       }
     }
 
@@ -681,44 +872,36 @@ fn collect_greedy_feedback_edge_indices(
       break
     }
 
-    let mut has_candidate = false
-    let mut candidate_id = ""
-    let mut candidate_score = 0
-    let mut candidate_outgoing_weight = 0
-    let mut candidate_order = 0
-    for order, node in nodes_in_order {
-      if option_int_or(active_node_by_id.get(node.id), 0) == 0 {
-        continue
-      }
-      let incoming_weight = option_int_or(incoming_weight_by_id.get(node.id), 0)
-      let outgoing_weight = option_int_or(outgoing_weight_by_id.get(node.id), 0)
-      let score = outgoing_weight - incoming_weight
-      if !has_candidate ||
-        score > candidate_score ||
-        (
-          score == candidate_score &&
-          outgoing_weight > candidate_outgoing_weight
-        ) ||
-        (
-          score == candidate_score &&
-          outgoing_weight == candidate_outgoing_weight &&
-          order > candidate_order
+    let mut picked_feedback_node = false
+    let mut bucket_index = bucket_count - 2
+    while bucket_index > 0 {
+      match
+        dequeue_bucket_entry(
+          bucket_index, bucket_head_by_index, bucket_tail_by_index, entry_prev_by_node_index,
+          entry_next_by_node_index, entry_bucket_by_node_index,
         ) {
-        has_candidate = true
-        candidate_id = node.id
-        candidate_score = score
-        candidate_outgoing_weight = outgoing_weight
-        candidate_order = order
+        Some(node_index) => {
+          remove_node(node_index, true)
+          picked_feedback_node = true
+          break
+        }
+        None => ()
       }
+      bucket_index = bucket_index - 1
     }
 
-    if !has_candidate {
-      break
-    }
-    if deactivate_node(candidate_id, true) {
-      remaining_node_count = remaining_node_count - 1
-    } else {
-      break
+    if !picked_feedback_node {
+      let mut fallback_node_index = -1
+      for node_index in 0..<active_node_by_index.length() {
+        if active_node_by_index[node_index] {
+          fallback_node_index = node_index
+          break
+        }
+      }
+      if fallback_node_index < 0 {
+        break
+      }
+      remove_node(fallback_node_index, true)
     }
   }
 

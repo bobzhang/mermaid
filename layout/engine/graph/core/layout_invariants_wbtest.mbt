@@ -674,6 +674,102 @@ test "Layout greedy feedback edge selector marks incoming edges of max score piv
 }
 
 ///|
+test "Layout greedy feedback edge selector prefers lighter reverse direction with multi-edges" {
+  let nodes : Array[MermaidNode] = [
+    { id: "N1", label: "N1", shape: Rectangle },
+    { id: "N2", label: "N2", shape: Rectangle },
+  ]
+  let edges : Array[MermaidEdge] = [
+    {
+      source: "N1",
+      target: "N2",
+      label: None,
+      style: Solid,
+      has_arrow_start: false,
+      has_arrow_end: true,
+      relation_operator: Some("-->"),
+    },
+    {
+      source: "N1",
+      target: "N2",
+      label: None,
+      style: Solid,
+      has_arrow_start: false,
+      has_arrow_end: true,
+      relation_operator: Some("-->"),
+    },
+    {
+      source: "N2",
+      target: "N1",
+      label: None,
+      style: Solid,
+      has_arrow_start: false,
+      has_arrow_end: true,
+      relation_operator: Some("-->"),
+    },
+  ]
+
+  let back_edges = collect_greedy_feedback_edge_indices(nodes, edges, [0, 1, 2])
+  let mut back_edge_count = 0
+  for _, _ in back_edges {
+    back_edge_count += 1
+  }
+
+  assert_eq(back_edge_count, 1)
+  assert_true(back_edges.contains(2))
+  assert_eq(back_edges.contains(0), false)
+  assert_eq(back_edges.contains(1), false)
+}
+
+///|
+test "Layout greedy feedback edge selector expands aggregated reverse multi-edges" {
+  let nodes : Array[MermaidNode] = [
+    { id: "N1", label: "N1", shape: Rectangle },
+    { id: "N2", label: "N2", shape: Rectangle },
+  ]
+  let edges : Array[MermaidEdge] = [
+    {
+      source: "N1",
+      target: "N2",
+      label: None,
+      style: Solid,
+      has_arrow_start: false,
+      has_arrow_end: true,
+      relation_operator: Some("-->"),
+    },
+    {
+      source: "N2",
+      target: "N1",
+      label: None,
+      style: Solid,
+      has_arrow_start: false,
+      has_arrow_end: true,
+      relation_operator: Some("-->"),
+    },
+    {
+      source: "N2",
+      target: "N1",
+      label: None,
+      style: Solid,
+      has_arrow_start: false,
+      has_arrow_end: true,
+      relation_operator: Some("-->"),
+    },
+  ]
+
+  let back_edges = collect_greedy_feedback_edge_indices(nodes, edges, [0, 1, 2])
+  let mut back_edge_count = 0
+  for _, _ in back_edges {
+    back_edge_count += 1
+  }
+
+  assert_eq(back_edge_count, 1)
+  assert_true(back_edges.contains(0))
+  assert_eq(back_edges.contains(1), false)
+  assert_eq(back_edges.contains(2), false)
+}
+
+///|
 test "Layout back-edge lane selection avoids existing segment crossings" {
   let source : PositionedNode = {
     id: "S",
