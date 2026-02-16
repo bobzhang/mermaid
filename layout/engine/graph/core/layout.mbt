@@ -2927,6 +2927,106 @@ fn distributed_boundary_port_offset(
 }
 
 ///|
+fn choose_available_boundary_offset(
+  preferred_offset : Int,
+  candidate_offsets : Array[Int],
+  used_offsets : Map[Int, Bool],
+) -> Int {
+  if !used_offsets.contains(preferred_offset) {
+    return preferred_offset
+  }
+  let mut has_candidate = false
+  let mut best_offset = preferred_offset
+  let mut best_distance = 0
+  let mut best_magnitude = 0
+  for candidate in candidate_offsets {
+    if used_offsets.contains(candidate) {
+      continue
+    }
+    let distance = int_abs(candidate - preferred_offset)
+    let magnitude = int_abs(candidate)
+    if !has_candidate ||
+      distance < best_distance ||
+      (distance == best_distance && magnitude < best_magnitude) ||
+      (
+        distance == best_distance &&
+        magnitude == best_magnitude &&
+        candidate < best_offset
+      ) {
+      has_candidate = true
+      best_offset = candidate
+      best_distance = distance
+      best_magnitude = magnitude
+    }
+  }
+  if has_candidate {
+    best_offset
+  } else {
+    preferred_offset
+  }
+}
+
+///|
+fn assign_compact_boundary_offsets_for_cohort(
+  cohort_assignments : Array[BoundaryEndpointAssignment],
+  edge_layout_contexts : Array[EdgeLayoutContext],
+  source_endpoint : Bool,
+  offsets_by_context_index : Map[Int, Int],
+) -> Unit {
+  if cohort_assignments.length() <= 1 {
+    return
+  }
+  cohort_assignments.sort_by((left, right) => {
+    if left.peer_minor != right.peer_minor {
+      return left.peer_minor.compare(right.peer_minor)
+    }
+    if left.peer_major != right.peer_major {
+      return left.peer_major.compare(right.peer_major)
+    }
+    left.context_index.compare(right.context_index)
+  })
+  let first_assignment = cohort_assignments[0]
+  let first_context = edge_layout_contexts[first_assignment.context_index]
+  let endpoint_node = if source_endpoint {
+    first_context.source
+  } else {
+    first_context.target
+  }
+  let half_span_limit = boundary_side_minor_span_limit(
+    endpoint_node,
+    first_assignment.side,
+  )
+  let candidate_offsets : Array[Int] = []
+  for slot, _ in cohort_assignments {
+    candidate_offsets.push(
+      distributed_boundary_port_offset(
+        slot,
+        cohort_assignments.length(),
+        half_span_limit,
+      ),
+    )
+  }
+  let used_offsets : Map[Int, Bool] = {}
+  for assignment in cohort_assignments {
+    match offsets_by_context_index.get(assignment.context_index) {
+      Some(offset) => used_offsets[offset] = true
+      None => ()
+    }
+  }
+  for slot, assignment in cohort_assignments {
+    if offsets_by_context_index.contains(assignment.context_index) {
+      continue
+    }
+    let preferred_offset = candidate_offsets[slot]
+    let chosen_offset = choose_available_boundary_offset(
+      preferred_offset, candidate_offsets, used_offsets,
+    )
+    offsets_by_context_index[assignment.context_index] = chosen_offset
+    used_offsets[chosen_offset] = true
+  }
+}
+
+///|
 fn deferred_back_edge_minor_axis_key(
   context : EdgeLayoutContext,
   key_mode : Int,
@@ -7118,6 +7218,22 @@ fn layout_graph_legacy_with_subgraph_redirects(
           half_span_limit,
         )
         source_boundary_offset_by_context_index[assignment.context_index] = offset
+      }
+    }
+
+    if graph.edges.length() <= 20 &&
+      assignments.length() <= 4 &&
+      boundary_side_is_horizontal(assignments[0].side) {
+      let source_cohort_assignments : Array[BoundaryEndpointAssignment] = []
+      for assignment in assignments {
+        if assignment.source_endpoint {
+          source_cohort_assignments.push(assignment)
+        }
+      }
+      if source_cohort_assignments.length() >= 2 {
+        assign_compact_boundary_offsets_for_cohort(
+          source_cohort_assignments, edge_layout_contexts, true, source_boundary_offset_by_context_index,
+        )
       }
     }
   }
