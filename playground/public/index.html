@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Mermaid MoonBit Playground</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <header class="hero">
+        <p class="eyebrow">MoonBit JS Target Playground</p>
+        <h1>Type Mermaid, Get SVG</h1>
+        <p class="subhead">
+          Rendering runs through <code>moon run cmd/main --target js</code> on every edit.
+        </p>
+      </header>
+
+      <section class="workspace">
+        <article class="panel panel-editor">
+          <div class="panel-head">
+            <h2>Mermaid Source</h2>
+            <span class="hint">Updates after 250ms idle</span>
+          </div>
+          <div class="example-row">
+            <label for="example-select">Examples</label>
+            <select id="example-select" aria-label="Load an example Mermaid diagram"></select>
+          </div>
+          <textarea id="source" spellcheck="false"></textarea>
+        </article>
+
+        <article class="panel panel-preview">
+          <div class="panel-head">
+            <h2>Rendered SVG</h2>
+            <span id="status" class="status">Ready</span>
+          </div>
+          <p id="error" class="error" hidden></p>
+          <div id="preview-wrap" class="preview-wrap">
+            <div id="preview" class="preview"></div>
+          </div>
+        </article>
+      </section>
+    </main>
+    <script type="module" src="/app.js"></script>
+  </body>
+</html>
