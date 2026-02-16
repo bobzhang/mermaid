@@ -297,6 +297,28 @@ test "Layout engine dagre-parity mode preserves legacy output in scaffold phase"
 }
 
 ///|
+test "Layout dagre-parity can diverge reciprocal edge routing from legacy" {
+  let graph = @parser.parse_mermaid(
+    (
+      #|flowchart LR
+      #|A --> B
+      #|B --> A
+    ),
+  )
+  let legacy_positioned = layout_graph(graph, RenderOptions::default())
+  let parity_positioned = layout_graph(graph, {
+    ..RenderOptions::default(),
+    layout_engine: Some(DagreParity),
+  })
+  let legacy_ab = find_positioned_edge(legacy_positioned.edges, "A", "B")
+  let parity_ab = find_positioned_edge(parity_positioned.edges, "A", "B")
+
+  assert_eq(parity_positioned.nodes, legacy_positioned.nodes)
+  assert_eq(parity_positioned.groups, legacy_positioned.groups)
+  assert_true(!points_arrays_equal(parity_ab.points, legacy_ab.points))
+}
+
+///|
 test "Layout lane collection accounts for long-span edges via virtual segments" {
   let nodes : Array[MermaidNode] = [
     { id: "A", label: "A", shape: Rectangle },

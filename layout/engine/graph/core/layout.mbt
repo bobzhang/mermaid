@@ -2724,6 +2724,33 @@ fn edge_points_for(
 }
 
 ///|
+fn apply_context_endpoint_port_stubs(
+  points : Array[Point],
+  context : EdgeLayoutContext,
+) -> Array[Point] {
+  let moving_forward = if context.edge_horizontal {
+    context.target.x >= context.source.x
+  } else {
+    context.target.y >= context.source.y
+  }
+  let source_anchor = boundary_anchor_point(
+    context.source,
+    context.edge_horizontal,
+    true,
+    moving_forward,
+    context.source_boundary_offset_minor,
+  )
+  let target_anchor = boundary_anchor_point(
+    context.target,
+    context.edge_horizontal,
+    false,
+    moving_forward,
+    context.target_boundary_offset_minor,
+  )
+  apply_endpoint_port_stubs(points, source_anchor, target_anchor)
+}
+
+///|
 fn forward_fanout_offset(slot : Int, total : Int) -> Int {
   if total <= 1 {
     return 0
@@ -5990,7 +6017,11 @@ fn layout_graph_with_subgraph_redirects_dagre_parity(
   compact_fanin : Bool,
 ) -> PositionedGraph {
   layout_graph_legacy_with_subgraph_redirects(
-    graph, options, use_subgraph_redirects, compact_fanin,
+    graph,
+    options,
+    use_subgraph_redirects,
+    compact_fanin,
+    DagreParity,
   )
 }
 
@@ -6004,7 +6035,11 @@ fn layout_graph_with_subgraph_redirects(
   match resolve_layout_engine(options) {
     Legacy =>
       layout_graph_legacy_with_subgraph_redirects(
-        graph, options, use_subgraph_redirects, compact_fanin,
+        graph,
+        options,
+        use_subgraph_redirects,
+        compact_fanin,
+        Legacy,
       )
     DagreParity =>
       layout_graph_with_subgraph_redirects_dagre_parity(
@@ -6019,6 +6054,7 @@ fn layout_graph_legacy_with_subgraph_redirects(
   options : RenderOptions,
   use_subgraph_redirects : Bool,
   compact_fanin : Bool,
+  layout_engine : LayoutEngine,
 ) -> PositionedGraph {
   if is_sequence_graph(graph) {
     return @layout_engine_sequence_core.layout_sequence_graph(graph, options)
@@ -6027,6 +6063,8 @@ fn layout_graph_legacy_with_subgraph_redirects(
   let base_padding = resolve_padding(options)
   let base_node_spacing = resolve_node_spacing(options)
   let base_layer_spacing = resolve_layer_spacing(options)
+  let enable_target_boundary_ports = layout_engine is DagreParity
+  let preserve_assigned_endpoint_ports = layout_engine is DagreParity
   let horizontal = layout_direction_is_horizontal(graph.direction)
   let reverse = layout_direction_is_reverse(graph.direction)
   let state_graph = is_state_graph(graph)
@@ -7096,7 +7134,14 @@ fn layout_graph_legacy_with_subgraph_redirects(
         source_boundary_offset_by_context_index.get(context_index),
         0,
       ),
-      target_boundary_offset_minor: 0,
+      target_boundary_offset_minor: if enable_target_boundary_ports {
+        option_int_or(
+          target_boundary_offset_by_context_index.get(context_index),
+          0,
+        )
+      } else {
+        0
+      },
     }
   }
 
@@ -7443,7 +7488,7 @@ fn layout_graph_legacy_with_subgraph_redirects(
     } else {
       None
     }
-    let base_points_with_ports = edge_points_for_with_ports(
+    let raw_base_points_with_ports = edge_points_for_with_ports(
       source,
       target,
       edge_horizontal,
@@ -7454,12 +7499,28 @@ fn layout_graph_legacy_with_subgraph_redirects(
       context.source_boundary_offset_minor,
       context.target_boundary_offset_minor,
     )
+    let has_reciprocal_counterpart = directed_edge_count_by_key.contains(
+      directed_edge_key(context.resolved_target_id, context.resolved_source_id),
+    )
+    let force_reciprocal_back_edge_ports = preserve_assigned_endpoint_ports &&
+      graph.edges.length() <= 20 &&
+      route_as_back_edge &&
+      has_reciprocal_counterpart
+    let base_points_with_ports = if force_reciprocal_back_edge_ports &&
+      (
+        context.source_boundary_offset_minor != 0 ||
+        context.target_boundary_offset_minor != 0
+      ) {
+      apply_context_endpoint_port_stubs(raw_base_points_with_ports, context)
+    } else {
+      raw_base_points_with_ports
+    }
     let force_compact_source_ports = graph.edges.length() <= 20 &&
       context.source_boundary_offset_minor != 0 &&
       context.target_boundary_offset_minor == 0
     let base_points = if context.source_boundary_offset_minor != 0 ||
       context.target_boundary_offset_minor != 0 {
-      if force_compact_source_ports {
+      if force_compact_source_ports || force_reciprocal_back_edge_ports {
         base_points_with_ports
       } else {
         let base_points_without_ports = edge_points_for_with_ports(
