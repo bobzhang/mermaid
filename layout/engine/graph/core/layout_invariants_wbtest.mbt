@@ -1193,6 +1193,41 @@ test "Layout horizontal rank spacing keeps wide adjacent nodes separated" {
 }
 
 ///|
+test "Layout spreads source anchors for horizontal fanout edges" {
+  let graph = @parser.parse_mermaid(
+    (
+      #|flowchart LR
+      #|A
+      #|B
+      #|C
+      #|D
+      #|A --> B
+      #|A --> C
+      #|A --> D
+      #|
+    )
+    .trim_end()
+    .to_string(),
+  )
+  let positioned = layout_graph(graph, RenderOptions::default())
+  let edge_ab = find_positioned_edge(positioned.edges, "A", "B")
+  let edge_ac = find_positioned_edge(positioned.edges, "A", "C")
+  let edge_ad = find_positioned_edge(positioned.edges, "A", "D")
+
+  assert_true(edge_ab.points.length() >= 2)
+  assert_true(edge_ac.points.length() >= 2)
+  assert_true(edge_ad.points.length() >= 2)
+  assert_true(
+    edge_ab.points[0].x != edge_ac.points[0].x ||
+    edge_ab.points[0].y != edge_ac.points[0].y,
+  )
+  assert_true(
+    edge_ac.points[0].x != edge_ad.points[0].x ||
+    edge_ac.points[0].y != edge_ad.points[0].y,
+  )
+}
+
+///|
 test "Layout dotted fanout follows target lanes with a single elbow" {
   let graph = @parser.parse_mermaid(
     (

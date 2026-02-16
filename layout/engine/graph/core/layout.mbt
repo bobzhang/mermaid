@@ -2330,6 +2330,65 @@ fn resolve_inline_style(
 }
 
 ///|
+fn node_boundary_point_toward(node : PositionedNode, toward : Point) -> Point {
+  let center_x = node.x
+  let center_y = node.y
+  let dx = toward.x - center_x
+  let dy = toward.y - center_y
+  let half_width = (node.width / 2).max(1)
+  let half_height = (node.height / 2).max(1)
+  if dx == 0 && dy == 0 {
+    return { x: center_x + half_width, y: center_y }
+  }
+  if dx == 0 {
+    let y_sign = if dy > 0 { 1 } else { -1 }
+    return { x: center_x, y: center_y + y_sign * half_height }
+  }
+  if dy == 0 {
+    let x_sign = if dx > 0 { 1 } else { -1 }
+    return { x: center_x + x_sign * half_width, y: center_y }
+  }
+
+  let abs_dx = int_abs(dx)
+  let abs_dy = int_abs(dy)
+  if abs_dx * half_height >= abs_dy * half_width {
+    let x_sign = if dx > 0 { 1 } else { -1 }
+    {
+      x: center_x + x_sign * half_width,
+      y: center_y + dy * half_width / abs_dx,
+    }
+  } else {
+    let y_sign = if dy > 0 { 1 } else { -1 }
+    {
+      x: center_x + dx * half_height / abs_dy,
+      y: center_y + y_sign * half_height,
+    }
+  }
+}
+
+///|
+fn apply_directional_boundary_anchors(
+  source : PositionedNode,
+  target : PositionedNode,
+  points : Array[Point],
+) -> Array[Point] {
+  if points.length() < 2 {
+    return points
+  }
+  let anchored_points : Array[Point] = []
+  for point in points {
+    anchored_points.push(point)
+  }
+  anchored_points[0] = node_boundary_point_toward(source, anchored_points[1])
+  let last_index = anchored_points.length() - 1
+  anchored_points[last_index] = node_boundary_point_toward(
+    target,
+    anchored_points[last_index - 1],
+  )
+  anchored_points
+}
+
+///|
 fn edge_points_for(
   source : PositionedNode,
   target : PositionedNode,
@@ -2358,12 +2417,12 @@ fn edge_points_for(
     match back_edge_bend_y {
       Some(bend_y) =>
         if !moving_right {
-          return [
+          return apply_directional_boundary_anchors(source, target, [
             start,
             { x: start_x, y: bend_y },
             { x: end_x, y: bend_y },
             end,
-          ]
+          ])
         }
       None => ()
     }
@@ -2373,22 +2432,30 @@ fn edge_points_for(
           let lane_y = source.y + offset_y
           if smooth_forward_fanout {
             let mid_x = (start_x + end_x) / 2
-            return [start, { x: mid_x, y: lane_y }, end]
+            return apply_directional_boundary_anchors(source, target, [
+              start,
+              { x: mid_x, y: lane_y },
+              end,
+            ])
           }
-          return [
+          return apply_directional_boundary_anchors(source, target, [
             start,
             { x: start_x, y: lane_y },
             { x: end_x, y: lane_y },
             end,
-          ]
+          ])
         }
       None => ()
     }
     if smooth_forward_fanout && moving_right && start.y != end.y {
       let mid_x = (start_x + end_x) / 2
-      return [start, { x: mid_x, y: end.y }, end]
+      return apply_directional_boundary_anchors(source, target, [
+        start,
+        { x: mid_x, y: end.y },
+        end,
+      ])
     }
-    [start, end]
+    apply_directional_boundary_anchors(source, target, [start, end])
   } else {
     let moving_down = target.y >= source.y
     let source_delta = if moving_down {
@@ -2408,12 +2475,12 @@ fn edge_points_for(
     match back_edge_bend_x {
       Some(bend_x) =>
         if !moving_down {
-          return [
+          return apply_directional_boundary_anchors(source, target, [
             start,
             { x: bend_x, y: start_y },
             { x: bend_x, y: end_y },
             end,
-          ]
+          ])
         }
       None => ()
     }
@@ -2421,16 +2488,16 @@ fn edge_points_for(
       Some(offset_x) =>
         if moving_down && offset_x != 0 {
           let lane_x = source.x + offset_x
-          return [
+          return apply_directional_boundary_anchors(source, target, [
             start,
             { x: lane_x, y: start_y },
             { x: lane_x, y: end_y },
             end,
-          ]
+          ])
         }
       None => ()
     }
-    [start, end]
+    apply_directional_boundary_anchors(source, target, [start, end])
   }
 }
 
