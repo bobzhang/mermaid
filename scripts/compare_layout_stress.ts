@@ -19,6 +19,7 @@
  *   bun run scripts/compare_layout_stress.ts --max-logical-crossing-multiplier 1.0 --explain-on-failure
  *   bun run scripts/compare_layout_stress.ts --max-weighted-gap-index 0.85
  *   bun run scripts/compare_layout_stress.ts --max-avg-weighted-gap-index 0.60
+ *   bun run scripts/compare_layout_stress.ts --local-layout-engine dagre-parity
  */
 
 import { mkdtempSync, readFileSync, readdirSync, writeFileSync } from 'node:fs'
@@ -98,6 +99,7 @@ type CliOptions = {
   profile?: string
   fixtures: string[]
   jsonPath?: string
+  localLayoutEngine?: 'legacy' | 'dagre-parity'
   allowUnparsedEdgeLines: boolean
   useLocalEdgeDump: boolean
   maxLogicalCrossingMultiplier?: number
@@ -1665,13 +1667,18 @@ function renderOfficial(
   )
 }
 
+function localLayoutEngineArgs(options: CliOptions): string[] {
+  if (!options.localLayoutEngine) return []
+  return [`--layout-engine=${options.localLayoutEngine}`]
+}
+
 function renderLocal(inputPath: string, outPath: string, options: CliOptions): void {
   const source = readFileSync(inputPath, 'utf8')
   for (let attempt = 0; attempt <= options.localRenderRetries; attempt += 1) {
     try {
       const svg = runOrThrow(
         'moon',
-        ['run', 'cmd/main', '--target', 'native', '--', source],
+        ['run', 'cmd/main', '--target', 'native', '--', ...localLayoutEngineArgs(options), source],
         options.localTimeoutMs,
       )
       writeFileSync(outPath, svg)
@@ -1692,7 +1699,16 @@ function renderLocalEdgePoints(inputPath: string, options: CliOptions): Point[][
     try {
       const output = runOrThrow(
         'moon',
-        ['run', 'cmd/main', '--target', 'native', '--', '--dump-edge-points', source],
+        [
+          'run',
+          'cmd/main',
+          '--target',
+          'native',
+          '--',
+          '--dump-edge-points',
+          ...localLayoutEngineArgs(options),
+          source,
+        ],
         options.localTimeoutMs,
       )
       return parseLocalEdgeDump(output)
@@ -1998,6 +2014,7 @@ function parseCliOptions(args: string[]): CliOptions {
   let profile: string | undefined = undefined
   const fixtures: string[] = []
   let jsonPath: string | undefined = undefined
+  let localLayoutEngine: 'legacy' | 'dagre-parity' | undefined = undefined
   let allowUnparsedEdgeLines = false
   let useLocalEdgeDump = false
   let maxLogicalCrossingMultiplier: number | undefined = undefined
@@ -2042,6 +2059,25 @@ function parseCliOptions(args: string[]): CliOptions {
       if (!next) fail('missing path after --json')
       jsonPath = next
       i += 1
+      continue
+    }
+    if (arg === '--local-layout-engine') {
+      const next = args[i + 1]
+      if (!next) fail('missing value after --local-layout-engine')
+      const normalized = next.trim().toLowerCase()
+      if (normalized !== 'legacy' && normalized !== 'dagre-parity') {
+        fail("invalid --local-layout-engine value, expected 'legacy' or 'dagre-parity'")
+      }
+      localLayoutEngine = normalized
+      i += 1
+      continue
+    }
+    if (arg.startsWith('--local-layout-engine=')) {
+      const normalized = arg.slice('--local-layout-engine='.length).trim().toLowerCase()
+      if (normalized !== 'legacy' && normalized !== 'dagre-parity') {
+        fail("invalid --local-layout-engine value, expected 'legacy' or 'dagre-parity'")
+      }
+      localLayoutEngine = normalized
       continue
     }
     if (arg === '--allow-unparsed-edge-lines') {
@@ -2369,6 +2405,7 @@ function parseCliOptions(args: string[]): CliOptions {
     profile,
     fixtures,
     jsonPath,
+    localLayoutEngine,
     allowUnparsedEdgeLines,
     useLocalEdgeDump,
     maxLogicalCrossingMultiplier,
@@ -2548,6 +2585,7 @@ function main(): void {
 
   console.log('\n=== summary ===')
   console.log(`profile=${options.profile ?? 'custom'}`)
+  console.log(`local_layout_engine=${options.localLayoutEngine ?? 'default(legacy)'}`)
   console.log(`fixtures=${results.length} structural_ok=${okCount}/${results.length}`)
   console.log(
     `avg_rmse=${round(avgRmse)} avg_inversion_rate_x=${round(avgInversion)} avg_inversion_rate_y=${round(avgInversionY)} avg_major_inversion_rate=${round(avgMajorInversion)}`,
@@ -2575,6 +2613,7 @@ function main(): void {
       renderedSvgDir: tempRoot,
       options: {
         profile: options.profile ?? null,
+        localLayoutEngine: options.localLayoutEngine ?? null,
         allowUnparsedEdgeLines: options.allowUnparsedEdgeLines,
         maxLogicalCrossingMultiplier: options.maxLogicalCrossingMultiplier ?? null,
         maxPolylineCrossingMultiplier: options.maxPolylineCrossingMultiplier ?? null,

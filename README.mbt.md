@@ -103,6 +103,7 @@ test {
     node_spacing: None,
     layer_spacing: None,
     transparent: Some(true),
+    layout_engine: None,
   }
   let svg = render_mermaid(
     (

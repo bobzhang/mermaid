@@ -27,6 +27,10 @@ type NodeShape = @model.NodeShape
 type RenderOptions = @model.RenderOptions
 
 ///|
+/// Layout engine selection used by graph positioning.
+type LayoutEngine = @model.LayoutEngine
+
+///|
 /// A 2D point used for edge routing.
 type Point = @model.Point
 

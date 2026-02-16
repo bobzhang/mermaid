@@ -51,6 +51,7 @@ fn branch_probe_svg_options(seed : Int) -> @beautiful_mermaid.RenderOptions {
     } else {
       Some(true)
     },
+    layout_engine: None,
   }
 }
 
@@ -316,6 +317,7 @@ test "Blackbox branch probe SVG font URL encoding includes multibyte paths" {
       node_spacing: Some(8),
       layer_spacing: Some(8),
       transparent: Some(i % 2 == 0),
+      layout_engine: None,
     }
     let svg = @beautiful_mermaid.render_mermaid(input, options~)
     assert_true(

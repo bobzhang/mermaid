@@ -249,6 +249,7 @@ test "SVG dimensions expand with padding option" (it : @test.Test) {
     node_spacing: None,
     layer_spacing: None,
     transparent: None,
+    layout_engine: None,
   }
   let large_options = @beautiful_mermaid.RenderOptions::{
     bg: None,
@@ -263,6 +264,7 @@ test "SVG dimensions expand with padding option" (it : @test.Test) {
     node_spacing: None,
     layer_spacing: None,
     transparent: None,
+    layout_engine: None,
   }
 
   let small_svg = @beautiful_mermaid.render_mermaid(
@@ -358,6 +360,7 @@ test "SVG applies custom font option" (it : @test.Test) {
     node_spacing: None,
     layer_spacing: None,
     transparent: None,
+    layout_engine: None,
   }
   let svg = @beautiful_mermaid.render_mermaid(
     integration_input_graph_td_ab(),
@@ -391,6 +394,7 @@ test "SVG applies explicit dark colors" (it : @test.Test) {
     node_spacing: None,
     layer_spacing: None,
     transparent: None,
+    layout_engine: None,
   }
   let svg = @beautiful_mermaid.render_mermaid(
     integration_input_graph_td_ab(),

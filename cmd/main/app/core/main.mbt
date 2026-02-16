@@ -21,6 +21,8 @@ fn print_usage() -> Unit {
     #|  moon run cmd/main -- --padding=20 "graph TD\nA --> B"
     #|  moon run cmd/main -- --node-spacing=80 "graph TD\nA --> B"
     #|  moon run cmd/main -- --layer-spacing=90 "graph TD\nA --> B"
+    #|  moon run cmd/main -- --layout-engine=legacy "graph TD\nA --> B"
+    #|  moon run cmd/main -- --layout-engine=dagre-parity "graph TD\nA --> B"
     #|  moon run cmd/main -- --transparent "graph TD\nA --> B"
     #|  moon run cmd/main -- --dump-edge-points "graph TD\nA --> B"
     #|  moon run cmd/main -- --list-themes
@@ -42,6 +44,7 @@ fn print_usage() -> Unit {
     #|  --padding  SVG/layout padding in px, e.g. 20
     #|  --node-spacing  Horizontal node spacing in px, e.g. 80
     #|  --layer-spacing  Vertical layer spacing in px, e.g. 90
+    #|  --layout-engine  Graph layout engine: legacy | dagre-parity
     #|  --transparent  Omit SVG background fill
     #|  --dump-edge-points  Print routed edge points instead of rendering SVG
     #|  --list-themes  Print built-in theme names
@@ -82,6 +85,21 @@ fn parse_non_negative_int(raw : String) -> Int? {
     Ok(value) => if value >= 0 { Some(value) } else { None }
     Err(_) => None
   }
+}
+
+///|
+fn parse_layout_engine(raw : String) -> @model.LayoutEngine? {
+  let normalized = raw.trim().to_lower()
+  if normalized == "legacy" {
+    return Some(Legacy)
+  }
+  if normalized == "dagre-parity" ||
+    normalized == "dagre_parity" ||
+    normalized == "dagre" ||
+    normalized == "parity" {
+    return Some(DagreParity)
+  }
+  None
 }
 
 ///|
@@ -129,6 +147,7 @@ fn svg_options_overridden(
   padding : Int?,
   node_spacing : Int?,
   layer_spacing : Int?,
+  layout_engine : @model.LayoutEngine?,
   transparent : Bool,
 ) -> Bool {
   theme_slug is Some(_) ||
@@ -143,6 +162,7 @@ fn svg_options_overridden(
   padding is Some(_) ||
   node_spacing is Some(_) ||
   layer_spacing is Some(_) ||
+  layout_engine is Some(_) ||
   transparent
 }
 
@@ -190,6 +210,7 @@ pub fn run() -> Unit {
   let mut padding : Int? = None
   let mut node_spacing : Int? = None
   let mut layer_spacing : Int? = None
+  let mut layout_engine : @model.LayoutEngine? = None
   let mut transparent = false
   let mut dump_edge_points = false
   let mut diagram : String? = None
@@ -205,6 +226,7 @@ pub fn run() -> Unit {
   let mut expect_padding_value = false
   let mut expect_node_spacing_value = false
   let mut expect_layer_spacing_value = false
+  let mut expect_layout_engine_value = false
   let mut expect_ascii_padding_x_value = false
   let mut expect_ascii_padding_y_value = false
   let mut expect_ascii_box_border_padding_value = false
@@ -281,6 +303,24 @@ pub fn run() -> Unit {
         }
       }
       expect_layer_spacing_value = false
+      continue
+    }
+
+    if expect_layout_engine_value {
+      if arg.has_prefix("--") {
+        println("Error: --layout-engine requires a value")
+        print_usage()
+        return
+      }
+      match parse_layout_engine(arg) {
+        Some(engine) => layout_engine = Some(engine)
+        None => {
+          println("Error: --layout-engine must be one of: legacy, dagre-parity")
+          print_usage()
+          return
+        }
+      }
+      expect_layout_engine_value = false
       continue
     }
 
@@ -499,6 +539,10 @@ pub fn run() -> Unit {
       expect_layer_spacing_value = true
       continue
     }
+    if arg == "--layout-engine" {
+      expect_layout_engine_value = true
+      continue
+    }
     if arg.has_prefix("--font=") {
       let font = (try! arg[7:]).to_string()
       if font == "" {
@@ -624,6 +668,23 @@ pub fn run() -> Unit {
         Some(value) => layer_spacing = Some(value)
         None => {
           println("Error: --layer-spacing requires a non-negative integer")
+          print_usage()
+          return
+        }
+      }
+      continue
+    }
+    if arg.has_prefix("--layout-engine=") {
+      let raw_layout_engine = (try! arg[16:]).to_string()
+      if raw_layout_engine == "" {
+        println("Error: --layout-engine requires a non-empty value")
+        print_usage()
+        return
+      }
+      match parse_layout_engine(raw_layout_engine) {
+        Some(engine) => layout_engine = Some(engine)
+        None => {
+          println("Error: --layout-engine must be one of: legacy, dagre-parity")
           print_usage()
           return
         }
@@ -765,6 +826,11 @@ pub fn run() -> Unit {
     print_usage()
     return
   }
+  if expect_layout_engine_value {
+    println("Error: --layout-engine requires a value")
+    print_usage()
+    return
+  }
   if expect_ascii_padding_x_value {
     println("Error: --ascii-padding-x requires a value")
     print_usage()
@@ -797,7 +863,8 @@ pub fn run() -> Unit {
   if render_text &&
     svg_options_overridden(
       theme_slug, font_name, bg_color, fg_color, line_color, accent_color, muted_color,
-      surface_color, border_color, padding, node_spacing, layer_spacing, transparent,
+      surface_color, border_color, padding, node_spacing, layer_spacing, layout_engine,
+      transparent,
     ) {
     println("Error: SVG flags require SVG output mode (omit --ascii/--unicode)")
     print_usage()
@@ -848,6 +915,7 @@ pub fn run() -> Unit {
       node_spacing,
       layer_spacing,
       transparent: Some(transparent),
+      layout_engine,
     }
     print_routed_edge_points(input, layout_options)
     return
@@ -866,6 +934,7 @@ pub fn run() -> Unit {
     node_spacing,
     layer_spacing,
     transparent: Some(transparent),
+    layout_engine,
   }
 
   let rendered_svg = match theme_slug {

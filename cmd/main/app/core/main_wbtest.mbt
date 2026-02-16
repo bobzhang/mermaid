@@ -16,6 +16,16 @@ test "parse_non_negative_int rejects negatives and invalid values" {
 }
 
 ///|
+test "parse_layout_engine accepts supported variants" {
+  assert_eq(parse_layout_engine("legacy"), Some(Legacy))
+  assert_eq(parse_layout_engine("dagre-parity"), Some(DagreParity))
+  assert_eq(parse_layout_engine("DAGRE_PARITY"), Some(DagreParity))
+  assert_eq(parse_layout_engine("parity"), Some(DagreParity))
+  assert_eq(parse_layout_engine(""), None)
+  assert_eq(parse_layout_engine("experimental"), None)
+}
+
+///|
 test "ascii_spacing_overridden is false for default spacing values" {
   assert_eq(ascii_spacing_overridden(5, 5, 1), false)
 }
@@ -88,6 +98,7 @@ test "svg_options_overridden tracks svg-only flags and spacing options" {
       None,
       None,
       None,
+      None,
       false,
     ),
     false,
@@ -95,6 +106,7 @@ test "svg_options_overridden tracks svg-only flags and spacing options" {
   assert_eq(
     svg_options_overridden(
       Some("tokyo-night"),
+      None,
       None,
       None,
       None,
@@ -124,6 +136,7 @@ test "svg_options_overridden tracks svg-only flags and spacing options" {
       None,
       None,
       None,
+      None,
       false,
     ),
     true,
@@ -142,6 +155,7 @@ test "svg_options_overridden tracks svg-only flags and spacing options" {
       Some(20),
       None,
       None,
+      None,
       false,
     ),
     true,
@@ -160,7 +174,27 @@ test "svg_options_overridden tracks svg-only flags and spacing options" {
       None,
       None,
       None,
+      None,
       true,
+    ),
+    true,
+  )
+  assert_eq(
+    svg_options_overridden(
+      None,
+      None,
+      None,
+      None,
+      None,
+      None,
+      None,
+      None,
+      None,
+      None,
+      None,
+      None,
+      Some(DagreParity),
+      false,
     ),
     true,
   )

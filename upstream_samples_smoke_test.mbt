@@ -1080,6 +1080,7 @@ test "Render smoke for upstream samples-data corpus" (it : @test.Test) {
       node_spacing: None,
       layer_spacing: None,
       transparent: Some(sample.transparent),
+      layout_engine: None,
     }
     let svg = @beautiful_mermaid.render_mermaid(
       sample.source,

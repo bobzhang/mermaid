@@ -276,6 +276,27 @@ fn count_logical_edge_crossings(
 }
 
 ///|
+test "Layout engine dagre-parity mode preserves legacy output in scaffold phase" {
+  let graph = @parser.parse_mermaid(
+    (
+      #|graph LR
+      #|A[Start] --> B[Middle]
+      #|B --> C[End]
+      #|A -.-> C
+    ),
+  )
+  let legacy_positioned = layout_graph(graph, RenderOptions::default())
+  let parity_positioned = layout_graph(graph, {
+    ..RenderOptions::default(),
+    layout_engine: Some(DagreParity),
+  })
+
+  assert_eq(parity_positioned.nodes, legacy_positioned.nodes)
+  assert_eq(parity_positioned.edges, legacy_positioned.edges)
+  assert_eq(parity_positioned.groups, legacy_positioned.groups)
+}
+
+///|
 test "Layout lane collection accounts for long-span edges via virtual segments" {
   let nodes : Array[MermaidNode] = [
     { id: "A", label: "A", shape: Rectangle },

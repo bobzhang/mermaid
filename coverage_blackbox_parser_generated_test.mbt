@@ -23,6 +23,7 @@ fn parser_generated_svg_option(seed : Int) -> RenderOptions {
     node_spacing: [Some(2), Some(8), None][seed % 3],
     layer_spacing: [Some(2), Some(8), None][seed / 2 % 3],
     transparent: Some(seed % 2 == 1),
+    layout_engine: None,
   }
 }
 

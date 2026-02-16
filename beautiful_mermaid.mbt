@@ -58,6 +58,7 @@ fn merge_options_with_colors(
     node_spacing: options.node_spacing,
     layer_spacing: options.layer_spacing,
     transparent: options.transparent,
+    layout_engine: options.layout_engine,
   }
 }
 

@@ -32,6 +32,7 @@ fn snapshot_upstream_sample_svg(
     node_spacing: None,
     layer_spacing: None,
     transparent: Some(sample.transparent),
+    layout_engine: None,
   }
   let svg = @beautiful_mermaid.render_mermaid(
     sample.source,

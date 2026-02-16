@@ -69,6 +69,14 @@ pub impl Eq for EdgeStyle
 pub impl Show for EdgeStyle
 pub impl ToJson for EdgeStyle
 
+pub(all) enum LayoutEngine {
+  Legacy
+  DagreParity
+}
+pub impl Eq for LayoutEngine
+pub impl Show for LayoutEngine
+pub impl ToJson for LayoutEngine
+
 pub(all) struct MermaidEdge {
   source : String
   target : String
@@ -275,6 +283,7 @@ pub(all) struct RenderOptions {
   node_spacing : Int?
   layer_spacing : Int?
   transparent : Bool?
+  layout_engine : LayoutEngine?
 }
 pub fn RenderOptions::default() -> Self
 pub impl Eq for RenderOptions

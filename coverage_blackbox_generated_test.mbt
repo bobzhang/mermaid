@@ -27,6 +27,7 @@ fn generated_svg_option(seed : Int) -> RenderOptions {
     node_spacing,
     layer_spacing,
     transparent,
+    layout_engine: None,
   }
 }
 

@@ -52,6 +52,7 @@ test "merge_options_with_colors preserves explicit overrides" {
     node_spacing: None,
     layer_spacing: None,
     transparent: Some(true),
+    layout_engine: None,
   }
   let merged = merge_options_with_colors(base, colors)
 
@@ -83,6 +84,7 @@ test "render_mermaid_with_colors keeps explicit option overrides" {
     node_spacing: None,
     layer_spacing: None,
     transparent: None,
+    layout_engine: None,
   }
   let svg = render_mermaid_with_colors(simple_graph_ab_wb(), colors, options~)
 

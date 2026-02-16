@@ -5975,7 +5975,46 @@ pub fn layout_graph_for_ascii(
 }
 
 ///|
+fn resolve_layout_engine(options : RenderOptions) -> LayoutEngine {
+  match options.layout_engine {
+    Some(engine) => engine
+    None => Legacy
+  }
+}
+
+///|
+fn layout_graph_with_subgraph_redirects_dagre_parity(
+  graph : MermaidGraph,
+  options : RenderOptions,
+  use_subgraph_redirects : Bool,
+  compact_fanin : Bool,
+) -> PositionedGraph {
+  layout_graph_legacy_with_subgraph_redirects(
+    graph, options, use_subgraph_redirects, compact_fanin,
+  )
+}
+
+///|
 fn layout_graph_with_subgraph_redirects(
+  graph : MermaidGraph,
+  options : RenderOptions,
+  use_subgraph_redirects : Bool,
+  compact_fanin : Bool,
+) -> PositionedGraph {
+  match resolve_layout_engine(options) {
+    Legacy =>
+      layout_graph_legacy_with_subgraph_redirects(
+        graph, options, use_subgraph_redirects, compact_fanin,
+      )
+    DagreParity =>
+      layout_graph_with_subgraph_redirects_dagre_parity(
+        graph, options, use_subgraph_redirects, compact_fanin,
+      )
+  }
+}
+
+///|
+fn layout_graph_legacy_with_subgraph_redirects(
   graph : MermaidGraph,
   options : RenderOptions,
   use_subgraph_redirects : Bool,

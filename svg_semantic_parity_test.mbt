@@ -371,6 +371,7 @@ test "SVG class supports explicit dark colors" (it : @test.Test) {
     node_spacing: None,
     layer_spacing: None,
     transparent: None,
+    layout_engine: None,
   }
   let svg = @beautiful_mermaid.render_mermaid(
     (
@@ -402,6 +403,7 @@ test "SVG render options include provided enrichment CSS vars" (it : @test.Test)
     node_spacing: None,
     layer_spacing: None,
     transparent: None,
+    layout_engine: None,
   }
   let svg = @beautiful_mermaid.render_mermaid(
     (
@@ -436,6 +438,7 @@ test "SVG render options omit enrichment CSS vars when unset" (it : @test.Test) 
     node_spacing: None,
     layer_spacing: None,
     transparent: None,
+    layout_engine: None,
   }
   let svg = @beautiful_mermaid.render_mermaid(
     (
@@ -472,6 +475,7 @@ test "SVG transparent render option omits root background style and rect" (
     node_spacing: None,
     layer_spacing: None,
     transparent: Some(true),
+    layout_engine: None,
   }
   let svg = @beautiful_mermaid.render_mermaid(
     (
@@ -716,6 +720,7 @@ test "SVG sequence supports explicit dark colors" (it : @test.Test) {
     node_spacing: None,
     layer_spacing: None,
     transparent: None,
+    layout_engine: None,
   }
   let svg = @beautiful_mermaid.render_mermaid(
     (
@@ -829,6 +834,7 @@ test "SVG ER supports explicit dark colors" (it : @test.Test) {
     node_spacing: None,
     layer_spacing: None,
     transparent: None,
+    layout_engine: None,
   }
   let svg = @beautiful_mermaid.render_mermaid(
     (

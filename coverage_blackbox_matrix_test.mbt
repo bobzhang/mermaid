@@ -29,6 +29,7 @@ fn coverage_svg_option_matrix() -> Array[RenderOptions] {
       node_spacing: Some(0),
       layer_spacing: Some(0),
       transparent: Some(true),
+      layout_engine: None,
     },
     {
       bg: Some("#0f172a"),
@@ -43,6 +44,7 @@ fn coverage_svg_option_matrix() -> Array[RenderOptions] {
       node_spacing: Some(4),
       layer_spacing: Some(4),
       transparent: Some(false),
+      layout_engine: None,
     },
     {
       bg: None,
@@ -57,6 +59,7 @@ fn coverage_svg_option_matrix() -> Array[RenderOptions] {
       node_spacing: Some(-2),
       layer_spacing: Some(-2),
       transparent: Some(true),
+      layout_engine: None,
     },
   ]
 }

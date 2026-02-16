@@ -191,6 +191,13 @@ pub fn DiagramColors::default() -> DiagramColors {
 }
 
 ///|
+/// Layout engine selection for graph positioning.
+pub(all) enum LayoutEngine {
+  Legacy
+  DagreParity
+} derive(Eq, Show, ToJson)
+
+///|
 /// SVG render configuration (theme colors, font, spacing, transparency).
 pub(all) struct RenderOptions {
   bg : String?
@@ -205,6 +212,7 @@ pub(all) struct RenderOptions {
   node_spacing : Int?
   layer_spacing : Int?
   transparent : Bool?
+  layout_engine : LayoutEngine?
 } derive(Eq, Show, ToJson)
 
 ///|
@@ -223,6 +231,7 @@ pub fn RenderOptions::default() -> RenderOptions {
     node_spacing: None,
     layer_spacing: None,
     transparent: None,
+    layout_engine: None,
   }
 }
 
