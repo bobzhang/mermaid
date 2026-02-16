@@ -698,6 +698,7 @@ fn collect_non_state_flow_lanes(
   rank_by_id : Map[String, Int],
   max_rank : Int,
   edges : Array[MermaidEdge],
+  preserve_dummy_lane_channels : Bool,
 ) -> Map[String, Int] {
   if nodes_in_order.length() == 0 {
     return {}
@@ -1191,6 +1192,12 @@ fn collect_non_state_flow_lanes(
     for node_id in rank_nodes[rank] {
       if real_node_ids.contains(node_id) {
         lane_by_id[node_id] = lane
+        if !preserve_dummy_lane_channels {
+          lane += 1
+          continue
+        }
+      }
+      if preserve_dummy_lane_channels {
         lane += 1
       }
     }
@@ -1277,7 +1284,14 @@ fn collect_non_state_flow_lanes(
   }
 
   if crossing_edge_indexes.length() >= 2 {
-    for pass in 0..<10 {
+    let adjacent_pass_budget = if crossing_edge_indexes.length() >= 120 {
+      24
+    } else if crossing_edge_indexes.length() >= 60 {
+      16
+    } else {
+      10
+    }
+    for pass in 0..<adjacent_pass_budget {
       let mut changed = false
       for rank in 0..<=max_rank {
         match real_node_ids_by_rank.get(rank) {
@@ -1332,7 +1346,14 @@ fn collect_non_state_flow_lanes(
       }
     }
 
-    for _ in 0..<4 {
+    let global_pass_budget = if crossing_edge_indexes.length() >= 120 {
+      8
+    } else if crossing_edge_indexes.length() >= 60 {
+      6
+    } else {
+      4
+    }
+    for _ in 0..<global_pass_budget {
       let mut changed = false
       for rank in 0..<=max_rank {
         match real_node_ids_by_rank.get(rank) {
@@ -4561,11 +4582,15 @@ fn layout_graph_with_subgraph_redirects(
         flow_max_rank = flow_max_rank.max(rank)
       }
     }
+    let preserve_dummy_lane_channels = !state_graph &&
+      !class_or_er_graph &&
+      (graph.subgraphs.length() > 0 || graph.edges.length() >= 30)
     let lane_by_id = collect_non_state_flow_lanes(
       nodes_in_order,
       flow_rank_by_node_id,
       flow_max_rank,
       graph.edges,
+      preserve_dummy_lane_channels,
     )
     for node_id, lane in lane_by_id {
       flow_lane_by_node_id[node_id] = lane
@@ -5098,6 +5123,7 @@ fn layout_graph_with_subgraph_redirects(
   }
   let forward_fanout_slot_by_context_index : Map[Int, Int] = {}
   let forward_fanout_slots_resolved_by_bucket : Map[String, Bool] = {}
+  let forward_fanout_disabled_by_bucket : Map[String, Bool] = {}
   let non_deferred_route_context_indices : Array[Int] = []
   let deferred_back_edge_context_indices : Array[Int] = []
   for context_index, context in edge_layout_contexts {
@@ -5172,6 +5198,27 @@ fn layout_graph_with_subgraph_redirects(
           None,
           None,
           Some(forward_fanout_offset(slot, total)),
+          enhanced_horizontal_state_flow,
+        )
+        candidate_polylines.push(points)
+      }
+      count_polyline_crossings(candidate_polylines)
+    }
+
+    fn evaluate_direct_crossings() -> Int {
+      let candidate_polylines : Array[Array[Point]] = []
+      for polyline in routed_polylines {
+        candidate_polylines.push(polyline)
+      }
+      for context_index in bucket_context_indices {
+        let context = edge_layout_contexts[context_index]
+        let points = edge_points_for(
+          context.source,
+          context.target,
+          context.edge_horizontal,
+          None,
+          None,
+          None,
           enhanced_horizontal_state_flow,
         )
         candidate_polylines.push(points)
@@ -5303,6 +5350,13 @@ fn layout_graph_with_subgraph_redirects(
       }
     }
 
+    let direct_crossings = evaluate_direct_crossings()
+    if direct_crossings <= best_crossings {
+      forward_fanout_disabled_by_bucket[bucket_key] = true
+      forward_fanout_slots_resolved_by_bucket[bucket_key] = true
+      return
+    }
+
     for slot, context_index in optimized_order {
       forward_fanout_slot_by_context_index[context_index] = slot
     }
@@ -5354,9 +5408,10 @@ fn layout_graph_with_subgraph_redirects(
       None
     }
     let use_forward_fanout_lane = context_uses_forward_fanout_lane(
-      context, forward_fanout_horizontal_span_threshold, forward_fanout_horizontal_minor_gap_threshold,
-      forward_fanout_vertical_span_threshold, forward_fanout_vertical_minor_gap_threshold,
-    )
+        context, forward_fanout_horizontal_span_threshold, forward_fanout_horizontal_minor_gap_threshold,
+        forward_fanout_vertical_span_threshold, forward_fanout_vertical_minor_gap_threshold,
+      ) &&
+      !forward_fanout_disabled_by_bucket.contains(forward_fanout_bucket_key)
     let points = edge_points_for(
       source,
       target,
@@ -5374,9 +5429,15 @@ fn layout_graph_with_subgraph_redirects(
             forward_fanout_slot_by_context_index, forward_fanout_slots_resolved_by_bucket,
             routed_polylines, enhanced_horizontal_state_flow,
           )
-          match forward_fanout_slot_by_context_index.get(context_index) {
-            Some(slot) => Some(forward_fanout_offset(slot, total))
-            None => None
+          if forward_fanout_disabled_by_bucket.contains(
+              forward_fanout_bucket_key,
+            ) {
+            None
+          } else {
+            match forward_fanout_slot_by_context_index.get(context_index) {
+              Some(slot) => Some(forward_fanout_offset(slot, total))
+              None => None
+            }
           }
         } else {
           None

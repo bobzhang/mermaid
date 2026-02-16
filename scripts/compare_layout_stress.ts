@@ -8,6 +8,7 @@
  *   bun run scripts/compare_layout_stress.ts --profile strict
  *   bun run scripts/compare_layout_stress.ts --max-logical-crossing-multiplier 1.8
  *   bun run scripts/compare_layout_stress.ts --allow-unparsed-edge-lines
+ *   bun run scripts/compare_layout_stress.ts --use-local-edge-dump
  *   bun run scripts/compare_layout_stress.ts --max-polyline-crossing-multiplier 4.6 --min-span-area-ratio 0.04
  *   bun run scripts/compare_layout_stress.ts --max-avg-rmse 0.70 --max-avg-inversion-rate 0.35 --max-avg-polyline-crossing-multiplier 3.6 --min-avg-span-area-ratio 0.18
  *   bun run scripts/compare_layout_stress.ts --max-major-inversion-rate 0.55 --max-avg-major-inversion-rate 0.20
@@ -76,6 +77,7 @@ type CliOptions = {
   fixtures: string[]
   jsonPath?: string
   allowUnparsedEdgeLines: boolean
+  useLocalEdgeDump: boolean
   maxLogicalCrossingMultiplier?: number
   maxPolylineCrossingMultiplier?: number
   minSpanXRatio?: number
@@ -311,6 +313,19 @@ function parseLocalEdges(svg: string): Point[][] {
   const pathRe = /<path class="edge" d="([^"]+)"/g
   for (const match of svg.matchAll(pathRe)) {
     const points = parsePathPoints(match[1]!)
+    if (points.length >= 2) edges.push(points)
+  }
+  return edges
+}
+
+function parseLocalEdgeDump(output: string): Point[][] {
+  const edges: Point[][] = []
+  for (const rawLine of output.split('\n')) {
+    const line = rawLine.trim()
+    if (line === '' || !line.startsWith('EDGE\t')) continue
+    const parts = line.split('\t')
+    if (parts.length < 4) continue
+    const points = parsePointPairs(parts[3]!)
     if (points.length >= 2) edges.push(points)
   }
   return edges
@@ -1349,6 +1364,27 @@ function renderLocal(inputPath: string, outPath: string, options: CliOptions): v
   }
 }
 
+function renderLocalEdgePoints(inputPath: string, options: CliOptions): Point[][] {
+  const source = readFileSync(inputPath, 'utf8')
+  for (let attempt = 0; attempt <= options.localRenderRetries; attempt += 1) {
+    try {
+      const output = runOrThrow(
+        'moon',
+        ['run', 'cmd/main', '--target', 'native', '--', '--dump-edge-points', source],
+        options.localTimeoutMs,
+      )
+      return parseLocalEdgeDump(output)
+    } catch (error) {
+      const hasRetry = attempt < options.localRenderRetries
+      if (!hasRetry || !isTimeoutError(error)) {
+        throw error
+      }
+      sleepMs(options.retryBackoffMs * (attempt + 1))
+    }
+  }
+  return []
+}
+
 function compareFixture(
   path: string,
   tempRoot: string,
@@ -1388,7 +1424,18 @@ function compareFixture(
   const officialNodes = parseOfficialNodePositions(officialSvg)
   const localNodes = parseLocalNodePositions(localSvg)
   const officialEdges = parseOfficialEdges(officialSvg)
-  const localEdges = parseLocalEdges(localSvg)
+  const localEdgesFromSvg = parseLocalEdges(localSvg)
+  let localEdges = localEdgesFromSvg
+  if (options.useLocalEdgeDump) {
+    try {
+      const dumpedEdges = renderLocalEdgePoints(path, options)
+      if (dumpedEdges.length === localEdgesFromSvg.length && dumpedEdges.length > 0) {
+        localEdges = dumpedEdges
+      }
+    } catch {
+      localEdges = localEdgesFromSvg
+    }
+  }
 
   const sharedLabels = [...officialNodes.keys()].filter(label => localNodes.has(label)).sort()
   const structuralOk =
@@ -1575,6 +1622,7 @@ function parseCliOptions(args: string[]): CliOptions {
   const fixtures: string[] = []
   let jsonPath: string | undefined = undefined
   let allowUnparsedEdgeLines = false
+  let useLocalEdgeDump = false
   let maxLogicalCrossingMultiplier: number | undefined = undefined
   let maxPolylineCrossingMultiplier: number | undefined = undefined
   let minSpanXRatio: number | undefined = undefined
@@ -1618,6 +1666,10 @@ function parseCliOptions(args: string[]): CliOptions {
     }
     if (arg === '--allow-unparsed-edge-lines') {
       allowUnparsedEdgeLines = true
+      continue
+    }
+    if (arg === '--use-local-edge-dump') {
+      useLocalEdgeDump = true
       continue
     }
     if (arg === '--max-logical-crossing-multiplier') {
@@ -1910,6 +1962,7 @@ function parseCliOptions(args: string[]): CliOptions {
     fixtures,
     jsonPath,
     allowUnparsedEdgeLines,
+    useLocalEdgeDump,
     maxLogicalCrossingMultiplier,
     maxPolylineCrossingMultiplier,
     minSpanXRatio,

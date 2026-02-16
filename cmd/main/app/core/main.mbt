@@ -22,6 +22,7 @@ fn print_usage() -> Unit {
     #|  moon run cmd/main -- --node-spacing=80 "graph TD\nA --> B"
     #|  moon run cmd/main -- --layer-spacing=90 "graph TD\nA --> B"
     #|  moon run cmd/main -- --transparent "graph TD\nA --> B"
+    #|  moon run cmd/main -- --dump-edge-points "graph TD\nA --> B"
     #|  moon run cmd/main -- --list-themes
     #|Flags:
     #|  --ascii    Render ASCII output
@@ -42,6 +43,7 @@ fn print_usage() -> Unit {
     #|  --node-spacing  Horizontal node spacing in px, e.g. 80
     #|  --layer-spacing  Vertical layer spacing in px, e.g. 90
     #|  --transparent  Omit SVG background fill
+    #|  --dump-edge-points  Print routed edge points instead of rendering SVG
     #|  --list-themes  Print built-in theme names
     #|  --help     Show this help
     #|
@@ -145,6 +147,29 @@ fn svg_options_overridden(
 }
 
 ///|
+fn print_routed_edge_points(
+  input : String,
+  options : @model.RenderOptions,
+) -> Unit {
+  let parsed : Result[@model.MermaidGraph, @beautiful_mermaid.MermaidError] = try? @parser_header_core.parse_mermaid(
+    input,
+  )
+  match parsed {
+    Ok(graph) => {
+      let positioned = @layout_engine_graph_core.layout_graph(graph, options)
+      for edge in positioned.edges {
+        let points = edge.points
+          .iter()
+          .map(point => "\{point.x},\{point.y}")
+          .join(" ")
+        println("EDGE\t\{edge.source}\t\{edge.target}\t\{points}")
+      }
+    }
+    Err(err) => println("Error: \{err}")
+  }
+}
+
+///|
 /// CLI entry point: parses arguments and renders a mermaid diagram.
 pub fn run() -> Unit {
   let args = cli_args_without_program()
@@ -166,6 +191,7 @@ pub fn run() -> Unit {
   let mut node_spacing : Int? = None
   let mut layer_spacing : Int? = None
   let mut transparent = false
+  let mut dump_edge_points = false
   let mut diagram : String? = None
   let mut expect_theme_value = false
   let mut expect_font_value = false
@@ -423,6 +449,10 @@ pub fn run() -> Unit {
     }
     if arg == "--transparent" {
       transparent = true
+      continue
+    }
+    if arg == "--dump-edge-points" {
+      dump_edge_points = true
       continue
     }
     if arg == "--font" {
@@ -759,6 +789,11 @@ pub fn run() -> Unit {
     print_usage()
     return
   }
+  if dump_edge_points && render_text {
+    println("Error: --dump-edge-points requires SVG output mode")
+    print_usage()
+    return
+  }
   if render_text &&
     svg_options_overridden(
       theme_slug, font_name, bg_color, fg_color, line_color, accent_color, muted_color,
@@ -796,6 +831,25 @@ pub fn run() -> Unit {
       Ok(output) => println(output)
       Err(err) => println("Error: \{err}")
     }
+    return
+  }
+
+  if dump_edge_points {
+    let layout_options = @model.RenderOptions::{
+      bg: bg_color,
+      fg: fg_color,
+      line: line_color,
+      accent: accent_color,
+      muted: muted_color,
+      surface: surface_color,
+      border: border_color,
+      font: font_name,
+      padding,
+      node_spacing,
+      layer_spacing,
+      transparent: Some(transparent),
+    }
+    print_routed_edge_points(input, layout_options)
     return
   }
 

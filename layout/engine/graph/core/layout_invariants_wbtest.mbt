@@ -207,7 +207,7 @@ test "Layout lane collection accounts for long-span edges via virtual segments" 
     flow_edge("B", "X"),
   ]
 
-  let lanes = collect_non_state_flow_lanes(nodes, rank_by_id, 2, edges)
+  let lanes = collect_non_state_flow_lanes(nodes, rank_by_id, 2, edges, false)
   assert_true(
     option_int_or(lanes.get("Y"), 0) < option_int_or(lanes.get("X"), 0),
   )
@@ -252,7 +252,7 @@ test "Layout lane collection uses long-span backward edges for ordering" {
     },
   ]
 
-  let lanes = collect_non_state_flow_lanes(nodes, rank_by_id, 3, edges)
+  let lanes = collect_non_state_flow_lanes(nodes, rank_by_id, 3, edges, false)
   assert_true(
     option_int_or(lanes.get("F"), 0) < option_int_or(lanes.get("E"), 0),
   )
