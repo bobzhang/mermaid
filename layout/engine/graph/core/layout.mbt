@@ -702,7 +702,7 @@ fn collect_greedy_feedback_edge_indices(
         (
           score == candidate_score &&
           outgoing_weight == candidate_outgoing_weight &&
-          order < candidate_order
+          order > candidate_order
         ) {
         has_candidate = true
         candidate_id = node.id
