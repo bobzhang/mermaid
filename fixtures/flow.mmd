@@ -1,0 +1,6 @@
+flowchart LR
+Start([Start]) --> Check{Valid input?}
+Check -->|yes| Build[Build artifact]
+Check -->|no| Fix[Fix source]
+Fix --> Check
+Build --> Ship([Ship])
