@@ -7191,6 +7191,13 @@ fn layout_graph_legacy_with_subgraph_redirects(
   if !state_graph || horizontal {
     let cycle_aware_layout = state_graph ||
       (!class_or_er_graph && graph_has_cycle(nodes_in_order, graph.edges))
+    let adaptive_compact_fanin = !state_graph &&
+      !class_or_er_graph &&
+      horizontal &&
+      cycle_aware_layout &&
+      graph.subgraphs.length() > 0 &&
+      graph.edges.length() >= 50
+    let rank_compact_fanin = compact_fanin || adaptive_compact_fanin
     horizontal_cycle_non_state_flow = !state_graph &&
       horizontal &&
       cycle_aware_layout
@@ -7205,7 +7212,7 @@ fn layout_graph_legacy_with_subgraph_redirects(
     let enable_cycle_rank_compaction = !state_graph &&
       !class_or_er_graph &&
       horizontal &&
-      !compact_fanin &&
+      !rank_compact_fanin &&
       cycle_aware_layout &&
       graph.subgraphs.length() == 0 &&
       graph.edges.length() >= 30
@@ -7235,7 +7242,7 @@ fn layout_graph_legacy_with_subgraph_redirects(
     let (baseline_rank_by_id, baseline_max_rank) = collect_non_state_flow_ranks(
       nodes_in_order,
       graph.edges,
-      compact_fanin,
+      rank_compact_fanin,
       cycle_aware_layout,
       promote_backward_dotted_edges,
       prefer_definition_back_edges,
@@ -7249,7 +7256,7 @@ fn layout_graph_legacy_with_subgraph_redirects(
       let (compacted_rank_by_id, compacted_max_rank) = collect_non_state_flow_ranks(
         nodes_in_order,
         graph.edges,
-        compact_fanin,
+        rank_compact_fanin,
         cycle_aware_layout,
         promote_backward_dotted_edges,
         prefer_definition_back_edges,
