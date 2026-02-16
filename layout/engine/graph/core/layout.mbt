@@ -7229,7 +7229,11 @@ fn layout_graph_legacy_with_subgraph_redirects(
         compacted_rank_by_id,
         compacted_lane_by_id,
       )
-      if compacted_lane_crossings < baseline_lane_crossings {
+      if compacted_lane_crossings < baseline_lane_crossings ||
+        (
+          compacted_lane_crossings == baseline_lane_crossings &&
+          compacted_max_rank < baseline_max_rank
+        ) {
         selected_rank_by_id = compacted_rank_by_id
         selected_max_rank = compacted_max_rank
         for node_id, lane in compacted_lane_by_id {
