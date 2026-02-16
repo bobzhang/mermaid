@@ -3577,6 +3577,58 @@ fn rebalance_boundary_offsets_for_bucket(
 }
 
 ///|
+fn bucket_has_source_target_offset_conflict(
+  assignments : Array[BoundaryEndpointAssignment],
+  source_boundary_offset_by_context_index : Map[Int, Int],
+  target_boundary_offset_by_context_index : Map[Int, Int],
+  edge_layout_contexts : Array[EdgeLayoutContext],
+) -> Bool {
+  if assignments.length() == 0 {
+    return false
+  }
+  let source_offsets : Map[Int, Bool] = {}
+  let target_offsets : Map[Int, Bool] = {}
+  let normalized_total = assignments.length().max(1)
+  for slot, assignment in assignments {
+    let context = edge_layout_contexts[assignment.context_index]
+    let endpoint_node = if assignment.source_endpoint {
+      context.source
+    } else {
+      context.target
+    }
+    let half_span_limit = boundary_side_minor_span_limit(
+      endpoint_node,
+      assignment.side,
+    )
+    let fallback_offset = distributed_boundary_port_offset(
+      slot, normalized_total, half_span_limit,
+    )
+    let resolved_offset = if assignment.source_endpoint {
+      option_int_or(
+        source_boundary_offset_by_context_index.get(assignment.context_index),
+        fallback_offset,
+      )
+    } else {
+      option_int_or(
+        target_boundary_offset_by_context_index.get(assignment.context_index),
+        fallback_offset,
+      )
+    }
+    if assignment.source_endpoint {
+      source_offsets[resolved_offset] = true
+    } else {
+      target_offsets[resolved_offset] = true
+    }
+  }
+  for offset, _ in source_offsets {
+    if target_offsets.contains(offset) {
+      return true
+    }
+  }
+  false
+}
+
+///|
 fn deferred_back_edge_minor_axis_key(
   context : EdgeLayoutContext,
   key_mode : Int,
@@ -7944,11 +7996,16 @@ fn layout_graph_legacy_with_subgraph_redirects(
       }
     }
 
+    let has_source_target_offset_conflict = bucket_has_source_target_offset_conflict(
+      assignments, source_boundary_offset_by_context_index, target_boundary_offset_by_context_index,
+      edge_layout_contexts,
+    )
     if graph.edges.length() <= 30 &&
-      assignments.length() <= 3 &&
+      assignments.length() <= 6 &&
       has_mixed_peer_minor &&
       source_endpoint_count > 0 &&
-      target_endpoint_count > 0 {
+      target_endpoint_count > 0 &&
+      has_source_target_offset_conflict {
       rebalance_boundary_offsets_for_bucket(
         assignments, edge_layout_contexts, source_boundary_offset_by_context_index,
         target_boundary_offset_by_context_index,
