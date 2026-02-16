@@ -6307,10 +6307,14 @@ fn layout_graph_legacy_with_subgraph_redirects(
   let flow_label_y_offset_by_rank : Map[Int, Int] = {}
   let mut refined_horizontal_non_state_flow = false
   let mut refined_horizontal_non_state_labeled_cycle_flow = false
+  let mut horizontal_cycle_non_state_flow = false
   let mut flow_max_rank = 0
   if !state_graph || horizontal {
     let cycle_aware_layout = state_graph ||
       (!class_or_er_graph && graph_has_cycle(nodes_in_order, graph.edges))
+    horizontal_cycle_non_state_flow = !state_graph &&
+      horizontal &&
+      cycle_aware_layout
     let promote_backward_dotted_edges = horizontal &&
       !state_graph &&
       !class_or_er_graph &&
@@ -6846,6 +6850,23 @@ fn layout_graph_legacy_with_subgraph_redirects(
       }
     }
   }
+  let horizontal_rank_center_x_by_index : Map[Int, Int] = {}
+  if horizontal && horizontal_cycle_non_state_flow {
+    for flow_rank_index in 0..<=flow_max_rank {
+      let rank_width = option_int_or(
+        max_width_by_flow_rank_index.get(flow_rank_index),
+        0,
+      )
+      let rank_shift = option_int_or(
+        horizontal_rank_shift_by_index.get(flow_rank_index),
+        0,
+      )
+      horizontal_rank_center_x_by_index[flow_rank_index] = padding +
+        flow_rank_index * node_spacing +
+        rank_shift +
+        rank_width / 2
+    }
+  }
 
   let mut max_right = padding
   let mut max_bottom = padding
@@ -6863,11 +6884,18 @@ fn layout_graph_legacy_with_subgraph_redirects(
       flow_rank
     }
     let x = if horizontal {
-      let rank_shift = option_int_or(
-        horizontal_rank_shift_by_index.get(flow_rank_index),
-        0,
-      )
-      padding + flow_rank_index * node_spacing + rank_shift + width / 2
+      if horizontal_cycle_non_state_flow {
+        option_int_or(
+          horizontal_rank_center_x_by_index.get(flow_rank_index),
+          padding + flow_rank_index * node_spacing + width / 2,
+        )
+      } else {
+        let rank_shift = option_int_or(
+          horizontal_rank_shift_by_index.get(flow_rank_index),
+          0,
+        )
+        padding + flow_rank_index * node_spacing + rank_shift + width / 2
+      }
     } else if flat_state_graph {
       padding +
       90 +

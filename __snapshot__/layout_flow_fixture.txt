@@ -4,7 +4,7 @@ width=616 height=262
 [nodes]
 node id=Ship shape=Stadium center=541,200 size=70x44 label=Ship
 node id=Start shape=Stadium center=75,155 size=70x44 label=Start
-node id=Fix shape=Rectangle center=396,110 size=104x44 label=Fix source
+node id=Fix shape=Rectangle center=412,110 size=104x44 label=Fix source
 node id=Check shape=Diamond center=230,155 size=120x44 label=Valid input?
 node id=Build shape=Rectangle center=412,200 size=136x44 label=Build artifact
 
@@ -12,8 +12,8 @@ node id=Build shape=Rectangle center=412,200 size=136x44 label=Build artifact
 edge Build->Ship label=- label_pos=- points=480,200 -> 506,200
 edge Start->Check label=- label_pos=- points=110,155 -> 170,155
 edge Check->Build label=yes label_pos=315,175 points=290,161 -> 290,155 -> 344,200
-edge Check->Fix label=no label_pos=316,133 points=290,149 -> 290,155 -> 344,110 -> 344,116
-edge Fix->Check label=- label_pos=- points=344,104 -> 344,110 -> 344,72 -> 290,72 -> 290,155 -> 290,161
+edge Check->Fix label=no label_pos=324,133 points=290,149 -> 290,155 -> 360,110 -> 360,116
+edge Fix->Check label=- label_pos=- points=360,104 -> 360,110 -> 360,72 -> 290,72 -> 290,155 -> 290,161
 
 [groups]
 (none)
