@@ -2643,12 +2643,16 @@ fn edge_points_for_with_ports(
     match back_edge_bend_y {
       Some(bend_y) =>
         if !moving_right {
-          return [
-            start_base,
-            { x: start_base.x, y: bend_y },
-            { x: end_base.x, y: bend_y },
-            end_base,
-          ]
+          return apply_endpoint_port_stubs(
+            [
+              start_base,
+              { x: start_base.x, y: bend_y },
+              { x: end_base.x, y: bend_y },
+              end_base,
+            ],
+            start_anchor,
+            end_anchor,
+          )
         }
       None => ()
     }
@@ -2684,12 +2688,16 @@ fn edge_points_for_with_ports(
     match back_edge_bend_x {
       Some(bend_x) =>
         if !moving_down {
-          return [
-            start_base,
-            { x: bend_x, y: start_base.y },
-            { x: bend_x, y: end_base.y },
-            end_base,
-          ]
+          return apply_endpoint_port_stubs(
+            [
+              start_base,
+              { x: bend_x, y: start_base.y },
+              { x: bend_x, y: end_base.y },
+              end_base,
+            ],
+            start_anchor,
+            end_anchor,
+          )
         }
       None => ()
     }
@@ -7202,7 +7210,8 @@ fn layout_graph_legacy_with_subgraph_redirects(
     }
 
     for _, peer_minor_assignments in assignments_by_peer_minor {
-      if peer_minor_assignments.length() <= 1 ||
+      if graph.edges.length() > 20 ||
+        peer_minor_assignments.length() <= 1 ||
         peer_minor_assignments.length() > 4 {
         continue
       }
@@ -7319,6 +7328,10 @@ fn layout_graph_legacy_with_subgraph_redirects(
     }
   }
   for context_index, context in edge_layout_contexts {
+    let resolved_target_offset = option_int_or(
+      target_boundary_offset_by_context_index.get(context_index),
+      0,
+    )
     edge_layout_contexts[context_index] = {
       edge: context.edge,
       resolved_source_id: context.resolved_source_id,
@@ -7335,11 +7348,13 @@ fn layout_graph_legacy_with_subgraph_redirects(
         source_boundary_offset_by_context_index.get(context_index),
         0,
       ),
-      target_boundary_offset_minor: if enable_target_boundary_ports {
-        option_int_or(
-          target_boundary_offset_by_context_index.get(context_index),
-          0,
-        )
+      target_boundary_offset_minor: if enable_target_boundary_ports ||
+        (
+          !state_graph &&
+          graph.edges.length() <= 20 &&
+          resolved_target_offset != 0
+        ) {
+        resolved_target_offset
       } else {
         0
       },
@@ -7707,7 +7722,16 @@ fn layout_graph_legacy_with_subgraph_redirects(
       graph.edges.length() <= 20 &&
       route_as_back_edge &&
       has_reciprocal_counterpart
-    let base_points_with_ports = if force_reciprocal_back_edge_ports &&
+    let force_compact_reciprocal_ports = !state_graph &&
+      graph.edges.length() <= 20 &&
+      has_reciprocal_counterpart &&
+      (
+        context.source_boundary_offset_minor != 0 ||
+        context.target_boundary_offset_minor != 0
+      )
+    let base_points_with_ports = if (
+        force_reciprocal_back_edge_ports || force_compact_reciprocal_ports
+      ) &&
       (
         context.source_boundary_offset_minor != 0 ||
         context.target_boundary_offset_minor != 0
@@ -7719,9 +7743,16 @@ fn layout_graph_legacy_with_subgraph_redirects(
     let force_compact_source_ports = graph.edges.length() <= 20 &&
       context.source_boundary_offset_minor != 0 &&
       context.target_boundary_offset_minor == 0
+    let force_compact_target_ports = !state_graph &&
+      graph.edges.length() <= 20 &&
+      context.target_boundary_offset_minor != 0 &&
+      context.source_boundary_offset_minor == 0
     let base_points = if context.source_boundary_offset_minor != 0 ||
       context.target_boundary_offset_minor != 0 {
-      if force_compact_source_ports || force_reciprocal_back_edge_ports {
+      if force_compact_source_ports ||
+        force_compact_target_ports ||
+        force_compact_reciprocal_ports ||
+        force_reciprocal_back_edge_ports {
         base_points_with_ports
       } else {
         let base_points_without_ports = edge_points_for_with_ports(

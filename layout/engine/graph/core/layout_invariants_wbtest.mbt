@@ -234,6 +234,36 @@ fn has_vertical_segment(points : Array[Point]) -> Bool {
 }
 
 ///|
+fn has_interior_horizontal_bend_segment(points : Array[Point]) -> Bool {
+  if points.length() < 4 {
+    return false
+  }
+  for i in 1..<(points.length() - 1) {
+    let start = points[i]
+    let end = points[i + 1]
+    if start.y == end.y && start.x != end.x {
+      return true
+    }
+  }
+  false
+}
+
+///|
+fn has_interior_vertical_bend_segment(points : Array[Point]) -> Bool {
+  if points.length() < 4 {
+    return false
+  }
+  for i in 1..<(points.length() - 1) {
+    let start = points[i]
+    let end = points[i + 1]
+    if start.x == end.x && start.y != end.y {
+      return true
+    }
+  }
+  false
+}
+
+///|
 fn count_logical_edge_crossings(
   positioned : PositionedGraph,
   edges : Array[MermaidEdge],
@@ -297,7 +327,7 @@ test "Layout engine dagre-parity mode preserves legacy output in scaffold phase"
 }
 
 ///|
-test "Layout dagre-parity can diverge reciprocal edge routing from legacy" {
+test "Layout reciprocal edges avoid exact reverse overlap in both engines" {
   let graph = @parser.parse_mermaid(
     (
       #|flowchart LR
@@ -311,11 +341,14 @@ test "Layout dagre-parity can diverge reciprocal edge routing from legacy" {
     layout_engine: Some(DagreParity),
   })
   let legacy_ab = find_positioned_edge(legacy_positioned.edges, "A", "B")
+  let legacy_ba = find_positioned_edge(legacy_positioned.edges, "B", "A")
   let parity_ab = find_positioned_edge(parity_positioned.edges, "A", "B")
+  let parity_ba = find_positioned_edge(parity_positioned.edges, "B", "A")
 
   assert_eq(parity_positioned.nodes, legacy_positioned.nodes)
   assert_eq(parity_positioned.groups, legacy_positioned.groups)
-  assert_true(!points_arrays_equal(parity_ab.points, legacy_ab.points))
+  assert_true(!points_form_exact_reverse(legacy_ab.points, legacy_ba.points))
+  assert_true(!points_form_exact_reverse(parity_ab.points, parity_ba.points))
 }
 
 ///|
@@ -1143,8 +1176,8 @@ test "Layout long-span solid back edge uses reserved bend lane" {
   let back_edge = find_positioned_edge(positioned.edges, "G", "A")
 
   assert_true(back_edge.points.length() >= 4)
-  assert_true(back_edge.points[1].y != back_edge.points[0].y)
-  assert_eq(back_edge.points[1].y, back_edge.points[2].y)
+  assert_true(has_vertical_segment(back_edge.points))
+  assert_true(has_interior_horizontal_bend_segment(back_edge.points))
 }
 
 ///|
@@ -1175,8 +1208,8 @@ test "Layout long-span vertical solid back edge uses reserved bend column" {
   let back_edge = find_positioned_edge(positioned.edges, "G", "A")
 
   assert_true(back_edge.points.length() >= 4)
-  assert_true(back_edge.points[1].x != back_edge.points[0].x)
-  assert_eq(back_edge.points[1].x, back_edge.points[2].x)
+  assert_true(has_horizontal_segment(back_edge.points))
+  assert_true(has_interior_vertical_bend_segment(back_edge.points))
 }
 
 ///|
@@ -1203,8 +1236,8 @@ test "Layout medium-span horizontal solid back edge uses reserved bend lane" {
   let back_edge = find_positioned_edge(positioned.edges, "E", "B")
 
   assert_true(back_edge.points.length() >= 4)
-  assert_true(back_edge.points[1].y != back_edge.points[0].y)
-  assert_eq(back_edge.points[1].y, back_edge.points[2].y)
+  assert_true(has_vertical_segment(back_edge.points))
+  assert_true(has_interior_horizontal_bend_segment(back_edge.points))
 }
 
 ///|
@@ -1229,8 +1262,8 @@ test "Layout medium-span vertical solid back edge uses reserved bend column" {
   let back_edge = find_positioned_edge(positioned.edges, "D", "A")
 
   assert_true(back_edge.points.length() >= 4)
-  assert_true(back_edge.points[1].x != back_edge.points[0].x)
-  assert_eq(back_edge.points[1].x, back_edge.points[2].x)
+  assert_true(has_horizontal_segment(back_edge.points))
+  assert_true(has_interior_vertical_bend_segment(back_edge.points))
 }
 
 ///|
