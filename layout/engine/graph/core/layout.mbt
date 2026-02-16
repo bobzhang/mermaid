@@ -1834,9 +1834,7 @@ fn collect_non_state_flow_lanes(
 
       if reversible_ranks.length() >= 2 {
         let mut best_crossings = count_lane_space_edge_crossings(
-          edges,
-          rank_by_id,
-          lane_by_id,
+          edges, rank_by_id, lane_by_id,
         )
 
         let single_pass_budget = if reversible_ranks.length() >= 12 {
@@ -1851,9 +1849,7 @@ fn collect_non_state_flow_lanes(
               Some(node_ids) => {
                 reverse_rank_order_in_place(node_ids, lane_by_id)
                 let candidate_crossings = count_lane_space_edge_crossings(
-                  edges,
-                  rank_by_id,
-                  lane_by_id,
+                  edges, rank_by_id, lane_by_id,
                 )
                 if candidate_crossings < best_crossings {
                   best_crossings = candidate_crossings
@@ -1885,9 +1881,7 @@ fn collect_non_state_flow_lanes(
                   reverse_rank_order_in_place(left_nodes, lane_by_id)
                   reverse_rank_order_in_place(right_nodes, lane_by_id)
                   let candidate_crossings = count_lane_space_edge_crossings(
-                    edges,
-                    rank_by_id,
-                    lane_by_id,
+                    edges, rank_by_id, lane_by_id,
                   )
                   if candidate_crossings < best_crossings {
                     best_crossings = candidate_crossings
@@ -1907,9 +1901,7 @@ fn collect_non_state_flow_lanes(
                 Some(node_ids) => {
                   reverse_rank_order_in_place(node_ids, lane_by_id)
                   let candidate_crossings = count_lane_space_edge_crossings(
-                    edges,
-                    rank_by_id,
-                    lane_by_id,
+                    edges, rank_by_id, lane_by_id,
                   )
                   if candidate_crossings < best_crossings {
                     best_crossings = candidate_crossings
@@ -2462,127 +2454,257 @@ fn resolve_inline_style(
 }
 
 ///|
-fn node_boundary_point_toward(node : PositionedNode, toward : Point) -> Point {
-  let center_x = node.x
-  let center_y = node.y
-  let dx = toward.x - center_x
-  let dy = toward.y - center_y
-  let half_width = (node.width / 2).max(1)
-  let half_height = (node.height / 2).max(1)
-  if dx == 0 && dy == 0 {
-    return { x: center_x + half_width, y: center_y }
+fn boundary_side_minor_limit(
+  node : PositionedNode,
+  side_is_vertical : Bool,
+) -> Int {
+  if side_is_vertical {
+    (node.height / 2 - 6).max(0)
+  } else {
+    (node.width / 2 - 6).max(0)
   }
-  if dx == 0 {
-    let y_sign = if dy > 0 { 1 } else { -1 }
-    return { x: center_x, y: center_y + y_sign * half_height }
-  }
-  if dy == 0 {
-    let x_sign = if dx > 0 { 1 } else { -1 }
-    return { x: center_x + x_sign * half_width, y: center_y }
-  }
+}
 
-  let abs_dx = int_abs(dx)
-  let abs_dy = int_abs(dy)
-  if abs_dx * half_height >= abs_dy * half_width {
-    let x_sign = if dx > 0 { 1 } else { -1 }
-    {
-      x: center_x + x_sign * half_width,
-      y: center_y + dy * half_width / abs_dx,
+///|
+fn clamp_minor_boundary_offset(
+  node : PositionedNode,
+  side_is_vertical : Bool,
+  offset : Int,
+) -> Int {
+  let limit = boundary_side_minor_limit(node, side_is_vertical)
+  if offset > limit {
+    limit
+  } else if offset < -limit {
+    -limit
+  } else {
+    offset
+  }
+}
+
+///|
+fn boundary_anchor_point(
+  source : PositionedNode,
+  horizontal : Bool,
+  source_endpoint : Bool,
+  moving_forward : Bool,
+  minor_offset : Int,
+) -> Point {
+  if horizontal {
+    let clamped_minor = clamp_minor_boundary_offset(source, true, minor_offset)
+    let delta_x = if source_endpoint {
+      if moving_forward {
+        source.width / 2
+      } else {
+        -source.width / 2
+      }
+    } else if moving_forward {
+      -source.width / 2
+    } else {
+      source.width / 2
+    }
+    { x: source.x + delta_x, y: source.y + clamped_minor }
+  } else {
+    let clamped_minor = clamp_minor_boundary_offset(source, false, minor_offset)
+    let delta_y = if source_endpoint {
+      if moving_forward {
+        source.height / 2
+      } else {
+        -source.height / 2
+      }
+    } else if moving_forward {
+      -source.height / 2
+    } else {
+      source.height / 2
+    }
+    { x: source.x + clamped_minor, y: source.y + delta_y }
+  }
+}
+
+///|
+fn point_equals(left : Point, right : Point) -> Bool {
+  left.x == right.x && left.y == right.y
+}
+
+///|
+fn apply_endpoint_port_stubs(
+  core_points : Array[Point],
+  source_anchor : Point,
+  target_anchor : Point,
+) -> Array[Point] {
+  if core_points.length() == 0 {
+    if point_equals(source_anchor, target_anchor) {
+      [source_anchor]
+    } else {
+      [source_anchor, target_anchor]
     }
   } else {
-    let y_sign = if dy > 0 { 1 } else { -1 }
-    {
-      x: center_x + dx * half_height / abs_dy,
-      y: center_y + y_sign * half_height,
+    let routed_points : Array[Point] = []
+    if !point_equals(source_anchor, core_points[0]) {
+      routed_points.push(source_anchor)
     }
+    for point in core_points {
+      if routed_points.length() == 0 ||
+        !point_equals(routed_points[routed_points.length() - 1], point) {
+        routed_points.push(point)
+      }
+    }
+    if !point_equals(target_anchor, routed_points[routed_points.length() - 1]) {
+      routed_points.push(target_anchor)
+    }
+    routed_points
   }
 }
 
 ///|
-fn apply_directional_boundary_anchors(
-  source : PositionedNode,
-  target : PositionedNode,
-  points : Array[Point],
-) -> Array[Point] {
-  if points.length() < 2 {
-    return points
-  }
-  let anchored_points : Array[Point] = []
-  for point in points {
-    anchored_points.push(point)
-  }
-  anchored_points[0] = node_boundary_point_toward(source, anchored_points[1])
-  let last_index = anchored_points.length() - 1
-  anchored_points[last_index] = node_boundary_point_toward(
-    target,
-    anchored_points[last_index - 1],
-  )
-  anchored_points
-}
-
-///|
-fn edge_points_with_minor_lane_offset(
+fn edge_points_with_minor_lane_offset_with_ports(
   source : PositionedNode,
   target : PositionedNode,
   horizontal : Bool,
   minor_offset : Int,
   smooth_forward_fanout : Bool,
+  source_port_minor_offset : Int,
+  target_port_minor_offset : Int,
 ) -> Array[Point] {
   if horizontal {
     let moving_right = target.x >= source.x
-    let source_delta = if moving_right {
-      source.width / 2
-    } else {
-      -source.width / 2
-    }
-    let target_delta = if moving_right {
-      -target.width / 2
-    } else {
-      target.width / 2
-    }
-    let start_x = source.x + source_delta
-    let end_x = target.x + target_delta
+    let start_anchor = boundary_anchor_point(
+      source, true, true, moving_right, source_port_minor_offset,
+    )
+    let start_base = boundary_anchor_point(source, true, true, moving_right, 0)
+    let end_anchor = boundary_anchor_point(
+      target, true, false, moving_right, target_port_minor_offset,
+    )
+    let end_base = boundary_anchor_point(target, true, false, moving_right, 0)
     let lane_y = source.y + minor_offset
-    let start : Point = { x: start_x, y: source.y }
-    let end : Point = { x: end_x, y: target.y }
     if smooth_forward_fanout {
-      let mid_x = (start_x + end_x) / 2
-      return apply_directional_boundary_anchors(source, target, [
-        start,
-        { x: mid_x, y: lane_y },
-        end,
-      ])
+      let mid_x = (start_base.x + end_base.x) / 2
+      return apply_endpoint_port_stubs(
+        [start_base, { x: mid_x, y: lane_y }, end_base],
+        start_anchor,
+        end_anchor,
+      )
     }
-    return apply_directional_boundary_anchors(source, target, [
-      start,
-      { x: start_x, y: lane_y },
-      { x: end_x, y: lane_y },
-      end,
-    ])
+    return apply_endpoint_port_stubs(
+      [
+        start_base,
+        { x: start_base.x, y: lane_y },
+        { x: end_base.x, y: lane_y },
+        end_base,
+      ],
+      start_anchor,
+      end_anchor,
+    )
   }
 
   let moving_down = target.y >= source.y
-  let source_delta = if moving_down {
-    source.height / 2
-  } else {
-    -source.height / 2
-  }
-  let target_delta = if moving_down {
-    -target.height / 2
-  } else {
-    target.height / 2
-  }
-  let start_y = source.y + source_delta
-  let end_y = target.y + target_delta
+  let start_anchor = boundary_anchor_point(
+    source, false, true, moving_down, source_port_minor_offset,
+  )
+  let start_base = boundary_anchor_point(source, false, true, moving_down, 0)
+  let end_anchor = boundary_anchor_point(
+    target, false, false, moving_down, target_port_minor_offset,
+  )
+  let end_base = boundary_anchor_point(target, false, false, moving_down, 0)
   let lane_x = source.x + minor_offset
-  let start : Point = { x: source.x, y: start_y }
-  let end : Point = { x: target.x, y: end_y }
-  return apply_directional_boundary_anchors(source, target, [
-    start,
-    { x: lane_x, y: start_y },
-    { x: lane_x, y: end_y },
-    end,
-  ])
+  apply_endpoint_port_stubs(
+    [
+      start_base,
+      { x: lane_x, y: start_base.y },
+      { x: lane_x, y: end_base.y },
+      end_base,
+    ],
+    start_anchor,
+    end_anchor,
+  )
+}
+
+///|
+fn edge_points_for_with_ports(
+  source : PositionedNode,
+  target : PositionedNode,
+  horizontal : Bool,
+  back_edge_bend_y : Int?,
+  back_edge_bend_x : Int?,
+  forward_fanout_offset_y : Int?,
+  smooth_forward_fanout : Bool,
+  source_port_minor_offset : Int,
+  target_port_minor_offset : Int,
+) -> Array[Point] {
+  if horizontal {
+    let moving_right = target.x >= source.x
+    let start_anchor = boundary_anchor_point(
+      source, true, true, moving_right, source_port_minor_offset,
+    )
+    let start_base = boundary_anchor_point(source, true, true, moving_right, 0)
+    let end_anchor = boundary_anchor_point(
+      target, true, false, moving_right, target_port_minor_offset,
+    )
+    let end_base = boundary_anchor_point(target, true, false, moving_right, 0)
+    match back_edge_bend_y {
+      Some(bend_y) =>
+        if !moving_right {
+          return [
+            start_base,
+            { x: start_base.x, y: bend_y },
+            { x: end_base.x, y: bend_y },
+            end_base,
+          ]
+        }
+      None => ()
+    }
+    match forward_fanout_offset_y {
+      Some(offset_y) =>
+        if moving_right && offset_y != 0 {
+          return edge_points_with_minor_lane_offset_with_ports(
+            source, target, true, offset_y, smooth_forward_fanout, source_port_minor_offset,
+            target_port_minor_offset,
+          )
+        }
+      None => ()
+    }
+    if smooth_forward_fanout && moving_right && start_base.y != end_base.y {
+      let mid_x = (start_base.x + end_base.x) / 2
+      return apply_endpoint_port_stubs(
+        [start_base, { x: mid_x, y: end_base.y }, end_base],
+        start_anchor,
+        end_anchor,
+      )
+    }
+    apply_endpoint_port_stubs([start_base, end_base], start_anchor, end_anchor)
+  } else {
+    let moving_down = target.y >= source.y
+    let start_anchor = boundary_anchor_point(
+      source, false, true, moving_down, source_port_minor_offset,
+    )
+    let start_base = boundary_anchor_point(source, false, true, moving_down, 0)
+    let end_anchor = boundary_anchor_point(
+      target, false, false, moving_down, target_port_minor_offset,
+    )
+    let end_base = boundary_anchor_point(target, false, false, moving_down, 0)
+    match back_edge_bend_x {
+      Some(bend_x) =>
+        if !moving_down {
+          return [
+            start_base,
+            { x: bend_x, y: start_base.y },
+            { x: bend_x, y: end_base.y },
+            end_base,
+          ]
+        }
+      None => ()
+    }
+    match forward_fanout_offset_y {
+      Some(offset_x) =>
+        if moving_down && offset_x != 0 {
+          return edge_points_with_minor_lane_offset_with_ports(
+            source, target, false, offset_x, smooth_forward_fanout, source_port_minor_offset,
+            target_port_minor_offset,
+          )
+        }
+      None => ()
+    }
+    apply_endpoint_port_stubs([start_base, end_base], start_anchor, end_anchor)
+  }
 }
 
 ///|
@@ -2595,91 +2717,10 @@ fn edge_points_for(
   forward_fanout_offset_y : Int?,
   smooth_forward_fanout : Bool,
 ) -> Array[Point] {
-  if horizontal {
-    let moving_right = target.x >= source.x
-    let source_delta = if moving_right {
-      source.width / 2
-    } else {
-      -source.width / 2
-    }
-    let target_delta = if moving_right {
-      -target.width / 2
-    } else {
-      target.width / 2
-    }
-    let start_x = source.x + source_delta
-    let end_x = target.x + target_delta
-    let start : Point = { x: start_x, y: source.y }
-    let end : Point = { x: end_x, y: target.y }
-    match back_edge_bend_y {
-      Some(bend_y) =>
-        if !moving_right {
-          return apply_directional_boundary_anchors(source, target, [
-            start,
-            { x: start_x, y: bend_y },
-            { x: end_x, y: bend_y },
-            end,
-          ])
-        }
-      None => ()
-    }
-    match forward_fanout_offset_y {
-      Some(offset_y) =>
-        if moving_right && offset_y != 0 {
-          return edge_points_with_minor_lane_offset(
-            source, target, true, offset_y, smooth_forward_fanout,
-          )
-        }
-      None => ()
-    }
-    if smooth_forward_fanout && moving_right && start.y != end.y {
-      let mid_x = (start_x + end_x) / 2
-      return apply_directional_boundary_anchors(source, target, [
-        start,
-        { x: mid_x, y: end.y },
-        end,
-      ])
-    }
-    apply_directional_boundary_anchors(source, target, [start, end])
-  } else {
-    let moving_down = target.y >= source.y
-    let source_delta = if moving_down {
-      source.height / 2
-    } else {
-      -source.height / 2
-    }
-    let target_delta = if moving_down {
-      -target.height / 2
-    } else {
-      target.height / 2
-    }
-    let start_y = source.y + source_delta
-    let end_y = target.y + target_delta
-    let start : Point = { x: source.x, y: start_y }
-    let end : Point = { x: target.x, y: end_y }
-    match back_edge_bend_x {
-      Some(bend_x) =>
-        if !moving_down {
-          return apply_directional_boundary_anchors(source, target, [
-            start,
-            { x: bend_x, y: start_y },
-            { x: bend_x, y: end_y },
-            end,
-          ])
-        }
-      None => ()
-    }
-    match forward_fanout_offset_y {
-      Some(offset_x) =>
-        if moving_down && offset_x != 0 {
-          return edge_points_with_minor_lane_offset(
-            source, target, false, offset_x, smooth_forward_fanout,
-          )
-        }
-      None => ()
-    }
-    apply_directional_boundary_anchors(source, target, [start, end])
-  }
+  edge_points_for_with_ports(
+    source, target, horizontal, back_edge_bend_y, back_edge_bend_x, forward_fanout_offset_y,
+    smooth_forward_fanout, 0, 0,
+  )
 }
 
 ///|
@@ -2714,6 +2755,26 @@ priv struct EdgeLayoutContext {
   source : PositionedNode
   target : PositionedNode
   edge_horizontal : Bool
+  source_boundary_offset_minor : Int
+  target_boundary_offset_minor : Int
+}
+
+///|
+priv enum NodeBoundarySide {
+  Left
+  Right
+  Top
+  Bottom
+}
+
+///|
+priv struct BoundaryEndpointAssignment {
+  context_index : Int
+  source_endpoint : Bool
+  side : NodeBoundarySide
+  peer_major : Int
+  peer_minor : Int
+  edge_span : Int
 }
 
 ///|
@@ -2745,6 +2806,88 @@ fn edge_layout_context_span(context : EdgeLayoutContext) -> Int {
     int_abs(context.target.x - context.source.x)
   } else {
     int_abs(context.target.y - context.source.y)
+  }
+}
+
+///|
+fn boundary_side_key(side : NodeBoundarySide) -> String {
+  match side {
+    Left => "L"
+    Right => "R"
+    Top => "T"
+    Bottom => "B"
+  }
+}
+
+///|
+fn boundary_bucket_key(node_id : String, side : NodeBoundarySide) -> String {
+  "\{node_id}:\{boundary_side_key(side)}"
+}
+
+///|
+fn opposite_boundary_side(side : NodeBoundarySide) -> NodeBoundarySide {
+  match side {
+    Left => Right
+    Right => Left
+    Top => Bottom
+    Bottom => Top
+  }
+}
+
+///|
+fn context_source_boundary_side(
+  context : EdgeLayoutContext,
+) -> NodeBoundarySide {
+  if context.edge_horizontal {
+    if context.target.x >= context.source.x {
+      Right
+    } else {
+      Left
+    }
+  } else if context.target.y >= context.source.y {
+    Bottom
+  } else {
+    Top
+  }
+}
+
+///|
+fn boundary_side_minor_span_limit(
+  node : PositionedNode,
+  side : NodeBoundarySide,
+) -> Int {
+  match side {
+    Left | Right => boundary_side_minor_limit(node, true)
+    Top | Bottom => boundary_side_minor_limit(node, false)
+  }
+}
+
+///|
+fn distributed_boundary_port_offset(
+  slot : Int,
+  total : Int,
+  half_span_limit : Int,
+) -> Int {
+  if total <= 1 || half_span_limit <= 0 {
+    return 0
+  }
+  let max_span = half_span_limit * 2
+  let min_step = 2
+  let preferred_step = 16
+  let fit_step = if total <= 1 {
+    preferred_step
+  } else {
+    (max_span / (total - 1)).max(min_step)
+  }
+  let step = preferred_step.min(fit_step)
+  let centered = slot * 2 - (total - 1)
+  let raw_offset = centered * step / 2
+  if raw_offset > half_span_limit {
+    half_span_limit
+  } else if raw_offset < -half_span_limit {
+    -half_span_limit
+  } else {
+    raw_offset
   }
 }
 
@@ -3011,7 +3154,7 @@ fn simulate_deferred_back_edge_order_crossings(
     } else {
       None
     }
-    let points = edge_points_for(
+    let points = edge_points_for_with_ports(
       source,
       target,
       context.edge_horizontal,
@@ -3019,6 +3162,8 @@ fn simulate_deferred_back_edge_order_crossings(
       back_edge_bend_x,
       None,
       enhanced_horizontal_state_flow,
+      context.source_boundary_offset_minor,
+      context.target_boundary_offset_minor,
     )
     candidate_polylines.push(points)
     append_routed_segments_for_points(
@@ -4515,6 +4660,8 @@ fn optimize_labeled_route_points(
   route_as_back_edge : Bool,
   use_forward_fanout_lane : Bool,
   smooth_forward_fanout : Bool,
+  source_port_minor_offset : Int,
+  target_port_minor_offset : Int,
   layer_spacing : Int,
   node_spacing : Int,
   positioned_nodes : Array[PositionedNode],
@@ -4581,12 +4728,14 @@ fn optimize_labeled_route_points(
   seen_signatures[points_signature(best_points)] = true
 
   for candidate_offset in candidate_offsets {
-    let candidate_points = edge_points_with_minor_lane_offset(
+    let candidate_points = edge_points_with_minor_lane_offset_with_ports(
       context.source,
       context.target,
       context.edge_horizontal,
       candidate_offset,
       smooth_forward_fanout,
+      source_port_minor_offset,
+      target_port_minor_offset,
     )
     let signature = points_signature(candidate_points)
     if seen_signatures.contains(signature) {
@@ -6548,6 +6697,8 @@ fn layout_graph_with_subgraph_redirects(
           source,
           target,
           edge_horizontal,
+          source_boundary_offset_minor: 0,
+          target_boundary_offset_minor: 0,
         })
         let key = directed_edge_key(resolved_source_id, resolved_target_id)
         directed_edge_count_by_key[key] = option_int_or(
@@ -6557,6 +6708,213 @@ fn layout_graph_with_subgraph_redirects(
           1
       }
       _ => ()
+    }
+  }
+
+  let boundary_assignments_by_bucket : Map[
+    String,
+    Array[BoundaryEndpointAssignment],
+  ] = {}
+  for context_index, context in edge_layout_contexts {
+    let source_side = context_source_boundary_side(context)
+    let target_side = opposite_boundary_side(source_side)
+    let source_peer_major = if context.edge_horizontal {
+      context.target.x
+    } else {
+      context.target.y
+    }
+    let source_peer_minor = if context.edge_horizontal {
+      context.target.y
+    } else {
+      context.target.x
+    }
+    let target_peer_major = if context.edge_horizontal {
+      context.source.x
+    } else {
+      context.source.y
+    }
+    let target_peer_minor = if context.edge_horizontal {
+      context.source.y
+    } else {
+      context.source.x
+    }
+    let source_bucket_key = boundary_bucket_key(
+      context.resolved_source_id,
+      source_side,
+    )
+    if !boundary_assignments_by_bucket.contains(source_bucket_key) {
+      boundary_assignments_by_bucket[source_bucket_key] = []
+    }
+    match boundary_assignments_by_bucket.get(source_bucket_key) {
+      Some(assignments) =>
+        assignments.push({
+          context_index,
+          source_endpoint: true,
+          side: source_side,
+          peer_major: source_peer_major,
+          peer_minor: source_peer_minor,
+          edge_span: edge_layout_context_span(context),
+        })
+      None => ()
+    }
+    let target_bucket_key = boundary_bucket_key(
+      context.resolved_target_id,
+      target_side,
+    )
+    if !boundary_assignments_by_bucket.contains(target_bucket_key) {
+      boundary_assignments_by_bucket[target_bucket_key] = []
+    }
+    match boundary_assignments_by_bucket.get(target_bucket_key) {
+      Some(assignments) =>
+        assignments.push({
+          context_index,
+          source_endpoint: false,
+          side: target_side,
+          peer_major: target_peer_major,
+          peer_minor: target_peer_minor,
+          edge_span: edge_layout_context_span(context),
+        })
+      None => ()
+    }
+  }
+  let source_boundary_offset_by_context_index : Map[Int, Int] = {}
+  let target_boundary_offset_by_context_index : Map[Int, Int] = {}
+  for _, assignments in boundary_assignments_by_bucket {
+    if assignments.length() == 0 {
+      continue
+    }
+    let assignments_by_peer_minor : Map[Int, Array[BoundaryEndpointAssignment]] = {}
+    let mut has_source_endpoint = false
+    for assignment in assignments {
+      if assignment.source_endpoint {
+        has_source_endpoint = true
+      }
+      if !assignments_by_peer_minor.contains(assignment.peer_minor) {
+        assignments_by_peer_minor[assignment.peer_minor] = []
+      }
+      match assignments_by_peer_minor.get(assignment.peer_minor) {
+        Some(peer_minor_assignments) => peer_minor_assignments.push(assignment)
+        None => ()
+      }
+    }
+
+    for _, peer_minor_assignments in assignments_by_peer_minor {
+      if peer_minor_assignments.length() <= 1 ||
+        peer_minor_assignments.length() > 4 {
+        continue
+      }
+      let mut peer_has_source_endpoint = false
+      let mut peer_has_target_endpoint = false
+      for assignment in peer_minor_assignments {
+        if assignment.source_endpoint {
+          peer_has_source_endpoint = true
+        } else {
+          peer_has_target_endpoint = true
+        }
+      }
+      if !peer_has_source_endpoint || !peer_has_target_endpoint {
+        continue
+      }
+      peer_minor_assignments.sort_by((left, right) => {
+        if left.peer_major != right.peer_major {
+          return left.peer_major.compare(right.peer_major)
+        }
+        if left.source_endpoint != right.source_endpoint {
+          if left.source_endpoint {
+            -1
+          } else {
+            1
+          }
+        } else if left.edge_span != right.edge_span {
+          right.edge_span.compare(left.edge_span)
+        } else {
+          left.context_index.compare(right.context_index)
+        }
+      })
+      let first_assignment = peer_minor_assignments[0]
+      let first_context = edge_layout_contexts[first_assignment.context_index]
+      let endpoint_node = if first_assignment.source_endpoint {
+        first_context.source
+      } else {
+        first_context.target
+      }
+      let half_span_limit = boundary_side_minor_span_limit(
+        endpoint_node,
+        first_assignment.side,
+      )
+      for slot, assignment in peer_minor_assignments {
+        let offset = distributed_boundary_port_offset(
+          slot,
+          peer_minor_assignments.length(),
+          half_span_limit,
+        )
+        if assignment.source_endpoint {
+          source_boundary_offset_by_context_index[assignment.context_index] = offset
+        } else {
+          target_boundary_offset_by_context_index[assignment.context_index] = offset
+        }
+      }
+    }
+
+    if assignments.length() <= 3 && has_source_endpoint {
+      assignments.sort_by((left, right) => {
+        if left.peer_minor != right.peer_minor {
+          return left.peer_minor.compare(right.peer_minor)
+        }
+        if left.peer_major != right.peer_major {
+          return left.peer_major.compare(right.peer_major)
+        }
+        if left.source_endpoint != right.source_endpoint {
+          if left.source_endpoint {
+            -1
+          } else {
+            1
+          }
+        } else {
+          left.context_index.compare(right.context_index)
+        }
+      })
+      let first_assignment = assignments[0]
+      let first_context = edge_layout_contexts[first_assignment.context_index]
+      let endpoint_node = if first_assignment.source_endpoint {
+        first_context.source
+      } else {
+        first_context.target
+      }
+      let half_span_limit = boundary_side_minor_span_limit(
+        endpoint_node,
+        first_assignment.side,
+      )
+      for slot, assignment in assignments {
+        let offset = distributed_boundary_port_offset(
+          slot,
+          assignments.length(),
+          half_span_limit,
+        )
+        if assignment.source_endpoint {
+          source_boundary_offset_by_context_index[assignment.context_index] = offset
+        } else {
+          target_boundary_offset_by_context_index[assignment.context_index] = offset
+        }
+      }
+    }
+  }
+  for context_index, context in edge_layout_contexts {
+    edge_layout_contexts[context_index] = {
+      edge: context.edge,
+      resolved_source_id: context.resolved_source_id,
+      resolved_target_id: context.resolved_target_id,
+      source: context.source,
+      target: context.target,
+      edge_horizontal: context.edge_horizontal,
+      source_boundary_offset_minor: option_int_or(
+        source_boundary_offset_by_context_index.get(context_index),
+        0,
+      ),
+      target_boundary_offset_minor: option_int_or(
+        target_boundary_offset_by_context_index.get(context_index),
+        0,
+      ),
     }
   }
 
@@ -6652,7 +7010,7 @@ fn layout_graph_with_subgraph_redirects(
           candidate_slot_by_context_index.get(context_index),
           0,
         )
-        let points = edge_points_for(
+        let points = edge_points_for_with_ports(
           context.source,
           context.target,
           context.edge_horizontal,
@@ -6660,6 +7018,8 @@ fn layout_graph_with_subgraph_redirects(
           None,
           Some(forward_fanout_offset(slot, total)),
           enhanced_horizontal_state_flow,
+          context.source_boundary_offset_minor,
+          context.target_boundary_offset_minor,
         )
         candidate_polylines.push(points)
       }
@@ -6673,7 +7033,7 @@ fn layout_graph_with_subgraph_redirects(
       }
       for context_index in bucket_context_indices {
         let context = edge_layout_contexts[context_index]
-        let points = edge_points_for(
+        let points = edge_points_for_with_ports(
           context.source,
           context.target,
           context.edge_horizontal,
@@ -6681,6 +7041,8 @@ fn layout_graph_with_subgraph_redirects(
           None,
           None,
           enhanced_horizontal_state_flow,
+          context.source_boundary_offset_minor,
+          context.target_boundary_offset_minor,
         )
         candidate_polylines.push(points)
       }
@@ -6874,44 +7236,84 @@ fn layout_graph_with_subgraph_redirects(
         forward_fanout_vertical_span_threshold, forward_fanout_vertical_minor_gap_threshold,
       ) &&
       !forward_fanout_disabled_by_bucket.contains(forward_fanout_bucket_key)
-    let base_points = edge_points_for(
+    let resolved_forward_fanout_offset = if use_forward_fanout_lane {
+      let total = option_int_or(
+        forward_fanout_out_count_by_bucket.get(forward_fanout_bucket_key),
+        0,
+      )
+      if total > 1 {
+        maybe_resolve_forward_fanout_slots_for_bucket(
+          forward_fanout_bucket_key, total, edge_layout_contexts, forward_fanout_context_indices_by_bucket,
+          forward_fanout_slot_by_context_index, forward_fanout_slots_resolved_by_bucket,
+          routed_polylines, enhanced_horizontal_state_flow,
+        )
+        if forward_fanout_disabled_by_bucket.contains(forward_fanout_bucket_key) {
+          None
+        } else {
+          match forward_fanout_slot_by_context_index.get(context_index) {
+            Some(slot) => Some(forward_fanout_offset(slot, total))
+            None => None
+          }
+        }
+      } else {
+        None
+      }
+    } else {
+      None
+    }
+    let base_points_with_ports = edge_points_for_with_ports(
       source,
       target,
       edge_horizontal,
       back_edge_bend_y,
       back_edge_bend_x,
-      if use_forward_fanout_lane {
-        let total = option_int_or(
-          forward_fanout_out_count_by_bucket.get(forward_fanout_bucket_key),
-          0,
-        )
-        if total > 1 {
-          maybe_resolve_forward_fanout_slots_for_bucket(
-            forward_fanout_bucket_key, total, edge_layout_contexts, forward_fanout_context_indices_by_bucket,
-            forward_fanout_slot_by_context_index, forward_fanout_slots_resolved_by_bucket,
-            routed_polylines, enhanced_horizontal_state_flow,
-          )
-          if forward_fanout_disabled_by_bucket.contains(
-              forward_fanout_bucket_key,
-            ) {
-            None
-          } else {
-            match forward_fanout_slot_by_context_index.get(context_index) {
-              Some(slot) => Some(forward_fanout_offset(slot, total))
-              None => None
-            }
-          }
-        } else {
-          None
-        }
-      } else {
-        None
-      },
+      resolved_forward_fanout_offset,
       enhanced_horizontal_state_flow,
+      context.source_boundary_offset_minor,
+      context.target_boundary_offset_minor,
     )
+    let base_points = if context.source_boundary_offset_minor != 0 ||
+      context.target_boundary_offset_minor != 0 {
+      let base_points_without_ports = edge_points_for_with_ports(
+        source,
+        target,
+        edge_horizontal,
+        back_edge_bend_y,
+        back_edge_bend_x,
+        resolved_forward_fanout_offset,
+        enhanced_horizontal_state_flow,
+        0,
+        0,
+      )
+      let with_ports_score = evaluate_labeled_route_score(
+        context, base_points_with_ports, 0, positioned_nodes, routed_edge_segments,
+        routed_label_boxes,
+      )
+      let without_ports_score = evaluate_labeled_route_score(
+        context, base_points_without_ports, 0, positioned_nodes, routed_edge_segments,
+        routed_label_boxes,
+      )
+      if label_route_score_is_better(without_ports_score, with_ports_score) {
+        base_points_without_ports
+      } else {
+        base_points_with_ports
+      }
+    } else {
+      base_points_with_ports
+    }
     let points = optimize_labeled_route_points(
-      context, base_points, route_as_back_edge, use_forward_fanout_lane, enhanced_horizontal_state_flow,
-      layer_spacing, node_spacing, positioned_nodes, routed_edge_segments, routed_label_boxes,
+      context,
+      base_points,
+      route_as_back_edge,
+      use_forward_fanout_lane,
+      enhanced_horizontal_state_flow,
+      context.source_boundary_offset_minor,
+      context.target_boundary_offset_minor,
+      layer_spacing,
+      node_spacing,
+      positioned_nodes,
+      routed_edge_segments,
+      routed_label_boxes,
     )
     points_by_context_index[context_index] = points
     append_routed_segments_for_points(
@@ -7108,7 +7510,7 @@ fn layout_graph_with_subgraph_redirects(
       } else {
         None
       }
-      let points = edge_points_for(
+      let points = edge_points_for_with_ports(
         source,
         target,
         context.edge_horizontal,
@@ -7116,6 +7518,8 @@ fn layout_graph_with_subgraph_redirects(
         back_edge_bend_x,
         None,
         enhanced_horizontal_state_flow,
+        context.source_boundary_offset_minor,
+        context.target_boundary_offset_minor,
       )
       points_by_context_index[context_index] = points
       append_routed_segments_for_points(
