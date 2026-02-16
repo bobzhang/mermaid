@@ -6318,9 +6318,6 @@ fn layout_graph_legacy_with_subgraph_redirects(
     let preserve_dummy_lane_channels = !state_graph &&
       !class_or_er_graph &&
       (graph.subgraphs.length() > 0 || graph.edges.length() >= 30)
-    let enable_feedback_back_edge_ordering = !state_graph &&
-      horizontal &&
-      !class_or_er_graph
     let enable_cycle_rank_compaction = !state_graph &&
       !class_or_er_graph &&
       horizontal &&
@@ -6328,6 +6325,21 @@ fn layout_graph_legacy_with_subgraph_redirects(
       cycle_aware_layout &&
       graph.subgraphs.length() == 0 &&
       graph.edges.length() >= 30
+    let prefer_definition_back_edges = !state_graph &&
+      cycle_aware_layout &&
+      !horizontal &&
+      graph.edges.length() < 50
+    let enable_feedback_back_edge_ordering = !state_graph &&
+      !class_or_er_graph &&
+      (
+        horizontal ||
+        (
+          !horizontal &&
+          cycle_aware_layout &&
+          !prefer_definition_back_edges &&
+          graph.edges.length() >= 50
+        )
+      )
     let precomputed_lane_by_id : Map[String, Int] = {}
     let mut has_precomputed_lane_by_id = false
     let (baseline_rank_by_id, baseline_max_rank) = collect_non_state_flow_ranks(
@@ -6336,7 +6348,7 @@ fn layout_graph_legacy_with_subgraph_redirects(
       compact_fanin,
       cycle_aware_layout,
       promote_backward_dotted_edges,
-      !state_graph && cycle_aware_layout && !horizontal,
+      prefer_definition_back_edges,
       false,
     )
     let mut selected_rank_by_id = baseline_rank_by_id
@@ -6348,7 +6360,7 @@ fn layout_graph_legacy_with_subgraph_redirects(
         compact_fanin,
         cycle_aware_layout,
         promote_backward_dotted_edges,
-        !state_graph && cycle_aware_layout && !horizontal,
+        prefer_definition_back_edges,
         true,
       )
       let baseline_lane_by_id = collect_non_state_flow_lanes(
