@@ -2034,8 +2034,10 @@ fn collect_non_state_flow_lanes(
     }
   }
 
-  // Keep tie-break refinements for large flowchart-style graphs only.
-  let enable_lane_tie_breaks = preserve_fanout_order_ties &&
+  // Keep source fanout ordering for all flowchart-style graphs.
+  let enable_fanout_tie_breaks = preserve_fanout_order_ties
+  // Keep span-cost tie-break refinements for larger graphs only.
+  let enable_lane_span_tie_breaks = enable_fanout_tie_breaks &&
     edges.length() >= 30
 
   fn optimize_rank_order_exact(
@@ -2091,14 +2093,14 @@ fn collect_non_state_flow_lanes(
     let mut best_crossings = count_crossings_involving(
       rank_incident_edge_indexes, crossing_edge_indexes, edges, rank_by_id, lane_by_id,
     )
-    let mut best_span_cost = if enable_lane_tie_breaks {
+    let mut best_span_cost = if enable_lane_span_tie_breaks {
       lane_span_cost_for_edges(
         rank_incident_edge_indexes, edges, rank_by_id, lane_by_id,
       )
     } else {
       0
     }
-    let mut best_fanout_violations = if enable_lane_tie_breaks {
+    let mut best_fanout_violations = if enable_fanout_tie_breaks {
       count_fanout_order_violations(
         rank_fanout_constraint_indexes, fanout_constraint_left_target_ids, fanout_constraint_right_target_ids,
         lane_by_id,
@@ -2128,14 +2130,14 @@ fn collect_non_state_flow_lanes(
         let candidate_crossings = count_crossings_involving(
           rank_incident_edge_indexes, crossing_edge_indexes, edges, rank_by_id, lane_by_id,
         )
-        let candidate_span_cost = if enable_lane_tie_breaks {
+        let candidate_span_cost = if enable_lane_span_tie_breaks {
           lane_span_cost_for_edges(
             rank_incident_edge_indexes, edges, rank_by_id, lane_by_id,
           )
         } else {
           0
         }
-        let candidate_fanout_violations = if enable_lane_tie_breaks {
+        let candidate_fanout_violations = if enable_fanout_tie_breaks {
           count_fanout_order_violations(
             rank_fanout_constraint_indexes, fanout_constraint_left_target_ids, fanout_constraint_right_target_ids,
             lane_by_id,
@@ -2145,7 +2147,7 @@ fn collect_non_state_flow_lanes(
         }
         if candidate_crossings < best_crossings ||
           (
-            enable_lane_tie_breaks &&
+            enable_fanout_tie_breaks &&
             candidate_crossings == best_crossings &&
             (
               candidate_fanout_violations < best_fanout_violations ||
@@ -2238,7 +2240,7 @@ fn collect_non_state_flow_lanes(
   }
 
   let fanout_targets_by_source_rank : Map[String, Array[String]] = {}
-  if enable_lane_tie_breaks {
+  if enable_fanout_tie_breaks {
     for _, edge in edges {
       match (rank_by_id.get(edge.source), rank_by_id.get(edge.target)) {
         (Some(source_rank), Some(target_rank)) =>
@@ -2322,7 +2324,7 @@ fn collect_non_state_flow_lanes(
     let before = count_crossings_involving(
       incident_edge_indexes, crossing_edge_indexes, edges, rank_by_id, lane_by_id,
     )
-    let before_span_cost = if enable_lane_tie_breaks {
+    let before_span_cost = if enable_lane_span_tie_breaks {
       lane_span_cost_for_edges(
         incident_edge_indexes, edges, rank_by_id, lane_by_id,
       )
@@ -2353,7 +2355,7 @@ fn collect_non_state_flow_lanes(
         }
       None => ()
     }
-    let before_fanout_violations = if enable_lane_tie_breaks {
+    let before_fanout_violations = if enable_fanout_tie_breaks {
       count_fanout_order_violations(
         fanout_constraint_indexes, fanout_constraint_left_target_ids, fanout_constraint_right_target_ids,
         lane_by_id,
@@ -2368,14 +2370,14 @@ fn collect_non_state_flow_lanes(
     let after = count_crossings_involving(
       incident_edge_indexes, crossing_edge_indexes, edges, rank_by_id, lane_by_id,
     )
-    let after_span_cost = if enable_lane_tie_breaks {
+    let after_span_cost = if enable_lane_span_tie_breaks {
       lane_span_cost_for_edges(
         incident_edge_indexes, edges, rank_by_id, lane_by_id,
       )
     } else {
       0
     }
-    let after_fanout_violations = if enable_lane_tie_breaks {
+    let after_fanout_violations = if enable_fanout_tie_breaks {
       count_fanout_order_violations(
         fanout_constraint_indexes, fanout_constraint_left_target_ids, fanout_constraint_right_target_ids,
         lane_by_id,
@@ -2385,7 +2387,7 @@ fn collect_non_state_flow_lanes(
     }
     if after < before ||
       (
-        enable_lane_tie_breaks &&
+        enable_fanout_tie_breaks &&
         after == before &&
         (
           after_fanout_violations < before_fanout_violations ||
@@ -2813,6 +2815,8 @@ fn refine_horizontal_state_flow_lanes(
     let source_rank = option_int_or(rank_by_id.get(node.id), 0)
     let source_lane = option_int_or(lane_by_id.get(node.id), 0)
     let forward_targets : Array[String] = []
+    let forward_target_encounter_index_by_id : Map[String, Int] = {}
+    let mut forward_target_encounter_index = 0
     match outgoing_edge_indices_by_source.get(node.id) {
       Some(outgoing_edge_indices) =>
         for edge_index in outgoing_edge_indices {
@@ -2825,17 +2829,27 @@ fn refine_horizontal_state_flow_lanes(
             continue
           }
           forward_targets.push(edge.target)
+          forward_target_encounter_index_by_id[edge.target] = forward_target_encounter_index
+          forward_target_encounter_index += 1
         }
       None => ()
     }
     forward_targets.sort_by((left, right) => {
-      let left_rank = option_int_or(rank_by_id.get(left), 0)
-      let right_rank = option_int_or(rank_by_id.get(right), 0)
+      let left_rank = option_int_or(rank_by_id.get(left), source_rank)
+      let right_rank = option_int_or(rank_by_id.get(right), source_rank)
       let rank_cmp = left_rank.compare(right_rank)
       if rank_cmp != 0 {
         rank_cmp
       } else {
-        left.compare(right)
+        let left_order = option_int_or(
+          forward_target_encounter_index_by_id.get(left),
+          0,
+        )
+        let right_order = option_int_or(
+          forward_target_encounter_index_by_id.get(right),
+          0,
+        )
+        left_order.compare(right_order)
       }
     })
 
@@ -6468,7 +6482,10 @@ fn optimize_labeled_route_points(
   )
   if best_score.label_node_overlaps == 0 &&
     best_score.label_edge_overlaps == 0 &&
-    best_score.label_label_overlaps == 0 {
+    best_score.label_label_overlaps == 0 &&
+    best_score.reciprocal_segment_intersections == 0 &&
+    best_score.reciprocal_segment_overlaps == 0 &&
+    best_score.route_crossings == 0 {
     return best_points
   }
 
@@ -8519,18 +8536,21 @@ fn layout_graph_legacy_with_subgraph_redirects(
     let has_reciprocal = context_has_reciprocal_edge(
       context, directed_edge_count_by_key,
     )
+    let reciprocal_requires_detour = has_reciprocal &&
+      context.source_boundary_offset_minor == 0 &&
+      context.target_boundary_offset_minor == 0
     if context.edge_horizontal {
       context.target.x < context.source.x &&
       (
         int_abs(context.target.x - context.source.x) >=
         horizontal_span_threshold ||
-        has_reciprocal
+        reciprocal_requires_detour
       )
     } else {
       context.target.y < context.source.y &&
       (
         int_abs(context.target.y - context.source.y) >= vertical_span_threshold ||
-        has_reciprocal
+        reciprocal_requires_detour
       )
     }
   }
@@ -8776,6 +8796,16 @@ fn layout_graph_legacy_with_subgraph_redirects(
         first_assignment.side,
       )
       for slot, assignment in peer_minor_assignments {
+        // When a source endpoint shares a peer-minor bucket with a reciprocal
+        // target endpoint, defer source offset assignment to the source cohort
+        // pass so fanout ordering is decided consistently across all sources.
+        let defer_source_assignment_to_cohort = graph.edges.length() <= 20 &&
+          assignment.source_endpoint &&
+          peer_has_target_endpoint &&
+          source_endpoint_count >= 2
+        if defer_source_assignment_to_cohort {
+          continue
+        }
         let offset = distributed_boundary_port_offset(
           slot,
           peer_minor_assignments.length(),

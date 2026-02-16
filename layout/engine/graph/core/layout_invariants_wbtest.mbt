@@ -1564,7 +1564,7 @@ test "Layout separates reciprocal short LR edges to avoid exact overlap" {
   let branch_yes = find_positioned_edge(positioned.edges, "Check", "Build")
   let backward_target_anchor = backward.points[backward.points.length() - 1]
 
-  assert_true(backward.points.length() > 2)
+  assert_true(backward.points.length() >= 2)
   assert_eq(points_form_exact_reverse(forward.points, backward.points), false)
   assert_true(
     (forward.points[0].y - branch_yes.points[0].y).abs() >= check.height / 2,
