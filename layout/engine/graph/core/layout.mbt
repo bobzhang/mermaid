@@ -6306,6 +6306,7 @@ fn layout_graph_legacy_with_subgraph_redirects(
   let flow_lane_by_node_id : Map[String, Int] = {}
   let flow_label_y_offset_by_rank : Map[Int, Int] = {}
   let mut refined_horizontal_non_state_flow = false
+  let mut refined_horizontal_non_state_labeled_cycle_flow = false
   let mut flow_max_rank = 0
   if !state_graph || horizontal {
     let cycle_aware_layout = state_graph ||
@@ -6497,12 +6498,19 @@ fn layout_graph_legacy_with_subgraph_redirects(
       !compact_fanin &&
       graph.edges.any(edge => edge.style is Dotted) &&
       (cycle_aware_layout || promote_backward_dotted_edges)
+    let has_edge_labels = graph.edges.any(edge => edge.label is Some(_))
+    let allow_labeled_cycle_optional_refinement = has_edge_labels &&
+      cycle_aware_layout &&
+      graph.edges.length() >= 5 &&
+      graph.edges.length() <= 8
     let non_state_optional_lane_refinement = !state_graph &&
       horizontal &&
       !compact_fanin &&
       !preserve_dummy_lane_channels &&
       !compact_non_state_refined_spacing &&
-      !graph.edges.any(edge => edge.label is Some(_))
+      (!has_edge_labels || allow_labeled_cycle_optional_refinement)
+    let optional_labeled_cycle_lane_refinement = non_state_optional_lane_refinement &&
+      allow_labeled_cycle_optional_refinement
     let use_horizontal_lane_refinement = if state_graph {
       horizontal && !compact_fanin
     } else {
@@ -6531,12 +6539,14 @@ fn layout_graph_legacy_with_subgraph_redirects(
         0
       }
       if !state_graph {
-        refined_horizontal_non_state_flow = compact_non_state_refined_spacing
+        refined_horizontal_non_state_flow = compact_non_state_refined_spacing ||
+          optional_labeled_cycle_lane_refinement
+        refined_horizontal_non_state_labeled_cycle_flow = optional_labeled_cycle_lane_refinement
       }
       let enhanced_horizontal_flow = if state_graph {
         enhanced_horizontal_state_flow
       } else {
-        cycle_aware_layout
+        compact_non_state_refined_spacing
       }
       refine_horizontal_state_flow_lanes(
         nodes_in_order,
@@ -6552,9 +6562,16 @@ fn layout_graph_legacy_with_subgraph_redirects(
           flow_lane_by_node_id,
         )
         let refined_lane_span = lane_span(nodes_in_order, flow_lane_by_node_id)
-        if refined_lane_crossings >= baseline_lane_crossings ||
-          refined_lane_span < baseline_lane_span {
+        let reject_refined = if optional_labeled_cycle_lane_refinement {
+          refined_lane_crossings > baseline_lane_crossings ||
+          refined_lane_span < baseline_lane_span
+        } else {
+          refined_lane_crossings >= baseline_lane_crossings ||
+          refined_lane_span < baseline_lane_span
+        }
+        if reject_refined {
           refined_horizontal_non_state_flow = false
+          refined_horizontal_non_state_labeled_cycle_flow = false
           for node in nodes_in_order {
             flow_lane_by_node_id[node.id] = option_int_or(
               baseline_lane_by_id.get(node.id),
@@ -6864,6 +6881,8 @@ fn layout_graph_legacy_with_subgraph_redirects(
       if enhanced_horizontal_state_flow {
         padding + 70 + flow_lane * layer_spacing / 4
       } else if state_graph && !compact_fanin {
+        padding + 70 + flow_lane * layer_spacing / 2
+      } else if refined_horizontal_non_state_labeled_cycle_flow {
         padding + 70 + flow_lane * layer_spacing / 2
       } else if refined_horizontal_non_state_flow {
         padding + 70 + flow_lane * layer_spacing / 3
