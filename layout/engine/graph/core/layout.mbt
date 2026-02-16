@@ -6337,7 +6337,7 @@ fn layout_graph_legacy_with_subgraph_redirects(
           !horizontal &&
           cycle_aware_layout &&
           !prefer_definition_back_edges &&
-          graph.edges.length() >= 50
+          graph.edges.length() >= 60
         )
       )
     let precomputed_lane_by_id : Map[String, Int] = {}
