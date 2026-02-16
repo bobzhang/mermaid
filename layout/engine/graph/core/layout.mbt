@@ -858,6 +858,10 @@ fn collect_non_state_flow_lanes(
     edges.length() >= 30 &&
     order_feedback_edge_count >= 6 &&
     order_feedback_multi_target_count >= 2
+  let enable_multi_sweep_ordering = include_non_dotted_feedback_back_edges &&
+    order_feedback_edge_count * 5 >= edges.length() &&
+    order_feedback_edge_count * 5 <= edges.length() * 2 &&
+    edges.length() <= 70
   for edge_index, edge in edges {
     match (rank_by_id.get(edge.source), rank_by_id.get(edge.target)) {
       (Some(source_rank), Some(target_rank)) =>
@@ -1034,12 +1038,59 @@ fn collect_non_state_flow_lanes(
     total
   }
 
+  fn total_adjacent_crossings(
+    rank_nodes : Array[Array[String]],
+    max_rank : Int,
+    adjacent_edge_indices_by_upper_rank : Map[Int, Array[Int]],
+    lane_edges : Array[MermaidEdge],
+  ) -> Int {
+    let mut total = 0
+    for rank in 0..<max_rank {
+      total += adjacent_crossings(
+        rank_nodes,
+        rank,
+        rank + 1,
+        adjacent_edge_indices_by_upper_rank,
+        lane_edges,
+      )
+    }
+    total
+  }
+
+  fn clone_rank_nodes(
+    rank_nodes : Array[Array[String]],
+  ) -> Array[Array[String]] {
+    let copied_rank_nodes : Array[Array[String]] = []
+    for node_ids in rank_nodes {
+      let copied_node_ids : Array[String] = []
+      for node_id in node_ids {
+        copied_node_ids.push(node_id)
+      }
+      copied_rank_nodes.push(copied_node_ids)
+    }
+    copied_rank_nodes
+  }
+
+  fn copy_rank_nodes_into(
+    source_rank_nodes : Array[Array[String]],
+    target_rank_nodes : Array[Array[String]],
+  ) -> Unit {
+    for i in 0..<source_rank_nodes.length() {
+      let copied_node_ids : Array[String] = []
+      for node_id in source_rank_nodes[i] {
+        copied_node_ids.push(node_id)
+      }
+      target_rank_nodes[i] = copied_node_ids
+    }
+  }
+
   fn barycenter_pass(
     rank_nodes : Array[Array[String]],
     start_rank : Int,
     end_rank : Int,
     step : Int,
     incoming_from_neighbor : Bool,
+    bias_right : Bool,
     incoming_adjacent_neighbor_ids_by_rank_node : Map[
       Int,
       Map[String, Array[String]],
@@ -1116,61 +1167,180 @@ fn collect_non_state_flow_lanes(
         }
         let left_order = option_int_or(current_order.get(left_id), 0)
         let right_order = option_int_or(current_order.get(right_id), 0)
-        left_order.compare(right_order)
+        let order_cmp = left_order.compare(right_order)
+        if order_cmp != 0 {
+          return if bias_right { 0 - order_cmp } else { order_cmp }
+        }
+        left_id.compare(right_id)
       })
       rank_nodes[rank] = current
       rank = rank + step
     }
   }
 
-  if max_rank > 0 {
-    for _ in 0..<2 {
-      barycenter_pass(
-        rank_nodes,
-        1,
-        max_rank + 1,
-        1,
-        true,
-        incoming_adjacent_neighbor_ids_by_rank_node,
-        outgoing_adjacent_neighbor_ids_by_rank_node,
-      )
-      barycenter_pass(
-        rank_nodes,
-        max_rank - 1,
-        -1,
-        -1,
-        false,
-        incoming_adjacent_neighbor_ids_by_rank_node,
-        outgoing_adjacent_neighbor_ids_by_rank_node,
-      )
-
-      for rank in 0..<=max_rank {
-        let nodes = rank_nodes[rank]
-        if nodes.length() < 2 {
-          continue
-        }
+  fn transpose_adjacent_ranks_pass(
+    rank_nodes : Array[Array[String]],
+    max_rank : Int,
+    bias_right : Bool,
+    adjacent_edge_indices_by_upper_rank : Map[Int, Array[Int]],
+    lane_edges : Array[MermaidEdge],
+  ) -> Bool {
+    let mut changed = false
+    let mut rank = if bias_right { max_rank } else { 0 }
+    while true {
+      let nodes = rank_nodes[rank]
+      if nodes.length() >= 2 {
         let mut current_crossings = crossings_around_rank(
           rank_nodes, rank, max_rank, adjacent_edge_indices_by_upper_rank, lane_edges,
         )
-        let mut i = 0
-        while i + 1 < nodes.length() {
-          let left = nodes[i]
-          let right = nodes[i + 1]
-          nodes[i] = right
-          nodes[i + 1] = left
-          rank_nodes[rank] = nodes
-          let swapped_crossings = crossings_around_rank(
-            rank_nodes, rank, max_rank, adjacent_edge_indices_by_upper_rank, lane_edges,
-          )
-          if swapped_crossings < current_crossings {
-            current_crossings = swapped_crossings
-          } else {
-            nodes[i] = left
-            nodes[i + 1] = right
+        if bias_right {
+          let mut i = nodes.length() - 2
+          while true {
+            let left = nodes[i]
+            let right = nodes[i + 1]
+            nodes[i] = right
+            nodes[i + 1] = left
             rank_nodes[rank] = nodes
+            let swapped_crossings = crossings_around_rank(
+              rank_nodes, rank, max_rank, adjacent_edge_indices_by_upper_rank, lane_edges,
+            )
+            if swapped_crossings < current_crossings {
+              current_crossings = swapped_crossings
+              changed = true
+            } else {
+              nodes[i] = left
+              nodes[i + 1] = right
+              rank_nodes[rank] = nodes
+            }
+            if i == 0 {
+              break
+            }
+            i = i - 1
           }
-          i = i + 1
+        } else {
+          let mut i = 0
+          while i + 1 < nodes.length() {
+            let left = nodes[i]
+            let right = nodes[i + 1]
+            nodes[i] = right
+            nodes[i + 1] = left
+            rank_nodes[rank] = nodes
+            let swapped_crossings = crossings_around_rank(
+              rank_nodes, rank, max_rank, adjacent_edge_indices_by_upper_rank, lane_edges,
+            )
+            if swapped_crossings < current_crossings {
+              current_crossings = swapped_crossings
+              changed = true
+            } else {
+              nodes[i] = left
+              nodes[i + 1] = right
+              rank_nodes[rank] = nodes
+            }
+            i = i + 1
+          }
         }
+      }
+      if bias_right {
+        if rank == 0 {
+          break
+        }
+        rank = rank - 1
+      } else {
+        if rank == max_rank {
+          break
+        }
+        rank = rank + 1
+      }
+    }
+    changed
+  }
+
+  if max_rank > 0 {
+    if enable_multi_sweep_ordering {
+      let best_rank_nodes = clone_rank_nodes(rank_nodes)
+      let mut best_crossings = total_adjacent_crossings(
+        rank_nodes, max_rank, adjacent_edge_indices_by_upper_rank, lane_edges,
+      )
+      let sweep_budget = if lane_edges.length() >= 180 {
+        16
+      } else if lane_edges.length() >= 120 {
+        14
+      } else if lane_edges.length() >= 60 {
+        12
+      } else {
+        10
+      }
+      let mut rounds_since_best = 0
+      for pass in 0..<sweep_budget {
+        let downward_sweep = pass % 2 == 0
+        let bias_right = pass % 4 >= 2
+        if downward_sweep {
+          barycenter_pass(
+            rank_nodes,
+            1,
+            max_rank + 1,
+            1,
+            true,
+            bias_right,
+            incoming_adjacent_neighbor_ids_by_rank_node,
+            outgoing_adjacent_neighbor_ids_by_rank_node,
+          )
+        } else {
+          barycenter_pass(
+            rank_nodes,
+            max_rank - 1,
+            -1,
+            -1,
+            false,
+            bias_right,
+            incoming_adjacent_neighbor_ids_by_rank_node,
+            outgoing_adjacent_neighbor_ids_by_rank_node,
+          )
+        }
+        let _ = transpose_adjacent_ranks_pass(
+          rank_nodes, max_rank, bias_right, adjacent_edge_indices_by_upper_rank,
+          lane_edges,
+        )
+        let candidate_crossings = total_adjacent_crossings(
+          rank_nodes, max_rank, adjacent_edge_indices_by_upper_rank, lane_edges,
+        )
+        if candidate_crossings < best_crossings {
+          best_crossings = candidate_crossings
+          copy_rank_nodes_into(rank_nodes, best_rank_nodes)
+          rounds_since_best = 0
+        } else {
+          rounds_since_best += 1
+          if rounds_since_best >= 4 {
+            break
+          }
+        }
+      }
+      copy_rank_nodes_into(best_rank_nodes, rank_nodes)
+    } else {
+      for _ in 0..<2 {
+        barycenter_pass(
+          rank_nodes,
+          1,
+          max_rank + 1,
+          1,
+          true,
+          false,
+          incoming_adjacent_neighbor_ids_by_rank_node,
+          outgoing_adjacent_neighbor_ids_by_rank_node,
+        )
+        barycenter_pass(
+          rank_nodes,
+          max_rank - 1,
+          -1,
+          -1,
+          false,
+          false,
+          incoming_adjacent_neighbor_ids_by_rank_node,
+          outgoing_adjacent_neighbor_ids_by_rank_node,
+        )
+        let _ = transpose_adjacent_ranks_pass(
+          rank_nodes, max_rank, false, adjacent_edge_indices_by_upper_rank, lane_edges,
+        )
       }
     }
   }
@@ -1418,13 +1588,14 @@ fn collect_non_state_flow_lanes(
   }
 
   let real_node_ids_by_rank : Map[Int, Array[String]] = {}
-  for node in nodes_in_order {
-    let rank = option_int_or(rank_by_id.get(node.id), 0)
-    if !real_node_ids_by_rank.contains(rank) {
-      real_node_ids_by_rank[rank] = []
+  for rank in 0..<=max_rank {
+    let node_ids : Array[String] = []
+    for node_id in rank_nodes[rank] {
+      if real_node_ids.contains(node_id) {
+        node_ids.push(node_id)
+      }
     }
-    let node_ids = real_node_ids_by_rank[rank]
-    node_ids.push(node.id)
+    real_node_ids_by_rank[rank] = node_ids
   }
 
   let crossing_edge_indexes : Array[Int] = []
