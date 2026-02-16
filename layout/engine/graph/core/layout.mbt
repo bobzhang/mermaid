@@ -8291,7 +8291,7 @@ fn layout_graph_legacy_with_subgraph_redirects(
   // collapse adjacent horizontal ranks, preserving compaction on normal-width graphs.
   let horizontal_rank_shift_by_index : Map[Int, Int] = {}
   if horizontal {
-    let min_horizontal_rank_clearance = (node_spacing / 5).max(16)
+    let min_horizontal_rank_clearance = (node_spacing / 3).max(24)
     let mut running_shift = 0
     for flow_rank_index in 0..<=flow_max_rank {
       horizontal_rank_shift_by_index[flow_rank_index] = running_shift

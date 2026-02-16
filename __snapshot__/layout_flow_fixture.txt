@@ -1,8 +1,8 @@
 [canvas]
-width=616 height=262
+width=633 height=262
 
 [nodes]
-node id=Ship shape=Stadium center=541,110 size=70x44 label=Ship
+node id=Ship shape=Stadium center=558,110 size=70x44 label=Ship
 node id=Start shape=Stadium center=75,155 size=70x44 label=Start
 node id=Fix shape=Rectangle center=412,200 size=104x44 label=Fix source
 node id=Check shape=Diamond center=230,155 size=120x44 label=Valid input?
@@ -10,7 +10,7 @@ node id=Build shape=Rectangle center=412,110 size=136x44 label=Build artifact
 
 [edges]
 edge Fix->Check label=- label_pos=- points=360,184 -> 252,169
-edge Build->Ship label=- label_pos=- points=480,110 -> 506,110
+edge Build->Ship label=- label_pos=- points=480,110 -> 523,110
 edge Start->Check label=- label_pos=- points=110,155 -> 170,155
 edge Check->Fix label=no label_pos=302,193 points=246,171 -> 360,216
 edge Check->Build label=yes label_pos=282,112 points=246,139 -> 246,112 -> 344,112 -> 344,110
