@@ -2601,6 +2601,13 @@ priv struct RoutedLabelBox {
 }
 
 ///|
+priv struct HorizontalLabelRankConstraint {
+  source_rank_index : Int
+  target_rank_index : Int
+  min_extra : Int
+}
+
+///|
 fn edge_layout_context_span(context : EdgeLayoutContext) -> Int {
   if context.edge_horizontal {
     int_abs(context.target.x - context.source.x)
@@ -3907,6 +3914,146 @@ fn edge_label_dimensions(label : String) -> (Int, Int) {
   let width = (longest_line * 7 + 12).max(18)
   let height = (lines.length() * 14 + 12).max(18)
   (width, height)
+}
+
+///|
+fn collect_horizontal_label_rank_constraints(
+  edges : Array[MermaidEdge],
+  flow_rank_by_node_id : Map[String, Int],
+  flow_max_rank : Int,
+  reverse : Bool,
+  node_width_by_id : Map[String, Int],
+  node_spacing : Int,
+  use_subgraph_redirects : Bool,
+  subgraph_exit_by_id : Map[String, String],
+  subgraph_entry_by_id : Map[String, String],
+) -> Array[HorizontalLabelRankConstraint] {
+  let constraints : Array[HorizontalLabelRankConstraint] = []
+  let label_clearance = (node_spacing / 6).max(12)
+  for edge in edges {
+    let label_text = match edge.label {
+      Some(text) => text
+      None => continue
+    }
+    let resolved_source_id = resolve_edge_endpoint_id(
+      edge.source,
+      use_subgraph_redirects,
+      subgraph_exit_by_id,
+    )
+    let resolved_target_id = resolve_edge_endpoint_id(
+      edge.target,
+      use_subgraph_redirects,
+      subgraph_entry_by_id,
+    )
+    match
+      (
+        flow_rank_by_node_id.get(resolved_source_id),
+        flow_rank_by_node_id.get(resolved_target_id),
+        node_width_by_id.get(resolved_source_id),
+        node_width_by_id.get(resolved_target_id),
+      ) {
+      (
+        Some(source_rank),
+        Some(target_rank),
+        Some(source_width),
+        Some(target_width),
+      ) => {
+        let source_rank_index = if reverse {
+          flow_max_rank - source_rank
+        } else {
+          source_rank
+        }
+        let target_rank_index = if reverse {
+          flow_max_rank - target_rank
+        } else {
+          target_rank
+        }
+        if target_rank_index <= source_rank_index {
+          continue
+        }
+        let (label_width, _) = edge_label_dimensions(label_text)
+        let required_center_delta = source_width / 2 +
+          target_width / 2 +
+          label_width +
+          label_clearance
+        let rank_delta = target_rank_index - source_rank_index
+        let base_center_delta = rank_delta * node_spacing +
+          (target_width - source_width) / 2
+        let required_extra = required_center_delta - base_center_delta
+        if required_extra > 0 {
+          constraints.push({
+            source_rank_index,
+            target_rank_index,
+            min_extra: required_extra,
+          })
+        }
+      }
+      _ => ()
+    }
+  }
+  constraints
+}
+
+///|
+fn solve_horizontal_label_rank_shifts(
+  max_rank : Int,
+  constraints : Array[HorizontalLabelRankConstraint],
+) -> Map[Int, Int] {
+  let min_shift_by_rank_index : Map[Int, Int] = {}
+  for rank_index in 0..<=max_rank {
+    min_shift_by_rank_index[rank_index] = 0
+  }
+  if constraints.length() == 0 {
+    return min_shift_by_rank_index
+  }
+
+  let max_passes = (max_rank + 1).max(1)
+  for _ in 0..<max_passes {
+    let mut changed = false
+    for constraint in constraints {
+      let source_shift = option_int_or(
+        min_shift_by_rank_index.get(constraint.source_rank_index),
+        0,
+      )
+      let current_target_shift = option_int_or(
+        min_shift_by_rank_index.get(constraint.target_rank_index),
+        0,
+      )
+      let candidate_target_shift = source_shift + constraint.min_extra
+      if candidate_target_shift > current_target_shift {
+        min_shift_by_rank_index[constraint.target_rank_index] = candidate_target_shift
+        changed = true
+      }
+    }
+    if !changed {
+      break
+    }
+  }
+
+  min_shift_by_rank_index
+}
+
+///|
+fn horizontal_label_boundary_extra_by_rank_index(
+  max_rank : Int,
+  min_shift_by_rank_index : Map[Int, Int],
+) -> Map[Int, Int] {
+  let extra_by_rank_index : Map[Int, Int] = {}
+  if max_rank <= 0 {
+    return extra_by_rank_index
+  }
+  for rank_index in 0..<max_rank {
+    let left_shift = option_int_or(min_shift_by_rank_index.get(rank_index), 0)
+    let right_shift = option_int_or(
+      min_shift_by_rank_index.get(rank_index + 1),
+      left_shift,
+    )
+    let boundary_extra = (right_shift - left_shift).max(0)
+    if boundary_extra > 0 {
+      extra_by_rank_index[rank_index] = boundary_extra
+    }
+  }
+  extra_by_rank_index
 }
 
 ///|
@@ -5906,8 +6053,10 @@ fn layout_graph_with_subgraph_redirects(
   }
 
   let max_width_by_flow_rank_index : Map[Int, Int] = {}
+  let node_width_by_id : Map[String, Int] = {}
   for node in nodes_in_order {
     let (width, _) = node_dimensions(node)
+    node_width_by_id[node.id] = width
     let flow_rank = option_int_or(flow_rank_by_node_id.get(node.id), 0)
     let flow_rank_index = if reverse {
       flow_max_rank - flow_rank
@@ -5925,6 +6074,32 @@ fn layout_graph_with_subgraph_redirects(
 
   // Apply minimal rank shifts only where wide labels would collapse adjacent
   // horizontal ranks, preserving compaction on normal-width graphs.
+  let horizontal_label_min_boundary_extra_by_index : Map[Int, Int] = {}
+  if horizontal {
+    let label_rank_constraints = collect_horizontal_label_rank_constraints(
+      graph.edges,
+      flow_rank_by_node_id,
+      flow_max_rank,
+      reverse,
+      node_width_by_id,
+      node_spacing,
+      use_subgraph_redirects,
+      subgraph_exit_by_id,
+      subgraph_entry_by_id,
+    )
+    let min_shift_by_rank_index = solve_horizontal_label_rank_shifts(
+      flow_max_rank, label_rank_constraints,
+    )
+    let boundary_extra_by_index = horizontal_label_boundary_extra_by_rank_index(
+      flow_max_rank, min_shift_by_rank_index,
+    )
+    for rank_index, extra in boundary_extra_by_index {
+      horizontal_label_min_boundary_extra_by_index[rank_index] = extra
+    }
+  }
+
+  // Apply minimal rank shifts only where wide nodes or labeled edges would
+  // collapse adjacent horizontal ranks, preserving compaction on normal-width graphs.
   let horizontal_rank_shift_by_index : Map[Int, Int] = {}
   if horizontal {
     let min_horizontal_rank_clearance = (node_spacing / 5).max(16)
@@ -5934,6 +6109,10 @@ fn layout_graph_with_subgraph_redirects(
       if flow_rank_index == flow_max_rank {
         continue
       }
+      let label_boundary_extra = option_int_or(
+        horizontal_label_min_boundary_extra_by_index.get(flow_rank_index),
+        0,
+      )
       let current_width = option_int_or(
         max_width_by_flow_rank_index.get(flow_rank_index),
         0,
@@ -5946,8 +6125,14 @@ fn layout_graph_with_subgraph_redirects(
         (flow_rank_index + 1) * node_spacing +
         running_shift
       let required_next_left = current_right + min_horizontal_rank_clearance
-      if next_left < required_next_left {
-        running_shift += required_next_left - next_left
+      let node_boundary_extra = if next_left < required_next_left {
+        required_next_left - next_left
+      } else {
+        0
+      }
+      let boundary_extra = node_boundary_extra.max(label_boundary_extra)
+      if boundary_extra > 0 {
+        running_shift += boundary_extra
       }
     }
   }

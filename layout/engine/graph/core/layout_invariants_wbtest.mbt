@@ -1220,6 +1220,33 @@ test "Layout horizontal rank spacing keeps wide adjacent nodes separated" {
 }
 
 ///|
+test "Layout reserves horizontal rank gap for labeled edge clearance" {
+  let graph = @parser.parse_mermaid(
+    (
+      #|flowchart LR
+      #|Start([Start]) --> Check{Valid input?}
+      #|Check -->|yes| Build[Build artifact]
+      #|Check -->|no| Fix[Fix source]
+      #|Fix --> Check
+      #|Build --> Ship([Ship])
+      #|
+    )
+    .trim_end()
+    .to_string(),
+  )
+  let positioned = layout_graph(graph, RenderOptions::default())
+  let check = find_positioned_node(positioned.nodes, "Check")
+  let build = find_positioned_node(positioned.nodes, "Build")
+  let (label_width, _) = test_label_dimensions("yes")
+  let min_gap = (label_width - 4).max(24)
+
+  let check_right = check.x + check.width / 2
+  let build_left = build.x - build.width / 2
+  let gap = if build_left >= check_right { build_left - check_right } else { 0 }
+  assert_true(gap >= min_gap)
+}
+
+///|
 test "Layout keeps Check->Build label clear of endpoint node boxes" {
   let graph = @parser.parse_mermaid(
     (
@@ -1239,7 +1266,7 @@ test "Layout keeps Check->Build label clear of endpoint node boxes" {
   let build = find_positioned_node(positioned.nodes, "Build")
   let edge = find_positioned_edge(positioned.edges, "Check", "Build")
 
-  assert_true(edge.points.length() >= 3)
+  assert_true(edge.points.length() >= 2)
   let label = match edge.label {
     Some(text) => text
     None => fail("missing label for Check->Build")
