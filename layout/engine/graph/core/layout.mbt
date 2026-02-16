@@ -699,6 +699,7 @@ fn collect_non_state_flow_lanes(
   max_rank : Int,
   edges : Array[MermaidEdge],
   preserve_dummy_lane_channels : Bool,
+  enable_feedback_back_edge_ordering : Bool,
 ) -> Map[String, Int] {
   if nodes_in_order.length() == 0 {
     return {}
@@ -754,7 +755,39 @@ fn collect_non_state_flow_lanes(
   }
 
   let lane_edges : Array[MermaidEdge] = []
-  let back_edge_ordering_min_span = 3
+  let dotted_back_edge_ordering_min_span = 3
+  let feedback_back_edge_ordering_min_span = 2
+  let node_order_by_id : Map[String, Int] = {}
+  for order, node in nodes_in_order {
+    node_order_by_id[node.id] = order
+  }
+  let mut order_feedback_edge_count = 0
+  let order_feedback_count_by_target : Map[String, Int] = {}
+  for edge in edges {
+    match
+      (node_order_by_id.get(edge.source), node_order_by_id.get(edge.target)) {
+      (Some(source_order), Some(target_order)) =>
+        if source_order > target_order {
+          order_feedback_edge_count += 1
+          let current_count = option_int_or(
+            order_feedback_count_by_target.get(edge.target),
+            0,
+          )
+          order_feedback_count_by_target[edge.target] = current_count + 1
+        }
+      _ => ()
+    }
+  }
+  let mut order_feedback_multi_target_count = 0
+  for _, target_count in order_feedback_count_by_target {
+    if target_count >= 2 {
+      order_feedback_multi_target_count += 1
+    }
+  }
+  let include_non_dotted_feedback_back_edges = enable_feedback_back_edge_ordering &&
+    edges.length() >= 30 &&
+    order_feedback_edge_count >= 6 &&
+    order_feedback_multi_target_count >= 2
   for edge_index, edge in edges {
     match (rank_by_id.get(edge.source), rank_by_id.get(edge.target)) {
       (Some(source_rank), Some(target_rank)) =>
@@ -770,8 +803,16 @@ fn collect_non_state_flow_lanes(
             lane_edges,
           )
         } else if source_rank > target_rank &&
-          source_rank - target_rank >= back_edge_ordering_min_span &&
-          edge.style is Dotted {
+          (
+            (
+              source_rank - target_rank >= dotted_back_edge_ordering_min_span &&
+              edge.style is Dotted
+            ) ||
+            (
+              include_non_dotted_feedback_back_edges &&
+              source_rank - target_rank >= feedback_back_edge_ordering_min_span
+            )
+          ) {
           // Feed long-span back edges into ordering as reversed constraints so
           // cycle-heavy graphs can reduce crossings before routing.
           append_lane_path(
@@ -1186,6 +1227,109 @@ fn collect_non_state_flow_lanes(
     crossings
   }
 
+  fn copy_node_id_order(node_ids : Array[String]) -> Array[String] {
+    let copied : Array[String] = []
+    for node_id in node_ids {
+      copied.push(node_id)
+    }
+    copied
+  }
+
+  fn assign_rank_order_to_lane_slots(
+    ordered_node_ids : Array[String],
+    lane_slots : Array[Int],
+    lane_by_id : Map[String, Int],
+  ) -> Unit {
+    for i, node_id in ordered_node_ids {
+      lane_by_id[node_id] = lane_slots[i]
+    }
+  }
+
+  fn optimize_rank_order_exact(
+    node_ids : Array[String],
+    incident_edge_indexes_by_node : Map[String, Array[Int]],
+    crossing_edge_indexes : Array[Int],
+    edges : Array[MermaidEdge],
+    rank_by_id : Map[String, Int],
+    lane_by_id : Map[String, Int],
+  ) -> Bool {
+    let node_count = node_ids.length()
+    if node_count <= 1 || node_count > 6 {
+      return false
+    }
+
+    let lane_slots : Array[Int] = []
+    for node_id in node_ids {
+      lane_slots.push(option_int_or(lane_by_id.get(node_id), 0))
+    }
+    lane_slots.sort()
+
+    let rank_incident_edge_indexes : Array[Int] = []
+    let seen_incident_edge_indexes : Map[Int, Bool] = {}
+    for node_id in node_ids {
+      append_incident_edge_indexes(
+        node_id, incident_edge_indexes_by_node, rank_incident_edge_indexes, seen_incident_edge_indexes,
+      )
+    }
+    if rank_incident_edge_indexes.length() == 0 {
+      return false
+    }
+
+    let candidate_order = copy_node_id_order(node_ids)
+    assign_rank_order_to_lane_slots(candidate_order, lane_slots, lane_by_id)
+    let mut best_crossings = count_crossings_involving(
+      rank_incident_edge_indexes, crossing_edge_indexes, edges, rank_by_id, lane_by_id,
+    )
+    let best_order = copy_node_id_order(candidate_order)
+    let mut improved = false
+
+    let permutation_state : Array[Int] = []
+    for _ in 0..<node_count {
+      permutation_state.push(0)
+    }
+    let mut index = 0
+    while index < node_count {
+      let state = permutation_state[index]
+      if state < index {
+        let left_index = if index % 2 == 0 { 0 } else { state }
+        let right_index = index
+        let left_id = candidate_order[left_index]
+        let right_id = candidate_order[right_index]
+        candidate_order[left_index] = right_id
+        candidate_order[right_index] = left_id
+
+        assign_rank_order_to_lane_slots(candidate_order, lane_slots, lane_by_id)
+        let candidate_crossings = count_crossings_involving(
+          rank_incident_edge_indexes, crossing_edge_indexes, edges, rank_by_id, lane_by_id,
+        )
+        if candidate_crossings < best_crossings {
+          best_crossings = candidate_crossings
+          improved = true
+          for i, node_id in candidate_order {
+            best_order[i] = node_id
+          }
+        }
+
+        permutation_state[index] = state + 1
+        index = 0
+      } else {
+        permutation_state[index] = 0
+        index += 1
+      }
+    }
+
+    if improved {
+      for i, node_id in best_order {
+        node_ids[i] = node_id
+      }
+      assign_rank_order_to_lane_slots(best_order, lane_slots, lane_by_id)
+      true
+    } else {
+      assign_rank_order_to_lane_slots(node_ids, lane_slots, lane_by_id)
+      false
+    }
+  }
+
   let lane_by_id : Map[String, Int] = {}
   for rank in 0..<=max_rank {
     let mut lane = 0
@@ -1377,6 +1521,34 @@ fn collect_non_state_flow_lanes(
       }
       if !changed {
         break
+      }
+    }
+
+    let enable_exact_rank_search = crossing_edge_indexes.length() >= 40 &&
+      crossing_edge_indexes.length() <= 220
+    if enable_exact_rank_search {
+      let exact_pass_budget = if crossing_edge_indexes.length() >= 120 {
+        2
+      } else {
+        3
+      }
+      for _ in 0..<exact_pass_budget {
+        let mut changed = false
+        for rank in 0..<=max_rank {
+          match real_node_ids_by_rank.get(rank) {
+            Some(node_ids) =>
+              if optimize_rank_order_exact(
+                  node_ids, incident_edge_indexes_by_node, crossing_edge_indexes,
+                  edges, rank_by_id, lane_by_id,
+                ) {
+                changed = true
+              }
+            None => ()
+          }
+        }
+        if !changed {
+          break
+        }
       }
     }
   }
@@ -4585,12 +4757,16 @@ fn layout_graph_with_subgraph_redirects(
     let preserve_dummy_lane_channels = !state_graph &&
       !class_or_er_graph &&
       (graph.subgraphs.length() > 0 || graph.edges.length() >= 30)
+    let enable_feedback_back_edge_ordering = !state_graph &&
+      horizontal &&
+      !class_or_er_graph
     let lane_by_id = collect_non_state_flow_lanes(
       nodes_in_order,
       flow_rank_by_node_id,
       flow_max_rank,
       graph.edges,
       preserve_dummy_lane_channels,
+      enable_feedback_back_edge_ordering,
     )
     for node_id, lane in lane_by_id {
       flow_lane_by_node_id[node_id] = lane
@@ -4603,6 +4779,7 @@ fn layout_graph_with_subgraph_redirects(
     let non_state_optional_lane_refinement = !state_graph &&
       horizontal &&
       !compact_fanin &&
+      !preserve_dummy_lane_channels &&
       !compact_non_state_refined_spacing &&
       !graph.edges.any(edge => edge.label is Some(_))
     let use_horizontal_lane_refinement = if state_graph {
