@@ -3127,6 +3127,7 @@ test "Layout deferred minor-axis key uses y for horizontal edges" {
     target,
     edge_horizontal: true,
     compact_endpoint_port_priority: false,
+    source_boundary_cohort_size: 0,
     source_boundary_offset_minor: 0,
     target_boundary_offset_minor: 0,
   }
@@ -3166,6 +3167,7 @@ test "Layout deferred minor-axis key uses x for vertical edges" {
     target,
     edge_horizontal: false,
     compact_endpoint_port_priority: false,
+    source_boundary_cohort_size: 0,
     source_boundary_offset_minor: 0,
     target_boundary_offset_minor: 0,
   }

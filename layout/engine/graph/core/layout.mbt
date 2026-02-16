@@ -2783,6 +2783,7 @@ priv struct EdgeLayoutContext {
   target : PositionedNode
   edge_horizontal : Bool
   compact_endpoint_port_priority : Bool
+  source_boundary_cohort_size : Int
   source_boundary_offset_minor : Int
   target_boundary_offset_minor : Int
 }
@@ -4883,6 +4884,79 @@ fn evaluate_labeled_route_score(
         route_length: route_length(points),
         offset_abs,
       }
+  }
+}
+
+///|
+fn source_endpoint_turnback_compaction_candidate(
+  points : Array[Point],
+  edge_horizontal : Bool,
+) -> Array[Point]? {
+  if points.length() != 3 {
+    return None
+  }
+  let source_anchor = points[0]
+  let source_stub_end = points[1]
+  let source_next = points[2]
+  if edge_horizontal {
+    if source_anchor.x != source_stub_end.x ||
+      source_anchor.y == source_stub_end.y ||
+      source_stub_end.y != source_next.y ||
+      source_stub_end.x == source_next.x {
+      return None
+    }
+    Some([source_anchor, { x: source_next.x, y: source_anchor.y }, source_next])
+  } else {
+    if source_anchor.y != source_stub_end.y ||
+      source_anchor.x == source_stub_end.x ||
+      source_stub_end.x != source_next.x ||
+      source_stub_end.y == source_next.y {
+      return None
+    }
+    Some([source_anchor, { x: source_anchor.x, y: source_next.y }, source_next])
+  }
+}
+
+///|
+fn maybe_compact_source_endpoint_turnback(
+  context : EdgeLayoutContext,
+  points : Array[Point],
+  route_as_back_edge : Bool,
+  positioned_nodes : Array[PositionedNode],
+  routed_edge_segments : Array[RoutedEdgeSegment],
+  routed_label_boxes : Array[RoutedLabelBox],
+) -> Array[Point] {
+  if route_as_back_edge ||
+    !context.compact_endpoint_port_priority ||
+    context.source_boundary_cohort_size < 2 ||
+    context.source_boundary_offset_minor == 0 {
+    return points
+  }
+  match
+    source_endpoint_turnback_compaction_candidate(
+      points,
+      context.edge_horizontal,
+    ) {
+    Some(candidate_points) => {
+      let current_score = evaluate_labeled_route_score(
+        context, points, 0, positioned_nodes, routed_edge_segments, routed_label_boxes,
+      )
+      let candidate_score = evaluate_labeled_route_score(
+        context, candidate_points, 0, positioned_nodes, routed_edge_segments, routed_label_boxes,
+      )
+      let candidate_better = label_route_score_is_better(
+        candidate_score, current_score,
+      )
+      let current_better = label_route_score_is_better(
+        current_score, candidate_score,
+      )
+      if candidate_better || !current_better {
+        candidate_points
+      } else {
+        points
+      }
+    }
+    None => points
   }
 }
 
@@ -7016,6 +7090,7 @@ fn layout_graph_legacy_with_subgraph_redirects(
           target,
           edge_horizontal,
           compact_endpoint_port_priority: graph.edges.length() <= 20,
+          source_boundary_cohort_size: 0,
           source_boundary_offset_minor: 0,
           target_boundary_offset_minor: 0,
         })
@@ -7098,6 +7173,7 @@ fn layout_graph_legacy_with_subgraph_redirects(
   }
   let source_boundary_offset_by_context_index : Map[Int, Int] = {}
   let target_boundary_offset_by_context_index : Map[Int, Int] = {}
+  let source_boundary_cohort_size_by_context_index : Map[Int, Int] = {}
   for _, assignments in boundary_assignments_by_bucket {
     if assignments.length() == 0 {
       continue
@@ -7117,6 +7193,11 @@ fn layout_graph_legacy_with_subgraph_redirects(
       match assignments_by_peer_minor.get(assignment.peer_minor) {
         Some(peer_minor_assignments) => peer_minor_assignments.push(assignment)
         None => ()
+      }
+    }
+    for assignment in assignments {
+      if assignment.source_endpoint {
+        source_boundary_cohort_size_by_context_index[assignment.context_index] = source_endpoint_count
       }
     }
 
@@ -7246,6 +7327,10 @@ fn layout_graph_legacy_with_subgraph_redirects(
       target: context.target,
       edge_horizontal: context.edge_horizontal,
       compact_endpoint_port_priority: context.compact_endpoint_port_priority,
+      source_boundary_cohort_size: option_int_or(
+        source_boundary_cohort_size_by_context_index.get(context_index),
+        0,
+      ),
       source_boundary_offset_minor: option_int_or(
         source_boundary_offset_by_context_index.get(context_index),
         0,
@@ -7660,9 +7745,13 @@ fn layout_graph_legacy_with_subgraph_redirects(
     } else {
       base_points_with_ports
     }
+    let compacted_base_points = maybe_compact_source_endpoint_turnback(
+      context, base_points, route_as_back_edge, positioned_nodes, routed_edge_segments,
+      routed_label_boxes,
+    )
     let points = optimize_labeled_route_points(
       context,
-      base_points,
+      compacted_base_points,
       route_as_back_edge,
       use_forward_fanout_lane,
       enhanced_horizontal_state_flow,
