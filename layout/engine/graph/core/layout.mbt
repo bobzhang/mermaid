@@ -1063,6 +1063,61 @@ fn graph_has_definition_backward_dotted_edge(
 }
 
 ///|
+fn legacy_should_use_greedy_feedback_arc_set(
+  graph : MermaidGraph,
+  cycle_aware_layout : Bool,
+  horizontal : Bool,
+  state_graph : Bool,
+  class_or_er_graph : Bool,
+) -> Bool {
+  if state_graph ||
+    class_or_er_graph ||
+    horizontal ||
+    !cycle_aware_layout ||
+    graph.edges.length() < 60 {
+    return false
+  }
+  if graph.subgraphs.length() == 0 {
+    return true
+  }
+
+  let top_level_group_index_by_node_id : Map[String, Int] = {}
+  for i, subgraph in graph.subgraphs {
+    collect_top_level_group_index_by_node_id(
+      subgraph, i, top_level_group_index_by_node_id,
+    )
+  }
+  if top_level_group_index_by_node_id.length() == 0 {
+    return true
+  }
+
+  let mut edges_within_top_level_groups = 0
+  let mut intra_top_level_group_edges = 0
+  for edge in graph.edges {
+    match
+      (
+        top_level_group_index_by_node_id.get(edge.source),
+        top_level_group_index_by_node_id.get(edge.target),
+      ) {
+      (Some(source_group), Some(target_group)) => {
+        edges_within_top_level_groups += 1
+        if source_group == target_group {
+          intra_top_level_group_edges += 1
+        }
+      }
+      _ => ()
+    }
+  }
+
+  if edges_within_top_level_groups == 0 {
+    return true
+  }
+  // Prefer greedy FAS for inter-group feedback lattices; avoid ring-heavy
+  // local cycles where greedy FAS can worsen ordering quality.
+  intra_top_level_group_edges * 5 <= edges_within_top_level_groups
+}
+
+///|
 fn layout_lane_orient(
   ax : Int,
   ay : Int,
@@ -3419,13 +3474,15 @@ fn distributed_boundary_port_offset(
   }
   let max_span = half_span_limit * 2
   let min_step = 2
-  let preferred_step = 12
+  // Spread ports to use more of the boundary when space allows, while keeping
+  // a cap so long edges do not over-detour on large nodes.
+  let max_step = max_span.min(36).max(min_step)
   let fit_step = if total <= 1 {
-    preferred_step
+    min_step
   } else {
     (max_span / (total - 1)).max(min_step)
   }
-  let step = preferred_step.min(fit_step)
+  let step = fit_step.min(max_step)
   let centered = slot * 2 - (total - 1)
   let raw_offset = centered * step / 2
   if raw_offset > half_span_limit {
@@ -7168,11 +7225,9 @@ fn layout_graph_legacy_with_subgraph_redirects(
         )
       )
     let use_greedy_feedback_arc_set = layout_engine is DagreParity &&
-      !state_graph &&
-      !class_or_er_graph &&
-      !horizontal &&
-      cycle_aware_layout &&
-      graph.edges.length() >= 60
+      legacy_should_use_greedy_feedback_arc_set(
+        graph, cycle_aware_layout, horizontal, state_graph, class_or_er_graph,
+      )
     let preserve_reversed_back_edge_constraints = use_greedy_feedback_arc_set
     let enable_feedback_back_edge_ordering = base_enable_feedback_back_edge_ordering &&
       !use_greedy_feedback_arc_set

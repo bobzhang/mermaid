@@ -9,11 +9,11 @@ node id=Validate shape=Rounded center=264,98 size=88x44 label=Validate
 node id=state_start_1 shape=StateStart center=130,92 size=14x14 label=
 
 [edges]
-edge Validate->Commit label=- label_pos=- points=308,92 -> 438,98
+edge Validate->Commit label=- label_pos=- points=308,82 -> 438,98
 edge state_start_1->Idle label=- label_pos=- points=130,99 -> 130,175
 edge Active->state_end_1 label=- label_pos=- points=474,120 -> 130,445
 edge Idle->Active label=start label_pos=196,148 points=130,175 -> 264,120
-edge Commit->Validate label=retry label_pos=373,95 points=438,92 -> 308,98
+edge Commit->Validate label=retry label_pos=373,90 points=438,82 -> 308,98
 
 [groups]
 group parent=- id=Active frame=208,40,314,92 label=Active
