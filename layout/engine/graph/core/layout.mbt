@@ -112,6 +112,7 @@ fn collect_non_state_flow_ranks(
   cycle_aware : Bool,
   promote_backward_dotted_edges : Bool,
   prefer_definition_back_edges : Bool,
+  compact_cycle_ranks_toward_sinks : Bool,
 ) -> (Map[String, Int], Int) {
   if !cycle_aware {
     let node_order_by_id : Map[String, Int] = {}
@@ -362,8 +363,10 @@ fn collect_non_state_flow_ranks(
   let relaxed_edge_indices : Array[Int] = []
   let definition_backward_edge_indices : Array[Int] = []
   let incoming_relaxed_edge_indices_by_target : Map[String, Array[Int]] = {}
+  let outgoing_relaxed_edge_indices_by_source : Map[String, Array[Int]] = {}
   for node in nodes_in_order {
     incoming_relaxed_edge_indices_by_target[node.id] = []
+    outgoing_relaxed_edge_indices_by_source[node.id] = []
   }
   for edge_index in considered_edge_indices {
     let is_definition_back_edge = definition_back_edge_by_index.contains(
@@ -378,6 +381,10 @@ fn collect_non_state_flow_ranks(
     relaxed_edge_indices.push(edge_index)
     let edge = edges[edge_index]
     match incoming_relaxed_edge_indices_by_target.get(edge.target) {
+      Some(indices) => indices.push(edge_index)
+      None => ()
+    }
+    match outgoing_relaxed_edge_indices_by_source.get(edge.source) {
       Some(indices) => indices.push(edge_index)
       None => ()
     }
@@ -447,6 +454,69 @@ fn collect_non_state_flow_ranks(
             }
             _ => ()
           }
+        }
+      }
+      if !changed {
+        break
+      }
+    }
+  }
+
+  if compact_cycle_ranks_toward_sinks &&
+    !compact_fanin &&
+    !prefer_definition_back_edges {
+    // Tighten cycle-aware ranks toward sinks without violating relaxed edge
+    // constraints. This reduces left-stretched layouts from pure longest-path
+    // layering and better approximates balanced dagre rank assignments.
+    for _ in 0..<nodes_in_order.length() {
+      let mut changed = false
+      let mut reverse_index = nodes_in_order.length()
+      while reverse_index > 0 {
+        reverse_index = reverse_index - 1
+        let node = nodes_in_order[reverse_index]
+
+        let mut lower_bound = 0
+        match incoming_relaxed_edge_indices_by_target.get(node.id) {
+          Some(incoming_indices) =>
+            for edge_index in incoming_indices {
+              let edge = edges[edge_index]
+              let source_rank = option_int_or(rank_by_id.get(edge.source), 0)
+              let candidate = source_rank + 1
+              if candidate > lower_bound {
+                lower_bound = candidate
+              }
+            }
+          None => ()
+        }
+
+        let mut has_upper_bound = false
+        let mut upper_bound = 0
+        match outgoing_relaxed_edge_indices_by_source.get(node.id) {
+          Some(outgoing_indices) =>
+            for edge_index in outgoing_indices {
+              let edge = edges[edge_index]
+              let target_rank = option_int_or(rank_by_id.get(edge.target), 0)
+              let candidate = target_rank - 1
+              if !has_upper_bound || candidate < upper_bound {
+                upper_bound = candidate
+                has_upper_bound = true
+              }
+            }
+          None => ()
+        }
+        if !has_upper_bound {
+          continue
+        }
+
+        let feasible_upper = if upper_bound < lower_bound {
+          lower_bound
+        } else {
+          upper_bound
+        }
+        let current_rank = option_int_or(rank_by_id.get(node.id), 0)
+        if feasible_upper > current_rank {
+          rank_by_id[node.id] = feasible_upper
+          changed = true
         }
       }
       if !changed {
@@ -4671,16 +4741,83 @@ fn layout_graph_with_subgraph_redirects(
       !class_or_er_graph &&
       !cycle_aware_layout &&
       graph_has_definition_backward_dotted_edge(nodes_in_order, graph.edges)
-    let (rank_by_id, max_rank) = collect_non_state_flow_ranks(
+    let preserve_dummy_lane_channels = !state_graph &&
+      !class_or_er_graph &&
+      (graph.subgraphs.length() > 0 || graph.edges.length() >= 30)
+    let enable_feedback_back_edge_ordering = !state_graph &&
+      horizontal &&
+      !class_or_er_graph
+    let enable_cycle_rank_compaction = !state_graph &&
+      !class_or_er_graph &&
+      horizontal &&
+      !compact_fanin &&
+      cycle_aware_layout &&
+      graph.subgraphs.length() == 0 &&
+      graph.edges.length() >= 30
+    let precomputed_lane_by_id : Map[String, Int] = {}
+    let mut has_precomputed_lane_by_id = false
+    let (baseline_rank_by_id, baseline_max_rank) = collect_non_state_flow_ranks(
       nodes_in_order,
       graph.edges,
       compact_fanin,
       cycle_aware_layout,
       promote_backward_dotted_edges,
       !state_graph && cycle_aware_layout && !horizontal,
+      false,
     )
-    flow_max_rank = max_rank
-    for node_id, rank in rank_by_id {
+    let mut selected_rank_by_id = baseline_rank_by_id
+    let mut selected_max_rank = baseline_max_rank
+    if enable_cycle_rank_compaction {
+      let (compacted_rank_by_id, compacted_max_rank) = collect_non_state_flow_ranks(
+        nodes_in_order,
+        graph.edges,
+        compact_fanin,
+        cycle_aware_layout,
+        promote_backward_dotted_edges,
+        !state_graph && cycle_aware_layout && !horizontal,
+        true,
+      )
+      let baseline_lane_by_id = collect_non_state_flow_lanes(
+        nodes_in_order,
+        baseline_rank_by_id,
+        baseline_max_rank,
+        graph.edges,
+        preserve_dummy_lane_channels,
+        enable_feedback_back_edge_ordering,
+      )
+      let compacted_lane_by_id = collect_non_state_flow_lanes(
+        nodes_in_order,
+        compacted_rank_by_id,
+        compacted_max_rank,
+        graph.edges,
+        preserve_dummy_lane_channels,
+        enable_feedback_back_edge_ordering,
+      )
+      let baseline_lane_crossings = count_lane_space_edge_crossings(
+        graph.edges,
+        baseline_rank_by_id,
+        baseline_lane_by_id,
+      )
+      let compacted_lane_crossings = count_lane_space_edge_crossings(
+        graph.edges,
+        compacted_rank_by_id,
+        compacted_lane_by_id,
+      )
+      if compacted_lane_crossings < baseline_lane_crossings {
+        selected_rank_by_id = compacted_rank_by_id
+        selected_max_rank = compacted_max_rank
+        for node_id, lane in compacted_lane_by_id {
+          precomputed_lane_by_id[node_id] = lane
+        }
+      } else {
+        for node_id, lane in baseline_lane_by_id {
+          precomputed_lane_by_id[node_id] = lane
+        }
+      }
+      has_precomputed_lane_by_id = true
+    }
+    flow_max_rank = selected_max_rank
+    for node_id, rank in selected_rank_by_id {
       flow_rank_by_node_id[node_id] = rank
     }
     if compact_fanin && !state_graph && graph.subgraphs.length() > 0 {
@@ -4754,20 +4891,18 @@ fn layout_graph_with_subgraph_redirects(
         flow_max_rank = flow_max_rank.max(rank)
       }
     }
-    let preserve_dummy_lane_channels = !state_graph &&
-      !class_or_er_graph &&
-      (graph.subgraphs.length() > 0 || graph.edges.length() >= 30)
-    let enable_feedback_back_edge_ordering = !state_graph &&
-      horizontal &&
-      !class_or_er_graph
-    let lane_by_id = collect_non_state_flow_lanes(
-      nodes_in_order,
-      flow_rank_by_node_id,
-      flow_max_rank,
-      graph.edges,
-      preserve_dummy_lane_channels,
-      enable_feedback_back_edge_ordering,
-    )
+    let lane_by_id = if has_precomputed_lane_by_id {
+      precomputed_lane_by_id
+    } else {
+      collect_non_state_flow_lanes(
+        nodes_in_order,
+        flow_rank_by_node_id,
+        flow_max_rank,
+        graph.edges,
+        preserve_dummy_lane_channels,
+        enable_feedback_back_edge_ordering,
+      )
+    }
     for node_id, lane in lane_by_id {
       flow_lane_by_node_id[node_id] = lane
     }
