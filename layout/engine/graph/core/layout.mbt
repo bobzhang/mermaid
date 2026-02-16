@@ -4988,6 +4988,7 @@ priv struct LabelRouteScore {
   label_edge_overlaps : Int
   label_label_overlaps : Int
   endpoint_anchor_conflicts : Int
+  reciprocal_segment_intersections : Int
   reciprocal_segment_overlaps : Int
   route_crossings : Int
   route_length : Int
@@ -5450,6 +5451,40 @@ fn route_reciprocal_segment_overlaps(
 }
 
 ///|
+fn route_reciprocal_segment_intersections(
+  context : EdgeLayoutContext,
+  points : Array[Point],
+  routed_edge_segments : Array[RoutedEdgeSegment],
+) -> Int {
+  let mut intersections = 0
+  for i in 1..<points.length() {
+    let candidate_start = points[i - 1]
+    let candidate_end = points[i]
+    for segment in routed_edge_segments {
+      if segment.source_id != context.resolved_target_id ||
+        segment.target_id != context.resolved_source_id {
+        continue
+      }
+      if point_equals(candidate_start, segment.start) ||
+        point_equals(candidate_start, segment.end) ||
+        point_equals(candidate_end, segment.start) ||
+        point_equals(candidate_end, segment.end) {
+        continue
+      }
+      if back_edge_segments_intersect(
+          candidate_start,
+          candidate_end,
+          segment.start,
+          segment.end,
+        ) {
+        intersections += 1
+      }
+    }
+  }
+  intersections
+}
+
+///|
 fn route_crossings_against_routed_segments(
   points : Array[Point],
   source_id : String,
@@ -5499,6 +5534,13 @@ fn evaluate_labeled_route_score(
   } else {
     0
   }
+  let reciprocal_segment_intersections = if context.compact_endpoint_port_priority {
+    route_reciprocal_segment_intersections(
+      context, points, routed_edge_segments,
+    )
+  } else {
+    0
+  }
   let route_crossings = route_crossings_against_routed_segments(
     points,
     context.resolved_source_id,
@@ -5539,6 +5581,7 @@ fn evaluate_labeled_route_score(
         label_edge_overlaps,
         label_label_overlaps,
         endpoint_anchor_conflicts,
+        reciprocal_segment_intersections,
         reciprocal_segment_overlaps,
         route_crossings,
         route_length: route_length(points),
@@ -5551,6 +5594,7 @@ fn evaluate_labeled_route_score(
         label_edge_overlaps: 0,
         label_label_overlaps: 0,
         endpoint_anchor_conflicts,
+        reciprocal_segment_intersections,
         reciprocal_segment_overlaps,
         route_crossings,
         route_length: route_length(points),
@@ -5633,6 +5677,115 @@ fn maybe_compact_source_endpoint_turnback(
 }
 
 ///|
+fn reciprocal_target_dogleg_candidate(
+  points : Array[Point],
+  offset : Int,
+) -> Array[Point]? {
+  if points.length() < 3 || offset <= 0 {
+    return None
+  }
+  let count = points.length()
+  let anchor = points[count - 1]
+  let approach = points[count - 2]
+  let pivot = points[count - 3]
+  if approach.x == anchor.x && approach.y != anchor.y {
+    let direction = if pivot.x >= anchor.x { 1 } else { -1 }
+    let detour_x = anchor.x + direction * offset
+    let candidate : Array[Point] = []
+    for i in 0..<(count - 2) {
+      candidate.push(points[i])
+    }
+    candidate.push({ x: detour_x, y: approach.y })
+    candidate.push({ x: detour_x, y: anchor.y })
+    candidate.push(anchor)
+    return Some(candidate)
+  }
+  if approach.y == anchor.y && approach.x != anchor.x {
+    let direction = if pivot.y >= anchor.y { 1 } else { -1 }
+    let detour_y = anchor.y + direction * offset
+    let candidate : Array[Point] = []
+    for i in 0..<(count - 2) {
+      candidate.push(points[i])
+    }
+    candidate.push({ x: approach.x, y: detour_y })
+    candidate.push({ x: anchor.x, y: detour_y })
+    candidate.push(anchor)
+    return Some(candidate)
+  }
+  None
+}
+
+///|
+fn maybe_optimize_reciprocal_target_dogleg(
+  context : EdgeLayoutContext,
+  points : Array[Point],
+  positioned_nodes : Array[PositionedNode],
+  routed_edge_segments : Array[RoutedEdgeSegment],
+  routed_label_boxes : Array[RoutedLabelBox],
+) -> Array[Point] {
+  if !context.compact_endpoint_port_priority || points.length() < 3 {
+    return points
+  }
+  if context.source_boundary_offset_minor == 0 &&
+    context.target_boundary_offset_minor == 0 {
+    return points
+  }
+  let mut has_reciprocal = false
+  for segment in routed_edge_segments {
+    if segment.source_id == context.resolved_target_id &&
+      segment.target_id == context.resolved_source_id {
+      has_reciprocal = true
+      break
+    }
+  }
+  if !has_reciprocal {
+    return points
+  }
+
+  let mut best_points : Array[Point] = []
+  for point in points {
+    best_points.push(point)
+  }
+  let seed_points : Array[Point] = []
+  for point in points {
+    seed_points.push(point)
+  }
+  let mut best_score = evaluate_labeled_route_score(
+    context, best_points, 0, positioned_nodes, routed_edge_segments, routed_label_boxes,
+  )
+  let seen_signatures : Map[String, Bool] = {}
+  seen_signatures[points_signature(best_points)] = true
+  let candidate_offsets = [12, 24, 36, 48, 72, 96, 128]
+  for offset in candidate_offsets {
+    match reciprocal_target_dogleg_candidate(seed_points, offset) {
+      Some(raw_candidate) => {
+        let candidate = simplify_polyline_points(raw_candidate)
+        let signature = points_signature(candidate)
+        if seen_signatures.contains(signature) {
+          continue
+        }
+        seen_signatures[signature] = true
+        let candidate_score = evaluate_labeled_route_score(
+          context, candidate, 0, positioned_nodes, routed_edge_segments, routed_label_boxes,
+        )
+        let candidate_better = label_route_score_is_better(
+          candidate_score, best_score,
+        )
+        let best_better = label_route_score_is_better(
+          best_score, candidate_score,
+        )
+        if candidate_better || !best_better {
+          best_points = candidate
+          best_score = candidate_score
+        }
+      }
+      None => ()
+    }
+  }
+  best_points
+}
+
+///|
 fn label_route_score_is_better(
   candidate : LabelRouteScore,
   best : LabelRouteScore,
@@ -5648,6 +5801,11 @@ fn label_route_score_is_better(
   }
   if candidate.endpoint_anchor_conflicts != best.endpoint_anchor_conflicts {
     return candidate.endpoint_anchor_conflicts < best.endpoint_anchor_conflicts
+  }
+  if candidate.reciprocal_segment_intersections !=
+    best.reciprocal_segment_intersections {
+    return candidate.reciprocal_segment_intersections <
+      best.reciprocal_segment_intersections
   }
   if candidate.reciprocal_segment_overlaps != best.reciprocal_segment_overlaps {
     return candidate.reciprocal_segment_overlaps <
@@ -8537,9 +8695,12 @@ fn layout_graph_legacy_with_subgraph_redirects(
       context, base_points, route_as_back_edge, positioned_nodes, routed_edge_segments,
       routed_label_boxes,
     )
+    let reciprocal_optimized_points = maybe_optimize_reciprocal_target_dogleg(
+      context, compacted_base_points, positioned_nodes, routed_edge_segments, routed_label_boxes,
+    )
     let points = optimize_labeled_route_points(
       context,
-      compacted_base_points,
+      reciprocal_optimized_points,
       route_as_back_edge,
       use_forward_fanout_lane,
       enhanced_horizontal_state_flow,
@@ -8757,14 +8918,19 @@ fn layout_graph_legacy_with_subgraph_redirects(
         context.source_boundary_offset_minor,
         context.target_boundary_offset_minor,
       )
-      points_by_context_index[context_index] = points
+      let optimized_points = maybe_optimize_reciprocal_target_dogleg(
+        context, points, positioned_nodes, routed_edge_segments, routed_label_boxes,
+      )
+      points_by_context_index[context_index] = optimized_points
       append_routed_segments_for_points(
         routed_edge_segments,
         context.resolved_source_id,
         context.resolved_target_id,
-        points,
+        optimized_points,
       )
-      append_routed_label_box_for_context(routed_label_boxes, context, points)
+      append_routed_label_box_for_context(
+        routed_label_boxes, context, optimized_points,
+      )
     }
   }
   for context_index, context in edge_layout_contexts {

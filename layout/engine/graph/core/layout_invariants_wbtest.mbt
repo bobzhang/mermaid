@@ -1647,6 +1647,28 @@ test "Layout keeps Check->Build label clear of endpoint node boxes" {
 }
 
 ///|
+test "Layout reciprocal flow loop avoids polyline crossing at opposite ports" {
+  let graph = @parser.parse_mermaid(
+    (
+      #|flowchart LR
+      #|Start([Start]) --> Check{Valid input?}
+      #|Check -->|yes| Build[Build artifact]
+      #|Check -->|no| Fix[Fix source]
+      #|Fix --> Check
+      #|Build --> Ship([Ship])
+      #|
+    )
+    .trim_end()
+    .to_string(),
+  )
+  let positioned = layout_graph(graph, RenderOptions::default())
+  let check_fix = find_positioned_edge(positioned.edges, "Check", "Fix")
+  let fix_check = find_positioned_edge(positioned.edges, "Fix", "Check")
+
+  assert_eq(count_polyline_crossings([check_fix.points, fix_check.points]), 0)
+}
+
+///|
 test "Layout spreads source anchors for horizontal fanout edges" {
   let graph = @parser.parse_mermaid(
     (
