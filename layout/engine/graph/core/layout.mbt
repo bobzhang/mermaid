@@ -573,6 +573,23 @@ fn collect_non_state_flow_ranks(
     }
   }
 
+  let mut has_rank = false
+  let mut min_rank = 0
+  for _, rank in rank_by_id {
+    if !has_rank {
+      has_rank = true
+      min_rank = rank
+    } else {
+      min_rank = min_rank.min(rank)
+    }
+  }
+  if has_rank && min_rank < 0 {
+    for node in nodes_in_order {
+      let current_rank = option_int_or(rank_by_id.get(node.id), 0)
+      rank_by_id[node.id] = current_rank - min_rank
+    }
+  }
+
   let mut max_rank = 0
   for _, rank in rank_by_id {
     max_rank = max_rank.max(rank)
