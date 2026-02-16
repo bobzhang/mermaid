@@ -5330,6 +5330,53 @@ fn layout_graph_with_subgraph_redirects(
     }
   }
 
+  let max_width_by_flow_rank_index : Map[Int, Int] = {}
+  for node in nodes_in_order {
+    let (width, _) = node_dimensions(node)
+    let flow_rank = option_int_or(flow_rank_by_node_id.get(node.id), 0)
+    let flow_rank_index = if reverse {
+      flow_max_rank - flow_rank
+    } else {
+      flow_rank
+    }
+    let current_max = option_int_or(
+      max_width_by_flow_rank_index.get(flow_rank_index),
+      0,
+    )
+    if width > current_max {
+      max_width_by_flow_rank_index[flow_rank_index] = width
+    }
+  }
+
+  // Apply minimal rank shifts only where wide labels would collapse adjacent
+  // horizontal ranks, preserving compaction on normal-width graphs.
+  let horizontal_rank_shift_by_index : Map[Int, Int] = {}
+  if horizontal {
+    let min_horizontal_rank_clearance = (node_spacing / 5).max(16)
+    let mut running_shift = 0
+    for flow_rank_index in 0..<=flow_max_rank {
+      horizontal_rank_shift_by_index[flow_rank_index] = running_shift
+      if flow_rank_index == flow_max_rank {
+        continue
+      }
+      let current_width = option_int_or(
+        max_width_by_flow_rank_index.get(flow_rank_index),
+        0,
+      )
+      let current_left = padding +
+        flow_rank_index * node_spacing +
+        running_shift
+      let current_right = current_left + current_width
+      let next_left = padding +
+        (flow_rank_index + 1) * node_spacing +
+        running_shift
+      let required_next_left = current_right + min_horizontal_rank_clearance
+      if next_left < required_next_left {
+        running_shift += required_next_left - next_left
+      }
+    }
+  }
+
   let mut max_right = padding
   let mut max_bottom = padding
 
@@ -5346,7 +5393,11 @@ fn layout_graph_with_subgraph_redirects(
       flow_rank
     }
     let x = if horizontal {
-      padding + flow_rank_index * node_spacing + width / 2
+      let rank_shift = option_int_or(
+        horizontal_rank_shift_by_index.get(flow_rank_index),
+        0,
+      )
+      padding + flow_rank_index * node_spacing + rank_shift + width / 2
     } else if flat_state_graph {
       padding +
       90 +
@@ -5482,21 +5533,47 @@ fn layout_graph_with_subgraph_redirects(
     }
   }
 
+  fn directed_edge_key(source_id : String, target_id : String) -> String {
+    "\{source_id}->\{target_id}"
+  }
+
+  fn context_has_reciprocal_edge(
+    context : EdgeLayoutContext,
+    directed_edge_count_by_key : Map[String, Int],
+  ) -> Bool {
+    let reverse_key = directed_edge_key(
+      context.resolved_target_id,
+      context.resolved_source_id,
+    )
+    option_int_or(directed_edge_count_by_key.get(reverse_key), 0) > 0
+  }
+
   fn context_requires_long_span_back_edge_bend(
     context : EdgeLayoutContext,
     horizontal_span_threshold : Int,
     vertical_span_threshold : Int,
+    directed_edge_count_by_key : Map[String, Int],
   ) -> Bool {
     let edge = context.edge
     if edge.label is Some(_) {
       return false
     }
+    let has_reciprocal = context_has_reciprocal_edge(
+      context, directed_edge_count_by_key,
+    )
     if context.edge_horizontal {
       context.target.x < context.source.x &&
-      int_abs(context.target.x - context.source.x) >= horizontal_span_threshold
+      (
+        int_abs(context.target.x - context.source.x) >=
+        horizontal_span_threshold ||
+        has_reciprocal
+      )
     } else {
       context.target.y < context.source.y &&
-      int_abs(context.target.y - context.source.y) >= vertical_span_threshold
+      (
+        int_abs(context.target.y - context.source.y) >= vertical_span_threshold ||
+        has_reciprocal
+      )
     }
   }
 
@@ -5541,6 +5618,7 @@ fn layout_graph_with_subgraph_redirects(
   }
 
   let edge_layout_contexts : Array[EdgeLayoutContext] = []
+  let directed_edge_count_by_key : Map[String, Int] = {}
   for edge in graph.edges {
     let resolved_source_id = resolve_edge_endpoint_id(
       edge.source,
@@ -5579,6 +5657,12 @@ fn layout_graph_with_subgraph_redirects(
           target,
           edge_horizontal,
         })
+        let key = directed_edge_key(resolved_source_id, resolved_target_id)
+        directed_edge_count_by_key[key] = option_int_or(
+            directed_edge_count_by_key.get(key),
+            0,
+          ) +
+          1
       }
       _ => ()
     }
@@ -5612,6 +5696,7 @@ fn layout_graph_with_subgraph_redirects(
   for context_index, context in edge_layout_contexts {
     let defer_back_edge = context_requires_long_span_back_edge_bend(
       context, back_edge_route_horizontal_span_threshold, back_edge_route_vertical_span_threshold,
+      directed_edge_count_by_key,
     )
     if defer_back_edge {
       deferred_back_edge_context_indices.push(context_index)
@@ -5867,6 +5952,7 @@ fn layout_graph_with_subgraph_redirects(
     let edge_horizontal = context.edge_horizontal
     let route_as_back_edge = context_requires_long_span_back_edge_bend(
       context, back_edge_route_horizontal_span_threshold, back_edge_route_vertical_span_threshold,
+      directed_edge_count_by_key,
     )
     let forward_fanout_bucket_key = forward_fanout_bucket(
       context.resolved_source_id,

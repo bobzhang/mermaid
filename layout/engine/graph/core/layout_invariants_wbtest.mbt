@@ -147,6 +147,21 @@ fn edges_have_proper_intersection(
 }
 
 ///|
+fn points_form_exact_reverse(left : Array[Point], right : Array[Point]) -> Bool {
+  if left.length() != right.length() {
+    return false
+  }
+  for i in 0..<left.length() {
+    let left_point = left[i]
+    let right_point = right[right.length() - 1 - i]
+    if left_point.x != right_point.x || left_point.y != right_point.y {
+      return false
+    }
+  }
+  true
+}
+
+///|
 fn count_logical_edge_crossings(
   positioned : PositionedGraph,
   edges : Array[MermaidEdge],
@@ -1120,6 +1135,60 @@ test "Layout preserves declared edge order after deferred back-edge routing" {
     let actual = positioned.edges[i]
     assert_eq(actual.source, expected.source)
     assert_eq(actual.target, expected.target)
+  }
+}
+
+///|
+test "Layout separates reciprocal short LR edges to avoid exact overlap" {
+  let graph = @parser.parse_mermaid(
+    (
+      #|flowchart LR
+      #|Start([Start]) --> Check{Valid input?}
+      #|Check -->|yes| Build[Build artifact]
+      #|Check -->|no| Fix[Fix source]
+      #|Fix --> Check
+      #|Build --> Ship([Ship])
+      #|
+    )
+    .trim_end()
+    .to_string(),
+  )
+  let positioned = layout_graph(graph, RenderOptions::default())
+  let forward = find_positioned_edge(positioned.edges, "Check", "Fix")
+  let backward = find_positioned_edge(positioned.edges, "Fix", "Check")
+
+  assert_true(backward.points.length() > 2)
+  assert_eq(points_form_exact_reverse(forward.points, backward.points), false)
+}
+
+///|
+test "Layout horizontal rank spacing keeps wide adjacent nodes separated" {
+  let graph = @parser.parse_mermaid(
+    (
+      #|flowchart LR
+      #|Start([Start]) --> Check{Valid input?}
+      #|Check -->|yes| Build[Build artifact]
+      #|Check -->|no| Fix[Fix source]
+      #|Fix --> Check
+      #|Build --> Ship([Ship])
+      #|
+    )
+    .trim_end()
+    .to_string(),
+  )
+  let positioned = layout_graph(graph, RenderOptions::default())
+  let build = find_positioned_node(positioned.nodes, "Build")
+  let ship = find_positioned_node(positioned.nodes, "Ship")
+  let required_gap = (resolve_node_spacing(RenderOptions::default()) / 5).max(
+    16,
+  )
+
+  if build.x <= ship.x {
+    let gap = ship.x - ship.width / 2 - (build.x + build.width / 2)
+    assert_true(gap >= required_gap)
+  } else {
+    let gap = build.x - build.width / 2 - (ship.x + ship.width / 2)
+    assert_true(gap >= required_gap)
   }
 }
 
