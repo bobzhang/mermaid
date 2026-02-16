@@ -8000,7 +8000,8 @@ fn layout_graph_legacy_with_subgraph_redirects(
       assignments, source_boundary_offset_by_context_index, target_boundary_offset_by_context_index,
       edge_layout_contexts,
     )
-    if graph.edges.length() <= 30 &&
+    if !class_or_er_graph &&
+      graph.edges.length() <= 30 &&
       assignments.length() <= 6 &&
       has_mixed_peer_minor &&
       source_endpoint_count > 0 &&
