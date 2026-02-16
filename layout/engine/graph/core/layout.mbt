@@ -3467,6 +3467,116 @@ fn assign_compact_boundary_offsets_for_cohort(
 }
 
 ///|
+fn boundary_offset_candidate_values(
+  half_span_limit : Int,
+  preferred_total : Int,
+) -> Array[Int] {
+  let candidates : Array[Int] = []
+  if half_span_limit <= 0 {
+    candidates.push(0)
+    return candidates
+  }
+
+  let normalized_total = preferred_total.max(1)
+  for slot in 0..<normalized_total {
+    let candidate = distributed_boundary_port_offset(
+      slot, normalized_total, half_span_limit,
+    )
+    if !candidates.contains(candidate) {
+      candidates.push(candidate)
+    }
+  }
+
+  let mut offset = -half_span_limit
+  while offset <= half_span_limit {
+    if !candidates.contains(offset) {
+      candidates.push(offset)
+    }
+    offset += 2
+  }
+
+  candidates
+}
+
+///|
+fn rebalance_boundary_offsets_for_bucket(
+  assignments : Array[BoundaryEndpointAssignment],
+  edge_layout_contexts : Array[EdgeLayoutContext],
+  source_boundary_offset_by_context_index : Map[Int, Int],
+  target_boundary_offset_by_context_index : Map[Int, Int],
+) -> Unit {
+  if assignments.length() <= 1 {
+    return
+  }
+
+  let ordered_assignments : Array[BoundaryEndpointAssignment] = []
+  for assignment in assignments {
+    ordered_assignments.push(assignment)
+  }
+  ordered_assignments.sort_by((left, right) => {
+    if left.source_endpoint != right.source_endpoint {
+      if left.source_endpoint {
+        -1
+      } else {
+        1
+      }
+    } else if left.peer_minor != right.peer_minor {
+      left.peer_minor.compare(right.peer_minor)
+    } else if left.edge_span != right.edge_span {
+      right.edge_span.compare(left.edge_span)
+    } else if left.peer_major != right.peer_major {
+      left.peer_major.compare(right.peer_major)
+    } else {
+      left.context_index.compare(right.context_index)
+    }
+  })
+
+  let first_assignment = ordered_assignments[0]
+  let first_context = edge_layout_contexts[first_assignment.context_index]
+  let endpoint_node = if first_assignment.source_endpoint {
+    first_context.source
+  } else {
+    first_context.target
+  }
+  let half_span_limit = boundary_side_minor_span_limit(
+    endpoint_node,
+    first_assignment.side,
+  )
+  let candidate_offsets = boundary_offset_candidate_values(
+    half_span_limit,
+    ordered_assignments.length(),
+  )
+  let used_offsets : Map[Int, Bool] = {}
+  let normalized_total = ordered_assignments.length().max(1)
+  for slot, assignment in ordered_assignments {
+    let existing_offset = if assignment.source_endpoint {
+      option_int_or(
+        source_boundary_offset_by_context_index.get(assignment.context_index),
+        distributed_boundary_port_offset(
+          slot, normalized_total, half_span_limit,
+        ),
+      )
+    } else {
+      option_int_or(
+        target_boundary_offset_by_context_index.get(assignment.context_index),
+        distributed_boundary_port_offset(
+          slot, normalized_total, half_span_limit,
+        ),
+      )
+    }
+    let chosen_offset = choose_available_boundary_offset(
+      existing_offset, candidate_offsets, used_offsets,
+    )
+    used_offsets[chosen_offset] = true
+    if assignment.source_endpoint {
+      source_boundary_offset_by_context_index[assignment.context_index] = chosen_offset
+    } else {
+      target_boundary_offset_by_context_index[assignment.context_index] = chosen_offset
+    }
+  }
+}
+
+///|
 fn deferred_back_edge_minor_axis_key(
   context : EdgeLayoutContext,
   key_mode : Int,
@@ -7706,6 +7816,7 @@ fn layout_graph_legacy_with_subgraph_redirects(
         None => ()
       }
     }
+    let mut has_mixed_peer_minor = false
     for assignment in assignments {
       if assignment.source_endpoint {
         source_boundary_cohort_size_by_context_index[assignment.context_index] = source_endpoint_count
@@ -7726,6 +7837,9 @@ fn layout_graph_legacy_with_subgraph_redirects(
         } else {
           peer_has_target_endpoint = true
         }
+      }
+      if peer_has_source_endpoint && peer_has_target_endpoint {
+        has_mixed_peer_minor = true
       }
       if !peer_has_source_endpoint || !peer_has_target_endpoint {
         continue
@@ -7828,6 +7942,17 @@ fn layout_graph_legacy_with_subgraph_redirects(
           source_cohort_assignments, edge_layout_contexts, true, source_boundary_offset_by_context_index,
         )
       }
+    }
+
+    if graph.edges.length() <= 30 &&
+      assignments.length() <= 3 &&
+      has_mixed_peer_minor &&
+      source_endpoint_count > 0 &&
+      target_endpoint_count > 0 {
+      rebalance_boundary_offsets_for_bucket(
+        assignments, edge_layout_contexts, source_boundary_offset_by_context_index,
+        target_boundary_offset_by_context_index,
+      )
     }
   }
   for context_index, context in edge_layout_contexts {
