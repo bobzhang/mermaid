@@ -114,6 +114,7 @@ fn collect_non_state_flow_ranks(
   prefer_definition_back_edges : Bool,
   compact_cycle_ranks_toward_sinks : Bool,
   use_greedy_feedback_arc_set : Bool,
+  preserve_reversed_back_edge_constraints : Bool,
 ) -> (Map[String, Int], Int) {
   if !cycle_aware {
     let node_order_by_id : Map[String, Int] = {}
@@ -371,6 +372,7 @@ fn collect_non_state_flow_ranks(
   }
 
   let relaxed_edge_indices : Array[Int] = []
+  let reversed_back_edge_indices : Array[Int] = []
   let definition_backward_edge_indices : Array[Int] = []
   let incoming_relaxed_edge_indices_by_target : Map[String, Array[Int]] = {}
   let outgoing_relaxed_edge_indices_by_source : Map[String, Array[Int]] = {}
@@ -385,7 +387,13 @@ fn collect_non_state_flow_ranks(
     if is_definition_back_edge {
       definition_backward_edge_indices.push(edge_index)
     }
-    if back_edge_by_index.contains(edge_index) || is_definition_back_edge {
+    if back_edge_by_index.contains(edge_index) {
+      if preserve_reversed_back_edge_constraints {
+        reversed_back_edge_indices.push(edge_index)
+      }
+      continue
+    }
+    if is_definition_back_edge {
       continue
     }
     relaxed_edge_indices.push(edge_index)
@@ -430,6 +438,21 @@ fn collect_non_state_flow_ranks(
           changed = true
         }
       }
+      if preserve_reversed_back_edge_constraints {
+        for edge_index in reversed_back_edge_indices {
+          let edge = edges[edge_index]
+          match (rank_by_id.get(edge.source), rank_by_id.get(edge.target)) {
+            (Some(source_rank), Some(target_rank)) => {
+              let candidate_rank = target_rank + 1
+              if candidate_rank > source_rank {
+                rank_by_id[edge.source] = candidate_rank
+                changed = true
+              }
+            }
+            _ => ()
+          }
+        }
+      }
       if !changed {
         break
       }
@@ -448,6 +471,21 @@ fn collect_non_state_flow_ranks(
             }
           }
           _ => ()
+        }
+      }
+      if preserve_reversed_back_edge_constraints {
+        for edge_index in reversed_back_edge_indices {
+          let edge = edges[edge_index]
+          match (rank_by_id.get(edge.source), rank_by_id.get(edge.target)) {
+            (Some(source_rank), Some(target_rank)) => {
+              let candidate_rank = target_rank + 1
+              if candidate_rank > source_rank {
+                rank_by_id[edge.source] = candidate_rank
+                changed = true
+              }
+            }
+            _ => ()
+          }
         }
       }
       // Keep definition-backward edges directional without forcing target depth.
@@ -6727,6 +6765,7 @@ fn layout_graph_legacy_with_subgraph_redirects(
       !horizontal &&
       cycle_aware_layout &&
       graph.edges.length() >= 60
+    let preserve_reversed_back_edge_constraints = use_greedy_feedback_arc_set
     let enable_feedback_back_edge_ordering = base_enable_feedback_back_edge_ordering &&
       !use_greedy_feedback_arc_set
     let precomputed_lane_by_id : Map[String, Int] = {}
@@ -6740,6 +6779,7 @@ fn layout_graph_legacy_with_subgraph_redirects(
       prefer_definition_back_edges,
       false,
       use_greedy_feedback_arc_set,
+      preserve_reversed_back_edge_constraints,
     )
     let mut selected_rank_by_id = baseline_rank_by_id
     let mut selected_max_rank = baseline_max_rank
@@ -6753,6 +6793,7 @@ fn layout_graph_legacy_with_subgraph_redirects(
         prefer_definition_back_edges,
         true,
         use_greedy_feedback_arc_set,
+        preserve_reversed_back_edge_constraints,
       )
       let baseline_lane_by_id = collect_non_state_flow_lanes(
         nodes_in_order,
