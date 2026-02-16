@@ -306,6 +306,28 @@ fn count_logical_edge_crossings(
 }
 
 ///|
+test "Layout simplify polyline removes duplicate and interior collinear points" {
+  let points : Array[Point] = [
+    { x: 0, y: 0 },
+    { x: 0, y: 0 },
+    { x: 12, y: 0 },
+    { x: 24, y: 0 },
+    { x: 24, y: 10 },
+    { x: 24, y: 20 },
+  ]
+  let simplified = simplify_polyline_points(points)
+  assert_eq(simplified, [{ x: 0, y: 0 }, { x: 24, y: 0 }, { x: 24, y: 20 }])
+}
+
+///|
+test "Layout simplify polyline preserves turnback cusp points" {
+  let points : Array[Point] = [{ x: 0, y: 0 }, { x: 0, y: 10 }, { x: 0, y: -8 }]
+  let simplified = simplify_polyline_points(points)
+  assert_eq(simplified.length(), 3)
+  assert_eq(simplified[1], { x: 0, y: 10 })
+}
+
+///|
 test "Layout engine dagre-parity mode preserves legacy output in scaffold phase" {
   let graph = @parser.parse_mermaid(
     (

@@ -2957,6 +2957,46 @@ fn point_equals(left : Point, right : Point) -> Bool {
 }
 
 ///|
+fn point_is_between_on_axis(value : Int, left : Int, right : Int) -> Bool {
+  let min_value = left.min(right)
+  let max_value = left.max(right)
+  value >= min_value && value <= max_value
+}
+
+///|
+fn point_collinear(first : Point, middle : Point, last : Point) -> Bool {
+  let cross = (middle.x - first.x) * (last.y - first.y) -
+    (middle.y - first.y) * (last.x - first.x)
+  if cross != 0 {
+    return false
+  }
+  point_is_between_on_axis(middle.x, first.x, last.x) &&
+  point_is_between_on_axis(middle.y, first.y, last.y)
+}
+
+///|
+fn simplify_polyline_points(points : Array[Point]) -> Array[Point] {
+  let simplified : Array[Point] = []
+  for point in points {
+    if simplified.length() == 0 ||
+      !point_equals(simplified[simplified.length() - 1], point) {
+      simplified.push(point)
+    }
+    while simplified.length() >= 3 {
+      let first = simplified[simplified.length() - 3]
+      let middle = simplified[simplified.length() - 2]
+      let last = simplified[simplified.length() - 1]
+      if point_collinear(first, middle, last) {
+        let _ = simplified.remove(simplified.length() - 2)
+      } else {
+        break
+      }
+    }
+  }
+  simplified
+}
+
+///|
 fn apply_endpoint_port_stubs(
   core_points : Array[Point],
   source_anchor : Point,
@@ -2982,7 +3022,7 @@ fn apply_endpoint_port_stubs(
     if !point_equals(target_anchor, routed_points[routed_points.length() - 1]) {
       routed_points.push(target_anchor)
     }
-    routed_points
+    simplify_polyline_points(routed_points)
   }
 }
 
