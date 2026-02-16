@@ -12,8 +12,8 @@ node id=Build shape=Rectangle center=384,110 size=136x44 label=Build artifact
 edge Build->Ship label=- label_pos=- points=452,110 -> 478,110
 edge Start->Check label=- label_pos=- points=110,110 -> 170,110
 edge Check->Fix label=no label_pos=291,155 points=251,132 -> 331,178
-edge Check->Build label=yes label_pos=303,110 points=290,110 -> 316,110
 edge Fix->Check label=- label_pos=- points=338,222 -> 316,238 -> 290,238 -> 240,132
+edge Check->Build label=yes label_pos=305,67 points=260,88 -> 290,67 -> 316,67 -> 350,88
 
 [groups]
 (none)

@@ -39,6 +39,33 @@ fn find_positioned_edge(
 }
 
 ///|
+fn test_label_dimensions(label : String) -> (Int, Int) {
+  let lines = label.split("\n").map(part => part.to_string()).to_array()
+  let mut longest_line = 0
+  for line in lines {
+    longest_line = longest_line.max(line.length())
+  }
+  let width = (longest_line * 7 + 12).max(18)
+  let height = (lines.length() * 14 + 12).max(18)
+  (width, height)
+}
+
+///|
+fn test_rects_overlap(
+  left : Int,
+  right : Int,
+  top : Int,
+  bottom : Int,
+  other_left : Int,
+  other_right : Int,
+  other_top : Int,
+  other_bottom : Int,
+) -> Bool {
+  spans_overlap(left, right, other_left, other_right) &&
+  spans_overlap(top, bottom, other_top, other_bottom)
+}
+
+///|
 fn flow_edge(source : String, target : String) -> MermaidEdge {
   {
     source,
@@ -1190,6 +1217,64 @@ test "Layout horizontal rank spacing keeps wide adjacent nodes separated" {
     let gap = build.x - build.width / 2 - (ship.x + ship.width / 2)
     assert_true(gap >= required_gap)
   }
+}
+
+///|
+test "Layout keeps Check->Build label clear of endpoint node boxes" {
+  let graph = @parser.parse_mermaid(
+    (
+      #|flowchart LR
+      #|Start([Start]) --> Check{Valid input?}
+      #|Check -->|yes| Build[Build artifact]
+      #|Check -->|no| Fix[Fix source]
+      #|Fix --> Check
+      #|Build --> Ship([Ship])
+      #|
+    )
+    .trim_end()
+    .to_string(),
+  )
+  let positioned = layout_graph(graph, RenderOptions::default())
+  let check = find_positioned_node(positioned.nodes, "Check")
+  let build = find_positioned_node(positioned.nodes, "Build")
+  let edge = find_positioned_edge(positioned.edges, "Check", "Build")
+
+  assert_true(edge.points.length() >= 3)
+  let label = match edge.label {
+    Some(text) => text
+    None => fail("missing label for Check->Build")
+  }
+  let label_position = match edge.label_position {
+    Some(point) => point
+    None => fail("missing label position for Check->Build")
+  }
+  let (label_width, label_height) = test_label_dimensions(label)
+  let label_left = label_position.x - label_width / 2
+  let label_right = label_position.x + (label_width + 1) / 2
+  let label_top = label_position.y - label_height / 2
+  let label_bottom = label_position.y + (label_height + 1) / 2
+
+  let check_left = check.x - check.width / 2
+  let check_right = check.x + check.width / 2
+  let check_top = check.y - check.height / 2
+  let check_bottom = check.y + check.height / 2
+  let build_left = build.x - build.width / 2
+  let build_right = build.x + build.width / 2
+  let build_top = build.y - build.height / 2
+  let build_bottom = build.y + build.height / 2
+
+  assert_true(
+    !test_rects_overlap(
+      label_left, label_right, label_top, label_bottom, check_left, check_right,
+      check_top, check_bottom,
+    ),
+  )
+  assert_true(
+    !test_rects_overlap(
+      label_left, label_right, label_top, label_bottom, build_left, build_right,
+      build_top, build_bottom,
+    ),
+  )
 }
 
 ///|

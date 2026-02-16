@@ -2389,6 +2389,71 @@ fn apply_directional_boundary_anchors(
 }
 
 ///|
+fn edge_points_with_minor_lane_offset(
+  source : PositionedNode,
+  target : PositionedNode,
+  horizontal : Bool,
+  minor_offset : Int,
+  smooth_forward_fanout : Bool,
+) -> Array[Point] {
+  if horizontal {
+    let moving_right = target.x >= source.x
+    let source_delta = if moving_right {
+      source.width / 2
+    } else {
+      -source.width / 2
+    }
+    let target_delta = if moving_right {
+      -target.width / 2
+    } else {
+      target.width / 2
+    }
+    let start_x = source.x + source_delta
+    let end_x = target.x + target_delta
+    let lane_y = source.y + minor_offset
+    let start : Point = { x: start_x, y: source.y }
+    let end : Point = { x: end_x, y: target.y }
+    if smooth_forward_fanout {
+      let mid_x = (start_x + end_x) / 2
+      return apply_directional_boundary_anchors(source, target, [
+        start,
+        { x: mid_x, y: lane_y },
+        end,
+      ])
+    }
+    return apply_directional_boundary_anchors(source, target, [
+      start,
+      { x: start_x, y: lane_y },
+      { x: end_x, y: lane_y },
+      end,
+    ])
+  }
+
+  let moving_down = target.y >= source.y
+  let source_delta = if moving_down {
+    source.height / 2
+  } else {
+    -source.height / 2
+  }
+  let target_delta = if moving_down {
+    -target.height / 2
+  } else {
+    target.height / 2
+  }
+  let start_y = source.y + source_delta
+  let end_y = target.y + target_delta
+  let lane_x = source.x + minor_offset
+  let start : Point = { x: source.x, y: start_y }
+  let end : Point = { x: target.x, y: end_y }
+  return apply_directional_boundary_anchors(source, target, [
+    start,
+    { x: lane_x, y: start_y },
+    { x: lane_x, y: end_y },
+    end,
+  ])
+}
+
+///|
 fn edge_points_for(
   source : PositionedNode,
   target : PositionedNode,
@@ -2429,21 +2494,9 @@ fn edge_points_for(
     match forward_fanout_offset_y {
       Some(offset_y) =>
         if moving_right && offset_y != 0 {
-          let lane_y = source.y + offset_y
-          if smooth_forward_fanout {
-            let mid_x = (start_x + end_x) / 2
-            return apply_directional_boundary_anchors(source, target, [
-              start,
-              { x: mid_x, y: lane_y },
-              end,
-            ])
-          }
-          return apply_directional_boundary_anchors(source, target, [
-            start,
-            { x: start_x, y: lane_y },
-            { x: end_x, y: lane_y },
-            end,
-          ])
+          return edge_points_with_minor_lane_offset(
+            source, target, true, offset_y, smooth_forward_fanout,
+          )
         }
       None => ()
     }
@@ -2487,13 +2540,9 @@ fn edge_points_for(
     match forward_fanout_offset_y {
       Some(offset_x) =>
         if moving_down && offset_x != 0 {
-          let lane_x = source.x + offset_x
-          return apply_directional_boundary_anchors(source, target, [
-            start,
-            { x: lane_x, y: start_y },
-            { x: lane_x, y: end_y },
-            end,
-          ])
+          return edge_points_with_minor_lane_offset(
+            source, target, false, offset_x, smooth_forward_fanout,
+          )
         }
       None => ()
     }
@@ -2541,6 +2590,14 @@ priv struct RoutedEdgeSegment {
   target_id : String
   start : Point
   end : Point
+}
+
+///|
+priv struct RoutedLabelBox {
+  left : Int
+  right : Int
+  top : Int
+  bottom : Int
 }
 
 ///|
@@ -3831,8 +3888,459 @@ fn reserve_back_edge_bend_x(
 }
 
 ///|
+priv struct LabelRouteScore {
+  label_node_overlaps : Int
+  label_edge_overlaps : Int
+  label_label_overlaps : Int
+  route_crossings : Int
+  route_length : Int
+  offset_abs : Int
+}
+
+///|
+fn edge_label_dimensions(label : String) -> (Int, Int) {
+  let lines = label.split("\n").map(part => part.to_string()).to_array()
+  let mut longest_line = 0
+  for line in lines {
+    longest_line = longest_line.max(line.length())
+  }
+  let width = (longest_line * 7 + 12).max(18)
+  let height = (lines.length() * 14 + 12).max(18)
+  (width, height)
+}
+
+///|
+fn polyline_label_anchor(points : Array[Point]) -> Point {
+  if points.length() == 0 {
+    return { x: 0, y: 0 }
+  }
+  if points.length() == 1 {
+    return points[0]
+  }
+
+  let mut total_length = 0
+  for i in 1..<points.length() {
+    let start = points[i - 1]
+    let end = points[i]
+    total_length = total_length +
+      int_abs(end.x - start.x) +
+      int_abs(end.y - start.y)
+  }
+  if total_length <= 0 {
+    return points[0]
+  }
+
+  let half_length = total_length / 2
+  let mut walked = 0
+  for i in 1..<points.length() {
+    let start = points[i - 1]
+    let end = points[i]
+    let segment_length = int_abs(end.x - start.x) + int_abs(end.y - start.y)
+    if segment_length <= 0 {
+      continue
+    }
+    let next_walked = walked + segment_length
+    if next_walked >= half_length {
+      let remaining = half_length - walked
+      return {
+        x: start.x + (end.x - start.x) * remaining / segment_length,
+        y: start.y + (end.y - start.y) * remaining / segment_length,
+      }
+    }
+    walked = next_walked
+  }
+  points[points.length() - 1]
+}
+
+///|
 fn midpoint(a : Point, b : Point) -> Point {
   { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }
+}
+
+///|
+fn edge_label_box_for_context_points(
+  context : EdgeLayoutContext,
+  points : Array[Point],
+) -> RoutedLabelBox? {
+  match context.edge.label {
+    Some(text) => {
+      let (label_width, label_height) = edge_label_dimensions(text)
+      let anchor = polyline_label_anchor(points)
+      Some({
+        left: anchor.x - label_width / 2,
+        right: anchor.x + (label_width + 1) / 2,
+        top: anchor.y - label_height / 2,
+        bottom: anchor.y + (label_height + 1) / 2,
+      })
+    }
+    None => None
+  }
+}
+
+///|
+fn point_inside_rect(
+  point : Point,
+  left : Int,
+  right : Int,
+  top : Int,
+  bottom : Int,
+) -> Bool {
+  point.x >= left && point.x <= right && point.y >= top && point.y <= bottom
+}
+
+///|
+fn rects_overlap(
+  left : Int,
+  right : Int,
+  top : Int,
+  bottom : Int,
+  other_left : Int,
+  other_right : Int,
+  other_top : Int,
+  other_bottom : Int,
+) -> Bool {
+  spans_overlap(left, right, other_left, other_right) &&
+  spans_overlap(top, bottom, other_top, other_bottom)
+}
+
+///|
+fn segment_intersects_rect(
+  start : Point,
+  end : Point,
+  left : Int,
+  right : Int,
+  top : Int,
+  bottom : Int,
+) -> Bool {
+  if !rects_overlap(
+      start.x.min(end.x),
+      start.x.max(end.x),
+      start.y.min(end.y),
+      start.y.max(end.y),
+      left,
+      right,
+      top,
+      bottom,
+    ) {
+    return false
+  }
+  if point_inside_rect(start, left, right, top, bottom) ||
+    point_inside_rect(end, left, right, top, bottom) {
+    return true
+  }
+  let top_left : Point = { x: left, y: top }
+  let top_right : Point = { x: right, y: top }
+  let bottom_left : Point = { x: left, y: bottom }
+  let bottom_right : Point = { x: right, y: bottom }
+  back_edge_segments_intersect(start, end, top_left, top_right) ||
+  back_edge_segments_intersect(start, end, top_right, bottom_right) ||
+  back_edge_segments_intersect(start, end, bottom_right, bottom_left) ||
+  back_edge_segments_intersect(start, end, bottom_left, top_left)
+}
+
+///|
+fn label_box_overlaps_node(
+  label_box : RoutedLabelBox,
+  node : PositionedNode,
+  margin : Int,
+) -> Bool {
+  let node_left = node.x - node.width / 2 - margin
+  let node_right = node.x + node.width / 2 + margin
+  let node_top = node.y - node.height / 2 - margin
+  let node_bottom = node.y + node.height / 2 + margin
+  rects_overlap(
+    label_box.left,
+    label_box.right,
+    label_box.top,
+    label_box.bottom,
+    node_left,
+    node_right,
+    node_top,
+    node_bottom,
+  )
+}
+
+///|
+fn label_box_overlaps_segment(
+  label_box : RoutedLabelBox,
+  segment : RoutedEdgeSegment,
+  margin : Int,
+) -> Bool {
+  segment_intersects_rect(
+    segment.start,
+    segment.end,
+    label_box.left - margin,
+    label_box.right + margin,
+    label_box.top - margin,
+    label_box.bottom + margin,
+  )
+}
+
+///|
+fn label_boxes_overlap(
+  left : RoutedLabelBox,
+  right : RoutedLabelBox,
+  margin : Int,
+) -> Bool {
+  rects_overlap(
+    left.left - margin,
+    left.right + margin,
+    left.top - margin,
+    left.bottom + margin,
+    right.left,
+    right.right,
+    right.top,
+    right.bottom,
+  )
+}
+
+///|
+fn route_length(points : Array[Point]) -> Int {
+  let mut length = 0
+  for i in 1..<points.length() {
+    let start = points[i - 1]
+    let end = points[i]
+    length = length + int_abs(end.x - start.x) + int_abs(end.y - start.y)
+  }
+  length
+}
+
+///|
+fn route_crossings_against_routed_segments(
+  points : Array[Point],
+  source_id : String,
+  target_id : String,
+  routed_edge_segments : Array[RoutedEdgeSegment],
+) -> Int {
+  let mut crossings = 0
+  for i in 1..<points.length() {
+    let candidate_start = points[i - 1]
+    let candidate_end = points[i]
+    for segment in routed_edge_segments {
+      if segment.source_id == source_id ||
+        segment.target_id == source_id ||
+        segment.source_id == target_id ||
+        segment.target_id == target_id {
+        continue
+      }
+      if back_edge_segments_properly_intersect(
+          candidate_start,
+          candidate_end,
+          segment.start,
+          segment.end,
+        ) {
+        crossings += 1
+      }
+    }
+  }
+  crossings
+}
+
+///|
+fn evaluate_labeled_route_score(
+  context : EdgeLayoutContext,
+  points : Array[Point],
+  offset_abs : Int,
+  positioned_nodes : Array[PositionedNode],
+  routed_edge_segments : Array[RoutedEdgeSegment],
+  routed_label_boxes : Array[RoutedLabelBox],
+) -> LabelRouteScore {
+  let route_crossings = route_crossings_against_routed_segments(
+    points,
+    context.resolved_source_id,
+    context.resolved_target_id,
+    routed_edge_segments,
+  )
+  match edge_label_box_for_context_points(context, points) {
+    Some(label_box) => {
+      let mut label_node_overlaps = 0
+      for node in positioned_nodes {
+        if label_box_overlaps_node(label_box, node, 2) {
+          label_node_overlaps += 1
+        }
+      }
+
+      let mut label_edge_overlaps = 0
+      for segment in routed_edge_segments {
+        if segment.source_id == context.resolved_source_id ||
+          segment.target_id == context.resolved_source_id ||
+          segment.source_id == context.resolved_target_id ||
+          segment.target_id == context.resolved_target_id {
+          continue
+        }
+        if label_box_overlaps_segment(label_box, segment, 2) {
+          label_edge_overlaps += 1
+        }
+      }
+
+      let mut label_label_overlaps = 0
+      for existing_label_box in routed_label_boxes {
+        if label_boxes_overlap(label_box, existing_label_box, 4) {
+          label_label_overlaps += 1
+        }
+      }
+
+      {
+        label_node_overlaps,
+        label_edge_overlaps,
+        label_label_overlaps,
+        route_crossings,
+        route_length: route_length(points),
+        offset_abs,
+      }
+    }
+    None =>
+      {
+        label_node_overlaps: 0,
+        label_edge_overlaps: 0,
+        label_label_overlaps: 0,
+        route_crossings,
+        route_length: route_length(points),
+        offset_abs,
+      }
+  }
+}
+
+///|
+fn label_route_score_is_better(
+  candidate : LabelRouteScore,
+  best : LabelRouteScore,
+) -> Bool {
+  if candidate.label_node_overlaps != best.label_node_overlaps {
+    return candidate.label_node_overlaps < best.label_node_overlaps
+  }
+  if candidate.label_edge_overlaps != best.label_edge_overlaps {
+    return candidate.label_edge_overlaps < best.label_edge_overlaps
+  }
+  if candidate.label_label_overlaps != best.label_label_overlaps {
+    return candidate.label_label_overlaps < best.label_label_overlaps
+  }
+  if candidate.route_crossings != best.route_crossings {
+    return candidate.route_crossings < best.route_crossings
+  }
+  if candidate.route_length != best.route_length {
+    return candidate.route_length < best.route_length
+  }
+  candidate.offset_abs < best.offset_abs
+}
+
+///|
+fn points_signature(points : Array[Point]) -> String {
+  points.iter().map(point => "\{point.x},\{point.y}").join("|")
+}
+
+///|
+fn optimize_labeled_route_points(
+  context : EdgeLayoutContext,
+  base_points : Array[Point],
+  route_as_back_edge : Bool,
+  use_forward_fanout_lane : Bool,
+  smooth_forward_fanout : Bool,
+  layer_spacing : Int,
+  node_spacing : Int,
+  positioned_nodes : Array[PositionedNode],
+  routed_edge_segments : Array[RoutedEdgeSegment],
+  routed_label_boxes : Array[RoutedLabelBox],
+) -> Array[Point] {
+  if context.edge.label is None {
+    return base_points
+  }
+  if route_as_back_edge || use_forward_fanout_lane {
+    return base_points
+  }
+
+  let mut best_points : Array[Point] = []
+  for point in base_points {
+    best_points.push(point)
+  }
+  let mut best_score = evaluate_labeled_route_score(
+    context, best_points, 0, positioned_nodes, routed_edge_segments, routed_label_boxes,
+  )
+  if best_score.label_node_overlaps == 0 &&
+    best_score.label_edge_overlaps == 0 &&
+    best_score.label_label_overlaps == 0 {
+    return best_points
+  }
+
+  let (label_width, label_height) = match context.edge.label {
+    Some(text) => edge_label_dimensions(text)
+    None => (0, 0)
+  }
+  let source_minor_half = if context.edge_horizontal {
+    context.source.height / 2
+  } else {
+    context.source.width / 2
+  }
+  let target_minor_half = if context.edge_horizontal {
+    context.target.height / 2
+  } else {
+    context.target.width / 2
+  }
+  let label_minor_half = if context.edge_horizontal {
+    label_height / 2
+  } else {
+    label_width / 2
+  }
+  let base_clearance = source_minor_half.max(target_minor_half) +
+    label_minor_half +
+    8
+  let step = if context.edge_horizontal {
+    (layer_spacing / 4).max(16)
+  } else {
+    (node_spacing / 4).max(16)
+  }
+
+  let candidate_offsets = [
+    -base_clearance,
+    base_clearance,
+    -(base_clearance + step),
+    base_clearance + step,
+    -(base_clearance + step * 2),
+    base_clearance + step * 2,
+  ]
+  let seen_signatures : Map[String, Bool] = {}
+  seen_signatures[points_signature(best_points)] = true
+
+  for candidate_offset in candidate_offsets {
+    let candidate_points = edge_points_with_minor_lane_offset(
+      context.source,
+      context.target,
+      context.edge_horizontal,
+      candidate_offset,
+      smooth_forward_fanout,
+    )
+    let signature = points_signature(candidate_points)
+    if seen_signatures.contains(signature) {
+      continue
+    }
+    seen_signatures[signature] = true
+    let candidate_score = evaluate_labeled_route_score(
+      context,
+      candidate_points,
+      int_abs(candidate_offset),
+      positioned_nodes,
+      routed_edge_segments,
+      routed_label_boxes,
+    )
+    if label_route_score_is_better(candidate_score, best_score) {
+      best_score = candidate_score
+      best_points = candidate_points
+    }
+  }
+
+  best_points
+}
+
+///|
+fn append_routed_label_box_for_context(
+  routed_label_boxes : Array[RoutedLabelBox],
+  context : EdgeLayoutContext,
+  points : Array[Point],
+) -> Unit {
+  match edge_label_box_for_context_points(context, points) {
+    Some(label_box) => routed_label_boxes.push(label_box)
+    None => ()
+  }
 }
 
 ///|
@@ -5774,6 +6282,7 @@ fn layout_graph_with_subgraph_redirects(
 
   let points_by_context_index : Map[Int, Array[Point]] = {}
   let routed_polylines : Array[Array[Point]] = []
+  let routed_label_boxes : Array[RoutedLabelBox] = []
 
   fn copy_context_index_order(order : Array[Int]) -> Array[Int] {
     let copied : Array[Int] = []
@@ -6048,7 +6557,7 @@ fn layout_graph_with_subgraph_redirects(
         forward_fanout_vertical_span_threshold, forward_fanout_vertical_minor_gap_threshold,
       ) &&
       !forward_fanout_disabled_by_bucket.contains(forward_fanout_bucket_key)
-    let points = edge_points_for(
+    let base_points = edge_points_for(
       source,
       target,
       edge_horizontal,
@@ -6083,6 +6592,10 @@ fn layout_graph_with_subgraph_redirects(
       },
       enhanced_horizontal_state_flow,
     )
+    let points = optimize_labeled_route_points(
+      context, base_points, route_as_back_edge, use_forward_fanout_lane, enhanced_horizontal_state_flow,
+      layer_spacing, node_spacing, positioned_nodes, routed_edge_segments, routed_label_boxes,
+    )
     points_by_context_index[context_index] = points
     append_routed_segments_for_points(
       routed_edge_segments,
@@ -6091,6 +6604,7 @@ fn layout_graph_with_subgraph_redirects(
       points,
     )
     routed_polylines.push(points)
+    append_routed_label_box_for_context(routed_label_boxes, context, points)
   }
 
   for context_index in non_deferred_non_fanout_context_indices {
@@ -6293,6 +6807,7 @@ fn layout_graph_with_subgraph_redirects(
         context.resolved_target_id,
         points,
       )
+      append_routed_label_box_for_context(routed_label_boxes, context, points)
     }
   }
   for context_index, context in edge_layout_contexts {
@@ -6301,7 +6816,7 @@ fn layout_graph_with_subgraph_redirects(
         let edge = context.edge
         let label_position = match edge.label {
           Some(_) => {
-            let base = midpoint(points[0], points[1])
+            let base = polyline_label_anchor(points)
             let key = label_anchor_key(base)
             let slot = option_int_or(label_slots_by_anchor.get(key), 0)
             label_slots_by_anchor[key] = slot + 1
