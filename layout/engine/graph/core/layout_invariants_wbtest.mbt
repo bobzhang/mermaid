@@ -605,6 +605,75 @@ test "Layout cycle detection flags simple feedback loops" {
 }
 
 ///|
+test "Layout greedy feedback edge selector marks incoming edges of max score pivot" {
+  let nodes : Array[MermaidNode] = [
+    { id: "A", label: "A", shape: Rectangle },
+    { id: "B", label: "B", shape: Rectangle },
+    { id: "C", label: "C", shape: Rectangle },
+    { id: "D", label: "D", shape: Rectangle },
+  ]
+  let edges : Array[MermaidEdge] = [
+    {
+      source: "A",
+      target: "B",
+      label: None,
+      style: Solid,
+      has_arrow_start: false,
+      has_arrow_end: true,
+      relation_operator: Some("-->"),
+    },
+    {
+      source: "B",
+      target: "C",
+      label: None,
+      style: Solid,
+      has_arrow_start: false,
+      has_arrow_end: true,
+      relation_operator: Some("-->"),
+    },
+    {
+      source: "C",
+      target: "A",
+      label: None,
+      style: Solid,
+      has_arrow_start: false,
+      has_arrow_end: true,
+      relation_operator: Some("-->"),
+    },
+    {
+      source: "C",
+      target: "D",
+      label: None,
+      style: Solid,
+      has_arrow_start: false,
+      has_arrow_end: true,
+      relation_operator: Some("-->"),
+    },
+    {
+      source: "D",
+      target: "B",
+      label: None,
+      style: Solid,
+      has_arrow_start: false,
+      has_arrow_end: true,
+      relation_operator: Some("-->"),
+    },
+  ]
+  let considered_edge_indices = [0, 1, 2, 3, 4]
+
+  let back_edges = collect_greedy_feedback_edge_indices(
+    nodes, edges, considered_edge_indices,
+  )
+  let mut back_edge_count = 0
+  for _, _ in back_edges {
+    back_edge_count += 1
+  }
+
+  assert_eq(back_edge_count, 1)
+  assert_true(back_edges.contains(1))
+}
+
+///|
 test "Layout back-edge lane selection avoids existing segment crossings" {
   let source : PositionedNode = {
     id: "S",
@@ -1052,10 +1121,10 @@ test "Layout cycle-aware rank collection rehydrates cyclic forward order" {
   ]
 
   let (legacy_ranks, _) = collect_non_state_flow_ranks(
-    nodes, edges, false, false, false, false, false,
+    nodes, edges, false, false, false, false, false, false,
   )
   let (cycle_ranks, _) = collect_non_state_flow_ranks(
-    nodes, edges, false, true, false, false, false,
+    nodes, edges, false, true, false, false, false, false,
   )
 
   let legacy_b = option_int_or(legacy_ranks.get("B"), -1)

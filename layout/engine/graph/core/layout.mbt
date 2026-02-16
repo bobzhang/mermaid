@@ -113,6 +113,7 @@ fn collect_non_state_flow_ranks(
   promote_backward_dotted_edges : Bool,
   prefer_definition_back_edges : Bool,
   compact_cycle_ranks_toward_sinks : Bool,
+  use_greedy_feedback_arc_set : Bool,
 ) -> (Map[String, Int], Int) {
   if !cycle_aware {
     let node_order_by_id : Map[String, Int] = {}
@@ -296,67 +297,76 @@ fn collect_non_state_flow_ranks(
     }
   }
 
-  let visit_state_by_id : Map[String, Int] = {}
   let back_edge_by_index : Map[Int, Bool] = {}
-
-  fn mark_back_edges_from(
-    node_id : String,
-    edges : Array[MermaidEdge],
-    outgoing_edge_indices_by_source : Map[String, Array[Int]],
-    visit_state_by_id : Map[String, Int],
-    back_edge_by_index : Map[Int, Bool],
-  ) -> Unit {
-    let state = option_int_or(visit_state_by_id.get(node_id), 0)
-    if state != 0 {
-      return
+  if use_greedy_feedback_arc_set {
+    let greedy_back_edge_by_index = collect_greedy_feedback_edge_indices(
+      nodes_in_order, edges, considered_edge_indices,
+    )
+    for edge_index, _ in greedy_back_edge_by_index {
+      back_edge_by_index[edge_index] = true
     }
+  } else {
+    let visit_state_by_id : Map[String, Int] = {}
 
-    visit_state_by_id[node_id] = 1
-    match outgoing_edge_indices_by_source.get(node_id) {
-      Some(outgoing_indices) =>
-        for edge_index in outgoing_indices {
-          let edge = edges[edge_index]
-          let target_state = option_int_or(
-            visit_state_by_id.get(edge.target),
-            0,
-          )
-          if target_state == 0 {
-            mark_back_edges_from(
-              edge.target,
-              edges,
-              outgoing_edge_indices_by_source,
-              visit_state_by_id,
-              back_edge_by_index,
+    fn mark_back_edges_from(
+      node_id : String,
+      edges : Array[MermaidEdge],
+      outgoing_edge_indices_by_source : Map[String, Array[Int]],
+      visit_state_by_id : Map[String, Int],
+      back_edge_by_index : Map[Int, Bool],
+    ) -> Unit {
+      let state = option_int_or(visit_state_by_id.get(node_id), 0)
+      if state != 0 {
+        return
+      }
+
+      visit_state_by_id[node_id] = 1
+      match outgoing_edge_indices_by_source.get(node_id) {
+        Some(outgoing_indices) =>
+          for edge_index in outgoing_indices {
+            let edge = edges[edge_index]
+            let target_state = option_int_or(
+              visit_state_by_id.get(edge.target),
+              0,
             )
-          } else if target_state == 1 {
-            back_edge_by_index[edge_index] = true
+            if target_state == 0 {
+              mark_back_edges_from(
+                edge.target,
+                edges,
+                outgoing_edge_indices_by_source,
+                visit_state_by_id,
+                back_edge_by_index,
+              )
+            } else if target_state == 1 {
+              back_edge_by_index[edge_index] = true
+            }
           }
-        }
-      None => ()
+        None => ()
+      }
+      visit_state_by_id[node_id] = 2
     }
-    visit_state_by_id[node_id] = 2
-  }
 
-  for node in nodes_in_order {
-    if option_int_or(indegree_by_id.get(node.id), 0) == 0 {
-      mark_back_edges_from(
-        node.id,
-        edges,
-        outgoing_edge_indices_by_source,
-        visit_state_by_id,
-        back_edge_by_index,
-      )
+    for node in nodes_in_order {
+      if option_int_or(indegree_by_id.get(node.id), 0) == 0 {
+        mark_back_edges_from(
+          node.id,
+          edges,
+          outgoing_edge_indices_by_source,
+          visit_state_by_id,
+          back_edge_by_index,
+        )
+      }
     }
-  }
-  for node in nodes_in_order {
-    if option_int_or(visit_state_by_id.get(node.id), 0) == 0 {
-      mark_back_edges_from(
-        node.id,
-        edges,
-        outgoing_edge_indices_by_source,
-        visit_state_by_id,
-        back_edge_by_index,
-      )
+    for node in nodes_in_order {
+      if option_int_or(visit_state_by_id.get(node.id), 0) == 0 {
+        mark_back_edges_from(
+          node.id,
+          edges,
+          outgoing_edge_indices_by_source,
+          visit_state_by_id,
+          back_edge_by_index,
+        )
+      }
     }
   }
 
@@ -530,6 +540,189 @@ fn collect_non_state_flow_ranks(
     max_rank = max_rank.max(rank)
   }
   (rank_by_id, max_rank)
+}
+
+///|
+fn collect_greedy_feedback_edge_indices(
+  nodes_in_order : Array[MermaidNode],
+  edges : Array[MermaidEdge],
+  considered_edge_indices : Array[Int],
+) -> Map[Int, Bool] {
+  let active_node_by_id : Map[String, Int] = {}
+  let active_edge_by_index : Map[Int, Int] = {}
+  let incoming_edge_indices_by_target : Map[String, Array[Int]] = {}
+  let outgoing_edge_indices_by_source : Map[String, Array[Int]] = {}
+  let incoming_weight_by_id : Map[String, Int] = {}
+  let outgoing_weight_by_id : Map[String, Int] = {}
+  let back_edge_by_index : Map[Int, Bool] = {}
+  let mut remaining_node_count = 0
+
+  for node in nodes_in_order {
+    active_node_by_id[node.id] = 1
+    incoming_edge_indices_by_target[node.id] = []
+    outgoing_edge_indices_by_source[node.id] = []
+    incoming_weight_by_id[node.id] = 0
+    outgoing_weight_by_id[node.id] = 0
+    remaining_node_count += 1
+  }
+
+  if remaining_node_count <= 1 {
+    return back_edge_by_index
+  }
+
+  for edge_index in considered_edge_indices {
+    let edge = edges[edge_index]
+    if !active_node_by_id.contains(edge.source) ||
+      !active_node_by_id.contains(edge.target) {
+      continue
+    }
+    active_edge_by_index[edge_index] = 1
+    match incoming_edge_indices_by_target.get(edge.target) {
+      Some(indices) => indices.push(edge_index)
+      None => ()
+    }
+    match outgoing_edge_indices_by_source.get(edge.source) {
+      Some(indices) => indices.push(edge_index)
+      None => ()
+    }
+    incoming_weight_by_id[edge.target] = option_int_or(
+        incoming_weight_by_id.get(edge.target),
+        0,
+      ) +
+      1
+    outgoing_weight_by_id[edge.source] = option_int_or(
+        outgoing_weight_by_id.get(edge.source),
+        0,
+      ) +
+      1
+  }
+
+  fn deactivate_node(node_id : String, collect_incoming_edges : Bool) -> Bool {
+    if option_int_or(active_node_by_id.get(node_id), 0) == 0 {
+      return false
+    }
+    active_node_by_id[node_id] = 0
+
+    match incoming_edge_indices_by_target.get(node_id) {
+      Some(incoming_edge_indices) =>
+        for edge_index in incoming_edge_indices {
+          if option_int_or(active_edge_by_index.get(edge_index), 0) == 0 {
+            continue
+          }
+          active_edge_by_index[edge_index] = 0
+          let edge = edges[edge_index]
+          incoming_weight_by_id[node_id] = option_int_or(
+              incoming_weight_by_id.get(node_id),
+              0,
+            ) -
+            1
+          outgoing_weight_by_id[edge.source] = option_int_or(
+              outgoing_weight_by_id.get(edge.source),
+              0,
+            ) -
+            1
+          if collect_incoming_edges {
+            back_edge_by_index[edge_index] = true
+          }
+        }
+      None => ()
+    }
+    match outgoing_edge_indices_by_source.get(node_id) {
+      Some(outgoing_edge_indices) =>
+        for edge_index in outgoing_edge_indices {
+          if option_int_or(active_edge_by_index.get(edge_index), 0) == 0 {
+            continue
+          }
+          active_edge_by_index[edge_index] = 0
+          let edge = edges[edge_index]
+          outgoing_weight_by_id[node_id] = option_int_or(
+              outgoing_weight_by_id.get(node_id),
+              0,
+            ) -
+            1
+          incoming_weight_by_id[edge.target] = option_int_or(
+              incoming_weight_by_id.get(edge.target),
+              0,
+            ) -
+            1
+        }
+      None => ()
+    }
+    true
+  }
+
+  while remaining_node_count > 0 {
+    let mut removed_any = true
+    while removed_any {
+      removed_any = false
+      for node in nodes_in_order {
+        if option_int_or(active_node_by_id.get(node.id), 0) == 0 {
+          continue
+        }
+        if option_int_or(outgoing_weight_by_id.get(node.id), 0) == 0 &&
+          deactivate_node(node.id, false) {
+          remaining_node_count = remaining_node_count - 1
+          removed_any = true
+        }
+      }
+      for node in nodes_in_order {
+        if option_int_or(active_node_by_id.get(node.id), 0) == 0 {
+          continue
+        }
+        if option_int_or(incoming_weight_by_id.get(node.id), 0) == 0 &&
+          deactivate_node(node.id, false) {
+          remaining_node_count = remaining_node_count - 1
+          removed_any = true
+        }
+      }
+    }
+
+    if remaining_node_count == 0 {
+      break
+    }
+
+    let mut has_candidate = false
+    let mut candidate_id = ""
+    let mut candidate_score = 0
+    let mut candidate_outgoing_weight = 0
+    let mut candidate_order = 0
+    for order, node in nodes_in_order {
+      if option_int_or(active_node_by_id.get(node.id), 0) == 0 {
+        continue
+      }
+      let incoming_weight = option_int_or(incoming_weight_by_id.get(node.id), 0)
+      let outgoing_weight = option_int_or(outgoing_weight_by_id.get(node.id), 0)
+      let score = outgoing_weight - incoming_weight
+      if !has_candidate ||
+        score > candidate_score ||
+        (
+          score == candidate_score &&
+          outgoing_weight > candidate_outgoing_weight
+        ) ||
+        (
+          score == candidate_score &&
+          outgoing_weight == candidate_outgoing_weight &&
+          order < candidate_order
+        ) {
+        has_candidate = true
+        candidate_id = node.id
+        candidate_score = score
+        candidate_outgoing_weight = outgoing_weight
+        candidate_order = order
+      }
+    }
+
+    if !has_candidate {
+      break
+    }
+    if deactivate_node(candidate_id, true) {
+      remaining_node_count = remaining_node_count - 1
+    } else {
+      break
+    }
+  }
+
+  back_edge_by_index
 }
 
 ///|
@@ -6345,6 +6538,12 @@ fn layout_graph_legacy_with_subgraph_redirects(
           graph.edges.length() >= 60
         )
       )
+    let use_greedy_feedback_arc_set = layout_engine is DagreParity &&
+      !state_graph &&
+      !class_or_er_graph &&
+      !horizontal &&
+      cycle_aware_layout &&
+      graph.edges.length() >= 60
     let precomputed_lane_by_id : Map[String, Int] = {}
     let mut has_precomputed_lane_by_id = false
     let (baseline_rank_by_id, baseline_max_rank) = collect_non_state_flow_ranks(
@@ -6355,6 +6554,7 @@ fn layout_graph_legacy_with_subgraph_redirects(
       promote_backward_dotted_edges,
       prefer_definition_back_edges,
       false,
+      use_greedy_feedback_arc_set,
     )
     let mut selected_rank_by_id = baseline_rank_by_id
     let mut selected_max_rank = baseline_max_rank
@@ -6367,6 +6567,7 @@ fn layout_graph_legacy_with_subgraph_redirects(
         promote_backward_dotted_edges,
         prefer_definition_back_edges,
         true,
+        use_greedy_feedback_arc_set,
       )
       let baseline_lane_by_id = collect_non_state_flow_lanes(
         nodes_in_order,
