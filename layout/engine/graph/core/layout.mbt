@@ -6527,7 +6527,7 @@ fn layout_graph_legacy_with_subgraph_redirects(
       cycle_aware_layout &&
       !horizontal &&
       graph.edges.length() < 50
-    let enable_feedback_back_edge_ordering = !state_graph &&
+    let base_enable_feedback_back_edge_ordering = !state_graph &&
       !class_or_er_graph &&
       (
         horizontal ||
@@ -6544,6 +6544,8 @@ fn layout_graph_legacy_with_subgraph_redirects(
       !horizontal &&
       cycle_aware_layout &&
       graph.edges.length() >= 60
+    let enable_feedback_back_edge_ordering = base_enable_feedback_back_edge_ordering &&
+      !use_greedy_feedback_arc_set
     let precomputed_lane_by_id : Map[String, Int] = {}
     let mut has_precomputed_lane_by_id = false
     let (baseline_rank_by_id, baseline_max_rank) = collect_non_state_flow_ranks(
