@@ -16,12 +16,8 @@ pub(all) struct LegacyLayoutRequest {
   options : @model.RenderOptions
   use_subgraph_redirects : Bool
   compact_fanin : Bool
-  routing_profile : LegacyRoutingProfile
-}
-
-pub(all) enum LegacyRoutingProfile {
-  LegacyCompatible
-  DagreParityCompatible
+  enable_target_boundary_ports : Bool
+  preserve_assigned_endpoint_ports : Bool
 }
 
 // Type aliases

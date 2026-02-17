@@ -13,7 +13,7 @@ pub(all) struct ElkLayoutRequest {
 /// Current implementation preserves behavior by delegating to the
 /// Dagre-parity-compatible legacy profile.
 pub fn layout_graph_elk(request : ElkLayoutRequest) -> PositionedGraph {
-  @layout_engine_graph_legacy_core.layout_graph_legacy({
+  @layout_engine_graph_engine_legacy_core.layout_graph_engine_legacy({
     graph: request.graph,
     options: request.options,
     use_subgraph_redirects: request.use_subgraph_redirects,

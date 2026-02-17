@@ -1,5 +1,5 @@
 import {
-  "bobzhang/beautiful_mermaid/layout/engine/graph/legacy/core" @layout_engine_graph_legacy_core,
+  "bobzhang/beautiful_mermaid/layout/engine/graph/engine/legacy/core" @layout_engine_graph_engine_legacy_core,
   "bobzhang/beautiful_mermaid/model" @model,
 }
 

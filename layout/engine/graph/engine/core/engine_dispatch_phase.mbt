@@ -11,7 +11,7 @@ pub(all) struct GraphEngineDispatchRequest {
 ///|
 fn legacy_routing_profile(
   engine : LayoutEngine,
-) -> @layout_engine_graph_legacy_core.LegacyRoutingProfile {
+) -> @layout_engine_graph_engine_legacy_core.LegacyRoutingProfile {
   match engine {
     Legacy => LegacyCompatible
     DagreParity => DagreParityCompatible
@@ -24,7 +24,7 @@ fn dispatch_legacy_backend(
   request : GraphEngineDispatchRequest,
   engine : LayoutEngine,
 ) -> PositionedGraph {
-  @layout_engine_graph_legacy_core.layout_graph_legacy({
+  @layout_engine_graph_engine_legacy_core.layout_graph_engine_legacy({
     graph: request.graph,
     options: request.options,
     use_subgraph_redirects: request.use_subgraph_redirects,
