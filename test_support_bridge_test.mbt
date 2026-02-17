@@ -121,6 +121,71 @@ fn ts_parse_padding_value(trimmed : String, prefix : String) -> Int? {
 }
 
 ///|
+#cfg(target="native")
+priv struct TsGoldenTextCase {
+  mermaid : String
+  expected : String
+  padding_x : Int
+  padding_y : Int
+}
+
+///|
+#cfg(target="native")
+fn ts_parse_golden_text_case(content : String) -> TsGoldenTextCase {
+  let mut padding_x = 5
+  let mut padding_y = 5
+  let mut in_mermaid = true
+  let mut mermaid_started = false
+  let mermaid_lines : Array[String] = []
+  let expected_lines : Array[String] = []
+
+  for line in content.split("\n") {
+    if line == "---" {
+      in_mermaid = false
+      continue
+    }
+
+    if in_mermaid {
+      let trimmed = line.trim().to_string()
+      if !mermaid_started {
+        if trimmed == "" {
+          continue
+        }
+        match ts_parse_padding_value(trimmed, "paddingx") {
+          Some(value) => {
+            padding_x = value
+            continue
+          }
+          None => ()
+        }
+        match ts_parse_padding_value(trimmed, "paddingy") {
+          Some(value) => {
+            padding_y = value
+            continue
+          }
+          None => ()
+        }
+      }
+      mermaid_started = true
+      mermaid_lines.push(line.to_string())
+    } else {
+      expected_lines.push(line.to_string())
+    }
+  }
+
+  let mermaid_body = mermaid_lines.iter().join("\n")
+  let mermaid = "\{mermaid_body}\n"
+  let expected = if expected_lines.length() > 0 &&
+    expected_lines[expected_lines.length() - 1] == "" {
+    expected_lines[:expected_lines.length() - 1].iter().join("\n")
+  } else {
+    expected_lines.iter().join("\n")
+  }
+
+  { mermaid, expected, padding_x, padding_y }
+}
+
+///|
 fn ts_svg_attr_int(svg : String, attr : String) -> Int? {
   let marker = "\{attr}=\""
   match svg.find(marker) {
