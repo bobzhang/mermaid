@@ -1,0 +1,18 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "bobzhang/beautiful_mermaid/layout/engine/graph/execute/core"
+
+import {
+  "bobzhang/beautiful_mermaid/model",
+}
+
+// Values
+pub fn execute_layout_plan(@bobzhang/beautiful_mermaid/layout/engine/graph/plan/core.LayoutExecutionPlan, @model.RenderOptions) -> @model.PositionedGraph
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits
+
