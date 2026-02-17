@@ -558,8 +558,8 @@ fn run() -> Unit {
       expect_layout_engine_value = true
       continue
     }
-    if arg.has_prefix("--font=") {
-      let font = (try! arg[7:]).to_string()
+    if arg is [.. "--font=", .. raw_font] {
+      let font = raw_font.to_string()
       if font == "" {
         println("Error: --font requires a non-empty value")
         print_usage()
@@ -568,8 +568,8 @@ fn run() -> Unit {
       font_name = Some(font)
       continue
     }
-    if arg.has_prefix("--bg=") {
-      let bg = (try! arg[5:]).to_string()
+    if arg is [.. "--bg=", .. raw_bg] {
+      let bg = raw_bg.to_string()
       if bg == "" {
         println("Error: --bg requires a non-empty value")
         print_usage()
@@ -578,8 +578,8 @@ fn run() -> Unit {
       bg_color = Some(bg)
       continue
     }
-    if arg.has_prefix("--fg=") {
-      let fg = (try! arg[5:]).to_string()
+    if arg is [.. "--fg=", .. raw_fg] {
+      let fg = raw_fg.to_string()
       if fg == "" {
         println("Error: --fg requires a non-empty value")
         print_usage()
@@ -588,8 +588,8 @@ fn run() -> Unit {
       fg_color = Some(fg)
       continue
     }
-    if arg.has_prefix("--line=") {
-      let line = (try! arg[7:]).to_string()
+    if arg is [.. "--line=", .. raw_line] {
+      let line = raw_line.to_string()
       if line == "" {
         println("Error: --line requires a non-empty value")
         print_usage()
@@ -598,8 +598,8 @@ fn run() -> Unit {
       line_color = Some(line)
       continue
     }
-    if arg.has_prefix("--accent=") {
-      let accent = (try! arg[9:]).to_string()
+    if arg is [.. "--accent=", .. raw_accent] {
+      let accent = raw_accent.to_string()
       if accent == "" {
         println("Error: --accent requires a non-empty value")
         print_usage()
@@ -608,8 +608,8 @@ fn run() -> Unit {
       accent_color = Some(accent)
       continue
     }
-    if arg.has_prefix("--muted=") {
-      let muted = (try! arg[8:]).to_string()
+    if arg is [.. "--muted=", .. raw_muted] {
+      let muted = raw_muted.to_string()
       if muted == "" {
         println("Error: --muted requires a non-empty value")
         print_usage()
@@ -618,8 +618,8 @@ fn run() -> Unit {
       muted_color = Some(muted)
       continue
     }
-    if arg.has_prefix("--surface=") {
-      let surface = (try! arg[10:]).to_string()
+    if arg is [.. "--surface=", .. raw_surface] {
+      let surface = raw_surface.to_string()
       if surface == "" {
         println("Error: --surface requires a non-empty value")
         print_usage()
@@ -628,8 +628,8 @@ fn run() -> Unit {
       surface_color = Some(surface)
       continue
     }
-    if arg.has_prefix("--border=") {
-      let border = (try! arg[9:]).to_string()
+    if arg is [.. "--border=", .. raw_border] {
+      let border = raw_border.to_string()
       if border == "" {
         println("Error: --border requires a non-empty value")
         print_usage()
@@ -638,8 +638,8 @@ fn run() -> Unit {
       border_color = Some(border)
       continue
     }
-    if arg.has_prefix("--padding=") {
-      let raw_padding = (try! arg[10:]).to_string()
+    if arg is [.. "--padding=", .. raw_padding] {
+      let raw_padding = raw_padding.to_string()
       if raw_padding == "" {
         println("Error: --padding requires a non-empty value")
         print_usage()
@@ -655,8 +655,8 @@ fn run() -> Unit {
       }
       continue
     }
-    if arg.has_prefix("--node-spacing=") {
-      let raw_node_spacing = (try! arg[15:]).to_string()
+    if arg is [.. "--node-spacing=", .. raw_node_spacing] {
+      let raw_node_spacing = raw_node_spacing.to_string()
       if raw_node_spacing == "" {
         println("Error: --node-spacing requires a non-empty value")
         print_usage()
@@ -672,8 +672,8 @@ fn run() -> Unit {
       }
       continue
     }
-    if arg.has_prefix("--layer-spacing=") {
-      let raw_layer_spacing = (try! arg[16:]).to_string()
+    if arg is [.. "--layer-spacing=", .. raw_layer_spacing] {
+      let raw_layer_spacing = raw_layer_spacing.to_string()
       if raw_layer_spacing == "" {
         println("Error: --layer-spacing requires a non-empty value")
         print_usage()
@@ -689,8 +689,8 @@ fn run() -> Unit {
       }
       continue
     }
-    if arg.has_prefix("--layout-engine=") {
-      let raw_layout_engine = (try! arg[16:]).to_string()
+    if arg is [.. "--layout-engine=", .. raw_layout_engine] {
+      let raw_layout_engine = raw_layout_engine.to_string()
       if raw_layout_engine == "" {
         println("Error: --layout-engine requires a non-empty value")
         print_usage()
@@ -708,8 +708,8 @@ fn run() -> Unit {
       }
       continue
     }
-    if arg.has_prefix("--ascii-padding-x=") {
-      let raw_ascii_padding_x = (try! arg[18:]).to_string()
+    if arg is [.. "--ascii-padding-x=", .. raw_ascii_padding_x] {
+      let raw_ascii_padding_x = raw_ascii_padding_x.to_string()
       if raw_ascii_padding_x == "" {
         println("Error: --ascii-padding-x requires a non-empty value")
         print_usage()
@@ -725,8 +725,8 @@ fn run() -> Unit {
       }
       continue
     }
-    if arg.has_prefix("--ascii-padding-y=") {
-      let raw_ascii_padding_y = (try! arg[18:]).to_string()
+    if arg is [.. "--ascii-padding-y=", .. raw_ascii_padding_y] {
+      let raw_ascii_padding_y = raw_ascii_padding_y.to_string()
       if raw_ascii_padding_y == "" {
         println("Error: --ascii-padding-y requires a non-empty value")
         print_usage()
@@ -742,8 +742,9 @@ fn run() -> Unit {
       }
       continue
     }
-    if arg.has_prefix("--ascii-box-border-padding=") {
-      let raw_ascii_box_border_padding = (try! arg[27:]).to_string()
+    if arg
+      is [.. "--ascii-box-border-padding=", .. raw_ascii_box_border_padding] {
+      let raw_ascii_box_border_padding = raw_ascii_box_border_padding.to_string()
       if raw_ascii_box_border_padding == "" {
         println("Error: --ascii-box-border-padding requires a non-empty value")
         print_usage()
@@ -765,8 +766,8 @@ fn run() -> Unit {
       expect_theme_value = true
       continue
     }
-    if arg.has_prefix("--theme=") {
-      let theme = (try! arg[8:]).to_string()
+    if arg is [.. "--theme=", .. raw_theme] {
+      let theme = raw_theme.to_string()
       if theme == "" {
         println("Error: --theme requires a non-empty value")
         print_usage()
