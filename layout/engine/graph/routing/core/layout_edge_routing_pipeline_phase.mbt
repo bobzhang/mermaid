@@ -417,46 +417,24 @@ fn materialize_positioned_edges_from_points(
 }
 
 ///|
-/// Legacy routing phase input assembled by the legacy orchestrator.
-pub(all) struct LegacyRoutingInput {
-  graph : MermaidGraph
-  state_graph : Bool
-  class_or_er_graph : Bool
-  horizontal : Bool
-  layer_spacing : Int
-  node_spacing : Int
-  use_subgraph_redirects : Bool
-  subgraph_exit_by_id : Map[String, String]
-  subgraph_entry_by_id : Map[String, String]
-  positioned_nodes : Array[PositionedNode]
-  positioned_by_id : Map[String, PositionedNode]
-  node_horizontal_by_id : Map[String, Bool]
-  enable_target_boundary_ports : Bool
-  preserve_assigned_endpoint_ports : Bool
-  enhanced_horizontal_state_flow : Bool
-}
-
-///|
 /// Routes all graph edges using the legacy/dagre-parity routing pipeline.
 pub fn route_legacy_positioned_edges(
-  input : LegacyRoutingInput,
+  graph : MermaidGraph,
+  state_graph : Bool,
+  class_or_er_graph : Bool,
+  horizontal : Bool,
+  layer_spacing : Int,
+  node_spacing : Int,
+  use_subgraph_redirects : Bool,
+  subgraph_exit_by_id : Map[String, String],
+  subgraph_entry_by_id : Map[String, String],
+  positioned_nodes : Array[PositionedNode],
+  positioned_by_id : Map[String, PositionedNode],
+  node_horizontal_by_id : Map[String, Bool],
+  enable_target_boundary_ports : Bool,
+  preserve_assigned_endpoint_ports : Bool,
+  enhanced_horizontal_state_flow : Bool,
 ) -> Array[PositionedEdge] {
-  let graph = input.graph
-  let state_graph = input.state_graph
-  let class_or_er_graph = input.class_or_er_graph
-  let horizontal = input.horizontal
-  let layer_spacing = input.layer_spacing
-  let node_spacing = input.node_spacing
-  let use_subgraph_redirects = input.use_subgraph_redirects
-  let subgraph_exit_by_id = input.subgraph_exit_by_id
-  let subgraph_entry_by_id = input.subgraph_entry_by_id
-  let positioned_nodes = input.positioned_nodes
-  let positioned_by_id = input.positioned_by_id
-  let node_horizontal_by_id = input.node_horizontal_by_id
-  let enable_target_boundary_ports = input.enable_target_boundary_ports
-  let preserve_assigned_endpoint_ports = input.preserve_assigned_endpoint_ports
-  let enhanced_horizontal_state_flow = input.enhanced_horizontal_state_flow
-
   let routed_edge_segments : Array[RoutedEdgeSegment] = []
   let back_edge_lane_reservations : Array[BackEdgeLaneReservation] = []
   let back_edge_column_reservations : Array[BackEdgeColumnReservation] = []

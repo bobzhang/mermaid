@@ -57,23 +57,11 @@ pub fn finalize_legacy_layout_from_placement(
     positioned_nodes, positioned_by_id, positioned_index_by_id,
   )
 
-  let positioned_edges = @layout_engine_graph_routing_core.route_legacy_positioned_edges({
-      graph,
-      state_graph,
-      class_or_er_graph,
-      horizontal,
-      layer_spacing,
-      node_spacing,
-      use_subgraph_redirects,
-      subgraph_exit_by_id,
-      subgraph_entry_by_id,
-      positioned_nodes,
-      positioned_by_id,
-      node_horizontal_by_id,
-      enable_target_boundary_ports,
-      preserve_assigned_endpoint_ports,
-      enhanced_horizontal_state_flow,
-    },
+  let positioned_edges = @layout_engine_graph_routing_core.route_legacy_positioned_edges(
+    graph, state_graph, class_or_er_graph, horizontal, layer_spacing, node_spacing,
+    use_subgraph_redirects, subgraph_exit_by_id, subgraph_entry_by_id, positioned_nodes,
+    positioned_by_id, node_horizontal_by_id, enable_target_boundary_ports, preserve_assigned_endpoint_ports,
+    enhanced_horizontal_state_flow,
   )
 
   @layout_engine_graph_finalize_core.finalize_positioned_graph(

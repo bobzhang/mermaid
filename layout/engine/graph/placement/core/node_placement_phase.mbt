@@ -3,8 +3,6 @@
 pub(all) struct LegacyPlacementState {
   positioned_nodes : Array[PositionedNode]
   positioned_by_id : Map[String, PositionedNode]
-  max_right : Int
-  max_bottom : Int
 }
 
 ///|
@@ -168,9 +166,6 @@ pub fn compute_legacy_node_placement_state(
     }
   }
 
-  let mut max_right = padding
-  let mut max_bottom = padding
-
   let total_nodes = nodes_in_order.length()
   let state_lane_step = (node_spacing / 3).max(26)
   for i, node in nodes_in_order {
@@ -240,9 +235,7 @@ pub fn compute_legacy_node_placement_state(
     }
     positioned_nodes.push(positioned)
     positioned_by_id[node.id] = positioned
-    max_right = max_right.max(x + width / 2)
-    max_bottom = max_bottom.max(y + height / 2)
   }
 
-  { positioned_nodes, positioned_by_id, max_right, max_bottom }
+  { positioned_nodes, positioned_by_id }
 }

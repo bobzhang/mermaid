@@ -40,8 +40,6 @@ pub(all) struct LegacyPlacementInput {
 pub(all) struct LegacyPlacementState {
   positioned_nodes : Array[@model.PositionedNode]
   positioned_by_id : Map[String, @model.PositionedNode]
-  max_right : Int
-  max_bottom : Int
 }
 
 // Type aliases

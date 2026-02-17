@@ -6,28 +6,11 @@ import {
 }
 
 // Values
-pub fn route_legacy_positioned_edges(LegacyRoutingInput) -> Array[@model.PositionedEdge]
+pub fn route_legacy_positioned_edges(@model.MermaidGraph, Bool, Bool, Bool, Int, Int, Bool, Map[String, String], Map[String, String], Array[@model.PositionedNode], Map[String, @model.PositionedNode], Map[String, Bool], Bool, Bool, Bool) -> Array[@model.PositionedEdge]
 
 // Errors
 
 // Types and methods
-pub(all) struct LegacyRoutingInput {
-  graph : @model.MermaidGraph
-  state_graph : Bool
-  class_or_er_graph : Bool
-  horizontal : Bool
-  layer_spacing : Int
-  node_spacing : Int
-  use_subgraph_redirects : Bool
-  subgraph_exit_by_id : Map[String, String]
-  subgraph_entry_by_id : Map[String, String]
-  positioned_nodes : Array[@model.PositionedNode]
-  positioned_by_id : Map[String, @model.PositionedNode]
-  node_horizontal_by_id : Map[String, Bool]
-  enable_target_boundary_ports : Bool
-  preserve_assigned_endpoint_ports : Bool
-  enhanced_horizontal_state_flow : Bool
-}
 
 // Type aliases
 
