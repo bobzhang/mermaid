@@ -1,10 +1,4 @@
 ///|
-priv struct LegacyPipelineRoutingConfig {
-  enable_target_boundary_ports : Bool
-  preserve_assigned_endpoint_ports : Bool
-}
-
-///|
 fn graph_is_sequence_layout(graph : MermaidGraph) -> Bool {
   let nodes = graph.nodes.values().to_array()
   if nodes.length() == 0 {
@@ -19,26 +13,36 @@ fn graph_is_sequence_layout(graph : MermaidGraph) -> Bool {
 }
 
 ///|
-fn layout_graph_legacy_with_subgraph_redirects(
+/// Runs the legacy graph layout pipeline with explicit routing toggles.
+pub fn layout_graph_legacy_with_subgraph_redirects(
   graph : MermaidGraph,
   options : RenderOptions,
   use_subgraph_redirects : Bool,
   compact_fanin : Bool,
-  routing_config : LegacyPipelineRoutingConfig,
+  enable_target_boundary_ports : Bool,
+  preserve_assigned_endpoint_ports : Bool,
 ) -> PositionedGraph {
   if graph_is_sequence_layout(graph) {
     return @layout_engine_sequence_core.layout_sequence_graph(graph, options)
   }
 
-  let base_padding = resolve_padding(options)
-  let base_node_spacing = resolve_node_spacing(options)
-  let base_layer_spacing = resolve_layer_spacing(options)
-  let enable_target_boundary_ports = routing_config.enable_target_boundary_ports
-  let preserve_assigned_endpoint_ports = routing_config.preserve_assigned_endpoint_ports
-  let horizontal = layout_direction_is_horizontal(graph.direction)
-  let reverse = layout_direction_is_reverse(graph.direction)
-  let state_graph = is_state_graph(graph)
-  let class_or_er_graph = is_class_or_er_graph(graph)
+  let base_padding = @layout_engine_graph_internal_core.resolve_padding(options)
+  let base_node_spacing = @layout_engine_graph_internal_core.resolve_node_spacing(
+    options,
+  )
+  let base_layer_spacing = @layout_engine_graph_internal_core.resolve_layer_spacing(
+    options,
+  )
+  let horizontal = @layout_engine_graph_internal_core.layout_direction_is_horizontal(
+    graph.direction,
+  )
+  let reverse = @layout_engine_graph_internal_core.layout_direction_is_reverse(
+    graph.direction,
+  )
+  let state_graph = @layout_engine_graph_internal_core.is_state_graph(graph)
+  let class_or_er_graph = @layout_engine_graph_internal_core.is_class_or_er_graph(
+    graph,
+  )
   let flat_state_graph = state_graph &&
     !horizontal &&
     graph.subgraphs.length() == 0
@@ -46,20 +50,22 @@ fn layout_graph_legacy_with_subgraph_redirects(
   let (subgraph_entry_by_id, subgraph_exit_by_id, prepped_nodes_in_order) = @layout_engine_graph_prep_core.prepare_graph_inputs(
     graph, use_subgraph_redirects,
   )
-  let nodes_in_order = reorder_nodes_for_flow_layout(
+  let nodes_in_order = @layout_engine_graph_internal_core.reorder_nodes_for_flow_layout(
     prepped_nodes_in_order,
     graph.edges,
   )
   let enhanced_horizontal_state_flow = state_graph &&
     horizontal &&
     !compact_fanin &&
-    use_enhanced_horizontal_state_flow_lanes(nodes_in_order)
+    @layout_engine_graph_internal_core.use_enhanced_horizontal_state_flow_lanes(
+      nodes_in_order,
+    )
   let padding = match options.padding {
     Some(_) => base_padding
     None => if enhanced_horizontal_state_flow { 10 } else { base_padding }
   }
   let node_spacing = if state_graph && horizontal && !compact_fanin {
-    resolve_horizontal_state_node_spacing(
+    @layout_engine_graph_internal_core.resolve_horizontal_state_node_spacing(
       options, nodes_in_order, base_node_spacing,
     )
   } else {
@@ -138,7 +144,7 @@ fn layout_graph_legacy_with_subgraph_redirects(
     enhanced_horizontal_state_flow,
   )
 
-  finalize_positioned_graph(
+  @layout_engine_graph_internal_core.finalize_positioned_graph(
     padding, max_right, max_bottom, positioned_nodes, positioned_edges, positioned_groups,
   )
 }

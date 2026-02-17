@@ -96,7 +96,10 @@ fn layout_state_grid_positions(
     if target_ids.contains(node.id) {
       continue
     }
-    let highest = option_int_or(highest_position_by_level.get(0), 0)
+    let highest = @layout_engine_graph_internal_core.option_int_or(
+      highest_position_by_level.get(0),
+      0,
+    )
     positions[node.id] = { x: highest, y: 0 }
     highest_position_by_level[0] = highest + 4
   }
@@ -110,7 +113,7 @@ fn layout_state_grid_positions(
     match positions.get(node.id) {
       Some(position) => {
         let child_level = position.y + 4
-        let mut highest = option_int_or(
+        let mut highest = @layout_engine_graph_internal_core.option_int_or(
           highest_position_by_level.get(child_level),
           0,
         )
@@ -132,7 +135,7 @@ fn layout_state_grid_positions(
     if positions.contains(node.id) {
       continue
     }
-    let highest = option_int_or(
+    let highest = @layout_engine_graph_internal_core.option_int_or(
       highest_position_by_level.get(fallback_level),
       0,
     )
@@ -604,7 +607,10 @@ fn layout_state_label_position(
     Some((start, ending)) => {
       let base = midpoint(start, ending)
       let key = label_anchor_key(base)
-      let slot = option_int_or(label_slots_by_anchor.get(key), 0)
+      let slot = @layout_engine_graph_internal_core.option_int_or(
+        label_slots_by_anchor.get(key),
+        0,
+      )
       label_slots_by_anchor[key] = slot + 1
       Some({
         x: base.x + label_overlap_offset_x(slot),
@@ -625,7 +631,10 @@ fn layout_state_label_position_from_source_segment(
   }
   let base = midpoint(points[0], points[1])
   let key = label_anchor_key(base)
-  let slot = option_int_or(label_slots_by_anchor.get(key), 0)
+  let slot = @layout_engine_graph_internal_core.option_int_or(
+    label_slots_by_anchor.get(key),
+    0,
+  )
   label_slots_by_anchor[key] = slot + 1
   Some({
     x: base.x + label_overlap_offset_x(slot),
@@ -687,9 +696,13 @@ fn layout_flat_state_graph_for_ascii_grid(
     return layout_state_empty_positioned_graph()
   }
 
-  let padding = resolve_padding(options)
-  let node_spacing = resolve_node_spacing(options)
-  let layer_spacing = resolve_layer_spacing(options)
+  let padding = @layout_engine_graph_internal_core.resolve_padding(options)
+  let node_spacing = @layout_engine_graph_internal_core.resolve_node_spacing(
+    options,
+  )
+  let layer_spacing = @layout_engine_graph_internal_core.resolve_layer_spacing(
+    options,
+  )
   let cell_x = (node_spacing / 3).max(54)
   let cell_x_step = cell_x + 12
   let cell_y = (layer_spacing / 4).max(25)
@@ -844,7 +857,7 @@ fn layout_flat_state_graph_for_ascii_grid(
     }
   }
 
-  finalize_positioned_graph(
+  @layout_engine_graph_internal_core.finalize_positioned_graph(
     padding, padding, padding, positioned_nodes, positioned_edges, positioned_groups,
   )
 }

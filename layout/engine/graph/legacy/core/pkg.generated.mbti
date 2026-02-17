@@ -1,0 +1,18 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "bobzhang/beautiful_mermaid/layout/engine/graph/legacy/core"
+
+import {
+  "bobzhang/beautiful_mermaid/model",
+}
+
+// Values
+pub fn layout_graph_legacy_with_subgraph_redirects(@model.MermaidGraph, @model.RenderOptions, Bool, Bool, Bool, Bool) -> @model.PositionedGraph
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits
+

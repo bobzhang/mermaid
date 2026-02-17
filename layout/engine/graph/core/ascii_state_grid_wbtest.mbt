@@ -74,7 +74,10 @@ fn state_grid_positions(
     if target_ids.contains(node.id) {
       continue
     }
-    let highest = option_int_or(highest_position_by_level.get(0), 0)
+    let highest = @layout_engine_graph_internal_core.option_int_or(
+      highest_position_by_level.get(0),
+      0,
+    )
     positions[node.id] = { x: highest, y: 0 }
     highest_position_by_level[0] = highest + 4
   }
@@ -88,7 +91,7 @@ fn state_grid_positions(
     match positions.get(node.id) {
       Some(position) => {
         let child_level = position.y + 4
-        let mut highest = option_int_or(
+        let mut highest = @layout_engine_graph_internal_core.option_int_or(
           highest_position_by_level.get(child_level),
           0,
         )
@@ -110,7 +113,7 @@ fn state_grid_positions(
     if positions.contains(node.id) {
       continue
     }
-    let highest = option_int_or(
+    let highest = @layout_engine_graph_internal_core.option_int_or(
       highest_position_by_level.get(fallback_level),
       0,
     )

@@ -1,0 +1,40 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "bobzhang/beautiful_mermaid/layout/engine/graph/internal/core"
+
+import {
+  "bobzhang/beautiful_mermaid/model",
+}
+
+// Values
+pub fn finalize_positioned_graph(Int, Int, Int, Array[@model.PositionedNode], Array[@model.PositionedEdge], Array[@model.PositionedGroup]) -> @model.PositionedGraph
+
+pub fn is_class_or_er_graph(@model.MermaidGraph) -> Bool
+
+pub fn is_state_graph(@model.MermaidGraph) -> Bool
+
+pub fn layout_direction_is_horizontal(@model.Direction) -> Bool
+
+pub fn layout_direction_is_reverse(@model.Direction) -> Bool
+
+pub fn option_int_or(Int?, Int) -> Int
+
+pub fn reorder_nodes_for_flow_layout(Array[@model.MermaidNode], Array[@model.MermaidEdge]) -> Array[@model.MermaidNode]
+
+pub fn resolve_horizontal_state_node_spacing(@model.RenderOptions, Array[@model.MermaidNode], Int) -> Int
+
+pub fn resolve_layer_spacing(@model.RenderOptions) -> Int
+
+pub fn resolve_node_spacing(@model.RenderOptions) -> Int
+
+pub fn resolve_padding(@model.RenderOptions) -> Int
+
+pub fn use_enhanced_horizontal_state_flow_lanes(Array[@model.MermaidNode]) -> Bool
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits
+

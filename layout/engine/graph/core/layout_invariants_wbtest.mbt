@@ -307,7 +307,7 @@ fn has_interior_vertical_bend_segment(points : Array[Point]) -> Bool {
 ///|
 fn count_logical_edge_crossings(
   positioned : PositionedGraph,
-  edges : Array[MermaidEdge],
+  edges : Array[@model.MermaidEdge],
 ) -> Int {
   let node_by_id : Map[String, PositionedNode] = {}
   for node in positioned.nodes {
@@ -879,9 +879,10 @@ test "Layout horizontal rank spacing keeps wide adjacent nodes separated" {
   let positioned = layout_graph(graph, RenderOptions::default())
   let build = find_positioned_node(positioned.nodes, "Build")
   let ship = find_positioned_node(positioned.nodes, "Ship")
-  let required_gap = (resolve_node_spacing(RenderOptions::default()) / 5).max(
-    16,
-  )
+  let required_gap = (@layout_engine_graph_internal_core.resolve_node_spacing(
+    RenderOptions::default(),
+  ) /
+  5).max(16)
 
   if build.x <= ship.x {
     let gap = ship.x - ship.width / 2 - (build.x + build.width / 2)
@@ -2430,7 +2431,10 @@ test "Layout sequence without notes has no extra horizontal shift" {
   assert_true(positioned.nodes.length() >= 1)
   let first = positioned.nodes[0]
   let first_left = first.x - first.width / 2
-  assert_eq(first_left, resolve_padding(RenderOptions::default()))
+  assert_eq(
+    first_left,
+    @layout_engine_graph_internal_core.resolve_padding(RenderOptions::default()),
+  )
 }
 
 ///|

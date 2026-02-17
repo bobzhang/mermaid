@@ -7,12 +7,16 @@ type MermaidGraph = @model.MermaidGraph
 type MermaidNode = @model.MermaidNode
 
 ///|
-/// Configuration options for SVG rendering.
-type RenderOptions = @model.RenderOptions
+/// A parsed edge connecting two nodes in a mermaid diagram.
+type MermaidEdge = @model.MermaidEdge
 
 ///|
-/// Layout engine selection used by graph positioning.
-type LayoutEngine = @model.LayoutEngine
+/// Layout direction for flowchart and state diagrams.
+type Direction = @model.Direction
+
+///|
+/// Configuration options for SVG rendering.
+type RenderOptions = @model.RenderOptions
 
 ///|
 /// A 2D point used for edge routing.

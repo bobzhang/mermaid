@@ -57,7 +57,7 @@ fn shift_positioned_group(
 
 ///|
 /// Normalizes positioned graph coordinates so all content stays inside `padding`.
-fn finalize_positioned_graph(
+pub fn finalize_positioned_graph(
   padding : Int,
   max_right : Int,
   max_bottom : Int,

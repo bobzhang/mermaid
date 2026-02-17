@@ -28,6 +28,15 @@ test "graph helper detects sequence-only nodes" {
     "B": { id: "B", label: "B", shape: Rectangle },
   }
 
-  assert_true(graph_is_sequence_layout(test_graph(sequence_nodes)))
-  assert_true(!graph_is_sequence_layout(test_graph(mixed_nodes)))
+  let sequence_layout = layout_graph(
+    test_graph(sequence_nodes),
+    RenderOptions::default(),
+  )
+  let mixed_layout = layout_graph(
+    test_graph(mixed_nodes),
+    RenderOptions::default(),
+  )
+
+  assert_true(sequence_layout.sequence_lifelines.length() > 0)
+  assert_eq(mixed_layout.sequence_lifelines.length(), 0)
 }

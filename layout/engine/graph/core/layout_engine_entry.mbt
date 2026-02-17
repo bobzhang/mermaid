@@ -20,20 +20,10 @@ fn resolve_layout_engine(options : RenderOptions) -> LayoutEngine {
 }
 
 ///|
-fn legacy_pipeline_routing_config(
-  engine : LayoutEngine,
-) -> LegacyPipelineRoutingConfig {
+fn legacy_pipeline_routing_flags(engine : LayoutEngine) -> (Bool, Bool) {
   match engine {
-    Legacy =>
-      {
-        enable_target_boundary_ports: false,
-        preserve_assigned_endpoint_ports: false,
-      }
-    DagreParity | Elk =>
-      {
-        enable_target_boundary_ports: true,
-        preserve_assigned_endpoint_ports: true,
-      }
+    Legacy => (false, false)
+    DagreParity | Elk => (true, true)
   }
 }
 
@@ -52,20 +42,22 @@ fn run_layout_engine(
   options : RenderOptions,
   engine : LayoutEngine,
 ) -> PositionedGraph {
-  let routing_config = match engine {
-    Legacy => legacy_pipeline_routing_config(Legacy)
-    DagreParity => legacy_pipeline_routing_config(DagreParity)
+  let (enable_target_boundary_ports, preserve_assigned_endpoint_ports) = match
+    engine {
+    Legacy => legacy_pipeline_routing_flags(Legacy)
+    DagreParity => legacy_pipeline_routing_flags(DagreParity)
     Elk =>
       // Reserve the ELK slot in the public selector while preserving current
       // non-ELK behavior during the modular refactor.
-      legacy_pipeline_routing_config(DagreParity)
+      legacy_pipeline_routing_flags(DagreParity)
   }
-  layout_graph_legacy_with_subgraph_redirects(
+  @layout_engine_graph_legacy_core.layout_graph_legacy_with_subgraph_redirects(
     ir.graph,
     options,
     ir.use_subgraph_redirects,
     ir.compact_fanin,
-    routing_config,
+    enable_target_boundary_ports,
+    preserve_assigned_endpoint_ports,
   )
 }
 
@@ -95,9 +87,13 @@ fn build_svg_layout_execution_plan(
 fn build_ascii_layout_execution_plan(
   graph : MermaidGraph,
 ) -> LayoutExecutionPlan {
-  let state_graph = is_state_graph(graph)
-  let horizontal = layout_direction_is_horizontal(graph.direction)
-  let reverse = layout_direction_is_reverse(graph.direction)
+  let state_graph = @layout_engine_graph_internal_core.is_state_graph(graph)
+  let horizontal = @layout_engine_graph_internal_core.layout_direction_is_horizontal(
+    graph.direction,
+  )
+  let reverse = @layout_engine_graph_internal_core.layout_direction_is_reverse(
+    graph.direction,
+  )
   let state_flat_ascii_grid_mode = state_graph && !horizontal && !reverse
   if state_flat_ascii_grid_mode {
     return UseFlatStateAsciiGrid(graph)

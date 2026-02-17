@@ -1,5 +1,6 @@
 ///|
-fn option_int_or(value : Int?, fallback : Int) -> Int {
+/// Returns `value` when present, otherwise `fallback`.
+pub fn option_int_or(value : Int?, fallback : Int) -> Int {
   match value {
     Some(found) => found
     None => fallback
@@ -7,22 +8,26 @@ fn option_int_or(value : Int?, fallback : Int) -> Int {
 }
 
 ///|
-fn resolve_padding(options : RenderOptions) -> Int {
+/// Resolves render padding with the graph default.
+pub fn resolve_padding(options : RenderOptions) -> Int {
   option_int_or(options.padding, 40)
 }
 
 ///|
-fn resolve_node_spacing(options : RenderOptions) -> Int {
+/// Resolves node spacing with the graph default.
+pub fn resolve_node_spacing(options : RenderOptions) -> Int {
   option_int_or(options.node_spacing, 130)
 }
 
 ///|
-fn resolve_layer_spacing(options : RenderOptions) -> Int {
+/// Resolves layer spacing with the graph default.
+pub fn resolve_layer_spacing(options : RenderOptions) -> Int {
   option_int_or(options.layer_spacing, 90)
 }
 
 ///|
-fn resolve_horizontal_state_node_spacing(
+/// Resolves horizontal state spacing from options or node widths.
+pub fn resolve_horizontal_state_node_spacing(
   options : RenderOptions,
   nodes_in_order : Array[MermaidNode],
   fallback : Int,
@@ -41,6 +46,7 @@ fn resolve_horizontal_state_node_spacing(
 }
 
 ///|
+/// Estimates rendered node width and height for layout planning.
 fn node_dimensions(node : MermaidNode) -> (Int, Int) {
   let label_lines = node.label
     .split("\n")
@@ -86,17 +92,20 @@ fn node_dimensions(node : MermaidNode) -> (Int, Int) {
 }
 
 ///|
-fn layout_direction_is_horizontal(direction : Direction) -> Bool {
+/// Returns true when the direction places ranks horizontally.
+pub fn layout_direction_is_horizontal(direction : Direction) -> Bool {
   direction is (LR | RL)
 }
 
 ///|
-fn layout_direction_is_reverse(direction : Direction) -> Bool {
+/// Returns true when the direction is reversed.
+pub fn layout_direction_is_reverse(direction : Direction) -> Bool {
   direction is (RL | BT)
 }
 
 ///|
-fn reorder_nodes_for_flow_layout(
+/// Reorders nodes so explicit state-start nodes lead traversal order.
+pub fn reorder_nodes_for_flow_layout(
   nodes_in_order : Array[MermaidNode],
   edges : Array[MermaidEdge],
 ) -> Array[MermaidNode] {
@@ -149,7 +158,8 @@ fn reorder_nodes_for_flow_layout(
 }
 
 ///|
-fn is_state_graph(graph : MermaidGraph) -> Bool {
+/// Returns true when the graph contains state start/end nodes.
+pub fn is_state_graph(graph : MermaidGraph) -> Bool {
   for _, node in graph.nodes {
     match node.shape {
       StateStart | StateEnd => return true
@@ -160,7 +170,8 @@ fn is_state_graph(graph : MermaidGraph) -> Bool {
 }
 
 ///|
-fn is_class_or_er_graph(graph : MermaidGraph) -> Bool {
+/// Returns true when the graph contains class or ER entity nodes.
+pub fn is_class_or_er_graph(graph : MermaidGraph) -> Bool {
   for _, node in graph.nodes {
     match node.shape {
       ClassEntity | ErEntity => return true
@@ -171,7 +182,8 @@ fn is_class_or_er_graph(graph : MermaidGraph) -> Bool {
 }
 
 ///|
-fn use_enhanced_horizontal_state_flow_lanes(
+/// Returns true when horizontal state flow lane heuristics should apply.
+pub fn use_enhanced_horizontal_state_flow_lanes(
   nodes_in_order : Array[MermaidNode],
 ) -> Bool {
   let mut circle_node_count = 0

@@ -1,16 +1,14 @@
 import {
   "bobzhang/beautiful_mermaid/layout/engine/graph/group/core" @layout_engine_graph_group_core,
   "bobzhang/beautiful_mermaid/layout/engine/graph/internal/core" @layout_engine_graph_internal_core,
-  "bobzhang/beautiful_mermaid/layout/engine/graph/legacy/core" @layout_engine_graph_legacy_core,
+  "bobzhang/beautiful_mermaid/layout/engine/graph/lane/core" @layout_engine_graph_lane_core,
+  "bobzhang/beautiful_mermaid/layout/engine/graph/placement/core" @layout_engine_graph_placement_core,
+  "bobzhang/beautiful_mermaid/layout/engine/graph/prep/core" @layout_engine_graph_prep_core,
   "bobzhang/beautiful_mermaid/layout/engine/graph/routing/core" @layout_engine_graph_routing_core,
-  "bobzhang/beautiful_mermaid/layout/engine/pathfinder/core" @layout_engine_pathfinder_core,
+  "bobzhang/beautiful_mermaid/layout/engine/sequence/core" @layout_engine_sequence_core,
   "bobzhang/beautiful_mermaid/model" @model,
 }
 
 import {
   "moonbitlang/core/test",
 } for "test"
-
-import {
-  "bobzhang/beautiful_mermaid/parser/header/core" @parser,
-} for "wbtest"
