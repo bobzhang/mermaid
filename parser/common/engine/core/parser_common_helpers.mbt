@@ -21,28 +21,24 @@ fn parse_delimited_token(
   close : String,
   shape : @model.NodeShape,
 ) -> @model.MermaidNode? {
-  match token.find(open) {
-    Some(start) =>
-      if !token.has_suffix(close) {
-        None
-      } else {
-        let close_offset = token.length() - close.length()
-        if close_offset < start + open.length() {
-          None
-        } else {
-          let raw_id = trim_owned((try! token[:start]).to_string())
-          let raw_label = trim_owned(
-            (try! token[start + open.length():close_offset]).to_string(),
-          )
-          let id = if raw_id == "" {
-            raw_label.to_lower().replace_all(old=" ", new="_")
-          } else {
-            raw_id
-          }
-          Some({ id, label: raw_label, shape })
-        }
+  match (token.find(open), token.strip_suffix(close)) {
+    (Some(start), Some(without_close)) => {
+      let prefix = without_close.to_string()
+      if prefix.length() < start + open.length() {
+        return None
       }
-    None => None
+      let raw_id = trim_owned((try! prefix[:start]).to_string())
+      let raw_label = trim_owned(
+        (try! prefix[start + open.length():]).to_string(),
+      )
+      let id = if raw_id == "" {
+        raw_label.to_lower().replace_all(old=" ", new="_")
+      } else {
+        raw_id
+      }
+      Some({ id, label: raw_label, shape })
+    }
+    _ => None
   }
 }
 
