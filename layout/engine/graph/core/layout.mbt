@@ -1,4 +1,10 @@
 ///|
+priv struct LegacyPipelineRoutingConfig {
+  enable_target_boundary_ports : Bool
+  preserve_assigned_endpoint_ports : Bool
+}
+
+///|
 fn graph_is_sequence_layout(graph : MermaidGraph) -> Bool {
   let nodes = graph.nodes.values().to_array()
   if nodes.length() == 0 {
@@ -18,7 +24,7 @@ fn layout_graph_legacy_with_subgraph_redirects(
   options : RenderOptions,
   use_subgraph_redirects : Bool,
   compact_fanin : Bool,
-  layout_engine : LayoutEngine,
+  routing_config : LegacyPipelineRoutingConfig,
 ) -> PositionedGraph {
   if graph_is_sequence_layout(graph) {
     return @layout_engine_sequence_core.layout_sequence_graph(graph, options)
@@ -27,8 +33,8 @@ fn layout_graph_legacy_with_subgraph_redirects(
   let base_padding = resolve_padding(options)
   let base_node_spacing = resolve_node_spacing(options)
   let base_layer_spacing = resolve_layer_spacing(options)
-  let enable_target_boundary_ports = layout_engine is DagreParity
-  let preserve_assigned_endpoint_ports = layout_engine is DagreParity
+  let enable_target_boundary_ports = routing_config.enable_target_boundary_ports
+  let preserve_assigned_endpoint_ports = routing_config.preserve_assigned_endpoint_ports
   let horizontal = layout_direction_is_horizontal(graph.direction)
   let reverse = layout_direction_is_reverse(graph.direction)
   let state_graph = is_state_graph(graph)
