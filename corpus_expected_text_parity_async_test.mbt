@@ -1,35 +1,21 @@
 ///|
 #cfg(target="native")
-async fn corpus_expected_text_files() -> Array[String] {
-  let entries = @fs.readdir("testdata/corpus/expected", sort=true)
-  let files : Array[String] = []
-  for entry in entries {
-    if entry.has_suffix(".json") {
-      files.push("testdata/corpus/expected/\{entry}")
-    }
-  }
-  files
-}
-
-///|
-#cfg(target="native")
 async fn golden_from_text_fixture(path : String) -> String {
   let content = @fs.read_file(path).text()
-  let sections = content.split("\n---\n").to_array()
-  match sections {
-    [_, golden, ..] => {
-      let lines = golden
-        .to_string()
-        .split("\n")
-        .map(part => part.to_string())
-        .to_array()
-      if lines.length() > 0 && lines[lines.length() - 1] == "" {
-        lines[:lines.length() - 1].iter().join("\n")
-      } else {
-        lines.iter().join("\n")
+  let delimiter = "\n---\n"
+  match content.find(delimiter) {
+    Some(first_sep) => {
+      let rest = (try! content[first_sep + delimiter.length():]).to_string()
+      let golden = match rest.find(delimiter) {
+        Some(second_sep) => (try! rest[:second_sep]).to_string()
+        None => rest
+      }
+      match golden.strip_suffix("\n") {
+        Some(without_newline) => without_newline.to_string()
+        None => golden
       }
     }
-    _ => ""
+    None => ""
   }
 }
 
@@ -68,7 +54,13 @@ async fn verify_corpus_expected_text_chunk(
   chunk_index : Int,
   chunk_count : Int,
 ) -> Unit {
-  let files = corpus_expected_text_files()
+  let entries = @fs.readdir("testdata/corpus/expected", sort=true)
+  let files : Array[String] = []
+  for entry in entries {
+    if entry.has_suffix(".json") {
+      files.push("testdata/corpus/expected/\{entry}")
+    }
+  }
   let selected = ts_files_for_chunk(files, chunk_index, chunk_count)
   if selected.length() == 0 {
     return
