@@ -81,38 +81,27 @@ fn ts_files_for_chunk(
 ///|
 fn ts_expected_case_name_from_json_path(path : String) -> String {
   let prefix = "testdata/corpus/expected/"
-  let file = if path.has_prefix(prefix) {
-    let parts = path.split(prefix).to_array()
-    if parts.length() >= 2 {
-      parts[1].to_string()
-    } else {
-      path
-    }
-  } else {
-    path
+  let file = match path.strip_prefix(prefix) {
+    Some(rest) => rest.to_string()
+    None => path
   }
-  if file.has_suffix(".json") {
-    let parts = file.split(".json").to_array()
-    if parts.length() > 0 {
-      parts[0].to_string()
-    } else {
-      file
-    }
-  } else {
-    file
+  match file.strip_suffix(".json") {
+    Some(rest) => rest.to_string()
+    None => file
   }
 }
 
 ///|
 fn ts_parse_padding_value(trimmed : String, prefix : String) -> Int? {
-  if !trimmed.to_lower().has_prefix(prefix) {
+  let lowered = trimmed.to_lower()
+  if !lowered.has_prefix(prefix) {
     return None
   }
-  let parts = trimmed.split("=").to_array()
-  if parts.length() < 2 {
-    return None
+  let raw_value = match trimmed.find("=") {
+    Some(eq_index) =>
+      (try! trimmed[eq_index + 1:]).to_string().trim().to_string()
+    None => return None
   }
-  let raw_value = parts[1].trim().to_string()
   let parsed : Result[Int, @strconv.StrConvError] = try? @strconv.parse_int(
     raw_value,
   )
@@ -125,20 +114,22 @@ fn ts_parse_padding_value(trimmed : String, prefix : String) -> Int? {
 ///|
 fn ts_svg_attr_int(svg : String, attr : String) -> Int? {
   let marker = "\{attr}=\""
-  let parts = svg.split(marker).to_array()
-  if parts.length() < 2 {
-    return None
-  }
-  let rest = parts[1]
-  match rest.find("\"") {
-    Some(_) => {
-      let raw_value = rest.split("\"").to_array()[0].to_string()
-      let parsed : Result[Int, @strconv.StrConvError] = try? @strconv.parse_int(
-        raw_value,
-      )
-      match parsed {
-        Ok(value) => Some(value)
-        Err(_) => None
+  match svg.find(marker) {
+    Some(start_index) => {
+      let value_start = start_index + marker.length()
+      let rest = (try! svg[value_start:]).to_string()
+      match rest.find("\"") {
+        Some(end_index) => {
+          let raw_value = (try! rest[:end_index]).to_string()
+          let parsed : Result[Int, @strconv.StrConvError] = try? @strconv.parse_int(
+            raw_value,
+          )
+          match parsed {
+            Ok(value) => Some(value)
+            Err(_) => None
+          }
+        }
+        None => None
       }
     }
     None => None
