@@ -158,6 +158,64 @@ fn final_phase_snapshot(
 }
 
 ///|
+priv struct ElkLayeredSetupState {
+  graph : MermaidGraph
+  options : RenderOptions
+  use_subgraph_redirects : Bool
+  compact_fanin : Bool
+  subgraph_entry_by_id : Map[String, String]
+  subgraph_exit_by_id : Map[String, String]
+  nodes_in_order : Array[MermaidNode]
+  horizontal : Bool
+  reverse : Bool
+  base_order_index_by_node_id : Map[String, Int]
+  node_ids_in_order : Array[String]
+}
+
+///|
+fn run_elk_layered_setup_phase(
+  request : GraphLayoutBackendRequest,
+) -> ElkLayeredSetupState {
+  let graph = request.graph
+  let options = request.options
+  let use_subgraph_redirects = request.use_subgraph_redirects
+  let compact_fanin = request.compact_fanin
+  let prep_state = @layout_engine_graph_prep_core.prepare_graph_inputs(
+    graph, use_subgraph_redirects,
+  )
+  let subgraph_entry_by_id = prep_state.subgraph_entry_by_id()
+  let subgraph_exit_by_id = prep_state.subgraph_exit_by_id()
+  let nodes_in_order = @layout_engine_graph_internal_core.reorder_nodes_for_flow_layout(
+    prep_state.nodes_in_order(),
+    graph.edges,
+  )
+  let horizontal = @layout_engine_graph_internal_core.layout_direction_is_horizontal(
+    graph.direction,
+  )
+  let reverse = @layout_engine_graph_internal_core.layout_direction_is_reverse(
+    graph.direction,
+  )
+  let base_order_index_by_node_id = build_order_index_by_node_id(nodes_in_order)
+  let node_ids_in_order : Array[String] = []
+  for node in nodes_in_order {
+    node_ids_in_order.push(node.id)
+  }
+  {
+    graph,
+    options,
+    use_subgraph_redirects,
+    compact_fanin,
+    subgraph_entry_by_id,
+    subgraph_exit_by_id,
+    nodes_in_order,
+    horizontal,
+    reverse,
+    base_order_index_by_node_id,
+    node_ids_in_order,
+  }
+}
+
+///|
 fn build_order_index_by_node_id(
   nodes_in_order : Array[MermaidNode],
 ) -> Map[String, Int] {
@@ -2086,29 +2144,17 @@ fn run_elk_layered_flow_backend(
   request : GraphLayoutBackendRequest,
   routing_policy : GraphBackendRoutingPolicy,
 ) -> GraphLayoutBackendResult {
-  let graph = request.graph
-  let options = request.options
-  let use_subgraph_redirects = request.use_subgraph_redirects
-  let prep_state = @layout_engine_graph_prep_core.prepare_graph_inputs(
-    graph, use_subgraph_redirects,
-  )
-  let subgraph_entry_by_id = prep_state.subgraph_entry_by_id()
-  let subgraph_exit_by_id = prep_state.subgraph_exit_by_id()
-  let nodes_in_order = @layout_engine_graph_internal_core.reorder_nodes_for_flow_layout(
-    prep_state.nodes_in_order(),
-    graph.edges,
-  )
-  let horizontal = @layout_engine_graph_internal_core.layout_direction_is_horizontal(
-    graph.direction,
-  )
-  let reverse = @layout_engine_graph_internal_core.layout_direction_is_reverse(
-    graph.direction,
-  )
-  let base_order_index_by_node_id = build_order_index_by_node_id(nodes_in_order)
-  let node_ids_in_order : Array[String] = []
-  for node in nodes_in_order {
-    node_ids_in_order.push(node.id)
-  }
+  let setup_state = run_elk_layered_setup_phase(request)
+  let graph = setup_state.graph
+  let options = setup_state.options
+  let use_subgraph_redirects = setup_state.use_subgraph_redirects
+  let subgraph_entry_by_id = setup_state.subgraph_entry_by_id
+  let subgraph_exit_by_id = setup_state.subgraph_exit_by_id
+  let nodes_in_order = setup_state.nodes_in_order
+  let horizontal = setup_state.horizontal
+  let reverse = setup_state.reverse
+  let base_order_index_by_node_id = setup_state.base_order_index_by_node_id
+  let node_ids_in_order = setup_state.node_ids_in_order
   let rank_seed_strategy = select_elk_layered_rank_seed_strategy(graph)
   let rank_seed_state = build_elk_layered_rank_seed_state(
     graph,
@@ -2120,7 +2166,7 @@ fn run_elk_layered_flow_backend(
     node_ids_in_order,
     base_order_index_by_node_id,
     horizontal,
-    request.compact_fanin,
+    setup_state.compact_fanin,
   )
   let rank_by_node_id = rank_seed_state.rank_by_node_id
   let max_rank = rank_seed_state.max_rank

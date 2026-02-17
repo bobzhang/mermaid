@@ -118,6 +118,52 @@ test "elk layered rank seed strategy uses native feedback for small graphs" {
 }
 
 ///|
+test "elk layered setup phase resolves graph metadata and ordering" {
+  let graph = wb_graph(["A", "B", "C"], [("A", "B"), ("B", "C")])
+  let request : GraphLayoutBackendRequest = {
+    graph,
+    options: RenderOptions::default(),
+    use_subgraph_redirects: true,
+    compact_fanin: true,
+  }
+  let setup_state = run_elk_layered_setup_phase(request)
+  assert_eq(setup_state.graph, graph)
+  assert_eq(setup_state.use_subgraph_redirects, true)
+  assert_eq(setup_state.compact_fanin, true)
+  assert_eq(setup_state.nodes_in_order.length(), 3)
+  assert_eq(setup_state.node_ids_in_order.length(), 3)
+  assert_eq(setup_state.base_order_index_by_node_id.length(), 3)
+}
+
+///|
+test "elk layered setup phase tracks reverse orientation for RL direction" {
+  let graph = wb_graph(["A", "B"], [("A", "B")])
+  let rl_graph : @model.MermaidGraph = {
+    diagram_kind: graph.diagram_kind,
+    direction: RL,
+    nodes: graph.nodes,
+    edges: graph.edges,
+    subgraphs: graph.subgraphs,
+    class_defs: graph.class_defs,
+    class_assignments: graph.class_assignments,
+    node_styles: graph.node_styles,
+    sequence_actor_order: graph.sequence_actor_order,
+    sequence_actor_kinds: graph.sequence_actor_kinds,
+    sequence_blocks: graph.sequence_blocks,
+    sequence_notes: graph.sequence_notes,
+    sequence_activation_commands: graph.sequence_activation_commands,
+  }
+  let setup_state = run_elk_layered_setup_phase({
+    graph: rl_graph,
+    options: RenderOptions::default(),
+    use_subgraph_redirects: false,
+    compact_fanin: false,
+  })
+  assert_eq(setup_state.horizontal, true)
+  assert_eq(setup_state.reverse, true)
+}
+
+///|
 test "elk layered rank seed strategy uses legacy lane seed for large graphs" {
   let nodes : Array[String] = []
   for i in 0..<17 {
