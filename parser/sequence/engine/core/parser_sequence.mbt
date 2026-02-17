@@ -226,17 +226,12 @@ fn parse_sequence_message_line(
         }
         _ => (rhs, None)
       }
-      let activation_mark = if raw_target.has_prefix("+") {
-        "+"
-      } else if raw_target.has_prefix("-") {
-        "-"
+      let (activation_mark, target) = if raw_target is [.. "+", .. target_rest] {
+        ("+", @parser_common_engine_core.trim_owned(target_rest.to_string()))
+      } else if raw_target is [.. "-", .. target_rest] {
+        ("-", @parser_common_engine_core.trim_owned(target_rest.to_string()))
       } else {
-        ""
-      }
-      let target = if activation_mark == "" {
-        raw_target
-      } else {
-        @parser_common_engine_core.trim_owned((try! raw_target[1:]).to_string())
+        ("", raw_target)
       }
 
       if source == "" || target == "" {
