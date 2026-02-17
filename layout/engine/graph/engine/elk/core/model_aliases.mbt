@@ -3,12 +3,27 @@
 type MermaidGraph = @model.MermaidGraph
 
 ///|
+/// Parsed graph node model.
+type MermaidNode = @model.MermaidNode
+
+///|
 /// Configuration options for SVG rendering.
 type RenderOptions = @model.RenderOptions
 
 ///|
+/// Positioned graph models produced by layout phases.
+type PositionedNode = @model.PositionedNode
+
+///|
+type PositionedGraph = @model.PositionedGraph
+
+///|
 /// Input contract shared by pluggable graph layout backends.
 type GraphLayoutBackendRequest = @layout_engine_graph_contract_core.GraphLayoutBackendRequest
+
+///|
+/// Lightweight phase-level snapshot used for backend evaluation.
+type GraphLayoutPhaseSnapshot = @layout_engine_graph_contract_core.GraphLayoutPhaseSnapshot
 
 ///|
 /// Backend output contract with final layout and optional intermediate snapshots.

@@ -198,6 +198,12 @@ test "elk setup phase keeps state-graph spacing unset for state-specific placeme
 }
 
 ///|
+test "elk layered pipeline applies only to non-state flowcharts" {
+  assert_eq(elk_should_use_layered_pipeline(flow_graph()), true)
+  assert_eq(elk_should_use_layered_pipeline(simple_state_graph()), false)
+}
+
+///|
 test "elk backend produces a valid positioned graph" {
   let elk_layout = layout_graph_elk_backend({
       graph: flow_graph(),
@@ -228,6 +234,31 @@ test "elk backend differs from legacy on fanout-heavy graph when spacing is auto
   assert_true(
     elk_backend.positioned_graph.width > legacy_backend.positioned_graph.width,
   )
+}
+
+///|
+test "elk backend falls back to shared backend pipeline on state graphs" {
+  let graph = simple_state_graph()
+  let request : @layout_engine_graph_contract_core.GraphLayoutBackendRequest = {
+    graph,
+    options: @model.RenderOptions::default(),
+    use_subgraph_redirects: true,
+    compact_fanin: false,
+  }
+  let elk_backend = layout_graph_elk_backend(request)
+  let fallback_backend = @layout_engine_graph_backend_core.run_graph_backend_pipeline(
+    {
+      graph,
+      options: derive_elk_render_options(graph, @model.RenderOptions::default()),
+      use_subgraph_redirects: true,
+      compact_fanin: false,
+    },
+    {
+      enable_target_boundary_ports: true,
+      preserve_assigned_endpoint_ports: false,
+    },
+  )
+  assert_eq(elk_backend, fallback_backend)
 }
 
 ///|
