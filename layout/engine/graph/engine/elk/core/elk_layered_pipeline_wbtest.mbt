@@ -663,6 +663,47 @@ test "elk layered finalize helper composes groups edges and final bounds" {
 }
 
 ///|
+test "elk layered node-placement phase builds positioned nodes and bounds" {
+  let graph = wb_graph(["A", "B", "C"], [("A", "B"), ("B", "C")])
+  let setup_state = run_elk_layered_setup_phase({
+    graph,
+    options: RenderOptions::default(),
+    use_subgraph_redirects: true,
+    compact_fanin: false,
+  })
+  let rank_phase_state = run_elk_layered_rank_phase(setup_state)
+  let node_size_state = build_elk_layered_node_size_state(
+    setup_state.nodes_in_order,
+  )
+  let max_rank_size = compute_max_rank_size(
+    rank_phase_state.rank_node_ids_by_rank,
+    rank_phase_state.rank_seed_state.max_rank,
+  )
+  let spacing_state = run_elk_layered_spacing_phase(
+    setup_state.options,
+    setup_state.horizontal,
+    max_rank_size,
+    node_size_state,
+  )
+  let placement_state = run_elk_layered_node_placement_phase(
+    setup_state, rank_phase_state, node_size_state, spacing_state,
+  )
+  assert_eq(
+    placement_state.positioned_nodes.length(),
+    setup_state.nodes_in_order.length(),
+  )
+  assert_eq(
+    placement_state.positioned_by_id.length(),
+    setup_state.nodes_in_order.length(),
+  )
+  assert_true(placement_state.max_right > 0)
+  assert_true(placement_state.max_bottom > 0)
+  assert_true(
+    option_bool_or(placement_state.node_horizontal_by_id.get("A"), false),
+  )
+}
+
+///|
 fn wb_rank_crossings_between(
   left_rank_node_ids : Array[String],
   right_rank_node_ids : Array[String],

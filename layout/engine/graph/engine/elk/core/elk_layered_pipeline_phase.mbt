@@ -2383,46 +2383,45 @@ fn run_elk_layered_rank_phase(
 }
 
 ///|
-/// Runs the ELK layered flow pipeline for non-state flowcharts.
-fn run_elk_layered_flow_backend(
-  request : GraphLayoutBackendRequest,
-  routing_policy : GraphBackendRoutingPolicy,
-) -> GraphLayoutBackendResult {
-  let setup_state = run_elk_layered_setup_phase(request)
+priv struct ElkLayeredPlacementState {
+  positioned_nodes : Array[PositionedNode]
+  positioned_by_id : Map[String, PositionedNode]
+  node_horizontal_by_id : Map[String, Bool]
+  max_right : Int
+  max_bottom : Int
+}
+
+///|
+fn run_elk_layered_node_placement_phase(
+  setup_state : ElkLayeredSetupState,
+  rank_phase_state : ElkLayeredRankPhaseState,
+  node_size_state : ElkLayeredNodeSizeState,
+  spacing_state : ElkLayeredSpacingState,
+) -> ElkLayeredPlacementState {
   let graph = setup_state.graph
-  let options = setup_state.options
-  let use_subgraph_redirects = setup_state.use_subgraph_redirects
-  let subgraph_entry_by_id = setup_state.subgraph_entry_by_id
-  let subgraph_exit_by_id = setup_state.subgraph_exit_by_id
   let nodes_in_order = setup_state.nodes_in_order
   let horizontal = setup_state.horizontal
   let reverse = setup_state.reverse
-  let rank_phase_state = run_elk_layered_rank_phase(setup_state)
-  let rank_seed_strategy = rank_phase_state.rank_seed_strategy
+  let use_subgraph_redirects = setup_state.use_subgraph_redirects
+  let subgraph_entry_by_id = setup_state.subgraph_entry_by_id
+  let subgraph_exit_by_id = setup_state.subgraph_exit_by_id
   let rank_seed_state = rank_phase_state.rank_seed_state
+  let rank_seed_strategy = rank_phase_state.rank_seed_strategy
+  let rank_node_ids_by_rank = rank_phase_state.rank_node_ids_by_rank
   let rank_by_node_id = rank_seed_state.rank_by_node_id
   let max_rank = rank_seed_state.max_rank
   let lane_by_node_id = rank_seed_state.lane_by_node_id
   let successors_by_node_id = rank_seed_state.successors_by_node_id
   let predecessors_by_node_id = rank_seed_state.predecessors_by_node_id
+  let padding = spacing_state.padding
+  let minor_step = spacing_state.minor_step
+  let max_rank_minor_span = spacing_state.max_rank_minor_span
+  let base_major_step = spacing_state.major_step
+  let width_by_node_id = node_size_state.width_by_node_id
+  let height_by_node_id = node_size_state.height_by_node_id
   let minor_placement_strategy = select_elk_layered_minor_placement_strategy(
     rank_seed_strategy,
   )
-  let rank_node_ids_by_rank = rank_phase_state.rank_node_ids_by_rank
-
-  let node_size_state = build_elk_layered_node_size_state(nodes_in_order)
-  let max_rank_size = compute_max_rank_size(rank_node_ids_by_rank, max_rank)
-  let spacing_state = run_elk_layered_spacing_phase(
-    options, horizontal, max_rank_size, node_size_state,
-  )
-  let padding = spacing_state.padding
-  let node_spacing = spacing_state.node_spacing
-  let layer_spacing = spacing_state.layer_spacing
-  let base_major_step = spacing_state.major_step
-  let minor_step = spacing_state.minor_step
-  let max_rank_minor_span = spacing_state.max_rank_minor_span
-  let width_by_node_id = node_size_state.width_by_node_id
-  let height_by_node_id = node_size_state.height_by_node_id
   let minor_coord_by_node_id = build_minor_coord_by_strategy(
     minor_placement_strategy, rank_node_ids_by_rank, max_rank, lane_by_node_id, padding,
     minor_step, max_rank_minor_span, predecessors_by_node_id, successors_by_node_id,
@@ -2449,6 +2448,51 @@ fn run_elk_layered_flow_backend(
   let (max_right, max_bottom) = positioned_nodes_layout_extent(
     positioned_nodes, padding,
   )
+  {
+    positioned_nodes,
+    positioned_by_id,
+    node_horizontal_by_id,
+    max_right,
+    max_bottom,
+  }
+}
+
+///|
+/// Runs the ELK layered flow pipeline for non-state flowcharts.
+fn run_elk_layered_flow_backend(
+  request : GraphLayoutBackendRequest,
+  routing_policy : GraphBackendRoutingPolicy,
+) -> GraphLayoutBackendResult {
+  let setup_state = run_elk_layered_setup_phase(request)
+  let graph = setup_state.graph
+  let options = setup_state.options
+  let use_subgraph_redirects = setup_state.use_subgraph_redirects
+  let subgraph_entry_by_id = setup_state.subgraph_entry_by_id
+  let subgraph_exit_by_id = setup_state.subgraph_exit_by_id
+  let nodes_in_order = setup_state.nodes_in_order
+  let horizontal = setup_state.horizontal
+  let reverse = setup_state.reverse
+  let rank_phase_state = run_elk_layered_rank_phase(setup_state)
+  let rank_seed_state = rank_phase_state.rank_seed_state
+  let max_rank = rank_seed_state.max_rank
+  let rank_node_ids_by_rank = rank_phase_state.rank_node_ids_by_rank
+
+  let node_size_state = build_elk_layered_node_size_state(nodes_in_order)
+  let max_rank_size = compute_max_rank_size(rank_node_ids_by_rank, max_rank)
+  let spacing_state = run_elk_layered_spacing_phase(
+    options, horizontal, max_rank_size, node_size_state,
+  )
+  let padding = spacing_state.padding
+  let node_spacing = spacing_state.node_spacing
+  let layer_spacing = spacing_state.layer_spacing
+  let placement_state = run_elk_layered_node_placement_phase(
+    setup_state, rank_phase_state, node_size_state, spacing_state,
+  )
+  let positioned_nodes = placement_state.positioned_nodes
+  let positioned_by_id = placement_state.positioned_by_id
+  let node_horizontal_by_id = placement_state.node_horizontal_by_id
+  let max_right = placement_state.max_right
+  let max_bottom = placement_state.max_bottom
   let positioned_graph = finalize_elk_layered_positioned_graph(
     graph, padding, horizontal, reverse, node_spacing, layer_spacing, use_subgraph_redirects,
     subgraph_exit_by_id, subgraph_entry_by_id, routing_policy, positioned_nodes,
