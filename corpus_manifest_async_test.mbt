@@ -46,12 +46,6 @@ fn parse_manifest_int(content : String, key : String) -> Int? {
 
 ///|
 #cfg(target="native")
-async fn count_txt_files(dir : String) -> Int {
-  @fs.readdir(dir, sort=true).filter(name => name.has_suffix(".txt")).length()
-}
-
-///|
-#cfg(target="native")
 async test "Corpus manifest matches file-backed corpus counts" {
   let manifest = @fs.read_file("testdata/corpus/manifest.json").text()
   let total_cases = parse_manifest_int(manifest, "totalCases")
@@ -73,8 +67,18 @@ async test "Corpus manifest matches file-backed corpus counts" {
 
       assert_eq(total, input_count)
       assert_eq(supported, supported_count)
-      assert_eq(ascii_count, count_txt_files("testdata/ascii"))
-      assert_eq(unicode_count, count_txt_files("testdata/unicode"))
+      assert_eq(
+        ascii_count,
+        @fs.readdir("testdata/ascii", sort=true)
+        .filter(name => name.has_suffix(".txt"))
+        .length(),
+      )
+      assert_eq(
+        unicode_count,
+        @fs.readdir("testdata/unicode", sort=true)
+        .filter(name => name.has_suffix(".txt"))
+        .length(),
+      )
     }
     _ => fail("invalid corpus manifest fields")
   }
