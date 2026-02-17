@@ -174,7 +174,7 @@ pub(all) struct DiagramColors {
   muted : String?
   surface : String?
   border : String?
-} derive(Eq, Show)
+}
 
 ///|
 /// Default diagram colors used when options omit `bg`/`fg`.

@@ -73,7 +73,21 @@ test "Theme parser is case-insensitive and unknown-safe" {
   assert_true(parse_theme_name("tokyo\t night") is Some(_))
   assert_true(parse_theme_name(github_newline_dark()) is Some(_))
   assert_true(parse_theme_name("not-a-theme") is None)
-  assert_eq(theme_by_name("DEFAULT"), theme_by_name("zinc-light"))
+  let default_theme = match theme_by_name("DEFAULT") {
+    Some(found) => found
+    None => fail("missing default theme")
+  }
+  let zinc_light = match theme_by_name("zinc-light") {
+    Some(found) => found
+    None => fail("missing zinc-light theme")
+  }
+  assert_eq(default_theme.bg, zinc_light.bg)
+  assert_eq(default_theme.fg, zinc_light.fg)
+  assert_eq(default_theme.line, zinc_light.line)
+  assert_eq(default_theme.accent, zinc_light.accent)
+  assert_eq(default_theme.muted, zinc_light.muted)
+  assert_eq(default_theme.surface, zinc_light.surface)
+  assert_eq(default_theme.border, zinc_light.border)
 }
 
 ///|
@@ -85,7 +99,7 @@ test "Theme lookup by name returns colors or none" {
   assert_eq(github_dark.bg, "#0d1117")
   assert_eq(github_dark.fg, "#e6edf3")
   assert_eq(github_dark.accent, Some("#4493f8"))
-  assert_eq(theme_by_name("github-neon"), None)
+  assert_true(theme_by_name("github-neon") is None)
 }
 
 ///|

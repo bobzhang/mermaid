@@ -29,8 +29,6 @@ pub(all) struct DiagramColors {
   border : String?
 }
 pub fn DiagramColors::default() -> Self
-pub impl Eq for DiagramColors
-pub impl Show for DiagramColors
 
 pub(all) enum DiagramKind {
   Flowchart
