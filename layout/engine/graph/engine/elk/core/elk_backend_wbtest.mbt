@@ -234,9 +234,6 @@ test "elk setup phase keeps state-graph spacing unset for state-specific placeme
 
 ///|
 test "elk layered pipeline applies only to non-state flowcharts" {
-  assert_eq(elk_should_use_layered_pipeline(flow_graph()), true)
-  assert_eq(elk_should_use_layered_pipeline(large_flow_graph()), true)
-  assert_eq(elk_should_use_layered_pipeline(simple_state_graph()), false)
   assert_eq(elk_graph_supports_layered_pipeline(flow_graph()), true)
   assert_eq(elk_graph_supports_layered_pipeline(large_flow_graph()), true)
   assert_eq(elk_graph_supports_layered_pipeline(simple_state_graph()), false)

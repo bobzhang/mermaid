@@ -223,9 +223,3 @@ fn run_elk_layered_flow_backend(
   ]
   { positioned_graph, phase_snapshots }
 }
-
-///|
-/// Returns true when the ELK layered pipeline should be used.
-fn elk_should_use_layered_pipeline(graph : MermaidGraph) -> Bool {
-  should_use_elk_layered_pipeline(graph)
-}

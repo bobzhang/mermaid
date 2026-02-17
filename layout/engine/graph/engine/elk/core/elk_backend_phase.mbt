@@ -40,7 +40,7 @@ fn layout_graph_elk_backend_with_mode(
   let use_layered_pipeline = if force_layered_pipeline {
     elk_graph_supports_layered_pipeline(request.graph)
   } else {
-    elk_should_use_layered_pipeline(request.graph)
+    elk_graph_supports_layered_pipeline(request.graph)
   }
   if use_layered_pipeline {
     run_elk_layered_flow_backend(tuned_request, elk_policy)

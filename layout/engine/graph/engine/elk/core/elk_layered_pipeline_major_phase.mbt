@@ -296,8 +296,3 @@ fn elk_graph_supports_layered_pipeline(graph : MermaidGraph) -> Bool {
   !@layout_engine_graph_internal_core.is_state_graph(graph) &&
   !@layout_engine_graph_internal_core.is_class_or_er_graph(graph)
 }
-
-///|
-fn should_use_elk_layered_pipeline(graph : MermaidGraph) -> Bool {
-  elk_graph_supports_layered_pipeline(graph)
-}
