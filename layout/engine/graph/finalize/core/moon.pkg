@@ -1,7 +1,0 @@
-import {
-  "bobzhang/beautiful_mermaid/model" @model,
-}
-
-import {
-  "moonbitlang/core/test",
-} for "test"
