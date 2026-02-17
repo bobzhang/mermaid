@@ -34,11 +34,9 @@ async fn repos_markdown_files_from(
 ///|
 #cfg(target="native")
 fn repos_skip_markdown_walk_dir(path : String) -> Bool {
-  let parts = path.split("/").to_array()
-  let name = if parts.length() == 0 {
-    path
-  } else {
-    parts[parts.length() - 1].to_string()
+  let name = match path.rev_find("/") {
+    Some(index) => (try! path[index + 1:]).to_string()
+    None => path
   }
   name == "node_modules" ||
   name == ".git" ||
