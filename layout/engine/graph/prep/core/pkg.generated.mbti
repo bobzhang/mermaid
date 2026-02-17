@@ -1,0 +1,23 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "bobzhang/beautiful_mermaid/layout/engine/graph/prep/core"
+
+import {
+  "bobzhang/beautiful_mermaid/model",
+}
+
+// Values
+pub fn prepare_graph_inputs(@model.MermaidGraph, Bool) -> GraphPrepResult
+
+// Errors
+
+// Types and methods
+pub struct GraphPrepResult {
+  subgraph_entry_by_id : Map[String, String]
+  subgraph_exit_by_id : Map[String, String]
+  nodes_in_order : Array[@model.MermaidNode]
+}
+
+// Type aliases
+
+// Traits
+

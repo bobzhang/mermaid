@@ -23,7 +23,9 @@ fn layout_graph_legacy_with_subgraph_redirects(
     !horizontal &&
     graph.subgraphs.length() == 0
 
-  let graph_inputs = prepare_legacy_graph_inputs(graph, use_subgraph_redirects)
+  let graph_inputs = @layout_engine_graph_prep_core.prepare_graph_inputs(
+    graph, use_subgraph_redirects,
+  )
   let subgraph_entry_by_id = graph_inputs.subgraph_entry_by_id
   let subgraph_exit_by_id = graph_inputs.subgraph_exit_by_id
   let nodes_in_order = reorder_nodes_for_flow_layout(
