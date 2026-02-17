@@ -39,16 +39,15 @@ fn parse_sequence_participant_declaration(
   actor_order : Array[String],
   actor_kinds : Map[String, SequenceParticipantKind],
 ) -> Bool {
-  let lower_line = line.to_lower()
-  let mut rest = ""
-  let kind = if lower_line.has_prefix("participant ") {
-    rest = @parser_common_engine_core.trim_owned((try! line[12:]).to_string())
-    SequenceParticipantKind::Participant
-  } else if lower_line.has_prefix("actor ") {
-    rest = @parser_common_engine_core.trim_owned((try! line[6:]).to_string())
-    Actor
-  } else {
-    return false
+  let (kind, rest) = lexmatch line[:] {
+    ("(?i:participant) ", rest_part) =>
+      (
+        SequenceParticipantKind::Participant,
+        @parser_common_engine_core.trim_owned(rest_part.to_string()),
+      )
+    ("(?i:actor) ", rest_part) =>
+      (Actor, @parser_common_engine_core.trim_owned(rest_part.to_string()))
+    _ => return false
   }
 
   if rest == "" {
@@ -147,36 +146,38 @@ fn parse_sequence_note_line(
   notes : Array[SequenceNote],
   after_index : Int,
 ) -> Bool {
-  let lower_line = line.to_lower()
-  if !lower_line.has_prefix("note ") {
-    return false
-  }
-
-  lexmatch (try! line[5:]) {
-    (placement_part, ":", text_part) => {
-      let placement = placement_part.trim()
-      let (position, raw_actors) = lexmatch placement {
-        ("(?i:left of) ", rest) =>
-          (SequenceNotePosition::Left, rest.trim().to_string())
-        ("(?i:right of) ", rest) => (Right, rest.trim().to_string())
-        ("(?i:over) ", rest) => (Over, rest.trim().to_string())
-        _ => return true
-      }
-      let text = text_part.trim().to_string()
-      let actor_ids : Array[String] = []
-      for raw_actor in raw_actors.split(",") {
-        let actor_id = raw_actor.trim().to_string()
-        if actor_id != "" {
-          ensure_sequence_participant(nodes, actor_order, actor_kinds, actor_id)
-          actor_ids.push(actor_id)
+  lexmatch line[:] {
+    ("(?i:note) ", rest) =>
+      lexmatch rest {
+        (placement_part, ":", text_part) => {
+          let placement = placement_part.trim()
+          let (position, raw_actors) = lexmatch placement {
+            ("(?i:left of) ", note_rest) =>
+              (SequenceNotePosition::Left, note_rest.trim().to_string())
+            ("(?i:right of) ", note_rest) =>
+              (Right, note_rest.trim().to_string())
+            ("(?i:over) ", note_rest) => (Over, note_rest.trim().to_string())
+            _ => return true
+          }
+          let text = text_part.trim().to_string()
+          let actor_ids : Array[String] = []
+          for raw_actor in raw_actors.split(",") {
+            let actor_id = raw_actor.trim().to_string()
+            if actor_id != "" {
+              ensure_sequence_participant(
+                nodes, actor_order, actor_kinds, actor_id,
+              )
+              actor_ids.push(actor_id)
+            }
+          }
+          if actor_ids.length() > 0 && text != "" {
+            notes.push({ actor_ids, text, position, after_index })
+          }
+          true
         }
+        _ => true
       }
-      if actor_ids.length() > 0 && text != "" {
-        notes.push({ actor_ids, text, position, after_index })
-      }
-      true
-    }
-    _ => true
+    _ => false
   }
 }
 
