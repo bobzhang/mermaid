@@ -119,6 +119,41 @@ fn fanout_graph() -> @model.MermaidGraph {
 }
 
 ///|
+fn simple_state_graph() -> @model.MermaidGraph {
+  let nodes : Map[String, @model.MermaidNode] = {
+    "start": { id: "start", label: "start", shape: StateStart },
+    "A": { id: "A", label: "A", shape: Circle },
+    "end": { id: "end", label: "end", shape: StateEnd },
+  }
+  let edges : Array[@model.MermaidEdge] = [
+    flow_edge("start", "A"),
+    flow_edge("A", "end"),
+  ]
+  let class_defs : Map[String, Map[String, String]] = {}
+  let class_assignments : Map[String, String] = {}
+  let node_styles : Map[String, Map[String, String]] = {}
+  let sequence_actor_kinds : Map[String, @model.SequenceParticipantKind] = {}
+  let sequence_blocks : Array[@model.SequenceBlock] = []
+  let sequence_notes : Array[@model.SequenceNote] = []
+  let sequence_activation_commands : Array[@model.SequenceActivationCommand] = []
+  {
+    diagram_kind: State,
+    direction: LR,
+    nodes,
+    edges,
+    subgraphs: [],
+    class_defs,
+    class_assignments,
+    node_styles,
+    sequence_actor_order: [],
+    sequence_actor_kinds,
+    sequence_blocks,
+    sequence_notes,
+    sequence_activation_commands,
+  }
+}
+
+///|
 test "elk setup phase derives structure-aware spacing and preserves explicit spacing" {
   let graph = fanout_graph()
   let defaults = @model.RenderOptions::default()
@@ -150,6 +185,16 @@ test "elk setup phase derives structure-aware spacing and preserves explicit spa
   let tuned_explicit = derive_elk_render_options(graph, explicit_options)
   assert_eq(tuned_explicit.node_spacing, Some(88))
   assert_eq(tuned_explicit.layer_spacing, Some(66))
+}
+
+///|
+test "elk setup phase keeps state-graph spacing unset for state-specific placement rules" {
+  let tuned = derive_elk_render_options(
+    simple_state_graph(),
+    @model.RenderOptions::default(),
+  )
+  assert_eq(tuned.node_spacing, None)
+  assert_eq(tuned.layer_spacing, None)
 }
 
 ///|

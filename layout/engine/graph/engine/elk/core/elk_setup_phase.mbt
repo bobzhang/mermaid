@@ -158,23 +158,36 @@ pub fn derive_elk_render_options(
   options : RenderOptions,
 ) -> RenderOptions {
   let complexity = graph_complexity(graph)
+  let state_graph = @layout_engine_graph_internal_core.is_state_graph(graph)
   let resolved_node_spacing = match options.node_spacing {
-    Some(spacing) => spacing
+    Some(spacing) => Some(spacing)
     None =>
-      elk_node_spacing(
-        @layout_engine_graph_internal_core.resolve_node_spacing(options),
-        graph,
-        complexity,
-      )
+      if state_graph {
+        None
+      } else {
+        Some(
+          elk_node_spacing(
+            @layout_engine_graph_internal_core.resolve_node_spacing(options),
+            graph,
+            complexity,
+          ),
+        )
+      }
   }
   let resolved_layer_spacing = match options.layer_spacing {
-    Some(spacing) => spacing
+    Some(spacing) => Some(spacing)
     None =>
-      elk_layer_spacing(
-        @layout_engine_graph_internal_core.resolve_layer_spacing(options),
-        graph,
-        complexity,
-      )
+      if state_graph {
+        None
+      } else {
+        Some(
+          elk_layer_spacing(
+            @layout_engine_graph_internal_core.resolve_layer_spacing(options),
+            graph,
+            complexity,
+          ),
+        )
+      }
   }
   {
     bg: options.bg,
@@ -186,8 +199,8 @@ pub fn derive_elk_render_options(
     border: options.border,
     font: options.font,
     padding: options.padding,
-    node_spacing: Some(resolved_node_spacing),
-    layer_spacing: Some(resolved_layer_spacing),
+    node_spacing: resolved_node_spacing,
+    layer_spacing: resolved_layer_spacing,
     transparent: options.transparent,
     layout_engine: options.layout_engine,
   }
