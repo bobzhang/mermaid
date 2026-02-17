@@ -67,7 +67,8 @@ fn repos_extract_mermaid_blocks(markdown : String) -> Array[String] {
         block_lines = []
       }
     } else if trimmed == "```" || trimmed == "~~~" {
-      blocks.push(block_lines.iter().join("\n") + "\n")
+      let block_body = block_lines.iter().join("\n")
+      blocks.push("\{block_body}\n")
       in_block = false
     } else {
       block_lines.push(line.to_string())
