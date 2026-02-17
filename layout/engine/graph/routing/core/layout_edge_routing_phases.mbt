@@ -2839,7 +2839,20 @@ fn label_route_score_is_better(
 
 ///|
 fn points_signature(points : Array[Point]) -> String {
-  points.iter().map(point => "\{point.x},\{point.y}").join("|")
+  if points.length() == 0 {
+    return ""
+  }
+  let sb = StringBuilder::new()
+  for i in 0..<points.length() {
+    if i > 0 {
+      sb.write_string("|")
+    }
+    let point = points[i]
+    sb.write_string(point.x.to_string())
+    sb.write_string(",")
+    sb.write_string(point.y.to_string())
+  }
+  sb.to_string()
 }
 
 ///|
