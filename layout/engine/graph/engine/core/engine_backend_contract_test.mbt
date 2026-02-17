@@ -71,19 +71,25 @@ fn stress_graph() -> @model.MermaidGraph {
 }
 
 ///|
+fn run_backend_with_snapshots(
+  graph : @model.MermaidGraph,
+  options : @model.RenderOptions,
+  engine : @model.LayoutEngine,
+) -> @layout_engine_graph_contract_core.GraphLayoutBackendResult {
+  @layout_engine_graph_engine_profile_core.run_graph_layout_engine_backend(
+    { graph, options, use_subgraph_redirects: true, compact_fanin: false },
+    engine,
+  )
+}
+
+///|
 test "engine backends keep phase snapshot invariants on stress graph" {
   let graph = stress_graph()
   let expected_nodes = graph.nodes.length()
   let expected_edges = graph.edges.length()
   let options = @model.RenderOptions::default()
 
-  let legacy_backend = dispatch_graph_layout_engine_backend(
-    graph,
-    options,
-    true,
-    false,
-    Legacy,
-  )
+  let legacy_backend = run_backend_with_snapshots(graph, options, Legacy)
   let legacy_snapshots = legacy_backend.phase_snapshots
   assert_eq(legacy_snapshots.length(), 3)
   assert_eq(legacy_snapshots[0].phase, "setup")
@@ -98,13 +104,7 @@ test "engine backends keep phase snapshot invariants on stress graph" {
   assert_eq(legacy_backend.positioned_graph.nodes.length(), expected_nodes)
   assert_eq(legacy_backend.positioned_graph.edges.length(), expected_edges)
 
-  let dagre_backend = dispatch_graph_layout_engine_backend(
-    graph,
-    options,
-    true,
-    false,
-    DagreParity,
-  )
+  let dagre_backend = run_backend_with_snapshots(graph, options, DagreParity)
   let dagre_snapshots = dagre_backend.phase_snapshots
   assert_eq(dagre_snapshots.length(), 3)
   assert_eq(dagre_snapshots[0].phase, "setup")
@@ -119,13 +119,7 @@ test "engine backends keep phase snapshot invariants on stress graph" {
   assert_eq(dagre_backend.positioned_graph.nodes.length(), expected_nodes)
   assert_eq(dagre_backend.positioned_graph.edges.length(), expected_edges)
 
-  let elk_backend = dispatch_graph_layout_engine_backend(
-    graph,
-    options,
-    true,
-    false,
-    Elk,
-  )
+  let elk_backend = run_backend_with_snapshots(graph, options, Elk)
   let elk_snapshots = elk_backend.phase_snapshots
   assert_eq(elk_snapshots.length(), 3)
   assert_eq(elk_snapshots[0].phase, "setup")
@@ -140,11 +134,9 @@ test "engine backends keep phase snapshot invariants on stress graph" {
   assert_eq(elk_backend.positioned_graph.nodes.length(), expected_nodes)
   assert_eq(elk_backend.positioned_graph.edges.length(), expected_edges)
 
-  let elk_layered_backend = dispatch_graph_layout_engine_backend(
+  let elk_layered_backend = run_backend_with_snapshots(
     graph,
     options,
-    true,
-    false,
     ElkLayered,
   )
   let elk_layered_snapshots = elk_layered_backend.phase_snapshots

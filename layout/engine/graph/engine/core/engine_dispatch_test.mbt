@@ -91,11 +91,13 @@ test "engine dispatch returns valid layouts for legacy dagre and elk backends" {
 ///|
 test "engine backend dispatch exposes phase snapshots" {
   let graph = flow_graph()
-  let backend = dispatch_graph_layout_engine_backend(
-    graph,
-    @model.RenderOptions::default(),
-    true,
-    false,
+  let backend = @layout_engine_graph_engine_profile_core.run_graph_layout_engine_backend(
+    {
+      graph,
+      options: @model.RenderOptions::default(),
+      use_subgraph_redirects: true,
+      compact_fanin: false,
+    },
     DagreParity,
   )
   assert_eq(backend.phase_snapshots.length(), 3)

@@ -8,8 +8,6 @@ import {
 // Values
 pub fn dispatch_graph_layout_engine(@model.MermaidGraph, @model.RenderOptions, Bool, Bool, @model.LayoutEngine) -> @model.PositionedGraph
 
-pub fn dispatch_graph_layout_engine_backend(@model.MermaidGraph, @model.RenderOptions, Bool, Bool, @model.LayoutEngine) -> @bobzhang/beautiful_mermaid/layout/engine/graph/contract/core.GraphLayoutBackendResult
-
 // Errors
 
 // Types and methods
