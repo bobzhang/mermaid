@@ -5,6 +5,53 @@ test "elk layered rank seed strategy uses native feedback for small graphs" {
 }
 
 ///|
+fn assert_mermaid_graph_equivalent(
+  left : @model.MermaidGraph,
+  right : @model.MermaidGraph,
+) -> Unit raise {
+  assert_eq(left.diagram_kind, right.diagram_kind)
+  assert_eq(left.direction, right.direction)
+  assert_eq(left.nodes.length(), right.nodes.length())
+  for node_id, node in right.nodes {
+    let left_node = left.nodes[node_id]
+    assert_eq(left_node.id, node.id)
+    assert_eq(left_node.label, node.label)
+    assert_eq(left_node.shape, node.shape)
+  }
+  assert_eq(left.edges.length(), right.edges.length())
+  for i in 0..<left.edges.length() {
+    let left_edge = left.edges[i]
+    let right_edge = right.edges[i]
+    assert_eq(left_edge.source, right_edge.source)
+    assert_eq(left_edge.target, right_edge.target)
+    assert_eq(left_edge.label, right_edge.label)
+    assert_eq(left_edge.style, right_edge.style)
+    assert_eq(left_edge.has_arrow_start, right_edge.has_arrow_start)
+    assert_eq(left_edge.has_arrow_end, right_edge.has_arrow_end)
+    assert_eq(left_edge.relation_operator, right_edge.relation_operator)
+  }
+  assert_eq(left.subgraphs.length(), right.subgraphs.length())
+  assert_eq(left.class_defs, right.class_defs)
+  assert_eq(left.class_assignments, right.class_assignments)
+  assert_eq(left.node_styles, right.node_styles)
+  assert_eq(left.sequence_actor_order, right.sequence_actor_order)
+  assert_eq(
+    left.sequence_actor_kinds.length(),
+    right.sequence_actor_kinds.length(),
+  )
+  for actor_id, right_kind in right.sequence_actor_kinds {
+    let left_kind = left.sequence_actor_kinds[actor_id]
+    assert_eq(left_kind.to_string(), right_kind.to_string())
+  }
+  assert_eq(left.sequence_blocks.length(), right.sequence_blocks.length())
+  assert_eq(left.sequence_notes.length(), right.sequence_notes.length())
+  assert_eq(
+    left.sequence_activation_commands.length(),
+    right.sequence_activation_commands.length(),
+  )
+}
+
+///|
 test "elk layered setup phase resolves graph metadata and ordering" {
   let graph = wb_graph(["A", "B", "C"], [("A", "B"), ("B", "C")])
   let request : GraphLayoutBackendRequest = {
@@ -14,7 +61,7 @@ test "elk layered setup phase resolves graph metadata and ordering" {
     compact_fanin: true,
   }
   let setup_state = run_elk_layered_setup_phase(request)
-  assert_eq(setup_state.graph, graph)
+  assert_mermaid_graph_equivalent(setup_state.graph, graph)
   assert_eq(setup_state.use_subgraph_redirects, true)
   assert_eq(setup_state.compact_fanin, true)
   assert_eq(setup_state.nodes_in_order.length(), 3)

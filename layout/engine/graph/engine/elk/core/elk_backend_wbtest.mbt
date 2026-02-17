@@ -202,11 +202,141 @@ fn backend_snapshot_equal(
 }
 
 ///|
+fn positioned_sequence_lifeline_equal(
+  left : @model.PositionedSequenceLifeline,
+  right : @model.PositionedSequenceLifeline,
+) -> Bool {
+  left.actor_id == right.actor_id &&
+  left.x == right.x &&
+  left.top_y == right.top_y &&
+  left.bottom_y == right.bottom_y
+}
+
+///|
+fn positioned_sequence_activation_equal(
+  left : @model.PositionedSequenceActivation,
+  right : @model.PositionedSequenceActivation,
+) -> Bool {
+  left.actor_id == right.actor_id &&
+  left.x == right.x &&
+  left.top_y == right.top_y &&
+  left.bottom_y == right.bottom_y &&
+  left.width == right.width
+}
+
+///|
+fn positioned_sequence_block_divider_equal(
+  left : @model.PositionedSequenceBlockDivider,
+  right : @model.PositionedSequenceBlockDivider,
+) -> Bool {
+  left.y == right.y && left.label == right.label
+}
+
+///|
+fn positioned_sequence_block_equal(
+  left : @model.PositionedSequenceBlock,
+  right : @model.PositionedSequenceBlock,
+) -> Bool {
+  if left.block_type != right.block_type ||
+    left.label != right.label ||
+    left.x != right.x ||
+    left.y != right.y ||
+    left.width != right.width ||
+    left.height != right.height {
+    return false
+  }
+  if left.dividers.length() != right.dividers.length() {
+    return false
+  }
+  for i in 0..<left.dividers.length() {
+    if !positioned_sequence_block_divider_equal(
+        left.dividers[i],
+        right.dividers[i],
+      ) {
+      return false
+    }
+  }
+  true
+}
+
+///|
+fn positioned_sequence_note_equal(
+  left : @model.PositionedSequenceNote,
+  right : @model.PositionedSequenceNote,
+) -> Bool {
+  left.text == right.text &&
+  left.x == right.x &&
+  left.y == right.y &&
+  left.width == right.width &&
+  left.height == right.height
+}
+
+///|
+fn positioned_graph_equal(
+  left : @model.PositionedGraph,
+  right : @model.PositionedGraph,
+) -> Bool {
+  if left.width != right.width || left.height != right.height {
+    return false
+  }
+  if left.nodes != right.nodes ||
+    left.edges != right.edges ||
+    left.groups != right.groups {
+    return false
+  }
+  if left.sequence_lifelines.length() != right.sequence_lifelines.length() {
+    return false
+  }
+  for i in 0..<left.sequence_lifelines.length() {
+    if !positioned_sequence_lifeline_equal(
+        left.sequence_lifelines[i],
+        right.sequence_lifelines[i],
+      ) {
+      return false
+    }
+  }
+  if left.sequence_activations.length() != right.sequence_activations.length() {
+    return false
+  }
+  for i in 0..<left.sequence_activations.length() {
+    if !positioned_sequence_activation_equal(
+        left.sequence_activations[i],
+        right.sequence_activations[i],
+      ) {
+      return false
+    }
+  }
+  if left.sequence_blocks.length() != right.sequence_blocks.length() {
+    return false
+  }
+  for i in 0..<left.sequence_blocks.length() {
+    if !positioned_sequence_block_equal(
+        left.sequence_blocks[i],
+        right.sequence_blocks[i],
+      ) {
+      return false
+    }
+  }
+  if left.sequence_notes.length() != right.sequence_notes.length() {
+    return false
+  }
+  for i in 0..<left.sequence_notes.length() {
+    if !positioned_sequence_note_equal(
+        left.sequence_notes[i],
+        right.sequence_notes[i],
+      ) {
+      return false
+    }
+  }
+  true
+}
+
+///|
 fn backend_result_equal(
   left : @layout_engine_graph_contract_core.GraphLayoutBackendResult,
   right : @layout_engine_graph_contract_core.GraphLayoutBackendResult,
 ) -> Bool {
-  if left.positioned_graph != right.positioned_graph {
+  if !positioned_graph_equal(left.positioned_graph, right.positioned_graph) {
     return false
   }
   let left_snapshots = left.phase_snapshots

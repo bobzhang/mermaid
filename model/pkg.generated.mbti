@@ -78,8 +78,6 @@ pub(all) struct MermaidEdge {
   has_arrow_end : Bool
   relation_operator : String?
 }
-pub impl Eq for MermaidEdge
-pub impl Show for MermaidEdge
 
 pub(all) struct MermaidGraph {
   diagram_kind : DiagramKind
@@ -96,16 +94,12 @@ pub(all) struct MermaidGraph {
   sequence_notes : Array[SequenceNote]
   sequence_activation_commands : Array[SequenceActivationCommand]
 }
-pub impl Eq for MermaidGraph
-pub impl Show for MermaidGraph
 
 pub(all) struct MermaidNode {
   id : String
   label : String
   shape : NodeShape
 }
-pub impl Eq for MermaidNode
-pub impl Show for MermaidNode
 
 pub(all) struct MermaidSubgraph {
   id : String
@@ -114,8 +108,6 @@ pub(all) struct MermaidSubgraph {
   children : Array[MermaidSubgraph]
   direction : Direction?
 }
-pub impl Eq for MermaidSubgraph
-pub impl Show for MermaidSubgraph
 
 pub(all) enum NodeShape {
   Rectangle
@@ -171,8 +163,6 @@ pub(all) struct PositionedGraph {
   sequence_blocks : Array[PositionedSequenceBlock]
   sequence_notes : Array[PositionedSequenceNote]
 }
-pub impl Eq for PositionedGraph
-pub impl Show for PositionedGraph
 
 pub(all) struct PositionedGroup {
   id : String
@@ -206,8 +196,6 @@ pub(all) struct PositionedSequenceActivation {
   bottom_y : Int
   width : Int
 }
-pub impl Eq for PositionedSequenceActivation
-pub impl Show for PositionedSequenceActivation
 
 pub(all) struct PositionedSequenceBlock {
   block_type : SequenceBlockType
@@ -218,15 +206,11 @@ pub(all) struct PositionedSequenceBlock {
   height : Int
   dividers : Array[PositionedSequenceBlockDivider]
 }
-pub impl Eq for PositionedSequenceBlock
-pub impl Show for PositionedSequenceBlock
 
 pub(all) struct PositionedSequenceBlockDivider {
   y : Int
   label : String
 }
-pub impl Eq for PositionedSequenceBlockDivider
-pub impl Show for PositionedSequenceBlockDivider
 
 pub(all) struct PositionedSequenceLifeline {
   actor_id : String
@@ -234,8 +218,6 @@ pub(all) struct PositionedSequenceLifeline {
   top_y : Int
   bottom_y : Int
 }
-pub impl Eq for PositionedSequenceLifeline
-pub impl Show for PositionedSequenceLifeline
 
 pub(all) struct PositionedSequenceNote {
   text : String
@@ -244,8 +226,6 @@ pub(all) struct PositionedSequenceNote {
   width : Int
   height : Int
 }
-pub impl Eq for PositionedSequenceNote
-pub impl Show for PositionedSequenceNote
 
 pub(all) struct RenderOptions {
   bg : String?
@@ -269,8 +249,6 @@ pub(all) struct SequenceActivationCommand {
   activate : Bool
   after_index : Int
 }
-pub impl Eq for SequenceActivationCommand
-pub impl Show for SequenceActivationCommand
 
 pub(all) struct SequenceBlock {
   block_type : SequenceBlockType
@@ -279,15 +257,11 @@ pub(all) struct SequenceBlock {
   end_index : Int
   dividers : Array[SequenceBlockDivider]
 }
-pub impl Eq for SequenceBlock
-pub impl Show for SequenceBlock
 
 pub(all) struct SequenceBlockDivider {
   index : Int
   label : String
 }
-pub impl Eq for SequenceBlockDivider
-pub impl Show for SequenceBlockDivider
 
 pub(all) enum SequenceBlockType {
   Loop
@@ -307,22 +281,18 @@ pub(all) struct SequenceNote {
   position : SequenceNotePosition
   after_index : Int
 }
-pub impl Eq for SequenceNote
-pub impl Show for SequenceNote
 
 pub(all) enum SequenceNotePosition {
   Left
   Right
   Over
 }
-pub impl Eq for SequenceNotePosition
 pub impl Show for SequenceNotePosition
 
 pub(all) enum SequenceParticipantKind {
   Participant
   Actor
 }
-pub impl Eq for SequenceParticipantKind
 pub impl Show for SequenceParticipantKind
 
 // Type aliases

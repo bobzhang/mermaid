@@ -61,7 +61,7 @@ pub(all) struct MermaidNode {
   id : String
   label : String
   shape : NodeShape
-} derive(Eq, Show)
+}
 
 ///|
 /// Parsed logical edge before layout.
@@ -73,7 +73,7 @@ pub(all) struct MermaidEdge {
   has_arrow_start : Bool
   has_arrow_end : Bool
   relation_operator : String?
-} derive(Eq, Show)
+}
 
 ///|
 /// Parsed subgraph/composite block with optional direction override.
@@ -83,14 +83,14 @@ pub(all) struct MermaidSubgraph {
   node_ids : Array[String]
   children : Array[MermaidSubgraph]
   direction : Direction?
-} derive(Eq, Show)
+}
 
 ///|
 /// Sequence participant visual kind.
 pub(all) enum SequenceParticipantKind {
   Participant
   Actor
-} derive(Eq, Show)
+} derive(Show)
 
 ///|
 /// Sequence block keyword kind (`alt`, `loop`, `par`, etc.).
@@ -109,7 +109,7 @@ pub(all) enum SequenceBlockType {
 pub(all) struct SequenceBlockDivider {
   index : Int
   label : String
-} derive(Eq, Show)
+}
 
 ///|
 /// Parsed sequence control block (`alt`, `opt`, `loop`, ...).
@@ -119,7 +119,7 @@ pub(all) struct SequenceBlock {
   start_index : Int
   end_index : Int
   dividers : Array[SequenceBlockDivider]
-} derive(Eq, Show)
+}
 
 ///|
 /// Placement mode for sequence notes.
@@ -127,7 +127,7 @@ pub(all) enum SequenceNotePosition {
   Left
   Right
   Over
-} derive(Eq, Show)
+} derive(Show)
 
 ///|
 /// Sequence note attached after a message index.
@@ -136,7 +136,7 @@ pub(all) struct SequenceNote {
   text : String
   position : SequenceNotePosition
   after_index : Int
-} derive(Eq, Show)
+}
 
 ///|
 /// Sequence activation/deactivation command positioned relative to messages.
@@ -144,7 +144,7 @@ pub(all) struct SequenceActivationCommand {
   actor_id : String
   activate : Bool
   after_index : Int
-} derive(Eq, Show)
+}
 
 ///|
 /// Normalized parsed Mermaid model consumed by layout/render stages.
@@ -162,7 +162,7 @@ pub(all) struct MermaidGraph {
   sequence_blocks : Array[SequenceBlock]
   sequence_notes : Array[SequenceNote]
   sequence_activation_commands : Array[SequenceActivationCommand]
-} derive(Eq, Show)
+}
 
 ///|
 /// SVG theme colors. `bg` and `fg` are required; the rest are optional enrichments.
@@ -305,7 +305,7 @@ pub(all) struct PositionedSequenceLifeline {
   x : Int
   top_y : Int
   bottom_y : Int
-} derive(Eq, Show)
+}
 
 ///|
 /// Sequence activation bar geometry.
@@ -315,14 +315,14 @@ pub(all) struct PositionedSequenceActivation {
   top_y : Int
   bottom_y : Int
   width : Int
-} derive(Eq, Show)
+}
 
 ///|
 /// Positioned divider label row inside a sequence block.
 pub(all) struct PositionedSequenceBlockDivider {
   y : Int
   label : String
-} derive(Eq, Show)
+}
 
 ///|
 /// Positioned sequence block container and divider rows.
@@ -334,7 +334,7 @@ pub(all) struct PositionedSequenceBlock {
   width : Int
   height : Int
   dividers : Array[PositionedSequenceBlockDivider]
-} derive(Eq, Show)
+}
 
 ///|
 /// Positioned sequence note box.
@@ -344,7 +344,7 @@ pub(all) struct PositionedSequenceNote {
   y : Int
   width : Int
   height : Int
-} derive(Eq, Show)
+}
 
 ///|
 /// Full positioned scene graph consumed by SVG and ASCII renderers.
@@ -358,4 +358,4 @@ pub(all) struct PositionedGraph {
   sequence_activations : Array[PositionedSequenceActivation]
   sequence_blocks : Array[PositionedSequenceBlock]
   sequence_notes : Array[PositionedSequenceNote]
-} derive(Eq, Show)
+}
