@@ -101,7 +101,7 @@ fn strip_node_metadata(raw_token : String) -> String {
   let token = raw_token.trim().to_string()
   match token.find("@{") {
     Some(index) =>
-      if token.has_suffix("}") {
+      if token is [.., .. "}"] {
         @parser_common_engine_core.trim_owned((try! token[:index]).to_string())
       } else {
         token
@@ -287,7 +287,7 @@ fn is_clean_flow_node_token(raw_token : String) -> Bool {
   let parsed = @parser_common_engine_core.parse_node_token(token)
   if parsed.shape == Asymmetric &&
     @parser_common_engine_core.is_plain_identifier(parsed.id) &&
-    token.has_suffix("]") {
+    token is [.., .. "]"] {
     return true
   }
   let mut square_depth = 0
@@ -1237,12 +1237,12 @@ fn parse_subgraph_start_line(line : String) -> MermaidSubgraph? {
 
   match rest.find("[") {
     Some(open_idx) =>
-      if rest.has_suffix("]") {
+      if rest is [.. without_close, .. "]"] {
         let raw_id = @parser_common_engine_core.trim_owned(
           (try! rest[:open_idx]).to_string(),
         )
         let raw_label = @parser_common_engine_core.trim_owned(
-          (try! rest[open_idx + 1:rest.length() - 1]).to_string(),
+          (try! without_close[open_idx + 1:]).to_string(),
         )
         if raw_id != "" && raw_label != "" && is_subgraph_id_token(raw_id) {
           return Some({
