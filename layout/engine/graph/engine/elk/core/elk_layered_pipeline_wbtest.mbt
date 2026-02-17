@@ -222,6 +222,63 @@ test "elk layered axis coordinate builder maps major/minor by orientation" {
 }
 
 ///|
+test "elk layered positioned-node builder applies defaults when dimensions/coords are missing" {
+  let graph = wb_graph(["A"], [])
+  let nodes_in_order : Array[@model.MermaidNode] = [wb_node("A")]
+  let width_by_node_id : Map[String, Int] = {}
+  let height_by_node_id : Map[String, Int] = {}
+  let x_by_node_id : Map[String, Int] = {}
+  let y_by_node_id : Map[String, Int] = {}
+  let (positioned_nodes, positioned_by_id) = build_positioned_nodes_from_axis_coords(
+    graph, nodes_in_order, width_by_node_id, height_by_node_id, x_by_node_id, y_by_node_id,
+    20,
+  )
+  assert_eq(positioned_nodes.length(), 1)
+  let positioned = positioned_nodes[0]
+  assert_eq(positioned.id, "A")
+  assert_eq(positioned.width, 70)
+  assert_eq(positioned.height, 44)
+  assert_eq(positioned.x, 90)
+  assert_eq(positioned.y, 90)
+  assert_eq(positioned.inline_style, None)
+  assert_eq(positioned_by_id.contains("A"), true)
+}
+
+///|
+test "elk layered horizontal map and extent helpers stay consistent" {
+  let positioned_nodes : Array[@model.PositionedNode] = [
+    {
+      id: "A",
+      label: "A",
+      shape: Rectangle,
+      x: 100,
+      y: 120,
+      width: 80,
+      height: 40,
+      inline_style: None,
+    },
+    {
+      id: "B",
+      label: "B",
+      shape: Rectangle,
+      x: 220,
+      y: 70,
+      width: 60,
+      height: 30,
+      inline_style: None,
+    },
+  ]
+  let horizontal_map = build_node_horizontal_by_id(positioned_nodes, true)
+  assert_eq(horizontal_map.get("A"), Some(true))
+  assert_eq(horizontal_map.get("B"), Some(true))
+  let (max_right, max_bottom) = positioned_nodes_layout_extent(
+    positioned_nodes, 10,
+  )
+  assert_eq(max_right, 250)
+  assert_eq(max_bottom, 140)
+}
+
+///|
 fn wb_rank_crossings_between(
   left_rank_node_ids : Array[String],
   right_rank_node_ids : Array[String],

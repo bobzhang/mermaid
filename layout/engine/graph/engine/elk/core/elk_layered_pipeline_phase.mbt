@@ -1733,6 +1733,63 @@ fn build_axis_coords_by_node_id(
 }
 
 ///|
+fn build_positioned_nodes_from_axis_coords(
+  graph : MermaidGraph,
+  nodes_in_order : Array[MermaidNode],
+  width_by_node_id : Map[String, Int],
+  height_by_node_id : Map[String, Int],
+  x_by_node_id : Map[String, Int],
+  y_by_node_id : Map[String, Int],
+  padding : Int,
+) -> (Array[PositionedNode], Map[String, PositionedNode]) {
+  let positioned_nodes : Array[PositionedNode] = []
+  let positioned_by_id : Map[String, PositionedNode] = {}
+  for node in nodes_in_order {
+    let width = option_int_or(width_by_node_id.get(node.id), 70)
+    let height = option_int_or(height_by_node_id.get(node.id), 44)
+    let positioned = PositionedNode::{
+      id: node.id,
+      label: node.label,
+      shape: node.shape,
+      x: option_int_or(x_by_node_id.get(node.id), padding + 70),
+      y: option_int_or(y_by_node_id.get(node.id), padding + 70),
+      width,
+      height,
+      inline_style: resolve_inline_style(graph, node.id),
+    }
+    positioned_nodes.push(positioned)
+    positioned_by_id[node.id] = positioned
+  }
+  (positioned_nodes, positioned_by_id)
+}
+
+///|
+fn build_node_horizontal_by_id(
+  positioned_nodes : Array[PositionedNode],
+  horizontal : Bool,
+) -> Map[String, Bool] {
+  let node_horizontal_by_id : Map[String, Bool] = {}
+  for node in positioned_nodes {
+    node_horizontal_by_id[node.id] = horizontal
+  }
+  node_horizontal_by_id
+}
+
+///|
+fn positioned_nodes_layout_extent(
+  positioned_nodes : Array[PositionedNode],
+  padding : Int,
+) -> (Int, Int) {
+  let mut max_right = padding
+  let mut max_bottom = padding
+  for node in positioned_nodes {
+    max_right = max_right.max(node.x + node.width / 2)
+    max_bottom = max_bottom.max(node.y + node.height / 2)
+  }
+  (max_right, max_bottom)
+}
+
+///|
 fn elk_graph_supports_layered_pipeline(graph : MermaidGraph) -> Bool {
   graph.diagram_kind is Flowchart &&
   !@layout_engine_graph_internal_core.is_state_graph(graph) &&
@@ -2102,38 +2159,17 @@ fn run_elk_layered_flow_backend(
     rank_node_ids_by_rank, max_rank, major_center_by_rank, minor_coord_by_node_id,
     padding, horizontal,
   )
-
-  let positioned_nodes : Array[PositionedNode] = []
-  let positioned_by_id : Map[String, PositionedNode] = {}
-  for node in nodes_in_order {
-    let width = option_int_or(width_by_node_id.get(node.id), 70)
-    let height = option_int_or(height_by_node_id.get(node.id), 44)
-    let positioned = PositionedNode::{
-      id: node.id,
-      label: node.label,
-      shape: node.shape,
-      x: option_int_or(x_by_node_id.get(node.id), padding + 70),
-      y: option_int_or(y_by_node_id.get(node.id), padding + 70),
-      width,
-      height,
-      inline_style: resolve_inline_style(graph, node.id),
-    }
-    positioned_nodes.push(positioned)
-    positioned_by_id[node.id] = positioned
-  }
-
+  let (positioned_nodes, positioned_by_id) = build_positioned_nodes_from_axis_coords(
+    graph, nodes_in_order, width_by_node_id, height_by_node_id, x_by_node_id, y_by_node_id,
+    padding,
+  )
   let positioned_index_by_id = positioned_index_by_node_id(positioned_nodes)
-  let node_horizontal_by_id : Map[String, Bool] = {}
-  for node in positioned_nodes {
-    node_horizontal_by_id[node.id] = horizontal
-  }
-
-  let mut max_right = padding
-  let mut max_bottom = padding
-  for node in positioned_nodes {
-    max_right = max_right.max(node.x + node.width / 2)
-    max_bottom = max_bottom.max(node.y + node.height / 2)
-  }
+  let node_horizontal_by_id = build_node_horizontal_by_id(
+    positioned_nodes, horizontal,
+  )
+  let (max_right, max_bottom) = positioned_nodes_layout_extent(
+    positioned_nodes, padding,
+  )
 
   let positioned_groups = @layout_engine_graph_group_core.build_legacy_positioned_groups(
     graph, padding, horizontal, reverse, false, node_spacing, layer_spacing, positioned_nodes,
