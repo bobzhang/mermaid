@@ -8,16 +8,16 @@ pub fn finalize_legacy_layout_from_placement(
   enable_target_boundary_ports : Bool,
   preserve_assigned_endpoint_ports : Bool,
 ) -> PositionedGraph {
-  let subgraph_entry_by_id = setup_state.subgraph_entry_by_id
-  let subgraph_exit_by_id = setup_state.subgraph_exit_by_id
-  let padding = setup_state.padding
-  let node_spacing = setup_state.node_spacing
-  let layer_spacing = setup_state.layer_spacing
-  let horizontal = setup_state.horizontal
-  let reverse = setup_state.reverse
-  let state_graph = setup_state.state_graph
-  let class_or_er_graph = setup_state.class_or_er_graph
-  let enhanced_horizontal_state_flow = setup_state.enhanced_horizontal_state_flow
+  let subgraph_entry_by_id = setup_state.subgraph_entry_by_id()
+  let subgraph_exit_by_id = setup_state.subgraph_exit_by_id()
+  let padding = setup_state.padding()
+  let node_spacing = setup_state.node_spacing()
+  let layer_spacing = setup_state.layer_spacing()
+  let horizontal = setup_state.horizontal()
+  let reverse = setup_state.reverse()
+  let state_graph = setup_state.state_graph()
+  let class_or_er_graph = setup_state.class_or_er_graph()
+  let enhanced_horizontal_state_flow = setup_state.enhanced_horizontal_state_flow()
 
   let positioned_nodes = placement_state.positioned_nodes()
   let positioned_by_id = placement_state.positioned_by_id()

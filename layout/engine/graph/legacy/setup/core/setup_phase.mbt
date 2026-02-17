@@ -1,6 +1,6 @@
 ///|
 /// Derived setup state consumed by legacy placement, grouping, and routing phases.
-pub(all) struct LegacyLayoutSetupState {
+pub struct LegacyLayoutSetupState {
   subgraph_entry_by_id : Map[String, String]
   subgraph_exit_by_id : Map[String, String]
   nodes_in_order : Array[MermaidNode]
@@ -14,6 +14,106 @@ pub(all) struct LegacyLayoutSetupState {
   flat_state_graph : Bool
   enhanced_horizontal_state_flow : Bool
   lane_state : LegacyLaneState
+}
+
+///|
+/// Returns subgraph entry-node redirects keyed by subgraph id.
+pub fn LegacyLayoutSetupState::subgraph_entry_by_id(
+  self : LegacyLayoutSetupState,
+) -> Map[String, String] {
+  self.subgraph_entry_by_id
+}
+
+///|
+/// Returns subgraph exit-node redirects keyed by subgraph id.
+pub fn LegacyLayoutSetupState::subgraph_exit_by_id(
+  self : LegacyLayoutSetupState,
+) -> Map[String, String] {
+  self.subgraph_exit_by_id
+}
+
+///|
+/// Returns normalized node order for downstream placement.
+pub fn LegacyLayoutSetupState::nodes_in_order(
+  self : LegacyLayoutSetupState,
+) -> Array[MermaidNode] {
+  self.nodes_in_order
+}
+
+///|
+/// Returns global graph padding used in layout stages.
+pub fn LegacyLayoutSetupState::padding(self : LegacyLayoutSetupState) -> Int {
+  self.padding
+}
+
+///|
+/// Returns horizontal node spacing used by downstream phases.
+pub fn LegacyLayoutSetupState::node_spacing(
+  self : LegacyLayoutSetupState,
+) -> Int {
+  self.node_spacing
+}
+
+///|
+/// Returns vertical layer spacing used by downstream phases.
+pub fn LegacyLayoutSetupState::layer_spacing(
+  self : LegacyLayoutSetupState,
+) -> Int {
+  self.layer_spacing
+}
+
+///|
+/// Returns whether layout direction is horizontal.
+pub fn LegacyLayoutSetupState::horizontal(
+  self : LegacyLayoutSetupState,
+) -> Bool {
+  self.horizontal
+}
+
+///|
+/// Returns whether layout direction is reversed.
+pub fn LegacyLayoutSetupState::reverse(self : LegacyLayoutSetupState) -> Bool {
+  self.reverse
+}
+
+///|
+/// Returns whether this diagram is a state graph.
+pub fn LegacyLayoutSetupState::state_graph(
+  self : LegacyLayoutSetupState,
+) -> Bool {
+  self.state_graph
+}
+
+///|
+/// Returns whether this diagram is a class or ER graph.
+pub fn LegacyLayoutSetupState::class_or_er_graph(
+  self : LegacyLayoutSetupState,
+) -> Bool {
+  self.class_or_er_graph
+}
+
+///|
+/// Returns whether state graph is eligible for flat-grid placement mode.
+pub fn LegacyLayoutSetupState::flat_state_graph(
+  self : LegacyLayoutSetupState,
+) -> Bool {
+  self.flat_state_graph
+}
+
+///|
+/// Returns whether enhanced horizontal state-flow lane behavior is enabled.
+pub fn LegacyLayoutSetupState::enhanced_horizontal_state_flow(
+  self : LegacyLayoutSetupState,
+) -> Bool {
+  self.enhanced_horizontal_state_flow
+}
+
+///|
+/// Returns computed lane/rank assignment state for placement.
+pub fn LegacyLayoutSetupState::lane_state(
+  self : LegacyLayoutSetupState,
+) -> LegacyLaneState {
+  self.lane_state
 }
 
 ///|
