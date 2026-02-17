@@ -1,15 +1,13 @@
 ///|
 fn run_layout_engine(
-  plan : LayoutGraphPlan,
+  graph : MermaidGraph,
+  use_subgraph_redirects : Bool,
+  compact_fanin : Bool,
   options : RenderOptions,
 ) -> PositionedGraph {
   let engine = @layout_engine_graph_plan_core.resolve_layout_engine(options)
   @layout_engine_graph_engine_core.dispatch_graph_layout_engine(
-    plan.graph,
-    options,
-    plan.use_subgraph_redirects,
-    plan.compact_fanin,
-    engine,
+    graph, options, use_subgraph_redirects, compact_fanin, engine,
   )
 }
 
@@ -20,7 +18,8 @@ pub fn execute_layout_plan(
   options : RenderOptions,
 ) -> PositionedGraph {
   match plan {
-    UseEngine(engine_plan) => run_layout_engine(engine_plan, options)
+    UseEngine(graph, use_subgraph_redirects, compact_fanin) =>
+      run_layout_engine(graph, use_subgraph_redirects, compact_fanin, options)
     UseSequence(graph) =>
       @layout_engine_sequence_core.layout_sequence_graph(graph, options)
     UseFlatStateAsciiGrid(graph) =>

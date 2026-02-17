@@ -1,15 +1,7 @@
 ///|
-/// Graph layout input passed to engine dispatch.
-pub(all) struct LayoutGraphPlan {
-  graph : MermaidGraph
-  use_subgraph_redirects : Bool
-  compact_fanin : Bool
-}
-
-///|
 /// Selected layout execution path for graph rendering.
 pub(all) enum LayoutExecutionPlan {
-  UseEngine(LayoutGraphPlan)
+  UseEngine(MermaidGraph, Bool, Bool)
   UseSequence(MermaidGraph)
   UseFlatStateAsciiGrid(MermaidGraph)
 }
@@ -21,15 +13,6 @@ pub fn resolve_layout_engine(options : RenderOptions) -> LayoutEngine {
     Some(engine) => engine
     None => Legacy
   }
-}
-
-///|
-fn build_layout_graph_plan(
-  graph : MermaidGraph,
-  use_subgraph_redirects : Bool,
-  compact_fanin : Bool,
-) -> LayoutGraphPlan {
-  { graph, use_subgraph_redirects, compact_fanin }
 }
 
 ///|
@@ -54,7 +37,7 @@ pub fn build_svg_layout_execution_plan(
   if graph_is_sequence_layout(graph) {
     return UseSequence(graph)
   }
-  UseEngine(build_layout_graph_plan(graph, true, false))
+  UseEngine(graph, true, false)
 }
 
 ///|
@@ -79,5 +62,5 @@ pub fn build_ascii_layout_execution_plan(
   }
 
   let state_composite_ascii_mode = state_graph && graph.subgraphs.length() > 0
-  UseEngine(build_layout_graph_plan(graph, !state_composite_ascii_mode, true))
+  UseEngine(graph, !state_composite_ascii_mode, true)
 }

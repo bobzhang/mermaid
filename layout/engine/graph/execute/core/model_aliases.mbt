@@ -7,8 +7,8 @@ type RenderOptions = @model.RenderOptions
 type LayoutExecutionPlan = @layout_engine_graph_plan_core.LayoutExecutionPlan
 
 ///|
-/// Graph layout input passed to engine dispatch.
-type LayoutGraphPlan = @layout_engine_graph_plan_core.LayoutGraphPlan
+/// The complete parsed mermaid diagram model.
+type MermaidGraph = @model.MermaidGraph
 
 ///|
 /// The complete positioned diagram ready for rendering.

@@ -46,9 +46,9 @@ test "svg plan routes non-sequence graphs to engine defaults" {
   }
   let plan = @core.build_svg_layout_execution_plan(test_graph(nodes, TD, []))
   match plan {
-    UseEngine(engine_plan) => {
-      assert_true(engine_plan.use_subgraph_redirects)
-      assert_eq(engine_plan.compact_fanin, false)
+    UseEngine(_, use_subgraph_redirects, compact_fanin) => {
+      assert_true(use_subgraph_redirects)
+      assert_eq(compact_fanin, false)
     }
     _ => fail("expected engine plan")
   }
@@ -77,9 +77,9 @@ test "ascii plan disables redirects for composite state graphs" {
     test_graph(nodes, LR, subgraphs),
   )
   match plan {
-    UseEngine(engine_plan) => {
-      assert_eq(engine_plan.use_subgraph_redirects, false)
-      assert_true(engine_plan.compact_fanin)
+    UseEngine(_, use_subgraph_redirects, compact_fanin) => {
+      assert_eq(use_subgraph_redirects, false)
+      assert_true(compact_fanin)
     }
     _ => fail("expected engine plan")
   }

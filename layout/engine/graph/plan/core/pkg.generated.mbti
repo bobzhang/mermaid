@@ -16,15 +16,9 @@ pub fn resolve_layout_engine(@model.RenderOptions) -> @model.LayoutEngine
 
 // Types and methods
 pub(all) enum LayoutExecutionPlan {
-  UseEngine(LayoutGraphPlan)
+  UseEngine(@model.MermaidGraph, Bool, Bool)
   UseSequence(@model.MermaidGraph)
   UseFlatStateAsciiGrid(@model.MermaidGraph)
-}
-
-pub(all) struct LayoutGraphPlan {
-  graph : @model.MermaidGraph
-  use_subgraph_redirects : Bool
-  compact_fanin : Bool
 }
 
 // Type aliases
