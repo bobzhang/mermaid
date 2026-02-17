@@ -1,6 +1,6 @@
 ///|
 /// Resolves backend routing policy for the selected graph layout engine.
-pub fn resolve_graph_engine_routing_policy(
+fn resolve_graph_engine_routing_policy(
   engine : LayoutEngine,
 ) -> GraphBackendRoutingPolicy {
   match engine {
