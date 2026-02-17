@@ -7374,7 +7374,7 @@ fn shift_top_level_flow_subgraphs_with_gap(
   if reverse || graph.subgraphs.length() < 2 {
     return
   }
-  if !horizontal {
+  if !horizontal && graph.edges.length() >= 60 {
     return
   }
 
