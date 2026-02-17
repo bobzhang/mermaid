@@ -514,11 +514,6 @@ fn build_deferred_back_edge_order(
 }
 
 ///|
-fn deferred_order_signature(order : Array[Int]) -> String {
-  order.iter().map(context_index => context_index.to_string()).join(",")
-}
-
-///|
 fn append_routed_segments_for_points(
   routed_edge_segments : Array[RoutedEdgeSegment],
   source_id : String,

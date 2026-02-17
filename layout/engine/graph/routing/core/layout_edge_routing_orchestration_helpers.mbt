@@ -264,7 +264,10 @@ fn maybe_resolve_forward_fanout_slots_for_bucket(
   let unique_candidate_orders : Array[Array[Int]] = []
   let seen_candidate_signatures : Map[String, Bool] = {}
   for candidate_order in candidate_orders {
-    let signature = deferred_order_signature(candidate_order)
+    let signature = candidate_order
+      .iter()
+      .map(context_index => context_index.to_string())
+      .join(",")
     if seen_candidate_signatures.contains(signature) {
       continue
     }

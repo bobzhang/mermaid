@@ -755,7 +755,10 @@ pub fn route_legacy_positioned_edges(
     let unique_deferred_order_candidates : Array[Array[Int]] = []
     let seen_candidate_signatures : Map[String, Bool] = {}
     for candidate_order in deferred_order_candidates {
-      let signature = deferred_order_signature(candidate_order)
+      let signature = candidate_order
+        .iter()
+        .map(context_index => context_index.to_string())
+        .join(",")
       if seen_candidate_signatures.contains(signature) {
         continue
       }
