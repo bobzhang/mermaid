@@ -330,12 +330,11 @@ fn append_relation_edge(
 
 ///|
 fn parse_class_declaration(line : String) -> (String, Bool)? {
-  if !line.has_prefix("class ") {
-    return None
+  let mut rest = lexmatch line[:] {
+    ("class ", class_rest) =>
+      @parser_common_engine_core.trim_owned(class_rest.to_string())
+    _ => return None
   }
-  let mut rest = @parser_common_engine_core.trim_owned(
-    (try! line[6:]).to_string(),
-  )
   let opens_block = rest.has_suffix("{")
   if rest.has_suffix("{") {
     rest = @parser_common_engine_core.trim_owned(
@@ -351,16 +350,20 @@ fn parse_class_declaration(line : String) -> (String, Bool)? {
 
 ///|
 fn parse_inline_class_declaration(line : String) -> (String, String?)? {
-  if !line.has_prefix("class ") || !line.has_suffix("}") {
+  let class_rest = lexmatch line[:] {
+    ("class ", class_rest) => class_rest.to_string()
+    _ => return None
+  }
+  if !class_rest.has_suffix("}") {
     return None
   }
-  match line.find("{") {
+  match class_rest.find("{") {
     Some(open_idx) => {
       let class_id = @parser_common_engine_core.trim_owned(
-        (try! line[6:open_idx]).to_string(),
+        (try! class_rest[:open_idx]).to_string(),
       )
       let inline_detail = @parser_common_engine_core.trim_owned(
-        (try! line[open_idx + 1:line.length() - 1]).to_string(),
+        (try! class_rest[open_idx + 1:class_rest.length() - 1]).to_string(),
       )
       if class_id == "" {
         None
