@@ -138,10 +138,10 @@ fn parse_state_declaration(
   nodes : Map[String, MermaidNode],
   composite_stack : Array[MermaidSubgraph],
 ) -> Unit {
-  if !line.has_prefix("state ") {
-    return
+  let rest = lexmatch line[:] {
+    ("state ", state_rest) => state_rest.trim()
+    _ => return
   }
-  let rest = (try! line[6:]).trim()
   lexmatch rest {
     (raw_label, " as ", id_part) => {
       let id = id_part.trim().to_string()
@@ -283,20 +283,23 @@ pub fn parse_state_diagram(lines : Array[String]) -> MermaidGraph {
 
   for i in 1..<lines.length() {
     let line = lines[i]
-    if line.has_prefix("direction ") {
-      let token = @parser_common_engine_core.trim_owned(
-        (try! line[10:]).to_string(),
-      )
-      match parse_direction_token_strict(token) {
-        Some(parsed_direction) =>
-          if composite_stack.length() > 0 {
-            set_current_subgraph_direction(composite_stack, parsed_direction)
-          } else {
-            direction = parsed_direction
-          }
-        None => ()
+    lexmatch line[:] {
+      ("direction ", direction_token) => {
+        let token = @parser_common_engine_core.trim_owned(
+          direction_token.to_string(),
+        )
+        match parse_direction_token_strict(token) {
+          Some(parsed_direction) =>
+            if composite_stack.length() > 0 {
+              set_current_subgraph_direction(composite_stack, parsed_direction)
+            } else {
+              direction = parsed_direction
+            }
+          None => ()
+        }
+        continue
       }
-      continue
+      _ => ()
     }
 
     match parse_state_composite_start_line(line) {
