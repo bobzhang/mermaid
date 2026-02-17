@@ -55,6 +55,28 @@ fn wb_graph(
 }
 
 ///|
+fn wb_find_node_by_label(
+  nodes : Array[@model.PositionedNode],
+  label : String,
+) -> @model.PositionedNode? {
+  for node in nodes {
+    if node.label == label {
+      return Some(node)
+    }
+  }
+  None
+}
+
+///|
+fn wb_abs(value : Int) -> Int {
+  if value < 0 {
+    -value
+  } else {
+    value
+  }
+}
+
+///|
 fn wb_rank_crossings_between(
   left_rank_node_ids : Array[String],
   right_rank_node_ids : Array[String],
@@ -207,4 +229,42 @@ test "elk layered order optimization reduces crossing count on bipartite rank pa
     successors_by_node_id,
   )
   assert_true(crossings_after <= crossings_before)
+}
+
+///|
+test "elk layered minor alignment keeps singleton sink rank close to predecessor lane" {
+  let flow = wb_graph(["Start", "Check", "Build", "Fix", "Ship"], [
+    ("Start", "Check"),
+    ("Check", "Build"),
+    ("Check", "Fix"),
+    ("Fix", "Check"),
+    ("Build", "Ship"),
+  ])
+  let request : GraphLayoutBackendRequest = {
+    graph: flow,
+    options: RenderOptions::default(),
+    use_subgraph_redirects: true,
+    compact_fanin: false,
+  }
+  let backend = run_elk_layered_flow_backend(request, {
+    enable_target_boundary_ports: true,
+    preserve_assigned_endpoint_ports: false,
+  })
+  let nodes = backend.positioned_graph.nodes
+  let build = match wb_find_node_by_label(nodes, "Build") {
+    Some(node) => node
+    None => fail("expected Build node")
+  }
+  let ship = match wb_find_node_by_label(nodes, "Ship") {
+    Some(node) => node
+    None => fail("expected Ship node")
+  }
+  let fix = match wb_find_node_by_label(nodes, "Fix") {
+    Some(node) => node
+    None => fail("expected Fix node")
+  }
+
+  let ship_build_delta = wb_abs(ship.y - build.y)
+  let ship_fix_delta = wb_abs(ship.y - fix.y)
+  assert_true(ship_build_delta < ship_fix_delta)
 }
