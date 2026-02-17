@@ -4,8 +4,6 @@ package "bobzhang/beautiful_mermaid/layout/engine/graph/engine/elk/core"
 // Values
 pub fn layout_graph_elk_backend(@bobzhang/beautiful_mermaid/layout/engine/graph/contract/core.GraphLayoutBackendRequest) -> @bobzhang/beautiful_mermaid/layout/engine/graph/contract/core.GraphLayoutBackendResult
 
-pub fn layout_graph_elk_layered_backend(@bobzhang/beautiful_mermaid/layout/engine/graph/contract/core.GraphLayoutBackendRequest) -> @bobzhang/beautiful_mermaid/layout/engine/graph/contract/core.GraphLayoutBackendResult
-
 // Errors
 
 // Types and methods

@@ -48,9 +48,7 @@ pub fn run_graph_layout_engine_backend(
     Elk =>
       @layout_engine_graph_engine_elk_core.layout_graph_elk_backend(request)
     ElkLayered =>
-      @layout_engine_graph_engine_elk_core.layout_graph_elk_layered_backend(
-        request,
-      )
+      @layout_engine_graph_engine_elk_core.layout_graph_elk_backend(request)
     Legacy => run_non_elk_backend(request, engine)
     DagreParity => run_non_elk_backend(request, engine)
   }

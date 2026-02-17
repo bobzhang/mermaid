@@ -11,17 +11,6 @@ pub fn layout_graph_elk_backend(
 }
 
 ///|
-/// Runs the ELK layered backend entrypoint.
-///
-/// This pre-alpha compatibility entrypoint currently matches
-/// `layout_graph_elk_backend`.
-pub fn layout_graph_elk_layered_backend(
-  request : GraphLayoutBackendRequest,
-) -> GraphLayoutBackendResult {
-  run_elk_backend(request)
-}
-
-///|
 fn run_elk_backend(
   request : GraphLayoutBackendRequest,
 ) -> GraphLayoutBackendResult {

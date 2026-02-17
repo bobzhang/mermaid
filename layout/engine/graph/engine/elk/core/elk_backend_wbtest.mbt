@@ -358,45 +358,6 @@ test "elk backend uses layered pipeline on large flowcharts" {
 }
 
 ///|
-test "elk layered backend forces layered pipeline for large flowcharts" {
-  let graph = large_flow_graph()
-  let request : @layout_engine_graph_contract_core.GraphLayoutBackendRequest = {
-    graph,
-    options: @model.RenderOptions::default(),
-    use_subgraph_redirects: true,
-    compact_fanin: false,
-  }
-  let forced_backend = layout_graph_elk_layered_backend(request)
-  let default_backend = layout_graph_elk_backend(request)
-  assert_true(backend_result_equal(forced_backend, default_backend))
-}
-
-///|
-test "elk layered backend still falls back on unsupported graph kinds" {
-  let graph = simple_state_graph()
-  let request : @layout_engine_graph_contract_core.GraphLayoutBackendRequest = {
-    graph,
-    options: @model.RenderOptions::default(),
-    use_subgraph_redirects: true,
-    compact_fanin: false,
-  }
-  let forced_backend = layout_graph_elk_layered_backend(request)
-  let fallback_backend = @layout_engine_graph_backend_core.run_graph_backend_pipeline(
-    {
-      graph,
-      options: derive_elk_render_options(graph, @model.RenderOptions::default()),
-      use_subgraph_redirects: true,
-      compact_fanin: false,
-    },
-    {
-      enable_target_boundary_ports: true,
-      preserve_assigned_endpoint_ports: false,
-    },
-  )
-  assert_true(backend_result_equal(forced_backend, fallback_backend))
-}
-
-///|
 test "elk backend exposes stable phase snapshots and counts" {
   let graph = flow_graph()
   let request : @layout_engine_graph_contract_core.GraphLayoutBackendRequest = {
