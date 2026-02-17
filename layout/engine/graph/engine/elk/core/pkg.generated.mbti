@@ -8,6 +8,8 @@ import {
 // Values
 pub fn layout_graph_elk(@model.MermaidGraph, @model.RenderOptions, Bool, Bool) -> @model.PositionedGraph
 
+pub fn layout_graph_elk_backend(@bobzhang/beautiful_mermaid/layout/engine/graph/contract/core.GraphLayoutBackendRequest) -> @bobzhang/beautiful_mermaid/layout/engine/graph/contract/core.GraphLayoutBackendResult
+
 // Errors
 
 // Types and methods

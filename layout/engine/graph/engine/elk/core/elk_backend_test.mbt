@@ -66,3 +66,21 @@ test "elk backend currently matches dagre parity legacy backend" {
 
   assert_eq(elk_layout, dagre_parity_layout)
 }
+
+///|
+test "elk backend exposes the same phase snapshots as dagre parity backend" {
+  let graph = flow_graph()
+  let request : @layout_engine_graph_contract_core.GraphLayoutBackendRequest = {
+    graph,
+    options: @model.RenderOptions::default(),
+    use_subgraph_redirects: true,
+    compact_fanin: false,
+  }
+  let elk_backend = layout_graph_elk_backend(request)
+  let dagre_backend = @layout_engine_graph_legacy_pipeline_core.layout_graph_legacy_backend(
+    request, true, true,
+  )
+
+  assert_eq(elk_backend.phase_snapshots, dagre_backend.phase_snapshots)
+  assert_eq(elk_backend.positioned_graph, dagre_backend.positioned_graph)
+}

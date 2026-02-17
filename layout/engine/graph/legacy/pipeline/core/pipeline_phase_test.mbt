@@ -47,49 +47,43 @@ fn flow_graph() -> @model.MermaidGraph {
 }
 
 ///|
-test "engine dispatch routes elk through parity-compatible backend" {
-  let graph = flow_graph()
-  let dagre_parity_layout = dispatch_graph_layout_engine(
-    graph,
-    @model.RenderOptions::default(),
-    true,
-    false,
-    DagreParity,
-  )
-  let elk_layout = dispatch_graph_layout_engine(
-    graph,
-    @model.RenderOptions::default(),
-    true,
-    false,
-    Elk,
-  )
-  let legacy_layout = dispatch_graph_layout_engine(
-    graph,
-    @model.RenderOptions::default(),
-    true,
-    false,
-    Legacy,
-  )
+test "legacy pipeline backend records setup placement and final snapshots" {
+  let request : @layout_engine_graph_contract_core.GraphLayoutBackendRequest = {
+    graph: flow_graph(),
+    options: @model.RenderOptions::default(),
+    use_subgraph_redirects: true,
+    compact_fanin: false,
+  }
+  let backend = layout_graph_legacy_backend(request, true, true)
 
-  assert_eq(elk_layout, dagre_parity_layout)
-  assert_eq(legacy_layout.nodes.length(), 2)
-  assert_eq(legacy_layout.edges.length(), 1)
-}
-
-///|
-test "engine backend dispatch exposes phase snapshots" {
-  let graph = flow_graph()
-  let backend = dispatch_graph_layout_engine_backend(
-    graph,
-    @model.RenderOptions::default(),
-    true,
-    false,
-    DagreParity,
-  )
   assert_eq(backend.phase_snapshots.length(), 3)
   assert_eq(backend.phase_snapshots[0].phase, "setup")
   assert_eq(backend.phase_snapshots[1].phase, "placement")
   assert_eq(backend.phase_snapshots[2].phase, "final")
   assert_true(backend.phase_snapshots[2].width > 0)
   assert_true(backend.phase_snapshots[2].height > 0)
+}
+
+///|
+test "legacy pipeline backend positioned graph matches legacy entry function" {
+  let graph = flow_graph()
+  let backend = layout_graph_legacy_backend(
+    {
+      graph,
+      options: @model.RenderOptions::default(),
+      use_subgraph_redirects: true,
+      compact_fanin: false,
+    },
+    true,
+    true,
+  )
+  let positioned = layout_graph_legacy(
+    graph,
+    @model.RenderOptions::default(),
+    true,
+    false,
+    true,
+    true,
+  )
+  assert_eq(backend.positioned_graph, positioned)
 }

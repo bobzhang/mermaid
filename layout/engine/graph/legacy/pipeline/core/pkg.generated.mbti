@@ -8,6 +8,8 @@ import {
 // Values
 pub fn layout_graph_legacy(@model.MermaidGraph, @model.RenderOptions, Bool, Bool, Bool, Bool) -> @model.PositionedGraph
 
+pub fn layout_graph_legacy_backend(@bobzhang/beautiful_mermaid/layout/engine/graph/contract/core.GraphLayoutBackendRequest, Bool, Bool) -> @bobzhang/beautiful_mermaid/layout/engine/graph/contract/core.GraphLayoutBackendResult
+
 // Errors
 
 // Types and methods

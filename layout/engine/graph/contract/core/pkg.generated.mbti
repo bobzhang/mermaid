@@ -1,0 +1,43 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "bobzhang/beautiful_mermaid/layout/engine/graph/contract/core"
+
+import {
+  "bobzhang/beautiful_mermaid/model",
+}
+
+// Values
+
+// Errors
+
+// Types and methods
+pub(all) struct GraphLayoutBackendRequest {
+  graph : @model.MermaidGraph
+  options : @model.RenderOptions
+  use_subgraph_redirects : Bool
+  compact_fanin : Bool
+}
+pub impl Eq for GraphLayoutBackendRequest
+pub impl Show for GraphLayoutBackendRequest
+
+pub(all) struct GraphLayoutBackendResult {
+  positioned_graph : @model.PositionedGraph
+  phase_snapshots : Array[GraphLayoutPhaseSnapshot]
+}
+pub impl Eq for GraphLayoutBackendResult
+pub impl Show for GraphLayoutBackendResult
+
+pub(all) struct GraphLayoutPhaseSnapshot {
+  phase : String
+  node_count : Int
+  edge_count : Int
+  group_count : Int
+  width : Int
+  height : Int
+}
+pub impl Eq for GraphLayoutPhaseSnapshot
+pub impl Show for GraphLayoutPhaseSnapshot
+
+// Type aliases
+
+// Traits
+
