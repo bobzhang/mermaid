@@ -1,0 +1,40 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "bobzhang/beautiful_mermaid/layout/engine/graph/legacy/setup/core"
+
+import {
+  "bobzhang/beautiful_mermaid/model",
+}
+
+// Values
+pub fn build_legacy_layout_setup(LegacyLayoutSetupRequest) -> LegacyLayoutSetupState
+
+// Errors
+
+// Types and methods
+pub(all) struct LegacyLayoutSetupRequest {
+  graph : @model.MermaidGraph
+  options : @model.RenderOptions
+  use_subgraph_redirects : Bool
+  compact_fanin : Bool
+}
+
+pub(all) struct LegacyLayoutSetupState {
+  subgraph_entry_by_id : Map[String, String]
+  subgraph_exit_by_id : Map[String, String]
+  nodes_in_order : Array[@model.MermaidNode]
+  padding : Int
+  node_spacing : Int
+  layer_spacing : Int
+  horizontal : Bool
+  reverse : Bool
+  state_graph : Bool
+  class_or_er_graph : Bool
+  flat_state_graph : Bool
+  enhanced_horizontal_state_flow : Bool
+  lane_state : @bobzhang/beautiful_mermaid/layout/engine/graph/lane/core.LegacyLaneState
+}
+
+// Type aliases
+
+// Traits
+
