@@ -23,9 +23,9 @@ fn option_color_or(value : String?, fallback : String?) -> String? {
 }
 
 ///|
-/// Resolve a full `DiagramColors` value from `RenderOptions`.
+/// Resolve a full `DiagramColors` value from `@model.RenderOptions`.
 /// Missing `bg`/`fg` values fall back to `@model.DiagramColors::default()`.
-fn build_colors(options : RenderOptions) -> @model.DiagramColors {
+fn build_colors(options : @model.RenderOptions) -> @model.DiagramColors {
   let defaults = @model.DiagramColors::default()
   {
     bg: option_string_or(options.bg, defaults.bg),
@@ -42,9 +42,9 @@ fn build_colors(options : RenderOptions) -> @model.DiagramColors {
 /// Merge user `options` with an explicit color palette.
 /// Explicit values in `options` win; missing color fields are filled from `colors`.
 fn merge_options_with_colors(
-  options : RenderOptions,
+  options : @model.RenderOptions,
   colors : @model.DiagramColors,
-) -> RenderOptions {
+) -> @model.RenderOptions {
   {
     bg: Some(option_string_or(options.bg, colors.bg)),
     fg: Some(option_string_or(options.fg, colors.fg)),
@@ -81,8 +81,8 @@ fn merge_options_with_colors(
 /// ```
 pub fn render_mermaid(
   text : String,
-  options? : RenderOptions = RenderOptions::default(),
-) -> String raise MermaidError {
+  options? : @model.RenderOptions = @model.RenderOptions::default(),
+) -> String raise @model.MermaidError {
   let positioned = @layout.layout_graph(
     @parser_header_core.parse_mermaid(text),
     options,
@@ -100,8 +100,8 @@ pub fn render_mermaid(
 fn render_mermaid_with_colors(
   text : String,
   colors : @model.DiagramColors,
-  options? : RenderOptions = RenderOptions::default(),
-) -> String raise MermaidError {
+  options? : @model.RenderOptions = @model.RenderOptions::default(),
+) -> String raise @model.MermaidError {
   let merged = merge_options_with_colors(options, colors)
   render_mermaid(text, options=merged)
 }
@@ -127,8 +127,8 @@ fn render_mermaid_with_colors(
 pub fn render_mermaid_with_theme_name(
   text : String,
   theme_name : String,
-  options? : RenderOptions = RenderOptions::default(),
-) -> String raise MermaidError {
+  options? : @model.RenderOptions = @model.RenderOptions::default(),
+) -> String raise @model.MermaidError {
   match @themes.theme_by_name(theme_name) {
     Some(colors) => render_mermaid_with_colors(text, colors, options~)
     None => raise UnknownTheme(theme_name)
@@ -137,7 +137,7 @@ pub fn render_mermaid_with_theme_name(
 
 ///|
 /// Parse Mermaid text and render ASCII/Unicode terminal output.
-/// Use `AsciiRenderOptions.use_ascii = true` for pure ASCII glyphs.
+/// Use `@model.AsciiRenderOptions.use_ascii = true` for pure ASCII glyphs.
 ///
 /// # Example
 /// ```mbt check
@@ -160,8 +160,8 @@ pub fn render_mermaid_with_theme_name(
 /// ```
 pub fn render_mermaid_ascii(
   text : String,
-  options? : AsciiRenderOptions = AsciiRenderOptions::default(),
-) -> String raise MermaidError {
+  options? : @model.AsciiRenderOptions = @model.AsciiRenderOptions::default(),
+) -> String raise @model.MermaidError {
   let graph = @parser_header_core.parse_mermaid(text)
   @renderer_ascii.render_ascii(graph, options)
 }
