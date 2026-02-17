@@ -82,11 +82,6 @@ fn graph_complexity(graph : MermaidGraph) -> ElkGraphComplexity {
 }
 
 ///|
-fn clamp_int(value : Int, min_value : Int, max_value : Int) -> Int {
-  value.max(min_value).min(max_value)
-}
-
-///|
 fn graph_edge_density_per_node_pct(graph : MermaidGraph) -> Int {
   if graph.nodes.length() == 0 {
     0
@@ -114,16 +109,14 @@ fn elk_node_spacing(
       0
     }) +
     ((edge_density_pct - 170).max(0) / 5).min(18)
-  clamp_int(
-    base_spacing +
-    fanout_boost +
-    indegree_boost +
-    label_boost +
-    reciprocal_boost -
-    density_compact,
-    90,
-    198,
-  )
+  (base_spacing +
+  fanout_boost +
+  indegree_boost +
+  label_boost +
+  reciprocal_boost -
+  density_compact)
+  .max(90)
+  .min(198)
 }
 
 ///|
@@ -151,15 +144,13 @@ fn elk_layer_spacing(
       0
     }) +
     ((edge_density_pct - 180).max(0) / 8).min(12)
-  clamp_int(
-    base_spacing +
-    label_ratio_boost +
-    longest_label_boost +
-    reciprocal_boost -
-    density_compact,
-    70,
-    165,
-  )
+  (base_spacing +
+  label_ratio_boost +
+  longest_label_boost +
+  reciprocal_boost -
+  density_compact)
+  .max(70)
+  .min(165)
 }
 
 ///|
