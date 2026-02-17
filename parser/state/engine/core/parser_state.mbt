@@ -6,7 +6,7 @@ fn parse_state_token(
   start_counter : Int,
   end_counter : Int,
 ) -> (String, Int, Int) {
-  let trimmed = @parser_common_engine_core.trim_owned(token)
+  let trimmed = token.trim().to_string()
   if trimmed == "[*]" {
     if is_source {
       let next = start_counter + 1
@@ -233,8 +233,8 @@ fn parse_state_description_line(
   description : String,
   nodes : Map[String, MermaidNode],
 ) -> Bool {
-  let id = @parser_common_engine_core.trim_owned(state_id)
-  let label = @parser_common_engine_core.trim_owned(description)
+  let id = state_id.trim().to_string()
+  let label = description.trim().to_string()
   if id == "" ||
     label == "" ||
     !@parser_common_engine_core.is_plain_identifier(id) {
@@ -261,7 +261,7 @@ fn parse_state_standalone_line(
   nodes : Map[String, MermaidNode],
   composite_stack : Array[MermaidSubgraph],
 ) -> Bool {
-  let candidate = @parser_common_engine_core.trim_owned(line)
+  let candidate = line.trim().to_string()
   if candidate == "" ||
     !@parser_common_engine_core.is_plain_identifier(candidate) {
     return false
@@ -287,9 +287,7 @@ pub fn parse_state_diagram(lines : Array[String]) -> MermaidGraph {
     let line = lines[i]
     lexmatch line[:] {
       ("direction ", direction_token) => {
-        let token = @parser_common_engine_core.trim_owned(
-          direction_token.to_string(),
-        )
+        let token = direction_token.to_string().trim().to_string()
         match parse_direction_token_strict(token) {
           Some(parsed_direction) =>
             if composite_stack.length() > 0 {
@@ -339,12 +337,14 @@ pub fn parse_state_diagram(lines : Array[String]) -> MermaidGraph {
 
     match find_edge_operator(transition_line) {
       Some(found) => {
-        let left = @parser_common_engine_core.trim_owned(
-          (try! transition_line[:found.index]).to_string(),
-        )
-        let right = @parser_common_engine_core.trim_owned(
-          (try! transition_line[found.index + found.op.symbol.length():]).to_string(),
-        )
+        let left = (try! transition_line[:found.index])
+          .to_string()
+          .trim()
+          .to_string()
+        let right = (try! transition_line[found.index + found.op.symbol.length():])
+          .to_string()
+          .trim()
+          .to_string()
         let (source_id, next_start, next_end) = parse_state_token(
           left, true, nodes, start_counter, end_counter,
         )
@@ -372,7 +372,7 @@ pub fn parse_state_diagram(lines : Array[String]) -> MermaidGraph {
             if parse_state_description_line(transition_line, description, nodes) {
               append_state_node_to_current_composite(
                 composite_stack,
-                @parser_common_engine_core.trim_owned(transition_line),
+                transition_line.trim().to_string(),
               )
             }
           None =>

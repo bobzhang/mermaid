@@ -43,10 +43,10 @@ fn parse_sequence_participant_declaration(
     ("(?i:participant) ", rest_part) =>
       (
         SequenceParticipantKind::Participant,
-        @parser_common_engine_core.trim_owned(rest_part.to_string()),
+        rest_part.to_string().trim().to_string(),
       )
     ("(?i:actor) ", rest_part) =>
-      (Actor, @parser_common_engine_core.trim_owned(rest_part.to_string()))
+      (Actor, rest_part.to_string().trim().to_string())
     _ => return false
   }
 
@@ -212,12 +212,11 @@ fn parse_sequence_message_line(
 ) -> Bool {
   match find_earliest_operator(line, sequence_edge_operators()) {
     Some(found) => {
-      let source = @parser_common_engine_core.trim_owned(
-        (try! line[:found.index]).to_string(),
-      )
-      let rhs = @parser_common_engine_core.trim_owned(
-        (try! line[found.index + found.op.symbol.length():]).to_string(),
-      )
+      let source = (try! line[:found.index]).to_string().trim().to_string()
+      let rhs = (try! line[found.index + found.op.symbol.length():])
+        .to_string()
+        .trim()
+        .to_string()
       let (raw_target, label) = lexmatch rhs[:] {
         (target_part, ":", label_part) => {
           let target = target_part.trim().to_string()
@@ -227,9 +226,9 @@ fn parse_sequence_message_line(
         _ => (rhs, None)
       }
       let (activation_mark, target) = if raw_target is [.. "+", .. target_rest] {
-        ("+", @parser_common_engine_core.trim_owned(target_rest.to_string()))
+        ("+", target_rest.to_string().trim().to_string())
       } else if raw_target is [.. "-", .. target_rest] {
-        ("-", @parser_common_engine_core.trim_owned(target_rest.to_string()))
+        ("-", target_rest.to_string().trim().to_string())
       } else {
         ("", raw_target)
       }

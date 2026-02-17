@@ -1,4 +1,3 @@
 import {
   "bobzhang/beautiful_mermaid/model" @model,
-  "bobzhang/beautiful_mermaid/parser/common/engine/core" @parser_common_engine_core,
 }
