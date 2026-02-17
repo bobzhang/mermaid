@@ -1,13 +1,5 @@
 ///|
 #cfg(target="native")
-async fn unicode_testdata_files() -> Array[String] {
-  @fs.readdir("testdata/unicode", sort=true).filter(file => {
-    file.has_suffix(".txt")
-  })
-}
-
-///|
-#cfg(target="native")
 async fn unicode_mismatch_file(file_name : String) -> String? {
   let path = "testdata/unicode/\{file_name}"
   let case_data = ts_parse_golden_text_case(@fs.read_file(path).text())
@@ -29,7 +21,9 @@ async fn unicode_mismatch_file(file_name : String) -> String? {
 ///|
 #cfg(target="native")
 async fn verify_unicode_chunk(chunk_index : Int, chunk_count : Int) -> Unit {
-  let files = unicode_testdata_files()
+  let files = @fs.readdir("testdata/unicode", sort=true).filter(file => {
+    file.has_suffix(".txt")
+  })
   let selected = ts_files_for_chunk(files, chunk_index, chunk_count)
   if selected.length() == 0 {
     fail(
