@@ -21,15 +21,6 @@ fn line_index(haystack : String, needle : String) -> Int {
 }
 
 ///|
-fn count_occurrences(haystack : String, needle : String) -> Int {
-  let parts = haystack.split(needle).to_array()
-  if parts.length() == 0 {
-    return 0
-  }
-  parts.length() - 1
-}
-
-///|
 test "Class inheritance arrow points toward parent" {
   let diagram =
     #|classDiagram
@@ -138,7 +129,7 @@ test "Class association chain keeps top-to-bottom ordering" {
   assert_true(c_line >= 0)
   assert_true(a_line < b_line)
   assert_true(b_line < c_line)
-  assert_eq(count_occurrences(unicode, "▼"), 2)
+  assert_eq(ts_count_occurrences(unicode, "▼"), 2)
 }
 
 ///|
@@ -306,7 +297,7 @@ test "Multi-level class inheritance keeps parent-first ordering" {
   assert_true(dog >= 0)
   assert_true(animal < mammal)
   assert_true(mammal < dog)
-  assert_eq(count_occurrences(unicode, "△"), 2)
+  assert_eq(ts_count_occurrences(unicode, "△"), 2)
 }
 
 ///|

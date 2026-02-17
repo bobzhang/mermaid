@@ -61,12 +61,7 @@ fn count_occurrences(text : String, pattern : String) -> Int {
   if pattern == "" {
     return 0
   }
-  let parts = text.split(pattern).to_array()
-  if parts.length() == 0 {
-    0
-  } else {
-    parts.length() - 1
-  }
+  text.split(pattern).to_array().length() - 1
 }
 
 ///|
