@@ -1,36 +1,15 @@
 ///|
-fn route_legacy_positioned_edges(
+
+///|
+fn collect_edge_layout_contexts(
   graph : MermaidGraph,
-  state_graph : Bool,
-  class_or_er_graph : Bool,
   horizontal : Bool,
-  layer_spacing : Int,
-  node_spacing : Int,
   use_subgraph_redirects : Bool,
   subgraph_exit_by_id : Map[String, String],
   subgraph_entry_by_id : Map[String, String],
-  positioned_nodes : Array[PositionedNode],
   positioned_by_id : Map[String, PositionedNode],
   node_horizontal_by_id : Map[String, Bool],
-  enable_target_boundary_ports : Bool,
-  preserve_assigned_endpoint_ports : Bool,
-  enhanced_horizontal_state_flow : Bool,
-) -> Array[PositionedEdge] {
-  let positioned_edges : Array[PositionedEdge] = []
-  let routed_edge_segments : Array[RoutedEdgeSegment] = []
-  let label_slots_by_anchor : Map[String, Int] = {}
-  let back_edge_lane_reservations : Array[BackEdgeLaneReservation] = []
-  let back_edge_column_reservations : Array[BackEdgeColumnReservation] = []
-  let forward_fanout_out_count_by_bucket : Map[String, Int] = {}
-  let forward_fanout_horizontal_minor_gap_threshold = (layer_spacing / 4).max(
-    22,
-  )
-  let forward_fanout_vertical_minor_gap_threshold = (node_spacing / 4).max(22)
-  let forward_fanout_horizontal_span_threshold = (node_spacing * 2).max(140)
-  let forward_fanout_vertical_span_threshold = (layer_spacing * 2).max(140)
-  let back_edge_route_horizontal_span_threshold = (node_spacing * 3).max(220)
-  let back_edge_route_vertical_span_threshold = (layer_spacing * 3).max(220)
-
+) -> (Array[EdgeLayoutContext], Map[String, Int]) {
   let edge_layout_contexts : Array[EdgeLayoutContext] = []
   let directed_edge_count_by_key : Map[String, Int] = {}
   for edge in graph.edges {
@@ -85,6 +64,46 @@ fn route_legacy_positioned_edges(
       _ => ()
     }
   }
+  (edge_layout_contexts, directed_edge_count_by_key)
+}
+
+///|
+fn route_legacy_positioned_edges(
+  graph : MermaidGraph,
+  state_graph : Bool,
+  class_or_er_graph : Bool,
+  horizontal : Bool,
+  layer_spacing : Int,
+  node_spacing : Int,
+  use_subgraph_redirects : Bool,
+  subgraph_exit_by_id : Map[String, String],
+  subgraph_entry_by_id : Map[String, String],
+  positioned_nodes : Array[PositionedNode],
+  positioned_by_id : Map[String, PositionedNode],
+  node_horizontal_by_id : Map[String, Bool],
+  enable_target_boundary_ports : Bool,
+  preserve_assigned_endpoint_ports : Bool,
+  enhanced_horizontal_state_flow : Bool,
+) -> Array[PositionedEdge] {
+  let positioned_edges : Array[PositionedEdge] = []
+  let routed_edge_segments : Array[RoutedEdgeSegment] = []
+  let label_slots_by_anchor : Map[String, Int] = {}
+  let back_edge_lane_reservations : Array[BackEdgeLaneReservation] = []
+  let back_edge_column_reservations : Array[BackEdgeColumnReservation] = []
+  let forward_fanout_out_count_by_bucket : Map[String, Int] = {}
+  let forward_fanout_horizontal_minor_gap_threshold = (layer_spacing / 4).max(
+    22,
+  )
+  let forward_fanout_vertical_minor_gap_threshold = (node_spacing / 4).max(22)
+  let forward_fanout_horizontal_span_threshold = (node_spacing * 2).max(140)
+  let forward_fanout_vertical_span_threshold = (layer_spacing * 2).max(140)
+  let back_edge_route_horizontal_span_threshold = (node_spacing * 3).max(220)
+  let back_edge_route_vertical_span_threshold = (layer_spacing * 3).max(220)
+
+  let (edge_layout_contexts, directed_edge_count_by_key) = collect_edge_layout_contexts(
+    graph, horizontal, use_subgraph_redirects, subgraph_exit_by_id, subgraph_entry_by_id,
+    positioned_by_id, node_horizontal_by_id,
+  )
 
   let boundary_assignments_by_bucket : Map[
     String,
