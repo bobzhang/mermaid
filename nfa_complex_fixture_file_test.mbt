@@ -11,7 +11,7 @@ fn nfa_ascii_options() -> @beautiful_mermaid.AsciiRenderOptions {
 
 ///|
 fn assert_has_edge(
-  graph : @beautiful_mermaid.MermaidGraph,
+  graph : @model.MermaidGraph,
   source : String,
   target : String,
   label : String?,
@@ -24,7 +24,7 @@ fn assert_has_edge(
 
 ///|
 fn assert_nfa_node_shape(
-  graph : @beautiful_mermaid.MermaidGraph,
+  graph : @model.MermaidGraph,
   node_id : String,
   expected_shape : String,
 ) -> Unit raise {

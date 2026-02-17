@@ -1,6 +1,6 @@
 ///|
 fn assert_node_shape(
-  graph : @beautiful_mermaid.MermaidGraph,
+  graph : @model.MermaidGraph,
   node_id : String,
   expected : String,
 ) -> Unit raise {

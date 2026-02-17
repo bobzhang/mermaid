@@ -1,6 +1,6 @@
 ///|
 fn assert_state_label(
-  graph : @beautiful_mermaid.MermaidGraph,
+  graph : @model.MermaidGraph,
   node_id : String,
   expected_label : String,
 ) -> Unit raise {
@@ -12,7 +12,7 @@ fn assert_state_label(
 
 ///|
 fn assert_state_shape(
-  graph : @beautiful_mermaid.MermaidGraph,
+  graph : @model.MermaidGraph,
   node_id : String,
   expected_shape : String,
 ) -> Unit raise {

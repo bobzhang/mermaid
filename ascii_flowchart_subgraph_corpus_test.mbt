@@ -1,6 +1,6 @@
 ///|
 fn collect_subgraph_labels(
-  subgraphs : Array[@beautiful_mermaid.MermaidSubgraph],
+  subgraphs : Array[@model.MermaidSubgraph],
   labels : Array[String],
 ) -> Unit {
   for subgraph in subgraphs {

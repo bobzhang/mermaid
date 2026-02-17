@@ -4,9 +4,7 @@ fn is_state_case(case_data : CorpusCase) -> Bool {
 }
 
 ///|
-fn collect_state_labels(
-  graph : @beautiful_mermaid.MermaidGraph,
-) -> Array[String] {
+fn collect_state_labels(graph : @model.MermaidGraph) -> Array[String] {
   let labels : Array[String] = []
   for _, node in graph.nodes {
     let shape_name = node.shape.to_string()
@@ -22,9 +20,7 @@ fn collect_state_labels(
 }
 
 ///|
-fn graph_has_state_pseudostates(
-  graph : @beautiful_mermaid.MermaidGraph,
-) -> Bool {
+fn graph_has_state_pseudostates(graph : @model.MermaidGraph) -> Bool {
   for _, node in graph.nodes {
     let shape_name = node.shape.to_string()
     if shape_name == "StateStart" || shape_name == "StateEnd" {
@@ -37,7 +33,7 @@ fn graph_has_state_pseudostates(
 ///|
 fn assert_state_output_invariants(
   output : String,
-  graph : @beautiful_mermaid.MermaidGraph,
+  graph : @model.MermaidGraph,
   case_name : String,
 ) -> Unit raise {
   if output.contains("state_start_") || output.contains("state_end_") {

@@ -92,7 +92,7 @@ test "Coverage matrix exercises parser corpus paths" {
 
   let all_cases = corpus_cases()
   for case_data in all_cases {
-    let parsed : Result[MermaidGraph, MermaidError] = try? @parser_header_core.parse_mermaid(
+    let parsed : Result[@model.MermaidGraph, MermaidError] = try? @parser_header_core.parse_mermaid(
       case_data.input,
     )
     match parsed {
@@ -152,7 +152,7 @@ test "Coverage matrix parser malformed headers and bodies" {
   ]
 
   for input in invalid_inputs {
-    let parsed : Result[MermaidGraph, MermaidError] = try? @parser_header_core.parse_mermaid(
+    let parsed : Result[@model.MermaidGraph, MermaidError] = try? @parser_header_core.parse_mermaid(
       input,
     )
     match parsed {
@@ -165,7 +165,7 @@ test "Coverage matrix parser malformed headers and bodies" {
 
 ///|
 test "Coverage matrix nested structs are exercised" {
-  let sub : MermaidSubgraph = {
+  let sub : @model.MermaidSubgraph = {
     id: "sg-id",
     label: "Subgraph",
     node_ids: ["A", "B"],
@@ -183,7 +183,7 @@ test "Coverage matrix nested structs are exercised" {
   assert_eq(sub.id, "sg-id")
   assert_eq(sub.children.length(), 1)
 
-  let group : PositionedGroup = {
+  let group : @model.PositionedGroup = {
     id: "g",
     label: "Group",
     x: 10,

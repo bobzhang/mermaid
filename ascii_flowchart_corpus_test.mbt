@@ -4,9 +4,7 @@ fn is_flowchart_case(case_data : CorpusCase) -> Bool {
 }
 
 ///|
-fn collect_flow_labels(
-  graph : @beautiful_mermaid.MermaidGraph,
-) -> Array[String] {
+fn collect_flow_labels(graph : @model.MermaidGraph) -> Array[String] {
   let labels : Array[String] = []
   for _, node in graph.nodes {
     let label = if node.label == "" { node.id } else { node.label }

@@ -21,12 +21,6 @@ pub using @model {type AsciiRenderOptions}
 
 pub using @model {type MermaidError}
 
-pub using @model {type MermaidGraph}
-
-pub using @model {type MermaidSubgraph}
-
-pub using @model {type PositionedGroup}
-
 pub using @model {type RenderOptions}
 
 // Traits
