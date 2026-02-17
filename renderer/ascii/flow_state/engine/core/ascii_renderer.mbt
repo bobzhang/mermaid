@@ -139,11 +139,6 @@ fn unit_step(value : Int) -> Int {
 }
 
 ///|
-fn axis_is_horizontal(dx : Int, dy : Int) -> Bool {
-  dx.abs() >= dy.abs()
-}
-
-///|
 fn flow_paths_are_reverse(first : Array[Point], second : Array[Point]) -> Bool {
   if first.length() != second.length() {
     return false
@@ -170,7 +165,7 @@ fn border_join_marker(
     return None
   }
 
-  if axis_is_horizontal(dx, dy) {
+  if dx.abs() >= dy.abs() {
     if for_target {
       if dx > 0 {
         Some("┤")
@@ -202,7 +197,7 @@ fn flow_edge_anchor(
   dy : Int,
   for_target : Bool,
 ) -> (Int, Int) {
-  if axis_is_horizontal(dx, dy) {
+  if dx.abs() >= dy.abs() {
     let y = box.top + box.height / 2
     if for_target {
       if dx > 0 {
