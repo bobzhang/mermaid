@@ -38,15 +38,12 @@ fn parse_compact_relation_parts(
     return None
   }
 
-  let source = @parser_common_engine_core.trim_owned(
-    (try! trimmed[:operator_start]).to_string(),
-  )
-  let operator = @parser_common_engine_core.trim_owned(
-    (try! trimmed[operator_start:operator_end + 1]).to_string(),
-  )
-  let target = @parser_common_engine_core.trim_owned(
-    (try! trimmed[operator_end + 1:]).to_string(),
-  )
+  let source = (try! trimmed[:operator_start]).to_string().trim().to_string()
+  let operator = (try! trimmed[operator_start:operator_end + 1])
+    .to_string()
+    .trim()
+    .to_string()
+  let target = (try! trimmed[operator_end + 1:]).to_string().trim().to_string()
   if source == "" ||
     operator == "" ||
     target == "" ||
@@ -95,7 +92,7 @@ fn parse_relation_parts(line : String) -> (String, String, String, String?)? {
   }
   let parts = body
     .split(" ")
-    .map(part => @parser_common_engine_core.trim_owned(part.to_string()))
+    .map(part => part.to_string().trim().to_string())
     .filter(part => part != "")
     .to_array()
   if parts.length() < 3 {
@@ -146,7 +143,7 @@ fn edge_style_for_operator(operator : String) -> EdgeStyle {
 fn collapse_spaces(text : String) -> String {
   text
   .split(" ")
-  .map(part => @parser_common_engine_core.trim_owned(part.to_string()))
+  .map(part => part.to_string().trim().to_string())
   .filter(part => part != "")
   .iter()
   .join(" ")
@@ -163,17 +160,15 @@ fn normalize_er_attribute(raw : String) -> String {
   let mut comment = ""
   lexmatch normalized[:] {
     (before_quote, "\"", after_quote) => {
-      body = @parser_common_engine_core.trim_owned(before_quote.to_string())
-      comment = @parser_common_engine_core.trim_owned(
-        "\"\{after_quote.to_string()}",
-      )
+      body = before_quote.to_string().trim().to_string()
+      comment = "\"\{after_quote.to_string()}".trim().to_string()
     }
     _ => ()
   }
 
   let parts = body
     .split(" ")
-    .map(part => @parser_common_engine_core.trim_owned(part.to_string()))
+    .map(part => part.to_string().trim().to_string())
     .filter(part => part != "")
     .to_array()
   if parts.length() < 2 {
@@ -209,13 +204,13 @@ fn normalize_class_member(raw : String) -> String {
   }
 
   let (visibility, body) = if trimmed is [.. "+", .. member_body] {
-    ("+", @parser_common_engine_core.trim_owned(member_body.to_string()))
+    ("+", member_body.to_string().trim().to_string())
   } else if trimmed is [.. "-", .. member_body] {
-    ("-", @parser_common_engine_core.trim_owned(member_body.to_string()))
+    ("-", member_body.to_string().trim().to_string())
   } else if trimmed is [.. "#", .. member_body] {
-    ("#", @parser_common_engine_core.trim_owned(member_body.to_string()))
+    ("#", member_body.to_string().trim().to_string())
   } else if trimmed is [.. "~", .. member_body] {
-    ("~", @parser_common_engine_core.trim_owned(member_body.to_string()))
+    ("~", member_body.to_string().trim().to_string())
   } else {
     ("", trimmed)
   }
@@ -226,12 +221,11 @@ fn normalize_class_member(raw : String) -> String {
   if body.contains("(") && body.contains(")") {
     match (body.find("("), body.find(")")) {
       (Some(open_idx), Some(close_idx)) => {
-        let name = @parser_common_engine_core.trim_owned(
-          (try! body[:open_idx]).to_string(),
-        )
-        let return_type = @parser_common_engine_core.trim_owned(
-          (try! body[close_idx + 1:]).to_string(),
-        )
+        let name = (try! body[:open_idx]).to_string().trim().to_string()
+        let return_type = (try! body[close_idx + 1:])
+          .to_string()
+          .trim()
+          .to_string()
         if name == "" {
           return trimmed
         }
@@ -249,7 +243,7 @@ fn normalize_class_member(raw : String) -> String {
 
   let parts = body
     .split(" ")
-    .map(part => @parser_common_engine_core.trim_owned(part.to_string()))
+    .map(part => part.to_string().trim().to_string())
     .filter(part => part != "")
     .to_array()
   if parts.length() >= 2 {
@@ -329,12 +323,11 @@ fn append_relation_edge(
 ///|
 fn parse_class_declaration(line : String) -> (String, Bool)? {
   let rest = lexmatch line[:] {
-    ("class ", class_rest) =>
-      @parser_common_engine_core.trim_owned(class_rest.to_string())
+    ("class ", class_rest) => class_rest.to_string().trim().to_string()
     _ => return None
   }
   let (class_id, opens_block) = if rest is [.. without_block, .. "{"] {
-    (@parser_common_engine_core.trim_owned(without_block.to_string()), true)
+    (without_block.to_string().trim().to_string(), true)
   } else {
     (rest, false)
   }
@@ -358,12 +351,11 @@ fn parse_inline_class_declaration(line : String) -> (String, String?)? {
   }
   match class_body.find("{") {
     Some(open_idx) => {
-      let class_id = @parser_common_engine_core.trim_owned(
-        (try! class_body[:open_idx]).to_string(),
-      )
-      let inline_detail = @parser_common_engine_core.trim_owned(
-        (try! class_body[open_idx + 1:]).to_string(),
-      )
+      let class_id = (try! class_body[:open_idx]).to_string().trim().to_string()
+      let inline_detail = (try! class_body[open_idx + 1:])
+        .to_string()
+        .trim()
+        .to_string()
       if class_id == "" {
         None
       } else if inline_detail == "" {
@@ -484,7 +476,7 @@ fn parse_er_entity_declaration_line(
   nodes : Map[String, MermaidNode],
 ) -> String? {
   let id = if line is [.. raw_id, .. "{"] {
-    @parser_common_engine_core.trim_owned(raw_id.to_string())
+    raw_id.to_string().trim().to_string()
   } else {
     return None
   }
@@ -500,7 +492,7 @@ fn parse_er_standalone_entity_line(
   line : String,
   nodes : Map[String, MermaidNode],
 ) -> Bool {
-  let trimmed = @parser_common_engine_core.trim_owned(line)
+  let trimmed = line.trim().to_string()
   if trimmed == "" ||
     trimmed is [.. "direction ", ..] ||
     trimmed is [.. "style ", ..] ||
@@ -510,9 +502,7 @@ fn parse_er_standalone_entity_line(
   }
 
   let (id, label) = if trimmed is [.. "\"", .. quoted_content, .. "\""] {
-    let content = @parser_common_engine_core.trim_owned(
-      quoted_content.to_string(),
-    )
+    let content = quoted_content.to_string().trim().to_string()
     if content == "" {
       return false
     }
