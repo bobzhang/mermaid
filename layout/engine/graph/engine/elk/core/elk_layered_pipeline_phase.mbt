@@ -341,6 +341,124 @@ fn sort_rank_nodes_by_neighbors(
 }
 
 ///|
+fn pair_inversion_crossings(edge_pairs : Array[(Int, Int)]) -> Int {
+  let mut crossings = 0
+  for left_index in 0..<edge_pairs.length() {
+    let (left_source_pos, left_target_pos) = edge_pairs[left_index]
+    for right_index in (left_index + 1)..<edge_pairs.length() {
+      let (right_source_pos, right_target_pos) = edge_pairs[right_index]
+      if (
+          left_source_pos < right_source_pos &&
+          left_target_pos > right_target_pos
+        ) ||
+        (
+          left_source_pos > right_source_pos &&
+          left_target_pos < right_target_pos
+        ) {
+        crossings += 1
+      }
+    }
+  }
+  crossings
+}
+
+///|
+fn layered_crossing_count(
+  rank_node_ids_by_rank : Map[Int, Array[String]],
+  max_rank : Int,
+  rank_by_node_id : Map[String, Int],
+  successors_by_node_id : Map[String, Array[String]],
+) -> Int {
+  let rank_position_by_node_id = rank_position_by_node_id(
+    rank_node_ids_by_rank, max_rank,
+  )
+  let edge_pairs_by_rank_pair : Map[String, Array[(Int, Int)]] = {}
+  for source_id, successors in successors_by_node_id {
+    let source_rank = option_int_or(rank_by_node_id.get(source_id), -1)
+    let source_pos = option_int_or(rank_position_by_node_id.get(source_id), -1)
+    if source_rank < 0 || source_pos < 0 {
+      continue
+    }
+    for target_id in successors {
+      let target_rank = option_int_or(rank_by_node_id.get(target_id), -1)
+      let target_pos = option_int_or(
+        rank_position_by_node_id.get(target_id),
+        -1,
+      )
+      if target_rank <= source_rank || target_pos < 0 {
+        continue
+      }
+      let rank_pair_key = "\{source_rank}->\{target_rank}"
+      if !edge_pairs_by_rank_pair.contains(rank_pair_key) {
+        edge_pairs_by_rank_pair[rank_pair_key] = []
+      }
+      match edge_pairs_by_rank_pair.get(rank_pair_key) {
+        Some(edge_pairs) => edge_pairs.push((source_pos, target_pos))
+        None => ()
+      }
+    }
+  }
+  let mut crossings = 0
+  for _, edge_pairs in edge_pairs_by_rank_pair {
+    crossings += pair_inversion_crossings(edge_pairs)
+  }
+  crossings
+}
+
+///|
+fn maybe_refine_rank_order_by_swaps(
+  rank_node_ids_by_rank : Map[Int, Array[String]],
+  max_rank : Int,
+  rank_by_node_id : Map[String, Int],
+  successors_by_node_id : Map[String, Array[String]],
+  node_count : Int,
+  edge_count : Int,
+) -> Unit {
+  if node_count > 40 || edge_count > 120 {
+    return
+  }
+  let mut best_crossings = layered_crossing_count(
+    rank_node_ids_by_rank, max_rank, rank_by_node_id, successors_by_node_id,
+  )
+  let mut pass = 0
+  while pass < 3 {
+    let mut improved = false
+    for rank in 0..<=max_rank {
+      match rank_node_ids_by_rank.get(rank) {
+        Some(node_ids) => {
+          if node_ids.length() <= 1 {
+            continue
+          }
+          let mut i = 0
+          while i + 1 < node_ids.length() {
+            let left = node_ids[i]
+            let right = node_ids[i + 1]
+            node_ids[i] = right
+            node_ids[i + 1] = left
+            let swapped_crossings = layered_crossing_count(
+              rank_node_ids_by_rank, max_rank, rank_by_node_id, successors_by_node_id,
+            )
+            if swapped_crossings < best_crossings {
+              best_crossings = swapped_crossings
+              improved = true
+            } else {
+              node_ids[i] = left
+              node_ids[i + 1] = right
+            }
+            i = i + 1
+          }
+        }
+        None => ()
+      }
+    }
+    if !improved {
+      break
+    }
+    pass += 1
+  }
+}
+
+///|
 fn optimize_rank_order(
   rank_node_ids_by_rank : Map[Int, Array[String]],
   max_rank : Int,
@@ -436,6 +554,14 @@ pub fn run_elk_layered_flow_backend(
   optimize_rank_order(
     rank_node_ids_by_rank, max_rank, predecessors_by_node_id, successors_by_node_id,
     order_index_by_node_id,
+  )
+  maybe_refine_rank_order_by_swaps(
+    rank_node_ids_by_rank,
+    max_rank,
+    rank_by_node_id,
+    successors_by_node_id,
+    nodes_in_order.length(),
+    graph.edges.length(),
   )
 
   let padding = @layout_engine_graph_internal_core.resolve_padding(options)
