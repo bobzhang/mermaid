@@ -79,23 +79,20 @@ fn repos_extract_mermaid_blocks(markdown : String) -> Array[String] {
 
 ///|
 fn repos_supported_mermaid_block(source : String) -> Bool {
-  let lines = source.split("\n").to_array()
-  let mut i = 0
-  while i < lines.length() {
-    let first = lines[i].to_string().trim().to_string()
+  let mut in_frontmatter = false
+  for line in source.split("\n") {
+    let first = line.trim().to_string()
     if first == "" || first.has_prefix("%%") {
-      i += 1
+      continue
+    }
+    if in_frontmatter {
+      if first == "---" {
+        in_frontmatter = false
+      }
       continue
     }
     if first == "---" {
-      i += 1
-      while i < lines.length() {
-        if lines[i].to_string().trim().to_string() == "---" {
-          i += 1
-          break
-        }
-        i += 1
-      }
+      in_frontmatter = true
       continue
     }
 
