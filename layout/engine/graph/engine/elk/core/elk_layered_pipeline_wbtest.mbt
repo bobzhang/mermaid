@@ -102,6 +102,16 @@ fn wb_abs(value : Int) -> Int {
 }
 
 ///|
+fn wb_contains_node_id(node_ids : Array[String], node_id : String) -> Bool {
+  for item in node_ids {
+    if item == node_id {
+      return true
+    }
+  }
+  false
+}
+
+///|
 fn wb_rank_crossings_between(
   left_rank_node_ids : Array[String],
   right_rank_node_ids : Array[String],
@@ -295,6 +305,184 @@ test "elk layered rank state breaks feedback cycles into forward-ranked edges" {
       assert_true(source_rank < target_rank)
     }
   }
+}
+
+///|
+test "elk layered virtual ordering normalizes long-span edges into adjacent ranks" {
+  let graph = wb_graph(["A", "B", "C"], [("A", "B"), ("B", "C"), ("A", "C")])
+  let prep_state = @layout_engine_graph_prep_core.prepare_graph_inputs(
+    graph, false,
+  )
+  let nodes_in_order = @layout_engine_graph_internal_core.reorder_nodes_for_flow_layout(
+    prep_state.nodes_in_order(),
+    graph.edges,
+  )
+  let base_order_index_by_node_id = build_order_index_by_node_id(nodes_in_order)
+  let (
+    rank_by_node_id,
+    max_rank,
+    order_index_by_node_id,
+    successors_by_node_id,
+    _predecessors_by_node_id,
+  ) = build_layered_rank_state(
+    graph,
+    false,
+    prep_state.subgraph_entry_by_id(),
+    prep_state.subgraph_exit_by_id(),
+    nodes_in_order,
+  )
+  let rank_node_ids_by_rank = build_rank_node_ids_by_lane(
+    nodes_in_order, rank_by_node_id, order_index_by_node_id, base_order_index_by_node_id,
+    max_rank,
+  )
+  let virtual_ordering_state = build_virtual_ordering_state(
+    rank_node_ids_by_rank, rank_by_node_id, max_rank, order_index_by_node_id, successors_by_node_id,
+  )
+
+  let mut virtual_count = 0
+  for _, is_virtual in virtual_ordering_state.virtual_by_node_id {
+    if is_virtual {
+      virtual_count += 1
+    }
+  }
+  assert_true(virtual_count >= 1)
+
+  for source_id, successors in virtual_ordering_state.successors_by_node_id {
+    let source_rank = option_int_or(
+      virtual_ordering_state.rank_by_node_id.get(source_id),
+      -1,
+    )
+    for target_id in successors {
+      let target_rank = option_int_or(
+        virtual_ordering_state.rank_by_node_id.get(target_id),
+        -1,
+      )
+      assert_true(source_rank >= 0)
+      assert_true(target_rank >= 0)
+      assert_eq(target_rank, source_rank + 1)
+    }
+  }
+}
+
+///|
+test "elk layered virtual ordering filters placeholders before placement" {
+  let graph = wb_graph(["A", "B", "C"], [("A", "B"), ("B", "C"), ("A", "C")])
+  let prep_state = @layout_engine_graph_prep_core.prepare_graph_inputs(
+    graph, false,
+  )
+  let nodes_in_order = @layout_engine_graph_internal_core.reorder_nodes_for_flow_layout(
+    prep_state.nodes_in_order(),
+    graph.edges,
+  )
+  let base_order_index_by_node_id = build_order_index_by_node_id(nodes_in_order)
+  let (
+    rank_by_node_id,
+    max_rank,
+    order_index_by_node_id,
+    successors_by_node_id,
+    _predecessors_by_node_id,
+  ) = build_layered_rank_state(
+    graph,
+    false,
+    prep_state.subgraph_entry_by_id(),
+    prep_state.subgraph_exit_by_id(),
+    nodes_in_order,
+  )
+  let rank_node_ids_by_rank = build_rank_node_ids_by_lane(
+    nodes_in_order, rank_by_node_id, order_index_by_node_id, base_order_index_by_node_id,
+    max_rank,
+  )
+  let virtual_ordering_state = build_virtual_ordering_state(
+    rank_node_ids_by_rank, rank_by_node_id, max_rank, order_index_by_node_id, successors_by_node_id,
+  )
+  let real_rank_node_ids_by_rank = filter_real_rank_node_ids_by_rank(
+    virtual_ordering_state.rank_node_ids_by_rank,
+    max_rank,
+    virtual_ordering_state.virtual_by_node_id,
+  )
+
+  let mut total_real_nodes = 0
+  for _, node_ids in real_rank_node_ids_by_rank {
+    total_real_nodes += node_ids.length()
+    for node_id in node_ids {
+      assert_eq(
+        option_bool_or(
+          virtual_ordering_state.virtual_by_node_id.get(node_id),
+          true,
+        ),
+        false,
+      )
+    }
+  }
+  assert_eq(total_real_nodes, nodes_in_order.length())
+
+  let rank_one_nodes = match real_rank_node_ids_by_rank.get(1) {
+    Some(node_ids) => node_ids
+    None => []
+  }
+  assert_true(wb_contains_node_id(rank_one_nodes, "B"))
+}
+
+///|
+test "elk layered rank-seeded neighbor orientation stays forward by rank" {
+  let graph = wb_graph(["A", "B", "C", "D"], [
+    ("A", "B"),
+    ("B", "C"),
+    ("C", "A"),
+    ("C", "D"),
+  ])
+  let prep_state = @layout_engine_graph_prep_core.prepare_graph_inputs(
+    graph, false,
+  )
+  let nodes_in_order = @layout_engine_graph_internal_core.reorder_nodes_for_flow_layout(
+    prep_state.nodes_in_order(),
+    graph.edges,
+  )
+  let lane_state = @layout_engine_graph_lane_core.compute_legacy_lane_state(
+    graph, nodes_in_order, false, false, true, false, false, false,
+  )
+  let rank_by_node_id = lane_state.flow_rank_by_node_id()
+  let order_index_by_node_id = build_order_index_by_node_id(nodes_in_order)
+  let node_ids : Array[String] = []
+  for node in nodes_in_order {
+    node_ids.push(node.id)
+  }
+  let (successors_by_node_id, _predecessors_by_node_id) = build_layered_neighbor_state_from_rank_seed(
+    graph,
+    false,
+    prep_state.subgraph_entry_by_id(),
+    prep_state.subgraph_exit_by_id(),
+    node_ids,
+    rank_by_node_id,
+    order_index_by_node_id,
+  )
+  for source_id, successors in successors_by_node_id {
+    let source_rank = option_int_or(rank_by_node_id.get(source_id), -1)
+    let source_order = option_int_or(order_index_by_node_id.get(source_id), -1)
+    for target_id in successors {
+      let target_rank = option_int_or(rank_by_node_id.get(target_id), -1)
+      let target_order = option_int_or(
+        order_index_by_node_id.get(target_id),
+        -1,
+      )
+      assert_true(source_rank <= target_rank)
+      if source_rank == target_rank {
+        assert_true(source_order < target_order)
+      }
+    }
+  }
+}
+
+///|
+test "elk layered lane-seeded minor coords preserve sparse lane gaps" {
+  let rank_node_ids_by_rank : Map[Int, Array[String]] = { 0: ["A", "B"] }
+  let lane_by_node_id : Map[String, Int] = { "A": 0, "B": 3 }
+  let minor_coord_by_node_id = build_minor_coord_by_lane_seed(
+    rank_node_ids_by_rank, 0, lane_by_node_id, 40, 30,
+  )
+  let a_minor = option_int_or(minor_coord_by_node_id.get("A"), 0)
+  let b_minor = option_int_or(minor_coord_by_node_id.get("B"), 0)
+  assert_true(b_minor - a_minor >= 90)
 }
 
 ///|

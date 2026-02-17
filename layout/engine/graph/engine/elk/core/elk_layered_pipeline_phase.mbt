@@ -599,6 +599,52 @@ fn build_layered_rank_state(
 }
 
 ///|
+fn build_layered_neighbor_state_from_rank_seed(
+  graph : MermaidGraph,
+  use_subgraph_redirects : Bool,
+  subgraph_entry_by_id : Map[String, String],
+  subgraph_exit_by_id : Map[String, String],
+  node_ids : Array[String],
+  rank_by_node_id : Map[String, Int],
+  order_index_by_node_id : Map[String, Int],
+) -> (Map[String, Array[String]], Map[String, Array[String]]) {
+  let successors_by_node_id : Map[String, Array[String]] = {}
+  let predecessors_by_node_id : Map[String, Array[String]] = {}
+  for node_id in node_ids {
+    successors_by_node_id[node_id] = []
+    predecessors_by_node_id[node_id] = []
+  }
+
+  let resolved_edges = collect_visible_resolved_edges(
+    graph, use_subgraph_redirects, subgraph_entry_by_id, subgraph_exit_by_id, node_ids,
+  )
+  for edge in resolved_edges {
+    let (source_id, target_id) = edge
+    let source_rank = option_int_or(rank_by_node_id.get(source_id), -1)
+    let target_rank = option_int_or(rank_by_node_id.get(target_id), -1)
+    if source_rank < 0 || target_rank < 0 {
+      continue
+    }
+    let (oriented_source_id, oriented_target_id) = if source_rank < target_rank {
+      (source_id, target_id)
+    } else if source_rank > target_rank {
+      (target_id, source_id)
+    } else if compare_node_ids_by_order(
+        source_id, target_id, order_index_by_node_id,
+      ) <=
+      0 {
+      (source_id, target_id)
+    } else {
+      (target_id, source_id)
+    }
+    append_normalized_ordering_edge(
+      oriented_source_id, oriented_target_id, successors_by_node_id, predecessors_by_node_id,
+    )
+  }
+  (successors_by_node_id, predecessors_by_node_id)
+}
+
+///|
 fn build_rank_node_ids(
   nodes_in_order : Array[MermaidNode],
   rank_by_node_id : Map[String, Int],
@@ -646,6 +692,213 @@ fn build_rank_node_ids_by_lane(
     }
   }
   rank_node_ids_by_rank
+}
+
+///|
+priv struct LayeredVirtualOrderingState {
+  rank_node_ids_by_rank : Map[Int, Array[String]]
+  rank_by_node_id : Map[String, Int]
+  order_index_by_node_id : Map[String, Int]
+  predecessors_by_node_id : Map[String, Array[String]]
+  successors_by_node_id : Map[String, Array[String]]
+  virtual_by_node_id : Map[String, Bool]
+}
+
+///|
+fn clone_rank_node_ids_by_rank(
+  rank_node_ids_by_rank : Map[Int, Array[String]],
+  max_rank : Int,
+) -> Map[Int, Array[String]] {
+  let cloned : Map[Int, Array[String]] = {}
+  for rank in 0..<=max_rank {
+    let copied_node_ids : Array[String] = []
+    match rank_node_ids_by_rank.get(rank) {
+      Some(node_ids) =>
+        for node_id in node_ids {
+          copied_node_ids.push(node_id)
+        }
+      None => ()
+    }
+    cloned[rank] = copied_node_ids
+  }
+  cloned
+}
+
+///|
+fn ensure_rank_node_ids_entry(
+  rank_node_ids_by_rank : Map[Int, Array[String]],
+  rank : Int,
+) -> Unit {
+  if !rank_node_ids_by_rank.contains(rank) {
+    rank_node_ids_by_rank[rank] = []
+  }
+}
+
+///|
+fn append_normalized_ordering_edge(
+  source_id : String,
+  target_id : String,
+  successors_by_node_id : Map[String, Array[String]],
+  predecessors_by_node_id : Map[String, Array[String]],
+) -> Unit {
+  if source_id == target_id {
+    return
+  }
+  match successors_by_node_id.get(source_id) {
+    Some(successors) => successors.push(target_id)
+    None => successors_by_node_id[source_id] = [target_id]
+  }
+  match predecessors_by_node_id.get(target_id) {
+    Some(predecessors) => predecessors.push(source_id)
+    None => predecessors_by_node_id[target_id] = [source_id]
+  }
+}
+
+///|
+fn build_virtual_ordering_state(
+  rank_node_ids_by_rank : Map[Int, Array[String]],
+  rank_by_node_id : Map[String, Int],
+  max_rank : Int,
+  order_index_by_node_id : Map[String, Int],
+  successors_by_node_id : Map[String, Array[String]],
+) -> LayeredVirtualOrderingState {
+  let normalized_rank_node_ids_by_rank = clone_rank_node_ids_by_rank(
+    rank_node_ids_by_rank, max_rank,
+  )
+  let normalized_rank_by_node_id : Map[String, Int] = {}
+  let normalized_order_index_by_node_id : Map[String, Int] = {}
+  let normalized_predecessors_by_node_id : Map[String, Array[String]] = {}
+  let normalized_successors_by_node_id : Map[String, Array[String]] = {}
+  let virtual_by_node_id : Map[String, Bool] = {}
+
+  for rank in 0..<=max_rank {
+    match normalized_rank_node_ids_by_rank.get(rank) {
+      Some(node_ids) =>
+        for position, node_id in node_ids {
+          normalized_rank_by_node_id[node_id] = rank
+          normalized_order_index_by_node_id[node_id] = option_int_or(
+            order_index_by_node_id.get(node_id),
+            rank * 10000 + position,
+          )
+          normalized_predecessors_by_node_id[node_id] = []
+          normalized_successors_by_node_id[node_id] = []
+          virtual_by_node_id[node_id] = false
+        }
+      None => ()
+    }
+  }
+
+  let mut edge_serial = 0
+  for source_id, direct_successors in successors_by_node_id {
+    let source_rank = option_int_or(rank_by_node_id.get(source_id), -1)
+    if source_rank < 0 {
+      continue
+    }
+    let source_order = option_int_or(order_index_by_node_id.get(source_id), 0)
+    for target_id in direct_successors {
+      let target_rank = option_int_or(rank_by_node_id.get(target_id), -1)
+      if target_rank <= source_rank {
+        continue
+      }
+      let target_order = option_int_or(
+        order_index_by_node_id.get(target_id),
+        source_order,
+      )
+      let rank_span = target_rank - source_rank
+      let mut previous_id = source_id
+      if rank_span > 1 {
+        for offset in 1..<rank_span {
+          let virtual_rank = source_rank + offset
+          let virtual_id = "__elk_virtual_\{edge_serial}_\{offset}"
+          ensure_rank_node_ids_entry(
+            normalized_rank_node_ids_by_rank, virtual_rank,
+          )
+          match normalized_rank_node_ids_by_rank.get(virtual_rank) {
+            Some(node_ids) => node_ids.push(virtual_id)
+            None => ()
+          }
+          let interpolated_order = (
+              source_order * (rank_span - offset) + target_order * offset
+            ) *
+            1000 /
+            rank_span
+          normalized_rank_by_node_id[virtual_id] = virtual_rank
+          normalized_order_index_by_node_id[virtual_id] = interpolated_order
+          normalized_predecessors_by_node_id[virtual_id] = []
+          normalized_successors_by_node_id[virtual_id] = []
+          virtual_by_node_id[virtual_id] = true
+          append_normalized_ordering_edge(
+            previous_id, virtual_id, normalized_successors_by_node_id, normalized_predecessors_by_node_id,
+          )
+          previous_id = virtual_id
+        }
+      }
+      append_normalized_ordering_edge(
+        previous_id, target_id, normalized_successors_by_node_id, normalized_predecessors_by_node_id,
+      )
+      edge_serial += 1
+    }
+  }
+
+  let mut dense_order = 0
+  for rank in 0..<=max_rank {
+    match normalized_rank_node_ids_by_rank.get(rank) {
+      Some(node_ids) => {
+        node_ids.sort_by((left, right) => {
+          let left_order = option_int_or(
+            normalized_order_index_by_node_id.get(left),
+            0,
+          )
+          let right_order = option_int_or(
+            normalized_order_index_by_node_id.get(right),
+            0,
+          )
+          if left_order != right_order {
+            left_order.compare(right_order)
+          } else {
+            left.compare(right)
+          }
+        })
+        for node_id in node_ids {
+          normalized_order_index_by_node_id[node_id] = dense_order
+          dense_order += 1
+        }
+      }
+      None => ()
+    }
+  }
+
+  {
+    rank_node_ids_by_rank: normalized_rank_node_ids_by_rank,
+    rank_by_node_id: normalized_rank_by_node_id,
+    order_index_by_node_id: normalized_order_index_by_node_id,
+    predecessors_by_node_id: normalized_predecessors_by_node_id,
+    successors_by_node_id: normalized_successors_by_node_id,
+    virtual_by_node_id,
+  }
+}
+
+///|
+fn filter_real_rank_node_ids_by_rank(
+  rank_node_ids_by_rank : Map[Int, Array[String]],
+  max_rank : Int,
+  virtual_by_node_id : Map[String, Bool],
+) -> Map[Int, Array[String]] {
+  let real_rank_node_ids_by_rank : Map[Int, Array[String]] = {}
+  for rank in 0..<=max_rank {
+    let real_node_ids : Array[String] = []
+    match rank_node_ids_by_rank.get(rank) {
+      Some(node_ids) =>
+        for node_id in node_ids {
+          if !option_bool_or(virtual_by_node_id.get(node_id), false) {
+            real_node_ids.push(node_id)
+          }
+        }
+      None => ()
+    }
+    real_rank_node_ids_by_rank[rank] = real_node_ids
+  }
+  real_rank_node_ids_by_rank
 }
 
 ///|
@@ -1221,6 +1474,51 @@ fn build_minor_coord_by_node_id(
 }
 
 ///|
+fn build_minor_coord_by_lane_seed(
+  rank_node_ids_by_rank : Map[Int, Array[String]],
+  max_rank : Int,
+  lane_by_node_id : Map[String, Int],
+  padding : Int,
+  minor_step : Int,
+) -> Map[String, Int] {
+  let mut has_lane = false
+  let mut min_lane = 0
+  for rank in 0..<=max_rank {
+    match rank_node_ids_by_rank.get(rank) {
+      Some(node_ids) =>
+        for node_id in node_ids {
+          let lane = option_int_or(lane_by_node_id.get(node_id), 0)
+          if !has_lane {
+            has_lane = true
+            min_lane = lane
+          } else if lane < min_lane {
+            min_lane = lane
+          }
+        }
+      None => ()
+    }
+  }
+
+  let minor_coord_by_node_id : Map[String, Int] = {}
+  for rank in 0..<=max_rank {
+    match rank_node_ids_by_rank.get(rank) {
+      Some(node_ids) => {
+        let mut previous_minor = padding + 70 - minor_step
+        for node_id in node_ids {
+          let lane = option_int_or(lane_by_node_id.get(node_id), 0)
+          let seeded_minor = padding + 70 + (lane - min_lane) * minor_step
+          let resolved_minor = seeded_minor.max(previous_minor + minor_step)
+          minor_coord_by_node_id[node_id] = resolved_minor
+          previous_minor = resolved_minor
+        }
+      }
+      None => ()
+    }
+  }
+  minor_coord_by_node_id
+}
+
+///|
 fn rank_pair_key(left_rank : Int, right_rank : Int) -> String {
   if left_rank <= right_rank {
     "\{left_rank}->\{right_rank}"
@@ -1349,31 +1647,103 @@ fn run_elk_layered_flow_backend(
     graph.direction,
   )
   let base_order_index_by_node_id = build_order_index_by_node_id(nodes_in_order)
+  let node_ids_in_order : Array[String] = []
+  for node in nodes_in_order {
+    node_ids_in_order.push(node.id)
+  }
+  let use_legacy_rank_seed = graph.nodes.length() > 16 ||
+    graph.edges.length() > 30
   let (
     rank_by_node_id,
     max_rank,
+    lane_by_node_id,
     order_index_by_node_id,
     successors_by_node_id,
     predecessors_by_node_id,
-  ) = build_layered_rank_state(
-    graph, use_subgraph_redirects, subgraph_entry_by_id, subgraph_exit_by_id, nodes_in_order,
-  )
-  let rank_node_ids_by_rank = build_rank_node_ids_by_lane(
-    nodes_in_order, rank_by_node_id, order_index_by_node_id, base_order_index_by_node_id,
+  ) = if use_legacy_rank_seed {
+    let legacy_lane_state = @layout_engine_graph_lane_core.compute_legacy_lane_state(
+      graph,
+      nodes_in_order,
+      false,
+      false,
+      horizontal,
+      request.compact_fanin,
+      false,
+      false,
+    )
+    let rank_by_node_id = legacy_lane_state.flow_rank_by_node_id()
+    let max_rank = legacy_lane_state.flow_max_rank()
+    let lane_by_node_id = legacy_lane_state.flow_lane_by_node_id()
+    let order_index_by_node_id = base_order_index_by_node_id
+    let (successors_by_node_id, predecessors_by_node_id) = build_layered_neighbor_state_from_rank_seed(
+      graph, use_subgraph_redirects, subgraph_entry_by_id, subgraph_exit_by_id, node_ids_in_order,
+      rank_by_node_id, order_index_by_node_id,
+    )
+    (
+      rank_by_node_id, max_rank, lane_by_node_id, order_index_by_node_id, successors_by_node_id,
+      predecessors_by_node_id,
+    )
+  } else {
+    let (
+      rank_by_node_id,
+      max_rank,
+      order_index_by_node_id,
+      successors_by_node_id,
+      predecessors_by_node_id,
+    ) = build_layered_rank_state(
+      graph, use_subgraph_redirects, subgraph_entry_by_id, subgraph_exit_by_id, nodes_in_order,
+    )
+    (
+      rank_by_node_id, max_rank, order_index_by_node_id, order_index_by_node_id,
+      successors_by_node_id, predecessors_by_node_id,
+    )
+  }
+  let base_rank_node_ids_by_rank = build_rank_node_ids_by_lane(
+    nodes_in_order, rank_by_node_id, lane_by_node_id, base_order_index_by_node_id,
     max_rank,
   )
-  optimize_rank_order(
-    rank_node_ids_by_rank, max_rank, predecessors_by_node_id, successors_by_node_id,
-    order_index_by_node_id,
-  )
-  maybe_refine_rank_order_by_swaps(
-    rank_node_ids_by_rank,
-    max_rank,
-    rank_by_node_id,
-    successors_by_node_id,
-    nodes_in_order.length(),
-    graph.edges.length(),
-  )
+  let rank_node_ids_by_rank = if use_legacy_rank_seed {
+    base_rank_node_ids_by_rank
+  } else if graph.nodes.length() <= 16 && graph.edges.length() <= 30 {
+    let virtual_ordering_state = build_virtual_ordering_state(
+      base_rank_node_ids_by_rank, rank_by_node_id, max_rank, order_index_by_node_id,
+      successors_by_node_id,
+    )
+    optimize_rank_order(
+      virtual_ordering_state.rank_node_ids_by_rank,
+      max_rank,
+      virtual_ordering_state.predecessors_by_node_id,
+      virtual_ordering_state.successors_by_node_id,
+      virtual_ordering_state.order_index_by_node_id,
+    )
+    maybe_refine_rank_order_by_swaps(
+      virtual_ordering_state.rank_node_ids_by_rank,
+      max_rank,
+      virtual_ordering_state.rank_by_node_id,
+      virtual_ordering_state.successors_by_node_id,
+      virtual_ordering_state.rank_by_node_id.length(),
+      graph.edges.length(),
+    )
+    filter_real_rank_node_ids_by_rank(
+      virtual_ordering_state.rank_node_ids_by_rank,
+      max_rank,
+      virtual_ordering_state.virtual_by_node_id,
+    )
+  } else {
+    optimize_rank_order(
+      base_rank_node_ids_by_rank, max_rank, predecessors_by_node_id, successors_by_node_id,
+      order_index_by_node_id,
+    )
+    maybe_refine_rank_order_by_swaps(
+      base_rank_node_ids_by_rank,
+      max_rank,
+      rank_by_node_id,
+      successors_by_node_id,
+      nodes_in_order.length(),
+      graph.edges.length(),
+    )
+    base_rank_node_ids_by_rank
+  }
 
   let padding = @layout_engine_graph_internal_core.resolve_padding(options)
   let node_spacing = @layout_engine_graph_internal_core.resolve_node_spacing(
@@ -1420,10 +1790,17 @@ fn run_elk_layered_flow_backend(
   }
   let minor_step = minor_gap.max(min_minor_step)
   let max_rank_minor_span = (max_rank_size - 1).max(0) * minor_step
-  let minor_coord_by_node_id = build_minor_coord_by_node_id(
-    rank_node_ids_by_rank, max_rank, padding, minor_step, max_rank_minor_span, predecessors_by_node_id,
-    successors_by_node_id, horizontal, width_by_node_id, height_by_node_id,
-  )
+  let minor_coord_by_node_id = if use_legacy_rank_seed {
+    build_minor_coord_by_lane_seed(
+      rank_node_ids_by_rank, max_rank, lane_by_node_id, padding, minor_step,
+    )
+  } else {
+    build_minor_coord_by_node_id(
+      rank_node_ids_by_rank, max_rank, padding, minor_step, max_rank_minor_span,
+      predecessors_by_node_id, successors_by_node_id, horizontal, width_by_node_id,
+      height_by_node_id,
+    )
+  }
   let rank_pair_label_major_gap = build_rank_pair_label_major_gap(
     graph, use_subgraph_redirects, subgraph_entry_by_id, subgraph_exit_by_id, rank_by_node_id,
     horizontal,
