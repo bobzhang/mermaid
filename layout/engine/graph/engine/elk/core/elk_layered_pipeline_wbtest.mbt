@@ -132,6 +132,41 @@ test "elk layered rank seed strategy uses legacy lane seed for large graphs" {
 }
 
 ///|
+test "elk layered rank order strategy keeps seed order for legacy seed path" {
+  let graph = wb_graph(["A", "B"], [("A", "B")])
+  assert_true(
+    select_elk_layered_rank_order_strategy(graph, LegacyLaneSeed)
+    is SeedOrderOnly,
+  )
+}
+
+///|
+test "elk layered rank order strategy uses virtual candidate for small native graphs" {
+  let graph = wb_graph(["A", "B", "C"], [("A", "B"), ("B", "C")])
+  assert_true(
+    select_elk_layered_rank_order_strategy(graph, NativeFeedback)
+    is OptimizedSeedWithVirtualCandidate,
+  )
+}
+
+///|
+test "elk layered rank order strategy uses optimized seed order for large native graphs" {
+  let nodes : Array[String] = []
+  for i in 0..<17 {
+    nodes.push("N\{i}")
+  }
+  let edges : Array[(String, String)] = []
+  for i in 0..<16 {
+    edges.push(("N\{i}", "N\{i + 1}"))
+  }
+  let graph = wb_graph(nodes, edges)
+  assert_true(
+    select_elk_layered_rank_order_strategy(graph, NativeFeedback)
+    is OptimizedSeedOrder,
+  )
+}
+
+///|
 fn wb_rank_crossings_between(
   left_rank_node_ids : Array[String],
   right_rank_node_ids : Array[String],

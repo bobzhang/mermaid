@@ -1792,6 +1792,79 @@ fn build_elk_layered_rank_seed_state(
 }
 
 ///|
+priv enum ElkLayeredRankOrderStrategy {
+  SeedOrderOnly
+  OptimizedSeedOrder
+  OptimizedSeedWithVirtualCandidate
+}
+
+///|
+fn select_elk_layered_rank_order_strategy(
+  graph : MermaidGraph,
+  rank_seed_strategy : ElkLayeredRankSeedStrategy,
+) -> ElkLayeredRankOrderStrategy {
+  if rank_seed_strategy is LegacyLaneSeed {
+    SeedOrderOnly
+  } else if graph.nodes.length() <= 16 && graph.edges.length() <= 30 {
+    OptimizedSeedWithVirtualCandidate
+  } else {
+    OptimizedSeedOrder
+  }
+}
+
+///|
+fn build_rank_node_ids_by_rank_for_order_strategy(
+  strategy : ElkLayeredRankOrderStrategy,
+  graph : MermaidGraph,
+  base_rank_node_ids_by_rank : Map[Int, Array[String]],
+  rank_by_node_id : Map[String, Int],
+  max_rank : Int,
+  order_index_by_node_id : Map[String, Int],
+  successors_by_node_id : Map[String, Array[String]],
+  predecessors_by_node_id : Map[String, Array[String]],
+) -> Map[Int, Array[String]] {
+  let optimized_base_rank_node_ids_by_rank = build_optimized_rank_node_ids_by_rank(
+    base_rank_node_ids_by_rank,
+    max_rank,
+    predecessors_by_node_id,
+    successors_by_node_id,
+    order_index_by_node_id,
+    rank_by_node_id,
+    rank_by_node_id.length(),
+    graph.edges.length(),
+  )
+  match strategy {
+    SeedOrderOnly => base_rank_node_ids_by_rank
+    OptimizedSeedOrder => optimized_base_rank_node_ids_by_rank
+    OptimizedSeedWithVirtualCandidate => {
+      let virtual_ordering_state = build_virtual_ordering_state(
+        base_rank_node_ids_by_rank, rank_by_node_id, max_rank, order_index_by_node_id,
+        successors_by_node_id,
+      )
+      let optimized_virtual_rank_node_ids_by_rank = build_optimized_rank_node_ids_by_rank(
+        virtual_ordering_state.rank_node_ids_by_rank,
+        max_rank,
+        virtual_ordering_state.predecessors_by_node_id,
+        virtual_ordering_state.successors_by_node_id,
+        virtual_ordering_state.order_index_by_node_id,
+        virtual_ordering_state.rank_by_node_id,
+        virtual_ordering_state.rank_by_node_id.length(),
+        graph.edges.length(),
+      )
+      let real_virtual_rank_node_ids_by_rank = filter_real_rank_node_ids_by_rank(
+        optimized_virtual_rank_node_ids_by_rank,
+        max_rank,
+        virtual_ordering_state.virtual_by_node_id,
+      )
+      select_lower_crossing_rank_order(
+        optimized_base_rank_node_ids_by_rank, real_virtual_rank_node_ids_by_rank,
+        max_rank, rank_by_node_id, successors_by_node_id,
+      )
+    }
+  }
+}
+
+///|
 /// Runs the ELK layered flow pipeline for non-state flowcharts.
 fn run_elk_layered_flow_backend(
   request : GraphLayoutBackendRequest,
@@ -1840,49 +1913,17 @@ fn run_elk_layered_flow_backend(
   let order_index_by_node_id = rank_seed_state.order_index_by_node_id
   let successors_by_node_id = rank_seed_state.successors_by_node_id
   let predecessors_by_node_id = rank_seed_state.predecessors_by_node_id
+  let rank_order_strategy = select_elk_layered_rank_order_strategy(
+    graph, rank_seed_strategy,
+  )
   let base_rank_node_ids_by_rank = build_rank_node_ids_by_lane(
     nodes_in_order, rank_by_node_id, lane_by_node_id, base_order_index_by_node_id,
     max_rank,
   )
-  let optimized_base_rank_node_ids_by_rank = build_optimized_rank_node_ids_by_rank(
-    base_rank_node_ids_by_rank,
-    max_rank,
-    predecessors_by_node_id,
-    successors_by_node_id,
-    order_index_by_node_id,
-    rank_by_node_id,
-    nodes_in_order.length(),
-    graph.edges.length(),
+  let rank_node_ids_by_rank = build_rank_node_ids_by_rank_for_order_strategy(
+    rank_order_strategy, graph, base_rank_node_ids_by_rank, rank_by_node_id, max_rank,
+    order_index_by_node_id, successors_by_node_id, predecessors_by_node_id,
   )
-  let rank_node_ids_by_rank = if use_legacy_rank_seed {
-    base_rank_node_ids_by_rank
-  } else if graph.nodes.length() <= 16 && graph.edges.length() <= 30 {
-    let virtual_ordering_state = build_virtual_ordering_state(
-      base_rank_node_ids_by_rank, rank_by_node_id, max_rank, order_index_by_node_id,
-      successors_by_node_id,
-    )
-    let optimized_virtual_rank_node_ids_by_rank = build_optimized_rank_node_ids_by_rank(
-      virtual_ordering_state.rank_node_ids_by_rank,
-      max_rank,
-      virtual_ordering_state.predecessors_by_node_id,
-      virtual_ordering_state.successors_by_node_id,
-      virtual_ordering_state.order_index_by_node_id,
-      virtual_ordering_state.rank_by_node_id,
-      virtual_ordering_state.rank_by_node_id.length(),
-      graph.edges.length(),
-    )
-    let real_virtual_rank_node_ids_by_rank = filter_real_rank_node_ids_by_rank(
-      optimized_virtual_rank_node_ids_by_rank,
-      max_rank,
-      virtual_ordering_state.virtual_by_node_id,
-    )
-    select_lower_crossing_rank_order(
-      optimized_base_rank_node_ids_by_rank, real_virtual_rank_node_ids_by_rank, max_rank,
-      rank_by_node_id, successors_by_node_id,
-    )
-  } else {
-    optimized_base_rank_node_ids_by_rank
-  }
 
   let padding = @layout_engine_graph_internal_core.resolve_padding(options)
   let node_spacing = @layout_engine_graph_internal_core.resolve_node_spacing(
