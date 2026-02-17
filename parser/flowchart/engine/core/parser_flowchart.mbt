@@ -1275,15 +1275,15 @@ fn parse_flow_line(
   class_assignments : Map[String, String],
   node_styles : Map[String, Map[String, String]],
 ) -> Array[String] {
-  if line.has_prefix("classDef ") {
+  if line is [.. "classDef ", ..] {
     parse_class_def_line(line, class_defs)
     return []
   }
-  if line.has_prefix("class ") {
+  if line is [.. "class ", ..] {
     parse_class_line(line, class_assignments)
     return []
   }
-  if line.has_prefix("style ") {
+  if line is [.. "style ", ..] {
     parse_style_line(line, node_styles)
     return []
   }
@@ -1375,9 +1375,9 @@ fn parse_flow_line(
       touched_node_ids
     }
     None =>
-      if line.has_prefix("subgraph ") || line == "end" {
+      if line is [.. "subgraph ", ..] || line == "end" {
         []
-      } else if line.has_prefix("direction ") {
+      } else if line is [.. "direction ", ..] {
         []
       } else {
         let standalone_entries = if line.contains("&") {
