@@ -7374,7 +7374,7 @@ fn shift_top_level_flow_subgraphs_with_gap(
   if reverse || graph.subgraphs.length() < 2 {
     return
   }
-  if !horizontal && graph.edges.length() >= 60 {
+  if !horizontal && graph.edges.length() >= 50 {
     return
   }
 
@@ -7766,8 +7766,7 @@ fn layout_graph_legacy_with_subgraph_redirects(
     let use_greedy_feedback_arc_set = legacy_should_use_greedy_feedback_arc_set(
       graph, cycle_aware_layout, horizontal, state_graph, class_or_er_graph,
     )
-    let preserve_reversed_back_edge_constraints = cycle_aware_layout &&
-      !prefer_definition_back_edges
+    let preserve_reversed_back_edge_constraints = use_greedy_feedback_arc_set
     let enable_feedback_back_edge_ordering = base_enable_feedback_back_edge_ordering &&
       !use_greedy_feedback_arc_set
     let precomputed_lane_by_id : Map[String, Int] = {}
