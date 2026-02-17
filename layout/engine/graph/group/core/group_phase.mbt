@@ -48,3 +48,32 @@ pub fn build_legacy_positioned_groups(
 
   positioned_groups
 }
+
+///|
+/// Builds positioned groups for flat ASCII state layout and registers anchors.
+pub fn build_ascii_state_positioned_groups(
+  graph : MermaidGraph,
+  padding : Int,
+  positioned_by_id : Map[String, PositionedNode],
+) -> Array[PositionedGroup] {
+  let positioned_groups : Array[PositionedGroup] = []
+  let mut empty_group_top = padding
+  for subgraph in graph.subgraphs {
+    match build_positioned_group(subgraph, positioned_by_id, false, false) {
+      Some(group) => positioned_groups.push(group)
+      None => {
+        let empty_group = build_empty_group_tree_at(
+          subgraph, padding, empty_group_top, false, false,
+        )
+        positioned_groups.push(empty_group)
+        empty_group_top = empty_group_top +
+          empty_group.height +
+          subgraph_group_padding()
+      }
+    }
+  }
+  for group in positioned_groups {
+    register_group_anchors(group, positioned_by_id, true)
+  }
+  positioned_groups
+}

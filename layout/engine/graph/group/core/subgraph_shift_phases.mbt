@@ -179,7 +179,7 @@ fn shift_top_level_state_subgraphs_right(
 
 ///|
 /// Registers group id anchors as synthetic positioned nodes.
-pub fn register_group_anchors(
+fn register_group_anchors(
   group : PositionedGroup,
   positioned_by_id : Map[String, PositionedNode],
   preserve_existing : Bool,

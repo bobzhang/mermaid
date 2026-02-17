@@ -685,30 +685,9 @@ fn layout_flat_state_graph_for_ascii_grid(
     }
   }
 
-  let positioned_groups : Array[PositionedGroup] = []
-  let mut empty_group_top = padding
-  for subgraph in graph.subgraphs {
-    match
-      @layout_engine_graph_group_core.build_positioned_group(
-        subgraph, positioned_by_id, false, false,
-      ) {
-      Some(group) => positioned_groups.push(group)
-      None => {
-        let empty_group = @layout_engine_graph_group_core.build_empty_group_tree_at(
-          subgraph, padding, empty_group_top, false, false,
-        )
-        positioned_groups.push(empty_group)
-        empty_group_top = empty_group_top +
-          empty_group.height +
-          @layout_engine_graph_group_core.subgraph_group_padding()
-      }
-    }
-  }
-  for group in positioned_groups {
-    @layout_engine_graph_group_core.register_group_anchors(
-      group, positioned_by_id, true,
-    )
-  }
+  let positioned_groups : Array[PositionedGroup] = @layout_engine_graph_group_core.build_ascii_state_positioned_groups(
+    graph, padding, positioned_by_id,
+  )
 
   let blocked = layout_state_grid_blocked_cells(grid_positions)
   let (max_grid_x, max_grid_y) = layout_state_grid_bounds(grid_positions)

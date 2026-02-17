@@ -85,7 +85,7 @@ pub fn is_sequence_graph(graph : MermaidGraph) -> Bool {
 
 ///|
 /// Returns default padding used around positioned subgraph content.
-pub fn subgraph_group_padding() -> Int {
+fn subgraph_group_padding() -> Int {
   12
 }
 
@@ -131,7 +131,7 @@ fn include_bounds(
 
 ///|
 /// Builds positioned placeholder bounds for an empty subgraph tree.
-pub fn build_empty_group_tree_at(
+fn build_empty_group_tree_at(
   subgraph : MermaidSubgraph,
   x : Int,
   y : Int,
@@ -239,7 +239,7 @@ pub fn build_empty_group_tree_at(
 
 ///|
 /// Builds positioned bounds for a subgraph using existing positioned nodes.
-pub fn build_positioned_group(
+fn build_positioned_group(
   subgraph : MermaidSubgraph,
   positioned_by_id : Map[String, PositionedNode],
   inherited_horizontal : Bool,
