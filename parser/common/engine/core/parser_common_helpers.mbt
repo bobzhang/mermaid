@@ -216,9 +216,7 @@ fn find_first_operator_indices(
 
 ///|
 /// Returns the edge operator specifications for flowchart parsing.
-pub fn flow_edge_operator_specs() -> Array[
-  (String, @model.EdgeStyle, Bool, Bool),
-] {
+fn flow_edge_operator_specs() -> Array[(String, @model.EdgeStyle, Bool, Bool)] {
   [
     ("<==>", Thick, true, true),
     ("<-.->", Dotted, true, true),

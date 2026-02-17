@@ -12,8 +12,6 @@ pub fn append_nodes_to_current_subgraph(Array[@model.MermaidSubgraph], Array[Str
 
 pub fn ensure_node(Map[String, @model.MermaidNode], @model.MermaidNode) -> Unit
 
-pub fn flow_edge_operator_specs() -> Array[(String, @model.EdgeStyle, Bool, Bool)]
-
 pub fn is_plain_identifier(String) -> Bool
 
 pub fn parse_direction_token_strict(String) -> @model.Direction?

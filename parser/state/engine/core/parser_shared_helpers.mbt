@@ -27,9 +27,24 @@ fn find_first_operator_indices(
 }
 
 ///|
+fn flow_edge_operator_specs() -> Array[(String, EdgeStyle, Bool, Bool)] {
+  [
+    ("<==>", Thick, true, true),
+    ("<-.->", Dotted, true, true),
+    ("<-->", Solid, true, true),
+    ("==>", Thick, false, true),
+    ("-.->", Dotted, false, true),
+    ("-->", Solid, false, true),
+    ("===", Thick, false, false),
+    ("-.-", Dotted, false, false),
+    ("---", Solid, false, false),
+  ]
+}
+
+///|
 fn edge_operators() -> Array[EdgeOp] {
   let operators : Array[EdgeOp] = []
-  for spec in @parser_common_engine_core.flow_edge_operator_specs() {
+  for spec in flow_edge_operator_specs() {
     let (symbol, style, has_arrow_start, has_arrow_end) = spec
     operators.push({ symbol, style, has_arrow_start, has_arrow_end })
   }
