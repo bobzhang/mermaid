@@ -75,27 +75,27 @@ fn class_draw_multibox(
 fn class_relation_meta(operator : String?) -> (String, Bool, Bool, Bool) {
   match operator {
     Some(op) =>
-      if op.has_prefix("<|") {
+      if op is [.. "<|", ..] {
         let rel_type = if op.contains(".") {
           "realization"
         } else {
           "inheritance"
         }
         (rel_type, false, rel_type == "realization", true)
-      } else if op.has_suffix("|>") {
+      } else if op is [.., .. "|>"] {
         let rel_type = if op.contains(".") {
           "realization"
         } else {
           "inheritance"
         }
         (rel_type, true, rel_type == "realization", true)
-      } else if op.has_prefix("*") {
+      } else if op is [.. "*", ..] {
         ("composition", false, false, false)
-      } else if op.has_suffix("*") {
+      } else if op is [.., .. "*"] {
         ("composition", true, false, false)
-      } else if op.has_prefix("o") {
+      } else if op is [.. "o", ..] {
         ("aggregation", false, false, false)
-      } else if op.has_suffix("o") {
+      } else if op is [.., .. "o"] {
         ("aggregation", true, false, false)
       } else if op.contains(".") {
         ("dependency", true, true, false)
