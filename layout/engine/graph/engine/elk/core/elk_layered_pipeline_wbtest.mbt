@@ -112,6 +112,25 @@ fn wb_contains_node_id(node_ids : Array[String], node_id : String) -> Bool {
 }
 
 ///|
+fn wb_rank_seed_state(
+  rank_by_node_id : Map[String, Int],
+  max_rank : Int,
+  lane_by_node_id : Map[String, Int],
+  order_index_by_node_id : Map[String, Int],
+  successors_by_node_id : Map[String, Array[String]],
+  predecessors_by_node_id : Map[String, Array[String]],
+) -> ElkLayeredRankSeedState {
+  {
+    rank_by_node_id,
+    max_rank,
+    lane_by_node_id,
+    order_index_by_node_id,
+    successors_by_node_id,
+    predecessors_by_node_id,
+  }
+}
+
+///|
 test "elk layered rank seed strategy uses native feedback for small graphs" {
   let graph = wb_graph(["A", "B", "C"], [("A", "B"), ("B", "C")])
   assert_true(select_elk_layered_rank_seed_strategy(graph) is NativeFeedback)
@@ -210,6 +229,112 @@ test "elk layered rank order strategy uses optimized seed order for large native
     select_elk_layered_rank_order_strategy(graph, NativeFeedback)
     is OptimizedSeedOrder,
   )
+}
+
+///|
+test "elk layered large-graph selector keeps legacy seed on crossing tie" {
+  let all_nodes : Array[String] = []
+  for i in 0..<17 {
+    all_nodes.push("N\{i}")
+  }
+  let graph = wb_graph(all_nodes, [("A", "B")])
+  let nodes_in_order : Array[@model.MermaidNode] = [wb_node("A"), wb_node("B")]
+  let rank_by_node_id : Map[String, Int] = { "A": 0, "B": 1 }
+  let lane_by_node_id : Map[String, Int] = { "A": 0, "B": 0 }
+  let order_index_by_node_id : Map[String, Int] = { "A": 0, "B": 1 }
+  let successors_by_node_id : Map[String, Array[String]] = {
+    "A": ["B"],
+    "B": [],
+  }
+  let predecessors_by_node_id : Map[String, Array[String]] = {
+    "A": [],
+    "B": ["A"],
+  }
+  let legacy_state = wb_rank_seed_state(
+    rank_by_node_id, 1, lane_by_node_id, order_index_by_node_id, successors_by_node_id,
+    predecessors_by_node_id,
+  )
+  let native_state = wb_rank_seed_state(
+    rank_by_node_id, 1, lane_by_node_id, order_index_by_node_id, successors_by_node_id,
+    predecessors_by_node_id,
+  )
+  let (strategy, selected_state) = select_large_graph_rank_seed_state_by_score(
+    graph, legacy_state, native_state, nodes_in_order, order_index_by_node_id,
+  )
+  assert_true(strategy is LegacyLaneSeed)
+  assert_eq(option_int_or(selected_state.rank_by_node_id.get("A"), -1), 0)
+}
+
+///|
+test "elk layered large-graph selector prefers lower-crossing native seed" {
+  let all_nodes : Array[String] = []
+  for i in 0..<17 {
+    all_nodes.push("N\{i}")
+  }
+  let graph = wb_graph(all_nodes, [("A", "D"), ("B", "C")])
+  let nodes_in_order : Array[@model.MermaidNode] = [
+    wb_node("A"),
+    wb_node("B"),
+    wb_node("C"),
+    wb_node("D"),
+  ]
+  let rank_by_node_id : Map[String, Int] = { "A": 0, "B": 0, "C": 1, "D": 1 }
+  let order_index_by_node_id : Map[String, Int] = {
+    "A": 0,
+    "B": 1,
+    "C": 2,
+    "D": 3,
+  }
+  let successors_by_node_id : Map[String, Array[String]] = {
+    "A": ["D"],
+    "B": ["C"],
+    "C": [],
+    "D": [],
+  }
+  let predecessors_by_node_id : Map[String, Array[String]] = {
+    "A": [],
+    "B": [],
+    "C": ["B"],
+    "D": ["A"],
+  }
+  let legacy_state = wb_rank_seed_state(
+    rank_by_node_id,
+    1,
+    { "A": 0, "B": 1, "C": 0, "D": 1 },
+    order_index_by_node_id,
+    successors_by_node_id,
+    predecessors_by_node_id,
+  )
+  let native_state = wb_rank_seed_state(
+    rank_by_node_id,
+    1,
+    { "A": 0, "B": 1, "C": 1, "D": 0 },
+    order_index_by_node_id,
+    successors_by_node_id,
+    predecessors_by_node_id,
+  )
+  let legacy_score = rank_seed_order_crossing_score(
+    graph,
+    LegacyLaneSeed,
+    legacy_state,
+    nodes_in_order,
+    order_index_by_node_id,
+  )
+  let native_score = rank_seed_order_crossing_score(
+    graph,
+    NativeFeedback,
+    native_state,
+    nodes_in_order,
+    order_index_by_node_id,
+  )
+  assert_true(native_score < legacy_score)
+
+  let (strategy, selected_state) = select_large_graph_rank_seed_state_by_score(
+    graph, legacy_state, native_state, nodes_in_order, order_index_by_node_id,
+  )
+  assert_true(strategy is NativeFeedback)
+  assert_eq(option_int_or(selected_state.lane_by_node_id.get("D"), -1), 0)
+  assert_eq(option_int_or(selected_state.lane_by_node_id.get("C"), -1), 1)
 }
 
 ///|
