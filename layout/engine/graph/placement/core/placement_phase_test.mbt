@@ -57,69 +57,69 @@ fn two_node_lane_map() -> Map[String, Int] {
 test "placement computes forward horizontal ordering from rank map" {
   let nodes = [test_node("A"), test_node("B")]
   let graph = test_graph(LR, nodes, [test_edge("A", "B")])
-  let (positioned_nodes, positioned_by_id, _, _) = compute_legacy_node_placement_state(
+  let placement_state = compute_legacy_node_placement_state({
     graph,
-    nodes,
-    false,
-    true,
-    false,
-    false,
-    false,
-    false,
-    false,
-    false,
-    false,
-    false,
-    {},
-    {},
-    1,
-    two_node_rank_map(),
-    two_node_lane_map(),
-    {},
-    {},
-    {},
-    40,
-    130,
-    90,
-  )
+    nodes_in_order: nodes,
+    reverse: false,
+    horizontal: true,
+    state_graph: false,
+    flat_state_graph: false,
+    compact_fanin: false,
+    enhanced_horizontal_state_flow: false,
+    refined_horizontal_non_state_flow: false,
+    refined_horizontal_non_state_labeled_cycle_flow: false,
+    horizontal_cycle_non_state_flow: false,
+    use_subgraph_redirects: false,
+    subgraph_entry_by_id: {},
+    subgraph_exit_by_id: {},
+    flow_max_rank: 1,
+    flow_rank_by_node_id: two_node_rank_map(),
+    flow_lane_by_node_id: two_node_lane_map(),
+    flow_label_y_offset_by_rank: {},
+    state_lane_by_node_id: {},
+    state_label_y_offset_by_node_id: {},
+    padding: 40,
+    node_spacing: 130,
+    layer_spacing: 90,
+  })
 
-  let ax = positioned_by_id["A"].x
-  let bx = positioned_by_id["B"].x
+  let ax = placement_state.positioned_by_id["A"].x
+  let bx = placement_state.positioned_by_id["B"].x
   assert_true(bx > ax)
-  assert_eq(positioned_nodes.length(), 2)
+  assert_eq(placement_state.positioned_nodes.length(), 2)
 }
 
 ///|
 test "placement reverse mode flips horizontal rank ordering" {
   let nodes = [test_node("A"), test_node("B")]
   let graph = test_graph(RL, nodes, [test_edge("A", "B")])
-  let (_, positioned_by_id, _, _) = compute_legacy_node_placement_state(
+  let placement_state = compute_legacy_node_placement_state({
     graph,
-    nodes,
-    true,
-    true,
-    false,
-    false,
-    false,
-    false,
-    false,
-    false,
-    false,
-    false,
-    {},
-    {},
-    1,
-    two_node_rank_map(),
-    two_node_lane_map(),
-    {},
-    {},
-    {},
-    40,
-    130,
-    90,
-  )
+    nodes_in_order: nodes,
+    reverse: true,
+    horizontal: true,
+    state_graph: false,
+    flat_state_graph: false,
+    compact_fanin: false,
+    enhanced_horizontal_state_flow: false,
+    refined_horizontal_non_state_flow: false,
+    refined_horizontal_non_state_labeled_cycle_flow: false,
+    horizontal_cycle_non_state_flow: false,
+    use_subgraph_redirects: false,
+    subgraph_entry_by_id: {},
+    subgraph_exit_by_id: {},
+    flow_max_rank: 1,
+    flow_rank_by_node_id: two_node_rank_map(),
+    flow_lane_by_node_id: two_node_lane_map(),
+    flow_label_y_offset_by_rank: {},
+    state_lane_by_node_id: {},
+    state_label_y_offset_by_node_id: {},
+    padding: 40,
+    node_spacing: 130,
+    layer_spacing: 90,
+  })
 
-  let ax = positioned_by_id["A"].x
-  let bx = positioned_by_id["B"].x
+  let ax = placement_state.positioned_by_id["A"].x
+  let bx = placement_state.positioned_by_id["B"].x
   assert_true(ax > bx)
 }

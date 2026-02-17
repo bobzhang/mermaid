@@ -1,30 +1,69 @@
 ///|
+/// Legacy placement phase output consumed by grouping/routing/finalization.
+pub struct LegacyPlacementState {
+  positioned_nodes : Array[PositionedNode]
+  positioned_by_id : Map[String, PositionedNode]
+  max_right : Int
+  max_bottom : Int
+}
+
+///|
+/// Legacy placement phase input assembled by the legacy orchestrator.
+pub(all) struct LegacyPlacementInput {
+  graph : MermaidGraph
+  nodes_in_order : Array[MermaidNode]
+  reverse : Bool
+  horizontal : Bool
+  state_graph : Bool
+  flat_state_graph : Bool
+  compact_fanin : Bool
+  enhanced_horizontal_state_flow : Bool
+  refined_horizontal_non_state_flow : Bool
+  refined_horizontal_non_state_labeled_cycle_flow : Bool
+  horizontal_cycle_non_state_flow : Bool
+  use_subgraph_redirects : Bool
+  subgraph_entry_by_id : Map[String, String]
+  subgraph_exit_by_id : Map[String, String]
+  flow_max_rank : Int
+  flow_rank_by_node_id : Map[String, Int]
+  flow_lane_by_node_id : Map[String, Int]
+  flow_label_y_offset_by_rank : Map[Int, Int]
+  state_lane_by_node_id : Map[String, Int]
+  state_label_y_offset_by_node_id : Map[String, Int]
+  padding : Int
+  node_spacing : Int
+  layer_spacing : Int
+}
+
+///|
 /// Computes legacy node coordinates and placement bounds.
 pub fn compute_legacy_node_placement_state(
-  graph : MermaidGraph,
-  nodes_in_order : Array[MermaidNode],
-  reverse : Bool,
-  horizontal : Bool,
-  state_graph : Bool,
-  flat_state_graph : Bool,
-  compact_fanin : Bool,
-  enhanced_horizontal_state_flow : Bool,
-  refined_horizontal_non_state_flow : Bool,
-  refined_horizontal_non_state_labeled_cycle_flow : Bool,
-  horizontal_cycle_non_state_flow : Bool,
-  use_subgraph_redirects : Bool,
-  subgraph_entry_by_id : Map[String, String],
-  subgraph_exit_by_id : Map[String, String],
-  flow_max_rank : Int,
-  flow_rank_by_node_id : Map[String, Int],
-  flow_lane_by_node_id : Map[String, Int],
-  flow_label_y_offset_by_rank : Map[Int, Int],
-  state_lane_by_node_id : Map[String, Int],
-  state_label_y_offset_by_node_id : Map[String, Int],
-  padding : Int,
-  node_spacing : Int,
-  layer_spacing : Int,
-) -> (Array[PositionedNode], Map[String, PositionedNode], Int, Int) {
+  input : LegacyPlacementInput,
+) -> LegacyPlacementState {
+  let graph = input.graph
+  let nodes_in_order = input.nodes_in_order
+  let reverse = input.reverse
+  let horizontal = input.horizontal
+  let state_graph = input.state_graph
+  let flat_state_graph = input.flat_state_graph
+  let compact_fanin = input.compact_fanin
+  let enhanced_horizontal_state_flow = input.enhanced_horizontal_state_flow
+  let refined_horizontal_non_state_flow = input.refined_horizontal_non_state_flow
+  let refined_horizontal_non_state_labeled_cycle_flow = input.refined_horizontal_non_state_labeled_cycle_flow
+  let horizontal_cycle_non_state_flow = input.horizontal_cycle_non_state_flow
+  let use_subgraph_redirects = input.use_subgraph_redirects
+  let subgraph_entry_by_id = input.subgraph_entry_by_id
+  let subgraph_exit_by_id = input.subgraph_exit_by_id
+  let flow_max_rank = input.flow_max_rank
+  let flow_rank_by_node_id = input.flow_rank_by_node_id
+  let flow_lane_by_node_id = input.flow_lane_by_node_id
+  let flow_label_y_offset_by_rank = input.flow_label_y_offset_by_rank
+  let state_lane_by_node_id = input.state_lane_by_node_id
+  let state_label_y_offset_by_node_id = input.state_label_y_offset_by_node_id
+  let padding = input.padding
+  let node_spacing = input.node_spacing
+  let layer_spacing = input.layer_spacing
+
   let positioned_nodes : Array[PositionedNode] = []
   let positioned_by_id : Map[String, PositionedNode] = {}
   let max_width_by_flow_rank_index : Map[Int, Int] = {}
@@ -205,5 +244,5 @@ pub fn compute_legacy_node_placement_state(
     max_bottom = max_bottom.max(y + height / 2)
   }
 
-  (positioned_nodes, positioned_by_id, max_right, max_bottom)
+  { positioned_nodes, positioned_by_id, max_right, max_bottom }
 }

@@ -6,11 +6,19 @@ import {
 }
 
 // Values
-pub fn layout_graph_legacy_with_subgraph_redirects(@model.MermaidGraph, @model.RenderOptions, Bool, Bool, Bool, Bool) -> @model.PositionedGraph
+pub fn layout_graph_legacy_with_subgraph_redirects(LegacyLayoutRequest) -> @model.PositionedGraph
 
 // Errors
 
 // Types and methods
+pub(all) struct LegacyLayoutRequest {
+  graph : @model.MermaidGraph
+  options : @model.RenderOptions
+  use_subgraph_redirects : Bool
+  compact_fanin : Bool
+  enable_target_boundary_ports : Bool
+  preserve_assigned_endpoint_ports : Bool
+}
 
 // Type aliases
 

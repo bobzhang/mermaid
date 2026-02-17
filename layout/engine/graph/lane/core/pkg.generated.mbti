@@ -6,11 +6,33 @@ import {
 }
 
 // Values
-pub fn compute_legacy_lane_state(@model.MermaidGraph, Array[@model.MermaidNode], Bool, Bool, Bool, Bool, Bool, Bool) -> (Map[String, Int], Map[String, Int], Map[String, Int], Map[String, Int], Map[Int, Int], Bool, Bool, Bool, Int)
+pub fn compute_legacy_lane_state(LegacyLaneInput) -> LegacyLaneState
 
 // Errors
 
 // Types and methods
+pub(all) struct LegacyLaneInput {
+  graph : @model.MermaidGraph
+  nodes_in_order : Array[@model.MermaidNode]
+  state_graph : Bool
+  class_or_er_graph : Bool
+  horizontal : Bool
+  compact_fanin : Bool
+  enhanced_horizontal_state_flow : Bool
+  flat_state_graph : Bool
+}
+
+pub struct LegacyLaneState {
+  state_lane_by_node_id : Map[String, Int]
+  state_label_y_offset_by_node_id : Map[String, Int]
+  flow_rank_by_node_id : Map[String, Int]
+  flow_lane_by_node_id : Map[String, Int]
+  flow_label_y_offset_by_rank : Map[Int, Int]
+  refined_horizontal_non_state_flow : Bool
+  refined_horizontal_non_state_labeled_cycle_flow : Bool
+  horizontal_cycle_non_state_flow : Bool
+  flow_max_rank : Int
+}
 
 // Type aliases
 

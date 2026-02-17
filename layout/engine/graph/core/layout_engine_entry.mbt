@@ -66,14 +66,14 @@ fn run_layout_engine(
       // non-ELK behavior during the modular refactor.
       legacy_pipeline_routing_flags(DagreParity)
   }
-  @layout_engine_graph_legacy_core.layout_graph_legacy_with_subgraph_redirects(
-    ir.graph,
+  @layout_engine_graph_legacy_core.layout_graph_legacy_with_subgraph_redirects({
+    graph: ir.graph,
     options,
-    ir.use_subgraph_redirects,
-    ir.compact_fanin,
+    use_subgraph_redirects: ir.use_subgraph_redirects,
+    compact_fanin: ir.compact_fanin,
     enable_target_boundary_ports,
     preserve_assigned_endpoint_ports,
-  )
+  })
 }
 
 ///|
