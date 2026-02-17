@@ -10,8 +10,6 @@ pub fn layout_graph(@model.MermaidGraph, @model.RenderOptions) -> @model.Positio
 
 pub fn layout_graph_for_ascii(@model.MermaidGraph, @model.RenderOptions) -> @model.PositionedGraph
 
-pub fn layout_state_flat_grid_layout_data(@model.MermaidGraph) -> (Array[@model.MermaidNode], Map[String, (Int, Int)], Array[Array[@bobzhang/beautiful_mermaid/layout/engine/pathfinder/core.AsciiGridCoord]])
-
 // Errors
 
 // Types and methods

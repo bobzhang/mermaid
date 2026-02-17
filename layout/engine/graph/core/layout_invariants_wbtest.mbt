@@ -1,4 +1,11 @@
 ///|
+type Point = @model.Point
+
+///|
+type PositionedNode = @model.PositionedNode
+
+///|
+type PositionedEdge = @model.PositionedEdge
 
 ///|
 fn label_position_for(edges : Array[PositionedEdge], label : String) -> Point? {

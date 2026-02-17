@@ -1,4 +1,7 @@
 ///|
+type MermaidNode = @model.MermaidNode
+
+///|
 fn test_graph(nodes : Map[String, MermaidNode]) -> MermaidGraph {
   {
     diagram_kind: Flowchart,

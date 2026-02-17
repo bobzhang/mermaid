@@ -686,7 +686,8 @@ fn layout_state_empty_positioned_graph() -> PositionedGraph {
 }
 
 ///|
-fn layout_flat_state_graph_for_ascii_grid(
+/// Lays out flat state graphs with the ASCII grid pipeline.
+pub fn layout_flat_state_graph_for_ascii_grid(
   graph : MermaidGraph,
   options : RenderOptions,
 ) -> PositionedGraph {

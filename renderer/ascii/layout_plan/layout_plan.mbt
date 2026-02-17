@@ -926,7 +926,7 @@ fn build_er_layout(graph : @model.MermaidGraph) -> AsciiErLayout {
 fn build_state_flat_grid_layout(
   graph : @model.MermaidGraph,
 ) -> AsciiStateFlatGridLayout {
-  let (nodes_in_order, grid_positions, edge_paths) = @layout.layout_state_flat_grid_layout_data(
+  let (nodes_in_order, grid_positions, edge_paths) = @layout_engine_graph_ascii_core.layout_state_flat_grid_layout_data(
     graph,
   )
   { nodes_in_order, grid_positions, edge_paths }

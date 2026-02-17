@@ -70,7 +70,9 @@ fn execute_layout_plan(
     UseEngine(ir) =>
       run_layout_engine(ir, options, resolve_layout_engine(options))
     UseFlatStateAsciiGrid(graph) =>
-      layout_flat_state_graph_for_ascii_grid(graph, options)
+      @layout_engine_graph_ascii_core.layout_flat_state_graph_for_ascii_grid(
+        graph, options,
+      )
   }
 }
 

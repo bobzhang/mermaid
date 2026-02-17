@@ -1,0 +1,20 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "bobzhang/beautiful_mermaid/layout/engine/graph/ascii/core"
+
+import {
+  "bobzhang/beautiful_mermaid/model",
+}
+
+// Values
+pub fn layout_flat_state_graph_for_ascii_grid(@model.MermaidGraph, @model.RenderOptions) -> @model.PositionedGraph
+
+pub fn layout_state_flat_grid_layout_data(@model.MermaidGraph) -> (Array[@model.MermaidNode], Map[String, (Int, Int)], Array[Array[@bobzhang/beautiful_mermaid/layout/engine/pathfinder/core.AsciiGridCoord]])
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits
+
