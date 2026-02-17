@@ -20,6 +20,7 @@
  *   bun run scripts/compare_layout_stress.ts --max-weighted-gap-index 0.85
  *   bun run scripts/compare_layout_stress.ts --max-avg-weighted-gap-index 0.60
  *   bun run scripts/compare_layout_stress.ts --local-layout-engine dagre-parity
+ *   bun run scripts/compare_layout_stress.ts --local-layout-engine elk
  */
 
 import { mkdtempSync, readFileSync, readdirSync, writeFileSync } from 'node:fs'
@@ -99,7 +100,7 @@ type CliOptions = {
   profile?: string
   fixtures: string[]
   jsonPath?: string
-  localLayoutEngine?: 'legacy' | 'dagre-parity'
+  localLayoutEngine?: 'legacy' | 'dagre-parity' | 'elk'
   allowUnparsedEdgeLines: boolean
   useLocalEdgeDump: boolean
   maxLogicalCrossingMultiplier?: number
@@ -2018,7 +2019,7 @@ function parseCliOptions(args: string[]): CliOptions {
   let profile: string | undefined = undefined
   const fixtures: string[] = []
   let jsonPath: string | undefined = undefined
-  let localLayoutEngine: 'legacy' | 'dagre-parity' | undefined = undefined
+  let localLayoutEngine: 'legacy' | 'dagre-parity' | 'elk' | undefined = undefined
   let allowUnparsedEdgeLines = false
   let useLocalEdgeDump = false
   let maxLogicalCrossingMultiplier: number | undefined = undefined
@@ -2069,8 +2070,8 @@ function parseCliOptions(args: string[]): CliOptions {
       const next = args[i + 1]
       if (!next) fail('missing value after --local-layout-engine')
       const normalized = next.trim().toLowerCase()
-      if (normalized !== 'legacy' && normalized !== 'dagre-parity') {
-        fail("invalid --local-layout-engine value, expected 'legacy' or 'dagre-parity'")
+      if (normalized !== 'legacy' && normalized !== 'dagre-parity' && normalized !== 'elk') {
+        fail("invalid --local-layout-engine value, expected 'legacy', 'dagre-parity', or 'elk'")
       }
       localLayoutEngine = normalized
       i += 1
@@ -2078,8 +2079,8 @@ function parseCliOptions(args: string[]): CliOptions {
     }
     if (arg.startsWith('--local-layout-engine=')) {
       const normalized = arg.slice('--local-layout-engine='.length).trim().toLowerCase()
-      if (normalized !== 'legacy' && normalized !== 'dagre-parity') {
-        fail("invalid --local-layout-engine value, expected 'legacy' or 'dagre-parity'")
+      if (normalized !== 'legacy' && normalized !== 'dagre-parity' && normalized !== 'elk') {
+        fail("invalid --local-layout-engine value, expected 'legacy', 'dagre-parity', or 'elk'")
       }
       localLayoutEngine = normalized
       continue
