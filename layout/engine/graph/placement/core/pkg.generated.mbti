@@ -15,8 +15,6 @@ pub(all) struct LegacyPlacementState {
   positioned_nodes : Array[@model.PositionedNode]
   positioned_by_id : Map[String, @model.PositionedNode]
 }
-pub fn LegacyPlacementState::positioned_by_id(Self) -> Map[String, @model.PositionedNode]
-pub fn LegacyPlacementState::positioned_nodes(Self) -> Array[@model.PositionedNode]
 
 // Type aliases
 

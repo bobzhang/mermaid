@@ -55,12 +55,12 @@ test "legacy setup derives flow defaults and lane state for a simple graph" {
     false,
   )
 
-  assert_eq(setup_state.padding(), 40)
-  assert_eq(setup_state.node_spacing(), 130)
-  assert_eq(setup_state.layer_spacing(), 90)
-  assert_eq(setup_state.horizontal(), true)
-  assert_eq(setup_state.reverse(), false)
-  assert_eq(setup_state.state_graph(), false)
-  assert_eq(setup_state.nodes_in_order().length(), 2)
-  assert_eq(setup_state.lane_state().flow_max_rank, 1)
+  assert_eq(setup_state.padding, 40)
+  assert_eq(setup_state.node_spacing, 130)
+  assert_eq(setup_state.layer_spacing, 90)
+  assert_eq(setup_state.horizontal, true)
+  assert_eq(setup_state.reverse, false)
+  assert_eq(setup_state.state_graph, false)
+  assert_eq(setup_state.nodes_in_order.length(), 2)
+  assert_eq(setup_state.lane_state.flow_max_rank, 1)
 }

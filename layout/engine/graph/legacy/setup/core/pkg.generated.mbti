@@ -26,19 +26,6 @@ pub(all) struct LegacyLayoutSetupState {
   enhanced_horizontal_state_flow : Bool
   lane_state : @bobzhang/beautiful_mermaid/layout/engine/graph/lane/core.LegacyLaneState
 }
-pub fn LegacyLayoutSetupState::class_or_er_graph(Self) -> Bool
-pub fn LegacyLayoutSetupState::enhanced_horizontal_state_flow(Self) -> Bool
-pub fn LegacyLayoutSetupState::flat_state_graph(Self) -> Bool
-pub fn LegacyLayoutSetupState::horizontal(Self) -> Bool
-pub fn LegacyLayoutSetupState::lane_state(Self) -> @bobzhang/beautiful_mermaid/layout/engine/graph/lane/core.LegacyLaneState
-pub fn LegacyLayoutSetupState::layer_spacing(Self) -> Int
-pub fn LegacyLayoutSetupState::node_spacing(Self) -> Int
-pub fn LegacyLayoutSetupState::nodes_in_order(Self) -> Array[@model.MermaidNode]
-pub fn LegacyLayoutSetupState::padding(Self) -> Int
-pub fn LegacyLayoutSetupState::reverse(Self) -> Bool
-pub fn LegacyLayoutSetupState::state_graph(Self) -> Bool
-pub fn LegacyLayoutSetupState::subgraph_entry_by_id(Self) -> Map[String, String]
-pub fn LegacyLayoutSetupState::subgraph_exit_by_id(Self) -> Map[String, String]
 
 // Type aliases
 

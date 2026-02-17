@@ -67,7 +67,7 @@ test "elk layered rank assignment keeps forward dependencies ordered" {
     graph, false,
   )
   let nodes_in_order = @layout_engine_graph_internal_core.reorder_nodes_for_flow_layout(
-    prep_state.nodes_in_order(),
+    prep_state.nodes_in_order,
     graph.edges,
   )
   let (
@@ -79,8 +79,8 @@ test "elk layered rank assignment keeps forward dependencies ordered" {
   ) = build_layered_rank_state(
     graph,
     false,
-    prep_state.subgraph_entry_by_id(),
-    prep_state.subgraph_exit_by_id(),
+    prep_state.subgraph_entry_by_id,
+    prep_state.subgraph_exit_by_id,
     nodes_in_order,
   )
 
@@ -109,7 +109,7 @@ test "elk layered order optimization reduces crossing count on bipartite rank pa
     graph, false,
   )
   let nodes_in_order = @layout_engine_graph_internal_core.reorder_nodes_for_flow_layout(
-    prep_state.nodes_in_order(),
+    prep_state.nodes_in_order,
     graph.edges,
   )
   let base_order_index_by_node_id = build_order_index_by_node_id(nodes_in_order)
@@ -122,8 +122,8 @@ test "elk layered order optimization reduces crossing count on bipartite rank pa
   ) = build_layered_rank_state(
     graph,
     false,
-    prep_state.subgraph_entry_by_id(),
-    prep_state.subgraph_exit_by_id(),
+    prep_state.subgraph_entry_by_id,
+    prep_state.subgraph_exit_by_id,
     nodes_in_order,
   )
   let rank_node_ids_by_rank = build_rank_node_ids_by_lane(
@@ -194,7 +194,7 @@ test "elk layered rank state breaks feedback cycles into forward-ranked edges" {
     graph, false,
   )
   let nodes_in_order = @layout_engine_graph_internal_core.reorder_nodes_for_flow_layout(
-    prep_state.nodes_in_order(),
+    prep_state.nodes_in_order,
     graph.edges,
   )
   let (
@@ -206,8 +206,8 @@ test "elk layered rank state breaks feedback cycles into forward-ranked edges" {
   ) = build_layered_rank_state(
     graph,
     false,
-    prep_state.subgraph_entry_by_id(),
-    prep_state.subgraph_exit_by_id(),
+    prep_state.subgraph_entry_by_id,
+    prep_state.subgraph_exit_by_id,
     nodes_in_order,
   )
   assert_true(max_rank >= 2)
@@ -229,7 +229,7 @@ test "elk layered virtual ordering normalizes long-span edges into adjacent rank
     graph, false,
   )
   let nodes_in_order = @layout_engine_graph_internal_core.reorder_nodes_for_flow_layout(
-    prep_state.nodes_in_order(),
+    prep_state.nodes_in_order,
     graph.edges,
   )
   let base_order_index_by_node_id = build_order_index_by_node_id(nodes_in_order)
@@ -242,8 +242,8 @@ test "elk layered virtual ordering normalizes long-span edges into adjacent rank
   ) = build_layered_rank_state(
     graph,
     false,
-    prep_state.subgraph_entry_by_id(),
-    prep_state.subgraph_exit_by_id(),
+    prep_state.subgraph_entry_by_id,
+    prep_state.subgraph_exit_by_id,
     nodes_in_order,
   )
   let rank_node_ids_by_rank = build_rank_node_ids_by_lane(
@@ -286,7 +286,7 @@ test "elk layered virtual ordering filters placeholders before placement" {
     graph, false,
   )
   let nodes_in_order = @layout_engine_graph_internal_core.reorder_nodes_for_flow_layout(
-    prep_state.nodes_in_order(),
+    prep_state.nodes_in_order,
     graph.edges,
   )
   let base_order_index_by_node_id = build_order_index_by_node_id(nodes_in_order)
@@ -299,8 +299,8 @@ test "elk layered virtual ordering filters placeholders before placement" {
   ) = build_layered_rank_state(
     graph,
     false,
-    prep_state.subgraph_entry_by_id(),
-    prep_state.subgraph_exit_by_id(),
+    prep_state.subgraph_entry_by_id,
+    prep_state.subgraph_exit_by_id,
     nodes_in_order,
   )
   let rank_node_ids_by_rank = build_rank_node_ids_by_lane(
@@ -350,7 +350,7 @@ test "elk layered rank-seeded neighbor orientation stays forward by rank" {
     graph, false,
   )
   let nodes_in_order = @layout_engine_graph_internal_core.reorder_nodes_for_flow_layout(
-    prep_state.nodes_in_order(),
+    prep_state.nodes_in_order,
     graph.edges,
   )
   let lane_state = @layout_engine_graph_lane_core.compute_legacy_lane_state(
@@ -365,8 +365,8 @@ test "elk layered rank-seeded neighbor orientation stays forward by rank" {
   let (successors_by_node_id, _predecessors_by_node_id) = build_layered_neighbor_state_from_rank_seed(
     graph,
     false,
-    prep_state.subgraph_entry_by_id(),
-    prep_state.subgraph_exit_by_id(),
+    prep_state.subgraph_entry_by_id,
+    prep_state.subgraph_exit_by_id,
     node_ids,
     rank_by_node_id,
     order_index_by_node_id,

@@ -63,30 +63,6 @@ pub(all) struct GraphPrepState {
 }
 
 ///|
-/// Returns subgraph entry-node redirects keyed by subgraph id.
-pub fn GraphPrepState::subgraph_entry_by_id(
-  self : GraphPrepState,
-) -> Map[String, String] {
-  self.subgraph_entry_by_id
-}
-
-///|
-/// Returns subgraph exit-node redirects keyed by subgraph id.
-pub fn GraphPrepState::subgraph_exit_by_id(
-  self : GraphPrepState,
-) -> Map[String, String] {
-  self.subgraph_exit_by_id
-}
-
-///|
-/// Returns normalized node order with redirected subgraph placeholders removed.
-pub fn GraphPrepState::nodes_in_order(
-  self : GraphPrepState,
-) -> Array[MermaidNode] {
-  self.nodes_in_order
-}
-
-///|
 /// Prepares normalized graph inputs used by downstream layout phases.
 pub fn prepare_graph_inputs(
   graph : MermaidGraph,

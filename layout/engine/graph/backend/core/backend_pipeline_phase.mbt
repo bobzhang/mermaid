@@ -12,7 +12,7 @@ fn setup_phase_snapshot(
 ) -> GraphLayoutPhaseSnapshot {
   {
     phase: "setup",
-    node_count: setup_state.nodes_in_order().length(),
+    node_count: setup_state.nodes_in_order.length(),
     edge_count: request.graph.edges.length(),
     group_count: request.graph.subgraphs.length(),
     width: 0,
@@ -27,7 +27,7 @@ fn placement_phase_snapshot(
 ) -> GraphLayoutPhaseSnapshot {
   {
     phase: "placement",
-    node_count: placement_state.positioned_nodes().length(),
+    node_count: placement_state.positioned_nodes.length(),
     edge_count: request.graph.edges.length(),
     group_count: request.graph.subgraphs.length(),
     width: 0,
