@@ -7,7 +7,7 @@ fn adjust_neighbor_degree_after_removal(
   match neighbors {
     Some(found) =>
       for neighbor_id in found {
-        if !node_is_active(active_by_node_id, neighbor_id) {
+        if !option_bool_or(active_by_node_id.get(neighbor_id), false) {
           continue
         }
         degree_by_node_id[neighbor_id] = option_int_or(
@@ -60,7 +60,7 @@ fn collect_active_source_or_sink_nodes(
 ) -> Array[String] {
   let selected : Array[String] = []
   for node_id in node_ids {
-    if !node_is_active(active_by_node_id, node_id) {
+    if !option_bool_or(active_by_node_id.get(node_id), false) {
       continue
     }
     let indegree = option_int_or(indegree_by_node_id.get(node_id), 0)
@@ -89,7 +89,7 @@ fn find_feedback_break_node(
   let mut best_score = 0
   let mut best_outdegree = 0
   for node_id in node_ids {
-    if !node_is_active(active_by_node_id, node_id) {
+    if !option_bool_or(active_by_node_id.get(node_id), false) {
       continue
     }
     let indegree = option_int_or(indegree_by_node_id.get(node_id), 0)
@@ -171,7 +171,7 @@ fn compute_feedback_acyclic_node_order(
         compare_node_ids_by_order(left, right, base_order_index_by_node_id)
       })
       for node_id in sinks {
-        if !node_is_active(active_by_node_id, node_id) {
+        if !option_bool_or(active_by_node_id.get(node_id), false) {
           continue
         }
         remove_feedback_order_node(
@@ -191,7 +191,7 @@ fn compute_feedback_acyclic_node_order(
         compare_node_ids_by_order(left, right, base_order_index_by_node_id)
       })
       for node_id in sources {
-        if !node_is_active(active_by_node_id, node_id) {
+        if !option_bool_or(active_by_node_id.get(node_id), false) {
           continue
         }
         remove_feedback_order_node(

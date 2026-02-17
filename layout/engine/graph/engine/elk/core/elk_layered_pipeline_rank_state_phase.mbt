@@ -1,12 +1,4 @@
 ///|
-fn node_is_active(
-  active_by_node_id : Map[String, Bool],
-  node_id : String,
-) -> Bool {
-  option_bool_or(active_by_node_id.get(node_id), false)
-}
-
-///|
 fn build_order_index_by_id(
   node_ids_in_order : Array[String],
 ) -> Map[String, Int] {
