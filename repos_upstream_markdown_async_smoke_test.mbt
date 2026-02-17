@@ -10,7 +10,18 @@ async fn repos_markdown_files_from(
   )
   match kind_result {
     Ok(Directory) => {
-      if repos_skip_markdown_walk_dir(path) {
+      let name = match path.rev_find("/") {
+        Some(index) => (try! path[index + 1:]).to_string()
+        None => path
+      }
+      if name
+        is ("node_modules"
+        | ".git"
+        | "dist"
+        | "build"
+        | "coverage"
+        | ".next"
+        | ".turbo") {
         return
       }
       let entries_result : Result[Array[String], Error] = try? @fs.readdir(
@@ -29,22 +40,6 @@ async fn repos_markdown_files_from(
     Ok(Regular) => if path.has_suffix(".md") { files.push(path) }
     _ => ()
   }
-}
-
-///|
-#cfg(target="native")
-fn repos_skip_markdown_walk_dir(path : String) -> Bool {
-  let name = match path.rev_find("/") {
-    Some(index) => (try! path[index + 1:]).to_string()
-    None => path
-  }
-  name == "node_modules" ||
-  name == ".git" ||
-  name == "dist" ||
-  name == "build" ||
-  name == "coverage" ||
-  name == ".next" ||
-  name == ".turbo"
 }
 
 ///|
@@ -119,22 +114,6 @@ fn repos_supported_mermaid_block(source : String) -> Bool {
   first.has_prefix("classDiagram") ||
   first.has_prefix("erDiagram") ||
   first.has_prefix("stateDiagram")
-}
-
-///|
-#cfg(target="native")
-async fn repos_supported_markdown_case_count() -> Int {
-  let files = repos_markdown_files()
-  let mut total = 0
-  for path in files {
-    let source = @fs.read_file(path).text()
-    for block in repos_extract_mermaid_blocks(source) {
-      if repos_supported_mermaid_block(block) {
-        total += 1
-      }
-    }
-  }
-  total
 }
 
 ///|
@@ -215,7 +194,16 @@ async fn repos_verify_markdown_chunk(
 ///|
 #cfg(target="native")
 async test "Upstream markdown supported corpus has enough cases" {
-  let count = repos_supported_markdown_case_count()
+  let files = repos_markdown_files()
+  let mut count = 0
+  for path in files {
+    let source = @fs.read_file(path).text()
+    for block in repos_extract_mermaid_blocks(source) {
+      if repos_supported_mermaid_block(block) {
+        count += 1
+      }
+    }
+  }
   assert_true(count >= 700)
 }
 
