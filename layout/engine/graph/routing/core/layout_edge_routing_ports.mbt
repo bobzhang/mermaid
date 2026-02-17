@@ -93,7 +93,7 @@ fn boundary_anchor_prefers_direct_base(node : PositionedNode) -> Bool {
 }
 
 ///|
-pub fn point_equals(left : Point, right : Point) -> Bool {
+fn point_equals(left : Point, right : Point) -> Bool {
   left.x == right.x && left.y == right.y
 }
 
@@ -116,7 +116,7 @@ fn point_collinear(first : Point, middle : Point, last : Point) -> Bool {
 }
 
 ///|
-pub fn simplify_polyline_points(points : Array[Point]) -> Array[Point] {
+fn simplify_polyline_points(points : Array[Point]) -> Array[Point] {
   let simplified : Array[Point] = []
   for point in points {
     if simplified.length() == 0 ||
@@ -160,7 +160,7 @@ fn shift_endpoint_boundary_run_to_anchor(
 }
 
 ///|
-pub fn apply_endpoint_port_stubs(
+fn apply_endpoint_port_stubs(
   core_points : Array[Point],
   source_anchor : Point,
   target_anchor : Point,
