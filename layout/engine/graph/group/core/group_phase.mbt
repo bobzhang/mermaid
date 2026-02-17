@@ -1,34 +1,17 @@
 ///|
-/// Legacy group-building request assembled by the legacy orchestrator.
-pub(all) struct LegacyGroupBuildRequest {
-  graph : MermaidGraph
-  padding : Int
-  horizontal : Bool
-  reverse : Bool
-  state_graph : Bool
-  node_spacing : Int
-  layer_spacing : Int
-  positioned_nodes : Array[PositionedNode]
-  positioned_by_id : Map[String, PositionedNode]
-  positioned_index_by_id : Map[String, Int]
-}
-
-///|
 /// Builds positioned subgraph groups and registers their anchor nodes.
 pub fn build_legacy_positioned_groups(
-  request : LegacyGroupBuildRequest,
+  graph : MermaidGraph,
+  padding : Int,
+  horizontal : Bool,
+  reverse : Bool,
+  state_graph : Bool,
+  node_spacing : Int,
+  layer_spacing : Int,
+  positioned_nodes : Array[PositionedNode],
+  positioned_by_id : Map[String, PositionedNode],
+  positioned_index_by_id : Map[String, Int],
 ) -> Array[PositionedGroup] {
-  let graph = request.graph
-  let padding = request.padding
-  let horizontal = request.horizontal
-  let reverse = request.reverse
-  let state_graph = request.state_graph
-  let node_spacing = request.node_spacing
-  let layer_spacing = request.layer_spacing
-  let positioned_nodes = request.positioned_nodes
-  let positioned_by_id = request.positioned_by_id
-  let positioned_index_by_id = request.positioned_index_by_id
-
   let positioned_groups : Array[PositionedGroup] = []
   let mut empty_group_top = padding
   for subgraph in graph.subgraphs {

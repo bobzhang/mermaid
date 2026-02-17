@@ -6,41 +6,15 @@ import {
 }
 
 // Values
-pub fn apply_subgraph_direction_overrides(LegacySubgraphOverrideRequest) -> Unit
+pub fn apply_subgraph_direction_overrides(Array[@model.MermaidSubgraph], Bool, Bool, Bool, Bool, Bool, Int, Int, Array[@model.PositionedNode], Map[String, Int], Map[String, Bool]) -> Unit
 
 pub fn build_ascii_state_positioned_groups(@model.MermaidGraph, Int, Map[String, @model.PositionedNode]) -> Array[@model.PositionedGroup]
 
-pub fn build_legacy_positioned_groups(LegacyGroupBuildRequest) -> Array[@model.PositionedGroup]
+pub fn build_legacy_positioned_groups(@model.MermaidGraph, Int, Bool, Bool, Bool, Int, Int, Array[@model.PositionedNode], Map[String, @model.PositionedNode], Map[String, Int]) -> Array[@model.PositionedGroup]
 
 // Errors
 
 // Types and methods
-pub(all) struct LegacyGroupBuildRequest {
-  graph : @model.MermaidGraph
-  padding : Int
-  horizontal : Bool
-  reverse : Bool
-  state_graph : Bool
-  node_spacing : Int
-  layer_spacing : Int
-  positioned_nodes : Array[@model.PositionedNode]
-  positioned_by_id : Map[String, @model.PositionedNode]
-  positioned_index_by_id : Map[String, Int]
-}
-
-pub(all) struct LegacySubgraphOverrideRequest {
-  subgraphs : Array[@model.MermaidSubgraph]
-  inherited_horizontal : Bool
-  inherited_reverse : Bool
-  inherited_override_active : Bool
-  global_horizontal : Bool
-  global_reverse : Bool
-  node_spacing : Int
-  layer_spacing : Int
-  positioned_nodes : Array[@model.PositionedNode]
-  positioned_index_by_id : Map[String, Int]
-  node_horizontal_by_id : Map[String, Bool]
-}
 
 // Type aliases
 

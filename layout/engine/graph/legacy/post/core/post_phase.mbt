@@ -29,19 +29,19 @@ pub fn finalize_legacy_layout_from_placement(
 
   let node_horizontal_by_id : Map[String, Bool] = {}
   if state_graph {
-    @layout_engine_graph_group_core.apply_subgraph_direction_overrides({
-      subgraphs: graph.subgraphs,
-      inherited_horizontal: horizontal,
-      inherited_reverse: reverse,
-      inherited_override_active: false,
-      global_horizontal: horizontal,
-      global_reverse: reverse,
+    @layout_engine_graph_group_core.apply_subgraph_direction_overrides(
+      graph.subgraphs,
+      horizontal,
+      reverse,
+      false,
+      horizontal,
+      reverse,
       node_spacing,
       layer_spacing,
       positioned_nodes,
       positioned_index_by_id,
       node_horizontal_by_id,
-    })
+    )
   }
 
   let mut max_right = padding
@@ -52,18 +52,9 @@ pub fn finalize_legacy_layout_from_placement(
     max_bottom = max_bottom.max(node.y + node.height / 2)
   }
 
-  let positioned_groups = @layout_engine_graph_group_core.build_legacy_positioned_groups({
-      graph,
-      padding,
-      horizontal,
-      reverse,
-      state_graph,
-      node_spacing,
-      layer_spacing,
-      positioned_nodes,
-      positioned_by_id,
-      positioned_index_by_id,
-    },
+  let positioned_groups = @layout_engine_graph_group_core.build_legacy_positioned_groups(
+    graph, padding, horizontal, reverse, state_graph, node_spacing, layer_spacing,
+    positioned_nodes, positioned_by_id, positioned_index_by_id,
   )
 
   let positioned_edges = @layout_engine_graph_routing_core.route_legacy_positioned_edges({

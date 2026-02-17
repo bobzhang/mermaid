@@ -63,18 +63,9 @@ test "group builds positioned group and registers anchor" {
   }
   let positioned_index_by_id : Map[String, Int] = { "A": 0, "B": 1 }
 
-  let groups = build_legacy_positioned_groups({
-    graph,
-    padding: 40,
-    horizontal: true,
-    reverse: false,
-    state_graph: false,
-    node_spacing: 130,
-    layer_spacing: 90,
-    positioned_nodes,
-    positioned_by_id,
-    positioned_index_by_id,
-  })
+  let groups = build_legacy_positioned_groups(
+    graph, 40, true, false, false, 130, 90, positioned_nodes, positioned_by_id, positioned_index_by_id,
+  )
 
   assert_eq(groups.length(), 1)
   assert_eq(groups[0].id, "SG")
