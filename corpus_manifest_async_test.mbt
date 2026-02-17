@@ -1,5 +1,23 @@
 ///|
 #cfg(target="native")
+fn parse_manifest_digit(ch : UInt16) -> Int {
+  match ch {
+    '0' => 0
+    '1' => 1
+    '2' => 2
+    '3' => 3
+    '4' => 4
+    '5' => 5
+    '6' => 6
+    '7' => 7
+    '8' => 8
+    '9' => 9
+    _ => 0
+  }
+}
+
+///|
+#cfg(target="native")
 fn parse_manifest_int(content : String, key : String) -> Int? {
   let marker = "\"\{key}\":"
   match content.find(marker) {
@@ -15,13 +33,11 @@ fn parse_manifest_int(content : String, key : String) -> Int? {
       if j == i {
         None
       } else {
-        let parsed : Result[Int, @strconv.StrConvError] = try? @strconv.parse_int(
-          (try! content[i:j]).to_string(),
-        )
-        match parsed {
-          Ok(value) => Some(value)
-          Err(_) => None
+        let mut value = 0
+        for k in i..<j {
+          value = value * 10 + parse_manifest_digit(content[k])
         }
+        Some(value)
       }
     }
     None => None

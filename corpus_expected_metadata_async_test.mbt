@@ -32,12 +32,22 @@ fn metadata_files_for_chunk(
 fn expected_json_case_name(path : String) -> String {
   let prefix = "testdata/corpus/expected/"
   let file = if path.has_prefix(prefix) {
-    (try! path[prefix.length():]).to_string()
+    let parts = path.split(prefix).to_array()
+    if parts.length() >= 2 {
+      parts[1].to_string()
+    } else {
+      path
+    }
   } else {
     path
   }
   if file.has_suffix(".json") {
-    (try! file[:file.length() - 5]).to_string()
+    let parts = file.split(".json").to_array()
+    if parts.length() > 0 {
+      parts[0].to_string()
+    } else {
+      file
+    }
   } else {
     file
   }

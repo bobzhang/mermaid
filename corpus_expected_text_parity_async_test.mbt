@@ -32,12 +32,22 @@ fn text_files_for_chunk(
 fn expected_case_name_from_json_path(path : String) -> String {
   let prefix = "testdata/corpus/expected/"
   let file = if path.has_prefix(prefix) {
-    (try! path[prefix.length():]).to_string()
+    let parts = path.split(prefix).to_array()
+    if parts.length() >= 2 {
+      parts[1].to_string()
+    } else {
+      path
+    }
   } else {
     path
   }
   if file.has_suffix(".json") {
-    (try! file[:file.length() - 5]).to_string()
+    let parts = file.split(".json").to_array()
+    if parts.length() > 0 {
+      parts[0].to_string()
+    } else {
+      file
+    }
   } else {
     file
   }
@@ -47,16 +57,21 @@ fn expected_case_name_from_json_path(path : String) -> String {
 #cfg(target="native")
 async fn golden_from_text_fixture(path : String) -> String {
   let content = @fs.read_file(path).text()
-  match content.find("\n---\n") {
-    Some(separator) => {
-      let start = separator + 5
-      let mut golden = (try! content[start:]).to_string()
-      if golden.has_suffix("\n") {
-        golden = (try! golden[:golden.length() - 1]).to_string()
+  let sections = content.split("\n---\n").to_array()
+  match sections {
+    [_, golden, ..] => {
+      let lines = golden
+        .to_string()
+        .split("\n")
+        .map(part => part.to_string())
+        .to_array()
+      if lines.length() > 0 && lines[lines.length() - 1] == "" {
+        lines[:lines.length() - 1].iter().join("\n")
+      } else {
+        lines.iter().join("\n")
       }
-      golden
     }
-    None => ""
+    _ => ""
   }
 }
 

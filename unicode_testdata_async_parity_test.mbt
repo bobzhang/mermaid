@@ -13,18 +13,17 @@ fn unicode_parse_padding_value(trimmed : String, prefix : String) -> Int? {
   if !trimmed.to_lower().has_prefix(prefix) {
     return None
   }
-  match trimmed.find("=") {
-    Some(eq_index) => {
-      let raw_value = (try! trimmed[eq_index + 1:]).trim().to_string()
-      let parsed : Result[Int, @strconv.StrConvError] = try? @strconv.parse_int(
-        raw_value,
-      )
-      match parsed {
-        Ok(value) => Some(value)
-        Err(_) => None
-      }
-    }
-    None => None
+  let parts = trimmed.split("=").to_array()
+  if parts.length() < 2 {
+    return None
+  }
+  let raw_value = parts[1].trim().to_string()
+  let parsed : Result[Int, @strconv.StrConvError] = try? @strconv.parse_int(
+    raw_value,
+  )
+  match parsed {
+    Ok(value) => Some(value)
+    Err(_) => None
   }
 }
 
@@ -73,9 +72,11 @@ fn unicode_parse_golden_text_case(content : String) -> UnicodeGoldenTextCase {
   }
 
   let mermaid = mermaid_lines.iter().join("\n") + "\n"
-  let mut expected = expected_lines.iter().join("\n")
-  if expected.has_suffix("\n") {
-    expected = (try! expected[:expected.length() - 1]).to_string()
+  let expected = if expected_lines.length() > 0 &&
+    expected_lines[expected_lines.length() - 1] == "" {
+    expected_lines[:expected_lines.length() - 1].iter().join("\n")
+  } else {
+    expected_lines.iter().join("\n")
   }
 
   { mermaid, expected, padding_x, padding_y }
