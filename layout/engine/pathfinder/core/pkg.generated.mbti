@@ -14,7 +14,6 @@ pub(all) struct AsciiGridCoord {
   y : Int
 }
 pub impl Eq for AsciiGridCoord
-pub impl Show for AsciiGridCoord
 
 // Type aliases
 

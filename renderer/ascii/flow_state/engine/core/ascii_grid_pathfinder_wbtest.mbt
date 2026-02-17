@@ -47,8 +47,10 @@ test "ascii grid pathfinder routes around a blocked point" {
     None => fail("expected a path around the obstacle")
   }
 
-  assert_eq(path[0], { x: 0, y: 0 })
-  assert_eq(path[path.length() - 1], { x: 2, y: 0 })
+  assert_eq(path[0].x, 0)
+  assert_eq(path[0].y, 0)
+  assert_eq(path[path.length() - 1].x, 2)
+  assert_eq(path[path.length() - 1].y, 0)
   if path.contains({ x: 1, y: 0 }) {
     fail("path should avoid blocked point: \{path_to_string(path)}")
   }

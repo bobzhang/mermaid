@@ -11,7 +11,7 @@ fn option_int_or(value : Int?, fallback : Int) -> Int {
 pub(all) struct AsciiGridCoord {
   x : Int
   y : Int
-} derive(Eq, Show)
+} derive(Eq)
 
 ///|
 priv struct AsciiGridFrontierEntry {

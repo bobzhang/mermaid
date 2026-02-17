@@ -136,6 +136,21 @@ fn state_nodes_in_definition_order(graph : MermaidGraph) -> Array[MermaidNode] {
 }
 
 ///|
+fn assert_grid_coord_eq(
+  coord : StateGridCoord?,
+  x : Int,
+  y : Int,
+) -> Unit raise {
+  match coord {
+    Some(found) => {
+      assert_eq(found.x, x)
+      assert_eq(found.y, y)
+    }
+    None => fail("expected grid coordinate (\{x}, \{y})")
+  }
+}
+
+///|
 test "state_grid_positions matches lifecycle sample topology" {
   let source = state_grid_lifecycle_source()
   let graph = @parser.parse_mermaid(source)
@@ -144,13 +159,13 @@ test "state_grid_positions matches lifecycle sample topology" {
     state_nodes_in_definition_order(graph),
   )
 
-  assert_eq(positions.get("state_start_1"), Some({ x: 0, y: 0 }))
-  assert_eq(positions.get("Closed"), Some({ x: 0, y: 4 }))
-  assert_eq(positions.get("Connecting"), Some({ x: 0, y: 8 }))
-  assert_eq(positions.get("Connected"), Some({ x: 0, y: 12 }))
-  assert_eq(positions.get("Disconnecting"), Some({ x: 0, y: 16 }))
-  assert_eq(positions.get("Reconnecting"), Some({ x: 4, y: 16 }))
-  assert_eq(positions.get("state_end_1"), Some({ x: 4, y: 8 }))
+  assert_grid_coord_eq(positions.get("state_start_1"), 0, 0)
+  assert_grid_coord_eq(positions.get("Closed"), 0, 4)
+  assert_grid_coord_eq(positions.get("Connecting"), 0, 8)
+  assert_grid_coord_eq(positions.get("Connected"), 0, 12)
+  assert_grid_coord_eq(positions.get("Disconnecting"), 0, 16)
+  assert_grid_coord_eq(positions.get("Reconnecting"), 4, 16)
+  assert_grid_coord_eq(positions.get("state_end_1"), 4, 8)
 }
 
 ///|
@@ -162,15 +177,15 @@ test "state_grid_positions matches composite sample topology" {
     state_nodes_in_definition_order(graph),
   )
 
-  assert_eq(positions.get("state_start_1"), Some({ x: 0, y: 0 }))
-  assert_eq(positions.get("Idle"), Some({ x: 0, y: 4 }))
-  assert_eq(positions.get("Processing"), Some({ x: 0, y: 8 }))
-  assert_eq(positions.get("parse"), Some({ x: 4, y: 0 }))
-  assert_eq(positions.get("validate"), Some({ x: 4, y: 4 }))
-  assert_eq(positions.get("execute"), Some({ x: 4, y: 8 }))
-  assert_eq(positions.get("Complete"), Some({ x: 0, y: 12 }))
-  assert_eq(positions.get("Error"), Some({ x: 4, y: 12 }))
-  assert_eq(positions.get("state_end_1"), Some({ x: 0, y: 16 }))
+  assert_grid_coord_eq(positions.get("state_start_1"), 0, 0)
+  assert_grid_coord_eq(positions.get("Idle"), 0, 4)
+  assert_grid_coord_eq(positions.get("Processing"), 0, 8)
+  assert_grid_coord_eq(positions.get("parse"), 4, 0)
+  assert_grid_coord_eq(positions.get("validate"), 4, 4)
+  assert_grid_coord_eq(positions.get("execute"), 4, 8)
+  assert_grid_coord_eq(positions.get("Complete"), 0, 12)
+  assert_grid_coord_eq(positions.get("Error"), 4, 12)
+  assert_grid_coord_eq(positions.get("state_end_1"), 0, 16)
 }
 
 ///|
