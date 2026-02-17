@@ -161,16 +161,14 @@ fn normalize_er_attribute(raw : String) -> String {
 
   let mut body = normalized
   let mut comment = ""
-  match normalized.find("\"") {
-    Some(quote_idx) => {
-      body = @parser_common_engine_core.trim_owned(
-        (try! normalized[:quote_idx]).to_string(),
-      )
+  lexmatch normalized[:] {
+    (before_quote, "\"", after_quote) => {
+      body = @parser_common_engine_core.trim_owned(before_quote.to_string())
       comment = @parser_common_engine_core.trim_owned(
-        (try! normalized[quote_idx:]).to_string(),
+        "\"\{after_quote.to_string()}",
       )
     }
-    None => ()
+    _ => ()
   }
 
   let parts = body
