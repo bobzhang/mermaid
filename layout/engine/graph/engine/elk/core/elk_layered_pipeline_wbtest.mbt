@@ -20,6 +20,18 @@ fn diagram_kind_equal(
 }
 
 ///|
+fn direction_equal(left : @model.Direction, right : @model.Direction) -> Bool {
+  match (left, right) {
+    (TD, TD) => true
+    (TB, TB) => true
+    (LR, LR) => true
+    (BT, BT) => true
+    (RL, RL) => true
+    _ => false
+  }
+}
+
+///|
 fn sequence_participant_kind_equal(
   left : @model.SequenceParticipantKind,
   right : @model.SequenceParticipantKind,
@@ -37,7 +49,7 @@ fn assert_mermaid_graph_equivalent(
   right : @model.MermaidGraph,
 ) -> Unit raise {
   assert_true(diagram_kind_equal(left.diagram_kind, right.diagram_kind))
-  assert_true(left.direction == right.direction)
+  assert_true(direction_equal(left.direction, right.direction))
   assert_eq(left.nodes.length(), right.nodes.length())
   for node_id, node in right.nodes {
     let left_node = left.nodes[node_id]

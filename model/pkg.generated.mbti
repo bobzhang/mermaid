@@ -45,7 +45,6 @@ pub(all) enum Direction {
   BT
   RL
 }
-pub impl Eq for Direction
 
 pub(all) enum EdgeStyle {
   Solid

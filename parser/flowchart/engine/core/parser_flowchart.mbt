@@ -890,25 +890,66 @@ test "parse_node_and_class applies shape metadata" {
 }
 
 ///|
+fn direction_equal(left : Direction, right : Direction) -> Bool {
+  match (left, right) {
+    (TD, TD) => true
+    (TB, TB) => true
+    (LR, LR) => true
+    (BT, BT) => true
+    (RL, RL) => true
+    _ => false
+  }
+}
+
+///|
+fn direction_option_equal(left : Direction?, right : Direction?) -> Bool {
+  match (left, right) {
+    (Some(actual), Some(expected)) => direction_equal(actual, expected)
+    (None, None) => true
+    _ => false
+  }
+}
+
+///|
 test "parse_flow_direction" {
   // basic flowchart + direction
-  assert_true(parse_flow_direction("flowchart LR") == Some(LR))
-  assert_true(parse_flow_direction("graph TD") == Some(TD))
+  assert_true(
+    direction_option_equal(parse_flow_direction("flowchart LR"), Some(LR)),
+  )
+  assert_true(
+    direction_option_equal(parse_flow_direction("graph TD"), Some(TD)),
+  )
   // case-insensitive keyword
-  assert_true(parse_flow_direction("Flowchart TB") == Some(TB))
-  assert_true(parse_flow_direction("GRAPH RL") == Some(RL))
+  assert_true(
+    direction_option_equal(parse_flow_direction("Flowchart TB"), Some(TB)),
+  )
+  assert_true(
+    direction_option_equal(parse_flow_direction("GRAPH RL"), Some(RL)),
+  )
   // extra whitespace
-  assert_true(parse_flow_direction("  flowchart   BT  ") == Some(BT))
+  assert_true(
+    direction_option_equal(parse_flow_direction("  flowchart   BT  "), Some(BT)),
+  )
   // tab replaced
-  assert_true(parse_flow_direction("flowchart\tLR") == Some(LR))
+  assert_true(
+    direction_option_equal(parse_flow_direction("flowchart\tLR"), Some(LR)),
+  )
   // missing direction defaults to TD
-  assert_true(parse_flow_direction("flowchart") == Some(TD))
-  assert_true(parse_flow_direction("flowchart ") == Some(TD))
-  assert_true(parse_flow_direction("graph") == Some(TD))
+  assert_true(
+    direction_option_equal(parse_flow_direction("flowchart"), Some(TD)),
+  )
+  assert_true(
+    direction_option_equal(parse_flow_direction("flowchart "), Some(TD)),
+  )
+  assert_true(direction_option_equal(parse_flow_direction("graph"), Some(TD)))
   // invalid direction token
-  assert_true(parse_flow_direction("flowchart XX") == None)
+  assert_true(
+    direction_option_equal(parse_flow_direction("flowchart XX"), None),
+  )
   // unrelated string
-  assert_true(parse_flow_direction("sequenceDiagram") == None)
+  assert_true(
+    direction_option_equal(parse_flow_direction("sequenceDiagram"), None),
+  )
 }
 
 ///|

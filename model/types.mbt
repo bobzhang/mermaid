@@ -13,7 +13,7 @@ pub(all) enum Direction {
   LR
   BT
   RL
-} derive(Eq)
+}
 
 ///|
 /// High-level Mermaid diagram category from the parsed header.
