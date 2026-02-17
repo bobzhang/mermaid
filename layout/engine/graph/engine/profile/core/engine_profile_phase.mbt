@@ -14,12 +14,7 @@ fn resolve_graph_engine_routing_policy(
         enable_target_boundary_ports: true,
         preserve_assigned_endpoint_ports: true,
       }
-    Elk =>
-      {
-        enable_target_boundary_ports: true,
-        preserve_assigned_endpoint_ports: false,
-      }
-    ElkLayered =>
+    Elk | ElkLayered =>
       {
         enable_target_boundary_ports: true,
         preserve_assigned_endpoint_ports: false,
@@ -45,9 +40,7 @@ pub fn run_graph_layout_engine_backend(
   engine : LayoutEngine,
 ) -> GraphLayoutBackendResult {
   match engine {
-    Elk =>
-      @layout_engine_graph_engine_elk_core.layout_graph_elk_backend(request)
-    ElkLayered =>
+    Elk | ElkLayered =>
       @layout_engine_graph_engine_elk_core.layout_graph_elk_backend(request)
     Legacy => run_non_elk_backend(request, engine)
     DagreParity => run_non_elk_backend(request, engine)
