@@ -116,7 +116,7 @@ fn layout_graph_legacy_with_subgraph_redirects(
     enhanced_horizontal_state_flow,
   )
 
-  finalize_positioned_graph(
+  @layout_engine_graph_finalize_core.finalize_positioned_graph(
     padding, max_right, max_bottom, positioned_nodes, positioned_edges, positioned_groups,
   )
 }

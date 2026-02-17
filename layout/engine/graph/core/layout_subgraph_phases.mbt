@@ -354,42 +354,6 @@ fn build_positioned_group(
 }
 
 ///|
-fn positioned_group_min_x(group : PositionedGroup) -> Int {
-  let mut min_x = group.x
-  for child in group.children {
-    min_x = min_x.min(positioned_group_min_x(child))
-  }
-  min_x
-}
-
-///|
-fn positioned_group_min_y(group : PositionedGroup) -> Int {
-  let mut min_y = group.y
-  for child in group.children {
-    min_y = min_y.min(positioned_group_min_y(child))
-  }
-  min_y
-}
-
-///|
-fn positioned_group_max_x(group : PositionedGroup) -> Int {
-  let mut max_x = group.x + group.width
-  for child in group.children {
-    max_x = max_x.max(positioned_group_max_x(child))
-  }
-  max_x
-}
-
-///|
-fn positioned_group_max_y(group : PositionedGroup) -> Int {
-  let mut max_y = group.y + group.height
-  for child in group.children {
-    max_y = max_y.max(positioned_group_max_y(child))
-  }
-  max_y
-}
-
-///|
 fn shift_positioned_group(
   group : PositionedGroup,
   shift_x : Int,
