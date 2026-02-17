@@ -2458,20 +2458,40 @@ fn run_elk_layered_node_placement_phase(
 }
 
 ///|
+fn run_elk_layered_finalize_phase(
+  setup_state : ElkLayeredSetupState,
+  spacing_state : ElkLayeredSpacingState,
+  placement_state : ElkLayeredPlacementState,
+  routing_policy : GraphBackendRoutingPolicy,
+) -> PositionedGraph {
+  finalize_elk_layered_positioned_graph(
+    setup_state.graph,
+    spacing_state.padding,
+    setup_state.horizontal,
+    setup_state.reverse,
+    spacing_state.node_spacing,
+    spacing_state.layer_spacing,
+    setup_state.use_subgraph_redirects,
+    setup_state.subgraph_exit_by_id,
+    setup_state.subgraph_entry_by_id,
+    routing_policy,
+    placement_state.positioned_nodes,
+    placement_state.positioned_by_id,
+    placement_state.node_horizontal_by_id,
+    placement_state.max_right,
+    placement_state.max_bottom,
+  )
+}
+
+///|
 /// Runs the ELK layered flow pipeline for non-state flowcharts.
 fn run_elk_layered_flow_backend(
   request : GraphLayoutBackendRequest,
   routing_policy : GraphBackendRoutingPolicy,
 ) -> GraphLayoutBackendResult {
   let setup_state = run_elk_layered_setup_phase(request)
-  let graph = setup_state.graph
   let options = setup_state.options
-  let use_subgraph_redirects = setup_state.use_subgraph_redirects
-  let subgraph_entry_by_id = setup_state.subgraph_entry_by_id
-  let subgraph_exit_by_id = setup_state.subgraph_exit_by_id
   let nodes_in_order = setup_state.nodes_in_order
-  let horizontal = setup_state.horizontal
-  let reverse = setup_state.reverse
   let rank_phase_state = run_elk_layered_rank_phase(setup_state)
   let rank_seed_state = rank_phase_state.rank_seed_state
   let max_rank = rank_seed_state.max_rank
@@ -2480,27 +2500,20 @@ fn run_elk_layered_flow_backend(
   let node_size_state = build_elk_layered_node_size_state(nodes_in_order)
   let max_rank_size = compute_max_rank_size(rank_node_ids_by_rank, max_rank)
   let spacing_state = run_elk_layered_spacing_phase(
-    options, horizontal, max_rank_size, node_size_state,
+    options,
+    setup_state.horizontal,
+    max_rank_size,
+    node_size_state,
   )
-  let padding = spacing_state.padding
-  let node_spacing = spacing_state.node_spacing
-  let layer_spacing = spacing_state.layer_spacing
   let placement_state = run_elk_layered_node_placement_phase(
     setup_state, rank_phase_state, node_size_state, spacing_state,
   )
-  let positioned_nodes = placement_state.positioned_nodes
-  let positioned_by_id = placement_state.positioned_by_id
-  let node_horizontal_by_id = placement_state.node_horizontal_by_id
-  let max_right = placement_state.max_right
-  let max_bottom = placement_state.max_bottom
-  let positioned_graph = finalize_elk_layered_positioned_graph(
-    graph, padding, horizontal, reverse, node_spacing, layer_spacing, use_subgraph_redirects,
-    subgraph_exit_by_id, subgraph_entry_by_id, routing_policy, positioned_nodes,
-    positioned_by_id, node_horizontal_by_id, max_right, max_bottom,
+  let positioned_graph = run_elk_layered_finalize_phase(
+    setup_state, spacing_state, placement_state, routing_policy,
   )
   let phase_snapshots = [
     setup_phase_snapshot(request, nodes_in_order),
-    placement_phase_snapshot(request, positioned_nodes),
+    placement_phase_snapshot(request, placement_state.positioned_nodes),
     final_phase_snapshot(positioned_graph),
   ]
   { positioned_graph, phase_snapshots }
