@@ -252,6 +252,103 @@ fn points_arrays_equal(left : Array[Point], right : Array[Point]) -> Bool {
 }
 
 ///|
+fn point_option_equal(left : Point?, right : Point?) -> Bool {
+  match (left, right) {
+    (Some(left_point), Some(right_point)) =>
+      point_equals(left_point, right_point)
+    (None, None) => true
+    _ => false
+  }
+}
+
+///|
+fn positioned_node_equal(left : PositionedNode, right : PositionedNode) -> Bool {
+  left.id == right.id &&
+  left.label == right.label &&
+  left.shape == right.shape &&
+  left.x == right.x &&
+  left.y == right.y &&
+  left.width == right.width &&
+  left.height == right.height &&
+  left.inline_style == right.inline_style
+}
+
+///|
+fn positioned_nodes_equal(
+  left : Array[PositionedNode],
+  right : Array[PositionedNode],
+) -> Bool {
+  if left.length() != right.length() {
+    return false
+  }
+  for i in 0..<left.length() {
+    if !positioned_node_equal(left[i], right[i]) {
+      return false
+    }
+  }
+  true
+}
+
+///|
+fn positioned_edge_equal(left : PositionedEdge, right : PositionedEdge) -> Bool {
+  left.source == right.source &&
+  left.target == right.target &&
+  left.label == right.label &&
+  left.style == right.style &&
+  left.has_arrow_start == right.has_arrow_start &&
+  left.has_arrow_end == right.has_arrow_end &&
+  left.relation_operator == right.relation_operator &&
+  points_arrays_equal(left.points, right.points) &&
+  point_option_equal(left.label_position, right.label_position)
+}
+
+///|
+fn positioned_edges_equal(
+  left : Array[PositionedEdge],
+  right : Array[PositionedEdge],
+) -> Bool {
+  if left.length() != right.length() {
+    return false
+  }
+  for i in 0..<left.length() {
+    if !positioned_edge_equal(left[i], right[i]) {
+      return false
+    }
+  }
+  true
+}
+
+///|
+fn positioned_group_equal(
+  left : @model.PositionedGroup,
+  right : @model.PositionedGroup,
+) -> Bool {
+  left.id == right.id &&
+  left.label == right.label &&
+  left.x == right.x &&
+  left.y == right.y &&
+  left.width == right.width &&
+  left.height == right.height &&
+  positioned_groups_equal(left.children, right.children)
+}
+
+///|
+fn positioned_groups_equal(
+  left : Array[@model.PositionedGroup],
+  right : Array[@model.PositionedGroup],
+) -> Bool {
+  if left.length() != right.length() {
+    return false
+  }
+  for i in 0..<left.length() {
+    if !positioned_group_equal(left[i], right[i]) {
+      return false
+    }
+  }
+  true
+}
+
+///|
 fn has_horizontal_segment(points : Array[Point]) -> Bool {
   if points.length() < 2 {
     return false
@@ -369,9 +466,15 @@ test "Layout engine dagre-parity mode preserves legacy output in scaffold phase"
     layout_engine: Some(DagreParity),
   })
 
-  assert_true(parity_positioned.nodes == legacy_positioned.nodes)
-  assert_true(parity_positioned.edges == legacy_positioned.edges)
-  assert_true(parity_positioned.groups == legacy_positioned.groups)
+  assert_true(
+    positioned_nodes_equal(parity_positioned.nodes, legacy_positioned.nodes),
+  )
+  assert_true(
+    positioned_edges_equal(parity_positioned.edges, legacy_positioned.edges),
+  )
+  assert_true(
+    positioned_groups_equal(parity_positioned.groups, legacy_positioned.groups),
+  )
 }
 
 ///|
@@ -393,8 +496,12 @@ test "Layout reciprocal edges avoid exact reverse overlap in both engines" {
   let parity_ab = find_positioned_edge(parity_positioned.edges, "A", "B")
   let parity_ba = find_positioned_edge(parity_positioned.edges, "B", "A")
 
-  assert_true(parity_positioned.nodes == legacy_positioned.nodes)
-  assert_true(parity_positioned.groups == legacy_positioned.groups)
+  assert_true(
+    positioned_nodes_equal(parity_positioned.nodes, legacy_positioned.nodes),
+  )
+  assert_true(
+    positioned_groups_equal(parity_positioned.groups, legacy_positioned.groups),
+  )
   assert_true(!points_form_exact_reverse(legacy_ab.points, legacy_ba.points))
   assert_true(!points_form_exact_reverse(parity_ab.points, parity_ba.points))
 }

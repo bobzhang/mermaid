@@ -257,7 +257,7 @@ pub fn AsciiRenderOptions::default() -> AsciiRenderOptions {
 pub(all) struct Point {
   x : Int
   y : Int
-} derive(Eq)
+}
 
 ///|
 /// Node after layout with absolute coordinates and computed size.
@@ -270,7 +270,7 @@ pub(all) struct PositionedNode {
   width : Int
   height : Int
   inline_style : Map[String, String]?
-} derive(Eq)
+}
 
 ///|
 /// Edge after layout with routed polyline points and optional label anchor.
@@ -284,7 +284,7 @@ pub(all) struct PositionedEdge {
   relation_operator : String?
   points : Array[Point]
   label_position : Point?
-} derive(Eq)
+}
 
 ///|
 /// Positioned subgraph/composite group bounds and nested children.
@@ -296,7 +296,7 @@ pub(all) struct PositionedGroup {
   width : Int
   height : Int
   children : Array[PositionedGroup]
-} derive(Eq)
+}
 
 ///|
 /// Sequence lifeline geometry for SVG/ASCII sequence renderers.

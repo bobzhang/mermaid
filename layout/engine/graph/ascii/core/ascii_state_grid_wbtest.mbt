@@ -343,7 +343,9 @@ fn state_points_are_reverse(
   }
   let len = path.length()
   for i in 0..<len {
-    if path[i] != reverse_path[len - 1 - i] {
+    let point = path[i]
+    let reverse_point = reverse_path[len - 1 - i]
+    if point.x != reverse_point.x || point.y != reverse_point.y {
       return false
     }
   }

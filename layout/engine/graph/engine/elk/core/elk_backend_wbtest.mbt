@@ -260,6 +260,133 @@ fn positioned_sequence_block_equal(
 }
 
 ///|
+fn positioned_point_equal(left : @model.Point, right : @model.Point) -> Bool {
+  left.x == right.x && left.y == right.y
+}
+
+///|
+fn positioned_point_option_equal(
+  left : @model.Point?,
+  right : @model.Point?,
+) -> Bool {
+  match (left, right) {
+    (Some(left_point), Some(right_point)) =>
+      positioned_point_equal(left_point, right_point)
+    (None, None) => true
+    _ => false
+  }
+}
+
+///|
+fn positioned_point_array_equal(
+  left : Array[@model.Point],
+  right : Array[@model.Point],
+) -> Bool {
+  if left.length() != right.length() {
+    return false
+  }
+  for i in 0..<left.length() {
+    if !positioned_point_equal(left[i], right[i]) {
+      return false
+    }
+  }
+  true
+}
+
+///|
+fn positioned_node_equal(
+  left : @model.PositionedNode,
+  right : @model.PositionedNode,
+) -> Bool {
+  left.id == right.id &&
+  left.label == right.label &&
+  left.shape == right.shape &&
+  left.x == right.x &&
+  left.y == right.y &&
+  left.width == right.width &&
+  left.height == right.height &&
+  left.inline_style == right.inline_style
+}
+
+///|
+fn positioned_node_array_equal(
+  left : Array[@model.PositionedNode],
+  right : Array[@model.PositionedNode],
+) -> Bool {
+  if left.length() != right.length() {
+    return false
+  }
+  for i in 0..<left.length() {
+    if !positioned_node_equal(left[i], right[i]) {
+      return false
+    }
+  }
+  true
+}
+
+///|
+fn positioned_edge_equal(
+  left : @model.PositionedEdge,
+  right : @model.PositionedEdge,
+) -> Bool {
+  left.source == right.source &&
+  left.target == right.target &&
+  left.label == right.label &&
+  left.style == right.style &&
+  left.has_arrow_start == right.has_arrow_start &&
+  left.has_arrow_end == right.has_arrow_end &&
+  left.relation_operator == right.relation_operator &&
+  positioned_point_array_equal(left.points, right.points) &&
+  positioned_point_option_equal(left.label_position, right.label_position)
+}
+
+///|
+fn positioned_edge_array_equal(
+  left : Array[@model.PositionedEdge],
+  right : Array[@model.PositionedEdge],
+) -> Bool {
+  if left.length() != right.length() {
+    return false
+  }
+  for i in 0..<left.length() {
+    if !positioned_edge_equal(left[i], right[i]) {
+      return false
+    }
+  }
+  true
+}
+
+///|
+fn positioned_group_equal(
+  left : @model.PositionedGroup,
+  right : @model.PositionedGroup,
+) -> Bool {
+  left.id == right.id &&
+  left.label == right.label &&
+  left.x == right.x &&
+  left.y == right.y &&
+  left.width == right.width &&
+  left.height == right.height &&
+  positioned_group_array_equal(left.children, right.children)
+}
+
+///|
+fn positioned_group_array_equal(
+  left : Array[@model.PositionedGroup],
+  right : Array[@model.PositionedGroup],
+) -> Bool {
+  if left.length() != right.length() {
+    return false
+  }
+  for i in 0..<left.length() {
+    if !positioned_group_equal(left[i], right[i]) {
+      return false
+    }
+  }
+  true
+}
+
+///|
 fn positioned_sequence_note_equal(
   left : @model.PositionedSequenceNote,
   right : @model.PositionedSequenceNote,
@@ -279,9 +406,9 @@ fn positioned_graph_equal(
   if left.width != right.width || left.height != right.height {
     return false
   }
-  if left.nodes != right.nodes ||
-    left.edges != right.edges ||
-    left.groups != right.groups {
+  if !positioned_node_array_equal(left.nodes, right.nodes) ||
+    !positioned_edge_array_equal(left.edges, right.edges) ||
+    !positioned_group_array_equal(left.groups, right.groups) {
     return false
   }
   if left.sequence_lifelines.length() != right.sequence_lifelines.length() {

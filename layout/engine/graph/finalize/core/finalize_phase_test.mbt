@@ -50,7 +50,13 @@ test "finalize positioned graph applies padding shift to all artifacts" {
   assert_eq(positioned.nodes[0].y, 20)
   assert_eq(positioned.edges[0].points[0].x, 15)
   assert_eq(positioned.edges[0].points[0].y, 20)
-  assert_true(positioned.edges[0].label_position == Some({ x: 10, y: 20 }))
+  match positioned.edges[0].label_position {
+    Some(position) => {
+      assert_eq(position.x, 10)
+      assert_eq(position.y, 20)
+    }
+    None => fail("missing edge label position")
+  }
 }
 
 ///|

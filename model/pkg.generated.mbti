@@ -125,7 +125,6 @@ pub(all) struct Point {
   x : Int
   y : Int
 }
-pub impl Eq for Point
 
 pub(all) struct PositionedEdge {
   source : String
@@ -138,7 +137,6 @@ pub(all) struct PositionedEdge {
   points : Array[Point]
   label_position : Point?
 }
-pub impl Eq for PositionedEdge
 
 pub(all) struct PositionedGraph {
   width : Int
@@ -161,7 +159,6 @@ pub(all) struct PositionedGroup {
   height : Int
   children : Array[PositionedGroup]
 }
-pub impl Eq for PositionedGroup
 
 pub(all) struct PositionedNode {
   id : String
@@ -173,7 +170,6 @@ pub(all) struct PositionedNode {
   height : Int
   inline_style : Map[String, String]?
 }
-pub impl Eq for PositionedNode
 
 pub(all) struct PositionedSequenceActivation {
   actor_id : String

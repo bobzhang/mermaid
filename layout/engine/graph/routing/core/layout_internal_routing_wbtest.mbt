@@ -12,6 +12,24 @@ fn flow_edge(source : String, target : String) -> MermaidEdge {
 }
 
 ///|
+fn wb_point_equal(left : Point, right : Point) -> Bool {
+  left.x == right.x && left.y == right.y
+}
+
+///|
+fn wb_points_equal(left : Array[Point], right : Array[Point]) -> Bool {
+  if left.length() != right.length() {
+    return false
+  }
+  for i in 0..<left.length() {
+    if !wb_point_equal(left[i], right[i]) {
+      return false
+    }
+  }
+  true
+}
+
+///|
 test "Layout simplify polyline removes duplicate and interior collinear points" {
   let points : Array[Point] = [
     { x: 0, y: 0 },
@@ -24,7 +42,13 @@ test "Layout simplify polyline removes duplicate and interior collinear points" 
   let simplified = @layout_engine_graph_edge_core.simplify_polyline_points(
     points,
   )
-  assert_true(simplified == [{ x: 0, y: 0 }, { x: 24, y: 0 }, { x: 24, y: 20 }])
+  assert_true(
+    wb_points_equal(simplified, [
+      { x: 0, y: 0 },
+      { x: 24, y: 0 },
+      { x: 24, y: 20 },
+    ]),
+  )
 }
 
 ///|
@@ -34,7 +58,7 @@ test "Layout simplify polyline preserves turnback cusp points" {
     points,
   )
   assert_eq(simplified.length(), 3)
-  assert_true(simplified[1] == { x: 0, y: 10 })
+  assert_true(wb_point_equal(simplified[1], { x: 0, y: 10 }))
 }
 
 ///|
@@ -44,7 +68,7 @@ test "Layout endpoint stubs preserve source fanout boundary separation" {
     { x: 290, y: 161 },
     { x: 344, y: 200 },
   )
-  assert_true(points == [{ x: 290, y: 161 }, { x: 344, y: 200 }])
+  assert_true(wb_points_equal(points, [{ x: 290, y: 161 }, { x: 344, y: 200 }]))
 }
 
 ///|
@@ -54,7 +78,7 @@ test "Layout endpoint stubs preserve reciprocal endpoint separation" {
     { x: 290, y: 149 },
     { x: 360, y: 116 },
   )
-  assert_true(points == [{ x: 290, y: 149 }, { x: 360, y: 116 }])
+  assert_true(wb_points_equal(points, [{ x: 290, y: 149 }, { x: 360, y: 116 }]))
 }
 
 ///|
