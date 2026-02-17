@@ -347,17 +347,8 @@ fn collect_non_state_flow_ranks(
       visit_state_by_id[node_id] = 2
     }
 
-    for node in nodes_in_order {
-      if option_int_or(indegree_by_id.get(node.id), 0) == 0 {
-        mark_back_edges_from(
-          node.id,
-          edges,
-          outgoing_edge_indices_by_source,
-          visit_state_by_id,
-          back_edge_by_index,
-        )
-      }
-    }
+    // Dagre parity: DFS acyclic reduction walks nodes in definition order
+    // without source pre-prioritization.
     for node in nodes_in_order {
       if option_int_or(visit_state_by_id.get(node.id), 0) == 0 {
         mark_back_edges_from(
@@ -1077,44 +1068,10 @@ fn legacy_should_use_greedy_feedback_arc_set(
     graph.edges.length() < 60 {
     return false
   }
-  if graph.subgraphs.length() == 0 {
-    return true
-  }
-
-  let top_level_group_index_by_node_id : Map[String, Int] = {}
-  for i, subgraph in graph.subgraphs {
-    collect_top_level_group_index_by_node_id(
-      subgraph, i, top_level_group_index_by_node_id,
-    )
-  }
-  if top_level_group_index_by_node_id.length() == 0 {
-    return true
-  }
-
-  let mut edges_within_top_level_groups = 0
-  let mut intra_top_level_group_edges = 0
-  for edge in graph.edges {
-    match
-      (
-        top_level_group_index_by_node_id.get(edge.source),
-        top_level_group_index_by_node_id.get(edge.target),
-      ) {
-      (Some(source_group), Some(target_group)) => {
-        edges_within_top_level_groups += 1
-        if source_group == target_group {
-          intra_top_level_group_edges += 1
-        }
-      }
-      _ => ()
-    }
-  }
-
-  if edges_within_top_level_groups == 0 {
-    return true
-  }
-  // Prefer greedy FAS for inter-group feedback lattices; avoid ring-heavy
-  // local cycles where greedy FAS can worsen ordering quality.
-  intra_top_level_group_edges * 5 <= edges_within_top_level_groups
+  // Dagre parity: grouped flowcharts rely on DFS acyclic reduction for stable
+  // hierarchy-aware rank assignment. Greedy FAS tends to over-flatten major
+  // ranks on dense inter-group feedback meshes.
+  graph.subgraphs.length() == 0
 }
 
 ///|
@@ -7417,6 +7374,9 @@ fn shift_top_level_flow_subgraphs_with_gap(
   if reverse || graph.subgraphs.length() < 2 {
     return
   }
+  if !horizontal {
+    return
+  }
 
   let member_indexes_by_root : Array[Array[Int]] = []
   for subgraph in graph.subgraphs {
@@ -7806,7 +7766,8 @@ fn layout_graph_legacy_with_subgraph_redirects(
     let use_greedy_feedback_arc_set = legacy_should_use_greedy_feedback_arc_set(
       graph, cycle_aware_layout, horizontal, state_graph, class_or_er_graph,
     )
-    let preserve_reversed_back_edge_constraints = use_greedy_feedback_arc_set
+    let preserve_reversed_back_edge_constraints = cycle_aware_layout &&
+      !prefer_definition_back_edges
     let enable_feedback_back_edge_ordering = base_enable_feedback_back_edge_ordering &&
       !use_greedy_feedback_arc_set
     let precomputed_lane_by_id : Map[String, Int] = {}
