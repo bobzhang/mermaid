@@ -394,11 +394,6 @@ fn node_shape_attrs(node : PositionedNode) -> String {
 }
 
 ///|
-fn node_label_attrs(node : PositionedNode) -> String {
-  attr("fill", style_value(node.inline_style, "color"))
-}
-
-///|
 fn sequence_is_actor_node(node : PositionedNode) -> Bool {
   match style_value(node.inline_style, "__sequence_kind") {
     Some(kind) => kind == "actor"
@@ -434,7 +429,7 @@ fn render_class_like_label(node : PositionedNode) -> String {
       top + header_height / 2,
       header,
       "label class-header-text",
-      node_label_attrs(node),
+      attr("fill", style_value(node.inline_style, "color")),
     ),
   )
   if rows.length() == 0 {
@@ -560,28 +555,23 @@ fn render_node_label(node : PositionedNode) -> String {
   if node.shape == StateStart {
     return ""
   }
+  let label_attrs = attr("fill", style_value(node.inline_style, "color"))
   if node.shape == SequenceParticipant && sequence_is_actor_node(node) {
-    return "<text class=\"label\" x=\"\{node.x}\" y=\"\{node.y + node.height / 2 + 14}\" text-anchor=\"middle\"\{node_label_attrs(node)}>\{xml_escape(node.label)}</text>"
+    return "<text class=\"label\" x=\"\{node.x}\" y=\"\{node.y + node.height / 2 + 14}\" text-anchor=\"middle\"\{label_attrs}>\{xml_escape(node.label)}</text>"
   }
   if node.shape is (ClassEntity | ErEntity) {
     return render_class_like_label(node)
   }
   let lines = node.label.split("\n").map(part => part.to_string()).to_array()
   if lines.length() <= 1 {
-    return text_svg_with_attrs(
-      node.x,
-      node.y,
-      node.label,
-      "label",
-      node_label_attrs(node),
-    )
+    return text_svg_with_attrs(node.x, node.y, node.label, "label", label_attrs)
   }
 
   let line_height = 14
   let start_y = node.y - (lines.length() - 1) * line_height / 2
   let sb = StringBuilder::new()
   sb.write_string(
-    "<text class=\"label\" x=\"\{node.x}\" text-anchor=\"middle\"\{node_label_attrs(node)}>",
+    "<text class=\"label\" x=\"\{node.x}\" text-anchor=\"middle\"\{label_attrs}>",
   )
   for i, line in lines {
     let y = start_y + i * line_height
