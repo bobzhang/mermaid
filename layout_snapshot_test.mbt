@@ -37,7 +37,7 @@ fn layout_snapshot_section(title : String, lines : Array[String]) -> String {
   } else {
     sorted.iter().join("\n")
   }
-  "[\{title}]\n" + body
+  "[\{title}]\n\{body}"
 }
 
 ///|
@@ -74,20 +74,15 @@ fn positioned_graph_layout_snapshot(
 
   let group_lines : Array[String] = []
   collect_group_layout_lines(positioned.groups, "-", group_lines)
+  let nodes_section = layout_snapshot_section("nodes", node_lines)
+  let edges_section = layout_snapshot_section("edges", edge_lines)
+  let groups_section = layout_snapshot_section("groups", group_lines)
 
-  (
-    #|[canvas]
-    #|width=
-  ) +
-  positioned.width.to_string() +
-  " height=" +
-  positioned.height.to_string() +
-  "\n\n" +
-  layout_snapshot_section("nodes", node_lines) +
-  "\n\n" +
-  layout_snapshot_section("edges", edge_lines) +
-  "\n\n" +
-  layout_snapshot_section("groups", group_lines)
+  "[canvas]\n" +
+  "width=\{positioned.width} height=\{positioned.height}\n\n" +
+  "\{nodes_section}\n\n" +
+  "\{edges_section}\n\n" +
+  groups_section
 }
 
 ///|

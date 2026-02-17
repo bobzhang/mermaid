@@ -51,7 +51,8 @@ fn parse_golden_text_case(content : String) -> GoldenTextCase {
     }
   }
 
-  let mermaid = mermaid_lines.iter().join("\n") + "\n"
+  let mermaid_body = mermaid_lines.iter().join("\n")
+  let mermaid = "\{mermaid_body}\n"
   let expected = if expected_lines.length() > 0 &&
     expected_lines[expected_lines.length() - 1] == "" {
     expected_lines[:expected_lines.length() - 1].iter().join("\n")
