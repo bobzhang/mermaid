@@ -454,7 +454,6 @@ pub fn run_elk_layered_flow_backend(
 
   let width_by_node_id : Map[String, Int] = {}
   let height_by_node_id : Map[String, Int] = {}
-  let max_major_size_by_rank : Map[Int, Int] = {}
   let mut global_max_width = 0
   let mut global_max_height = 0
   for node in nodes_in_order {
@@ -463,12 +462,6 @@ pub fn run_elk_layered_flow_backend(
     height_by_node_id[node.id] = height
     global_max_width = global_max_width.max(width)
     global_max_height = global_max_height.max(height)
-    let rank = option_int_or(rank_by_node_id.get(node.id), 0)
-    let major_size = if horizontal { width } else { height }
-    let current_major_size = option_int_or(max_major_size_by_rank.get(rank), 0)
-    if major_size > current_major_size {
-      max_major_size_by_rank[rank] = major_size
-    }
   }
 
   let mut max_rank_size = 1
@@ -481,6 +474,12 @@ pub fn run_elk_layered_flow_backend(
 
   let major_gap = if horizontal { node_spacing } else { layer_spacing }
   let minor_gap = if horizontal { layer_spacing } else { node_spacing }
+  let global_major_size = if horizontal {
+    global_max_width
+  } else {
+    global_max_height
+  }
+  let major_step = major_gap.max(global_major_size + (major_gap / 5).max(20))
   let min_minor_step = if horizontal {
     global_max_height + 12
   } else {
@@ -490,14 +489,10 @@ pub fn run_elk_layered_flow_backend(
   let max_rank_minor_span = (max_rank_size - 1).max(0) * minor_step
 
   let major_center_by_rank : Map[Int, Int] = {}
-  let mut major_cursor = padding + 70
+  let major_start = padding + 70
   for displayed_rank in 0..<=max_rank {
     let rank = if reverse { max_rank - displayed_rank } else { displayed_rank }
-    let rank_major_size = option_int_or(max_major_size_by_rank.get(rank), 1).max(
-      1,
-    )
-    major_center_by_rank[rank] = major_cursor + rank_major_size / 2
-    major_cursor += rank_major_size + major_gap
+    major_center_by_rank[rank] = major_start + displayed_rank * major_step
   }
 
   let x_by_node_id : Map[String, Int] = {}
