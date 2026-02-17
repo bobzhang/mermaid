@@ -48,13 +48,12 @@ fn flow_graph() -> @model.MermaidGraph {
 
 ///|
 test "elk backend produces a valid positioned graph" {
-  let graph = flow_graph()
-  let elk_layout = layout_graph_elk(
-    graph,
-    @model.RenderOptions::default(),
-    true,
-    false,
-  )
+  let elk_layout = layout_graph_elk_backend({
+      graph: flow_graph(),
+      options: @model.RenderOptions::default(),
+      use_subgraph_redirects: true,
+      compact_fanin: false,
+    }).positioned_graph
   assert_eq(elk_layout.nodes.length(), 2)
   assert_eq(elk_layout.edges.length(), 1)
   assert_true(elk_layout.width > 0)

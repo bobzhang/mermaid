@@ -1,38 +1,11 @@
 ///|
-fn dispatch_legacy_backend(
-  request : GraphLayoutBackendRequest,
-) -> GraphLayoutBackendResult {
-  @layout_engine_graph_legacy_pipeline_core.layout_graph_legacy_backend(
-    request, false, false,
-  )
-}
-
-///|
-fn dispatch_dagre_parity_backend(
-  request : GraphLayoutBackendRequest,
-) -> GraphLayoutBackendResult {
-  @layout_engine_graph_engine_dagre_core.layout_graph_dagre_parity_backend(
-    request,
-  )
-}
-
-///|
-fn dispatch_elk_backend(
-  request : GraphLayoutBackendRequest,
-) -> GraphLayoutBackendResult {
-  @layout_engine_graph_engine_elk_core.layout_graph_elk_backend(request)
-}
-
-///|
 fn dispatch_backend_by_engine(
   request : GraphLayoutBackendRequest,
   engine : LayoutEngine,
 ) -> GraphLayoutBackendResult {
-  match engine {
-    Legacy => dispatch_legacy_backend(request)
-    DagreParity => dispatch_dagre_parity_backend(request)
-    Elk => dispatch_elk_backend(request)
-  }
+  @layout_engine_graph_engine_profile_core.run_graph_layout_engine_backend(
+    request, engine,
+  )
 }
 
 ///|

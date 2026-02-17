@@ -1,0 +1,20 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "bobzhang/beautiful_mermaid/layout/engine/graph/engine/profile/core"
+
+import {
+  "bobzhang/beautiful_mermaid/model",
+}
+
+// Values
+pub fn resolve_graph_engine_routing_policy(@model.LayoutEngine) -> @bobzhang/beautiful_mermaid/layout/engine/graph/backend/core.GraphBackendRoutingPolicy
+
+pub fn run_graph_layout_engine_backend(@bobzhang/beautiful_mermaid/layout/engine/graph/contract/core.GraphLayoutBackendRequest, @model.LayoutEngine) -> @bobzhang/beautiful_mermaid/layout/engine/graph/contract/core.GraphLayoutBackendResult
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits
+

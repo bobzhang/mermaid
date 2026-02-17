@@ -47,7 +47,7 @@ fn flow_graph() -> @model.MermaidGraph {
 }
 
 ///|
-test "dagre parity backend currently delegates to legacy parity profile" {
+test "dagre parity backend delegates to profile runner" {
   let graph = flow_graph()
   let request : @layout_engine_graph_contract_core.GraphLayoutBackendRequest = {
     graph,
@@ -56,9 +56,10 @@ test "dagre parity backend currently delegates to legacy parity profile" {
     compact_fanin: false,
   }
   let dagre_backend = layout_graph_dagre_parity_backend(request)
-  let legacy_backend = @layout_engine_graph_legacy_pipeline_core.layout_graph_legacy_backend(
-    request, true, true,
+  let profile_backend = @layout_engine_graph_engine_profile_core.run_graph_layout_engine_backend(
+    request,
+    DagreParity,
   )
 
-  assert_eq(dagre_backend, legacy_backend)
+  assert_eq(dagre_backend, profile_backend)
 }

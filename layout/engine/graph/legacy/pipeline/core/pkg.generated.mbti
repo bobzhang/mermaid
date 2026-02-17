@@ -1,14 +1,8 @@
 // Generated using `moon info`, DON'T EDIT IT
 package "bobzhang/beautiful_mermaid/layout/engine/graph/legacy/pipeline/core"
 
-import {
-  "bobzhang/beautiful_mermaid/model",
-}
-
 // Values
-pub fn layout_graph_legacy(@model.MermaidGraph, @model.RenderOptions, Bool, Bool, Bool, Bool) -> @model.PositionedGraph
-
-pub fn layout_graph_legacy_backend(@bobzhang/beautiful_mermaid/layout/engine/graph/contract/core.GraphLayoutBackendRequest, Bool, Bool) -> @bobzhang/beautiful_mermaid/layout/engine/graph/contract/core.GraphLayoutBackendResult
+pub fn layout_graph_legacy_backend(@bobzhang/beautiful_mermaid/layout/engine/graph/contract/core.GraphLayoutBackendRequest) -> @bobzhang/beautiful_mermaid/layout/engine/graph/contract/core.GraphLayoutBackendResult
 
 // Errors
 

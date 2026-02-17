@@ -54,7 +54,7 @@ test "legacy pipeline backend records setup placement and final snapshots" {
     use_subgraph_redirects: true,
     compact_fanin: false,
   }
-  let backend = layout_graph_legacy_backend(request, true, true)
+  let backend = layout_graph_legacy_backend(request)
 
   assert_eq(backend.phase_snapshots.length(), 3)
   assert_eq(backend.phase_snapshots[0].phase, "setup")
@@ -65,25 +65,22 @@ test "legacy pipeline backend records setup placement and final snapshots" {
 }
 
 ///|
-test "legacy pipeline backend positioned graph matches legacy entry function" {
+test "legacy pipeline backend positioned graph matches legacy profile runner" {
   let graph = flow_graph()
-  let backend = layout_graph_legacy_backend(
+  let backend = layout_graph_legacy_backend({
+    graph,
+    options: @model.RenderOptions::default(),
+    use_subgraph_redirects: true,
+    compact_fanin: false,
+  })
+  let positioned = @layout_engine_graph_engine_profile_core.run_graph_layout_engine_backend(
     {
       graph,
       options: @model.RenderOptions::default(),
       use_subgraph_redirects: true,
       compact_fanin: false,
     },
-    true,
-    true,
+    Legacy,
   )
-  let positioned = layout_graph_legacy(
-    graph,
-    @model.RenderOptions::default(),
-    true,
-    false,
-    true,
-    true,
-  )
-  assert_eq(backend.positioned_graph, positioned)
+  assert_eq(backend.positioned_graph, positioned.positioned_graph)
 }
