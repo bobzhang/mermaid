@@ -1,5 +1,5 @@
 // Generated using `moon info`, DON'T EDIT IT
-package "bobzhang/beautiful_mermaid/layout/engine/graph/legacy/core"
+package "bobzhang/beautiful_mermaid/layout/engine/graph/legacy/pipeline/core"
 
 import {
   "bobzhang/beautiful_mermaid/model",

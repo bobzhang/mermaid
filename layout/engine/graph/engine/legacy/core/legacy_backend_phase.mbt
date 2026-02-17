@@ -31,7 +31,7 @@ pub fn layout_graph_engine_legacy(
   let (enable_target_boundary_ports, preserve_assigned_endpoint_ports) = routing_flags_for_profile(
     request.routing_profile,
   )
-  @layout_engine_graph_legacy_core.layout_graph_legacy({
+  @layout_engine_graph_legacy_pipeline_core.layout_graph_legacy({
     graph: request.graph,
     options: request.options,
     use_subgraph_redirects: request.use_subgraph_redirects,
