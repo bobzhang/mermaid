@@ -6099,6 +6099,34 @@ fn route_crossings_against_routed_segments(
 }
 
 ///|
+fn route_crossings_against_all_routed_segments(
+  points : Array[Point],
+  source_id : String,
+  target_id : String,
+  routed_edge_segments : Array[RoutedEdgeSegment],
+) -> Int {
+  let mut crossings = 0
+  for i in 1..<points.length() {
+    let candidate_start = points[i - 1]
+    let candidate_end = points[i]
+    for segment in routed_edge_segments {
+      if segment.source_id == source_id && segment.target_id == target_id {
+        continue
+      }
+      if back_edge_segments_properly_intersect(
+          candidate_start,
+          candidate_end,
+          segment.start,
+          segment.end,
+        ) {
+        crossings += 1
+      }
+    }
+  }
+  crossings
+}
+
+///|
 fn evaluate_labeled_route_score(
   context : EdgeLayoutContext,
   points : Array[Point],
@@ -6299,6 +6327,150 @@ fn reciprocal_target_dogleg_candidate(
 }
 
 ///|
+fn reciprocal_two_point_dogleg_candidate(
+  points : Array[Point],
+  edge_horizontal : Bool,
+  offset : Int,
+) -> Array[Point]? {
+  if points.length() != 2 || offset == 0 {
+    return None
+  }
+  let start = points[0]
+  let end = points[1]
+  if edge_horizontal {
+    if start.x == end.x || start.y == end.y {
+      return None
+    }
+    let baseline = if offset > 0 {
+      start.y.max(end.y)
+    } else {
+      start.y.min(end.y)
+    }
+    let apex_y = baseline + offset
+    let apex_x = (start.x + end.x) / 2
+    return Some(
+      simplify_polyline_points([start, { x: apex_x, y: apex_y }, end]),
+    )
+  }
+  if start.y == end.y || start.x == end.x {
+    return None
+  }
+  let baseline = if offset > 0 {
+    start.x.max(end.x)
+  } else {
+    start.x.min(end.x)
+  }
+  let apex_x = baseline + offset
+  let apex_y = (start.y + end.y) / 2
+  Some(simplify_polyline_points([start, { x: apex_x, y: apex_y }, end]))
+}
+
+///|
+fn reciprocal_two_point_outer_detour_candidate(
+  context : EdgeLayoutContext,
+  points : Array[Point],
+  toward_positive_major : Bool,
+  offset : Int,
+) -> Array[Point]? {
+  if points.length() != 2 || offset <= 0 {
+    return None
+  }
+  let start = points[0]
+  let end = points[1]
+  if context.edge_horizontal {
+    let source_left = context.source.x - context.source.width / 2
+    let source_right = context.source.x + context.source.width / 2
+    let target_left = context.target.x - context.target.width / 2
+    let target_right = context.target.x + context.target.width / 2
+    let detour_x = if toward_positive_major {
+      source_right.max(target_right) + offset
+    } else {
+      source_left.min(target_left) - offset
+    }
+    return Some(
+      simplify_polyline_points([
+        start,
+        { x: detour_x, y: start.y },
+        { x: detour_x, y: end.y },
+        end,
+      ]),
+    )
+  }
+  let source_top = context.source.y - context.source.height / 2
+  let source_bottom = context.source.y + context.source.height / 2
+  let target_top = context.target.y - context.target.height / 2
+  let target_bottom = context.target.y + context.target.height / 2
+  let detour_y = if toward_positive_major {
+    source_bottom.max(target_bottom) + offset
+  } else {
+    source_top.min(target_top) - offset
+  }
+  Some(
+    simplify_polyline_points([
+      start,
+      { x: start.x, y: detour_y },
+      { x: end.x, y: detour_y },
+      end,
+    ]),
+  )
+}
+
+///|
+fn reciprocal_two_point_outer_shifted_candidate(
+  context : EdgeLayoutContext,
+  points : Array[Point],
+  toward_positive_major : Bool,
+  major_offset : Int,
+  minor_offset : Int,
+) -> Array[Point]? {
+  if points.length() != 2 || major_offset <= 0 || minor_offset == 0 {
+    return None
+  }
+  let start = points[0]
+  let end = points[1]
+  if context.edge_horizontal {
+    let source_left = context.source.x - context.source.width / 2
+    let source_right = context.source.x + context.source.width / 2
+    let target_left = context.target.x - context.target.width / 2
+    let target_right = context.target.x + context.target.width / 2
+    let detour_x = if toward_positive_major {
+      source_right.max(target_right) + major_offset
+    } else {
+      source_left.min(target_left) - major_offset
+    }
+    let lane_y = start.y + minor_offset
+    return Some(
+      simplify_polyline_points([
+        start,
+        { x: start.x, y: lane_y },
+        { x: detour_x, y: lane_y },
+        { x: detour_x, y: end.y },
+        end,
+      ]),
+    )
+  }
+  let source_top = context.source.y - context.source.height / 2
+  let source_bottom = context.source.y + context.source.height / 2
+  let target_top = context.target.y - context.target.height / 2
+  let target_bottom = context.target.y + context.target.height / 2
+  let detour_y = if toward_positive_major {
+    source_bottom.max(target_bottom) + major_offset
+  } else {
+    source_top.min(target_top) - major_offset
+  }
+  let lane_x = start.x + minor_offset
+  Some(
+    simplify_polyline_points([
+      start,
+      { x: lane_x, y: start.y },
+      { x: lane_x, y: detour_y },
+      { x: end.x, y: detour_y },
+      end,
+    ]),
+  )
+}
+
+///|
 fn maybe_optimize_reciprocal_target_dogleg(
   context : EdgeLayoutContext,
   points : Array[Point],
@@ -6306,11 +6478,7 @@ fn maybe_optimize_reciprocal_target_dogleg(
   routed_edge_segments : Array[RoutedEdgeSegment],
   routed_label_boxes : Array[RoutedLabelBox],
 ) -> Array[Point] {
-  if !context.compact_endpoint_port_priority || points.length() < 3 {
-    return points
-  }
-  if context.source_boundary_offset_minor == 0 &&
-    context.target_boundary_offset_minor == 0 {
+  if !context.compact_endpoint_port_priority || points.length() < 2 {
     return points
   }
   let mut has_reciprocal = false
@@ -6322,6 +6490,12 @@ fn maybe_optimize_reciprocal_target_dogleg(
     }
   }
   if !has_reciprocal {
+    return points
+  }
+  if context.source_boundary_offset_minor == 0 {
+    return points
+  }
+  if context.source_boundary_cohort_size < 2 && context.edge.label is Some(_) {
     return points
   }
 
@@ -6336,8 +6510,243 @@ fn maybe_optimize_reciprocal_target_dogleg(
   let mut best_score = evaluate_labeled_route_score(
     context, best_points, 0, positioned_nodes, routed_edge_segments, routed_label_boxes,
   )
+  let mut best_crossings = route_crossings_against_all_routed_segments(
+    best_points,
+    context.resolved_source_id,
+    context.resolved_target_id,
+    routed_edge_segments,
+  )
   let seen_signatures : Map[String, Bool] = {}
   seen_signatures[points_signature(best_points)] = true
+  if points.length() == 2 {
+    let start = points[0]
+    let end = points[points.length() - 1]
+    let minor_delta = if context.edge_horizontal {
+      int_abs(end.y - start.y)
+    } else {
+      int_abs(end.x - start.x)
+    }
+    let base_offset = minor_delta.max(12)
+    let candidate_offsets = [
+      -base_offset,
+      base_offset,
+      -(base_offset + 12),
+      base_offset + 12,
+      -(base_offset + 24),
+      base_offset + 24,
+    ]
+    for offset in candidate_offsets {
+      match
+        reciprocal_two_point_dogleg_candidate(
+          seed_points,
+          context.edge_horizontal,
+          offset,
+        ) {
+        Some(candidate) => {
+          let signature = points_signature(candidate)
+          if seen_signatures.contains(signature) {
+            continue
+          }
+          seen_signatures[signature] = true
+          let candidate_crossings = route_crossings_against_all_routed_segments(
+            candidate,
+            context.resolved_source_id,
+            context.resolved_target_id,
+            routed_edge_segments,
+          )
+          let candidate_score = evaluate_labeled_route_score(
+            context,
+            candidate,
+            int_abs(offset),
+            positioned_nodes,
+            routed_edge_segments,
+            routed_label_boxes,
+          )
+          let candidate_better = label_route_score_is_better(
+            candidate_score, best_score,
+          )
+          let best_better = label_route_score_is_better(
+            best_score, candidate_score,
+          )
+          if candidate_crossings < best_crossings ||
+            (
+              candidate_crossings == best_crossings &&
+              (candidate_better || !best_better)
+            ) {
+            best_points = candidate
+            best_score = candidate_score
+            best_crossings = candidate_crossings
+          }
+        }
+        None => ()
+      }
+    }
+    let outer_detour_offsets = [12, 24, 36, 48, 72, 96]
+    for offset in outer_detour_offsets {
+      match
+        reciprocal_two_point_outer_detour_candidate(
+          context, seed_points, false, offset,
+        ) {
+        Some(candidate) => {
+          let signature = points_signature(candidate)
+          if !seen_signatures.contains(signature) {
+            seen_signatures[signature] = true
+            let candidate_crossings = route_crossings_against_all_routed_segments(
+              candidate,
+              context.resolved_source_id,
+              context.resolved_target_id,
+              routed_edge_segments,
+            )
+            let candidate_score = evaluate_labeled_route_score(
+              context, candidate, offset, positioned_nodes, routed_edge_segments,
+              routed_label_boxes,
+            )
+            let candidate_better = label_route_score_is_better(
+              candidate_score, best_score,
+            )
+            let best_better = label_route_score_is_better(
+              best_score, candidate_score,
+            )
+            if candidate_crossings < best_crossings ||
+              (
+                candidate_crossings == best_crossings &&
+                (candidate_better || !best_better)
+              ) {
+              best_points = candidate
+              best_score = candidate_score
+              best_crossings = candidate_crossings
+            }
+          }
+        }
+        None => ()
+      }
+      match
+        reciprocal_two_point_outer_detour_candidate(
+          context, seed_points, true, offset,
+        ) {
+        Some(candidate) => {
+          let signature = points_signature(candidate)
+          if !seen_signatures.contains(signature) {
+            seen_signatures[signature] = true
+            let candidate_crossings = route_crossings_against_all_routed_segments(
+              candidate,
+              context.resolved_source_id,
+              context.resolved_target_id,
+              routed_edge_segments,
+            )
+            let candidate_score = evaluate_labeled_route_score(
+              context, candidate, offset, positioned_nodes, routed_edge_segments,
+              routed_label_boxes,
+            )
+            let candidate_better = label_route_score_is_better(
+              candidate_score, best_score,
+            )
+            let best_better = label_route_score_is_better(
+              best_score, candidate_score,
+            )
+            if candidate_crossings < best_crossings ||
+              (
+                candidate_crossings == best_crossings &&
+                (candidate_better || !best_better)
+              ) {
+              best_points = candidate
+              best_score = candidate_score
+              best_crossings = candidate_crossings
+            }
+          }
+        }
+        None => ()
+      }
+    }
+    let shifted_major_offsets = [12, 24, 36, 48, 72]
+    let shifted_minor_offsets = [-24, -12, 12, 24]
+    for major_offset in shifted_major_offsets {
+      for minor_offset in shifted_minor_offsets {
+        match
+          reciprocal_two_point_outer_shifted_candidate(
+            context, seed_points, false, major_offset, minor_offset,
+          ) {
+          Some(candidate) => {
+            let signature = points_signature(candidate)
+            if !seen_signatures.contains(signature) {
+              seen_signatures[signature] = true
+              let candidate_crossings = route_crossings_against_all_routed_segments(
+                candidate,
+                context.resolved_source_id,
+                context.resolved_target_id,
+                routed_edge_segments,
+              )
+              let candidate_score = evaluate_labeled_route_score(
+                context,
+                candidate,
+                major_offset + int_abs(minor_offset),
+                positioned_nodes,
+                routed_edge_segments,
+                routed_label_boxes,
+              )
+              let candidate_better = label_route_score_is_better(
+                candidate_score, best_score,
+              )
+              let best_better = label_route_score_is_better(
+                best_score, candidate_score,
+              )
+              if candidate_crossings < best_crossings ||
+                (
+                  candidate_crossings == best_crossings &&
+                  (candidate_better || !best_better)
+                ) {
+                best_points = candidate
+                best_score = candidate_score
+                best_crossings = candidate_crossings
+              }
+            }
+          }
+          None => ()
+        }
+        match
+          reciprocal_two_point_outer_shifted_candidate(
+            context, seed_points, true, major_offset, minor_offset,
+          ) {
+          Some(candidate) => {
+            let signature = points_signature(candidate)
+            if !seen_signatures.contains(signature) {
+              seen_signatures[signature] = true
+              let candidate_crossings = route_crossings_against_all_routed_segments(
+                candidate,
+                context.resolved_source_id,
+                context.resolved_target_id,
+                routed_edge_segments,
+              )
+              let candidate_score = evaluate_labeled_route_score(
+                context,
+                candidate,
+                major_offset + int_abs(minor_offset),
+                positioned_nodes,
+                routed_edge_segments,
+                routed_label_boxes,
+              )
+              let candidate_better = label_route_score_is_better(
+                candidate_score, best_score,
+              )
+              let best_better = label_route_score_is_better(
+                best_score, candidate_score,
+              )
+              if candidate_crossings < best_crossings ||
+                (
+                  candidate_crossings == best_crossings &&
+                  (candidate_better || !best_better)
+                ) {
+                best_points = candidate
+                best_score = candidate_score
+                best_crossings = candidate_crossings
+              }
+            }
+          }
+          None => ()
+        }
+      }
+    }
+  }
   let candidate_offsets = [12, 24, 36, 48, 72, 96, 128]
   for offset in candidate_offsets {
     match reciprocal_target_dogleg_candidate(seed_points, offset) {
@@ -6348,6 +6757,12 @@ fn maybe_optimize_reciprocal_target_dogleg(
           continue
         }
         seen_signatures[signature] = true
+        let candidate_crossings = route_crossings_against_all_routed_segments(
+          candidate,
+          context.resolved_source_id,
+          context.resolved_target_id,
+          routed_edge_segments,
+        )
         let candidate_score = evaluate_labeled_route_score(
           context, candidate, 0, positioned_nodes, routed_edge_segments, routed_label_boxes,
         )
@@ -6357,9 +6772,14 @@ fn maybe_optimize_reciprocal_target_dogleg(
         let best_better = label_route_score_is_better(
           best_score, candidate_score,
         )
-        if candidate_better || !best_better {
+        if candidate_crossings < best_crossings ||
+          (
+            candidate_crossings == best_crossings &&
+            (candidate_better || !best_better)
+          ) {
           best_points = candidate
           best_score = candidate_score
+          best_crossings = candidate_crossings
         }
       }
       None => ()

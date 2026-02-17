@@ -1740,6 +1740,43 @@ test "Layout reciprocal flow loop avoids polyline crossing at opposite ports" {
 }
 
 ///|
+test "Layout reciprocal fanout avoids pairwise crossings" {
+  let graph = @parser.parse_mermaid(
+    (
+      #|flowchart LR
+      #|A{A}
+      #|B[B]
+      #|C[C]
+      #|A --> B
+      #|A --> C
+      #|B --> A
+      #|C --> A
+      #|
+    )
+    .trim_end()
+    .to_string(),
+  )
+  let positioned = layout_graph(graph, RenderOptions::default())
+  let edge_ab = find_positioned_edge(positioned.edges, "A", "B")
+  let edge_ac = find_positioned_edge(positioned.edges, "A", "C")
+  let edge_ba = find_positioned_edge(positioned.edges, "B", "A")
+  let edge_ca = find_positioned_edge(positioned.edges, "C", "A")
+
+  assert_true(edge_ab.points.length() >= 2)
+  assert_true(edge_ac.points.length() >= 2)
+  assert_true(!point_equals(edge_ab.points[0], edge_ac.points[0]))
+  assert_eq(
+    count_polyline_crossings([
+      edge_ab.points,
+      edge_ac.points,
+      edge_ba.points,
+      edge_ca.points,
+    ]),
+    0,
+  )
+}
+
+///|
 test "Layout spreads source anchors for horizontal fanout edges" {
   let graph = @parser.parse_mermaid(
     (

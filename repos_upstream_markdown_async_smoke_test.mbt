@@ -4,18 +4,49 @@ async fn repos_markdown_files_from(
   path : String,
   files : Array[String],
 ) -> Unit {
-  let entries_result : Result[Array[String], Error] = try? @fs.readdir(
+  let kind_result : Result[@fs.FileKind, Error] = try? @fs.kind(
     path,
-    sort=true,
+    follow_symlink=false,
   )
-  match entries_result {
-    Ok(entries) =>
-      for entry in entries {
-        let child = "\{path}/\{entry}"
-        repos_markdown_files_from(child, files)
+  match kind_result {
+    Ok(Directory) => {
+      if repos_skip_markdown_walk_dir(path) {
+        return
       }
-    Err(_) => if path.has_suffix(".md") { files.push(path) }
+      let entries_result : Result[Array[String], Error] = try? @fs.readdir(
+        path,
+        sort=true,
+      )
+      match entries_result {
+        Ok(entries) =>
+          for entry in entries {
+            let child = "\{path}/\{entry}"
+            repos_markdown_files_from(child, files)
+          }
+        Err(_) => ()
+      }
+    }
+    Ok(Regular) => if path.has_suffix(".md") { files.push(path) }
+    _ => ()
   }
+}
+
+///|
+#cfg(target="native")
+fn repos_skip_markdown_walk_dir(path : String) -> Bool {
+  let parts = path.split("/").to_array()
+  let name = if parts.length() == 0 {
+    path
+  } else {
+    parts[parts.length() - 1].to_string()
+  }
+  name == "node_modules" ||
+  name == ".git" ||
+  name == "dist" ||
+  name == "build" ||
+  name == "coverage" ||
+  name == ".next" ||
+  name == ".turbo"
 }
 
 ///|
