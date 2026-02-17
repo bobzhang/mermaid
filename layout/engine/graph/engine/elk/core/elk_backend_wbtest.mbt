@@ -235,7 +235,7 @@ test "elk setup phase keeps state-graph spacing unset for state-specific placeme
 ///|
 test "elk layered pipeline applies only to non-state flowcharts" {
   assert_eq(elk_should_use_layered_pipeline(flow_graph()), true)
-  assert_eq(elk_should_use_layered_pipeline(large_flow_graph()), false)
+  assert_eq(elk_should_use_layered_pipeline(large_flow_graph()), true)
   assert_eq(elk_should_use_layered_pipeline(simple_state_graph()), false)
   assert_eq(elk_graph_supports_layered_pipeline(flow_graph()), true)
   assert_eq(elk_graph_supports_layered_pipeline(large_flow_graph()), true)
@@ -304,7 +304,7 @@ test "elk backend falls back to shared backend pipeline on state graphs" {
 }
 
 ///|
-test "elk backend falls back to shared backend pipeline on large flowcharts" {
+test "elk backend uses layered pipeline on large flowcharts" {
   let graph = large_flow_graph()
   let request : @layout_engine_graph_contract_core.GraphLayoutBackendRequest = {
     graph,
@@ -313,7 +313,7 @@ test "elk backend falls back to shared backend pipeline on large flowcharts" {
     compact_fanin: false,
   }
   let elk_backend = layout_graph_elk_backend(request)
-  let fallback_backend = @layout_engine_graph_backend_core.run_graph_backend_pipeline(
+  let layered_backend = run_elk_layered_flow_backend(
     {
       graph,
       options: derive_elk_render_options(graph, @model.RenderOptions::default()),
@@ -325,7 +325,7 @@ test "elk backend falls back to shared backend pipeline on large flowcharts" {
       preserve_assigned_endpoint_ports: false,
     },
   )
-  assert_eq(elk_backend, fallback_backend)
+  assert_eq(elk_backend, layered_backend)
 }
 
 ///|
@@ -338,19 +338,8 @@ test "elk layered backend forces layered pipeline for large flowcharts" {
     compact_fanin: false,
   }
   let forced_backend = layout_graph_elk_layered_backend(request)
-  let expected_layered_backend = run_elk_layered_flow_backend(
-    {
-      graph,
-      options: derive_elk_render_options(graph, @model.RenderOptions::default()),
-      use_subgraph_redirects: true,
-      compact_fanin: false,
-    },
-    {
-      enable_target_boundary_ports: true,
-      preserve_assigned_endpoint_ports: false,
-    },
-  )
-  assert_eq(forced_backend, expected_layered_backend)
+  let default_backend = layout_graph_elk_backend(request)
+  assert_eq(forced_backend, default_backend)
 }
 
 ///|
