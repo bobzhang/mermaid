@@ -44,40 +44,6 @@ fn test_graph(
 }
 
 ///|
-test "lane graph_has_cycle detects cycles and ignores simple chains" {
-  let nodes = [test_node("A"), test_node("B"), test_node("C")]
-  let cyclic_edges = [
-    test_edge("A", "B"),
-    test_edge("B", "C"),
-    test_edge("C", "A"),
-  ]
-  let acyclic_edges = [test_edge("A", "B"), test_edge("B", "C")]
-
-  assert_true(graph_has_cycle(nodes, cyclic_edges))
-  assert_true(!graph_has_cycle(nodes, acyclic_edges))
-}
-
-///|
-test "lane rank and lane assignment are stable on simple DAG" {
-  let nodes = [test_node("A"), test_node("B"), test_node("C")]
-  let edges = [test_edge("A", "B"), test_edge("A", "C"), test_edge("B", "C")]
-  let (ranks, max_rank) = collect_non_state_flow_ranks(
-    nodes, edges, false, false, false, false, false, false, false,
-  )
-  assert_eq(max_rank, 2)
-  assert_eq(ranks.get("A"), Some(0))
-  assert_eq(ranks.get("B"), Some(1))
-  assert_eq(ranks.get("C"), Some(2))
-
-  let lanes = collect_non_state_flow_lanes(
-    nodes, ranks, max_rank, edges, false, false, true,
-  )
-  assert_eq(lanes.get("A"), Some(0))
-  assert_eq(lanes.get("B"), Some(0))
-  assert_eq(lanes.get("C"), Some(0))
-}
-
-///|
 test "lane compute_legacy_lane_state returns expected flow rank envelope" {
   let nodes = [test_node("A"), test_node("B"), test_node("C")]
   let graph = test_graph(LR, nodes, [test_edge("A", "B"), test_edge("B", "C")])

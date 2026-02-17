@@ -6,15 +6,7 @@ import {
 }
 
 // Values
-pub fn collect_greedy_feedback_edge_indices(Array[@model.MermaidNode], Array[@model.MermaidEdge], Array[Int]) -> Map[Int, Bool]
-
-pub fn collect_non_state_flow_lanes(Array[@model.MermaidNode], Map[String, Int], Int, Array[@model.MermaidEdge], Bool, Bool, Bool) -> Map[String, Int]
-
-pub fn collect_non_state_flow_ranks(Array[@model.MermaidNode], Array[@model.MermaidEdge], Bool, Bool, Bool, Bool, Bool, Bool, Bool) -> (Map[String, Int], Int)
-
 pub fn compute_legacy_lane_state(@model.MermaidGraph, Array[@model.MermaidNode], Bool, Bool, Bool, Bool, Bool, Bool) -> LegacyLaneState
-
-pub fn graph_has_cycle(Array[@model.MermaidNode], Array[@model.MermaidEdge]) -> Bool
 
 // Errors
 
