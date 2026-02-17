@@ -667,30 +667,38 @@ fn rank_position_by_node_id(
 }
 
 ///|
-fn node_neighbor_barycenter(
+fn node_neighbor_order_key(
   node_id : String,
   neighbor_by_node_id : Map[String, Array[String]],
   rank_position_by_node_id : Map[String, Int],
-) -> (Bool, Int) {
+) -> (Bool, Int, Int) {
+  let positions : Array[Int] = []
   let mut sum = 0
-  let mut count = 0
   match neighbor_by_node_id.get(node_id) {
     Some(neighbors) =>
       for neighbor_id in neighbors {
         match rank_position_by_node_id.get(neighbor_id) {
           Some(position) => {
+            positions.push(position)
             sum += position
-            count += 1
           }
           None => ()
         }
       }
     None => ()
   }
-  if count == 0 {
-    (false, 0)
+  if positions.length() == 0 {
+    (false, 0, 0)
   } else {
-    (true, sum * 1000 / count)
+    positions.sort()
+    let count = positions.length()
+    let median_scaled = if count % 2 == 1 {
+      positions[count / 2] * 1000
+    } else {
+      (positions[count / 2 - 1] + positions[count / 2]) * 500
+    }
+    let mean_scaled = sum * 1000 / count
+    (true, median_scaled, mean_scaled)
   }
 }
 
@@ -702,14 +710,17 @@ fn sort_rank_nodes_by_neighbors(
   order_index_by_node_id : Map[String, Int],
 ) -> Unit {
   node_ids.sort_by((left, right) => {
-    let (left_has_center, left_center) = node_neighbor_barycenter(
+    let (left_has_center, left_median, left_mean) = node_neighbor_order_key(
       left, neighbor_by_node_id, rank_position_by_node_id,
     )
-    let (right_has_center, right_center) = node_neighbor_barycenter(
+    let (right_has_center, right_median, right_mean) = node_neighbor_order_key(
       right, neighbor_by_node_id, rank_position_by_node_id,
     )
-    if left_has_center && right_has_center && left_center != right_center {
-      return left_center.compare(right_center)
+    if left_has_center && right_has_center && left_median != right_median {
+      return left_median.compare(right_median)
+    }
+    if left_has_center && right_has_center && left_mean != right_mean {
+      return left_mean.compare(right_mean)
     }
     if left_has_center != right_has_center {
       if left_has_center {
