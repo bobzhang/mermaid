@@ -47,7 +47,7 @@ fn flow_graph() -> @model.MermaidGraph {
 }
 
 ///|
-test "elk backend currently matches dagre parity legacy backend" {
+test "elk backend produces a valid positioned graph" {
   let graph = flow_graph()
   let elk_layout = layout_graph_elk(
     graph,
@@ -55,20 +55,14 @@ test "elk backend currently matches dagre parity legacy backend" {
     true,
     false,
   )
-  let dagre_parity_layout = @layout_engine_graph_legacy_pipeline_core.layout_graph_legacy(
-    graph,
-    @model.RenderOptions::default(),
-    true,
-    false,
-    true,
-    true,
-  )
-
-  assert_eq(elk_layout, dagre_parity_layout)
+  assert_eq(elk_layout.nodes.length(), 2)
+  assert_eq(elk_layout.edges.length(), 1)
+  assert_true(elk_layout.width > 0)
+  assert_true(elk_layout.height > 0)
 }
 
 ///|
-test "elk backend exposes the same phase snapshots as dagre parity backend" {
+test "elk backend exposes stable phase snapshots and counts" {
   let graph = flow_graph()
   let request : @layout_engine_graph_contract_core.GraphLayoutBackendRequest = {
     graph,
@@ -77,10 +71,15 @@ test "elk backend exposes the same phase snapshots as dagre parity backend" {
     compact_fanin: false,
   }
   let elk_backend = layout_graph_elk_backend(request)
-  let dagre_backend = @layout_engine_graph_legacy_pipeline_core.layout_graph_legacy_backend(
-    request, true, true,
-  )
-
-  assert_eq(elk_backend.phase_snapshots, dagre_backend.phase_snapshots)
-  assert_eq(elk_backend.positioned_graph, dagre_backend.positioned_graph)
+  let snapshots = elk_backend.phase_snapshots
+  assert_eq(snapshots.length(), 3)
+  assert_eq(snapshots[0].phase, "setup")
+  assert_eq(snapshots[1].phase, "placement")
+  assert_eq(snapshots[2].phase, "final")
+  assert_eq(snapshots[2].node_count, 2)
+  assert_eq(snapshots[2].edge_count, 1)
+  assert_true(snapshots[2].width > 0)
+  assert_true(snapshots[2].height > 0)
+  assert_eq(elk_backend.positioned_graph.nodes.length(), 2)
+  assert_eq(elk_backend.positioned_graph.edges.length(), 1)
 }

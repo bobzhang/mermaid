@@ -1,6 +1,6 @@
 import {
+  "bobzhang/beautiful_mermaid/layout/engine/graph/backend/core" @layout_engine_graph_backend_core,
   "bobzhang/beautiful_mermaid/layout/engine/graph/contract/core" @layout_engine_graph_contract_core,
-  "bobzhang/beautiful_mermaid/layout/engine/graph/legacy/pipeline/core" @layout_engine_graph_legacy_pipeline_core,
   "bobzhang/beautiful_mermaid/model" @model,
 }
 

@@ -1,0 +1,18 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "bobzhang/beautiful_mermaid/layout/engine/graph/backend/core"
+
+// Values
+pub fn run_graph_backend_pipeline(@bobzhang/beautiful_mermaid/layout/engine/graph/contract/core.GraphLayoutBackendRequest, GraphBackendRoutingPolicy) -> @bobzhang/beautiful_mermaid/layout/engine/graph/contract/core.GraphLayoutBackendResult
+
+// Errors
+
+// Types and methods
+pub(all) struct GraphBackendRoutingPolicy {
+  enable_target_boundary_ports : Bool
+  preserve_assigned_endpoint_ports : Bool
+}
+
+// Type aliases
+
+// Traits
+

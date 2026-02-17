@@ -15,9 +15,9 @@ type PositionedGraph = @model.PositionedGraph
 type GraphLayoutBackendRequest = @layout_engine_graph_contract_core.GraphLayoutBackendRequest
 
 ///|
-/// Lightweight phase-level snapshot used for backend evaluation.
-type GraphLayoutPhaseSnapshot = @layout_engine_graph_contract_core.GraphLayoutPhaseSnapshot
-
-///|
 /// Backend output contract with final layout and optional intermediate snapshots.
 type GraphLayoutBackendResult = @layout_engine_graph_contract_core.GraphLayoutBackendResult
+
+///|
+/// Routing flags for backend-specific post-placement behavior.
+type GraphBackendRoutingPolicy = @layout_engine_graph_backend_core.GraphBackendRoutingPolicy

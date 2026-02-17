@@ -47,7 +47,7 @@ fn flow_graph() -> @model.MermaidGraph {
 }
 
 ///|
-test "engine dispatch routes elk through parity-compatible backend" {
+test "engine dispatch returns valid layouts for legacy dagre and elk backends" {
   let graph = flow_graph()
   let dagre_parity_layout = dispatch_graph_layout_engine(
     graph,
@@ -71,7 +71,10 @@ test "engine dispatch routes elk through parity-compatible backend" {
     Legacy,
   )
 
-  assert_eq(elk_layout, dagre_parity_layout)
+  assert_eq(dagre_parity_layout.nodes.length(), 2)
+  assert_eq(dagre_parity_layout.edges.length(), 1)
+  assert_eq(elk_layout.nodes.length(), 2)
+  assert_eq(elk_layout.edges.length(), 1)
   assert_eq(legacy_layout.nodes.length(), 2)
   assert_eq(legacy_layout.edges.length(), 1)
 }

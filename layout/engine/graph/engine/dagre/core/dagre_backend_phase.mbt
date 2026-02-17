@@ -3,7 +3,11 @@
 pub fn layout_graph_dagre_parity_backend(
   request : GraphLayoutBackendRequest,
 ) -> GraphLayoutBackendResult {
-  @layout_engine_graph_legacy_pipeline_core.layout_graph_legacy_backend(
-    request, true, true,
+  let routing_policy : GraphBackendRoutingPolicy = {
+    enable_target_boundary_ports: true,
+    preserve_assigned_endpoint_ports: true,
+  }
+  @layout_engine_graph_backend_core.run_graph_backend_pipeline(
+    request, routing_policy,
   )
 }
