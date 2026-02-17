@@ -55,7 +55,9 @@ async test "Corpus manifest matches file-backed corpus counts" {
 
   match (total_cases, supported_cases, ascii_fixtures, unicode_fixtures) {
     (Some(total), Some(supported), Some(ascii_count), Some(unicode_count)) => {
-      let input_count = corpus_input_files().length()
+      let input_count = @fs.readdir("testdata/corpus/inputs", sort=true)
+        .filter(name => name.has_suffix(".mmd"))
+        .length()
       let expected_files = corpus_expected_files()
       let mut supported_count = 0
       for path in expected_files {

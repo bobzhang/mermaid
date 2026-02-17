@@ -1,6 +1,5 @@
 ///|
-#cfg(target="native")
-async fn corpus_input_files() -> Array[String] {
+async fn verify_corpus_chunk(chunk_index : Int, chunk_count : Int) -> Unit {
   let entries = @fs.readdir("testdata/corpus/inputs", sort=true)
   let files : Array[String] = []
   for name in entries {
@@ -8,12 +7,6 @@ async fn corpus_input_files() -> Array[String] {
       files.push("testdata/corpus/inputs/\{name}")
     }
   }
-  files
-}
-
-///|
-async fn verify_corpus_chunk(chunk_index : Int, chunk_count : Int) -> Unit {
-  let files = corpus_input_files()
   let selected = ts_files_for_chunk(files, chunk_index, chunk_count)
   if selected.length() == 0 {
     return

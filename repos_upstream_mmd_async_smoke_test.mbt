@@ -1,6 +1,9 @@
 ///|
 #cfg(target="native")
-async fn repos_upstream_mmd_files() -> Array[String] {
+async fn repos_verify_upstream_mmd_chunk(
+  chunk_index : Int,
+  chunk_count : Int,
+) -> Unit {
   let roots = [
     ".repos/mermaid/docs/diagrams", ".repos/mermaid/packages/mermaid/src/docs/diagrams",
   ]
@@ -21,16 +24,6 @@ async fn repos_upstream_mmd_files() -> Array[String] {
     }
   }
   files.sort()
-  files
-}
-
-///|
-#cfg(target="native")
-async fn repos_verify_upstream_mmd_chunk(
-  chunk_index : Int,
-  chunk_count : Int,
-) -> Unit {
-  let files = repos_upstream_mmd_files()
   if files.length() == 0 {
     return
   }
