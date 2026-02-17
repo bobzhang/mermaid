@@ -1,6 +1,6 @@
 ///|
 /// Derived setup state consumed by legacy placement, grouping, and routing phases.
-pub struct LegacyLayoutSetupState {
+pub(all) struct LegacyLayoutSetupState {
   subgraph_entry_by_id : Map[String, String]
   subgraph_exit_by_id : Map[String, String]
   nodes_in_order : Array[MermaidNode]

@@ -11,7 +11,7 @@ pub fn prepare_graph_inputs(@model.MermaidGraph, Bool) -> GraphPrepState
 // Errors
 
 // Types and methods
-pub struct GraphPrepState {
+pub(all) struct GraphPrepState {
   subgraph_entry_by_id : Map[String, String]
   subgraph_exit_by_id : Map[String, String]
   nodes_in_order : Array[@model.MermaidNode]

@@ -11,7 +11,7 @@ pub fn run_legacy_placement_phase(@model.MermaidGraph, @bobzhang/beautiful_merma
 // Errors
 
 // Types and methods
-pub struct LegacyPlacementState {
+pub(all) struct LegacyPlacementState {
   positioned_nodes : Array[@model.PositionedNode]
   positioned_by_id : Map[String, @model.PositionedNode]
 }

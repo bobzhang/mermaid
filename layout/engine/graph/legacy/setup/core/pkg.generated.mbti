@@ -11,7 +11,7 @@ pub fn build_legacy_layout_setup(@model.MermaidGraph, @model.RenderOptions, Bool
 // Errors
 
 // Types and methods
-pub struct LegacyLayoutSetupState {
+pub(all) struct LegacyLayoutSetupState {
   subgraph_entry_by_id : Map[String, String]
   subgraph_exit_by_id : Map[String, String]
   nodes_in_order : Array[@model.MermaidNode]

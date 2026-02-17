@@ -1,6 +1,6 @@
 ///|
 /// Legacy placement phase output consumed by grouping/routing/finalization.
-pub struct LegacyPlacementState {
+pub(all) struct LegacyPlacementState {
   positioned_nodes : Array[PositionedNode]
   positioned_by_id : Map[String, PositionedNode]
 }

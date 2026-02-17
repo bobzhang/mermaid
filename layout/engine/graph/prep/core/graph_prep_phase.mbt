@@ -56,7 +56,7 @@ fn collect_hidden_subgraph_node_ids(
 
 ///|
 /// Legacy prep phase output consumed by downstream phases.
-pub struct GraphPrepState {
+pub(all) struct GraphPrepState {
   subgraph_entry_by_id : Map[String, String]
   subgraph_exit_by_id : Map[String, String]
   nodes_in_order : Array[MermaidNode]
