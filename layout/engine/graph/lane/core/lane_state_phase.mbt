@@ -1,6 +1,6 @@
 ///|
 /// Legacy lane/rank phase output consumed by placement and routing phases.
-pub(all) struct LegacyLaneState {
+pub struct LegacyLaneState {
   state_lane_by_node_id : Map[String, Int]
   state_label_y_offset_by_node_id : Map[String, Int]
   flow_rank_by_node_id : Map[String, Int]
@@ -10,6 +10,76 @@ pub(all) struct LegacyLaneState {
   refined_horizontal_non_state_labeled_cycle_flow : Bool
   horizontal_cycle_non_state_flow : Bool
   flow_max_rank : Int
+}
+
+///|
+/// Returns per-node state lanes used for vertical placement offsets.
+pub fn LegacyLaneState::state_lane_by_node_id(
+  self : LegacyLaneState,
+) -> Map[String, Int] {
+  self.state_lane_by_node_id
+}
+
+///|
+/// Returns per-node state label vertical offsets.
+pub fn LegacyLaneState::state_label_y_offset_by_node_id(
+  self : LegacyLaneState,
+) -> Map[String, Int] {
+  self.state_label_y_offset_by_node_id
+}
+
+///|
+/// Returns computed rank indices for each node in flow layout.
+pub fn LegacyLaneState::flow_rank_by_node_id(
+  self : LegacyLaneState,
+) -> Map[String, Int] {
+  self.flow_rank_by_node_id
+}
+
+///|
+/// Returns per-node lane indices within each rank.
+pub fn LegacyLaneState::flow_lane_by_node_id(
+  self : LegacyLaneState,
+) -> Map[String, Int] {
+  self.flow_lane_by_node_id
+}
+
+///|
+/// Returns extra vertical label offsets keyed by flow-rank index.
+pub fn LegacyLaneState::flow_label_y_offset_by_rank(
+  self : LegacyLaneState,
+) -> Map[Int, Int] {
+  self.flow_label_y_offset_by_rank
+}
+
+///|
+/// Returns whether compact horizontal non-state spacing refinement is enabled.
+pub fn LegacyLaneState::refined_horizontal_non_state_flow(
+  self : LegacyLaneState,
+) -> Bool {
+  self.refined_horizontal_non_state_flow
+}
+
+///|
+/// Returns whether optional labeled-cycle lane refinement is enabled.
+pub fn LegacyLaneState::refined_horizontal_non_state_labeled_cycle_flow(
+  self : LegacyLaneState,
+) -> Bool {
+  self.refined_horizontal_non_state_labeled_cycle_flow
+}
+
+///|
+/// Returns whether cycle-aware horizontal flow spacing is active.
+pub fn LegacyLaneState::horizontal_cycle_non_state_flow(
+  self : LegacyLaneState,
+) -> Bool {
+  self.horizontal_cycle_non_state_flow
+}
+
+///|
+/// Returns the maximum computed flow rank across all nodes.
+pub fn LegacyLaneState::flow_max_rank(self : LegacyLaneState) -> Int {
+  self.flow_max_rank
 }
 
 ///|

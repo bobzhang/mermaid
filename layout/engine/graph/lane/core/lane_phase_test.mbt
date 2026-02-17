@@ -51,8 +51,8 @@ test "lane compute_legacy_lane_state returns expected flow rank envelope" {
   let lane_state = compute_legacy_lane_state(
     graph, nodes, false, false, true, false, false, false,
   )
-  assert_eq(lane_state.flow_max_rank, 2)
-  assert_eq(lane_state.flow_rank_by_node_id.get("A"), Some(0))
-  assert_eq(lane_state.flow_rank_by_node_id.get("B"), Some(1))
-  assert_eq(lane_state.flow_rank_by_node_id.get("C"), Some(2))
+  assert_eq(lane_state.flow_max_rank(), 2)
+  assert_eq(lane_state.flow_rank_by_node_id().get("A"), Some(0))
+  assert_eq(lane_state.flow_rank_by_node_id().get("B"), Some(1))
+  assert_eq(lane_state.flow_rank_by_node_id().get("C"), Some(2))
 }
