@@ -130,3 +130,41 @@ fn ts_svg_attr_int(svg : String, attr : String) -> Int? {
     None => None
   }
 }
+
+///|
+fn ts_collect_edge_label_rects(svg : String) -> Array[(Int, Int, Int, Int)] {
+  let rects : Array[(Int, Int, Int, Int)] = []
+  let marker = "<rect class=\"edge-label-bg\""
+  let mut offset = 0
+  while offset < svg.length() {
+    let rest = (try! svg[offset:]).to_string()
+    match rest.find(marker) {
+      Some(found) => {
+        let snippet = (try! rest[found:]).to_string()
+        match
+          (
+            ts_svg_attr_int(snippet, "x"),
+            ts_svg_attr_int(snippet, "y"),
+            ts_svg_attr_int(snippet, "width"),
+            ts_svg_attr_int(snippet, "height"),
+          ) {
+          (Some(x), Some(y), Some(width), Some(height)) =>
+            rects.push((x, y, width, height))
+          _ => ()
+        }
+        offset = offset + found + marker.length()
+      }
+      None => return rects
+    }
+  }
+  rects
+}
+
+///|
+fn ts_rects_overlap(a : (Int, Int, Int, Int), b : (Int, Int, Int, Int)) -> Bool {
+  let (ax, ay, aw, ah) = a
+  let (bx, by, bw, bh) = b
+  let overlap_x = ax < bx + bw && ax + aw > bx
+  let overlap_y = ay < by + bh && ay + ah > by
+  overlap_x && overlap_y
+}

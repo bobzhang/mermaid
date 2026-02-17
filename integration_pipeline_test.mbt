@@ -1,42 +1,4 @@
 ///|
-struct EdgeLabelRect {
-  x : Int
-  y : Int
-  width : Int
-  height : Int
-}
-
-///|
-fn collect_edge_label_rects(svg : String) -> Array[EdgeLabelRect] {
-  let rects : Array[EdgeLabelRect] = []
-  let marker = "<rect class=\"edge-label-bg\""
-  let segments = svg.split(marker).to_array()
-  for i in 1..<segments.length() {
-    let snippet = marker + segments[i].to_string()
-    match
-      (
-        ts_svg_attr_int(snippet, "x"),
-        ts_svg_attr_int(snippet, "y"),
-        ts_svg_attr_int(snippet, "width"),
-        ts_svg_attr_int(snippet, "height"),
-      ) {
-      (Some(x), Some(y), Some(width), Some(height)) =>
-        rects.push({ x, y, width, height })
-      _ => ()
-    }
-  }
-
-  rects
-}
-
-///|
-fn edge_label_rects_overlap(a : EdgeLabelRect, b : EdgeLabelRect) -> Bool {
-  let overlap_x = a.x < b.x + b.width && a.x + a.width > b.x
-  let overlap_y = a.y < b.y + b.height && a.y + a.height > b.y
-  overlap_x && overlap_y
-}
-
-///|
 fn snapshot_svg(it : @test.Test, filename : String, svg : String) -> Unit raise {
   it.write(svg)
   it.snapshot(filename~)
@@ -2408,12 +2370,12 @@ test "Flowchart cycle edge label pills do not overlap" (it : @test.Test) {
   )
   snapshot_svg(it, "integration_flowchart_cycle_labels.svg", svg)
 
-  let rects = collect_edge_label_rects(svg)
+  let rects = ts_collect_edge_label_rects(svg)
   assert_true(rects.length() >= 3)
 
   for i in 0..<rects.length() {
     for j in (i + 1)..<rects.length() {
-      assert_true(!edge_label_rects_overlap(rects[i], rects[j]))
+      assert_true(!ts_rects_overlap(rects[i], rects[j]))
     }
   }
 }
