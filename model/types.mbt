@@ -257,7 +257,7 @@ pub fn AsciiRenderOptions::default() -> AsciiRenderOptions {
 pub(all) struct Point {
   x : Int
   y : Int
-} derive(Eq, Show)
+} derive(Eq)
 
 ///|
 /// Node after layout with absolute coordinates and computed size.
@@ -296,7 +296,7 @@ pub(all) struct PositionedGroup {
   width : Int
   height : Int
   children : Array[PositionedGroup]
-} derive(Eq, Show)
+} derive(Eq)
 
 ///|
 /// Sequence lifeline geometry for SVG/ASCII sequence renderers.

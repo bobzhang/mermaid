@@ -24,7 +24,7 @@ test "Layout simplify polyline removes duplicate and interior collinear points" 
   let simplified = @layout_engine_graph_edge_core.simplify_polyline_points(
     points,
   )
-  assert_eq(simplified, [{ x: 0, y: 0 }, { x: 24, y: 0 }, { x: 24, y: 20 }])
+  assert_true(simplified == [{ x: 0, y: 0 }, { x: 24, y: 0 }, { x: 24, y: 20 }])
 }
 
 ///|
@@ -34,7 +34,7 @@ test "Layout simplify polyline preserves turnback cusp points" {
     points,
   )
   assert_eq(simplified.length(), 3)
-  assert_eq(simplified[1], { x: 0, y: 10 })
+  assert_true(simplified[1] == { x: 0, y: 10 })
 }
 
 ///|
@@ -44,7 +44,7 @@ test "Layout endpoint stubs preserve source fanout boundary separation" {
     { x: 290, y: 161 },
     { x: 344, y: 200 },
   )
-  assert_eq(points, [{ x: 290, y: 161 }, { x: 344, y: 200 }])
+  assert_true(points == [{ x: 290, y: 161 }, { x: 344, y: 200 }])
 }
 
 ///|
@@ -54,7 +54,7 @@ test "Layout endpoint stubs preserve reciprocal endpoint separation" {
     { x: 290, y: 149 },
     { x: 360, y: 116 },
   )
-  assert_eq(points, [{ x: 290, y: 149 }, { x: 360, y: 116 }])
+  assert_true(points == [{ x: 290, y: 149 }, { x: 360, y: 116 }])
 }
 
 ///|

@@ -126,7 +126,6 @@ pub(all) struct Point {
   y : Int
 }
 pub impl Eq for Point
-pub impl Show for Point
 
 pub(all) struct PositionedEdge {
   source : String
@@ -163,7 +162,6 @@ pub(all) struct PositionedGroup {
   children : Array[PositionedGroup]
 }
 pub impl Eq for PositionedGroup
-pub impl Show for PositionedGroup
 
 pub(all) struct PositionedNode {
   id : String
