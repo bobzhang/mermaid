@@ -17,18 +17,30 @@ fn wb_edge(source : String, target : String) -> @model.MermaidEdge {
 }
 
 ///|
-fn wb_graph(
+fn wb_labeled_edge(
+  source : String,
+  target : String,
+  label : String,
+) -> @model.MermaidEdge {
+  {
+    source,
+    target,
+    label: Some(label),
+    style: Solid,
+    has_arrow_start: false,
+    has_arrow_end: true,
+    relation_operator: Some("-->"),
+  }
+}
+
+///|
+fn wb_graph_with_edges(
   nodes : Array[String],
-  edges : Array[(String, String)],
+  graph_edges : Array[@model.MermaidEdge],
 ) -> @model.MermaidGraph {
   let node_map : Map[String, @model.MermaidNode] = {}
   for node_id in nodes {
     node_map[node_id] = wb_node(node_id)
-  }
-  let graph_edges : Array[@model.MermaidEdge] = []
-  for edge in edges {
-    let (source, target) = edge
-    graph_edges.push(wb_edge(source, target))
   }
   let class_defs : Map[String, Map[String, String]] = {}
   let class_assignments : Map[String, String] = {}
@@ -52,6 +64,19 @@ fn wb_graph(
     sequence_notes,
     sequence_activation_commands,
   }
+}
+
+///|
+fn wb_graph(
+  nodes : Array[String],
+  edges : Array[(String, String)],
+) -> @model.MermaidGraph {
+  let graph_edges : Array[@model.MermaidEdge] = []
+  for edge in edges {
+    let (source, target) = edge
+    graph_edges.push(wb_edge(source, target))
+  }
+  wb_graph_with_edges(nodes, graph_edges)
 }
 
 ///|
@@ -273,4 +298,55 @@ test "elk layered minor alignment keeps singleton sink rank close to predecessor
   let ship_build_delta = wb_abs(ship.y - build.y)
   let ship_fix_delta = wb_abs(ship.y - fix.y)
   assert_true(ship_build_delta < ship_fix_delta)
+}
+
+///|
+test "elk layered major spacing expands when edge labels are long" {
+  let unlabeled = wb_graph(["A", "B"], [("A", "B")])
+  let labeled = wb_graph_with_edges(["A", "B"], [
+    wb_labeled_edge(
+      "A", "B", "This edge label is intentionally long to require more major spacing",
+    ),
+  ])
+  let request_unlabeled : GraphLayoutBackendRequest = {
+    graph: unlabeled,
+    options: RenderOptions::default(),
+    use_subgraph_redirects: true,
+    compact_fanin: false,
+  }
+  let request_labeled : GraphLayoutBackendRequest = {
+    graph: labeled,
+    options: RenderOptions::default(),
+    use_subgraph_redirects: true,
+    compact_fanin: false,
+  }
+  let backend_unlabeled = run_elk_layered_flow_backend(request_unlabeled, {
+    enable_target_boundary_ports: true,
+    preserve_assigned_endpoint_ports: false,
+  })
+  let backend_labeled = run_elk_layered_flow_backend(request_labeled, {
+    enable_target_boundary_ports: true,
+    preserve_assigned_endpoint_ports: false,
+  })
+  let unlabeled_nodes = backend_unlabeled.positioned_graph.nodes
+  let labeled_nodes = backend_labeled.positioned_graph.nodes
+  let unlabeled_a = match wb_find_node_by_label(unlabeled_nodes, "A") {
+    Some(node) => node
+    None => fail("expected A in unlabeled graph")
+  }
+  let unlabeled_b = match wb_find_node_by_label(unlabeled_nodes, "B") {
+    Some(node) => node
+    None => fail("expected B in unlabeled graph")
+  }
+  let labeled_a = match wb_find_node_by_label(labeled_nodes, "A") {
+    Some(node) => node
+    None => fail("expected A in labeled graph")
+  }
+  let labeled_b = match wb_find_node_by_label(labeled_nodes, "B") {
+    Some(node) => node
+    None => fail("expected B in labeled graph")
+  }
+  let unlabeled_major_distance = wb_abs(unlabeled_b.x - unlabeled_a.x)
+  let labeled_major_distance = wb_abs(labeled_b.x - labeled_a.x)
+  assert_true(labeled_major_distance > unlabeled_major_distance)
 }

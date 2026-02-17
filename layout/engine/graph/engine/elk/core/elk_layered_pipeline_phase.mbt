@@ -827,6 +827,94 @@ fn build_minor_coord_by_node_id(
 }
 
 ///|
+fn rank_pair_key(left_rank : Int, right_rank : Int) -> String {
+  if left_rank <= right_rank {
+    "\{left_rank}->\{right_rank}"
+  } else {
+    "\{right_rank}->\{left_rank}"
+  }
+}
+
+///|
+fn edge_label_major_extent(label : String, horizontal : Bool) -> Int {
+  let lines = label.split("\n").map(line => line.to_string()).to_array()
+  let mut longest_line = 0
+  for line in lines {
+    longest_line = longest_line.max(line.length())
+  }
+  if horizontal {
+    longest_line * 6 + 12
+  } else {
+    lines.length() * 13 + 8
+  }
+}
+
+///|
+fn build_rank_pair_label_major_gap(
+  graph : MermaidGraph,
+  use_subgraph_redirects : Bool,
+  subgraph_entry_by_id : Map[String, String],
+  subgraph_exit_by_id : Map[String, String],
+  rank_by_node_id : Map[String, Int],
+  horizontal : Bool,
+) -> Map[String, Int] {
+  let rank_pair_label_major_gap : Map[String, Int] = {}
+  for edge in graph.edges {
+    let source_id = resolve_edge_endpoint_id(
+      edge.source,
+      use_subgraph_redirects,
+      subgraph_exit_by_id,
+    )
+    let target_id = resolve_edge_endpoint_id(
+      edge.target,
+      use_subgraph_redirects,
+      subgraph_entry_by_id,
+    )
+    let source_rank = option_int_or(rank_by_node_id.get(source_id), -1)
+    let target_rank = option_int_or(rank_by_node_id.get(target_id), -1)
+    if source_rank < 0 || target_rank <= source_rank {
+      continue
+    }
+    let label_major_gap = match edge.label {
+      Some(label) => edge_label_major_extent(label, horizontal) + 8
+      None => 0
+    }
+    if label_major_gap <= 0 {
+      continue
+    }
+    for rank in source_rank..<target_rank {
+      let key = rank_pair_key(rank, rank + 1)
+      let current = option_int_or(rank_pair_label_major_gap.get(key), 0)
+      if label_major_gap > current {
+        rank_pair_label_major_gap[key] = label_major_gap
+      }
+    }
+  }
+  rank_pair_label_major_gap
+}
+
+///|
+fn rank_pair_major_step(
+  left_rank : Int,
+  right_rank : Int,
+  base_major_step : Int,
+  rank_pair_label_major_gap : Map[String, Int],
+) -> Int {
+  let label_clearance = option_int_or(
+    rank_pair_label_major_gap.get(rank_pair_key(left_rank, right_rank)),
+    0,
+  )
+  if label_clearance <= base_major_step {
+    base_major_step
+  } else {
+    // Dampen label-driven expansion so long labels gain room without causing
+    // large global stretching on small graphs.
+    let overflow = label_clearance - base_major_step
+    base_major_step + overflow * 2 / 3
+  }
+}
+
+///|
 fn should_use_elk_layered_pipeline(graph : MermaidGraph) -> Bool {
   // Keep ELK layered pass scoped to small/medium flowcharts where the
   // lightweight MoonBit implementation is quality-competitive. Larger dense
@@ -935,7 +1023,9 @@ pub fn run_elk_layered_flow_backend(
   } else {
     global_max_height
   }
-  let major_step = major_gap.max(global_major_size + (major_gap / 5).max(20))
+  let base_major_step = major_gap.max(
+    global_major_size + (major_gap / 5).max(20),
+  )
   let min_minor_step = if horizontal {
     global_max_height + 12
   } else {
@@ -947,12 +1037,29 @@ pub fn run_elk_layered_flow_backend(
     rank_node_ids_by_rank, max_rank, padding, minor_step, max_rank_minor_span, predecessors_by_node_id,
     successors_by_node_id, horizontal, width_by_node_id, height_by_node_id,
   )
+  let rank_pair_label_major_gap = build_rank_pair_label_major_gap(
+    graph, use_subgraph_redirects, subgraph_entry_by_id, subgraph_exit_by_id, rank_by_node_id,
+    horizontal,
+  )
 
   let major_center_by_rank : Map[Int, Int] = {}
   let major_start = padding + 70
+  let mut displayed_major_center = major_start
   for displayed_rank in 0..<=max_rank {
     let rank = if reverse { max_rank - displayed_rank } else { displayed_rank }
-    major_center_by_rank[rank] = major_start + displayed_rank * major_step
+    if displayed_rank > 0 {
+      let previous_displayed_rank = displayed_rank - 1
+      let previous_rank = if reverse {
+        max_rank - previous_displayed_rank
+      } else {
+        previous_displayed_rank
+      }
+      let step = rank_pair_major_step(
+        previous_rank, rank, base_major_step, rank_pair_label_major_gap,
+      )
+      displayed_major_center += step
+    }
+    major_center_by_rank[rank] = displayed_major_center
   }
 
   let x_by_node_id : Map[String, Int] = {}
