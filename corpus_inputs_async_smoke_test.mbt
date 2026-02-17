@@ -28,13 +28,6 @@ fn corpus_files_for_chunk(
 }
 
 ///|
-#cfg(target="native")
-fn corpus_svg_looks_valid(svg : String) -> Bool {
-  svg.has_prefix("<svg ") && svg.has_suffix("</svg>")
-}
-
-///|
-#cfg(target="native")
 async fn verify_corpus_chunk(chunk_index : Int, chunk_count : Int) -> Unit {
   let files = corpus_input_files()
   let selected = corpus_files_for_chunk(files, chunk_index, chunk_count)
@@ -70,7 +63,7 @@ async fn verify_corpus_chunk(chunk_index : Int, chunk_count : Int) -> Unit {
 
     match (svg_result, ascii_result, unicode_result) {
       (Ok(svg), Ok(ascii), Ok(unicode)) =>
-        if !corpus_svg_looks_valid(svg) ||
+        if !(svg.has_prefix("<svg ") && svg.has_suffix("</svg>")) ||
           ts_normalize_whitespace(ascii) == "" ||
           ts_normalize_whitespace(unicode) == "" {
           failures.push(path)
