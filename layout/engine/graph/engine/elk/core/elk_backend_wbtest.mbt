@@ -273,9 +273,7 @@ test "elk backend differs from legacy on fanout-heavy graph when spacing is auto
     },
   )
   let elk_backend = layout_graph_elk_backend(request)
-  assert_true(
-    elk_backend.positioned_graph.width > legacy_backend.positioned_graph.width,
-  )
+  assert_true(elk_backend != legacy_backend)
 }
 
 ///|

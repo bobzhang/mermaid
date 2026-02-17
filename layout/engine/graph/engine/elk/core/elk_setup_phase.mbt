@@ -87,22 +87,33 @@ fn clamp_int(value : Int, min_value : Int, max_value : Int) -> Int {
 }
 
 ///|
+fn graph_edge_density_per_node_pct(graph : MermaidGraph) -> Int {
+  if graph.nodes.length() == 0 {
+    0
+  } else {
+    graph.edges.length() * 100 / graph.nodes.length()
+  }
+}
+
+///|
 fn elk_node_spacing(
   base_spacing : Int,
   graph : MermaidGraph,
   complexity : ElkGraphComplexity,
 ) -> Int {
-  let fanout_boost = ((complexity.max_outdegree - 1).max(0) * 10).min(60)
-  let indegree_boost = ((complexity.max_indegree - 2).max(0) * 6).min(24)
-  let label_boost = ((complexity.longest_edge_label_len - 4).max(0) * 2).min(42)
-  let reciprocal_boost = (complexity.reciprocal_edge_count * 6).min(24)
-  let density_compact = if graph.nodes.length() >= 24 {
-    14
-  } else if graph.nodes.length() >= 16 {
-    8
-  } else {
-    0
-  }
+  let fanout_boost = ((complexity.max_outdegree - 1).max(0) * 7).min(42)
+  let indegree_boost = ((complexity.max_indegree - 2).max(0) * 4).min(16)
+  let label_boost = (complexity.longest_edge_label_len - 4).max(0).min(24)
+  let reciprocal_boost = (complexity.reciprocal_edge_count * 4).min(16)
+  let edge_density_pct = graph_edge_density_per_node_pct(graph)
+  let density_compact = (if graph.nodes.length() >= 24 {
+      18
+    } else if graph.nodes.length() >= 16 {
+      10
+    } else {
+      0
+    }) +
+    ((edge_density_pct - 170).max(0) / 5).min(18)
   clamp_int(
     base_spacing +
     fanout_boost +
@@ -110,8 +121,8 @@ fn elk_node_spacing(
     label_boost +
     reciprocal_boost -
     density_compact,
-    96,
-    220,
+    90,
+    198,
   )
 }
 
@@ -126,26 +137,28 @@ fn elk_layer_spacing(
   } else {
     complexity.labeled_edge_count * 100 / graph.edges.length()
   }
-  let label_ratio_boost = (labeled_edge_ratio_pct / 7).min(18)
-  let longest_label_boost = (complexity.longest_edge_label_len - 6)
+  let label_ratio_boost = (labeled_edge_ratio_pct / 10).min(12)
+  let longest_label_boost = (complexity.longest_edge_label_len - 8)
     .max(0)
-    .min(24)
-  let reciprocal_boost = (complexity.reciprocal_edge_count * 4).min(18)
-  let density_compact = if graph.nodes.length() >= 24 {
-    10
-  } else if graph.nodes.length() >= 16 {
-    6
-  } else {
-    0
-  }
+    .min(16)
+  let reciprocal_boost = (complexity.reciprocal_edge_count * 3).min(12)
+  let edge_density_pct = graph_edge_density_per_node_pct(graph)
+  let density_compact = (if graph.nodes.length() >= 24 {
+      12
+    } else if graph.nodes.length() >= 16 {
+      8
+    } else {
+      0
+    }) +
+    ((edge_density_pct - 180).max(0) / 8).min(12)
   clamp_int(
     base_spacing +
     label_ratio_boost +
     longest_label_boost +
     reciprocal_boost -
     density_compact,
-    72,
-    180,
+    70,
+    165,
   )
 }
 
