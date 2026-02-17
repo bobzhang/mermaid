@@ -1097,7 +1097,10 @@ fn parse_class_def_line(
   line : String,
   class_defs : Map[String, Map[String, String]],
 ) -> Unit {
-  let rest = (try! line[9:]).trim()
+  let rest = lexmatch line[:] {
+    ("classDef ", class_def_rest) => class_def_rest.trim()
+    _ => return
+  }
   lexmatch rest {
     ("[^[:space:]]+" as class_name, tail) => {
       let cn = class_name.to_string()
@@ -1114,7 +1117,11 @@ fn parse_class_line(
   line : String,
   class_assignments : Map[String, String],
 ) -> Unit {
-  let rest = @parser_common_engine_core.trim_owned((try! line[6:]).to_string())
+  let rest = lexmatch line[:] {
+    ("class ", class_rest) =>
+      @parser_common_engine_core.trim_owned(class_rest.to_string())
+    _ => return
+  }
   match rest.rev_find(" ") {
     Some(idx) => {
       let node_list = @parser_common_engine_core.trim_owned(
@@ -1144,7 +1151,10 @@ fn parse_style_line(
   line : String,
   node_styles : Map[String, Map[String, String]],
 ) -> Unit {
-  let rest = (try! line[6:]).trim()
+  let rest = lexmatch line[:] {
+    ("style ", style_rest) => style_rest.trim()
+    _ => return
+  }
   lexmatch rest {
     ("[^[:space:]]+" as node_list, tail) => {
       let style_map = parse_style_properties(tail.trim().to_string())
@@ -1219,10 +1229,11 @@ fn normalize_subgraph_id_from_label(label : String) -> String {
 
 ///|
 fn parse_subgraph_start_line(line : String) -> MermaidSubgraph? {
-  if !line.has_prefix("subgraph ") {
-    return None
+  let rest = lexmatch line[:] {
+    ("subgraph ", subgraph_rest) =>
+      @parser_common_engine_core.trim_owned(subgraph_rest.to_string())
+    _ => return None
   }
-  let rest = @parser_common_engine_core.trim_owned((try! line[9:]).to_string())
   if rest == "" {
     return None
   }
@@ -1411,18 +1422,21 @@ pub fn parse_flowchart(
   for i in 1..<lines.length() {
     let line = lines[i]
 
-    if line.has_prefix("direction ") {
-      if subgraph_stack.length() > 0 {
-        let token = @parser_common_engine_core.trim_owned(
-          (try! line[10:]).to_string(),
-        )
-        match parse_direction_token_strict(token) {
-          Some(parsed_direction) =>
-            set_current_subgraph_direction(subgraph_stack, parsed_direction)
-          None => ()
+    lexmatch line[:] {
+      ("direction ", direction_token) => {
+        if subgraph_stack.length() > 0 {
+          let token = @parser_common_engine_core.trim_owned(
+            direction_token.to_string(),
+          )
+          match parse_direction_token_strict(token) {
+            Some(parsed_direction) =>
+              set_current_subgraph_direction(subgraph_stack, parsed_direction)
+            None => ()
+          }
         }
+        continue
       }
-      continue
+      _ => ()
     }
 
     match parse_subgraph_start_line(line) {
