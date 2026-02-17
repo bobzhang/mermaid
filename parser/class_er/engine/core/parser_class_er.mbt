@@ -499,8 +499,8 @@ fn parse_er_standalone_entity_line(
 ) -> Bool {
   let trimmed = @parser_common_engine_core.trim_owned(line)
   if trimmed == "" ||
-    trimmed.has_prefix("direction ") ||
-    trimmed.has_prefix("style ") ||
+    trimmed is [.. "direction ", ..] ||
+    trimmed is [.. "style ", ..] ||
     trimmed == "{" ||
     trimmed == "}" {
     return false
