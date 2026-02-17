@@ -8,5 +8,5 @@ import {
 }
 
 import {
-  "moonbitlang/core/test",
+  "bobzhang/beautiful_mermaid/layout/engine/graph/legacy/placement/core" @layout_engine_graph_legacy_placement_core,
 } for "test"
