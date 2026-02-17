@@ -6,12 +6,6 @@ priv struct LayoutGraphIR {
 }
 
 ///|
-priv struct LegacyRoutingFlags {
-  enable_target_boundary_ports : Bool
-  preserve_assigned_endpoint_ports : Bool
-}
-
-///|
 priv enum LayoutExecutionPlan {
   UseEngine(LayoutGraphIR)
   UseSequence(MermaidGraph)
@@ -23,22 +17,6 @@ fn resolve_layout_engine(options : RenderOptions) -> LayoutEngine {
   match options.layout_engine {
     Some(engine) => engine
     None => Legacy
-  }
-}
-
-///|
-fn legacy_pipeline_routing_flags(engine : LayoutEngine) -> LegacyRoutingFlags {
-  match engine {
-    Legacy =>
-      {
-        enable_target_boundary_ports: false,
-        preserve_assigned_endpoint_ports: false,
-      }
-    DagreParity | Elk =>
-      {
-        enable_target_boundary_ports: true,
-        preserve_assigned_endpoint_ports: true,
-      }
   }
 }
 
@@ -71,21 +49,12 @@ fn run_layout_engine(
   options : RenderOptions,
   engine : LayoutEngine,
 ) -> PositionedGraph {
-  let routing_flags = match engine {
-    Legacy => legacy_pipeline_routing_flags(Legacy)
-    DagreParity => legacy_pipeline_routing_flags(DagreParity)
-    Elk =>
-      // Reserve the ELK slot in the public selector while preserving current
-      // non-ELK behavior during the modular refactor.
-      legacy_pipeline_routing_flags(DagreParity)
-  }
-  @layout_engine_graph_legacy_core.layout_graph_legacy_with_subgraph_redirects({
+  @layout_engine_graph_engine_core.dispatch_graph_layout_engine({
     graph: ir.graph,
     options,
     use_subgraph_redirects: ir.use_subgraph_redirects,
     compact_fanin: ir.compact_fanin,
-    enable_target_boundary_ports: routing_flags.enable_target_boundary_ports,
-    preserve_assigned_endpoint_ports: routing_flags.preserve_assigned_endpoint_ports,
+    engine,
   })
 }
 

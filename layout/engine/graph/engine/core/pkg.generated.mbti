@@ -1,0 +1,25 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "bobzhang/beautiful_mermaid/layout/engine/graph/engine/core"
+
+import {
+  "bobzhang/beautiful_mermaid/model",
+}
+
+// Values
+pub fn dispatch_graph_layout_engine(GraphEngineDispatchRequest) -> @model.PositionedGraph
+
+// Errors
+
+// Types and methods
+pub(all) struct GraphEngineDispatchRequest {
+  graph : @model.MermaidGraph
+  options : @model.RenderOptions
+  use_subgraph_redirects : Bool
+  compact_fanin : Bool
+  engine : @model.LayoutEngine
+}
+
+// Type aliases
+
+// Traits
+
