@@ -12,7 +12,7 @@ pub fn build_plan(@model.MermaidGraph, @model.AsciiRenderOptions) -> AsciiLayout
 // Errors
 
 // Types and methods
-pub struct AsciiClassLayout {
+pub(all) struct AsciiClassLayout {
   class_sections_map : Map[String, Array[Array[String]]]
   class_width : Map[String, Int]
   class_height : Map[String, Int]
@@ -23,7 +23,7 @@ pub struct AsciiClassLayout {
   total_h : Int
 }
 
-pub struct AsciiErLayout {
+pub(all) struct AsciiErLayout {
   entity_sections : Map[String, Array[Array[String]]]
   entity_width : Map[String, Int]
   entity_height : Map[String, Int]
@@ -34,11 +34,11 @@ pub struct AsciiErLayout {
   total_h : Int
 }
 
-pub struct AsciiFlowSubgraphLayout {
+pub(all) struct AsciiFlowSubgraphLayout {
   positioned : @model.PositionedGraph
 }
 
-pub struct AsciiLayoutPlan {
+pub(all) struct AsciiLayoutPlan {
   kind : AsciiPlanKind
   graph : @model.MermaidGraph
   sequence_layout : AsciiSequenceLayout?
@@ -48,7 +48,7 @@ pub struct AsciiLayoutPlan {
   flow_subgraph : AsciiFlowSubgraphLayout?
 }
 
-pub enum AsciiPlanKind {
+pub(all) enum AsciiPlanKind {
   Sequence
   Class
   Er
@@ -56,13 +56,13 @@ pub enum AsciiPlanKind {
   FlowSubgraph
 }
 
-pub struct AsciiSequenceActivationLayout {
+pub(all) struct AsciiSequenceActivationLayout {
   actor_idx : Int
   top_y : Int
   bottom_y : Int
 }
 
-pub struct AsciiSequenceLayout {
+pub(all) struct AsciiSequenceLayout {
   actors : Array[@model.MermaidNode]
   actor_index : Map[String, Int]
   lifeline_x : Array[Int]
@@ -78,7 +78,7 @@ pub struct AsciiSequenceLayout {
   total_h : Int
 }
 
-pub struct AsciiSequenceNoteLayout {
+pub(all) struct AsciiSequenceNoteLayout {
   x : Int
   y : Int
   width : Int
@@ -86,7 +86,7 @@ pub struct AsciiSequenceNoteLayout {
   lines : Array[String]
 }
 
-pub struct AsciiStateFlatGridLayout {
+pub(all) struct AsciiStateFlatGridLayout {
   nodes_in_order : Array[@model.MermaidNode]
   grid_positions : Map[String, (Int, Int)]
   edge_paths : Array[Array[@core.AsciiGridCoord]]

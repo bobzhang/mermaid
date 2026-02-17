@@ -1,6 +1,6 @@
 ///|
 /// The kind of diagram layout plan for ASCII rendering.
-pub enum AsciiPlanKind {
+pub(all) enum AsciiPlanKind {
   Sequence
   Class
   Er
@@ -10,7 +10,7 @@ pub enum AsciiPlanKind {
 
 ///|
 /// Layout metrics for a sequence diagram note in ASCII rendering.
-pub struct AsciiSequenceNoteLayout {
+pub(all) struct AsciiSequenceNoteLayout {
   x : Int
   y : Int
   width : Int
@@ -20,7 +20,7 @@ pub struct AsciiSequenceNoteLayout {
 
 ///|
 /// Layout metrics for a sequence activation bar in ASCII rendering.
-pub struct AsciiSequenceActivationLayout {
+pub(all) struct AsciiSequenceActivationLayout {
   actor_idx : Int
   top_y : Int
   bottom_y : Int
@@ -28,7 +28,7 @@ pub struct AsciiSequenceActivationLayout {
 
 ///|
 /// Complete layout metrics for a sequence diagram in ASCII rendering.
-pub struct AsciiSequenceLayout {
+pub(all) struct AsciiSequenceLayout {
   actors : Array[@model.MermaidNode]
   actor_index : Map[String, Int]
   lifeline_x : Array[Int]
@@ -46,7 +46,7 @@ pub struct AsciiSequenceLayout {
 
 ///|
 /// Layout metrics for a class diagram in ASCII rendering.
-pub struct AsciiClassLayout {
+pub(all) struct AsciiClassLayout {
   class_sections_map : Map[String, Array[Array[String]]]
   class_width : Map[String, Int]
   class_height : Map[String, Int]
@@ -59,7 +59,7 @@ pub struct AsciiClassLayout {
 
 ///|
 /// Layout metrics for an ER diagram in ASCII rendering.
-pub struct AsciiErLayout {
+pub(all) struct AsciiErLayout {
   entity_sections : Map[String, Array[Array[String]]]
   entity_width : Map[String, Int]
   entity_height : Map[String, Int]
@@ -72,7 +72,7 @@ pub struct AsciiErLayout {
 
 ///|
 /// Layout metrics for a flat state diagram grid in ASCII rendering.
-pub struct AsciiStateFlatGridLayout {
+pub(all) struct AsciiStateFlatGridLayout {
   nodes_in_order : Array[@model.MermaidNode]
   grid_positions : Map[String, (Int, Int)]
   edge_paths : Array[Array[@layout_engine_pathfinder_core.AsciiGridCoord]]
@@ -80,13 +80,13 @@ pub struct AsciiStateFlatGridLayout {
 
 ///|
 /// Layout metrics for a flowchart with subgraphs in ASCII rendering.
-pub struct AsciiFlowSubgraphLayout {
+pub(all) struct AsciiFlowSubgraphLayout {
   positioned : @model.PositionedGraph
 }
 
 ///|
 /// The layout plan selecting rendering strategy for ASCII output.
-pub struct AsciiLayoutPlan {
+pub(all) struct AsciiLayoutPlan {
   kind : AsciiPlanKind
   graph : @model.MermaidGraph
   sequence_layout : AsciiSequenceLayout?
