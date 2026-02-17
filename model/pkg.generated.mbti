@@ -37,7 +37,6 @@ pub(all) enum DiagramKind {
   Class
   Er
 }
-pub impl Eq for DiagramKind
 
 pub(all) enum Direction {
   TD

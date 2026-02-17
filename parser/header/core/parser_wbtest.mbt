@@ -1,9 +1,24 @@
 ///|
+fn diagram_kind_equal(
+  actual : @model.DiagramKind,
+  expected : @model.DiagramKind,
+) -> Bool {
+  match (actual, expected) {
+    (Flowchart, Flowchart) => true
+    (State, State) => true
+    (Sequence, Sequence) => true
+    (Class, Class) => true
+    (Er, Er) => true
+    _ => false
+  }
+}
+
+///|
 fn assert_diagram_kind(
   graph : MermaidGraph,
   expected : @model.DiagramKind,
 ) -> Unit raise {
-  assert_true(graph.diagram_kind == expected)
+  assert_true(diagram_kind_equal(graph.diagram_kind, expected))
 }
 
 ///|
