@@ -38,11 +38,6 @@ fn ts_normalize_whitespace(text : String) -> String {
 }
 
 ///|
-fn ts_contains_all(haystack : String, needles : Array[String]) -> Bool {
-  needles.all(needle => haystack.contains(needle))
-}
-
-///|
 fn ts_count_occurrences(haystack : String, needle : String) -> Int {
   if needle == "" {
     return 0

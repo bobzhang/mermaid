@@ -2,7 +2,9 @@
 test "SVG semantic parity gate cases" {
   for case_data in gate_cases() {
     let svg = @beautiful_mermaid.render_mermaid(case_data.input)
-    assert_true(ts_contains_all(svg, case_data.expected_svg_fragments))
+    assert_true(
+      case_data.expected_svg_fragments.all(fragment => svg.contains(fragment)),
+    )
     assert_true(svg.has_prefix("<svg "))
     assert_true(svg.has_suffix("</svg>"))
   }

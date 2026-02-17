@@ -25,7 +25,9 @@ fn snapshot_supported_case_svg(
 
   assert_true(svg.has_prefix("<svg "))
   assert_true(svg.has_suffix("</svg>"))
-  assert_true(ts_contains_all(svg, case_data.expected_svg_fragments))
+  assert_true(
+    case_data.expected_svg_fragments.all(fragment => svg.contains(fragment)),
+  )
 }
 
 ///|
