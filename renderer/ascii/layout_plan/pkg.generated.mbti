@@ -2,6 +2,7 @@
 package "bobzhang/beautiful_mermaid/renderer/ascii/layout_plan"
 
 import {
+  "bobzhang/beautiful_mermaid/layout/engine/pathfinder/core",
   "bobzhang/beautiful_mermaid/model",
 }
 
@@ -87,8 +88,8 @@ pub struct AsciiSequenceNoteLayout {
 
 pub struct AsciiStateFlatGridLayout {
   nodes_in_order : Array[@model.MermaidNode]
-  grid_positions : Map[String, @bobzhang/beautiful_mermaid/layout/engine/graph/core.LayoutStateGridCoord]
-  edge_paths : Array[Array[@bobzhang/beautiful_mermaid/layout/engine/pathfinder/core.AsciiGridCoord]]
+  grid_positions : Map[String, (Int, Int)]
+  edge_paths : Array[Array[@core.AsciiGridCoord]]
 }
 
 // Type aliases

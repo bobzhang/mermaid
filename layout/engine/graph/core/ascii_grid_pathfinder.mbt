@@ -1,6 +1,6 @@
 ///|
 /// A coordinate on the ASCII grid used for pathfinding.
-pub type AsciiGridCoord = @layout_engine_pathfinder_core.AsciiGridCoord
+type AsciiGridCoord = @layout_engine_pathfinder_core.AsciiGridCoord
 
 ///|
 fn ascii_grid_key(coord : AsciiGridCoord) -> String {

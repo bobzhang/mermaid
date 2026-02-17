@@ -2167,47 +2167,47 @@ fn render_ascii_state_flat_grid(
   let row_height : Map[Int, Int] = {}
   for node in nodes_in_order {
     match grid_positions.get(node.id) {
-      Some(coord) => {
+      Some((coord_x, coord_y)) => {
         let label = state_ascii_node_label(node)
         let content_width = options.box_border_padding * 2 + label.length()
         let content_height = 1 + options.box_border_padding * 2
 
-        let col0 = option_int_or(column_width.get(coord.x), 0)
+        let col0 = option_int_or(column_width.get(coord_x), 0)
         if 1 > col0 {
-          column_width[coord.x] = 1
+          column_width[coord_x] = 1
         }
-        let col1 = option_int_or(column_width.get(coord.x + 1), 0)
+        let col1 = option_int_or(column_width.get(coord_x + 1), 0)
         if content_width > col1 {
-          column_width[coord.x + 1] = content_width
+          column_width[coord_x + 1] = content_width
         }
-        let col2 = option_int_or(column_width.get(coord.x + 2), 0)
+        let col2 = option_int_or(column_width.get(coord_x + 2), 0)
         if 1 > col2 {
-          column_width[coord.x + 2] = 1
+          column_width[coord_x + 2] = 1
         }
 
-        let row0 = option_int_or(row_height.get(coord.y), 0)
+        let row0 = option_int_or(row_height.get(coord_y), 0)
         if 1 > row0 {
-          row_height[coord.y] = 1
+          row_height[coord_y] = 1
         }
-        let row1 = option_int_or(row_height.get(coord.y + 1), 0)
+        let row1 = option_int_or(row_height.get(coord_y + 1), 0)
         if content_height > row1 {
-          row_height[coord.y + 1] = content_height
+          row_height[coord_y + 1] = content_height
         }
-        let row2 = option_int_or(row_height.get(coord.y + 2), 0)
+        let row2 = option_int_or(row_height.get(coord_y + 2), 0)
         if 1 > row2 {
-          row_height[coord.y + 2] = 1
+          row_height[coord_y + 2] = 1
         }
 
-        if coord.x > 0 {
-          let gap_col = option_int_or(column_width.get(coord.x - 1), 0)
+        if coord_x > 0 {
+          let gap_col = option_int_or(column_width.get(coord_x - 1), 0)
           if options.padding_x > gap_col {
-            column_width[coord.x - 1] = options.padding_x
+            column_width[coord_x - 1] = options.padding_x
           }
         }
-        if coord.y > 0 {
-          let gap_row = option_int_or(row_height.get(coord.y - 1), 0)
+        if coord_y > 0 {
+          let gap_row = option_int_or(row_height.get(coord_y - 1), 0)
           if options.padding_y > gap_row {
-            row_height[coord.y - 1] = options.padding_y
+            row_height[coord_y - 1] = options.padding_y
           }
         }
       }
@@ -2274,16 +2274,16 @@ fn render_ascii_state_flat_grid(
   let node_box_by_id : Map[String, AsciiFlowNodeBox] = {}
   for node in nodes_in_order {
     match grid_positions.get(node.id) {
-      Some(coord) => {
+      Some((coord_x, coord_y)) => {
         let (left, top) = state_ascii_grid_to_draw(column_width, row_height, {
-          x: coord.x,
-          y: coord.y,
+          x: coord_x,
+          y: coord_y,
         })
-        let width = option_int_or(column_width.get(coord.x), 0) +
-          option_int_or(column_width.get(coord.x + 1), 0) +
+        let width = option_int_or(column_width.get(coord_x), 0) +
+          option_int_or(column_width.get(coord_x + 1), 0) +
           1
-        let height = option_int_or(row_height.get(coord.y), 0) +
-          option_int_or(row_height.get(coord.y + 1), 0) +
+        let height = option_int_or(row_height.get(coord_y), 0) +
+          option_int_or(row_height.get(coord_y + 1), 0) +
           1
         let box = AsciiFlowNodeBox::{
           id: node.id,

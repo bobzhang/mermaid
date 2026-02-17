@@ -10,20 +10,13 @@ pub fn layout_graph(@model.MermaidGraph, @model.RenderOptions) -> @model.Positio
 
 pub fn layout_graph_for_ascii(@model.MermaidGraph, @model.RenderOptions) -> @model.PositionedGraph
 
-pub fn layout_state_flat_grid_layout_data(@model.MermaidGraph) -> (Array[@model.MermaidNode], Map[String, LayoutStateGridCoord], Array[Array[@bobzhang/beautiful_mermaid/layout/engine/pathfinder/core.AsciiGridCoord]])
+pub fn layout_state_flat_grid_layout_data(@model.MermaidGraph) -> (Array[@model.MermaidNode], Map[String, (Int, Int)], Array[Array[@bobzhang/beautiful_mermaid/layout/engine/pathfinder/core.AsciiGridCoord]])
 
 // Errors
 
 // Types and methods
-pub(all) struct LayoutStateGridCoord {
-  x : Int
-  y : Int
-}
-pub impl Eq for LayoutStateGridCoord
-pub impl Show for LayoutStateGridCoord
 
 // Type aliases
-pub using @bobzhang/beautiful_mermaid/layout/engine/pathfinder/core {type AsciiGridCoord}
 
 // Traits
 

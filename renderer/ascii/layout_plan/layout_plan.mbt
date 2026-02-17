@@ -74,8 +74,8 @@ pub struct AsciiErLayout {
 /// Layout metrics for a flat state diagram grid in ASCII rendering.
 pub struct AsciiStateFlatGridLayout {
   nodes_in_order : Array[@model.MermaidNode]
-  grid_positions : Map[String, @layout.LayoutStateGridCoord]
-  edge_paths : Array[Array[@layout.AsciiGridCoord]]
+  grid_positions : Map[String, (Int, Int)]
+  edge_paths : Array[Array[@layout_engine_pathfinder_core.AsciiGridCoord]]
 }
 
 ///|

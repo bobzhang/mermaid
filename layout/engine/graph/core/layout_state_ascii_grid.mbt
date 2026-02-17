@@ -1,9 +1,9 @@
 ///|
 /// A coordinate on the state diagram layout grid.
-pub(all) struct LayoutStateGridCoord {
+priv struct LayoutStateGridCoord {
   x : Int
   y : Int
-} derive(Eq, Show)
+}
 
 ///|
 priv struct LayoutStateEdgeDir {
@@ -440,8 +440,8 @@ pub fn layout_state_flat_grid_layout_data(
   graph : MermaidGraph,
 ) -> (
   Array[MermaidNode],
-  Map[String, LayoutStateGridCoord],
-  Array[Array[AsciiGridCoord]],
+  Map[String, (Int, Int)],
+  Array[Array[@layout_engine_pathfinder_core.AsciiGridCoord]],
 ) {
   let nodes_in_order = layout_state_nodes_in_definition_order(graph)
   let grid_positions = layout_state_grid_positions(graph, nodes_in_order)
@@ -451,7 +451,7 @@ pub fn layout_state_flat_grid_layout_data(
   } else {
     layout_state_grid_bounds(grid_positions)
   }
-  let edge_paths : Array[Array[AsciiGridCoord]] = []
+  let edge_paths : Array[Array[@layout_engine_pathfinder_core.AsciiGridCoord]] = []
   for edge in graph.edges {
     let path = match
       layout_state_edge_grid_path_td(
@@ -467,7 +467,11 @@ pub fn layout_state_flat_grid_layout_data(
     }
     edge_paths.push(path)
   }
-  (nodes_in_order, grid_positions, edge_paths)
+  let public_grid_positions : Map[String, (Int, Int)] = {}
+  for node_id, coord in grid_positions {
+    public_grid_positions[node_id] = (coord.x, coord.y)
+  }
+  (nodes_in_order, public_grid_positions, edge_paths)
 }
 
 ///|

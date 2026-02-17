@@ -44,4 +44,4 @@ type PositionedGraph = @model.PositionedGraph
 
 ///|
 /// A coordinate on the ASCII grid used for pathfinding.
-type AsciiGridCoord = @layout.AsciiGridCoord
+type AsciiGridCoord = @layout_engine_pathfinder_core.AsciiGridCoord
