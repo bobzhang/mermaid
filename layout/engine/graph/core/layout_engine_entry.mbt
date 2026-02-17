@@ -24,14 +24,16 @@ fn legacy_pipeline_routing_config(
   engine : LayoutEngine,
 ) -> LegacyPipelineRoutingConfig {
   match engine {
-    Legacy => {
-      enable_target_boundary_ports: false,
-      preserve_assigned_endpoint_ports: false,
-    }
-    DagreParity | Elk => {
-      enable_target_boundary_ports: true,
-      preserve_assigned_endpoint_ports: true,
-    }
+    Legacy =>
+      {
+        enable_target_boundary_ports: false,
+        preserve_assigned_endpoint_ports: false,
+      }
+    DagreParity | Elk =>
+      {
+        enable_target_boundary_ports: true,
+        preserve_assigned_endpoint_ports: true,
+      }
   }
 }
 
