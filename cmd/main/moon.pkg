@@ -1,6 +1,16 @@
 import {
-  "bobzhang/beautiful_mermaid/cmd/main/app/core" @cmd_main_app_core,
+  "bobzhang/beautiful_mermaid" @beautiful_mermaid,
+  "bobzhang/beautiful_mermaid/layout/engine/graph/core" @layout_engine_graph_core,
+  "bobzhang/beautiful_mermaid/model" @model,
+  "bobzhang/beautiful_mermaid/parser/header/core" @parser_header_core,
+  "bobzhang/beautiful_mermaid/themes/core" @themes,
+  "moonbitlang/core/env" @env,
+  "moonbitlang/core/strconv" @strconv,
 }
+
+import {
+  "moonbitlang/core/test",
+} for "test"
 
 options(
   "is-main": true,
