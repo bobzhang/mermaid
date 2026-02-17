@@ -50,7 +50,6 @@ pub fn layout_graph_legacy(request : LegacyLayoutRequest) -> PositionedGraph {
   let horizontal = setup_state.horizontal
   let reverse = setup_state.reverse
   let state_graph = setup_state.state_graph
-  let class_or_er_graph = setup_state.class_or_er_graph
   let flat_state_graph = setup_state.flat_state_graph
   let enhanced_horizontal_state_flow = setup_state.enhanced_horizontal_state_flow
   let lane_state = setup_state.lane_state
@@ -81,74 +80,12 @@ pub fn layout_graph_legacy(request : LegacyLayoutRequest) -> PositionedGraph {
       layer_spacing,
     },
   )
-  let positioned_nodes = placement_state.positioned_nodes
-  let positioned_by_id = placement_state.positioned_by_id
-  let mut max_right = placement_state.max_right
-  let mut max_bottom = placement_state.max_bottom
-
-  let positioned_index_by_id : Map[String, Int] = {}
-  for i, node in positioned_nodes {
-    positioned_index_by_id[node.id] = i
-  }
-  let node_horizontal_by_id : Map[String, Bool] = {}
-  if state_graph {
-    @layout_engine_graph_group_core.apply_subgraph_direction_overrides({
-      subgraphs: graph.subgraphs,
-      inherited_horizontal: horizontal,
-      inherited_reverse: reverse,
-      inherited_override_active: false,
-      global_horizontal: horizontal,
-      global_reverse: reverse,
-      node_spacing,
-      layer_spacing,
-      positioned_nodes,
-      positioned_index_by_id,
-      node_horizontal_by_id,
-    })
-  }
-
-  max_right = padding
-  max_bottom = padding
-  for node in positioned_nodes {
-    positioned_by_id[node.id] = node
-    max_right = max_right.max(node.x + node.width / 2)
-    max_bottom = max_bottom.max(node.y + node.height / 2)
-  }
-
-  let positioned_groups = @layout_engine_graph_group_core.build_legacy_positioned_groups({
-      graph,
-      padding,
-      horizontal,
-      reverse,
-      state_graph,
-      node_spacing,
-      layer_spacing,
-      positioned_nodes,
-      positioned_by_id,
-      positioned_index_by_id,
-    },
-  )
-
-  let positioned_edges = @layout_engine_graph_routing_core.route_legacy_positioned_edges({
-      graph,
-      state_graph,
-      class_or_er_graph,
-      horizontal,
-      layer_spacing,
-      node_spacing,
-      use_subgraph_redirects,
-      subgraph_exit_by_id,
-      subgraph_entry_by_id,
-      positioned_nodes,
-      positioned_by_id,
-      node_horizontal_by_id,
-      enable_target_boundary_ports,
-      preserve_assigned_endpoint_ports,
-      enhanced_horizontal_state_flow,
-    },
-  )
-
-  @layout_engine_graph_finalize_core.finalize_positioned_graph(
-    padding, max_right, max_bottom, positioned_nodes, positioned_edges, positioned_groups,
-  )
+  @layout_engine_graph_legacy_post_core.finalize_legacy_layout_from_placement({
+    graph,
+    setup_state,
+    placement_state,
+    use_subgraph_redirects,
+    enable_target_boundary_ports,
+    preserve_assigned_endpoint_ports,
+  })
 }

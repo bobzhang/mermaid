@@ -1,7 +1,9 @@
 import {
-  "bobzhang/beautiful_mermaid/layout/engine/graph/legacy/post/core" @layout_engine_graph_legacy_post_core,
+  "bobzhang/beautiful_mermaid/layout/engine/graph/finalize/core" @layout_engine_graph_finalize_core,
+  "bobzhang/beautiful_mermaid/layout/engine/graph/group/core" @layout_engine_graph_group_core,
   "bobzhang/beautiful_mermaid/layout/engine/graph/legacy/setup/core" @layout_engine_graph_legacy_setup_core,
   "bobzhang/beautiful_mermaid/layout/engine/graph/placement/core" @layout_engine_graph_placement_core,
+  "bobzhang/beautiful_mermaid/layout/engine/graph/routing/core" @layout_engine_graph_routing_core,
   "bobzhang/beautiful_mermaid/model" @model,
 }
 

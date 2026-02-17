@@ -1,0 +1,26 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "bobzhang/beautiful_mermaid/layout/engine/graph/legacy/post/core"
+
+import {
+  "bobzhang/beautiful_mermaid/model",
+}
+
+// Values
+pub fn finalize_legacy_layout_from_placement(LegacyPostPlacementRequest) -> @model.PositionedGraph
+
+// Errors
+
+// Types and methods
+pub(all) struct LegacyPostPlacementRequest {
+  graph : @model.MermaidGraph
+  setup_state : @bobzhang/beautiful_mermaid/layout/engine/graph/legacy/setup/core.LegacyLayoutSetupState
+  placement_state : @bobzhang/beautiful_mermaid/layout/engine/graph/placement/core.LegacyPlacementState
+  use_subgraph_redirects : Bool
+  enable_target_boundary_ports : Bool
+  preserve_assigned_endpoint_ports : Bool
+}
+
+// Type aliases
+
+// Traits
+
