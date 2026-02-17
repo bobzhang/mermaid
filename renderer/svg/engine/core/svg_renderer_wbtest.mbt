@@ -61,19 +61,12 @@ fn count_occurrences(text : String, pattern : String) -> Int {
   if pattern == "" {
     return 0
   }
-  let mut count = 0
-  let mut start = 0
-  while start < text.length() {
-    let remaining = (try! text[start:]).to_string()
-    match remaining.find(pattern) {
-      Some(found) => {
-        count += 1
-        start = start + found + pattern.length()
-      }
-      None => break
-    }
+  let parts = text.split(pattern).to_array()
+  if parts.length() == 0 {
+    0
+  } else {
+    parts.length() - 1
   }
-  count
 }
 
 ///|

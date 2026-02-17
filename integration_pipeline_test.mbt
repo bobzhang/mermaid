@@ -27,34 +27,19 @@ struct EdgeLabelRect {
 fn collect_edge_label_rects(svg : String) -> Array[EdgeLabelRect] {
   let rects : Array[EdgeLabelRect] = []
   let marker = "<rect class=\"edge-label-bg\""
-  let mut offset = 0
-
-  while offset < svg.length() {
-    let remaining = (try! svg[offset:]).to_string()
-    match remaining.find(marker) {
-      Some(found) => {
-        let start = offset + found
-        let tail = (try! svg[start:]).to_string()
-        match tail.find("/>") {
-          Some(close_idx) => {
-            let snippet = (try! tail[:close_idx + 2]).to_string()
-            match
-              (
-                ts_svg_attr_int(snippet, "x"),
-                ts_svg_attr_int(snippet, "y"),
-                ts_svg_attr_int(snippet, "width"),
-                ts_svg_attr_int(snippet, "height"),
-              ) {
-              (Some(x), Some(y), Some(width), Some(height)) =>
-                rects.push({ x, y, width, height })
-              _ => ()
-            }
-            offset = start + close_idx + 2
-          }
-          None => break
-        }
-      }
-      None => break
+  let segments = svg.split(marker).to_array()
+  for i in 1..<segments.length() {
+    let snippet = marker + segments[i].to_string()
+    match
+      (
+        ts_svg_attr_int(snippet, "x"),
+        ts_svg_attr_int(snippet, "y"),
+        ts_svg_attr_int(snippet, "width"),
+        ts_svg_attr_int(snippet, "height"),
+      ) {
+      (Some(x), Some(y), Some(width), Some(height)) =>
+        rects.push({ x, y, width, height })
+      _ => ()
     }
   }
 

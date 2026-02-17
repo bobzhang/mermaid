@@ -47,41 +47,31 @@ fn ts_count_occurrences(haystack : String, needle : String) -> Int {
   if needle == "" {
     return 0
   }
-
-  let mut total = 0
-  let mut offset = 0
-  while offset < haystack.length() {
-    let remaining = (try! haystack[offset:]).to_string()
-    match remaining.find(needle) {
-      Some(found) => {
-        total = total + 1
-        offset = offset + found + needle.length()
-      }
-      None => break
-    }
+  let parts = haystack.split(needle).to_array()
+  if parts.length() == 0 {
+    0
+  } else {
+    parts.length() - 1
   }
-  total
 }
 
 ///|
 fn ts_svg_attr_int(svg : String, attr : String) -> Int? {
   let marker = "\{attr}=\""
-  match svg.find(marker) {
-    Some(start) => {
-      let value_start = start + marker.length()
-      let rest = (try! svg[value_start:]).to_string()
-      match rest.find("\"") {
-        Some(end_quote) => {
-          let raw_value = (try! rest[:end_quote]).to_string()
-          let parsed : Result[Int, @strconv.StrConvError] = try? @strconv.parse_int(
-            raw_value,
-          )
-          match parsed {
-            Ok(value) => Some(value)
-            Err(_) => None
-          }
-        }
-        None => None
+  let parts = svg.split(marker).to_array()
+  if parts.length() < 2 {
+    return None
+  }
+  let rest = parts[1]
+  match rest.find("\"") {
+    Some(_) => {
+      let raw_value = rest.split("\"").to_array()[0].to_string()
+      let parsed : Result[Int, @strconv.StrConvError] = try? @strconv.parse_int(
+        raw_value,
+      )
+      match parsed {
+        Ok(value) => Some(value)
+        Err(_) => None
       }
     }
     None => None
