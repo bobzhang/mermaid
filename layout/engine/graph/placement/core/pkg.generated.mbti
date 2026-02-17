@@ -1,0 +1,24 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "bobzhang/beautiful_mermaid/layout/engine/graph/placement/core"
+
+import {
+  "bobzhang/beautiful_mermaid/model",
+}
+
+// Values
+pub fn compute_legacy_node_placement_state(@model.MermaidGraph, Array[@model.MermaidNode], Bool, Bool, Bool, Bool, Bool, Bool, Bool, Bool, Bool, Bool, Map[String, String], Map[String, String], Int, Map[String, Int], Map[String, Int], Map[Int, Int], Map[String, Int], Map[String, Int], Int, Int, Int) -> LegacyNodePlacementState
+
+// Errors
+
+// Types and methods
+pub struct LegacyNodePlacementState {
+  positioned_nodes : Array[@model.PositionedNode]
+  positioned_by_id : Map[String, @model.PositionedNode]
+  max_right : Int
+  max_bottom : Int
+}
+
+// Type aliases
+
+// Traits
+

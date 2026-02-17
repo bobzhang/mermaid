@@ -62,7 +62,7 @@ fn layout_graph_legacy_with_subgraph_redirects(
   let horizontal_cycle_non_state_flow = lane_state.horizontal_cycle_non_state_flow
   let flow_max_rank = lane_state.flow_max_rank
 
-  let placement_state = compute_legacy_node_placement_state(
+  let placement_state = @layout_engine_graph_placement_core.compute_legacy_node_placement_state(
     graph, nodes_in_order, reverse, horizontal, state_graph, flat_state_graph, compact_fanin,
     enhanced_horizontal_state_flow, refined_horizontal_non_state_flow, refined_horizontal_non_state_labeled_cycle_flow,
     horizontal_cycle_non_state_flow, use_subgraph_redirects, subgraph_entry_by_id,

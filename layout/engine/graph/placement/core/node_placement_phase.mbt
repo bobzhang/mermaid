@@ -1,5 +1,6 @@
 ///|
-priv struct LegacyNodePlacementState {
+/// Intermediate node placement output consumed by later layout phases.
+pub struct LegacyNodePlacementState {
   positioned_nodes : Array[PositionedNode]
   positioned_by_id : Map[String, PositionedNode]
   max_right : Int
@@ -7,7 +8,8 @@ priv struct LegacyNodePlacementState {
 }
 
 ///|
-fn compute_legacy_node_placement_state(
+/// Computes legacy node coordinates and placement bounds.
+pub fn compute_legacy_node_placement_state(
   graph : MermaidGraph,
   nodes_in_order : Array[MermaidNode],
   reverse : Bool,
