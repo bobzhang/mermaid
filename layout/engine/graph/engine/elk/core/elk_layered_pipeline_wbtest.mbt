@@ -183,6 +183,84 @@ test "elk layered setup phase tracks reverse orientation for RL direction" {
 }
 
 ///|
+test "elk layered node-size phase captures dimensions and maxima" {
+  let nodes_in_order : Array[@model.MermaidNode] = [
+    wb_node("A"),
+    wb_node("LONG_LABEL_NODE"),
+  ]
+  let node_size_state = build_elk_layered_node_size_state(nodes_in_order)
+  for node in nodes_in_order {
+    let (width, height) = node_dimensions(node)
+    assert_eq(
+      option_int_or(node_size_state.width_by_node_id.get(node.id), -1),
+      width,
+    )
+    assert_eq(
+      option_int_or(node_size_state.height_by_node_id.get(node.id), -1),
+      height,
+    )
+    assert_true(node_size_state.global_max_width >= width)
+    assert_true(node_size_state.global_max_height >= height)
+  }
+}
+
+///|
+test "elk layered spacing phase resolves orientation-aware major/minor steps" {
+  let options = RenderOptions::default()
+  let node_size_state : ElkLayeredNodeSizeState = {
+    width_by_node_id: {},
+    height_by_node_id: {},
+    global_max_width: 140,
+    global_max_height: 60,
+  }
+  let node_spacing = @layout_engine_graph_internal_core.resolve_node_spacing(
+    options,
+  )
+  let layer_spacing = @layout_engine_graph_internal_core.resolve_layer_spacing(
+    options,
+  )
+  let padding = @layout_engine_graph_internal_core.resolve_padding(options)
+
+  let horizontal_spacing = run_elk_layered_spacing_phase(
+    options, true, 3, node_size_state,
+  )
+  let expected_horizontal_major = node_spacing.max(
+    140 + (node_spacing / 5).max(20),
+  )
+  let expected_horizontal_minor = layer_spacing.max(60 + 12)
+  assert_eq(horizontal_spacing.padding, padding)
+  assert_eq(horizontal_spacing.node_spacing, node_spacing)
+  assert_eq(horizontal_spacing.layer_spacing, layer_spacing)
+  assert_eq(horizontal_spacing.major_step, expected_horizontal_major)
+  assert_eq(horizontal_spacing.minor_step, expected_horizontal_minor)
+  assert_eq(
+    horizontal_spacing.max_rank_minor_span,
+    2 * expected_horizontal_minor,
+  )
+
+  let vertical_spacing = run_elk_layered_spacing_phase(
+    options, false, 2, node_size_state,
+  )
+  let expected_vertical_major = layer_spacing.max(
+    60 + (layer_spacing / 5).max(20),
+  )
+  let expected_vertical_minor = node_spacing.max(140 + 12)
+  assert_eq(vertical_spacing.major_step, expected_vertical_major)
+  assert_eq(vertical_spacing.minor_step, expected_vertical_minor)
+  assert_eq(vertical_spacing.max_rank_minor_span, expected_vertical_minor)
+}
+
+///|
+test "elk layered rank-size helper tracks widest rank" {
+  let rank_node_ids_by_rank : Map[Int, Array[String]] = {
+    0: ["A", "B"],
+    1: ["C", "D", "E"],
+    2: ["F"],
+  }
+  assert_eq(compute_max_rank_size(rank_node_ids_by_rank, 2), 3)
+}
+
+///|
 test "elk layered rank seed strategy uses legacy lane seed for large graphs" {
   let nodes : Array[String] = []
   for i in 0..<17 {

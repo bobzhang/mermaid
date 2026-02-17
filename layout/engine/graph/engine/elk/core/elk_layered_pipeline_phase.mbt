@@ -216,6 +216,96 @@ fn run_elk_layered_setup_phase(
 }
 
 ///|
+priv struct ElkLayeredNodeSizeState {
+  width_by_node_id : Map[String, Int]
+  height_by_node_id : Map[String, Int]
+  global_max_width : Int
+  global_max_height : Int
+}
+
+///|
+fn build_elk_layered_node_size_state(
+  nodes_in_order : Array[MermaidNode],
+) -> ElkLayeredNodeSizeState {
+  let width_by_node_id : Map[String, Int] = {}
+  let height_by_node_id : Map[String, Int] = {}
+  let mut global_max_width = 0
+  let mut global_max_height = 0
+  for node in nodes_in_order {
+    let (width, height) = node_dimensions(node)
+    width_by_node_id[node.id] = width
+    height_by_node_id[node.id] = height
+    global_max_width = global_max_width.max(width)
+    global_max_height = global_max_height.max(height)
+  }
+  { width_by_node_id, height_by_node_id, global_max_width, global_max_height }
+}
+
+///|
+fn compute_max_rank_size(
+  rank_node_ids_by_rank : Map[Int, Array[String]],
+  max_rank : Int,
+) -> Int {
+  let mut max_rank_size = 1
+  for rank in 0..<=max_rank {
+    match rank_node_ids_by_rank.get(rank) {
+      Some(node_ids) => max_rank_size = max_rank_size.max(node_ids.length())
+      None => ()
+    }
+  }
+  max_rank_size
+}
+
+///|
+priv struct ElkLayeredSpacingState {
+  padding : Int
+  node_spacing : Int
+  layer_spacing : Int
+  major_step : Int
+  minor_step : Int
+  max_rank_minor_span : Int
+}
+
+///|
+fn run_elk_layered_spacing_phase(
+  options : RenderOptions,
+  horizontal : Bool,
+  max_rank_size : Int,
+  node_size_state : ElkLayeredNodeSizeState,
+) -> ElkLayeredSpacingState {
+  let padding = @layout_engine_graph_internal_core.resolve_padding(options)
+  let node_spacing = @layout_engine_graph_internal_core.resolve_node_spacing(
+    options,
+  )
+  let layer_spacing = @layout_engine_graph_internal_core.resolve_layer_spacing(
+    options,
+  )
+  let major_gap = if horizontal { node_spacing } else { layer_spacing }
+  let minor_gap = if horizontal { layer_spacing } else { node_spacing }
+  let global_major_size = if horizontal {
+    node_size_state.global_max_width
+  } else {
+    node_size_state.global_max_height
+  }
+  let major_step = major_gap.max(global_major_size + (major_gap / 5).max(20))
+  let min_minor_step = if horizontal {
+    node_size_state.global_max_height + 12
+  } else {
+    node_size_state.global_max_width + 12
+  }
+  let minor_step = minor_gap.max(min_minor_step)
+  let max_rank_minor_span = (max_rank_size - 1).max(0) * minor_step
+  {
+    padding,
+    node_spacing,
+    layer_spacing,
+    major_step,
+    minor_step,
+    max_rank_minor_span,
+  }
+}
+
+///|
 fn build_order_index_by_node_id(
   nodes_in_order : Array[MermaidNode],
 ) -> Map[String, Int] {
@@ -2288,51 +2378,19 @@ fn run_elk_layered_flow_backend(
     order_index_by_node_id, successors_by_node_id, predecessors_by_node_id,
   )
 
-  let padding = @layout_engine_graph_internal_core.resolve_padding(options)
-  let node_spacing = @layout_engine_graph_internal_core.resolve_node_spacing(
-    options,
+  let node_size_state = build_elk_layered_node_size_state(nodes_in_order)
+  let max_rank_size = compute_max_rank_size(rank_node_ids_by_rank, max_rank)
+  let spacing_state = run_elk_layered_spacing_phase(
+    options, horizontal, max_rank_size, node_size_state,
   )
-  let layer_spacing = @layout_engine_graph_internal_core.resolve_layer_spacing(
-    options,
-  )
-
-  let width_by_node_id : Map[String, Int] = {}
-  let height_by_node_id : Map[String, Int] = {}
-  let mut global_max_width = 0
-  let mut global_max_height = 0
-  for node in nodes_in_order {
-    let (width, height) = node_dimensions(node)
-    width_by_node_id[node.id] = width
-    height_by_node_id[node.id] = height
-    global_max_width = global_max_width.max(width)
-    global_max_height = global_max_height.max(height)
-  }
-
-  let mut max_rank_size = 1
-  for rank in 0..<=max_rank {
-    match rank_node_ids_by_rank.get(rank) {
-      Some(node_ids) => max_rank_size = max_rank_size.max(node_ids.length())
-      None => ()
-    }
-  }
-
-  let major_gap = if horizontal { node_spacing } else { layer_spacing }
-  let minor_gap = if horizontal { layer_spacing } else { node_spacing }
-  let global_major_size = if horizontal {
-    global_max_width
-  } else {
-    global_max_height
-  }
-  let base_major_step = major_gap.max(
-    global_major_size + (major_gap / 5).max(20),
-  )
-  let min_minor_step = if horizontal {
-    global_max_height + 12
-  } else {
-    global_max_width + 12
-  }
-  let minor_step = minor_gap.max(min_minor_step)
-  let max_rank_minor_span = (max_rank_size - 1).max(0) * minor_step
+  let padding = spacing_state.padding
+  let node_spacing = spacing_state.node_spacing
+  let layer_spacing = spacing_state.layer_spacing
+  let base_major_step = spacing_state.major_step
+  let minor_step = spacing_state.minor_step
+  let max_rank_minor_span = spacing_state.max_rank_minor_span
+  let width_by_node_id = node_size_state.width_by_node_id
+  let height_by_node_id = node_size_state.height_by_node_id
   let minor_coord_by_node_id = build_minor_coord_by_strategy(
     minor_placement_strategy, rank_node_ids_by_rank, max_rank, lane_by_node_id, padding,
     minor_step, max_rank_minor_span, predecessors_by_node_id, successors_by_node_id,
