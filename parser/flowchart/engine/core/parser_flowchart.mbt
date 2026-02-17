@@ -122,47 +122,44 @@ fn parse_shape_alias(raw_shape : String) -> @model.NodeShape? {
 
 ///|
 fn parse_node_shape_metadata(raw_token : String) -> @model.NodeShape? {
-  let node_part = match raw_token.find(":::") {
-    Some(index) => (try! raw_token[:index]).to_string()
-    None => raw_token
+  let node_part = lexmatch raw_token[:] {
+    (token_part, ":::", _) => token_part.to_string()
+    _ => raw_token
   }
   let token = node_part.trim().to_string()
-  match token.find("@{") {
+  let metadata = match token.find("@{") {
     Some(start_index) => {
       let after = (try! token[start_index + 2:]).to_string()
       match after.find("}") {
-        Some(end_index) => {
-          let metadata = @parser_common_engine_core.trim_owned(
+        Some(end_index) =>
+          @parser_common_engine_core.trim_owned(
             (try! after[:end_index]).to_string(),
           )
-          for entry in metadata.split(",") {
-            let kv = entry.trim().to_string()
-            if kv == "" {
-              continue
-            }
-            match kv.find(":") {
-              Some(colon_index) => {
-                let key = @parser_common_engine_core.trim_owned(
-                  (try! kv[:colon_index]).to_string(),
-                )
-                if key.to_lower() != "shape" {
-                  continue
-                }
-                let value = @parser_common_engine_core.trim_owned(
-                  (try! kv[colon_index + 1:]).to_string(),
-                )
-                return parse_shape_alias(value)
-              }
-              None => ()
-            }
-          }
-          None
-        }
-        None => None
+        None => return None
       }
     }
-    None => None
+    None => return None
   }
+  for entry in metadata.split(",") {
+    let kv = entry.trim().to_string()
+    if kv == "" {
+      continue
+    }
+    lexmatch kv[:] {
+      (key_part, ":", value_part) => {
+        let key = @parser_common_engine_core.trim_owned(key_part.to_string())
+        if key.to_lower() != "shape" {
+          continue
+        }
+        let value = @parser_common_engine_core.trim_owned(
+          value_part.to_string(),
+        )
+        return parse_shape_alias(value)
+      }
+      _ => ()
+    }
+  }
+  None
 }
 
 ///|
