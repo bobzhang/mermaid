@@ -23,33 +23,13 @@ fn layout_graph_legacy_with_subgraph_redirects(
     !horizontal &&
     graph.subgraphs.length() == 0
 
-  let subgraph_entry_by_id : Map[String, String] = {}
-  let subgraph_exit_by_id : Map[String, String] = {}
-  if use_subgraph_redirects {
-    for subgraph in graph.subgraphs {
-      collect_subgraph_edge_redirects(
-        subgraph, subgraph_entry_by_id, subgraph_exit_by_id,
-      )
-    }
-  }
-  let hidden_subgraph_node_ids : Map[String, Bool] = {}
-  if use_subgraph_redirects {
-    collect_hidden_subgraph_node_ids(
-      graph.subgraphs,
-      subgraph_entry_by_id,
-      subgraph_exit_by_id,
-      hidden_subgraph_node_ids,
-    )
-  }
-
-  let mut nodes_in_order : Array[MermaidNode] = []
-  for entry in graph.nodes.to_array() {
-    let (node_id, node) = entry
-    if !hidden_subgraph_node_ids.contains(node_id) {
-      nodes_in_order.push(node)
-    }
-  }
-  nodes_in_order = reorder_nodes_for_flow_layout(nodes_in_order, graph.edges)
+  let graph_inputs = prepare_legacy_graph_inputs(graph, use_subgraph_redirects)
+  let subgraph_entry_by_id = graph_inputs.subgraph_entry_by_id
+  let subgraph_exit_by_id = graph_inputs.subgraph_exit_by_id
+  let nodes_in_order = reorder_nodes_for_flow_layout(
+    graph_inputs.nodes_in_order,
+    graph.edges,
+  )
   let enhanced_horizontal_state_flow = state_graph &&
     horizontal &&
     !compact_fanin &&
@@ -122,39 +102,10 @@ fn layout_graph_legacy_with_subgraph_redirects(
     max_bottom = max_bottom.max(node.y + node.height / 2)
   }
 
-  let positioned_groups : Array[PositionedGroup] = []
-  let mut empty_group_top = padding
-  for subgraph in graph.subgraphs {
-    match
-      build_positioned_group(subgraph, positioned_by_id, horizontal, reverse) {
-      Some(group) => positioned_groups.push(group)
-      None => {
-        let empty_group = build_empty_group_tree_at(
-          subgraph, padding, empty_group_top, horizontal, reverse,
-        )
-        positioned_groups.push(empty_group)
-        empty_group_top = empty_group_top +
-          empty_group.height +
-          subgraph_group_padding()
-      }
-    }
-  }
-
-  if state_graph {
-    shift_top_level_state_subgraphs_right(
-      graph, node_spacing, layer_spacing, positioned_nodes, positioned_groups, positioned_index_by_id,
-      positioned_by_id,
-    )
-  } else {
-    shift_top_level_flow_subgraphs_with_gap(
-      graph, horizontal, reverse, layer_spacing, positioned_nodes, positioned_groups,
-      positioned_index_by_id, positioned_by_id,
-    )
-  }
-
-  for group in positioned_groups {
-    register_group_anchors(group, positioned_by_id, state_graph)
-  }
+  let positioned_groups = build_legacy_positioned_groups(
+    graph, padding, horizontal, reverse, state_graph, node_spacing, layer_spacing,
+    positioned_nodes, positioned_by_id, positioned_index_by_id,
+  )
 
   let positioned_edges = route_legacy_positioned_edges(
     graph, state_graph, class_or_er_graph, horizontal, layer_spacing, node_spacing,
