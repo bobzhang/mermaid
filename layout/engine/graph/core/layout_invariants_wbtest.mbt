@@ -61,8 +61,12 @@ fn test_rects_overlap(
   other_top : Int,
   other_bottom : Int,
 ) -> Bool {
-  spans_overlap(left, right, other_left, other_right) &&
-  spans_overlap(top, bottom, other_top, other_bottom)
+  @layout_engine_graph_routing_core.spans_overlap(
+    left, right, other_left, other_right,
+  ) &&
+  @layout_engine_graph_routing_core.spans_overlap(
+    top, bottom, other_top, other_bottom,
+  )
 }
 
 ///|
@@ -148,7 +152,9 @@ fn segment_intersects_horizontal_span(
     }
     let segment_left = start.x.min(end.x)
     let segment_right = start.x.max(end.x)
-    return spans_overlap(left, right, segment_left, segment_right)
+    return @layout_engine_graph_routing_core.spans_overlap(
+      left, right, segment_left, segment_right,
+    )
   }
 
   let dx = end.x - start.x
@@ -354,21 +360,25 @@ test "Layout simplify polyline removes duplicate and interior collinear points" 
     { x: 24, y: 10 },
     { x: 24, y: 20 },
   ]
-  let simplified = simplify_polyline_points(points)
+  let simplified = @layout_engine_graph_routing_core.simplify_polyline_points(
+    points,
+  )
   assert_eq(simplified, [{ x: 0, y: 0 }, { x: 24, y: 0 }, { x: 24, y: 20 }])
 }
 
 ///|
 test "Layout simplify polyline preserves turnback cusp points" {
   let points : Array[Point] = [{ x: 0, y: 0 }, { x: 0, y: 10 }, { x: 0, y: -8 }]
-  let simplified = simplify_polyline_points(points)
+  let simplified = @layout_engine_graph_routing_core.simplify_polyline_points(
+    points,
+  )
   assert_eq(simplified.length(), 3)
   assert_eq(simplified[1], { x: 0, y: 10 })
 }
 
 ///|
 test "Layout endpoint stubs preserve source fanout boundary separation" {
-  let points = apply_endpoint_port_stubs(
+  let points = @layout_engine_graph_routing_core.apply_endpoint_port_stubs(
     [{ x: 290, y: 155 }, { x: 290, y: 155 }, { x: 344, y: 200 }],
     { x: 290, y: 161 },
     { x: 344, y: 200 },
@@ -378,7 +388,7 @@ test "Layout endpoint stubs preserve source fanout boundary separation" {
 
 ///|
 test "Layout endpoint stubs preserve reciprocal endpoint separation" {
-  let points = apply_endpoint_port_stubs(
+  let points = @layout_engine_graph_routing_core.apply_endpoint_port_stubs(
     [{ x: 290, y: 155 }, { x: 290, y: 155 }, { x: 360, y: 110 }],
     { x: 290, y: 149 },
     { x: 360, y: 116 },
@@ -885,7 +895,7 @@ test "Layout back-edge lane selection avoids existing segment crossings" {
     height: 24,
     inline_style: None,
   }
-  let blocker : RoutedEdgeSegment = {
+  let blocker : @layout_engine_graph_routing_core.RoutedEdgeSegment = {
     source_id: "X",
     target_id: "Y",
     start: { x: 140, y: 20 },
@@ -894,8 +904,10 @@ test "Layout back-edge lane selection avoids existing segment crossings" {
     is_target_stub: false,
   }
 
-  let reservations : Array[BackEdgeLaneReservation] = []
-  let bend_y = reserve_back_edge_bend_y(
+  let reservations : Array[
+    @layout_engine_graph_routing_core.BackEdgeLaneReservation,
+  ] = []
+  let bend_y = @layout_engine_graph_routing_core.reserve_back_edge_bend_y(
     source,
     target,
     [source, target],
@@ -942,7 +954,9 @@ test "Layout back-edge lane selection can skip nearest lane for fewer crossings"
     inline_style: None,
   }
 
-  let routed_edge_segments : Array[RoutedEdgeSegment] = [
+  let routed_edge_segments : Array[
+    @layout_engine_graph_routing_core.RoutedEdgeSegment,
+  ] = [
     {
       source_id: "A",
       target_id: "B",
@@ -961,8 +975,10 @@ test "Layout back-edge lane selection can skip nearest lane for fewer crossings"
     },
   ]
 
-  let reservations : Array[BackEdgeLaneReservation] = []
-  let bend_y = reserve_back_edge_bend_y(
+  let reservations : Array[
+    @layout_engine_graph_routing_core.BackEdgeLaneReservation,
+  ] = []
+  let bend_y = @layout_engine_graph_routing_core.reserve_back_edge_bend_y(
     source,
     target,
     [source, target],
@@ -1008,7 +1024,7 @@ test "Layout back-edge lane node-box penalty counts intersected nodes" {
     inline_style: None,
   }
 
-  let blocked = back_edge_lane_node_box_penalty(
+  let blocked = @layout_engine_graph_routing_core.back_edge_lane_node_box_penalty(
     [source, target, obstacle],
     source,
     target,
@@ -1018,7 +1034,7 @@ test "Layout back-edge lane node-box penalty counts intersected nodes" {
     target.y,
     58,
   )
-  let clear = back_edge_lane_node_box_penalty(
+  let clear = @layout_engine_graph_routing_core.back_edge_lane_node_box_penalty(
     [source, target, obstacle],
     source,
     target,
@@ -1066,7 +1082,7 @@ test "Layout back-edge column node-box penalty counts intersected nodes" {
     inline_style: None,
   }
 
-  let blocked = back_edge_column_node_box_penalty(
+  let blocked = @layout_engine_graph_routing_core.back_edge_column_node_box_penalty(
     [source, target, obstacle],
     source,
     target,
@@ -1076,7 +1092,7 @@ test "Layout back-edge column node-box penalty counts intersected nodes" {
     target.y + target.height / 2,
     58,
   )
-  let clear = back_edge_column_node_box_penalty(
+  let clear = @layout_engine_graph_routing_core.back_edge_column_node_box_penalty(
     [source, target, obstacle],
     source,
     target,
@@ -1093,12 +1109,20 @@ test "Layout back-edge column node-box penalty counts intersected nodes" {
 
 ///|
 test "Layout back-edge lane score prefers fewer crossings over side congestion" {
-  assert_true(back_edge_lane_score_is_better(0, 1, 80, 3, 1, 0, 2, 20, 0, 0))
+  assert_true(
+    @layout_engine_graph_routing_core.back_edge_lane_score_is_better(
+      0, 1, 80, 3, 1, 0, 2, 20, 0, 0,
+    ),
+  )
 }
 
 ///|
 test "Layout back-edge lane score uses node-box avoidance as crossing tie-breaker" {
-  assert_true(back_edge_lane_score_is_better(0, 2, 20, 0, 0, 1, 2, 20, 0, 1))
+  assert_true(
+    @layout_engine_graph_routing_core.back_edge_lane_score_is_better(
+      0, 2, 20, 0, 0, 1, 2, 20, 0, 1,
+    ),
+  )
 }
 
 ///|
@@ -1124,12 +1148,16 @@ test "Layout long-span back-edge lane search can use extended candidates" {
     inline_style: None,
   }
 
-  let reservations : Array[BackEdgeLaneReservation] = []
+  let reservations : Array[
+    @layout_engine_graph_routing_core.BackEdgeLaneReservation,
+  ] = []
   for blocked_y in [58, 40, 22] {
     reservations.push({ left: 112, right: 688, y: blocked_y })
   }
 
-  let routed_edge_segments : Array[RoutedEdgeSegment] = [
+  let routed_edge_segments : Array[
+    @layout_engine_graph_routing_core.RoutedEdgeSegment,
+  ] = [
     {
       source_id: "U",
       target_id: "V",
@@ -1140,7 +1168,7 @@ test "Layout long-span back-edge lane search can use extended candidates" {
     },
   ]
 
-  let bend_y = reserve_back_edge_bend_y(
+  let bend_y = @layout_engine_graph_routing_core.reserve_back_edge_bend_y(
     source,
     target,
     [source, target],
@@ -1176,7 +1204,9 @@ test "Layout mid-long span back-edge lane search upgrades to dense candidate spa
     inline_style: None,
   }
 
-  let reservations : Array[BackEdgeLaneReservation] = []
+  let reservations : Array[
+    @layout_engine_graph_routing_core.BackEdgeLaneReservation,
+  ] = []
   for
     blocked_y in [
       58, 40, 38, 22, 18, 142, 160, 162, 178, 182, 196, 202, 214, 222, 232, 242,
@@ -1184,7 +1214,9 @@ test "Layout mid-long span back-edge lane search upgrades to dense candidate spa
     ] {
     reservations.push({ left: 112, right: 568, y: blocked_y })
   }
-  let routed_edge_segments : Array[RoutedEdgeSegment] = [
+  let routed_edge_segments : Array[
+    @layout_engine_graph_routing_core.RoutedEdgeSegment,
+  ] = [
     {
       source_id: "U",
       target_id: "V",
@@ -1195,7 +1227,7 @@ test "Layout mid-long span back-edge lane search upgrades to dense candidate spa
     },
   ]
 
-  let bend_y = reserve_back_edge_bend_y(
+  let bend_y = @layout_engine_graph_routing_core.reserve_back_edge_bend_y(
     source,
     target,
     [source, target],
@@ -1582,8 +1614,18 @@ test "Layout separates reciprocal short LR edges to avoid exact overlap" {
   assert_true(
     (forward.points[0].y - branch_yes.points[0].y).abs() >= check.height / 2,
   )
-  assert_true(!point_equals(forward.points[0], branch_yes.points[0]))
-  assert_true(!point_equals(backward_target_anchor, branch_yes.points[0]))
+  assert_true(
+    !@layout_engine_graph_routing_core.point_equals(
+      forward.points[0],
+      branch_yes.points[0],
+    ),
+  )
+  assert_true(
+    !@layout_engine_graph_routing_core.point_equals(
+      backward_target_anchor,
+      branch_yes.points[0],
+    ),
+  )
 }
 
 ///|
@@ -1749,7 +1791,13 @@ test "Layout reciprocal flow loop avoids polyline crossing at opposite ports" {
   let check_fix = find_positioned_edge(positioned.edges, "Check", "Fix")
   let fix_check = find_positioned_edge(positioned.edges, "Fix", "Check")
 
-  assert_eq(count_polyline_crossings([check_fix.points, fix_check.points]), 0)
+  assert_eq(
+    @layout_engine_graph_routing_core.count_polyline_crossings([
+      check_fix.points,
+      fix_check.points,
+    ]),
+    0,
+  )
 }
 
 ///|
@@ -1777,9 +1825,14 @@ test "Layout reciprocal fanout avoids pairwise crossings" {
 
   assert_true(edge_ab.points.length() >= 2)
   assert_true(edge_ac.points.length() >= 2)
-  assert_true(!point_equals(edge_ab.points[0], edge_ac.points[0]))
+  assert_true(
+    !@layout_engine_graph_routing_core.point_equals(
+      edge_ab.points[0],
+      edge_ac.points[0],
+    ),
+  )
   assert_eq(
-    count_polyline_crossings([
+    @layout_engine_graph_routing_core.count_polyline_crossings([
       edge_ab.points,
       edge_ac.points,
       edge_ba.points,
@@ -1814,9 +1867,24 @@ test "Layout spreads source anchors for horizontal fanout edges" {
   assert_true(edge_ab.points.length() >= 2)
   assert_true(edge_ac.points.length() >= 2)
   assert_true(edge_ad.points.length() >= 2)
-  assert_true(!point_equals(edge_ab.points[0], edge_ac.points[0]))
-  assert_true(!point_equals(edge_ab.points[0], edge_ad.points[0]))
-  assert_true(!point_equals(edge_ac.points[0], edge_ad.points[0]))
+  assert_true(
+    !@layout_engine_graph_routing_core.point_equals(
+      edge_ab.points[0],
+      edge_ac.points[0],
+    ),
+  )
+  assert_true(
+    !@layout_engine_graph_routing_core.point_equals(
+      edge_ab.points[0],
+      edge_ad.points[0],
+    ),
+  )
+  assert_true(
+    !@layout_engine_graph_routing_core.point_equals(
+      edge_ac.points[0],
+      edge_ad.points[0],
+    ),
+  )
   assert_true(!points_arrays_equal(edge_ab.points, edge_ac.points))
   assert_true(!points_arrays_equal(edge_ac.points, edge_ad.points))
 }
@@ -3467,7 +3535,10 @@ test "Layout polyline crossing count ignores shared endpoints" {
   let left : Array[Point] = [{ x: 0, y: 0 }, { x: 10, y: 10 }]
   let right : Array[Point] = [{ x: 0, y: 0 }, { x: 10, y: 0 }, { x: 0, y: 10 }]
 
-  assert_eq(count_polyline_crossings([left, right]), 0)
+  assert_eq(
+    @layout_engine_graph_routing_core.count_polyline_crossings([left, right]),
+    0,
+  )
 }
 
 ///|
@@ -3479,7 +3550,10 @@ test "Layout polyline crossing count counts each pair at most once" {
     { x: 10, y: 20 },
   ]
 
-  assert_eq(count_polyline_crossings([left, right]), 1)
+  assert_eq(
+    @layout_engine_graph_routing_core.count_polyline_crossings([left, right]),
+    1,
+  )
 }
 
 ///|
@@ -3504,7 +3578,7 @@ test "Layout deferred minor-axis key uses y for horizontal edges" {
     height: 40,
     inline_style: None,
   }
-  let context : EdgeLayoutContext = {
+  let context : @layout_engine_graph_routing_core.EdgeLayoutContext = {
     edge: flow_edge("S", "T"),
     resolved_source_id: "S",
     resolved_target_id: "T",
@@ -3517,9 +3591,24 @@ test "Layout deferred minor-axis key uses y for horizontal edges" {
     target_boundary_offset_minor: 0,
   }
 
-  assert_eq(deferred_back_edge_minor_axis_key(context, 0), 120)
-  assert_eq(deferred_back_edge_minor_axis_key(context, 1), 60)
-  assert_eq(deferred_back_edge_minor_axis_key(context, 2), 180)
+  assert_eq(
+    @layout_engine_graph_routing_core.deferred_back_edge_minor_axis_key(
+      context, 0,
+    ),
+    120,
+  )
+  assert_eq(
+    @layout_engine_graph_routing_core.deferred_back_edge_minor_axis_key(
+      context, 1,
+    ),
+    60,
+  )
+  assert_eq(
+    @layout_engine_graph_routing_core.deferred_back_edge_minor_axis_key(
+      context, 2,
+    ),
+    180,
+  )
 }
 
 ///|
@@ -3544,7 +3633,7 @@ test "Layout deferred minor-axis key uses x for vertical edges" {
     height: 40,
     inline_style: None,
   }
-  let context : EdgeLayoutContext = {
+  let context : @layout_engine_graph_routing_core.EdgeLayoutContext = {
     edge: flow_edge("S", "T"),
     resolved_source_id: "S",
     resolved_target_id: "T",
@@ -3557,7 +3646,22 @@ test "Layout deferred minor-axis key uses x for vertical edges" {
     target_boundary_offset_minor: 0,
   }
 
-  assert_eq(deferred_back_edge_minor_axis_key(context, 0), 30)
-  assert_eq(deferred_back_edge_minor_axis_key(context, 1), 150)
-  assert_eq(deferred_back_edge_minor_axis_key(context, 2), 180)
+  assert_eq(
+    @layout_engine_graph_routing_core.deferred_back_edge_minor_axis_key(
+      context, 0,
+    ),
+    30,
+  )
+  assert_eq(
+    @layout_engine_graph_routing_core.deferred_back_edge_minor_axis_key(
+      context, 1,
+    ),
+    150,
+  )
+  assert_eq(
+    @layout_engine_graph_routing_core.deferred_back_edge_minor_axis_key(
+      context, 2,
+    ),
+    180,
+  )
 }

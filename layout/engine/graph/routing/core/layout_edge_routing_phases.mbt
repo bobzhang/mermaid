@@ -205,7 +205,7 @@ fn clamp_minor_boundary_offset(
 }
 
 ///|
-priv struct BackEdgeLaneReservation {
+pub(all) struct BackEdgeLaneReservation {
   left : Int
   right : Int
   y : Int
@@ -219,7 +219,7 @@ priv struct BackEdgeColumnReservation {
 }
 
 ///|
-priv struct EdgeLayoutContext {
+pub(all) struct EdgeLayoutContext {
   edge : MermaidEdge
   resolved_source_id : String
   resolved_target_id : String
@@ -251,7 +251,7 @@ priv struct BoundaryEndpointAssignment {
 }
 
 ///|
-priv struct RoutedEdgeSegment {
+pub(all) struct RoutedEdgeSegment {
   source_id : String
   target_id : String
   start : Point
@@ -629,7 +629,7 @@ fn bucket_has_source_target_offset_conflict(
 }
 
 ///|
-fn deferred_back_edge_minor_axis_key(
+pub fn deferred_back_edge_minor_axis_key(
   context : EdgeLayoutContext,
   key_mode : Int,
 ) -> Int {
@@ -802,7 +802,7 @@ fn polylines_share_endpoint(
 }
 
 ///|
-fn count_polyline_crossings(polylines : Array[Array[Point]]) -> Int {
+pub fn count_polyline_crossings(polylines : Array[Array[Point]]) -> Int {
   let mut crossings = 0
   for i in 0..<polylines.length() {
     let left_polyline = polylines[i]
@@ -1063,7 +1063,7 @@ fn optimize_deferred_back_edge_order_locally(
 }
 
 ///|
-fn spans_overlap(
+pub fn spans_overlap(
   a_left : Int,
   a_right : Int,
   b_left : Int,
@@ -1239,7 +1239,7 @@ fn back_edge_vertical_segment_intersects_node_box(
 }
 
 ///|
-fn back_edge_lane_node_box_penalty(
+pub fn back_edge_lane_node_box_penalty(
   nodes : Array[PositionedNode],
   source : PositionedNode,
   target : PositionedNode,
@@ -1283,7 +1283,7 @@ fn back_edge_lane_node_box_penalty(
 }
 
 ///|
-fn back_edge_column_node_box_penalty(
+pub fn back_edge_column_node_box_penalty(
   nodes : Array[PositionedNode],
   source : PositionedNode,
   target : PositionedNode,
@@ -1475,7 +1475,7 @@ fn collect_back_edge_vertical_crossing_candidates(
 }
 
 ///|
-fn back_edge_lane_score_is_better(
+pub fn back_edge_lane_score_is_better(
   node_box_hits : Int,
   crossings : Int,
   distance : Int,
@@ -1503,7 +1503,7 @@ fn back_edge_lane_score_is_better(
 }
 
 ///|
-fn reserve_back_edge_bend_y(
+pub fn reserve_back_edge_bend_y(
   source : PositionedNode,
   target : PositionedNode,
   nodes : Array[PositionedNode],

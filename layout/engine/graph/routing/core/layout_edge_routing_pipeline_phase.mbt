@@ -401,7 +401,7 @@ fn materialize_positioned_edges_from_points(
 }
 
 ///|
-fn route_legacy_positioned_edges(
+pub fn route_legacy_positioned_edges(
   graph : MermaidGraph,
   state_graph : Bool,
   class_or_er_graph : Bool,

@@ -7,15 +7,6 @@ fn option_int_or(value : Int?, fallback : Int) -> Int {
 }
 
 ///|
-fn int_abs(value : Int) -> Int {
-  if value < 0 {
-    -value
-  } else {
-    value
-  }
-}
-
-///|
 fn resolve_padding(options : RenderOptions) -> Int {
   option_int_or(options.padding, 40)
 }

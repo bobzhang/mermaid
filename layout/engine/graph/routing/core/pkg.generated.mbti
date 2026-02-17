@@ -1,0 +1,67 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "bobzhang/beautiful_mermaid/layout/engine/graph/routing/core"
+
+import {
+  "bobzhang/beautiful_mermaid/model",
+}
+
+// Values
+pub fn apply_endpoint_port_stubs(Array[@model.Point], @model.Point, @model.Point) -> Array[@model.Point]
+
+pub fn back_edge_column_node_box_penalty(Array[@model.PositionedNode], @model.PositionedNode, @model.PositionedNode, Int, Int, Int, Int, Int) -> Int
+
+pub fn back_edge_lane_node_box_penalty(Array[@model.PositionedNode], @model.PositionedNode, @model.PositionedNode, Int, Int, Int, Int, Int) -> Int
+
+pub fn back_edge_lane_score_is_better(Int, Int, Int, Int, Int, Int, Int, Int, Int, Int) -> Bool
+
+pub fn count_polyline_crossings(Array[Array[@model.Point]]) -> Int
+
+pub fn deferred_back_edge_minor_axis_key(EdgeLayoutContext, Int) -> Int
+
+pub fn edge_points_for(@model.PositionedNode, @model.PositionedNode, Bool, Int?, Int?, Int?, Bool) -> Array[@model.Point]
+
+pub fn point_equals(@model.Point, @model.Point) -> Bool
+
+pub fn reserve_back_edge_bend_y(@model.PositionedNode, @model.PositionedNode, Array[@model.PositionedNode], Array[RoutedEdgeSegment], Array[BackEdgeLaneReservation]) -> Int
+
+pub fn route_legacy_positioned_edges(@model.MermaidGraph, Bool, Bool, Bool, Int, Int, Bool, Map[String, String], Map[String, String], Array[@model.PositionedNode], Map[String, @model.PositionedNode], Map[String, Bool], Bool, Bool, Bool) -> Array[@model.PositionedEdge]
+
+pub fn simplify_polyline_points(Array[@model.Point]) -> Array[@model.Point]
+
+pub fn spans_overlap(Int, Int, Int, Int) -> Bool
+
+// Errors
+
+// Types and methods
+pub(all) struct BackEdgeLaneReservation {
+  left : Int
+  right : Int
+  y : Int
+}
+
+pub(all) struct EdgeLayoutContext {
+  edge : @model.MermaidEdge
+  resolved_source_id : String
+  resolved_target_id : String
+  source : @model.PositionedNode
+  target : @model.PositionedNode
+  edge_horizontal : Bool
+  compact_endpoint_port_priority : Bool
+  source_boundary_cohort_size : Int
+  source_boundary_offset_minor : Int
+  target_boundary_offset_minor : Int
+}
+
+pub(all) struct RoutedEdgeSegment {
+  source_id : String
+  target_id : String
+  start : @model.Point
+  end : @model.Point
+  is_source_stub : Bool
+  is_target_stub : Bool
+}
+
+// Type aliases
+
+// Traits
+

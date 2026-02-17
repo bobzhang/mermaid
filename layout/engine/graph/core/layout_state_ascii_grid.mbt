@@ -524,6 +524,42 @@ fn layout_state_best_label_segment(points : Array[Point]) -> (Point, Point)? {
 }
 
 ///|
+fn midpoint(a : Point, b : Point) -> Point {
+  { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }
+}
+
+///|
+fn label_overlap_offset(slot : Int) -> Int {
+  if slot <= 0 {
+    return 0
+  }
+  let magnitude = (slot + 1) / 2 * 30
+  if slot % 2 == 1 {
+    -magnitude
+  } else {
+    magnitude
+  }
+}
+
+///|
+fn label_overlap_offset_x(slot : Int) -> Int {
+  if slot <= 0 {
+    return 0
+  }
+  let magnitude = (slot + 1) / 2 * 40
+  if slot % 2 == 1 {
+    -magnitude
+  } else {
+    magnitude
+  }
+}
+
+///|
+fn label_anchor_key(point : Point) -> String {
+  "\{point.x}:\{point.y}"
+}
+
+///|
 fn layout_state_label_position(
   points : Array[Point],
   label_slots_by_anchor : Map[String, Int],
@@ -738,11 +774,27 @@ fn layout_flat_state_graph_for_ascii_grid(
                 path, origin_x, origin_y, cell_x_step, cell_y,
               )
             } else {
-              edge_points_for(source, target, false, None, None, None, false)
+              @layout_engine_graph_routing_core.edge_points_for(
+                source,
+                target,
+                false,
+                None,
+                None,
+                None,
+                false,
+              )
             }
           }
           None =>
-            edge_points_for(source, target, false, None, None, None, false)
+            @layout_engine_graph_routing_core.edge_points_for(
+              source,
+              target,
+              false,
+              None,
+              None,
+              None,
+              false,
+            )
         }
         let label_position = match edge.label {
           Some(_) =>
