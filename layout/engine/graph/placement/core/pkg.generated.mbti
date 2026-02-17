@@ -6,37 +6,11 @@ import {
 }
 
 // Values
-pub fn compute_legacy_node_placement_state(LegacyPlacementInput) -> LegacyPlacementState
+pub fn run_legacy_placement_phase(@model.MermaidGraph, @bobzhang/beautiful_mermaid/layout/engine/graph/legacy/setup/core.LegacyLayoutSetupState, Bool, Bool) -> LegacyPlacementState
 
 // Errors
 
 // Types and methods
-pub(all) struct LegacyPlacementInput {
-  graph : @model.MermaidGraph
-  nodes_in_order : Array[@model.MermaidNode]
-  reverse : Bool
-  horizontal : Bool
-  state_graph : Bool
-  flat_state_graph : Bool
-  compact_fanin : Bool
-  enhanced_horizontal_state_flow : Bool
-  refined_horizontal_non_state_flow : Bool
-  refined_horizontal_non_state_labeled_cycle_flow : Bool
-  horizontal_cycle_non_state_flow : Bool
-  use_subgraph_redirects : Bool
-  subgraph_entry_by_id : Map[String, String]
-  subgraph_exit_by_id : Map[String, String]
-  flow_max_rank : Int
-  flow_rank_by_node_id : Map[String, Int]
-  flow_lane_by_node_id : Map[String, Int]
-  flow_label_y_offset_by_rank : Map[Int, Int]
-  state_lane_by_node_id : Map[String, Int]
-  state_label_y_offset_by_node_id : Map[String, Int]
-  padding : Int
-  node_spacing : Int
-  layer_spacing : Int
-}
-
 pub(all) struct LegacyPlacementState {
   positioned_nodes : Array[@model.PositionedNode]
   positioned_by_id : Map[String, @model.PositionedNode]

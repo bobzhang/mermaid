@@ -44,44 +44,18 @@ fn test_graph(
 }
 
 ///|
-fn two_node_rank_map() -> Map[String, Int] {
-  { "A": 0, "B": 1 }
-}
-
-///|
-fn two_node_lane_map() -> Map[String, Int] {
-  { "A": 0, "B": 0 }
-}
-
-///|
 test "placement computes forward horizontal ordering from rank map" {
   let nodes = [test_node("A"), test_node("B")]
   let graph = test_graph(LR, nodes, [test_edge("A", "B")])
-  let placement_state = compute_legacy_node_placement_state({
+  let setup_state = @layout_engine_graph_legacy_setup_core.build_legacy_layout_setup(
     graph,
-    nodes_in_order: nodes,
-    reverse: false,
-    horizontal: true,
-    state_graph: false,
-    flat_state_graph: false,
-    compact_fanin: false,
-    enhanced_horizontal_state_flow: false,
-    refined_horizontal_non_state_flow: false,
-    refined_horizontal_non_state_labeled_cycle_flow: false,
-    horizontal_cycle_non_state_flow: false,
-    use_subgraph_redirects: false,
-    subgraph_entry_by_id: {},
-    subgraph_exit_by_id: {},
-    flow_max_rank: 1,
-    flow_rank_by_node_id: two_node_rank_map(),
-    flow_lane_by_node_id: two_node_lane_map(),
-    flow_label_y_offset_by_rank: {},
-    state_lane_by_node_id: {},
-    state_label_y_offset_by_node_id: {},
-    padding: 40,
-    node_spacing: 130,
-    layer_spacing: 90,
-  })
+    @model.RenderOptions::default(),
+    false,
+    false,
+  )
+  let placement_state = run_legacy_placement_phase(
+    graph, setup_state, false, false,
+  )
 
   let ax = placement_state.positioned_by_id["A"].x
   let bx = placement_state.positioned_by_id["B"].x
@@ -93,31 +67,15 @@ test "placement computes forward horizontal ordering from rank map" {
 test "placement reverse mode flips horizontal rank ordering" {
   let nodes = [test_node("A"), test_node("B")]
   let graph = test_graph(RL, nodes, [test_edge("A", "B")])
-  let placement_state = compute_legacy_node_placement_state({
+  let setup_state = @layout_engine_graph_legacy_setup_core.build_legacy_layout_setup(
     graph,
-    nodes_in_order: nodes,
-    reverse: true,
-    horizontal: true,
-    state_graph: false,
-    flat_state_graph: false,
-    compact_fanin: false,
-    enhanced_horizontal_state_flow: false,
-    refined_horizontal_non_state_flow: false,
-    refined_horizontal_non_state_labeled_cycle_flow: false,
-    horizontal_cycle_non_state_flow: false,
-    use_subgraph_redirects: false,
-    subgraph_entry_by_id: {},
-    subgraph_exit_by_id: {},
-    flow_max_rank: 1,
-    flow_rank_by_node_id: two_node_rank_map(),
-    flow_lane_by_node_id: two_node_lane_map(),
-    flow_label_y_offset_by_rank: {},
-    state_lane_by_node_id: {},
-    state_label_y_offset_by_node_id: {},
-    padding: 40,
-    node_spacing: 130,
-    layer_spacing: 90,
-  })
+    @model.RenderOptions::default(),
+    false,
+    false,
+  )
+  let placement_state = run_legacy_placement_phase(
+    graph, setup_state, false, false,
+  )
 
   let ax = placement_state.positioned_by_id["A"].x
   let bx = placement_state.positioned_by_id["B"].x

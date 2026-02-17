@@ -1,9 +1,0 @@
-import {
-  "bobzhang/beautiful_mermaid/layout/engine/graph/legacy/setup/core" @layout_engine_graph_legacy_setup_core,
-  "bobzhang/beautiful_mermaid/layout/engine/graph/placement/core" @layout_engine_graph_placement_core,
-  "bobzhang/beautiful_mermaid/model" @model,
-}
-
-import {
-  "moonbitlang/core/test",
-} for "test"
