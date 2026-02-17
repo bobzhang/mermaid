@@ -112,6 +112,26 @@ fn wb_contains_node_id(node_ids : Array[String], node_id : String) -> Bool {
 }
 
 ///|
+test "elk layered rank seed strategy uses native feedback for small graphs" {
+  let graph = wb_graph(["A", "B", "C"], [("A", "B"), ("B", "C")])
+  assert_true(select_elk_layered_rank_seed_strategy(graph) is NativeFeedback)
+}
+
+///|
+test "elk layered rank seed strategy uses legacy lane seed for large graphs" {
+  let nodes : Array[String] = []
+  for i in 0..<17 {
+    nodes.push("N\{i}")
+  }
+  let edges : Array[(String, String)] = []
+  for i in 0..<16 {
+    edges.push(("N\{i}", "N\{i + 1}"))
+  }
+  let graph = wb_graph(nodes, edges)
+  assert_true(select_elk_layered_rank_seed_strategy(graph) is LegacyLaneSeed)
+}
+
+///|
 fn wb_rank_crossings_between(
   left_rank_node_ids : Array[String],
   right_rank_node_ids : Array[String],

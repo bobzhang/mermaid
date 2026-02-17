@@ -1677,6 +1677,121 @@ fn should_use_elk_layered_pipeline(graph : MermaidGraph) -> Bool {
 }
 
 ///|
+priv enum ElkLayeredRankSeedStrategy {
+  LegacyLaneSeed
+  NativeFeedback
+}
+
+///|
+priv struct ElkLayeredRankSeedState {
+  rank_by_node_id : Map[String, Int]
+  max_rank : Int
+  lane_by_node_id : Map[String, Int]
+  order_index_by_node_id : Map[String, Int]
+  successors_by_node_id : Map[String, Array[String]]
+  predecessors_by_node_id : Map[String, Array[String]]
+}
+
+///|
+fn select_elk_layered_rank_seed_strategy(
+  graph : MermaidGraph,
+) -> ElkLayeredRankSeedStrategy {
+  if graph.nodes.length() > 16 || graph.edges.length() > 30 {
+    LegacyLaneSeed
+  } else {
+    NativeFeedback
+  }
+}
+
+///|
+fn build_legacy_lane_rank_seed_state(
+  graph : MermaidGraph,
+  use_subgraph_redirects : Bool,
+  subgraph_entry_by_id : Map[String, String],
+  subgraph_exit_by_id : Map[String, String],
+  nodes_in_order : Array[MermaidNode],
+  node_ids_in_order : Array[String],
+  base_order_index_by_node_id : Map[String, Int],
+  horizontal : Bool,
+  compact_fanin : Bool,
+) -> ElkLayeredRankSeedState {
+  let legacy_lane_state = @layout_engine_graph_lane_core.compute_legacy_lane_state(
+    graph, nodes_in_order, false, false, horizontal, compact_fanin, false, false,
+  )
+  let rank_by_node_id = legacy_lane_state.flow_rank_by_node_id()
+  let max_rank = legacy_lane_state.flow_max_rank()
+  let lane_by_node_id = legacy_lane_state.flow_lane_by_node_id()
+  let order_index_by_node_id = base_order_index_by_node_id
+  let (successors_by_node_id, predecessors_by_node_id) = build_layered_neighbor_state_from_rank_seed(
+    graph, use_subgraph_redirects, subgraph_entry_by_id, subgraph_exit_by_id, node_ids_in_order,
+    rank_by_node_id, order_index_by_node_id,
+  )
+  {
+    rank_by_node_id,
+    max_rank,
+    lane_by_node_id,
+    order_index_by_node_id,
+    successors_by_node_id,
+    predecessors_by_node_id,
+  }
+}
+
+///|
+fn build_native_feedback_rank_seed_state(
+  graph : MermaidGraph,
+  use_subgraph_redirects : Bool,
+  subgraph_entry_by_id : Map[String, String],
+  subgraph_exit_by_id : Map[String, String],
+  nodes_in_order : Array[MermaidNode],
+) -> ElkLayeredRankSeedState {
+  let (
+    rank_by_node_id,
+    max_rank,
+    order_index_by_node_id,
+    successors_by_node_id,
+    predecessors_by_node_id,
+  ) = build_layered_rank_state(
+    graph, use_subgraph_redirects, subgraph_entry_by_id, subgraph_exit_by_id, nodes_in_order,
+  )
+  {
+    rank_by_node_id,
+    max_rank,
+    lane_by_node_id: order_index_by_node_id,
+    order_index_by_node_id,
+    successors_by_node_id,
+    predecessors_by_node_id,
+  }
+}
+
+///|
+fn build_elk_layered_rank_seed_state(
+  graph : MermaidGraph,
+  strategy : ElkLayeredRankSeedStrategy,
+  use_subgraph_redirects : Bool,
+  subgraph_entry_by_id : Map[String, String],
+  subgraph_exit_by_id : Map[String, String],
+  nodes_in_order : Array[MermaidNode],
+  node_ids_in_order : Array[String],
+  base_order_index_by_node_id : Map[String, Int],
+  horizontal : Bool,
+  compact_fanin : Bool,
+) -> ElkLayeredRankSeedState {
+  match strategy {
+    LegacyLaneSeed =>
+      build_legacy_lane_rank_seed_state(
+        graph, use_subgraph_redirects, subgraph_entry_by_id, subgraph_exit_by_id,
+        nodes_in_order, node_ids_in_order, base_order_index_by_node_id, horizontal,
+        compact_fanin,
+      )
+    NativeFeedback =>
+      build_native_feedback_rank_seed_state(
+        graph, use_subgraph_redirects, subgraph_entry_by_id, subgraph_exit_by_id,
+        nodes_in_order,
+      )
+  }
+}
+
+///|
 /// Runs the ELK layered flow pipeline for non-state flowcharts.
 fn run_elk_layered_flow_backend(
   request : GraphLayoutBackendRequest,
@@ -1705,53 +1820,26 @@ fn run_elk_layered_flow_backend(
   for node in nodes_in_order {
     node_ids_in_order.push(node.id)
   }
-  let use_legacy_rank_seed = graph.nodes.length() > 16 ||
-    graph.edges.length() > 30
-  let (
-    rank_by_node_id,
-    max_rank,
-    lane_by_node_id,
-    order_index_by_node_id,
-    successors_by_node_id,
-    predecessors_by_node_id,
-  ) = if use_legacy_rank_seed {
-    let legacy_lane_state = @layout_engine_graph_lane_core.compute_legacy_lane_state(
-      graph,
-      nodes_in_order,
-      false,
-      false,
-      horizontal,
-      request.compact_fanin,
-      false,
-      false,
-    )
-    let rank_by_node_id = legacy_lane_state.flow_rank_by_node_id()
-    let max_rank = legacy_lane_state.flow_max_rank()
-    let lane_by_node_id = legacy_lane_state.flow_lane_by_node_id()
-    let order_index_by_node_id = base_order_index_by_node_id
-    let (successors_by_node_id, predecessors_by_node_id) = build_layered_neighbor_state_from_rank_seed(
-      graph, use_subgraph_redirects, subgraph_entry_by_id, subgraph_exit_by_id, node_ids_in_order,
-      rank_by_node_id, order_index_by_node_id,
-    )
-    (
-      rank_by_node_id, max_rank, lane_by_node_id, order_index_by_node_id, successors_by_node_id,
-      predecessors_by_node_id,
-    )
-  } else {
-    let (
-      rank_by_node_id,
-      max_rank,
-      order_index_by_node_id,
-      successors_by_node_id,
-      predecessors_by_node_id,
-    ) = build_layered_rank_state(
-      graph, use_subgraph_redirects, subgraph_entry_by_id, subgraph_exit_by_id, nodes_in_order,
-    )
-    (
-      rank_by_node_id, max_rank, order_index_by_node_id, order_index_by_node_id,
-      successors_by_node_id, predecessors_by_node_id,
-    )
-  }
+  let rank_seed_strategy = select_elk_layered_rank_seed_strategy(graph)
+  let use_legacy_rank_seed = rank_seed_strategy is LegacyLaneSeed
+  let rank_seed_state = build_elk_layered_rank_seed_state(
+    graph,
+    rank_seed_strategy,
+    use_subgraph_redirects,
+    subgraph_entry_by_id,
+    subgraph_exit_by_id,
+    nodes_in_order,
+    node_ids_in_order,
+    base_order_index_by_node_id,
+    horizontal,
+    request.compact_fanin,
+  )
+  let rank_by_node_id = rank_seed_state.rank_by_node_id
+  let max_rank = rank_seed_state.max_rank
+  let lane_by_node_id = rank_seed_state.lane_by_node_id
+  let order_index_by_node_id = rank_seed_state.order_index_by_node_id
+  let successors_by_node_id = rank_seed_state.successors_by_node_id
+  let predecessors_by_node_id = rank_seed_state.predecessors_by_node_id
   let base_rank_node_ids_by_rank = build_rank_node_ids_by_lane(
     nodes_in_order, rank_by_node_id, lane_by_node_id, base_order_index_by_node_id,
     max_rank,
