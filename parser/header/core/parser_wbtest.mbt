@@ -1,6 +1,9 @@
 ///|
-fn assert_diagram_kind(graph : MermaidGraph, expected : String) -> Unit raise {
-  assert_eq(graph.diagram_kind.to_string(), expected)
+fn assert_diagram_kind(
+  graph : MermaidGraph,
+  expected : @model.DiagramKind,
+) -> Unit raise {
+  assert_true(graph.diagram_kind == expected)
 }
 
 ///|
@@ -14,7 +17,7 @@ test "parse_mermaid sets Flowchart kind for graph header" {
     .trim_end()
     .to_string(),
   )
-  assert_diagram_kind(graph, "Flowchart")
+  assert_diagram_kind(graph, Flowchart)
 }
 
 ///|
@@ -28,7 +31,7 @@ test "parse_mermaid sets State kind for stateDiagram-v2 header" {
     .trim_end()
     .to_string(),
   )
-  assert_diagram_kind(graph, "State")
+  assert_diagram_kind(graph, State)
 }
 
 ///|
@@ -42,7 +45,7 @@ test "parse_mermaid sets Sequence kind for sequenceDiagram header" {
     .trim_end()
     .to_string(),
   )
-  assert_diagram_kind(graph, "Sequence")
+  assert_diagram_kind(graph, Sequence)
 }
 
 ///|
@@ -56,7 +59,7 @@ test "parse_mermaid sets Class kind for classDiagram header" {
     .trim_end()
     .to_string(),
   )
-  assert_diagram_kind(graph, "Class")
+  assert_diagram_kind(graph, Class)
 }
 
 ///|
@@ -70,5 +73,5 @@ test "parse_mermaid sets Er kind for erDiagram header" {
     .trim_end()
     .to_string(),
   )
-  assert_diagram_kind(graph, "Er")
+  assert_diagram_kind(graph, Er)
 }

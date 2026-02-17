@@ -21,7 +21,7 @@ fn assert_mermaid_graph_equivalent(
   left : @model.MermaidGraph,
   right : @model.MermaidGraph,
 ) -> Unit raise {
-  assert_eq(left.diagram_kind, right.diagram_kind)
+  assert_true(left.diagram_kind == right.diagram_kind)
   assert_eq(left.direction, right.direction)
   assert_eq(left.nodes.length(), right.nodes.length())
   for node_id, node in right.nodes {

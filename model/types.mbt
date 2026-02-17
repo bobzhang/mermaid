@@ -23,7 +23,7 @@ pub(all) enum DiagramKind {
   Sequence
   Class
   Er
-} derive(Eq, Show)
+} derive(Eq)
 
 ///|
 /// Normalized node shapes used by parser and renderers.
