@@ -1,0 +1,24 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "bobzhang/beautiful_mermaid/layout/engine/graph/engine/elk/core"
+
+import {
+  "bobzhang/beautiful_mermaid/model",
+}
+
+// Values
+pub fn layout_graph_elk(ElkLayoutRequest) -> @model.PositionedGraph
+
+// Errors
+
+// Types and methods
+pub(all) struct ElkLayoutRequest {
+  graph : @model.MermaidGraph
+  options : @model.RenderOptions
+  use_subgraph_redirects : Bool
+  compact_fanin : Bool
+}
+
+// Type aliases
+
+// Traits
+

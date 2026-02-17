@@ -1,5 +1,4 @@
 import {
-  "bobzhang/beautiful_mermaid/layout/engine/graph/engine/elk/core" @layout_engine_graph_engine_elk_core,
   "bobzhang/beautiful_mermaid/layout/engine/graph/legacy/core" @layout_engine_graph_legacy_core,
   "bobzhang/beautiful_mermaid/model" @model,
 }
