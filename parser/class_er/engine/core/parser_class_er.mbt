@@ -331,10 +331,8 @@ fn parse_class_declaration(line : String) -> (String, Bool)? {
     _ => return None
   }
   let opens_block = rest.has_suffix("{")
-  if rest.has_suffix("{") {
-    rest = @parser_common_engine_core.trim_owned(
-      (try! rest[:rest.length() - 1]).to_string(),
-    )
+  if rest is [.. without_block, .. "{"] {
+    rest = @parser_common_engine_core.trim_owned(without_block.to_string())
   }
   if rest == "" {
     None
@@ -479,12 +477,11 @@ fn parse_er_entity_declaration_line(
   line : String,
   nodes : Map[String, MermaidNode],
 ) -> String? {
-  if !line.has_suffix("{") {
+  let id = if line is [.. raw_id, .. "{"] {
+    @parser_common_engine_core.trim_owned(raw_id.to_string())
+  } else {
     return None
   }
-  let id = @parser_common_engine_core.trim_owned(
-    (try! line[:line.length() - 1]).to_string(),
-  )
   if id == "" {
     return None
   }
@@ -506,11 +503,9 @@ fn parse_er_standalone_entity_line(
     return false
   }
 
-  let (id, label) = if trimmed.has_prefix("\"") &&
-    trimmed.has_suffix("\"") &&
-    trimmed.length() >= 2 {
+  let (id, label) = if trimmed is [.. "\"", .. quoted_content, .. "\""] {
     let content = @parser_common_engine_core.trim_owned(
-      (try! trimmed[1:trimmed.length() - 1]).to_string(),
+      quoted_content.to_string(),
     )
     if content == "" {
       return false
