@@ -1,7 +1,7 @@
 import {
+  "bobzhang/beautiful_mermaid/layout/engine/graph/legacy/placement/core" @layout_engine_graph_legacy_placement_core,
   "bobzhang/beautiful_mermaid/layout/engine/graph/legacy/post/core" @layout_engine_graph_legacy_post_core,
   "bobzhang/beautiful_mermaid/layout/engine/graph/legacy/setup/core" @layout_engine_graph_legacy_setup_core,
-  "bobzhang/beautiful_mermaid/layout/engine/graph/placement/core" @layout_engine_graph_placement_core,
   "bobzhang/beautiful_mermaid/model" @model,
 }
 
