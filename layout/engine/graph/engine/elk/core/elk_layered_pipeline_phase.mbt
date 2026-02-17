@@ -1790,6 +1790,51 @@ fn positioned_nodes_layout_extent(
 }
 
 ///|
+fn finalize_elk_layered_positioned_graph(
+  graph : MermaidGraph,
+  padding : Int,
+  horizontal : Bool,
+  reverse : Bool,
+  node_spacing : Int,
+  layer_spacing : Int,
+  use_subgraph_redirects : Bool,
+  subgraph_exit_by_id : Map[String, String],
+  subgraph_entry_by_id : Map[String, String],
+  routing_policy : GraphBackendRoutingPolicy,
+  positioned_nodes : Array[PositionedNode],
+  positioned_by_id : Map[String, PositionedNode],
+  node_horizontal_by_id : Map[String, Bool],
+  max_right : Int,
+  max_bottom : Int,
+) -> PositionedGraph {
+  let positioned_index_by_id = positioned_index_by_node_id(positioned_nodes)
+  let positioned_groups = @layout_engine_graph_group_core.build_legacy_positioned_groups(
+    graph, padding, horizontal, reverse, false, node_spacing, layer_spacing, positioned_nodes,
+    positioned_by_id, positioned_index_by_id,
+  )
+  let positioned_edges = @layout_engine_graph_routing_core.route_legacy_positioned_edges(
+    graph,
+    false,
+    false,
+    horizontal,
+    layer_spacing,
+    node_spacing,
+    use_subgraph_redirects,
+    subgraph_exit_by_id,
+    subgraph_entry_by_id,
+    positioned_nodes,
+    positioned_by_id,
+    node_horizontal_by_id,
+    routing_policy.enable_target_boundary_ports,
+    routing_policy.preserve_assigned_endpoint_ports,
+    false,
+  )
+  @layout_engine_graph_finalize_core.finalize_positioned_graph(
+    padding, max_right, max_bottom, positioned_nodes, positioned_edges, positioned_groups,
+  )
+}
+
+///|
 fn elk_graph_supports_layered_pipeline(graph : MermaidGraph) -> Bool {
   graph.diagram_kind is Flowchart &&
   !@layout_engine_graph_internal_core.is_state_graph(graph) &&
@@ -2163,37 +2208,16 @@ fn run_elk_layered_flow_backend(
     graph, nodes_in_order, width_by_node_id, height_by_node_id, x_by_node_id, y_by_node_id,
     padding,
   )
-  let positioned_index_by_id = positioned_index_by_node_id(positioned_nodes)
   let node_horizontal_by_id = build_node_horizontal_by_id(
     positioned_nodes, horizontal,
   )
   let (max_right, max_bottom) = positioned_nodes_layout_extent(
     positioned_nodes, padding,
   )
-
-  let positioned_groups = @layout_engine_graph_group_core.build_legacy_positioned_groups(
-    graph, padding, horizontal, reverse, false, node_spacing, layer_spacing, positioned_nodes,
-    positioned_by_id, positioned_index_by_id,
-  )
-  let positioned_edges = @layout_engine_graph_routing_core.route_legacy_positioned_edges(
-    graph,
-    false,
-    false,
-    horizontal,
-    layer_spacing,
-    node_spacing,
-    use_subgraph_redirects,
-    subgraph_exit_by_id,
-    subgraph_entry_by_id,
-    positioned_nodes,
-    positioned_by_id,
-    node_horizontal_by_id,
-    routing_policy.enable_target_boundary_ports,
-    routing_policy.preserve_assigned_endpoint_ports,
-    false,
-  )
-  let positioned_graph = @layout_engine_graph_finalize_core.finalize_positioned_graph(
-    padding, max_right, max_bottom, positioned_nodes, positioned_edges, positioned_groups,
+  let positioned_graph = finalize_elk_layered_positioned_graph(
+    graph, padding, horizontal, reverse, node_spacing, layer_spacing, use_subgraph_redirects,
+    subgraph_exit_by_id, subgraph_entry_by_id, routing_policy, positioned_nodes,
+    positioned_by_id, node_horizontal_by_id, max_right, max_bottom,
   )
   let phase_snapshots = [
     setup_phase_snapshot(request, nodes_in_order),

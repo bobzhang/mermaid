@@ -279,6 +279,66 @@ test "elk layered horizontal map and extent helpers stay consistent" {
 }
 
 ///|
+test "elk layered finalize helper composes groups edges and final bounds" {
+  let graph = wb_graph(["A", "B"], [("A", "B")])
+  let positioned_nodes : Array[@model.PositionedNode] = [
+    {
+      id: "A",
+      label: "A",
+      shape: Rectangle,
+      x: 100,
+      y: 100,
+      width: 70,
+      height: 44,
+      inline_style: None,
+    },
+    {
+      id: "B",
+      label: "B",
+      shape: Rectangle,
+      x: 220,
+      y: 100,
+      width: 70,
+      height: 44,
+      inline_style: None,
+    },
+  ]
+  let positioned_by_id : Map[String, @model.PositionedNode] = {
+    "A": positioned_nodes[0],
+    "B": positioned_nodes[1],
+  }
+  let node_horizontal_by_id : Map[String, Bool] = { "A": true, "B": true }
+  let (max_right, max_bottom) = positioned_nodes_layout_extent(
+    positioned_nodes, 20,
+  )
+  let positioned_graph = finalize_elk_layered_positioned_graph(
+    graph,
+    20,
+    true,
+    false,
+    120,
+    80,
+    false,
+    {},
+    {},
+    {
+      enable_target_boundary_ports: true,
+      preserve_assigned_endpoint_ports: false,
+    },
+    positioned_nodes,
+    positioned_by_id,
+    node_horizontal_by_id,
+    max_right,
+    max_bottom,
+  )
+  assert_eq(positioned_graph.nodes.length(), 2)
+  assert_eq(positioned_graph.edges.length(), 1)
+  assert_eq(positioned_graph.groups.length(), 0)
+  assert_true(positioned_graph.width > 0)
+  assert_true(positioned_graph.height > 0)
+}
+
+///|
 fn wb_rank_crossings_between(
   left_rank_node_ids : Array[String],
   right_rank_node_ids : Array[String],
