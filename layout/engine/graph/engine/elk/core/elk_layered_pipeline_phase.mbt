@@ -1665,6 +1665,74 @@ fn rank_pair_major_step(
 }
 
 ///|
+fn build_major_center_by_rank(
+  max_rank : Int,
+  reverse : Bool,
+  padding : Int,
+  base_major_step : Int,
+  rank_pair_label_major_gap : Map[String, Int],
+) -> Map[Int, Int] {
+  let major_center_by_rank : Map[Int, Int] = {}
+  let major_start = padding + 70
+  let mut displayed_major_center = major_start
+  for displayed_rank in 0..<=max_rank {
+    let rank = if reverse { max_rank - displayed_rank } else { displayed_rank }
+    if displayed_rank > 0 {
+      let previous_displayed_rank = displayed_rank - 1
+      let previous_rank = if reverse {
+        max_rank - previous_displayed_rank
+      } else {
+        previous_displayed_rank
+      }
+      let step = rank_pair_major_step(
+        previous_rank, rank, base_major_step, rank_pair_label_major_gap,
+      )
+      displayed_major_center += step
+    }
+    major_center_by_rank[rank] = displayed_major_center
+  }
+  major_center_by_rank
+}
+
+///|
+fn build_axis_coords_by_node_id(
+  rank_node_ids_by_rank : Map[Int, Array[String]],
+  max_rank : Int,
+  major_center_by_rank : Map[Int, Int],
+  minor_coord_by_node_id : Map[String, Int],
+  padding : Int,
+  horizontal : Bool,
+) -> (Map[String, Int], Map[String, Int]) {
+  let x_by_node_id : Map[String, Int] = {}
+  let y_by_node_id : Map[String, Int] = {}
+  for rank in 0..<=max_rank {
+    match rank_node_ids_by_rank.get(rank) {
+      Some(node_ids) => {
+        let major_center = option_int_or(
+          major_center_by_rank.get(rank),
+          padding + 70,
+        )
+        for node_id in node_ids {
+          let minor_coord = option_int_or(
+            minor_coord_by_node_id.get(node_id),
+            padding + 70,
+          )
+          if horizontal {
+            x_by_node_id[node_id] = major_center
+            y_by_node_id[node_id] = minor_coord
+          } else {
+            x_by_node_id[node_id] = minor_coord
+            y_by_node_id[node_id] = major_center
+          }
+        }
+      }
+      None => ()
+    }
+  }
+  (x_by_node_id, y_by_node_id)
+}
+
+///|
 fn elk_graph_supports_layered_pipeline(graph : MermaidGraph) -> Bool {
   graph.diagram_kind is Flowchart &&
   !@layout_engine_graph_internal_core.is_state_graph(graph) &&
@@ -2027,53 +2095,13 @@ fn run_elk_layered_flow_backend(
     graph, use_subgraph_redirects, subgraph_entry_by_id, subgraph_exit_by_id, rank_by_node_id,
     horizontal,
   )
-
-  let major_center_by_rank : Map[Int, Int] = {}
-  let major_start = padding + 70
-  let mut displayed_major_center = major_start
-  for displayed_rank in 0..<=max_rank {
-    let rank = if reverse { max_rank - displayed_rank } else { displayed_rank }
-    if displayed_rank > 0 {
-      let previous_displayed_rank = displayed_rank - 1
-      let previous_rank = if reverse {
-        max_rank - previous_displayed_rank
-      } else {
-        previous_displayed_rank
-      }
-      let step = rank_pair_major_step(
-        previous_rank, rank, base_major_step, rank_pair_label_major_gap,
-      )
-      displayed_major_center += step
-    }
-    major_center_by_rank[rank] = displayed_major_center
-  }
-
-  let x_by_node_id : Map[String, Int] = {}
-  let y_by_node_id : Map[String, Int] = {}
-  for rank in 0..<=max_rank {
-    match rank_node_ids_by_rank.get(rank) {
-      Some(node_ids) => {
-        let major_center = option_int_or(
-          major_center_by_rank.get(rank),
-          padding + 70,
-        )
-        for node_id in node_ids {
-          let minor_coord = option_int_or(
-            minor_coord_by_node_id.get(node_id),
-            padding + 70,
-          )
-          if horizontal {
-            x_by_node_id[node_id] = major_center
-            y_by_node_id[node_id] = minor_coord
-          } else {
-            x_by_node_id[node_id] = minor_coord
-            y_by_node_id[node_id] = major_center
-          }
-        }
-      }
-      None => ()
-    }
-  }
+  let major_center_by_rank = build_major_center_by_rank(
+    max_rank, reverse, padding, base_major_step, rank_pair_label_major_gap,
+  )
+  let (x_by_node_id, y_by_node_id) = build_axis_coords_by_node_id(
+    rank_node_ids_by_rank, max_rank, major_center_by_rank, minor_coord_by_node_id,
+    padding, horizontal,
+  )
 
   let positioned_nodes : Array[PositionedNode] = []
   let positioned_by_id : Map[String, PositionedNode] = {}

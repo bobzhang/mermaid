@@ -182,6 +182,46 @@ test "elk layered minor placement strategy uses relaxed mode for native path" {
 }
 
 ///|
+test "elk layered major center builder respects reverse display order" {
+  let rank_pair_label_major_gap : Map[String, Int] = {}
+  let forward_centers = build_major_center_by_rank(
+    2, false, 40, 100, rank_pair_label_major_gap,
+  )
+  assert_eq(option_int_or(forward_centers.get(0), -1), 110)
+  assert_eq(option_int_or(forward_centers.get(1), -1), 210)
+  assert_eq(option_int_or(forward_centers.get(2), -1), 310)
+
+  let reverse_centers = build_major_center_by_rank(
+    2, true, 40, 100, rank_pair_label_major_gap,
+  )
+  assert_eq(option_int_or(reverse_centers.get(2), -1), 110)
+  assert_eq(option_int_or(reverse_centers.get(1), -1), 210)
+  assert_eq(option_int_or(reverse_centers.get(0), -1), 310)
+}
+
+///|
+test "elk layered axis coordinate builder maps major/minor by orientation" {
+  let rank_node_ids_by_rank : Map[Int, Array[String]] = { 0: ["A"], 1: ["B"] }
+  let major_center_by_rank : Map[Int, Int] = { 0: 120, 1: 240 }
+  let minor_coord_by_node_id : Map[String, Int] = { "A": 40, "B": 60 }
+  let (horizontal_x, horizontal_y) = build_axis_coords_by_node_id(
+    rank_node_ids_by_rank, 1, major_center_by_rank, minor_coord_by_node_id, 0, true,
+  )
+  assert_eq(option_int_or(horizontal_x.get("A"), -1), 120)
+  assert_eq(option_int_or(horizontal_y.get("A"), -1), 40)
+  assert_eq(option_int_or(horizontal_x.get("B"), -1), 240)
+  assert_eq(option_int_or(horizontal_y.get("B"), -1), 60)
+
+  let (vertical_x, vertical_y) = build_axis_coords_by_node_id(
+    rank_node_ids_by_rank, 1, major_center_by_rank, minor_coord_by_node_id, 0, false,
+  )
+  assert_eq(option_int_or(vertical_x.get("A"), -1), 40)
+  assert_eq(option_int_or(vertical_y.get("A"), -1), 120)
+  assert_eq(option_int_or(vertical_x.get("B"), -1), 60)
+  assert_eq(option_int_or(vertical_y.get("B"), -1), 240)
+}
+
+///|
 fn wb_rank_crossings_between(
   left_rank_node_ids : Array[String],
   right_rank_node_ids : Array[String],
