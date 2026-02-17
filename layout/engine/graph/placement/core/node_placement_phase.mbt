@@ -1,8 +1,24 @@
 ///|
 /// Legacy placement phase output consumed by grouping/routing/finalization.
-pub(all) struct LegacyPlacementState {
+pub struct LegacyPlacementState {
   positioned_nodes : Array[PositionedNode]
   positioned_by_id : Map[String, PositionedNode]
+}
+
+///|
+/// Returns positioned nodes in final placement order.
+pub fn LegacyPlacementState::positioned_nodes(
+  self : LegacyPlacementState,
+) -> Array[PositionedNode] {
+  self.positioned_nodes
+}
+
+///|
+/// Returns positioned nodes keyed by node id.
+pub fn LegacyPlacementState::positioned_by_id(
+  self : LegacyPlacementState,
+) -> Map[String, PositionedNode] {
+  self.positioned_by_id
 }
 
 ///|

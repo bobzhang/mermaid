@@ -57,10 +57,11 @@ test "placement computes forward horizontal ordering from rank map" {
     graph, setup_state, false, false,
   )
 
-  let ax = placement_state.positioned_by_id["A"].x
-  let bx = placement_state.positioned_by_id["B"].x
+  let positioned_by_id = placement_state.positioned_by_id()
+  let ax = positioned_by_id["A"].x
+  let bx = positioned_by_id["B"].x
   assert_true(bx > ax)
-  assert_eq(placement_state.positioned_nodes.length(), 2)
+  assert_eq(placement_state.positioned_nodes().length(), 2)
 }
 
 ///|
@@ -77,7 +78,8 @@ test "placement reverse mode flips horizontal rank ordering" {
     graph, setup_state, false, false,
   )
 
-  let ax = placement_state.positioned_by_id["A"].x
-  let bx = placement_state.positioned_by_id["B"].x
+  let positioned_by_id = placement_state.positioned_by_id()
+  let ax = positioned_by_id["A"].x
+  let bx = positioned_by_id["B"].x
   assert_true(ax > bx)
 }

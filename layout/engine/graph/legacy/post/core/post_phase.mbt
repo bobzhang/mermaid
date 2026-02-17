@@ -19,8 +19,8 @@ pub fn finalize_legacy_layout_from_placement(
   let class_or_er_graph = setup_state.class_or_er_graph
   let enhanced_horizontal_state_flow = setup_state.enhanced_horizontal_state_flow
 
-  let positioned_nodes = placement_state.positioned_nodes
-  let positioned_by_id = placement_state.positioned_by_id
+  let positioned_nodes = placement_state.positioned_nodes()
+  let positioned_by_id = placement_state.positioned_by_id()
 
   let positioned_index_by_id : Map[String, Int] = {}
   for i, node in positioned_nodes {
