@@ -1,0 +1,34 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "bobzhang/beautiful_mermaid/layout/engine/graph/group/core"
+
+import {
+  "bobzhang/beautiful_mermaid/model",
+}
+
+// Values
+pub fn apply_subgraph_direction_overrides(Array[@model.MermaidSubgraph], Bool, Bool, Bool, Bool, Bool, Int, Int, Array[@model.PositionedNode], Map[String, Int], Map[String, Bool]) -> Unit
+
+pub fn build_empty_group_tree_at(@model.MermaidSubgraph, Int, Int, Bool, Bool) -> @model.PositionedGroup
+
+pub fn build_legacy_positioned_groups(@model.MermaidGraph, Int, Bool, Bool, Bool, Int, Int, Array[@model.PositionedNode], Map[String, @model.PositionedNode], Map[String, Int]) -> Array[@model.PositionedGroup]
+
+pub fn build_positioned_group(@model.MermaidSubgraph, Map[String, @model.PositionedNode], Bool, Bool) -> @model.PositionedGroup?
+
+pub fn is_sequence_graph(@model.MermaidGraph) -> Bool
+
+pub fn register_group_anchors(@model.PositionedGroup, Map[String, @model.PositionedNode], Bool) -> Unit
+
+pub fn resolve_edge_endpoint_id(String, Bool, Map[String, String]) -> String
+
+pub fn resolve_inline_style(@model.MermaidGraph, String) -> Map[String, String]?
+
+pub fn subgraph_group_padding() -> Int
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits
+

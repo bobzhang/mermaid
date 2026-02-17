@@ -11,10 +11,6 @@ type MermaidNode = @model.MermaidNode
 type MermaidEdge = @model.MermaidEdge
 
 ///|
-/// A subgraph grouping nodes and child subgraphs.
-type MermaidSubgraph = @model.MermaidSubgraph
-
-///|
 /// Layout direction for flowchart and state diagrams.
 type Direction = @model.Direction
 

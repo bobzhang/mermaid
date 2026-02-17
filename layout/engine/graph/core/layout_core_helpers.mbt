@@ -194,16 +194,3 @@ fn use_enhanced_horizontal_state_flow_lanes(
   }
   circle_node_count >= 3
 }
-
-///|
-fn find_positioned_group_index(
-  groups : Array[PositionedGroup],
-  group_id : String,
-) -> Int? {
-  for i, group in groups {
-    if group.id == group_id {
-      return Some(i)
-    }
-  }
-  None
-}

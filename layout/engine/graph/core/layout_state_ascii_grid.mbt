@@ -637,7 +637,10 @@ fn layout_flat_state_graph_for_ascii_grid(
           y: origin_y + (coord.y + 1) * cell_y,
           width: cell_x * 2,
           height: cell_y * 2,
-          inline_style: resolve_inline_style(graph, node.id),
+          inline_style: @layout_engine_graph_group_core.resolve_inline_style(
+            graph,
+            node.id,
+          ),
         }
         positioned_nodes.push(positioned)
         positioned_by_id[node.id] = positioned
@@ -649,21 +652,26 @@ fn layout_flat_state_graph_for_ascii_grid(
   let positioned_groups : Array[PositionedGroup] = []
   let mut empty_group_top = padding
   for subgraph in graph.subgraphs {
-    match build_positioned_group(subgraph, positioned_by_id, false, false) {
+    match
+      @layout_engine_graph_group_core.build_positioned_group(
+        subgraph, positioned_by_id, false, false,
+      ) {
       Some(group) => positioned_groups.push(group)
       None => {
-        let empty_group = build_empty_group_tree_at(
+        let empty_group = @layout_engine_graph_group_core.build_empty_group_tree_at(
           subgraph, padding, empty_group_top, false, false,
         )
         positioned_groups.push(empty_group)
         empty_group_top = empty_group_top +
           empty_group.height +
-          subgraph_group_padding()
+          @layout_engine_graph_group_core.subgraph_group_padding()
       }
     }
   }
   for group in positioned_groups {
-    register_group_anchors(group, positioned_by_id, true)
+    @layout_engine_graph_group_core.register_group_anchors(
+      group, positioned_by_id, true,
+    )
   }
 
   let blocked = layout_state_grid_blocked_cells(grid_positions)

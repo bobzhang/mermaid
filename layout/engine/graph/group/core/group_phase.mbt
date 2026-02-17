@@ -1,5 +1,6 @@
 ///|
-fn build_legacy_positioned_groups(
+/// Builds positioned subgraph groups and registers their anchor nodes.
+pub fn build_legacy_positioned_groups(
   graph : MermaidGraph,
   padding : Int,
   horizontal : Bool,

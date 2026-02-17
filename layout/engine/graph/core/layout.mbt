@@ -6,7 +6,7 @@ fn layout_graph_legacy_with_subgraph_redirects(
   compact_fanin : Bool,
   layout_engine : LayoutEngine,
 ) -> PositionedGraph {
-  if is_sequence_graph(graph) {
+  if @layout_engine_graph_group_core.is_sequence_graph(graph) {
     return @layout_engine_sequence_core.layout_sequence_graph(graph, options)
   }
 
@@ -81,7 +81,7 @@ fn layout_graph_legacy_with_subgraph_redirects(
   }
   let node_horizontal_by_id : Map[String, Bool] = {}
   if state_graph {
-    apply_subgraph_direction_overrides(
+    @layout_engine_graph_group_core.apply_subgraph_direction_overrides(
       graph.subgraphs,
       horizontal,
       reverse,
@@ -104,7 +104,7 @@ fn layout_graph_legacy_with_subgraph_redirects(
     max_bottom = max_bottom.max(node.y + node.height / 2)
   }
 
-  let positioned_groups = build_legacy_positioned_groups(
+  let positioned_groups = @layout_engine_graph_group_core.build_legacy_positioned_groups(
     graph, padding, horizontal, reverse, state_graph, node_spacing, layer_spacing,
     positioned_nodes, positioned_by_id, positioned_index_by_id,
   )

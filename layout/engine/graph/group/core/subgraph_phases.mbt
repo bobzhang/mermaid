@@ -30,7 +30,8 @@ fn merge_style(
 }
 
 ///|
-fn resolve_inline_style(
+/// Resolves inline style for a node from class and node-level declarations.
+pub fn resolve_inline_style(
   graph : MermaidGraph,
   node_id : String,
 ) -> Map[String, String]? {
@@ -51,7 +52,8 @@ fn resolve_inline_style(
 }
 
 ///|
-fn resolve_edge_endpoint_id(
+/// Resolves edge endpoints through subgraph redirects when enabled.
+pub fn resolve_edge_endpoint_id(
   node_id : String,
   use_subgraph_redirects : Bool,
   redirects : Map[String, String],
@@ -67,7 +69,8 @@ fn resolve_edge_endpoint_id(
 }
 
 ///|
-fn is_sequence_graph(graph : MermaidGraph) -> Bool {
+/// Returns true when graph nodes are all sequence participants.
+pub fn is_sequence_graph(graph : MermaidGraph) -> Bool {
   let nodes = graph.nodes.values().to_array()
   if nodes.length() == 0 {
     return false
@@ -81,7 +84,8 @@ fn is_sequence_graph(graph : MermaidGraph) -> Bool {
 }
 
 ///|
-fn subgraph_group_padding() -> Int {
+/// Returns default padding used around positioned subgraph content.
+pub fn subgraph_group_padding() -> Int {
   12
 }
 
@@ -126,7 +130,8 @@ fn include_bounds(
 }
 
 ///|
-fn build_empty_group_tree_at(
+/// Builds positioned placeholder bounds for an empty subgraph tree.
+pub fn build_empty_group_tree_at(
   subgraph : MermaidSubgraph,
   x : Int,
   y : Int,
@@ -233,7 +238,8 @@ fn build_empty_group_tree_at(
 }
 
 ///|
-fn build_positioned_group(
+/// Builds positioned bounds for a subgraph using existing positioned nodes.
+pub fn build_positioned_group(
   subgraph : MermaidSubgraph,
   positioned_by_id : Map[String, PositionedNode],
   inherited_horizontal : Bool,
@@ -633,7 +639,8 @@ fn apply_subgraph_direction_override_to_children(
 }
 
 ///|
-fn apply_subgraph_direction_overrides(
+/// Applies subgraph-local direction overrides to positioned nodes.
+pub fn apply_subgraph_direction_overrides(
   subgraphs : Array[MermaidSubgraph],
   inherited_horizontal : Bool,
   inherited_reverse : Bool,
