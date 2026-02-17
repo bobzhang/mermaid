@@ -246,7 +246,7 @@ fn run() -> Unit {
 
   for arg in args {
     if expect_ascii_box_border_padding_value {
-      if arg.has_prefix("--") {
+      if arg is [.. "--", ..] {
         println("Error: --ascii-box-border-padding requires a value")
         print_usage()
         return
@@ -266,7 +266,7 @@ fn run() -> Unit {
     }
 
     if expect_ascii_padding_y_value {
-      if arg.has_prefix("--") {
+      if arg is [.. "--", ..] {
         println("Error: --ascii-padding-y requires a value")
         print_usage()
         return
@@ -284,7 +284,7 @@ fn run() -> Unit {
     }
 
     if expect_ascii_padding_x_value {
-      if arg.has_prefix("--") {
+      if arg is [.. "--", ..] {
         println("Error: --ascii-padding-x requires a value")
         print_usage()
         return
@@ -302,7 +302,7 @@ fn run() -> Unit {
     }
 
     if expect_layer_spacing_value {
-      if arg.has_prefix("--") {
+      if arg is [.. "--", ..] {
         println("Error: --layer-spacing requires a value")
         print_usage()
         return
@@ -320,7 +320,7 @@ fn run() -> Unit {
     }
 
     if expect_layout_engine_value {
-      if arg.has_prefix("--") {
+      if arg is [.. "--", ..] {
         println("Error: --layout-engine requires a value")
         print_usage()
         return
@@ -340,7 +340,7 @@ fn run() -> Unit {
     }
 
     if expect_node_spacing_value {
-      if arg.has_prefix("--") {
+      if arg is [.. "--", ..] {
         println("Error: --node-spacing requires a value")
         print_usage()
         return
@@ -358,7 +358,7 @@ fn run() -> Unit {
     }
 
     if expect_padding_value {
-      if arg.has_prefix("--") {
+      if arg is [.. "--", ..] {
         println("Error: --padding requires a value")
         print_usage()
         return
@@ -376,7 +376,7 @@ fn run() -> Unit {
     }
 
     if expect_border_value {
-      if arg.has_prefix("--") {
+      if arg is [.. "--", ..] {
         println("Error: --border requires a value")
         print_usage()
         return
@@ -387,7 +387,7 @@ fn run() -> Unit {
     }
 
     if expect_surface_value {
-      if arg.has_prefix("--") {
+      if arg is [.. "--", ..] {
         println("Error: --surface requires a value")
         print_usage()
         return
@@ -398,7 +398,7 @@ fn run() -> Unit {
     }
 
     if expect_muted_value {
-      if arg.has_prefix("--") {
+      if arg is [.. "--", ..] {
         println("Error: --muted requires a value")
         print_usage()
         return
@@ -409,7 +409,7 @@ fn run() -> Unit {
     }
 
     if expect_accent_value {
-      if arg.has_prefix("--") {
+      if arg is [.. "--", ..] {
         println("Error: --accent requires a value")
         print_usage()
         return
@@ -420,7 +420,7 @@ fn run() -> Unit {
     }
 
     if expect_line_value {
-      if arg.has_prefix("--") {
+      if arg is [.. "--", ..] {
         println("Error: --line requires a value")
         print_usage()
         return
@@ -431,7 +431,7 @@ fn run() -> Unit {
     }
 
     if expect_fg_value {
-      if arg.has_prefix("--") {
+      if arg is [.. "--", ..] {
         println("Error: --fg requires a value")
         print_usage()
         return
@@ -442,7 +442,7 @@ fn run() -> Unit {
     }
 
     if expect_bg_value {
-      if arg.has_prefix("--") {
+      if arg is [.. "--", ..] {
         println("Error: --bg requires a value")
         print_usage()
         return
@@ -453,7 +453,7 @@ fn run() -> Unit {
     }
 
     if expect_font_value {
-      if arg.has_prefix("--") {
+      if arg is [.. "--", ..] {
         println("Error: --font requires a value")
         print_usage()
         return
@@ -464,7 +464,7 @@ fn run() -> Unit {
     }
 
     if expect_theme_value {
-      if arg.has_prefix("--") {
+      if arg is [.. "--", ..] {
         println("Error: --theme requires a value")
         print_usage()
         return
@@ -776,7 +776,7 @@ fn run() -> Unit {
       theme_slug = Some(theme)
       continue
     }
-    if arg.has_prefix("--") {
+    if arg is [.. "--", ..] {
       println("Error: unknown flag \{arg}")
       print_usage()
       return
