@@ -4,27 +4,6 @@ fn point_equals(left : Point, right : Point) -> Bool {
 }
 
 ///|
-fn simplify_polyline_points(points : Array[Point]) -> Array[Point] {
-  @layout_engine_graph_edge_core.simplify_polyline_points(points)
-}
-
-///|
-fn edge_points_with_minor_lane_offset_with_ports(
-  source : PositionedNode,
-  target : PositionedNode,
-  horizontal : Bool,
-  minor_offset : Int,
-  smooth_forward_fanout : Bool,
-  source_port_minor_offset : Int,
-  target_port_minor_offset : Int,
-) -> Array[Point] {
-  @layout_engine_graph_edge_core.edge_points_with_minor_lane_offset_with_ports(
-    source, target, horizontal, minor_offset, smooth_forward_fanout, source_port_minor_offset,
-    target_port_minor_offset,
-  )
-}
-
-///|
 fn apply_context_endpoint_port_stubs(
   points : Array[Point],
   context : EdgeLayoutContext,

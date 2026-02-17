@@ -2356,7 +2356,11 @@ fn reciprocal_two_point_dogleg_candidate(
     let apex_y = baseline + offset
     let apex_x = (start.x + end.x) / 2
     return Some(
-      simplify_polyline_points([start, { x: apex_x, y: apex_y }, end]),
+      @layout_engine_graph_edge_core.simplify_polyline_points([
+        start,
+        { x: apex_x, y: apex_y },
+        end,
+      ]),
     )
   }
   if start.y == end.y || start.x == end.x {
@@ -2369,7 +2373,13 @@ fn reciprocal_two_point_dogleg_candidate(
   }
   let apex_x = baseline + offset
   let apex_y = (start.y + end.y) / 2
-  Some(simplify_polyline_points([start, { x: apex_x, y: apex_y }, end]))
+  Some(
+    @layout_engine_graph_edge_core.simplify_polyline_points([
+      start,
+      { x: apex_x, y: apex_y },
+      end,
+    ]),
+  )
 }
 
 ///|
@@ -2395,7 +2405,7 @@ fn reciprocal_two_point_outer_detour_candidate(
       source_left.min(target_left) - offset
     }
     return Some(
-      simplify_polyline_points([
+      @layout_engine_graph_edge_core.simplify_polyline_points([
         start,
         { x: detour_x, y: start.y },
         { x: detour_x, y: end.y },
@@ -2413,7 +2423,7 @@ fn reciprocal_two_point_outer_detour_candidate(
     source_top.min(target_top) - offset
   }
   Some(
-    simplify_polyline_points([
+    @layout_engine_graph_edge_core.simplify_polyline_points([
       start,
       { x: start.x, y: detour_y },
       { x: end.x, y: detour_y },
@@ -2447,7 +2457,7 @@ fn reciprocal_two_point_outer_shifted_candidate(
     }
     let lane_y = start.y + minor_offset
     return Some(
-      simplify_polyline_points([
+      @layout_engine_graph_edge_core.simplify_polyline_points([
         start,
         { x: start.x, y: lane_y },
         { x: detour_x, y: lane_y },
@@ -2467,7 +2477,7 @@ fn reciprocal_two_point_outer_shifted_candidate(
   }
   let lane_x = start.x + minor_offset
   Some(
-    simplify_polyline_points([
+    @layout_engine_graph_edge_core.simplify_polyline_points([
       start,
       { x: lane_x, y: start.y },
       { x: lane_x, y: detour_y },
@@ -2758,7 +2768,9 @@ fn maybe_optimize_reciprocal_target_dogleg(
   for offset in candidate_offsets {
     match reciprocal_target_dogleg_candidate(seed_points, offset) {
       Some(raw_candidate) => {
-        let candidate = simplify_polyline_points(raw_candidate)
+        let candidate = @layout_engine_graph_edge_core.simplify_polyline_points(
+          raw_candidate,
+        )
         let signature = points_signature(candidate)
         if seen_signatures.contains(signature) {
           continue
@@ -2913,7 +2925,7 @@ fn optimize_labeled_route_points(
   seen_signatures[points_signature(best_points)] = true
 
   for candidate_offset in candidate_offsets {
-    let candidate_points = edge_points_with_minor_lane_offset_with_ports(
+    let candidate_points = @layout_engine_graph_edge_core.edge_points_with_minor_lane_offset_with_ports(
       context.source,
       context.target,
       context.edge_horizontal,
