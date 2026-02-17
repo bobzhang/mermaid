@@ -170,11 +170,6 @@ fn rounded_orthogonal_path(
 }
 
 ///|
-fn edge_needs_curve_path(points : Array[Point]) -> Bool {
-  points.length() >= 3 && !edge_has_short_terminal_stub_for_basis(points)
-}
-
-///|
 fn basis_bezier_segment(
   sb : StringBuilder,
   x0 : Int,
@@ -375,11 +370,6 @@ fn text_svg_with_attrs(
   } else {
     "<text class=\"\{class_name}\" x=\"\{x}\" y=\"\{y}\" text-anchor=\"middle\" dominant-baseline=\"middle\"\{extra_attrs}>\{xml_escape(content)}</text>"
   }
-}
-
-///|
-fn text_svg(x : Int, y : Int, content : String, class_name : String) -> String {
-  text_svg_with_attrs(x, y, content, class_name, "")
 }
 
 ///|
@@ -1068,7 +1058,9 @@ pub fn render_svg(
     } else {
       ("", "")
     }
-    if !sequence_mode && edge_needs_curve_path(rendered_points) {
+    if !sequence_mode &&
+      rendered_points.length() >= 3 &&
+      !edge_has_short_terminal_stub_for_basis(rendered_points) {
       let path_d = if edge_is_axis_aligned_polyline(rendered_points) {
         rounded_orthogonal_path(rendered_points, 10)
       } else {
@@ -1112,7 +1104,9 @@ pub fn render_svg(
             sb.write_string(
               "<rect class=\"edge-label-bg\" x=\"\{bg_x}\" y=\"\{bg_y}\" width=\"\{bg_width}\" height=\"\{bg_height}\" rx=\"4\" ry=\"4\" />",
             )
-            sb.write_string(text_svg(pos.x, label_y, label, "edge-label"))
+            sb.write_string(
+              text_svg_with_attrs(pos.x, label_y, label, "edge-label", ""),
+            )
           }
           None => ()
         }
