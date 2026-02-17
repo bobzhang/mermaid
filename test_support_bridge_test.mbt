@@ -64,6 +64,46 @@ fn ts_option_or_zero(value : Int?) -> Int {
 }
 
 ///|
+fn ts_files_for_chunk(
+  files : Array[String],
+  chunk_index : Int,
+  chunk_count : Int,
+) -> Array[String] {
+  let selected : Array[String] = []
+  for i in 0..<files.length() {
+    if i % chunk_count == chunk_index {
+      selected.push(files[i])
+    }
+  }
+  selected
+}
+
+///|
+fn ts_expected_case_name_from_json_path(path : String) -> String {
+  let prefix = "testdata/corpus/expected/"
+  let file = if path.has_prefix(prefix) {
+    let parts = path.split(prefix).to_array()
+    if parts.length() >= 2 {
+      parts[1].to_string()
+    } else {
+      path
+    }
+  } else {
+    path
+  }
+  if file.has_suffix(".json") {
+    let parts = file.split(".json").to_array()
+    if parts.length() > 0 {
+      parts[0].to_string()
+    } else {
+      file
+    }
+  } else {
+    file
+  }
+}
+
+///|
 fn ts_svg_attr_int(svg : String, attr : String) -> Int? {
   let marker = "\{attr}=\""
   let parts = svg.split(marker).to_array()

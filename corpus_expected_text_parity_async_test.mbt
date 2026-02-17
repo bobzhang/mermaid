@@ -13,48 +13,6 @@ async fn corpus_expected_text_files() -> Array[String] {
 
 ///|
 #cfg(target="native")
-fn text_files_for_chunk(
-  files : Array[String],
-  chunk_index : Int,
-  chunk_count : Int,
-) -> Array[String] {
-  let selected : Array[String] = []
-  for i in 0..<files.length() {
-    if i % chunk_count == chunk_index {
-      selected.push(files[i])
-    }
-  }
-  selected
-}
-
-///|
-#cfg(target="native")
-fn expected_case_name_from_json_path(path : String) -> String {
-  let prefix = "testdata/corpus/expected/"
-  let file = if path.has_prefix(prefix) {
-    let parts = path.split(prefix).to_array()
-    if parts.length() >= 2 {
-      parts[1].to_string()
-    } else {
-      path
-    }
-  } else {
-    path
-  }
-  if file.has_suffix(".json") {
-    let parts = file.split(".json").to_array()
-    if parts.length() > 0 {
-      parts[0].to_string()
-    } else {
-      file
-    }
-  } else {
-    file
-  }
-}
-
-///|
-#cfg(target="native")
 async fn golden_from_text_fixture(path : String) -> String {
   let content = @fs.read_file(path).text()
   let sections = content.split("\n---\n").to_array()
@@ -111,14 +69,14 @@ async fn verify_corpus_expected_text_chunk(
   chunk_count : Int,
 ) -> Unit {
   let files = corpus_expected_text_files()
-  let selected = text_files_for_chunk(files, chunk_index, chunk_count)
+  let selected = ts_files_for_chunk(files, chunk_index, chunk_count)
   if selected.length() == 0 {
     return
   }
 
   let mismatches : Array[String] = []
   for json_path in selected {
-    let case_name = expected_case_name_from_json_path(json_path)
+    let case_name = ts_expected_case_name_from_json_path(json_path)
     let ascii_path = "testdata/ascii/\{case_name}.txt"
     let unicode_path = "testdata/unicode/\{case_name}.txt"
     let expected_text = @fs.read_file(json_path).text()

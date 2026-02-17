@@ -92,22 +92,6 @@ async fn unicode_testdata_files() -> Array[String] {
 
 ///|
 #cfg(target="native")
-fn unicode_files_for_chunk(
-  files : Array[String],
-  chunk_index : Int,
-  chunk_count : Int,
-) -> Array[String] {
-  let selected : Array[String] = []
-  for i in 0..<files.length() {
-    if i % chunk_count == chunk_index {
-      selected.push(files[i])
-    }
-  }
-  selected
-}
-
-///|
-#cfg(target="native")
 async fn unicode_mismatch_file(file_name : String) -> String? {
   let path = "testdata/unicode/\{file_name}"
   let case_data = unicode_parse_golden_text_case(@fs.read_file(path).text())
@@ -130,7 +114,7 @@ async fn unicode_mismatch_file(file_name : String) -> String? {
 #cfg(target="native")
 async fn verify_unicode_chunk(chunk_index : Int, chunk_count : Int) -> Unit {
   let files = unicode_testdata_files()
-  let selected = unicode_files_for_chunk(files, chunk_index, chunk_count)
+  let selected = ts_files_for_chunk(files, chunk_index, chunk_count)
   if selected.length() == 0 {
     fail(
       "Unicode testdata chunk \{chunk_index + 1}/\{chunk_count} has no files",
