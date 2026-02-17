@@ -40,9 +40,9 @@ fn build_legacy_lane_rank_seed_state(
   let legacy_lane_state = @layout_engine_graph_lane_core.compute_legacy_lane_state(
     graph, nodes_in_order, false, false, horizontal, compact_fanin, false, false,
   )
-  let rank_by_node_id = legacy_lane_state.flow_rank_by_node_id()
-  let max_rank = legacy_lane_state.flow_max_rank()
-  let lane_by_node_id = legacy_lane_state.flow_lane_by_node_id()
+  let rank_by_node_id = legacy_lane_state.flow_rank_by_node_id
+  let max_rank = legacy_lane_state.flow_max_rank
+  let lane_by_node_id = legacy_lane_state.flow_lane_by_node_id
   let order_index_by_node_id = base_order_index_by_node_id
   let (successors_by_node_id, predecessors_by_node_id) = build_layered_neighbor_state_from_rank_seed(
     graph, use_subgraph_redirects, subgraph_entry_by_id, subgraph_exit_by_id, node_ids_in_order,

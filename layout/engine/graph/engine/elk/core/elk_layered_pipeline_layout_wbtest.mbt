@@ -356,7 +356,7 @@ test "elk layered rank-seeded neighbor orientation stays forward by rank" {
   let lane_state = @layout_engine_graph_lane_core.compute_legacy_lane_state(
     graph, nodes_in_order, false, false, true, false, false, false,
   )
-  let rank_by_node_id = lane_state.flow_rank_by_node_id()
+  let rank_by_node_id = lane_state.flow_rank_by_node_id
   let order_index_by_node_id = build_order_index_by_node_id(nodes_in_order)
   let node_ids : Array[String] = []
   for node in nodes_in_order {

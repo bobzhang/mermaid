@@ -62,5 +62,5 @@ test "legacy setup derives flow defaults and lane state for a simple graph" {
   assert_eq(setup_state.reverse(), false)
   assert_eq(setup_state.state_graph(), false)
   assert_eq(setup_state.nodes_in_order().length(), 2)
-  assert_eq(setup_state.lane_state().flow_max_rank(), 1)
+  assert_eq(setup_state.lane_state().flow_max_rank, 1)
 }
