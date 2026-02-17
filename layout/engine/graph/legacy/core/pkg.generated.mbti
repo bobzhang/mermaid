@@ -6,7 +6,7 @@ import {
 }
 
 // Values
-pub fn layout_graph_legacy_with_subgraph_redirects(LegacyLayoutRequest) -> @model.PositionedGraph
+pub fn layout_graph_legacy(LegacyLayoutRequest) -> @model.PositionedGraph
 
 // Errors
 
@@ -16,8 +16,12 @@ pub(all) struct LegacyLayoutRequest {
   options : @model.RenderOptions
   use_subgraph_redirects : Bool
   compact_fanin : Bool
-  enable_target_boundary_ports : Bool
-  preserve_assigned_endpoint_ports : Bool
+  routing_profile : LegacyRoutingProfile
+}
+
+pub(all) enum LegacyRoutingProfile {
+  LegacyCompatible
+  DagreParityCompatible
 }
 
 // Type aliases

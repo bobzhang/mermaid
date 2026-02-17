@@ -5,21 +5,34 @@ pub(all) struct LegacyLayoutRequest {
   options : RenderOptions
   use_subgraph_redirects : Bool
   compact_fanin : Bool
-  enable_target_boundary_ports : Bool
-  preserve_assigned_endpoint_ports : Bool
+  routing_profile : LegacyRoutingProfile
 }
 
 ///|
-/// Runs the legacy graph layout pipeline with explicit routing toggles.
-pub fn layout_graph_legacy_with_subgraph_redirects(
-  request : LegacyLayoutRequest,
-) -> PositionedGraph {
+/// Selects the legacy routing behavior profile.
+pub(all) enum LegacyRoutingProfile {
+  LegacyCompatible
+  DagreParityCompatible
+}
+
+///|
+fn routing_flags_for_profile(profile : LegacyRoutingProfile) -> (Bool, Bool) {
+  match profile {
+    LegacyCompatible => (false, false)
+    DagreParityCompatible => (true, true)
+  }
+}
+
+///|
+/// Runs the legacy graph layout pipeline with a selected routing profile.
+pub fn layout_graph_legacy(request : LegacyLayoutRequest) -> PositionedGraph {
   let graph = request.graph
   let options = request.options
   let use_subgraph_redirects = request.use_subgraph_redirects
   let compact_fanin = request.compact_fanin
-  let enable_target_boundary_ports = request.enable_target_boundary_ports
-  let preserve_assigned_endpoint_ports = request.preserve_assigned_endpoint_ports
+  let (enable_target_boundary_ports, preserve_assigned_endpoint_ports) = routing_flags_for_profile(
+    request.routing_profile,
+  )
 
   let setup_state = @layout_engine_graph_legacy_setup_core.build_legacy_layout_setup({
       graph,

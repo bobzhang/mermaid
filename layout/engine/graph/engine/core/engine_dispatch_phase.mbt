@@ -1,10 +1,4 @@
 ///|
-priv struct LegacyRoutingFlags {
-  enable_target_boundary_ports : Bool
-  preserve_assigned_endpoint_ports : Bool
-}
-
-///|
 /// Engine dispatch request assembled by graph core orchestration.
 pub(all) struct GraphEngineDispatchRequest {
   graph : MermaidGraph
@@ -15,18 +9,12 @@ pub(all) struct GraphEngineDispatchRequest {
 }
 
 ///|
-fn legacy_pipeline_routing_flags(engine : LayoutEngine) -> LegacyRoutingFlags {
+fn legacy_routing_profile(
+  engine : LayoutEngine,
+) -> @layout_engine_graph_legacy_core.LegacyRoutingProfile {
   match engine {
-    Legacy =>
-      {
-        enable_target_boundary_ports: false,
-        preserve_assigned_endpoint_ports: false,
-      }
-    DagreParity | Elk =>
-      {
-        enable_target_boundary_ports: true,
-        preserve_assigned_endpoint_ports: true,
-      }
+    Legacy => LegacyCompatible
+    DagreParity | Elk => DagreParityCompatible
   }
 }
 
@@ -35,19 +23,17 @@ fn legacy_pipeline_routing_flags(engine : LayoutEngine) -> LegacyRoutingFlags {
 pub fn dispatch_graph_layout_engine(
   request : GraphEngineDispatchRequest,
 ) -> PositionedGraph {
-  let routing_flags = match request.engine {
-    Legacy => legacy_pipeline_routing_flags(Legacy)
-    DagreParity => legacy_pipeline_routing_flags(DagreParity)
+  let engine = match request.engine {
     Elk =>
       // Reserve ELK in the selector while parity work is in progress.
-      legacy_pipeline_routing_flags(DagreParity)
+      @model.DagreParity
+    other => other
   }
-  @layout_engine_graph_legacy_core.layout_graph_legacy_with_subgraph_redirects({
+  @layout_engine_graph_legacy_core.layout_graph_legacy({
     graph: request.graph,
     options: request.options,
     use_subgraph_redirects: request.use_subgraph_redirects,
     compact_fanin: request.compact_fanin,
-    enable_target_boundary_ports: routing_flags.enable_target_boundary_ports,
-    preserve_assigned_endpoint_ports: routing_flags.preserve_assigned_endpoint_ports,
+    routing_profile: legacy_routing_profile(engine),
   })
 }
