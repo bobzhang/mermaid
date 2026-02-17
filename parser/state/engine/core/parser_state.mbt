@@ -171,10 +171,11 @@ fn parse_state_declaration(
 
 ///|
 fn parse_state_composite_start_line(line : String) -> MermaidSubgraph? {
-  if !line.has_prefix("state ") || !line.has_suffix("{") {
+  let rest = if line is [.. "state ", .. raw_rest, .. "{"] {
+    raw_rest.trim()
+  } else {
     return None
   }
-  let rest = (try! line[6:line.length() - 1]).trim()
   if rest.length() == 0 {
     return None
   }
