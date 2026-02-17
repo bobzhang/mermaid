@@ -13,30 +13,17 @@ pub(all) struct LegacyLaneState {
 }
 
 ///|
-/// Legacy lane/rank phase input assembled by the legacy orchestrator.
-pub(all) struct LegacyLaneInput {
-  graph : MermaidGraph
-  nodes_in_order : Array[MermaidNode]
-  state_graph : Bool
-  class_or_er_graph : Bool
-  horizontal : Bool
-  compact_fanin : Bool
-  enhanced_horizontal_state_flow : Bool
-  flat_state_graph : Bool
-}
-
-///|
 /// Computes legacy lane and rank assignments for graph layout.
-pub fn compute_legacy_lane_state(input : LegacyLaneInput) -> LegacyLaneState {
-  let graph = input.graph
-  let nodes_in_order = input.nodes_in_order
-  let state_graph = input.state_graph
-  let class_or_er_graph = input.class_or_er_graph
-  let horizontal = input.horizontal
-  let compact_fanin = input.compact_fanin
-  let enhanced_horizontal_state_flow = input.enhanced_horizontal_state_flow
-  let flat_state_graph = input.flat_state_graph
-
+pub fn compute_legacy_lane_state(
+  graph : MermaidGraph,
+  nodes_in_order : Array[MermaidNode],
+  state_graph : Bool,
+  class_or_er_graph : Bool,
+  horizontal : Bool,
+  compact_fanin : Bool,
+  enhanced_horizontal_state_flow : Bool,
+  flat_state_graph : Bool,
+) -> LegacyLaneState {
   let state_lane_by_node_id : Map[String, Int] = {}
   let state_label_y_offset_by_node_id : Map[String, Int] = {}
   let flow_rank_by_node_id : Map[String, Int] = {}
