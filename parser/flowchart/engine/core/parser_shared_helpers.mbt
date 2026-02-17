@@ -20,6 +20,13 @@ fn push_unique_id(ids : Array[String], id : String) -> Unit {
 }
 
 ///|
+fn ensure_node(nodes : Map[String, MermaidNode], node : MermaidNode) -> Unit {
+  if !nodes.contains(node.id) {
+    nodes[node.id] = node
+  }
+}
+
+///|
 fn apply_class_assignment(
   class_assignments : Map[String, String],
   node : MermaidNode,
@@ -40,7 +47,7 @@ fn ensure_nodes_from_entries(
   let resolved : Array[MermaidNode] = []
   for entry in entries {
     let (node, class_name) = entry
-    @parser_common_engine_core.ensure_node(nodes, node)
+    ensure_node(nodes, node)
     apply_class_assignment(class_assignments, node, class_name)
     resolved.push(node)
   }

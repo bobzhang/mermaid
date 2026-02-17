@@ -6,8 +6,6 @@ import {
 }
 
 // Values
-pub fn ensure_node(Map[String, @model.MermaidNode], @model.MermaidNode) -> Unit
-
 pub fn is_plain_identifier(String) -> Bool
 
 pub fn parse_node_token(String) -> @model.MermaidNode

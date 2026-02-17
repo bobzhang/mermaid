@@ -1,4 +1,11 @@
 ///|
+fn ensure_node(nodes : Map[String, MermaidNode], node : MermaidNode) -> Unit {
+  if !nodes.contains(node.id) {
+    nodes[node.id] = node
+  }
+}
+
+///|
 fn parse_compact_relation_parts(
   body : String,
   label : String?,
@@ -308,16 +315,8 @@ fn append_relation_edge(
   nodes : Map[String, MermaidNode],
   edges : Array[MermaidEdge],
 ) -> Unit {
-  @parser_common_engine_core.ensure_node(nodes, {
-    id: source,
-    label: source,
-    shape: default_shape,
-  })
-  @parser_common_engine_core.ensure_node(nodes, {
-    id: target,
-    label: target,
-    shape: default_shape,
-  })
+  ensure_node(nodes, { id: source, label: source, shape: default_shape })
+  ensure_node(nodes, { id: target, label: target, shape: default_shape })
   edges.push({
     source,
     target,
@@ -403,11 +402,7 @@ pub fn parse_class_diagram(lines : Array[String]) -> MermaidGraph {
 
     match parse_inline_class_declaration(line) {
       Some((class_id, inline_detail)) => {
-        @parser_common_engine_core.ensure_node(nodes, {
-          id: class_id,
-          label: class_id,
-          shape: ClassEntity,
-        })
+        ensure_node(nodes, { id: class_id, label: class_id, shape: ClassEntity })
         match inline_detail {
           Some(detail) =>
             append_detail(details, class_id, normalize_class_member(detail))
@@ -420,11 +415,7 @@ pub fn parse_class_diagram(lines : Array[String]) -> MermaidGraph {
 
     match parse_class_declaration(line) {
       Some((class_id, opens_block)) => {
-        @parser_common_engine_core.ensure_node(nodes, {
-          id: class_id,
-          label: class_id,
-          shape: ClassEntity,
-        })
+        ensure_node(nodes, { id: class_id, label: class_id, shape: ClassEntity })
         if opens_block {
           current_class = Some(class_id)
         }
@@ -454,7 +445,7 @@ pub fn parse_class_diagram(lines : Array[String]) -> MermaidGraph {
         let candidate = candidate_part.trim().to_string()
         let detail = normalize_class_member(detail_part.trim().to_string())
         if @parser_common_engine_core.is_plain_identifier(candidate) {
-          @parser_common_engine_core.ensure_node(nodes, {
+          ensure_node(nodes, {
             id: candidate,
             label: candidate,
             shape: ClassEntity,
@@ -499,11 +490,7 @@ fn parse_er_entity_declaration_line(
   if id == "" {
     return None
   }
-  @parser_common_engine_core.ensure_node(nodes, {
-    id,
-    label: id,
-    shape: ErEntity,
-  })
+  ensure_node(nodes, { id, label: id, shape: ErEntity })
   Some(id)
 }
 
@@ -538,7 +525,7 @@ fn parse_er_standalone_entity_line(
     (trimmed, trimmed)
   }
 
-  @parser_common_engine_core.ensure_node(nodes, { id, label, shape: ErEntity })
+  ensure_node(nodes, { id, label, shape: ErEntity })
   true
 }
 

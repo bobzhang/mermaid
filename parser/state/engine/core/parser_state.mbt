@@ -11,20 +11,12 @@ fn parse_state_token(
     if is_source {
       let next = start_counter + 1
       let id = "state_start_\{next}"
-      @parser_common_engine_core.ensure_node(nodes, {
-        id,
-        label: "",
-        shape: StateStart,
-      })
+      ensure_node(nodes, { id, label: "", shape: StateStart })
       (id, next, end_counter)
     } else {
       let next = end_counter + 1
       let id = "state_end_\{next}"
-      @parser_common_engine_core.ensure_node(nodes, {
-        id,
-        label: "",
-        shape: StateEnd,
-      })
+      ensure_node(nodes, { id, label: "", shape: StateEnd })
       (id, start_counter, next)
     }
   } else {
@@ -38,7 +30,7 @@ fn parse_state_token(
         parsed.shape
       },
     }
-    @parser_common_engine_core.ensure_node(nodes, node)
+    ensure_node(nodes, node)
     (node.id, start_counter, end_counter)
   }
 }
@@ -67,6 +59,13 @@ fn parse_direction_token_strict(token : String) -> Direction? {
 fn push_unique_id(ids : Array[String], id : String) -> Unit {
   if !ids.any(found => found == id) {
     ids.push(id)
+  }
+}
+
+///|
+fn ensure_node(nodes : Map[String, MermaidNode], node : MermaidNode) -> Unit {
+  if !nodes.contains(node.id) {
+    nodes[node.id] = node
   }
 }
 
@@ -148,11 +147,7 @@ fn parse_state_declaration(
       let id = id_part.trim().to_string()
       let label = strip_quotes(raw_label.trim())
       if id != "" {
-        @parser_common_engine_core.ensure_node(nodes, {
-          id,
-          label,
-          shape: Rounded,
-        })
+        ensure_node(nodes, { id, label, shape: Rounded })
         append_nodes_to_current_subgraph(composite_stack, [id])
       }
     }
@@ -168,7 +163,7 @@ fn parse_state_declaration(
           parsed.shape
         },
       }
-      @parser_common_engine_core.ensure_node(nodes, node)
+      ensure_node(nodes, node)
       append_nodes_to_current_subgraph(composite_stack, [node.id])
     }
   }
@@ -270,11 +265,7 @@ fn parse_state_standalone_line(
     return false
   }
 
-  @parser_common_engine_core.ensure_node(nodes, {
-    id: candidate,
-    label: candidate,
-    shape: Rounded,
-  })
+  ensure_node(nodes, { id: candidate, label: candidate, shape: Rounded })
   append_state_node_to_current_composite(composite_stack, candidate)
   true
 }

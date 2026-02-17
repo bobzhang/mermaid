@@ -5,17 +5,6 @@ pub fn trim_owned(s : String) -> String {
 }
 
 ///|
-/// Inserts a node into the map if it does not already exist.
-pub fn ensure_node(
-  nodes : Map[String, @model.MermaidNode],
-  node : @model.MermaidNode,
-) -> Unit {
-  if !nodes.contains(node.id) {
-    nodes[node.id] = node
-  }
-}
-
-///|
 /// Returns true if the text is a plain identifier with no spaces or sign prefixes.
 pub fn is_plain_identifier(text : String) -> Bool {
   text != "" &&
