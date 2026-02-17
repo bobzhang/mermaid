@@ -304,11 +304,6 @@ pub fn boundary_anchor_point(
 }
 
 ///|
-fn boundary_anchor_prefers_direct_base(node : PositionedNode) -> Bool {
-  boundary_polygon_points(node) is Some(_)
-}
-
-///|
 fn point_equals(left : Point, right : Point) -> Bool {
   left.x == right.x && left.y == right.y
 }
@@ -432,7 +427,7 @@ pub fn edge_points_with_minor_lane_offset_with_ports(
     let start_anchor = boundary_anchor_point(
       source, true, true, moving_right, source_port_minor_offset,
     )
-    let start_base = if boundary_anchor_prefers_direct_base(source) {
+    let start_base = if boundary_polygon_points(source) is Some(_) {
       start_anchor
     } else {
       boundary_anchor_point(source, true, true, moving_right, 0)
@@ -440,7 +435,7 @@ pub fn edge_points_with_minor_lane_offset_with_ports(
     let end_anchor = boundary_anchor_point(
       target, true, false, moving_right, target_port_minor_offset,
     )
-    let end_base = if boundary_anchor_prefers_direct_base(target) {
+    let end_base = if boundary_polygon_points(target) is Some(_) {
       end_anchor
     } else {
       boundary_anchor_point(target, true, false, moving_right, 0)
@@ -470,7 +465,7 @@ pub fn edge_points_with_minor_lane_offset_with_ports(
   let start_anchor = boundary_anchor_point(
     source, false, true, moving_down, source_port_minor_offset,
   )
-  let start_base = if boundary_anchor_prefers_direct_base(source) {
+  let start_base = if boundary_polygon_points(source) is Some(_) {
     start_anchor
   } else {
     boundary_anchor_point(source, false, true, moving_down, 0)
@@ -478,7 +473,7 @@ pub fn edge_points_with_minor_lane_offset_with_ports(
   let end_anchor = boundary_anchor_point(
     target, false, false, moving_down, target_port_minor_offset,
   )
-  let end_base = if boundary_anchor_prefers_direct_base(target) {
+  let end_base = if boundary_polygon_points(target) is Some(_) {
     end_anchor
   } else {
     boundary_anchor_point(target, false, false, moving_down, 0)
@@ -514,7 +509,7 @@ pub fn edge_points_for_with_ports(
     let start_anchor = boundary_anchor_point(
       source, true, true, moving_right, source_port_minor_offset,
     )
-    let start_base = if boundary_anchor_prefers_direct_base(source) {
+    let start_base = if boundary_polygon_points(source) is Some(_) {
       start_anchor
     } else {
       boundary_anchor_point(source, true, true, moving_right, 0)
@@ -522,7 +517,7 @@ pub fn edge_points_for_with_ports(
     let end_anchor = boundary_anchor_point(
       target, true, false, moving_right, target_port_minor_offset,
     )
-    let end_base = if boundary_anchor_prefers_direct_base(target) {
+    let end_base = if boundary_polygon_points(target) is Some(_) {
       end_anchor
     } else {
       boundary_anchor_point(target, true, false, moving_right, 0)
@@ -567,7 +562,7 @@ pub fn edge_points_for_with_ports(
     let start_anchor = boundary_anchor_point(
       source, false, true, moving_down, source_port_minor_offset,
     )
-    let start_base = if boundary_anchor_prefers_direct_base(source) {
+    let start_base = if boundary_polygon_points(source) is Some(_) {
       start_anchor
     } else {
       boundary_anchor_point(source, false, true, moving_down, 0)
@@ -575,7 +570,7 @@ pub fn edge_points_for_with_ports(
     let end_anchor = boundary_anchor_point(
       target, false, false, moving_down, target_port_minor_offset,
     )
-    let end_base = if boundary_anchor_prefers_direct_base(target) {
+    let end_base = if boundary_polygon_points(target) is Some(_) {
       end_anchor
     } else {
       boundary_anchor_point(target, false, false, moving_down, 0)
