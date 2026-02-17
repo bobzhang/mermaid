@@ -60,19 +60,20 @@ fn layout_graph_legacy_with_subgraph_redirects(
     base_node_spacing
   }
   let layer_spacing = base_layer_spacing
-  let lane_state = @layout_engine_graph_lane_core.compute_legacy_lane_state(
+  let (
+    state_lane_by_node_id,
+    state_label_y_offset_by_node_id,
+    flow_rank_by_node_id,
+    flow_lane_by_node_id,
+    flow_label_y_offset_by_rank,
+    refined_horizontal_non_state_flow,
+    refined_horizontal_non_state_labeled_cycle_flow,
+    horizontal_cycle_non_state_flow,
+    flow_max_rank,
+  ) = @layout_engine_graph_lane_core.compute_legacy_lane_state(
     graph, nodes_in_order, state_graph, class_or_er_graph, horizontal, compact_fanin,
     enhanced_horizontal_state_flow, flat_state_graph,
   )
-  let state_lane_by_node_id = lane_state.state_lane_by_node_id
-  let state_label_y_offset_by_node_id = lane_state.state_label_y_offset_by_node_id
-  let flow_rank_by_node_id = lane_state.flow_rank_by_node_id
-  let flow_lane_by_node_id = lane_state.flow_lane_by_node_id
-  let flow_label_y_offset_by_rank = lane_state.flow_label_y_offset_by_rank
-  let refined_horizontal_non_state_flow = lane_state.refined_horizontal_non_state_flow
-  let refined_horizontal_non_state_labeled_cycle_flow = lane_state.refined_horizontal_non_state_labeled_cycle_flow
-  let horizontal_cycle_non_state_flow = lane_state.horizontal_cycle_non_state_flow
-  let flow_max_rank = lane_state.flow_max_rank
 
   let (
     positioned_nodes,

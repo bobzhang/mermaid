@@ -1,18 +1,4 @@
 ///|
-/// Computed lane/rank state consumed by node placement and routing.
-pub struct LegacyLaneState {
-  state_lane_by_node_id : Map[String, Int]
-  state_label_y_offset_by_node_id : Map[String, Int]
-  flow_rank_by_node_id : Map[String, Int]
-  flow_lane_by_node_id : Map[String, Int]
-  flow_label_y_offset_by_rank : Map[Int, Int]
-  refined_horizontal_non_state_flow : Bool
-  refined_horizontal_non_state_labeled_cycle_flow : Bool
-  horizontal_cycle_non_state_flow : Bool
-  flow_max_rank : Int
-}
-
-///|
 /// Computes legacy lane and rank assignments for graph layout.
 pub fn compute_legacy_lane_state(
   graph : MermaidGraph,
@@ -23,7 +9,17 @@ pub fn compute_legacy_lane_state(
   compact_fanin : Bool,
   enhanced_horizontal_state_flow : Bool,
   flat_state_graph : Bool,
-) -> LegacyLaneState {
+) -> (
+  Map[String, Int],
+  Map[String, Int],
+  Map[String, Int],
+  Map[String, Int],
+  Map[Int, Int],
+  Bool,
+  Bool,
+  Bool,
+  Int,
+) {
   let state_lane_by_node_id : Map[String, Int] = {}
   let state_label_y_offset_by_node_id : Map[String, Int] = {}
   let flow_rank_by_node_id : Map[String, Int] = {}
@@ -514,15 +510,10 @@ pub fn compute_legacy_lane_state(
     }
   }
 
-  {
-    state_lane_by_node_id,
-    state_label_y_offset_by_node_id,
-    flow_rank_by_node_id,
-    flow_lane_by_node_id,
-    flow_label_y_offset_by_rank,
-    refined_horizontal_non_state_flow,
-    refined_horizontal_non_state_labeled_cycle_flow,
-    horizontal_cycle_non_state_flow,
+  (
+    state_lane_by_node_id, state_label_y_offset_by_node_id, flow_rank_by_node_id,
+    flow_lane_by_node_id, flow_label_y_offset_by_rank, refined_horizontal_non_state_flow,
+    refined_horizontal_non_state_labeled_cycle_flow, horizontal_cycle_non_state_flow,
     flow_max_rank,
-  }
+  )
 }
