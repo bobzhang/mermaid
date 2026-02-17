@@ -515,5 +515,3 @@ fn optimize_rank_order(
     pass += 1
   }
 }
-
-///|

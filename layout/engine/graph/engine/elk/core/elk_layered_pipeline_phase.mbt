@@ -141,5 +141,3 @@ fn collect_visible_resolved_edges(
   }
   resolved_edges
 }
-
-///|

@@ -461,5 +461,3 @@ fn build_rank_node_ids_by_lane(
   }
   rank_node_ids_by_rank
 }
-
-///|
