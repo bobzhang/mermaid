@@ -25,19 +25,6 @@ pub fn is_plain_identifier(text : String) -> Bool {
 }
 
 ///|
-/// Parses a direction token strictly (TD, TB, LR, BT, RL).
-pub fn parse_direction_token_strict(token : String) -> @model.Direction? {
-  match token.to_upper() {
-    "TD" => Some(TD)
-    "TB" => Some(TB)
-    "LR" => Some(LR)
-    "BT" => Some(BT)
-    "RL" => Some(RL)
-    _ => None
-  }
-}
-
-///|
 /// Parses a node token with open/close delimiters into a `MermaidNode`.
 fn parse_delimited_token(
   token : String,

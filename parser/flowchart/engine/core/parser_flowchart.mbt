@@ -1,4 +1,16 @@
 ///|
+fn parse_direction_token_strict(token : String) -> Direction? {
+  match token.to_upper() {
+    "TD" => Some(TD)
+    "TB" => Some(TB)
+    "LR" => Some(LR)
+    "BT" => Some(BT)
+    "RL" => Some(RL)
+    _ => None
+  }
+}
+
+///|
 fn parse_flow_direction(header : String) -> Direction? {
   let normalized = header.replace_all(old="\t", new=" ")
   lexmatch normalized[:] {
@@ -9,8 +21,7 @@ fn parse_flow_direction(header : String) -> Direction? {
       "[[:space:]]+"
       ("[^[:space:]]+" as dir)
       "[[:space:]]*"
-    ) =>
-      @parser_common_engine_core.parse_direction_token_strict(dir.to_string())
+    ) => parse_direction_token_strict(dir.to_string())
     _ => None
   }
 }
@@ -1296,7 +1307,7 @@ pub fn parse_flowchart(
         let token = @parser_common_engine_core.trim_owned(
           (try! line[10:]).to_string(),
         )
-        match @parser_common_engine_core.parse_direction_token_strict(token) {
+        match parse_direction_token_strict(token) {
           Some(parsed_direction) =>
             @parser_common_engine_core.set_current_subgraph_direction(
               subgraph_stack, parsed_direction,

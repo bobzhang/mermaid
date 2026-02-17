@@ -14,8 +14,6 @@ pub fn ensure_node(Map[String, @model.MermaidNode], @model.MermaidNode) -> Unit
 
 pub fn is_plain_identifier(String) -> Bool
 
-pub fn parse_direction_token_strict(String) -> @model.Direction?
-
 pub fn parse_node_token(String) -> @model.MermaidNode
 
 pub fn set_current_subgraph_direction(Array[@model.MermaidSubgraph], @model.Direction) -> Unit

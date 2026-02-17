@@ -52,6 +52,18 @@ fn strip_quotes(s : StringView) -> String {
 }
 
 ///|
+fn parse_direction_token_strict(token : String) -> Direction? {
+  match token.to_upper() {
+    "TD" => Some(TD)
+    "TB" => Some(TB)
+    "LR" => Some(LR)
+    "BT" => Some(BT)
+    "RL" => Some(RL)
+    _ => None
+  }
+}
+
+///|
 fn parse_state_declaration(
   line : String,
   nodes : Map[String, MermaidNode],
@@ -222,7 +234,7 @@ pub fn parse_state_diagram(lines : Array[String]) -> MermaidGraph {
       let token = @parser_common_engine_core.trim_owned(
         (try! line[10:]).to_string(),
       )
-      match @parser_common_engine_core.parse_direction_token_strict(token) {
+      match parse_direction_token_strict(token) {
         Some(parsed_direction) =>
           if composite_stack.length() > 0 {
             @parser_common_engine_core.set_current_subgraph_direction(
