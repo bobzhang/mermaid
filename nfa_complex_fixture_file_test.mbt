@@ -1,10 +1,4 @@
 ///|
-#cfg(target="native")
-async fn nfa_fixture_source(name : String) -> String {
-  @fs.read_file("fixtures/\{name}.mmd").text()
-}
-
-///|
 fn nfa_ascii_options() -> @model.AsciiRenderOptions {
   { use_ascii: true, padding_x: 5, padding_y: 5, box_border_padding: 1 }
 }
@@ -49,7 +43,7 @@ fn assert_render_smoke(source : String, token : String) -> Unit raise {
 ///|
 #cfg(target="native")
 async test "NFA fixture 004 parses and renders expected structure" {
-  let source = nfa_fixture_source("nfa_004")
+  let source = @fs.read_file("fixtures/nfa_004.mmd").text()
   let graph = @parser_header_core.parse_mermaid(source)
 
   assert_eq(direction_name(graph.direction), "LR")
@@ -69,7 +63,7 @@ async test "NFA fixture 004 parses and renders expected structure" {
 ///|
 #cfg(target="native")
 async test "NFA fixture 005 parses and renders expected structure" {
-  let source = nfa_fixture_source("nfa_005")
+  let source = @fs.read_file("fixtures/nfa_005.mmd").text()
   let graph = @parser_header_core.parse_mermaid(source)
 
   assert_eq(direction_name(graph.direction), "LR")
@@ -90,7 +84,7 @@ async test "NFA fixture 005 parses and renders expected structure" {
 ///|
 #cfg(target="native")
 async test "NFA fixture 006 parses branch-loop-merge topology" {
-  let source = nfa_fixture_source("nfa_006")
+  let source = @fs.read_file("fixtures/nfa_006.mmd").text()
   let graph = @parser_header_core.parse_mermaid(source)
 
   assert_eq(direction_name(graph.direction), "LR")
@@ -113,7 +107,7 @@ async test "NFA fixture 006 parses branch-loop-merge topology" {
 ///|
 #cfg(target="native")
 async test "NFA fixture 007 parses parallel-source labels and epsilon exits" {
-  let source = nfa_fixture_source("nfa_007")
+  let source = @fs.read_file("fixtures/nfa_007.mmd").text()
   let graph = @parser_header_core.parse_mermaid(source)
 
   assert_eq(direction_name(graph.direction), "LR")
@@ -137,7 +131,7 @@ async test "NFA fixture 007 parses parallel-source labels and epsilon exits" {
 ///|
 #cfg(target="native")
 async test "NFA fixture 008 parses dual branches with synchronized join" {
-  let source = nfa_fixture_source("nfa_008")
+  let source = @fs.read_file("fixtures/nfa_008.mmd").text()
   let graph = @parser_header_core.parse_mermaid(source)
 
   assert_eq(direction_name(graph.direction), "LR")
@@ -164,7 +158,7 @@ async test "NFA fixture 008 parses dual branches with synchronized join" {
 ///|
 #cfg(target="native")
 async test "NFA fixture 009 parses multi-accept converging machine" {
-  let source = nfa_fixture_source("nfa_009")
+  let source = @fs.read_file("fixtures/nfa_009.mmd").text()
   let graph = @parser_header_core.parse_mermaid(source)
 
   assert_eq(direction_name(graph.direction), "LR")
@@ -200,7 +194,7 @@ async test "All NFA fixtures parse and render smoke" {
     "nfa_008", "nfa_009",
   ]
   for name in fixture_names {
-    let source = nfa_fixture_source(name)
+    let source = @fs.read_file("fixtures/\{name}.mmd").text()
     if source.trim().to_string() == "" {
       continue
     }
