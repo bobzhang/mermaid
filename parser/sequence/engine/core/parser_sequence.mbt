@@ -293,9 +293,8 @@ pub fn parse_sequence_diagram(lines : Array[String]) -> MermaidGraph {
       continue
     }
 
-    let lower_line = line.to_lower()
-    if lower_line.has_prefix("activate ") ||
-      lower_line.has_prefix("deactivate ") {
+    if line[:] lexmatch? "(?i:activate) .*" ||
+      line[:] lexmatch? "(?i:deactivate) .*" {
       continue
     }
 
@@ -347,7 +346,7 @@ pub fn parse_sequence_diagram(lines : Array[String]) -> MermaidGraph {
       continue
     }
 
-    if lower_line.has_prefix("autonumber") {
+    if line[:] lexmatch? "(?i:autonumber).*" {
       continue
     }
 
