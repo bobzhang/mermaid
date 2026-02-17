@@ -23,9 +23,6 @@ pub fn layout_state_nodes_in_definition_order(@model.MermaidGraph) -> Array[@mod
 // Errors
 
 // Types and methods
-type LayoutStateEdgeDir
-pub impl Eq for LayoutStateEdgeDir
-
 pub(all) struct LayoutStateGridCoord {
   x : Int
   y : Int

@@ -6,7 +6,7 @@ pub(all) struct LayoutStateGridCoord {
 } derive(Eq, Show)
 
 ///|
-struct LayoutStateEdgeDir {
+priv struct LayoutStateEdgeDir {
   x : Int
   y : Int
 } derive(Eq)
