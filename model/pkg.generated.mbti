@@ -10,7 +10,6 @@ pub(all) suberror MermaidError {
 }
 pub impl Eq for MermaidError
 pub impl Show for MermaidError
-pub impl ToJson for MermaidError
 
 // Types and methods
 pub(all) struct AsciiRenderOptions {
@@ -22,7 +21,6 @@ pub(all) struct AsciiRenderOptions {
 pub fn AsciiRenderOptions::default() -> Self
 pub impl Eq for AsciiRenderOptions
 pub impl Show for AsciiRenderOptions
-pub impl ToJson for AsciiRenderOptions
 
 pub(all) struct DiagramColors {
   bg : String
@@ -36,7 +34,6 @@ pub(all) struct DiagramColors {
 pub fn DiagramColors::default() -> Self
 pub impl Eq for DiagramColors
 pub impl Show for DiagramColors
-pub impl ToJson for DiagramColors
 
 pub(all) enum DiagramKind {
   Flowchart
@@ -47,7 +44,6 @@ pub(all) enum DiagramKind {
 }
 pub impl Eq for DiagramKind
 pub impl Show for DiagramKind
-pub impl ToJson for DiagramKind
 
 pub(all) enum Direction {
   TD
@@ -58,7 +54,6 @@ pub(all) enum Direction {
 }
 pub impl Eq for Direction
 pub impl Show for Direction
-pub impl ToJson for Direction
 
 pub(all) enum EdgeStyle {
   Solid
@@ -67,7 +62,6 @@ pub(all) enum EdgeStyle {
 }
 pub impl Eq for EdgeStyle
 pub impl Show for EdgeStyle
-pub impl ToJson for EdgeStyle
 
 pub(all) enum LayoutEngine {
   Legacy
@@ -77,7 +71,6 @@ pub(all) enum LayoutEngine {
 }
 pub impl Eq for LayoutEngine
 pub impl Show for LayoutEngine
-pub impl ToJson for LayoutEngine
 
 pub(all) struct MermaidEdge {
   source : String
@@ -90,7 +83,6 @@ pub(all) struct MermaidEdge {
 }
 pub impl Eq for MermaidEdge
 pub impl Show for MermaidEdge
-pub impl ToJson for MermaidEdge
 
 pub(all) struct MermaidGraph {
   diagram_kind : DiagramKind
@@ -109,7 +101,6 @@ pub(all) struct MermaidGraph {
 }
 pub impl Eq for MermaidGraph
 pub impl Show for MermaidGraph
-pub impl ToJson for MermaidGraph
 
 pub(all) struct MermaidNode {
   id : String
@@ -118,7 +109,6 @@ pub(all) struct MermaidNode {
 }
 pub impl Eq for MermaidNode
 pub impl Show for MermaidNode
-pub impl ToJson for MermaidNode
 
 pub(all) struct MermaidSubgraph {
   id : String
@@ -129,7 +119,6 @@ pub(all) struct MermaidSubgraph {
 }
 pub impl Eq for MermaidSubgraph
 pub impl Show for MermaidSubgraph
-pub impl ToJson for MermaidSubgraph
 
 pub(all) enum NodeShape {
   Rectangle
@@ -152,7 +141,6 @@ pub(all) enum NodeShape {
 }
 pub impl Eq for NodeShape
 pub impl Show for NodeShape
-pub impl ToJson for NodeShape
 
 pub(all) struct Point {
   x : Int
@@ -160,7 +148,6 @@ pub(all) struct Point {
 }
 pub impl Eq for Point
 pub impl Show for Point
-pub impl ToJson for Point
 
 pub(all) struct PositionedEdge {
   source : String
@@ -175,7 +162,6 @@ pub(all) struct PositionedEdge {
 }
 pub impl Eq for PositionedEdge
 pub impl Show for PositionedEdge
-pub impl ToJson for PositionedEdge
 
 pub(all) struct PositionedGraph {
   width : Int
@@ -190,7 +176,6 @@ pub(all) struct PositionedGraph {
 }
 pub impl Eq for PositionedGraph
 pub impl Show for PositionedGraph
-pub impl ToJson for PositionedGraph
 
 pub(all) struct PositionedGroup {
   id : String
@@ -203,7 +188,6 @@ pub(all) struct PositionedGroup {
 }
 pub impl Eq for PositionedGroup
 pub impl Show for PositionedGroup
-pub impl ToJson for PositionedGroup
 
 pub(all) struct PositionedNode {
   id : String
@@ -217,7 +201,6 @@ pub(all) struct PositionedNode {
 }
 pub impl Eq for PositionedNode
 pub impl Show for PositionedNode
-pub impl ToJson for PositionedNode
 
 pub(all) struct PositionedSequenceActivation {
   actor_id : String
@@ -228,7 +211,6 @@ pub(all) struct PositionedSequenceActivation {
 }
 pub impl Eq for PositionedSequenceActivation
 pub impl Show for PositionedSequenceActivation
-pub impl ToJson for PositionedSequenceActivation
 
 pub(all) struct PositionedSequenceBlock {
   block_type : SequenceBlockType
@@ -241,7 +223,6 @@ pub(all) struct PositionedSequenceBlock {
 }
 pub impl Eq for PositionedSequenceBlock
 pub impl Show for PositionedSequenceBlock
-pub impl ToJson for PositionedSequenceBlock
 
 pub(all) struct PositionedSequenceBlockDivider {
   y : Int
@@ -249,7 +230,6 @@ pub(all) struct PositionedSequenceBlockDivider {
 }
 pub impl Eq for PositionedSequenceBlockDivider
 pub impl Show for PositionedSequenceBlockDivider
-pub impl ToJson for PositionedSequenceBlockDivider
 
 pub(all) struct PositionedSequenceLifeline {
   actor_id : String
@@ -259,7 +239,6 @@ pub(all) struct PositionedSequenceLifeline {
 }
 pub impl Eq for PositionedSequenceLifeline
 pub impl Show for PositionedSequenceLifeline
-pub impl ToJson for PositionedSequenceLifeline
 
 pub(all) struct PositionedSequenceNote {
   text : String
@@ -270,7 +249,6 @@ pub(all) struct PositionedSequenceNote {
 }
 pub impl Eq for PositionedSequenceNote
 pub impl Show for PositionedSequenceNote
-pub impl ToJson for PositionedSequenceNote
 
 pub(all) struct RenderOptions {
   bg : String?
@@ -290,7 +268,6 @@ pub(all) struct RenderOptions {
 pub fn RenderOptions::default() -> Self
 pub impl Eq for RenderOptions
 pub impl Show for RenderOptions
-pub impl ToJson for RenderOptions
 
 pub(all) struct SequenceActivationCommand {
   actor_id : String
@@ -299,7 +276,6 @@ pub(all) struct SequenceActivationCommand {
 }
 pub impl Eq for SequenceActivationCommand
 pub impl Show for SequenceActivationCommand
-pub impl ToJson for SequenceActivationCommand
 
 pub(all) struct SequenceBlock {
   block_type : SequenceBlockType
@@ -310,7 +286,6 @@ pub(all) struct SequenceBlock {
 }
 pub impl Eq for SequenceBlock
 pub impl Show for SequenceBlock
-pub impl ToJson for SequenceBlock
 
 pub(all) struct SequenceBlockDivider {
   index : Int
@@ -318,7 +293,6 @@ pub(all) struct SequenceBlockDivider {
 }
 pub impl Eq for SequenceBlockDivider
 pub impl Show for SequenceBlockDivider
-pub impl ToJson for SequenceBlockDivider
 
 pub(all) enum SequenceBlockType {
   Loop
@@ -331,7 +305,6 @@ pub(all) enum SequenceBlockType {
 }
 pub impl Eq for SequenceBlockType
 pub impl Show for SequenceBlockType
-pub impl ToJson for SequenceBlockType
 
 pub(all) struct SequenceNote {
   actor_ids : Array[String]
@@ -341,7 +314,6 @@ pub(all) struct SequenceNote {
 }
 pub impl Eq for SequenceNote
 pub impl Show for SequenceNote
-pub impl ToJson for SequenceNote
 
 pub(all) enum SequenceNotePosition {
   Left
@@ -350,7 +322,6 @@ pub(all) enum SequenceNotePosition {
 }
 pub impl Eq for SequenceNotePosition
 pub impl Show for SequenceNotePosition
-pub impl ToJson for SequenceNotePosition
 
 pub(all) enum SequenceParticipantKind {
   Participant
@@ -358,7 +329,6 @@ pub(all) enum SequenceParticipantKind {
 }
 pub impl Eq for SequenceParticipantKind
 pub impl Show for SequenceParticipantKind
-pub impl ToJson for SequenceParticipantKind
 
 // Type aliases
 
