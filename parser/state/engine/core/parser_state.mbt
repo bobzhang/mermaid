@@ -137,10 +137,10 @@ fn parse_state_declaration(
   line : String,
   nodes : Map[String, MermaidNode],
   composite_stack : Array[MermaidSubgraph],
-) -> Unit {
+) -> Bool {
   let rest = lexmatch line[:] {
     ("state ", state_rest) => state_rest.trim()
-    _ => return
+    _ => return false
   }
   lexmatch rest {
     (raw_label, " as ", id_part) => {
@@ -167,6 +167,7 @@ fn parse_state_declaration(
       append_nodes_to_current_subgraph(composite_stack, [node.id])
     }
   }
+  true
 }
 
 ///|
@@ -324,8 +325,7 @@ pub fn parse_state_diagram(lines : Array[String]) -> MermaidGraph {
       continue
     }
 
-    if line.has_prefix("state ") {
-      parse_state_declaration(line, nodes, composite_stack)
+    if parse_state_declaration(line, nodes, composite_stack) {
       continue
     }
     if line == "{" {
