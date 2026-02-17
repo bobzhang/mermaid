@@ -595,11 +595,6 @@ fn find_top_level_edge_operator(
 }
 
 ///|
-fn find_earliest_edge_operator(line : String) -> FoundEdgeOp? {
-  find_top_level_edge_operator(line, edge_operators())
-}
-
-///|
 fn mid_label_left_marker(edge_symbol : String) -> String? {
   match edge_symbol {
     "<==>" => Some("<==")
@@ -1258,7 +1253,7 @@ fn parse_flow_line(
     None => ()
   }
 
-  match find_earliest_edge_operator(line) {
+  match find_top_level_edge_operator(line, edge_operators()) {
     Some(found) => {
       let touched_node_ids : Array[String] = []
       let left_segment = @parser_common_engine_core.trim_owned(
@@ -1282,7 +1277,8 @@ fn parse_flow_line(
       let mut done = false
       while !done {
         let (label, rhs_without_label) = parse_label_and_target(rhs)
-        match find_earliest_edge_operator(rhs_without_label) {
+        match
+          find_top_level_edge_operator(rhs_without_label, edge_operators()) {
           Some(next_found) => {
             let target_segment = @parser_common_engine_core.trim_owned(
               (try! rhs_without_label[:next_found.index]).to_string(),
