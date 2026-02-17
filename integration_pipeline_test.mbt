@@ -5,42 +5,10 @@ fn snapshot_svg(it : @test.Test, filename : String, svg : String) -> Unit raise 
 }
 
 ///|
-fn integration_input_graph_lr_abc_chain() -> String {
-  (
-    #|graph LR
-    #|A --> B --> C
-  )
-}
-
-///|
-fn integration_input_graph_td_abc_chain() -> String {
-  (
-    #|graph TD
-    #|A --> B --> C
-  )
-}
-
-///|
 fn integration_input_graph_td_ab() -> String {
   (
     #|graph TD
     #|A --> B
-  )
-}
-
-///|
-fn integration_input_graph_td_start_end() -> String {
-  (
-    #|graph TD
-    #|A[Start] --> B[End]
-  )
-}
-
-///|
-fn integration_input_graph_td_yes_label() -> String {
-  (
-    #|graph TD
-    #|A -->|Yes| B
   )
 }
 
@@ -53,28 +21,18 @@ fn integration_input_graph_lr_ab() -> String {
 }
 
 ///|
-fn integration_input_state_start_ready() -> String {
-  (
-    #|stateDiagram-v2
-    #|[*] --> Ready
-  )
-}
-
-///|
-fn integration_input_state_done_end() -> String {
-  (
-    #|stateDiagram-v2
-    #|Done --> [*]
-  )
-}
-
-///|
 test "Pipeline dimensions honor direction" (it : @test.Test) {
   let lr_svg = @beautiful_mermaid.render_mermaid(
-    integration_input_graph_lr_abc_chain(),
+    (
+      #|graph LR
+      #|A --> B --> C
+    ),
   )
   let td_svg = @beautiful_mermaid.render_mermaid(
-    integration_input_graph_td_abc_chain(),
+    (
+      #|graph TD
+      #|A --> B --> C
+    ),
   )
 
   snapshot_svg(it, "integration_pipeline_direction_lr.svg", lr_svg)
@@ -219,7 +177,10 @@ test "SVG dimensions expand with padding option" (it : @test.Test) {
 ///|
 test "SVG renders labeled nodes for simple flow" (it : @test.Test) {
   let svg = @beautiful_mermaid.render_mermaid(
-    integration_input_graph_td_start_end(),
+    (
+      #|graph TD
+      #|A[Start] --> B[End]
+    ),
   )
   snapshot_svg(it, "integration_flowchart_labeled_nodes.svg", svg)
   assert_true(svg.contains(">Start</text>"))
@@ -229,7 +190,10 @@ test "SVG renders labeled nodes for simple flow" (it : @test.Test) {
 ///|
 test "SVG renders edge labels for simple flow" (it : @test.Test) {
   let svg = @beautiful_mermaid.render_mermaid(
-    integration_input_graph_td_yes_label(),
+    (
+      #|graph TD
+      #|A -->|Yes| B
+    ),
   )
   snapshot_svg(it, "integration_flowchart_edge_label.svg", svg)
   assert_true(svg.contains(">Yes</text>"))
@@ -854,7 +818,10 @@ test "SVG renders basic state diagram labels" (it : @test.Test) {
 ///|
 test "SVG renders state start pseudostate as filled circle" (it : @test.Test) {
   let svg = @beautiful_mermaid.render_mermaid(
-    integration_input_state_start_ready(),
+    (
+      #|stateDiagram-v2
+      #|[*] --> Ready
+    ),
   )
   snapshot_svg(it, "integration_state_start_pseudostate.svg", svg)
   assert_true(svg.contains("stroke=\"none\""))
@@ -864,7 +831,10 @@ test "SVG renders state start pseudostate as filled circle" (it : @test.Test) {
 ///|
 test "SVG renders state end pseudostate as bullseye" (it : @test.Test) {
   let svg = @beautiful_mermaid.render_mermaid(
-    integration_input_state_done_end(),
+    (
+      #|stateDiagram-v2
+      #|Done --> [*]
+    ),
   )
   snapshot_svg(it, "integration_state_end_pseudostate.svg", svg)
   assert_true(ts_count_occurrences(svg, "<circle") >= 2)
