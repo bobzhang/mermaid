@@ -1,4 +1,5 @@
 import {
+  "bobzhang/beautiful_mermaid/layout/engine/graph/finalize/core" @layout_engine_graph_finalize_core,
   "bobzhang/beautiful_mermaid/layout/engine/graph/group/core" @layout_engine_graph_group_core,
   "bobzhang/beautiful_mermaid/layout/engine/graph/internal/core" @layout_engine_graph_internal_core,
   "bobzhang/beautiful_mermaid/layout/engine/graph/lane/core" @layout_engine_graph_lane_core,

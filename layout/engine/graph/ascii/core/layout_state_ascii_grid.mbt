@@ -858,7 +858,7 @@ pub fn layout_flat_state_graph_for_ascii_grid(
     }
   }
 
-  @layout_engine_graph_internal_core.finalize_positioned_graph(
+  @layout_engine_graph_finalize_core.finalize_positioned_graph(
     padding, padding, padding, positioned_nodes, positioned_edges, positioned_groups,
   )
 }

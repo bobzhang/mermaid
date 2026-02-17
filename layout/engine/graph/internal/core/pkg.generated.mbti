@@ -6,8 +6,6 @@ import {
 }
 
 // Values
-pub fn finalize_positioned_graph(Int, Int, Int, Array[@model.PositionedNode], Array[@model.PositionedEdge], Array[@model.PositionedGroup]) -> @model.PositionedGraph
-
 pub fn is_class_or_er_graph(@model.MermaidGraph) -> Bool
 
 pub fn is_state_graph(@model.MermaidGraph) -> Bool

@@ -23,7 +23,7 @@ fn test_group(
 
 ///|
 test "finalize positioned graph applies padding shift to all artifacts" {
-  let positioned = @layout_engine_graph_internal_core.finalize_positioned_graph(
+  let positioned = @core.finalize_positioned_graph(
     10,
     20,
     20,
@@ -55,16 +55,9 @@ test "finalize positioned graph applies padding shift to all artifacts" {
 
 ///|
 test "finalize positioned graph includes nested group bounds" {
-  let positioned = @layout_engine_graph_internal_core.finalize_positioned_graph(
-    8,
-    8,
-    8,
-    [],
-    [],
-    [
-      test_group("Parent", 30, 30, 10, 10, [test_group("Child", 5, 6, 4, 5, [])]),
-    ],
-  )
+  let positioned = @core.finalize_positioned_graph(8, 8, 8, [], [], [
+    test_group("Parent", 30, 30, 10, 10, [test_group("Child", 5, 6, 4, 5, [])]),
+  ])
 
   assert_eq(positioned.width, 51)
   assert_eq(positioned.height, 50)
