@@ -48,28 +48,18 @@ test "legacy post phase routes edges and finalizes output bounds" {
   let graph = test_graph(LR, [test_node("A"), test_node("B")], [
     test_edge("A", "B"),
   ])
-  let setup_state = @layout_engine_graph_legacy_setup_core.build_legacy_layout_setup({
-      graph,
-      options: @model.RenderOptions::default(),
-      use_subgraph_redirects: true,
-      compact_fanin: false,
-    },
-  )
-  let placement_state = @layout_engine_graph_legacy_placement_core.run_legacy_placement_phase({
-      graph,
-      setup_state,
-      use_subgraph_redirects: true,
-      compact_fanin: false,
-    },
-  )
-  let positioned = finalize_legacy_layout_from_placement({
+  let setup_state = @layout_engine_graph_legacy_setup_core.build_legacy_layout_setup(
     graph,
-    setup_state,
-    placement_state,
-    use_subgraph_redirects: true,
-    enable_target_boundary_ports: false,
-    preserve_assigned_endpoint_ports: false,
-  })
+    @model.RenderOptions::default(),
+    true,
+    false,
+  )
+  let placement_state = @layout_engine_graph_legacy_placement_core.run_legacy_placement_phase(
+    graph, setup_state, true, false,
+  )
+  let positioned = finalize_legacy_layout_from_placement(
+    graph, setup_state, placement_state, true, false, false,
+  )
 
   assert_eq(positioned.nodes.length(), 2)
   assert_eq(positioned.edges.length(), 1)

@@ -1,22 +1,11 @@
 ///|
-/// Input required to run the legacy placement phase.
-pub(all) struct LegacyPlacementPhaseRequest {
-  graph : MermaidGraph
-  setup_state : LegacyLayoutSetupState
-  use_subgraph_redirects : Bool
-  compact_fanin : Bool
-}
-
-///|
 /// Runs the legacy placement phase from setup state.
 pub fn run_legacy_placement_phase(
-  request : LegacyPlacementPhaseRequest,
+  graph : MermaidGraph,
+  setup_state : LegacyLayoutSetupState,
+  use_subgraph_redirects : Bool,
+  compact_fanin : Bool,
 ) -> LegacyPlacementState {
-  let graph = request.graph
-  let setup_state = request.setup_state
-  let use_subgraph_redirects = request.use_subgraph_redirects
-  let compact_fanin = request.compact_fanin
-
   let subgraph_entry_by_id = setup_state.subgraph_entry_by_id
   let subgraph_exit_by_id = setup_state.subgraph_exit_by_id
   let nodes_in_order = setup_state.nodes_in_order

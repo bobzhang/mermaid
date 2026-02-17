@@ -1,13 +1,4 @@
 ///|
-/// Input required to derive legacy graph layout setup state.
-pub(all) struct LegacyLayoutSetupRequest {
-  graph : MermaidGraph
-  options : RenderOptions
-  use_subgraph_redirects : Bool
-  compact_fanin : Bool
-}
-
-///|
 /// Derived setup state consumed by legacy placement, grouping, and routing phases.
 pub(all) struct LegacyLayoutSetupState {
   subgraph_entry_by_id : Map[String, String]
@@ -28,12 +19,11 @@ pub(all) struct LegacyLayoutSetupState {
 ///|
 /// Computes shared setup state for the legacy graph layout pipeline.
 pub fn build_legacy_layout_setup(
-  request : LegacyLayoutSetupRequest,
+  graph : MermaidGraph,
+  options : RenderOptions,
+  use_subgraph_redirects : Bool,
+  compact_fanin : Bool,
 ) -> LegacyLayoutSetupState {
-  let graph = request.graph
-  let options = request.options
-  let compact_fanin = request.compact_fanin
-
   let base_padding = @layout_engine_graph_internal_core.resolve_padding(options)
   let base_node_spacing = @layout_engine_graph_internal_core.resolve_node_spacing(
     options,
@@ -57,7 +47,7 @@ pub fn build_legacy_layout_setup(
 
   let prep_state = @layout_engine_graph_prep_core.prepare_graph_inputs({
     graph,
-    use_subgraph_redirects: request.use_subgraph_redirects,
+    use_subgraph_redirects,
   })
   let subgraph_entry_by_id = prep_state.subgraph_entry_by_id
   let subgraph_exit_by_id = prep_state.subgraph_exit_by_id

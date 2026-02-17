@@ -1,26 +1,13 @@
 ///|
-/// Input required to run legacy post-placement phases.
-pub(all) struct LegacyPostPlacementRequest {
-  graph : MermaidGraph
-  setup_state : LegacyLayoutSetupState
-  placement_state : LegacyPlacementState
-  use_subgraph_redirects : Bool
-  enable_target_boundary_ports : Bool
-  preserve_assigned_endpoint_ports : Bool
-}
-
-///|
 /// Runs legacy post-placement phases: subgraph overrides, grouping, routing, and finalization.
 pub fn finalize_legacy_layout_from_placement(
-  request : LegacyPostPlacementRequest,
+  graph : MermaidGraph,
+  setup_state : LegacyLayoutSetupState,
+  placement_state : LegacyPlacementState,
+  use_subgraph_redirects : Bool,
+  enable_target_boundary_ports : Bool,
+  preserve_assigned_endpoint_ports : Bool,
 ) -> PositionedGraph {
-  let graph = request.graph
-  let setup_state = request.setup_state
-  let placement_state = request.placement_state
-  let use_subgraph_redirects = request.use_subgraph_redirects
-  let enable_target_boundary_ports = request.enable_target_boundary_ports
-  let preserve_assigned_endpoint_ports = request.preserve_assigned_endpoint_ports
-
   let subgraph_entry_by_id = setup_state.subgraph_entry_by_id
   let subgraph_exit_by_id = setup_state.subgraph_exit_by_id
   let padding = setup_state.padding

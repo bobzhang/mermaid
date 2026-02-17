@@ -48,12 +48,12 @@ test "legacy setup derives flow defaults and lane state for a simple graph" {
   let graph = test_graph(LR, [test_node("A"), test_node("B")], [
     test_edge("A", "B"),
   ])
-  let setup_state = build_legacy_layout_setup({
+  let setup_state = build_legacy_layout_setup(
     graph,
-    options: @model.RenderOptions::default(),
-    use_subgraph_redirects: true,
-    compact_fanin: false,
-  })
+    @model.RenderOptions::default(),
+    true,
+    false,
+  )
 
   assert_eq(setup_state.padding, 40)
   assert_eq(setup_state.node_spacing, 130)

@@ -6,18 +6,11 @@ import {
 }
 
 // Values
-pub fn build_legacy_layout_setup(LegacyLayoutSetupRequest) -> LegacyLayoutSetupState
+pub fn build_legacy_layout_setup(@model.MermaidGraph, @model.RenderOptions, Bool, Bool) -> LegacyLayoutSetupState
 
 // Errors
 
 // Types and methods
-pub(all) struct LegacyLayoutSetupRequest {
-  graph : @model.MermaidGraph
-  options : @model.RenderOptions
-  use_subgraph_redirects : Bool
-  compact_fanin : Bool
-}
-
 pub(all) struct LegacyLayoutSetupState {
   subgraph_entry_by_id : Map[String, String]
   subgraph_exit_by_id : Map[String, String]

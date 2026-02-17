@@ -6,17 +6,11 @@ import {
 }
 
 // Values
-pub fn run_legacy_placement_phase(LegacyPlacementPhaseRequest) -> @bobzhang/beautiful_mermaid/layout/engine/graph/placement/core.LegacyPlacementState
+pub fn run_legacy_placement_phase(@model.MermaidGraph, @bobzhang/beautiful_mermaid/layout/engine/graph/legacy/setup/core.LegacyLayoutSetupState, Bool, Bool) -> @bobzhang/beautiful_mermaid/layout/engine/graph/placement/core.LegacyPlacementState
 
 // Errors
 
 // Types and methods
-pub(all) struct LegacyPlacementPhaseRequest {
-  graph : @model.MermaidGraph
-  setup_state : @bobzhang/beautiful_mermaid/layout/engine/graph/legacy/setup/core.LegacyLayoutSetupState
-  use_subgraph_redirects : Bool
-  compact_fanin : Bool
-}
 
 // Type aliases
 

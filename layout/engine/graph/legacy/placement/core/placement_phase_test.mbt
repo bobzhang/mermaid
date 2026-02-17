@@ -48,19 +48,15 @@ test "legacy placement phase positions nodes from setup state" {
   let graph = test_graph(LR, [test_node("A"), test_node("B")], [
     test_edge("A", "B"),
   ])
-  let setup_state = @layout_engine_graph_legacy_setup_core.build_legacy_layout_setup({
-      graph,
-      options: @model.RenderOptions::default(),
-      use_subgraph_redirects: true,
-      compact_fanin: false,
-    },
-  )
-  let placement_state = run_legacy_placement_phase({
+  let setup_state = @layout_engine_graph_legacy_setup_core.build_legacy_layout_setup(
     graph,
-    setup_state,
-    use_subgraph_redirects: true,
-    compact_fanin: false,
-  })
+    @model.RenderOptions::default(),
+    true,
+    false,
+  )
+  let placement_state = run_legacy_placement_phase(
+    graph, setup_state, true, false,
+  )
 
   assert_eq(placement_state.positioned_nodes.length(), 2)
   let ax = placement_state.positioned_by_id["A"].x
