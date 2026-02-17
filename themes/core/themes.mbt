@@ -193,15 +193,19 @@ fn normalize_theme_name(name : String) -> String {
     collapsed = collapsed.replace_all(old="--", new="-")
   }
 
-  let mut trimmed = collapsed
-  while trimmed.has_prefix("-") && trimmed.length() > 0 {
-    trimmed = (try! trimmed[1:]).to_string()
+  let mut start = 0
+  let mut end = collapsed.length()
+  while start < end && collapsed[start] == '-' {
+    start += 1
   }
-  while trimmed.has_suffix("-") && trimmed.length() > 0 {
-    trimmed = (try! trimmed[:trimmed.length() - 1]).to_string()
+  while end > start && collapsed[end - 1] == '-' {
+    end -= 1
   }
-
-  trimmed
+  if start == end {
+    ""
+  } else {
+    (try! collapsed[start:end]).to_string()
+  }
 }
 
 ///|
