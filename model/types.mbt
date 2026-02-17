@@ -13,7 +13,7 @@ pub(all) enum Direction {
   LR
   BT
   RL
-} derive(Eq, Show)
+} derive(Eq)
 
 ///|
 /// High-level Mermaid diagram category from the parsed header.
@@ -45,7 +45,7 @@ pub(all) enum NodeShape {
   ClassEntity
   ErEntity
   SequenceParticipant
-} derive(Eq, Show)
+} derive(Eq)
 
 ///|
 /// Edge stroke style.
@@ -53,7 +53,7 @@ pub(all) enum EdgeStyle {
   Solid
   Dotted
   Thick
-} derive(Eq, Show)
+} derive(Eq)
 
 ///|
 /// Parsed logical node before layout.
@@ -270,7 +270,7 @@ pub(all) struct PositionedNode {
   width : Int
   height : Int
   inline_style : Map[String, String]?
-} derive(Eq, Show)
+} derive(Eq)
 
 ///|
 /// Edge after layout with routed polyline points and optional label anchor.
@@ -284,7 +284,7 @@ pub(all) struct PositionedEdge {
   relation_operator : String?
   points : Array[Point]
   label_position : Point?
-} derive(Eq, Show)
+} derive(Eq)
 
 ///|
 /// Positioned subgraph/composite group bounds and nested children.

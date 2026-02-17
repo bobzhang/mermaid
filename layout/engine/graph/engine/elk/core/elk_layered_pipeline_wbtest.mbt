@@ -37,13 +37,13 @@ fn assert_mermaid_graph_equivalent(
   right : @model.MermaidGraph,
 ) -> Unit raise {
   assert_true(diagram_kind_equal(left.diagram_kind, right.diagram_kind))
-  assert_eq(left.direction, right.direction)
+  assert_true(left.direction == right.direction)
   assert_eq(left.nodes.length(), right.nodes.length())
   for node_id, node in right.nodes {
     let left_node = left.nodes[node_id]
     assert_eq(left_node.id, node.id)
     assert_eq(left_node.label, node.label)
-    assert_eq(left_node.shape, node.shape)
+    assert_true(left_node.shape == node.shape)
   }
   assert_eq(left.edges.length(), right.edges.length())
   for i in 0..<left.edges.length() {
@@ -52,7 +52,7 @@ fn assert_mermaid_graph_equivalent(
     assert_eq(left_edge.source, right_edge.source)
     assert_eq(left_edge.target, right_edge.target)
     assert_eq(left_edge.label, right_edge.label)
-    assert_eq(left_edge.style, right_edge.style)
+    assert_true(left_edge.style == right_edge.style)
     assert_eq(left_edge.has_arrow_start, right_edge.has_arrow_start)
     assert_eq(left_edge.has_arrow_end, right_edge.has_arrow_end)
     assert_eq(left_edge.relation_operator, right_edge.relation_operator)

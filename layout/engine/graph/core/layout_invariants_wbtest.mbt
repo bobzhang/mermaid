@@ -369,8 +369,8 @@ test "Layout engine dagre-parity mode preserves legacy output in scaffold phase"
     layout_engine: Some(DagreParity),
   })
 
-  assert_eq(parity_positioned.nodes, legacy_positioned.nodes)
-  assert_eq(parity_positioned.edges, legacy_positioned.edges)
+  assert_true(parity_positioned.nodes == legacy_positioned.nodes)
+  assert_true(parity_positioned.edges == legacy_positioned.edges)
   assert_eq(parity_positioned.groups, legacy_positioned.groups)
 }
 
@@ -393,7 +393,7 @@ test "Layout reciprocal edges avoid exact reverse overlap in both engines" {
   let parity_ab = find_positioned_edge(parity_positioned.edges, "A", "B")
   let parity_ba = find_positioned_edge(parity_positioned.edges, "B", "A")
 
-  assert_eq(parity_positioned.nodes, legacy_positioned.nodes)
+  assert_true(parity_positioned.nodes == legacy_positioned.nodes)
   assert_eq(parity_positioned.groups, legacy_positioned.groups)
   assert_true(!points_form_exact_reverse(legacy_ab.points, legacy_ba.points))
   assert_true(!points_form_exact_reverse(parity_ab.points, parity_ba.points))

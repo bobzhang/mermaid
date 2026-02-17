@@ -2,7 +2,7 @@
 test "Parser parity gate cases" {
   for case_data in gate_cases() {
     let graph = @parser_header_core.parse_mermaid(case_data.input)
-    assert_eq(graph.direction.to_string(), case_data.direction)
+    assert_eq(direction_name(graph.direction), case_data.direction)
     assert_eq(graph.nodes.length(), case_data.expected_node_count)
     assert_eq(graph.edges.length(), case_data.expected_edge_count)
   }
@@ -41,7 +41,7 @@ test "Parser ignores leading yaml frontmatter" {
       #|A --> B
     ),
   )
-  assert_eq(graph.direction.to_string(), "TD")
+  assert_eq(direction_name(graph.direction), "TD")
   assert_eq(graph.edges.length(), 1)
 }
 
@@ -59,7 +59,7 @@ test "Parser ignores comments before yaml frontmatter" {
       #|A --> B
     ),
   )
-  assert_eq(graph.direction.to_string(), "LR")
+  assert_eq(direction_name(graph.direction), "LR")
   assert_eq(graph.edges.length(), 1)
 }
 
@@ -75,7 +75,7 @@ test "Parser accepts all supported flowchart directions" {
       .trim_end()
       .to_string(),
     )
-    assert_eq(graph.direction.to_string(), direction)
+    assert_eq(direction_name(graph.direction), direction)
     assert_eq(graph.edges.length(), 1)
   }
 }
@@ -88,7 +88,7 @@ test "Parser accepts graph/flowchart headers without direction" {
       #|A --> B
     ),
   )
-  assert_eq(graph_default.direction.to_string(), "TD")
+  assert_eq(direction_name(graph_default.direction), "TD")
   assert_eq(graph_default.edges.length(), 1)
 
   let flowchart_default = @parser_header_core.parse_mermaid(
@@ -97,7 +97,7 @@ test "Parser accepts graph/flowchart headers without direction" {
       #|A --> B
     ),
   )
-  assert_eq(flowchart_default.direction.to_string(), "TD")
+  assert_eq(direction_name(flowchart_default.direction), "TD")
   assert_eq(flowchart_default.edges.length(), 1)
 }
 
@@ -125,7 +125,7 @@ test "Parser keeps first node definition for shape and label" {
   match graph.nodes.get("A") {
     Some(node) => {
       assert_eq(node.label, "Start")
-      assert_eq(node.shape.to_string(), "Rectangle")
+      assert_eq(node_shape_name(node.shape), "Rectangle")
     }
     None => fail("missing node A")
   }
@@ -158,14 +158,14 @@ test "Parser creates default rectangle nodes for bare references" {
 
   match graph.nodes.get("A") {
     Some(node) => {
-      assert_eq(node.shape.to_string(), "Rectangle")
+      assert_eq(node_shape_name(node.shape), "Rectangle")
       assert_eq(node.label, "A")
     }
     None => fail("missing node A")
   }
   match graph.nodes.get("B") {
     Some(node) => {
-      assert_eq(node.shape.to_string(), "Rectangle")
+      assert_eq(node_shape_name(node.shape), "Rectangle")
       assert_eq(node.label, "B")
     }
     None => fail("missing node B")
@@ -193,51 +193,51 @@ test "Parser recognizes all flowchart node shape variants together" {
   )
 
   match graph.nodes.get("A") {
-    Some(node) => assert_eq(node.shape.to_string(), "Rectangle")
+    Some(node) => assert_eq(node_shape_name(node.shape), "Rectangle")
     None => fail("missing node A")
   }
   match graph.nodes.get("B") {
-    Some(node) => assert_eq(node.shape.to_string(), "Rounded")
+    Some(node) => assert_eq(node_shape_name(node.shape), "Rounded")
     None => fail("missing node B")
   }
   match graph.nodes.get("C") {
-    Some(node) => assert_eq(node.shape.to_string(), "Diamond")
+    Some(node) => assert_eq(node_shape_name(node.shape), "Diamond")
     None => fail("missing node C")
   }
   match graph.nodes.get("D") {
-    Some(node) => assert_eq(node.shape.to_string(), "Stadium")
+    Some(node) => assert_eq(node_shape_name(node.shape), "Stadium")
     None => fail("missing node D")
   }
   match graph.nodes.get("E") {
-    Some(node) => assert_eq(node.shape.to_string(), "Circle")
+    Some(node) => assert_eq(node_shape_name(node.shape), "Circle")
     None => fail("missing node E")
   }
   match graph.nodes.get("F") {
-    Some(node) => assert_eq(node.shape.to_string(), "Subroutine")
+    Some(node) => assert_eq(node_shape_name(node.shape), "Subroutine")
     None => fail("missing node F")
   }
   match graph.nodes.get("G") {
-    Some(node) => assert_eq(node.shape.to_string(), "DoubleCircle")
+    Some(node) => assert_eq(node_shape_name(node.shape), "DoubleCircle")
     None => fail("missing node G")
   }
   match graph.nodes.get("H") {
-    Some(node) => assert_eq(node.shape.to_string(), "Hexagon")
+    Some(node) => assert_eq(node_shape_name(node.shape), "Hexagon")
     None => fail("missing node H")
   }
   match graph.nodes.get("I") {
-    Some(node) => assert_eq(node.shape.to_string(), "Cylinder")
+    Some(node) => assert_eq(node_shape_name(node.shape), "Cylinder")
     None => fail("missing node I")
   }
   match graph.nodes.get("J") {
-    Some(node) => assert_eq(node.shape.to_string(), "Asymmetric")
+    Some(node) => assert_eq(node_shape_name(node.shape), "Asymmetric")
     None => fail("missing node J")
   }
   match graph.nodes.get("K") {
-    Some(node) => assert_eq(node.shape.to_string(), "Trapezoid")
+    Some(node) => assert_eq(node_shape_name(node.shape), "Trapezoid")
     None => fail("missing node K")
   }
   match graph.nodes.get("L") {
-    Some(node) => assert_eq(node.shape.to_string(), "TrapezoidAlt")
+    Some(node) => assert_eq(node_shape_name(node.shape), "TrapezoidAlt")
     None => fail("missing node L")
   }
 }
@@ -250,7 +250,7 @@ test "Parser accepts case-insensitive flowchart header keywords" {
       #|A --> B
     ),
   )
-  assert_eq(graph.direction.to_string(), "TD")
+  assert_eq(direction_name(graph.direction), "TD")
   assert_eq(graph.edges.length(), 1)
 
   let flowchart = @parser_header_core.parse_mermaid(
@@ -259,14 +259,14 @@ test "Parser accepts case-insensitive flowchart header keywords" {
       #|X --> Y
     ),
   )
-  assert_eq(flowchart.direction.to_string(), "LR")
+  assert_eq(direction_name(flowchart.direction), "LR")
   assert_eq(flowchart.edges.length(), 1)
 }
 
 ///|
 test "Parser accepts tab-separated flowchart header tokens" {
   let graph = @parser_header_core.parse_mermaid("graph\tTD\nA --> B")
-  assert_eq(graph.direction.to_string(), "TD")
+  assert_eq(direction_name(graph.direction), "TD")
   assert_eq(graph.edges.length(), 1)
 }
 
@@ -301,7 +301,7 @@ test "Parser parses no-arrow edge with label" {
   assert_eq(edge.source, "A")
   assert_eq(edge.target, "B")
   assert_eq(edge.label, Some("text"))
-  assert_eq(edge.style.to_string(), "Solid")
+  assert_eq(edge_style_name(edge.style), "Solid")
   assert_true(!edge.has_arrow_start)
   assert_true(!edge.has_arrow_end)
 }
@@ -319,17 +319,17 @@ test "Parser keeps no-arrow operators without arrowheads across styles" {
   assert_eq(graph.edges.length(), 3)
 
   let e1 = graph.edges[0]
-  assert_eq(e1.style.to_string(), "Solid")
+  assert_eq(edge_style_name(e1.style), "Solid")
   assert_true(!e1.has_arrow_start)
   assert_true(!e1.has_arrow_end)
 
   let e2 = graph.edges[1]
-  assert_eq(e2.style.to_string(), "Dotted")
+  assert_eq(edge_style_name(e2.style), "Dotted")
   assert_true(!e2.has_arrow_start)
   assert_true(!e2.has_arrow_end)
 
   let e3 = graph.edges[2]
-  assert_eq(e3.style.to_string(), "Thick")
+  assert_eq(edge_style_name(e3.style), "Thick")
   assert_true(!e3.has_arrow_start)
   assert_true(!e3.has_arrow_end)
 }
@@ -344,7 +344,7 @@ test "Parser parses dotted bidirectional edge operator" {
   )
   assert_eq(graph.edges.length(), 1)
   let edge = graph.edges[0]
-  assert_eq(edge.style.to_string(), "Dotted")
+  assert_eq(edge_style_name(edge.style), "Dotted")
   assert_true(edge.has_arrow_start)
   assert_true(edge.has_arrow_end)
 }
@@ -359,7 +359,7 @@ test "Parser parses solid bidirectional edge operator" {
   )
   assert_eq(graph.edges.length(), 1)
   let edge = graph.edges[0]
-  assert_eq(edge.style.to_string(), "Solid")
+  assert_eq(edge_style_name(edge.style), "Solid")
   assert_true(edge.has_arrow_start)
   assert_true(edge.has_arrow_end)
 }
@@ -377,15 +377,15 @@ test "Parser keeps edge styles and labels for solid dotted and thick links" {
   assert_eq(graph.edges.length(), 3)
 
   let e1 = graph.edges[0]
-  assert_eq(e1.style.to_string(), "Solid")
+  assert_eq(edge_style_name(e1.style), "Solid")
   assert_eq(e1.label, Some("solid"))
 
   let e2 = graph.edges[1]
-  assert_eq(e2.style.to_string(), "Dotted")
+  assert_eq(edge_style_name(e2.style), "Dotted")
   assert_eq(e2.label, Some("dotted"))
 
   let e3 = graph.edges[2]
-  assert_eq(e3.style.to_string(), "Thick")
+  assert_eq(edge_style_name(e3.style), "Thick")
   assert_eq(e3.label, Some("thick"))
 }
 
@@ -430,15 +430,15 @@ test "Parser expands chained edges while preserving inline shapes" {
   assert_eq(graph.edges.length(), 2)
 
   match graph.nodes.get("A") {
-    Some(node) => assert_eq(node.shape.to_string(), "Rectangle")
+    Some(node) => assert_eq(node_shape_name(node.shape), "Rectangle")
     None => fail("missing node A")
   }
   match graph.nodes.get("B") {
-    Some(node) => assert_eq(node.shape.to_string(), "Diamond")
+    Some(node) => assert_eq(node_shape_name(node.shape), "Diamond")
     None => fail("missing node B")
   }
   match graph.nodes.get("C") {
-    Some(node) => assert_eq(node.shape.to_string(), "Rounded")
+    Some(node) => assert_eq(node_shape_name(node.shape), "Rounded")
     None => fail("missing node C")
   }
 }
@@ -479,7 +479,7 @@ test "Parser handles extra whitespace and empty lines" {
     .trim_end()
     .to_string(),
   )
-  assert_eq(graph.direction.to_string(), "TD")
+  assert_eq(direction_name(graph.direction), "TD")
   assert_eq(graph.nodes.length(), 3)
   assert_eq(graph.edges.length(), 2)
 }
@@ -556,7 +556,7 @@ test "Parser parses thick bidirectional edge operator" {
   )
   assert_eq(graph.edges.length(), 1)
   let edge = graph.edges[0]
-  assert_eq(edge.style.to_string(), "Thick")
+  assert_eq(edge_style_name(edge.style), "Thick")
   assert_true(edge.has_arrow_start)
   assert_true(edge.has_arrow_end)
 }
@@ -574,28 +574,28 @@ test "Parser expands mixed chained operators with correct precedence" {
   let e1 = graph.edges[0]
   assert_eq(e1.source, "A")
   assert_eq(e1.target, "B")
-  assert_eq(e1.style.to_string(), "Solid")
+  assert_eq(edge_style_name(e1.style), "Solid")
   assert_true(!e1.has_arrow_start)
   assert_true(!e1.has_arrow_end)
 
   let e2 = graph.edges[1]
   assert_eq(e2.source, "B")
   assert_eq(e2.target, "C")
-  assert_eq(e2.style.to_string(), "Solid")
+  assert_eq(edge_style_name(e2.style), "Solid")
   assert_true(!e2.has_arrow_start)
   assert_true(e2.has_arrow_end)
 
   let e3 = graph.edges[2]
   assert_eq(e3.source, "C")
   assert_eq(e3.target, "D")
-  assert_eq(e3.style.to_string(), "Dotted")
+  assert_eq(edge_style_name(e3.style), "Dotted")
   assert_true(!e3.has_arrow_start)
   assert_true(e3.has_arrow_end)
 
   let e4 = graph.edges[3]
   assert_eq(e4.source, "D")
   assert_eq(e4.target, "E")
-  assert_eq(e4.style.to_string(), "Thick")
+  assert_eq(edge_style_name(e4.style), "Thick")
   assert_true(!e4.has_arrow_start)
   assert_true(!e4.has_arrow_end)
 }

@@ -8,7 +8,7 @@ test "Parser supports class diagram relationships" {
     ),
   )
 
-  assert_eq(graph.direction.to_string(), "TD")
+  assert_eq(direction_name(graph.direction), "TD")
   assert_eq(graph.nodes.length(), 4)
   assert_eq(graph.edges.length(), 2)
 
@@ -89,7 +89,7 @@ test "Parser accepts class relationships with range cardinality tokens" {
   assert_eq(edge.target, "Repository")
   assert_eq(edge.relation_operator, Some("..>"))
   assert_eq(edge.label, Some("depends"))
-  assert_eq(edge.style.to_string(), "Dotted")
+  assert_eq(edge_style_name(edge.style), "Dotted")
 }
 
 ///|
@@ -108,7 +108,7 @@ test "Parser captures class members from blocks and property lines" {
   assert_eq(graph.nodes.length(), 1)
   match graph.nodes.get("Animal") {
     Some(node) => {
-      assert_eq(node.shape.to_string(), "ClassEntity")
+      assert_eq(node_shape_name(node.shape), "ClassEntity")
       assert_true(node.label.contains("Animal"))
       assert_true(node.label.contains("+name: String"))
       assert_true(node.label.contains("+eat: void"))
@@ -151,7 +151,7 @@ test "Parser captures inline class annotation declarations" {
   assert_eq(graph.nodes.length(), 1)
   match graph.nodes.get("Shape") {
     Some(node) => {
-      assert_eq(node.shape.to_string(), "ClassEntity")
+      assert_eq(node_shape_name(node.shape), "ClassEntity")
       assert_true(node.label.contains("Shape"))
       assert_true(node.label.contains("<<abstract>>"))
     }
@@ -193,14 +193,14 @@ test "Parser supports ER diagram relationships" {
     ),
   )
 
-  assert_eq(graph.direction.to_string(), "TD")
+  assert_eq(direction_name(graph.direction), "TD")
   assert_eq(graph.nodes.length(), 2)
   assert_eq(graph.edges.length(), 1)
   assert_eq(graph.edges[0].source, "CUSTOMER")
   assert_eq(graph.edges[0].target, "ORDER")
   assert_eq(graph.edges[0].label, Some("places"))
   match graph.nodes.get("ORDER") {
-    Some(node) => assert_eq(node.shape.to_string(), "ErEntity")
+    Some(node) => assert_eq(node_shape_name(node.shape), "ErEntity")
     None => fail("missing entity ORDER")
   }
 }
@@ -241,7 +241,7 @@ test "Parser supports compact and alias-style ER relationship syntax" {
   assert_eq(graph.edges[2].source, "PERSON")
   assert_eq(graph.edges[2].target, "NAMED_DRIVER")
   assert_eq(graph.edges[2].relation_operator, Some(".."))
-  assert_eq(graph.edges[2].style.to_string(), "Dotted")
+  assert_eq(edge_style_name(graph.edges[2].style), "Dotted")
 }
 
 ///|
@@ -280,7 +280,7 @@ test "Parser captures non-identifying ER relationships as dotted" {
   assert_eq(edge.source, "USER")
   assert_eq(edge.target, "LOG")
   assert_eq(edge.label, Some("generates"))
-  assert_eq(edge.style.to_string(), "Dotted")
+  assert_eq(edge_style_name(edge.style), "Dotted")
   assert_eq(edge.relation_operator, Some("||..o{"))
 }
 
@@ -407,7 +407,7 @@ test "Parser supports one-to-one ER cardinality operator" {
   assert_eq(edge.target, "PASSPORT")
   assert_eq(edge.relation_operator, Some("||--||"))
   assert_eq(edge.label, Some("has"))
-  assert_eq(edge.style.to_string(), "Solid")
+  assert_eq(edge_style_name(edge.style), "Solid")
 }
 
 ///|
@@ -426,5 +426,5 @@ test "Parser supports many-to-zero-many ER cardinality operator" {
   assert_eq(edge.target, "TAG")
   assert_eq(edge.relation_operator, Some("}|--o{"))
   assert_eq(edge.label, Some("has"))
-  assert_eq(edge.style.to_string(), "Solid")
+  assert_eq(edge_style_name(edge.style), "Solid")
 }

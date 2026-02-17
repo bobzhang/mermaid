@@ -29,7 +29,7 @@ fn assert_nfa_node_shape(
   expected_shape : String,
 ) -> Unit raise {
   match graph.nodes.get(node_id) {
-    Some(node) => assert_eq(node.shape.to_string(), expected_shape)
+    Some(node) => assert_eq(node_shape_name(node.shape), expected_shape)
     None => fail("missing node \{node_id}")
   }
 }
@@ -52,7 +52,7 @@ async test "NFA fixture 004 parses and renders expected structure" {
   let source = nfa_fixture_source("nfa_004")
   let graph = @parser_header_core.parse_mermaid(source)
 
-  assert_eq(graph.direction.to_string(), "LR")
+  assert_eq(direction_name(graph.direction), "LR")
   assert_eq(graph.nodes.length(), 8)
   assert_eq(graph.edges.length(), 10)
 
@@ -72,7 +72,7 @@ async test "NFA fixture 005 parses and renders expected structure" {
   let source = nfa_fixture_source("nfa_005")
   let graph = @parser_header_core.parse_mermaid(source)
 
-  assert_eq(graph.direction.to_string(), "LR")
+  assert_eq(direction_name(graph.direction), "LR")
   assert_eq(graph.nodes.length(), 8)
   assert_eq(graph.edges.length(), 11)
 
@@ -93,7 +93,7 @@ async test "NFA fixture 006 parses branch-loop-merge topology" {
   let source = nfa_fixture_source("nfa_006")
   let graph = @parser_header_core.parse_mermaid(source)
 
-  assert_eq(graph.direction.to_string(), "LR")
+  assert_eq(direction_name(graph.direction), "LR")
   assert_eq(graph.nodes.length(), 9)
   assert_eq(graph.edges.length(), 10)
 
@@ -116,7 +116,7 @@ async test "NFA fixture 007 parses parallel-source labels and epsilon exits" {
   let source = nfa_fixture_source("nfa_007")
   let graph = @parser_header_core.parse_mermaid(source)
 
-  assert_eq(graph.direction.to_string(), "LR")
+  assert_eq(direction_name(graph.direction), "LR")
   assert_eq(graph.nodes.length(), 10)
   assert_eq(graph.edges.length(), 12)
 
@@ -140,7 +140,7 @@ async test "NFA fixture 008 parses dual branches with synchronized join" {
   let source = nfa_fixture_source("nfa_008")
   let graph = @parser_header_core.parse_mermaid(source)
 
-  assert_eq(graph.direction.to_string(), "LR")
+  assert_eq(direction_name(graph.direction), "LR")
   assert_eq(graph.nodes.length(), 11)
   assert_eq(graph.edges.length(), 14)
 
@@ -167,7 +167,7 @@ async test "NFA fixture 009 parses multi-accept converging machine" {
   let source = nfa_fixture_source("nfa_009")
   let graph = @parser_header_core.parse_mermaid(source)
 
-  assert_eq(graph.direction.to_string(), "LR")
+  assert_eq(direction_name(graph.direction), "LR")
   assert_eq(graph.nodes.length(), 13)
   assert_eq(graph.edges.length(), 17)
 

@@ -8,11 +8,11 @@ test "Parser supports basic sequence messages" {
     ),
   )
 
-  assert_eq(graph.direction.to_string(), "LR")
+  assert_eq(direction_name(graph.direction), "LR")
   assert_eq(graph.nodes.length(), 2)
   assert_eq(graph.edges.length(), 2)
   match graph.nodes.get("Alice") {
-    Some(node) => assert_eq(node.shape.to_string(), "SequenceParticipant")
+    Some(node) => assert_eq(node_shape_name(node.shape), "SequenceParticipant")
     None => fail("missing participant Alice")
   }
 
@@ -20,13 +20,13 @@ test "Parser supports basic sequence messages" {
   assert_eq(first.source, "Alice")
   assert_eq(first.target, "Bob")
   assert_eq(first.label, Some("Hello Bob"))
-  assert_eq(first.style.to_string(), "Solid")
+  assert_eq(edge_style_name(first.style), "Solid")
 
   let second = graph.edges[1]
   assert_eq(second.source, "Bob")
   assert_eq(second.target, "Alice")
   assert_eq(second.label, Some("Hi Alice"))
-  assert_eq(second.style.to_string(), "Dotted")
+  assert_eq(edge_style_name(second.style), "Dotted")
 }
 
 ///|
@@ -39,11 +39,11 @@ test "Parser keeps sequence self messages" {
     ),
   )
 
-  assert_eq(graph.direction.to_string(), "LR")
+  assert_eq(direction_name(graph.direction), "LR")
   assert_eq(graph.nodes.length(), 2)
   assert_eq(graph.edges.length(), 2)
   match graph.nodes.get("Bob") {
-    Some(node) => assert_eq(node.shape.to_string(), "SequenceParticipant")
+    Some(node) => assert_eq(node_shape_name(node.shape), "SequenceParticipant")
     None => fail("missing participant Bob")
   }
   assert_eq(graph.edges[0].source, "Alice")
@@ -67,15 +67,15 @@ test "Parser supports additional sequence arrow operators" {
 
   let first = graph.edges[0]
   assert_eq(first.relation_operator, Some("->"))
-  assert_eq(first.style.to_string(), "Solid")
+  assert_eq(edge_style_name(first.style), "Solid")
 
   let second = graph.edges[1]
   assert_eq(second.relation_operator, Some("--)"))
-  assert_eq(second.style.to_string(), "Dotted")
+  assert_eq(edge_style_name(second.style), "Dotted")
 
   let third = graph.edges[2]
   assert_eq(third.relation_operator, Some("-x"))
-  assert_eq(third.style.to_string(), "Solid")
+  assert_eq(edge_style_name(third.style), "Solid")
 }
 
 ///|

@@ -4,9 +4,9 @@ test "Parser parity for all supported corpus cases" {
     let graph = @parser_header_core.parse_mermaid(case_data.input)
     match case_data.direction {
       Some(direction) =>
-        if graph.direction.to_string() != direction {
+        if direction_name(graph.direction) != direction {
           fail(
-            "direction mismatch for \{case_data.name}: got \{graph.direction.to_string()}, expected \{direction}",
+            "direction mismatch for \{case_data.name}: got \{direction_name(graph.direction)}, expected \{direction}",
           )
         }
       None => fail("supported case missing direction: \{case_data.name}")

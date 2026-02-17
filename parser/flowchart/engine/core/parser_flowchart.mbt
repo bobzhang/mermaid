@@ -853,60 +853,62 @@ test "split_node_and_class" {
 
 ///|
 test "parse_node_shape_metadata" {
-  assert_eq(parse_node_shape_metadata("A@{shape: circ}"), Some(Circle))
-  assert_eq(
-    parse_node_shape_metadata("start@{ shape: f-circ, label: \"J\" }"),
+  assert_true(parse_node_shape_metadata("A@{shape: circ}") == Some(Circle))
+  assert_true(
+    parse_node_shape_metadata("start@{ shape: f-circ, label: \"J\" }") ==
     Some(StateStart),
   )
-  assert_eq(
-    parse_node_shape_metadata("end@{shape: dbl-circ}:::done"),
+  assert_true(
+    parse_node_shape_metadata("end@{shape: dbl-circ}:::done") ==
     Some(DoubleCircle),
   )
-  assert_eq(parse_node_shape_metadata("A@{shape: junction}"), Some(StateStart))
-  assert_eq(parse_node_shape_metadata("A@{shape: unknown}"), None)
-  assert_eq(parse_node_shape_metadata("A"), None)
+  assert_true(
+    parse_node_shape_metadata("A@{shape: junction}") == Some(StateStart),
+  )
+  assert_true(parse_node_shape_metadata("A@{shape: unknown}") == None)
+  assert_true(parse_node_shape_metadata("A") == None)
 }
 
 ///|
 test "parse_node_and_class applies shape metadata" {
   let (start_node, start_class) = parse_node_and_class("start@{shape: f-circ}")
   assert_eq(start_node.id, "start")
-  assert_eq(start_node.shape, StateStart)
+  assert_true(start_node.shape == StateStart)
   assert_eq(start_class, None)
 
   let (accept_node, accept_class) = parse_node_and_class(
     "accept@{shape: dbl-circ}:::final",
   )
   assert_eq(accept_node.id, "accept")
-  assert_eq(accept_node.shape, DoubleCircle)
+  assert_true(accept_node.shape == DoubleCircle)
   assert_eq(accept_class, Some("final"))
 
   let (normal_node, normal_class) = parse_node_and_class("q0@{shape: circ}")
   assert_eq(normal_node.id, "q0")
-  assert_eq(normal_node.shape, Circle)
+  assert_true(normal_node.shape == Circle)
   assert_eq(normal_class, None)
 }
 
 ///|
 test "parse_flow_direction" {
   // basic flowchart + direction
-  assert_eq(parse_flow_direction("flowchart LR"), Some(LR))
-  assert_eq(parse_flow_direction("graph TD"), Some(TD))
+  assert_true(parse_flow_direction("flowchart LR") == Some(LR))
+  assert_true(parse_flow_direction("graph TD") == Some(TD))
   // case-insensitive keyword
-  assert_eq(parse_flow_direction("Flowchart TB"), Some(TB))
-  assert_eq(parse_flow_direction("GRAPH RL"), Some(RL))
+  assert_true(parse_flow_direction("Flowchart TB") == Some(TB))
+  assert_true(parse_flow_direction("GRAPH RL") == Some(RL))
   // extra whitespace
-  assert_eq(parse_flow_direction("  flowchart   BT  "), Some(BT))
+  assert_true(parse_flow_direction("  flowchart   BT  ") == Some(BT))
   // tab replaced
-  assert_eq(parse_flow_direction("flowchart\tLR"), Some(LR))
+  assert_true(parse_flow_direction("flowchart\tLR") == Some(LR))
   // missing direction defaults to TD
-  assert_eq(parse_flow_direction("flowchart"), Some(TD))
-  assert_eq(parse_flow_direction("flowchart "), Some(TD))
-  assert_eq(parse_flow_direction("graph"), Some(TD))
+  assert_true(parse_flow_direction("flowchart") == Some(TD))
+  assert_true(parse_flow_direction("flowchart ") == Some(TD))
+  assert_true(parse_flow_direction("graph") == Some(TD))
   // invalid direction token
-  assert_eq(parse_flow_direction("flowchart XX"), None)
+  assert_true(parse_flow_direction("flowchart XX") == None)
   // unrelated string
-  assert_eq(parse_flow_direction("sequenceDiagram"), None)
+  assert_true(parse_flow_direction("sequenceDiagram") == None)
 }
 
 ///|

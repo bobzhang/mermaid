@@ -46,7 +46,6 @@ pub(all) enum Direction {
   RL
 }
 pub impl Eq for Direction
-pub impl Show for Direction
 
 pub(all) enum EdgeStyle {
   Solid
@@ -54,7 +53,6 @@ pub(all) enum EdgeStyle {
   Thick
 }
 pub impl Eq for EdgeStyle
-pub impl Show for EdgeStyle
 
 pub(all) enum LayoutEngine {
   Legacy
@@ -123,7 +121,6 @@ pub(all) enum NodeShape {
   SequenceParticipant
 }
 pub impl Eq for NodeShape
-pub impl Show for NodeShape
 
 pub(all) struct Point {
   x : Int
@@ -144,7 +141,6 @@ pub(all) struct PositionedEdge {
   label_position : Point?
 }
 pub impl Eq for PositionedEdge
-pub impl Show for PositionedEdge
 
 pub(all) struct PositionedGraph {
   width : Int
@@ -181,7 +177,6 @@ pub(all) struct PositionedNode {
   inline_style : Map[String, String]?
 }
 pub impl Eq for PositionedNode
-pub impl Show for PositionedNode
 
 pub(all) struct PositionedSequenceActivation {
   actor_id : String

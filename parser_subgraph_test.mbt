@@ -106,10 +106,10 @@ test "Parser captures direction override inside subgraph only" {
     ),
   )
 
-  assert_eq(graph.direction.to_string(), "TD")
+  assert_eq(direction_name(graph.direction), "TD")
   assert_eq(graph.subgraphs.length(), 1)
   match graph.subgraphs[0].direction {
-    Some(direction) => assert_eq(direction.to_string(), "LR")
+    Some(direction) => assert_eq(direction_name(direction), "LR")
     None => fail("expected subgraph direction override")
   }
 }
@@ -124,7 +124,7 @@ test "Parser ignores root flowchart direction lines after header" {
     ),
   )
 
-  assert_eq(graph.direction.to_string(), "TD")
+  assert_eq(direction_name(graph.direction), "TD")
   assert_eq(graph.subgraphs.length(), 0)
   assert_eq(graph.edges.length(), 1)
 }
@@ -141,7 +141,7 @@ test "Parser ignores invalid direction override inside subgraph" {
     ),
   )
 
-  assert_eq(graph.direction.to_string(), "LR")
+  assert_eq(direction_name(graph.direction), "LR")
   assert_eq(graph.subgraphs.length(), 1)
   match graph.subgraphs[0].direction {
     Some(_) => fail("expected invalid direction token to be ignored")

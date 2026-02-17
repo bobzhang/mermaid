@@ -17,7 +17,7 @@ fn assert_state_shape(
   expected_shape : String,
 ) -> Unit raise {
   match graph.nodes.get(node_id) {
-    Some(node) => assert_eq(node.shape.to_string(), expected_shape)
+    Some(node) => assert_eq(node_shape_name(node.shape), expected_shape)
     None => fail("missing state node \{node_id}")
   }
 }
@@ -30,7 +30,7 @@ test "Parser detects state diagram headers and default direction" {
       #|s1 --> s2
     ),
   )
-  assert_eq(v2.direction.to_string(), "TD")
+  assert_eq(direction_name(v2.direction), "TD")
 
   let legacy = @parser_header_core.parse_mermaid(
     (
@@ -38,7 +38,7 @@ test "Parser detects state diagram headers and default direction" {
       #|s1 --> s2
     ),
   )
-  assert_eq(legacy.direction.to_string(), "TD")
+  assert_eq(direction_name(legacy.direction), "TD")
 }
 
 ///|
@@ -81,11 +81,11 @@ test "Parser parses start and end state pseudostates with unique ids" {
   assert_true(graph.nodes.get("state_end_2") is Some(_))
 
   match graph.nodes.get("state_start_1") {
-    Some(node) => assert_eq(node.shape.to_string(), "StateStart")
+    Some(node) => assert_eq(node_shape_name(node.shape), "StateStart")
     None => fail("missing state_start_1")
   }
   match graph.nodes.get("state_end_1") {
-    Some(node) => assert_eq(node.shape.to_string(), "StateEnd")
+    Some(node) => assert_eq(node_shape_name(node.shape), "StateEnd")
     None => fail("missing state_end_1")
   }
 }
@@ -115,7 +115,7 @@ test "Parser applies state direction override" {
       #|s1 --> s2
     ),
   )
-  assert_eq(graph.direction.to_string(), "LR")
+  assert_eq(direction_name(graph.direction), "LR")
 }
 
 ///|
@@ -128,7 +128,7 @@ test "Parser ignores invalid state direction token" {
       #|s1 --> s2
     ),
   )
-  assert_eq(graph.direction.to_string(), "LR")
+  assert_eq(direction_name(graph.direction), "LR")
 }
 
 ///|
@@ -214,10 +214,10 @@ test "Parser captures direction override inside state composite" {
     ),
   )
 
-  assert_eq(graph.direction.to_string(), "TD")
+  assert_eq(direction_name(graph.direction), "TD")
   assert_eq(graph.subgraphs.length(), 1)
   match graph.subgraphs[0].direction {
-    Some(direction) => assert_eq(direction.to_string(), "LR")
+    Some(direction) => assert_eq(direction_name(direction), "LR")
     None => fail("expected composite direction override")
   }
 }
@@ -271,47 +271,47 @@ test "Parser keeps state edge operator semantics across all flow-style operators
   assert_eq(graph.edges.length(), 9)
 
   let e1 = graph.edges[0]
-  assert_eq(e1.style.to_string(), "Thick")
+  assert_eq(edge_style_name(e1.style), "Thick")
   assert_true(e1.has_arrow_start)
   assert_true(e1.has_arrow_end)
 
   let e2 = graph.edges[1]
-  assert_eq(e2.style.to_string(), "Dotted")
+  assert_eq(edge_style_name(e2.style), "Dotted")
   assert_true(e2.has_arrow_start)
   assert_true(e2.has_arrow_end)
 
   let e3 = graph.edges[2]
-  assert_eq(e3.style.to_string(), "Solid")
+  assert_eq(edge_style_name(e3.style), "Solid")
   assert_true(e3.has_arrow_start)
   assert_true(e3.has_arrow_end)
 
   let e4 = graph.edges[3]
-  assert_eq(e4.style.to_string(), "Thick")
+  assert_eq(edge_style_name(e4.style), "Thick")
   assert_true(!e4.has_arrow_start)
   assert_true(e4.has_arrow_end)
 
   let e5 = graph.edges[4]
-  assert_eq(e5.style.to_string(), "Dotted")
+  assert_eq(edge_style_name(e5.style), "Dotted")
   assert_true(!e5.has_arrow_start)
   assert_true(e5.has_arrow_end)
 
   let e6 = graph.edges[5]
-  assert_eq(e6.style.to_string(), "Solid")
+  assert_eq(edge_style_name(e6.style), "Solid")
   assert_true(!e6.has_arrow_start)
   assert_true(e6.has_arrow_end)
 
   let e7 = graph.edges[6]
-  assert_eq(e7.style.to_string(), "Thick")
+  assert_eq(edge_style_name(e7.style), "Thick")
   assert_true(!e7.has_arrow_start)
   assert_true(!e7.has_arrow_end)
 
   let e8 = graph.edges[7]
-  assert_eq(e8.style.to_string(), "Dotted")
+  assert_eq(edge_style_name(e8.style), "Dotted")
   assert_true(!e8.has_arrow_start)
   assert_true(!e8.has_arrow_end)
 
   let e9 = graph.edges[8]
-  assert_eq(e9.style.to_string(), "Solid")
+  assert_eq(edge_style_name(e9.style), "Solid")
   assert_true(!e9.has_arrow_start)
   assert_true(!e9.has_arrow_end)
 }
@@ -330,7 +330,7 @@ test "Parser parses state labels on bidirectional thick edges" {
   assert_eq(edge.source, "A")
   assert_eq(edge.target, "B")
   assert_eq(edge.label, Some("sync"))
-  assert_eq(edge.style.to_string(), "Thick")
+  assert_eq(edge_style_name(edge.style), "Thick")
   assert_true(edge.has_arrow_start)
   assert_true(edge.has_arrow_end)
 }

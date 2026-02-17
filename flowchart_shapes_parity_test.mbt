@@ -5,7 +5,7 @@ fn assert_node_shape(
   expected : String,
 ) -> Unit raise {
   match graph.nodes.get(node_id) {
-    Some(node) => assert_eq(node.shape.to_string(), expected)
+    Some(node) => assert_eq(node_shape_name(node.shape), expected)
     None => fail("missing node \{node_id}")
   }
 }

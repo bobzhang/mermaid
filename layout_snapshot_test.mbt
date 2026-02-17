@@ -60,7 +60,7 @@ fn positioned_graph_layout_snapshot(
   let node_lines : Array[String] = []
   for node in positioned.nodes {
     node_lines.push(
-      "node id=\{node.id} shape=\{node.shape} center=\{node.x},\{node.y} size=\{node.width}x\{node.height} label=\{node.label}",
+      "node id=\{node.id} shape=\{node_shape_name(node.shape)} center=\{node.x},\{node.y} size=\{node.width}x\{node.height} label=\{node.label}",
     )
   }
 
