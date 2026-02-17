@@ -12,10 +12,6 @@ pub fn append_nodes_to_current_subgraph(Array[@model.MermaidSubgraph], Array[Str
 
 pub fn ensure_node(Map[String, @model.MermaidNode], @model.MermaidNode) -> Unit
 
-pub fn find_earliest_operator_indices(String, Array[String]) -> (Int, Int)?
-
-pub fn find_first_operator_indices(String, Array[String]) -> (Int, Int)?
-
 pub fn flow_edge_operator_specs() -> Array[(String, @model.EdgeStyle, Bool, Bool)]
 
 pub fn is_plain_identifier(String) -> Bool
@@ -23,8 +19,6 @@ pub fn is_plain_identifier(String) -> Bool
 pub fn parse_direction_token_strict(String) -> @model.Direction?
 
 pub fn parse_node_token(String) -> @model.MermaidNode
-
-pub fn push_unique_id(Array[String], String) -> Unit
 
 pub fn set_current_subgraph_direction(Array[@model.MermaidSubgraph], @model.Direction) -> Unit
 

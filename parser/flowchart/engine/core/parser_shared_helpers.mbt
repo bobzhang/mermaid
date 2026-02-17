@@ -13,6 +13,13 @@ priv struct FoundEdgeOp {
 }
 
 ///|
+fn push_unique_id(ids : Array[String], id : String) -> Unit {
+  if !ids.any(found => found == id) {
+    ids.push(id)
+  }
+}
+
+///|
 fn apply_class_assignment(
   class_assignments : Map[String, String],
   node : MermaidNode,
@@ -46,6 +53,6 @@ fn push_unique_node_ids(
   nodes : Array[MermaidNode],
 ) -> Unit {
   for node in nodes {
-    @parser_common_engine_core.push_unique_id(ids, node.id)
+    push_unique_id(ids, node.id)
   }
 }

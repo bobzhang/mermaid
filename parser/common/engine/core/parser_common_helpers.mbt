@@ -173,7 +173,7 @@ pub fn parse_node_token(raw_token : String) -> @model.MermaidNode {
 
 ///|
 /// Finds the earliest occurrence among operator symbols in a line.
-pub fn find_earliest_operator_indices(
+fn find_earliest_operator_indices(
   line : String,
   operator_symbols : Array[String],
 ) -> (Int, Int)? {
@@ -201,7 +201,7 @@ pub fn find_earliest_operator_indices(
 
 ///|
 /// Finds the first matching operator symbol by priority order.
-pub fn find_first_operator_indices(
+fn find_first_operator_indices(
   line : String,
   operator_symbols : Array[String],
 ) -> (Int, Int)? {
@@ -234,7 +234,7 @@ pub fn flow_edge_operator_specs() -> Array[
 
 ///|
 /// Pushes an ID into the array if not already present.
-pub fn push_unique_id(ids : Array[String], id : String) -> Unit {
+fn push_unique_id(ids : Array[String], id : String) -> Unit {
   if !ids.any(found => found == id) {
     ids.push(id)
   }
