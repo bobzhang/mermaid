@@ -49,7 +49,7 @@ test "prepare graph inputs keeps nodes untouched when redirects are disabled" {
     },
   ])
 
-  let prep_state = prepare_graph_inputs({ graph, use_subgraph_redirects: false })
+  let prep_state = prepare_graph_inputs(graph, false)
   assert_eq(prep_state.subgraph_entry_by_id.length(), 0)
   assert_eq(prep_state.subgraph_exit_by_id.length(), 0)
   assert_eq(prep_state.nodes_in_order.length(), 4)
@@ -83,7 +83,7 @@ test "prepare graph inputs resolves nested and empty subgraph redirects" {
     outer, empty,
   ])
 
-  let prep_state = prepare_graph_inputs({ graph, use_subgraph_redirects: true })
+  let prep_state = prepare_graph_inputs(graph, true)
   assert_eq(prep_state.subgraph_entry_by_id.get("Inner"), Some("A"))
   assert_eq(prep_state.subgraph_exit_by_id.get("Inner"), Some("B"))
   assert_eq(prep_state.subgraph_entry_by_id.get("Outer"), Some("A"))
