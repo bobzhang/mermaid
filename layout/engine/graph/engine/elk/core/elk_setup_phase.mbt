@@ -153,7 +153,7 @@ fn elk_layer_spacing(
 /// Derives ELK-preferred render options for the graph.
 ///
 /// Explicit `node_spacing` / `layer_spacing` from the caller are preserved.
-pub fn derive_elk_render_options(
+fn derive_elk_render_options(
   graph : MermaidGraph,
   options : RenderOptions,
 ) -> RenderOptions {

@@ -262,9 +262,12 @@ test "elk backend differs from legacy on fanout-heavy graph when spacing is auto
     use_subgraph_redirects: true,
     compact_fanin: false,
   }
-  let legacy_backend = @layout_engine_graph_engine_profile_core.run_graph_layout_engine_backend(
+  let legacy_backend = @layout_engine_graph_backend_core.run_graph_backend_pipeline(
     request,
-    Legacy,
+    {
+      enable_target_boundary_ports: false,
+      preserve_assigned_endpoint_ports: false,
+    },
   )
   let elk_backend = layout_graph_elk_backend(request)
   assert_true(

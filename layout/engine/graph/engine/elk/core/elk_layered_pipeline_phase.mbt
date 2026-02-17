@@ -929,7 +929,7 @@ fn should_use_elk_layered_pipeline(graph : MermaidGraph) -> Bool {
 
 ///|
 /// Runs the ELK layered flow pipeline for non-state flowcharts.
-pub fn run_elk_layered_flow_backend(
+fn run_elk_layered_flow_backend(
   request : GraphLayoutBackendRequest,
   routing_policy : GraphBackendRoutingPolicy,
 ) -> GraphLayoutBackendResult {
@@ -1155,6 +1155,6 @@ pub fn run_elk_layered_flow_backend(
 
 ///|
 /// Returns true when the ELK layered pipeline should be used.
-pub fn elk_should_use_layered_pipeline(graph : MermaidGraph) -> Bool {
+fn elk_should_use_layered_pipeline(graph : MermaidGraph) -> Bool {
   should_use_elk_layered_pipeline(graph)
 }

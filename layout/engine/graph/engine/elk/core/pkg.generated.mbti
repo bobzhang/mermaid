@@ -1,18 +1,8 @@
 // Generated using `moon info`, DON'T EDIT IT
 package "bobzhang/beautiful_mermaid/layout/engine/graph/engine/elk/core"
 
-import {
-  "bobzhang/beautiful_mermaid/model",
-}
-
 // Values
-pub fn derive_elk_render_options(@model.MermaidGraph, @model.RenderOptions) -> @model.RenderOptions
-
-pub fn elk_should_use_layered_pipeline(@model.MermaidGraph) -> Bool
-
 pub fn layout_graph_elk_backend(@bobzhang/beautiful_mermaid/layout/engine/graph/contract/core.GraphLayoutBackendRequest) -> @bobzhang/beautiful_mermaid/layout/engine/graph/contract/core.GraphLayoutBackendResult
-
-pub fn run_elk_layered_flow_backend(@bobzhang/beautiful_mermaid/layout/engine/graph/contract/core.GraphLayoutBackendRequest, @bobzhang/beautiful_mermaid/layout/engine/graph/backend/core.GraphBackendRoutingPolicy) -> @bobzhang/beautiful_mermaid/layout/engine/graph/contract/core.GraphLayoutBackendResult
 
 // Errors
 
