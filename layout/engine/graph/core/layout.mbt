@@ -48,7 +48,7 @@ fn layout_graph_legacy_with_subgraph_redirects(
     base_node_spacing
   }
   let layer_spacing = base_layer_spacing
-  let lane_state = compute_legacy_lane_state(
+  let lane_state = @layout_engine_graph_lane_core.compute_legacy_lane_state(
     graph, nodes_in_order, state_graph, class_or_er_graph, horizontal, compact_fanin,
     enhanced_horizontal_state_flow, flat_state_graph,
   )

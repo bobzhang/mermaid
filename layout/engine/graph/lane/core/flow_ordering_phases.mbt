@@ -1,5 +1,6 @@
 ///|
-fn collect_non_state_flow_ranks(
+/// Computes flow ranks for non-state diagrams under legacy heuristics.
+pub fn collect_non_state_flow_ranks(
   nodes_in_order : Array[MermaidNode],
   edges : Array[MermaidEdge],
   compact_fanin : Bool,
@@ -483,7 +484,8 @@ fn collect_non_state_flow_ranks(
 }
 
 ///|
-fn collect_greedy_feedback_edge_indices(
+/// Selects feedback edges using a weighted greedy FAS heuristic.
+pub fn collect_greedy_feedback_edge_indices(
   nodes_in_order : Array[MermaidNode],
   edges : Array[MermaidEdge],
   considered_edge_indices : Array[Int],
@@ -849,7 +851,8 @@ fn collect_greedy_feedback_edge_indices(
 }
 
 ///|
-fn graph_has_cycle(
+/// Detects whether a graph has any non-self-loop cycle.
+pub fn graph_has_cycle(
   nodes_in_order : Array[MermaidNode],
   edges : Array[MermaidEdge],
 ) -> Bool {
@@ -1100,7 +1103,8 @@ fn lane_span(
 }
 
 ///|
-fn collect_non_state_flow_lanes(
+/// Computes lane assignments after ranks are established.
+pub fn collect_non_state_flow_lanes(
   nodes_in_order : Array[MermaidNode],
   rank_by_id : Map[String, Int],
   max_rank : Int,

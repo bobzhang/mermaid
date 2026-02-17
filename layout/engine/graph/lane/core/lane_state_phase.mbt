@@ -1,5 +1,6 @@
 ///|
-priv struct LegacyLaneState {
+/// Computed lane/rank state consumed by node placement and routing.
+pub struct LegacyLaneState {
   state_lane_by_node_id : Map[String, Int]
   state_label_y_offset_by_node_id : Map[String, Int]
   flow_rank_by_node_id : Map[String, Int]
@@ -12,7 +13,8 @@ priv struct LegacyLaneState {
 }
 
 ///|
-fn compute_legacy_lane_state(
+/// Computes legacy lane and rank assignments for graph layout.
+pub fn compute_legacy_lane_state(
   graph : MermaidGraph,
   nodes_in_order : Array[MermaidNode],
   state_graph : Bool,

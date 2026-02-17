@@ -19,10 +19,6 @@ type MermaidSubgraph = @model.MermaidSubgraph
 type Direction = @model.Direction
 
 ///|
-/// Visual shape of a diagram node.
-type NodeShape = @model.NodeShape
-
-///|
 /// Configuration options for SVG rendering.
 type RenderOptions = @model.RenderOptions
 

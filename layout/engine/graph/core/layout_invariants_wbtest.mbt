@@ -451,7 +451,7 @@ test "Layout lane collection accounts for long-span edges via virtual segments" 
     flow_edge("B", "X"),
   ]
 
-  let lanes = collect_non_state_flow_lanes(
+  let lanes = @layout_engine_graph_lane_core.collect_non_state_flow_lanes(
     nodes, rank_by_id, 2, edges, false, false, true,
   )
   assert_true(
@@ -498,7 +498,7 @@ test "Layout lane collection uses long-span backward edges for ordering" {
     },
   ]
 
-  let lanes = collect_non_state_flow_lanes(
+  let lanes = @layout_engine_graph_lane_core.collect_non_state_flow_lanes(
     nodes, rank_by_id, 3, edges, false, false, true,
   )
   assert_true(
@@ -681,8 +681,13 @@ test "Layout cycle detection flags simple feedback loops" {
     },
   ]
 
-  assert_true(graph_has_cycle(nodes, cyclic_edges))
-  assert_eq(graph_has_cycle(nodes, acyclic_edges), false)
+  assert_true(
+    @layout_engine_graph_lane_core.graph_has_cycle(nodes, cyclic_edges),
+  )
+  assert_eq(
+    @layout_engine_graph_lane_core.graph_has_cycle(nodes, acyclic_edges),
+    false,
+  )
 }
 
 ///|
@@ -742,7 +747,7 @@ test "Layout greedy feedback edge selector marks incoming edges of max score piv
   ]
   let considered_edge_indices = [0, 1, 2, 3, 4]
 
-  let back_edges = collect_greedy_feedback_edge_indices(
+  let back_edges = @layout_engine_graph_lane_core.collect_greedy_feedback_edge_indices(
     nodes, edges, considered_edge_indices,
   )
   let mut back_edge_count = 0
@@ -790,7 +795,11 @@ test "Layout greedy feedback edge selector prefers lighter reverse direction wit
     },
   ]
 
-  let back_edges = collect_greedy_feedback_edge_indices(nodes, edges, [0, 1, 2])
+  let back_edges = @layout_engine_graph_lane_core.collect_greedy_feedback_edge_indices(
+    nodes,
+    edges,
+    [0, 1, 2],
+  )
   let mut back_edge_count = 0
   for _, _ in back_edges {
     back_edge_count += 1
@@ -838,7 +847,11 @@ test "Layout greedy feedback edge selector expands aggregated reverse multi-edge
     },
   ]
 
-  let back_edges = collect_greedy_feedback_edge_indices(nodes, edges, [0, 1, 2])
+  let back_edges = @layout_engine_graph_lane_core.collect_greedy_feedback_edge_indices(
+    nodes,
+    edges,
+    [0, 1, 2],
+  )
   let mut back_edge_count = 0
   for _, _ in back_edges {
     back_edge_count += 1
@@ -1297,10 +1310,10 @@ test "Layout cycle-aware rank collection rehydrates cyclic forward order" {
     },
   ]
 
-  let (legacy_ranks, _) = collect_non_state_flow_ranks(
+  let (legacy_ranks, _) = @layout_engine_graph_lane_core.collect_non_state_flow_ranks(
     nodes, edges, false, false, false, false, false, false, false,
   )
-  let (cycle_ranks, _) = collect_non_state_flow_ranks(
+  let (cycle_ranks, _) = @layout_engine_graph_lane_core.collect_non_state_flow_ranks(
     nodes, edges, false, true, false, false, false, false, false,
   )
 
