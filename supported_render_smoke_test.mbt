@@ -16,13 +16,13 @@ test "Render smoke for all supported corpus cases" (it : @test.Test) {
       .to_string()
     svg_sections.push(section)
 
-    let ascii_options = @beautiful_mermaid.AsciiRenderOptions::{
+    let ascii_options = @model.AsciiRenderOptions::{
       use_ascii: true,
       padding_x: case_data.padding_x,
       padding_y: case_data.padding_y,
       box_border_padding: 1,
     }
-    let unicode_options = @beautiful_mermaid.AsciiRenderOptions::{
+    let unicode_options = @model.AsciiRenderOptions::{
       use_ascii: false,
       padding_x: case_data.padding_x,
       padding_y: case_data.padding_y,

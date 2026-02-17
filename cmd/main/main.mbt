@@ -184,7 +184,7 @@ fn print_routed_edge_points(
   input : String,
   options : @model.RenderOptions,
 ) -> Unit {
-  let parsed : Result[@model.MermaidGraph, @beautiful_mermaid.MermaidError] = try? @parser_header_core.parse_mermaid(
+  let parsed : Result[@model.MermaidGraph, @model.MermaidError] = try? @parser_header_core.parse_mermaid(
     input,
   )
   match parsed {
@@ -901,7 +901,7 @@ fn run() -> Unit {
   }
 
   if render_text {
-    let options = @beautiful_mermaid.AsciiRenderOptions::{
+    let options = @model.AsciiRenderOptions::{
       use_ascii: use_ascii_chars,
       padding_x: ascii_padding_x,
       padding_y: ascii_padding_y,
@@ -938,7 +938,7 @@ fn run() -> Unit {
     return
   }
 
-  let svg_options = @beautiful_mermaid.RenderOptions::{
+  let svg_options = @model.RenderOptions::{
     bg: bg_color,
     fg: fg_color,
     line: line_color,

@@ -1,5 +1,5 @@
 ///|
-fn nfa_lock_options(use_ascii : Bool) -> @beautiful_mermaid.AsciiRenderOptions {
+fn nfa_lock_options(use_ascii : Bool) -> @model.AsciiRenderOptions {
   { use_ascii, padding_x: 5, padding_y: 5, box_border_padding: 1 }
 }
 

@@ -4,7 +4,7 @@ test "ASCII ER corpus parity" {
     case_data in ts_supported_ascii_cases().filter(case_data => {
       case_data.header == "erdiagram"
     }) {
-    let options = @beautiful_mermaid.AsciiRenderOptions::{
+    let options = @model.AsciiRenderOptions::{
       use_ascii: true,
       padding_x: case_data.padding_x,
       padding_y: case_data.padding_y,
@@ -31,7 +31,7 @@ test "Unicode ER corpus parity" {
     case_data in ts_supported_unicode_cases().filter(case_data => {
       case_data.header == "erdiagram"
     }) {
-    let options = @beautiful_mermaid.AsciiRenderOptions::{
+    let options = @model.AsciiRenderOptions::{
       use_ascii: false,
       padding_x: case_data.padding_x,
       padding_y: case_data.padding_y,

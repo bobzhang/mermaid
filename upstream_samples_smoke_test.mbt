@@ -1067,7 +1067,7 @@ fn upstream_samples() -> Array[UpstreamSample] {
 test "Render smoke for upstream samples-data corpus" (it : @test.Test) {
   let svg_sections : Array[String] = []
   for sample in upstream_samples() {
-    let svg_options = @beautiful_mermaid.RenderOptions::{
+    let svg_options = @model.RenderOptions::{
       bg: None,
       fg: None,
       line: None,

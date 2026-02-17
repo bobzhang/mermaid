@@ -358,7 +358,7 @@ test "SVG class renders complete hierarchy with abstract annotation" (
 
 ///|
 test "SVG class supports explicit dark colors" (it : @test.Test) {
-  let options = @beautiful_mermaid.RenderOptions::{
+  let options = @model.RenderOptions::{
     bg: Some("#18181B"),
     fg: Some("#FAFAFA"),
     line: None,
@@ -390,7 +390,7 @@ test "SVG class supports explicit dark colors" (it : @test.Test) {
 
 ///|
 test "SVG render options include provided enrichment CSS vars" (it : @test.Test) {
-  let options = @beautiful_mermaid.RenderOptions::{
+  let options = @model.RenderOptions::{
     bg: Some("#111111"),
     fg: Some("#eeeeee"),
     line: Some("#123456"),
@@ -425,7 +425,7 @@ test "SVG render options include provided enrichment CSS vars" (it : @test.Test)
 
 ///|
 test "SVG render options omit enrichment CSS vars when unset" (it : @test.Test) {
-  let options = @beautiful_mermaid.RenderOptions::{
+  let options = @model.RenderOptions::{
     bg: Some("#18181B"),
     fg: Some("#FAFAFA"),
     line: None,
@@ -462,7 +462,7 @@ test "SVG render options omit enrichment CSS vars when unset" (it : @test.Test) 
 test "SVG transparent render option omits root background style and rect" (
   it : @test.Test,
 ) {
-  let options = @beautiful_mermaid.RenderOptions::{
+  let options = @model.RenderOptions::{
     bg: Some("#18181B"),
     fg: Some("#FAFAFA"),
     line: None,
@@ -707,7 +707,7 @@ test "SVG sequence renders complex authentication flow content" (
 
 ///|
 test "SVG sequence supports explicit dark colors" (it : @test.Test) {
-  let options = @beautiful_mermaid.RenderOptions::{
+  let options = @model.RenderOptions::{
     bg: Some("#18181B"),
     fg: Some("#FAFAFA"),
     line: None,
@@ -821,7 +821,7 @@ test "SVG ER non-identifying relations are dashed" (it : @test.Test) {
 
 ///|
 test "SVG ER supports explicit dark colors" (it : @test.Test) {
-  let options = @beautiful_mermaid.RenderOptions::{
+  let options = @model.RenderOptions::{
     bg: Some("#18181B"),
     fg: Some("#FAFAFA"),
     line: None,

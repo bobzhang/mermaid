@@ -25,7 +25,10 @@ test "merge_options_with_colors fills missing fields from theme colors" {
     Some(found) => found
     None => fail("missing dracula theme")
   }
-  let merged = merge_options_with_colors(RenderOptions::default(), colors)
+  let merged = merge_options_with_colors(
+    @model.RenderOptions::default(),
+    colors,
+  )
 
   assert_eq(merged.bg, Some("#282a36"))
   assert_eq(merged.fg, Some("#f8f8f2"))
@@ -39,7 +42,7 @@ test "merge_options_with_colors preserves explicit overrides" {
     Some(found) => found
     None => fail("missing dracula theme")
   }
-  let base = RenderOptions::{
+  let base = @model.RenderOptions::{
     bg: Some("#101010"),
     fg: Some("#f0f0f0"),
     line: Some("#111111"),
@@ -71,7 +74,7 @@ test "render_mermaid_with_colors keeps explicit option overrides" {
     Some(found) => found
     None => fail("missing tokyo-night theme")
   }
-  let options = RenderOptions::{
+  let options = @model.RenderOptions::{
     bg: Some("#000000"),
     fg: None,
     line: None,

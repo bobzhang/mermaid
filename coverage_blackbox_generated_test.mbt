@@ -1,5 +1,5 @@
 ///|
-fn generated_ascii_option(seed : Int) -> AsciiRenderOptions {
+fn generated_ascii_option(seed : Int) -> @model.AsciiRenderOptions {
   let use_ascii = seed % 2 == 0
   let padding_x = [0, 1, 2, 5][seed % 4]
   let padding_y = [0, 1, 2, 5][seed / 2 % 4]
@@ -8,7 +8,7 @@ fn generated_ascii_option(seed : Int) -> AsciiRenderOptions {
 }
 
 ///|
-fn generated_svg_option(seed : Int) -> RenderOptions {
+fn generated_svg_option(seed : Int) -> @model.RenderOptions {
   let padding = [Some(0), Some(2), Some(8), Some(16)][seed % 4]
   let node_spacing = [Some(2), Some(8), Some(16), None][seed / 2 % 4]
   let layer_spacing = [Some(2), Some(8), Some(16), None][seed / 3 % 4]
@@ -33,7 +33,7 @@ fn generated_svg_option(seed : Int) -> RenderOptions {
 
 ///|
 fn generated_render_attempt(input : String, seed : Int) -> (Bool, Bool) {
-  let ascii_result : Result[String, MermaidError] = try? render_mermaid_ascii(
+  let ascii_result : Result[String, @model.MermaidError] = try? render_mermaid_ascii(
     input,
     options=generated_ascii_option(seed),
   )
@@ -44,7 +44,7 @@ fn generated_render_attempt(input : String, seed : Int) -> (Bool, Bool) {
     }
     Err(_) => false
   }
-  let svg_result : Result[String, MermaidError] = try? render_mermaid(
+  let svg_result : Result[String, @model.MermaidError] = try? render_mermaid(
     input,
     options=generated_svg_option(seed),
   )

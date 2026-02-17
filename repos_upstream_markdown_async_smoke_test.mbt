@@ -182,10 +182,10 @@ async fn repos_verify_markdown_chunk(
 
       let id = "\{path}#\{i + 1}"
       checked += 1
-      let svg_result : Result[String, @beautiful_mermaid.MermaidError] = try? @beautiful_mermaid.render_mermaid(
+      let svg_result : Result[String, @model.MermaidError] = try? @beautiful_mermaid.render_mermaid(
         block,
       )
-      let ascii_result : Result[String, @beautiful_mermaid.MermaidError] = try? @beautiful_mermaid.render_mermaid_ascii(
+      let ascii_result : Result[String, @model.MermaidError] = try? @beautiful_mermaid.render_mermaid_ascii(
         block,
         options={
           use_ascii: true,
@@ -194,7 +194,7 @@ async fn repos_verify_markdown_chunk(
           box_border_padding: 1,
         },
       )
-      let unicode_result : Result[String, @beautiful_mermaid.MermaidError] = try? @beautiful_mermaid.render_mermaid_ascii(
+      let unicode_result : Result[String, @model.MermaidError] = try? @beautiful_mermaid.render_mermaid_ascii(
         block,
         options={
           use_ascii: false,

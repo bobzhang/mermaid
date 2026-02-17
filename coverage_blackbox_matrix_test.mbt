@@ -1,5 +1,5 @@
 ///|
-fn coverage_ascii_option_matrix() -> Array[AsciiRenderOptions] {
+fn coverage_ascii_option_matrix() -> Array[@model.AsciiRenderOptions] {
   [
     { use_ascii: true, padding_x: 5, padding_y: 5, box_border_padding: 1 },
     { use_ascii: false, padding_x: 5, padding_y: 5, box_border_padding: 1 },
@@ -13,9 +13,9 @@ fn coverage_ascii_option_matrix() -> Array[AsciiRenderOptions] {
 }
 
 ///|
-fn coverage_svg_option_matrix() -> Array[RenderOptions] {
+fn coverage_svg_option_matrix() -> Array[@model.RenderOptions] {
   [
-    RenderOptions::default(),
+    @model.RenderOptions::default(),
     {
       bg: None,
       fg: None,
@@ -92,7 +92,7 @@ test "Coverage matrix exercises parser corpus paths" {
 
   let all_cases = corpus_cases()
   for case_data in all_cases {
-    let parsed : Result[@model.MermaidGraph, MermaidError] = try? @parser_header_core.parse_mermaid(
+    let parsed : Result[@model.MermaidGraph, @model.MermaidError] = try? @parser_header_core.parse_mermaid(
       case_data.input,
     )
     match parsed {
@@ -152,7 +152,7 @@ test "Coverage matrix parser malformed headers and bodies" {
   ]
 
   for input in invalid_inputs {
-    let parsed : Result[@model.MermaidGraph, MermaidError] = try? @parser_header_core.parse_mermaid(
+    let parsed : Result[@model.MermaidGraph, @model.MermaidError] = try? @parser_header_core.parse_mermaid(
       input,
     )
     match parsed {

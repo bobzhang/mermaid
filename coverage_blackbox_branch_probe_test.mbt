@@ -1,7 +1,5 @@
 ///|
-fn branch_probe_ascii_options(
-  seed : Int,
-) -> @beautiful_mermaid.AsciiRenderOptions {
+fn branch_probe_ascii_options(seed : Int) -> @model.AsciiRenderOptions {
   {
     use_ascii: seed % 2 == 0,
     padding_x: [0, 1, 3, 5, -1][seed % 5],
@@ -11,7 +9,7 @@ fn branch_probe_ascii_options(
 }
 
 ///|
-fn branch_probe_svg_options(seed : Int) -> @beautiful_mermaid.RenderOptions {
+fn branch_probe_svg_options(seed : Int) -> @model.RenderOptions {
   {
     bg: if seed % 3 == 0 {
       Some("#0f172a")
@@ -57,12 +55,12 @@ fn branch_probe_svg_options(seed : Int) -> @beautiful_mermaid.RenderOptions {
 
 ///|
 fn branch_probe_exercise_case(input : String, seed : Int) -> (Bool, Bool, Bool) {
-  let parsed : Result[@model.MermaidGraph, @beautiful_mermaid.MermaidError] = try? @parser_header_core.parse_mermaid(
+  let parsed : Result[@model.MermaidGraph, @model.MermaidError] = try? @parser_header_core.parse_mermaid(
     input,
   )
   match parsed {
     Ok(_) => {
-      let ascii_result : Result[String, @beautiful_mermaid.MermaidError] = try? @beautiful_mermaid.render_mermaid_ascii(
+      let ascii_result : Result[String, @model.MermaidError] = try? @beautiful_mermaid.render_mermaid_ascii(
         input,
         options=branch_probe_ascii_options(seed),
       )
@@ -73,7 +71,7 @@ fn branch_probe_exercise_case(input : String, seed : Int) -> (Bool, Bool, Bool) 
         }
         Err(_) => false
       }
-      let svg_result : Result[String, @beautiful_mermaid.MermaidError] = try? @beautiful_mermaid.render_mermaid(
+      let svg_result : Result[String, @model.MermaidError] = try? @beautiful_mermaid.render_mermaid(
         input,
         options=branch_probe_svg_options(seed),
       )
@@ -303,7 +301,7 @@ test "Blackbox branch probe SVG font URL encoding includes multibyte paths" {
   let mut saw_four_byte = false
 
   for i, font in fonts {
-    let options : @beautiful_mermaid.RenderOptions = {
+    let options : @model.RenderOptions = {
       bg: None,
       fg: None,
       line: None,

@@ -10,7 +10,7 @@ test "Parser parity gate cases" {
 
 ///|
 test "Parser rejects unsupported header" {
-  let result : Result[@model.MermaidGraph, @beautiful_mermaid.MermaidError] = try? @parser_header_core.parse_mermaid(
+  let result : Result[@model.MermaidGraph, @model.MermaidError] = try? @parser_header_core.parse_mermaid(
     (
       #|pie
       #|A : 1
@@ -21,7 +21,7 @@ test "Parser rejects unsupported header" {
 
 ///|
 test "Parser rejects empty input" {
-  let result : Result[@model.MermaidGraph, @beautiful_mermaid.MermaidError] = try? @parser_header_core.parse_mermaid(
+  let result : Result[@model.MermaidGraph, @model.MermaidError] = try? @parser_header_core.parse_mermaid(
     "",
   )
   assert_true(result is Err(_))
@@ -103,7 +103,7 @@ test "Parser accepts graph/flowchart headers without direction" {
 
 ///|
 test "Parser rejects flowchart header with invalid direction token" {
-  let result : Result[@model.MermaidGraph, @beautiful_mermaid.MermaidError] = try? @parser_header_core.parse_mermaid(
+  let result : Result[@model.MermaidGraph, @model.MermaidError] = try? @parser_header_core.parse_mermaid(
     (
       #|graph XX
       #|A --> B
@@ -502,7 +502,7 @@ test "Parser handles diagram with only standalone nodes" {
 
 ///|
 test "Parser rejects flowchart header with extra trailing tokens" {
-  let result : Result[@model.MermaidGraph, @beautiful_mermaid.MermaidError] = try? @parser_header_core.parse_mermaid(
+  let result : Result[@model.MermaidGraph, @model.MermaidError] = try? @parser_header_core.parse_mermaid(
     (
       #|graph TD extra
       #|A --> B
@@ -529,7 +529,7 @@ test "Parser ignores comment lines including indented comments" {
 
 ///|
 test "Parser rejects stateDiagram header with extra trailing tokens" {
-  let result : Result[@model.MermaidGraph, @beautiful_mermaid.MermaidError] = try? @parser_header_core.parse_mermaid(
+  let result : Result[@model.MermaidGraph, @model.MermaidError] = try? @parser_header_core.parse_mermaid(
     (
       #|stateDiagram-v2 extra
       #|A --> B

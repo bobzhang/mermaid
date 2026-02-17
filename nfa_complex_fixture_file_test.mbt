@@ -5,7 +5,7 @@ async fn nfa_fixture_source(name : String) -> String {
 }
 
 ///|
-fn nfa_ascii_options() -> @beautiful_mermaid.AsciiRenderOptions {
+fn nfa_ascii_options() -> @model.AsciiRenderOptions {
   { use_ascii: true, padding_x: 5, padding_y: 5, box_border_padding: 1 }
 }
 

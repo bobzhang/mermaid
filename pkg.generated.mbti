@@ -17,11 +17,6 @@ pub fn render_mermaid_with_theme_name(String, String, options? : @model.RenderOp
 // Types and methods
 
 // Type aliases
-pub using @model {type AsciiRenderOptions}
-
-pub using @model {type MermaidError}
-
-pub using @model {type RenderOptions}
 
 // Traits
 

@@ -19,7 +19,7 @@ fn snapshot_upstream_sample_svg(
   filename : String,
 ) -> Unit raise {
   let sample = upstream_sample_by_title(title)
-  let svg_options = @beautiful_mermaid.RenderOptions::{
+  let svg_options = @model.RenderOptions::{
     bg: None,
     fg: None,
     line: None,

@@ -1,7 +1,7 @@
 ///|
 test "Unicode golden gate cases" {
   for case_data in gate_cases() {
-    let options = @beautiful_mermaid.AsciiRenderOptions::{
+    let options = @model.AsciiRenderOptions::{
       use_ascii: false,
       padding_x: case_data.padding_x,
       padding_y: case_data.padding_y,

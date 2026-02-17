@@ -90,7 +90,7 @@ test {
 ```mbt check
 ///|
 test {
-  let options = RenderOptions::{
+  let options = @model.RenderOptions::{
     bg: Some("#18181B"),
     fg: Some("#FAFAFA"),
     line: Some("#7aa2f7"),

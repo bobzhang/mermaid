@@ -59,7 +59,7 @@ fn expected_supported_flag(content : String) -> Bool? {
 #cfg(target="native")
 async fn parser_support_for_input(input_path : String) -> Bool {
   let input = @fs.read_file(input_path).text()
-  let parsed : Result[@model.MermaidGraph, @beautiful_mermaid.MermaidError] = try? @parser_header_core.parse_mermaid(
+  let parsed : Result[@model.MermaidGraph, @model.MermaidError] = try? @parser_header_core.parse_mermaid(
     input,
   )
   match parsed {

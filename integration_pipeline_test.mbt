@@ -236,7 +236,7 @@ test "SVG simple flow keeps valid svg envelope" (it : @test.Test) {
 
 ///|
 test "SVG dimensions expand with padding option" (it : @test.Test) {
-  let small_options = @beautiful_mermaid.RenderOptions::{
+  let small_options = @model.RenderOptions::{
     bg: None,
     fg: None,
     line: None,
@@ -251,7 +251,7 @@ test "SVG dimensions expand with padding option" (it : @test.Test) {
     transparent: None,
     layout_engine: None,
   }
-  let large_options = @beautiful_mermaid.RenderOptions::{
+  let large_options = @model.RenderOptions::{
     bg: None,
     fg: None,
     line: None,
@@ -347,7 +347,7 @@ test "Flowchart chained labeled edges render across text and SVG modes" (
 
 ///|
 test "SVG applies custom font option" (it : @test.Test) {
-  let options = @beautiful_mermaid.RenderOptions::{
+  let options = @model.RenderOptions::{
     bg: None,
     fg: None,
     line: None,
@@ -381,7 +381,7 @@ test "SVG defaults to light theme colors" (it : @test.Test) {
 
 ///|
 test "SVG applies explicit dark colors" (it : @test.Test) {
-  let options = @beautiful_mermaid.RenderOptions::{
+  let options = @model.RenderOptions::{
     bg: Some("#18181B"),
     fg: Some("#FAFAFA"),
     line: None,
@@ -1326,13 +1326,13 @@ test "SVG renders self-loop labels" (it : @test.Test) {
 
 ///|
 test "ASCII and Unicode modes differ" {
-  let ascii_options = @beautiful_mermaid.AsciiRenderOptions::{
+  let ascii_options = @model.AsciiRenderOptions::{
     use_ascii: true,
     padding_x: 5,
     padding_y: 5,
     box_border_padding: 1,
   }
-  let unicode_options = @beautiful_mermaid.AsciiRenderOptions::{
+  let unicode_options = @model.AsciiRenderOptions::{
     use_ascii: false,
     padding_x: 5,
     padding_y: 5,

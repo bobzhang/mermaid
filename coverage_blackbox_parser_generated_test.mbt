@@ -1,5 +1,5 @@
 ///|
-fn parser_generated_ascii_option(seed : Int) -> AsciiRenderOptions {
+fn parser_generated_ascii_option(seed : Int) -> @model.AsciiRenderOptions {
   {
     use_ascii: seed % 2 == 0,
     padding_x: [0, 1, 2, 5][seed % 4],
@@ -9,7 +9,7 @@ fn parser_generated_ascii_option(seed : Int) -> AsciiRenderOptions {
 }
 
 ///|
-fn parser_generated_svg_option(seed : Int) -> RenderOptions {
+fn parser_generated_svg_option(seed : Int) -> @model.RenderOptions {
   {
     bg: None,
     fg: None,
@@ -29,7 +29,7 @@ fn parser_generated_svg_option(seed : Int) -> RenderOptions {
 
 ///|
 fn parser_generated_exercise(input : String, seed : Int) -> Bool {
-  let parsed : Result[@model.MermaidGraph, MermaidError] = try? @parser_header_core.parse_mermaid(
+  let parsed : Result[@model.MermaidGraph, @model.MermaidError] = try? @parser_header_core.parse_mermaid(
     input,
   )
   match parsed {

@@ -46,10 +46,10 @@ async fn verify_corpus_chunk(chunk_index : Int, chunk_count : Int) -> Unit {
   for path in selected {
     let source = @fs.read_file(path).text()
 
-    let svg_result : Result[String, @beautiful_mermaid.MermaidError] = try? @beautiful_mermaid.render_mermaid(
+    let svg_result : Result[String, @model.MermaidError] = try? @beautiful_mermaid.render_mermaid(
       source,
     )
-    let ascii_result : Result[String, @beautiful_mermaid.MermaidError] = try? @beautiful_mermaid.render_mermaid_ascii(
+    let ascii_result : Result[String, @model.MermaidError] = try? @beautiful_mermaid.render_mermaid_ascii(
       source,
       options={
         use_ascii: true,
@@ -58,7 +58,7 @@ async fn verify_corpus_chunk(chunk_index : Int, chunk_count : Int) -> Unit {
         box_border_padding: 1,
       },
     )
-    let unicode_result : Result[String, @beautiful_mermaid.MermaidError] = try? @beautiful_mermaid.render_mermaid_ascii(
+    let unicode_result : Result[String, @model.MermaidError] = try? @beautiful_mermaid.render_mermaid_ascii(
       source,
       options={
         use_ascii: false,
