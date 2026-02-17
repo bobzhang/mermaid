@@ -926,32 +926,9 @@ fn build_er_layout(graph : @model.MermaidGraph) -> AsciiErLayout {
 fn build_state_flat_grid_layout(
   graph : @model.MermaidGraph,
 ) -> AsciiStateFlatGridLayout {
-  let nodes_in_order = @layout.layout_state_nodes_in_definition_order(graph)
-  let grid_positions = @layout.layout_state_grid_positions(
-    graph, nodes_in_order,
+  let (nodes_in_order, grid_positions, edge_paths) = @layout.layout_state_flat_grid_layout_data(
+    graph,
   )
-  let blocked = @layout.layout_state_grid_blocked_cells(grid_positions)
-  let (max_grid_x, max_grid_y) = if grid_positions.length() == 0 {
-    (0, 0)
-  } else {
-    @layout.layout_state_grid_bounds(grid_positions)
-  }
-  let edge_paths : Array[Array[@layout.AsciiGridCoord]] = []
-  for edge in graph.edges {
-    let path = match
-      @layout.layout_state_edge_grid_path_td(
-        grid_positions,
-        blocked,
-        max_grid_x,
-        max_grid_y,
-        edge.source,
-        edge.target,
-      ) {
-      Some(found) => found
-      None => []
-    }
-    edge_paths.push(path)
-  }
   { nodes_in_order, grid_positions, edge_paths }
 }
 

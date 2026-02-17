@@ -36,7 +36,7 @@ fn layout_state_children_in_order(
 
 ///|
 /// Returns graph nodes in their original definition order.
-pub fn layout_state_nodes_in_definition_order(
+fn layout_state_nodes_in_definition_order(
   graph : MermaidGraph,
 ) -> Array[MermaidNode] {
   let nodes : Array[MermaidNode] = []
@@ -48,7 +48,7 @@ pub fn layout_state_nodes_in_definition_order(
 
 ///|
 /// Computes grid positions for state diagram nodes.
-pub fn layout_state_grid_positions(
+fn layout_state_grid_positions(
   graph : MermaidGraph,
   nodes_in_order : Array[MermaidNode],
 ) -> Map[String, LayoutStateGridCoord] {
@@ -110,7 +110,7 @@ pub fn layout_state_grid_positions(
 
 ///|
 /// Computes the bounding box of the state diagram grid.
-pub fn layout_state_grid_bounds(
+fn layout_state_grid_bounds(
   positions : Map[String, LayoutStateGridCoord],
 ) -> (Int, Int) {
   let mut max_x = 0
@@ -124,7 +124,7 @@ pub fn layout_state_grid_bounds(
 
 ///|
 /// Computes the set of grid cells blocked by node positions.
-pub fn layout_state_grid_blocked_cells(
+fn layout_state_grid_blocked_cells(
   positions : Map[String, LayoutStateGridCoord],
 ) -> Map[String, Bool] {
   let blocked : Map[String, Bool] = {}
@@ -396,7 +396,7 @@ fn layout_state_pick_shorter_path(
 
 ///|
 /// Routes an edge path on the state grid in top-down direction.
-pub fn layout_state_edge_grid_path_td(
+fn layout_state_edge_grid_path_td(
   positions : Map[String, LayoutStateGridCoord],
   blocked : Map[String, Bool],
   max_x : Int,
@@ -432,6 +432,42 @@ pub fn layout_state_edge_grid_path_td(
     }
     _ => None
   }
+}
+
+///|
+/// Computes state flat-grid layout inputs for ASCII planning.
+pub fn layout_state_flat_grid_layout_data(
+  graph : MermaidGraph,
+) -> (
+  Array[MermaidNode],
+  Map[String, LayoutStateGridCoord],
+  Array[Array[AsciiGridCoord]],
+) {
+  let nodes_in_order = layout_state_nodes_in_definition_order(graph)
+  let grid_positions = layout_state_grid_positions(graph, nodes_in_order)
+  let blocked = layout_state_grid_blocked_cells(grid_positions)
+  let (max_grid_x, max_grid_y) = if grid_positions.length() == 0 {
+    (0, 0)
+  } else {
+    layout_state_grid_bounds(grid_positions)
+  }
+  let edge_paths : Array[Array[AsciiGridCoord]] = []
+  for edge in graph.edges {
+    let path = match
+      layout_state_edge_grid_path_td(
+        grid_positions,
+        blocked,
+        max_grid_x,
+        max_grid_y,
+        edge.source,
+        edge.target,
+      ) {
+      Some(found) => found
+      None => []
+    }
+    edge_paths.push(path)
+  }
+  (nodes_in_order, grid_positions, edge_paths)
 }
 
 ///|
