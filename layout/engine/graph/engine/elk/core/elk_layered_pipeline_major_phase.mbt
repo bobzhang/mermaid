@@ -1,4 +1,38 @@
 ///|
+fn merge_style(
+  target : Map[String, String],
+  style : Map[String, String]?,
+) -> Unit {
+  match style {
+    Some(found) =>
+      for entry in found.to_array() {
+        let (key, value) = entry
+        target[key] = value
+      }
+    None => ()
+  }
+}
+
+///|
+fn resolve_inline_style(
+  graph : MermaidGraph,
+  node_id : String,
+) -> Map[String, String]? {
+  let resolved : Map[String, String] = {}
+  let class_style = match graph.class_assignments.get(node_id) {
+    Some(class_name) => graph.class_defs.get(class_name)
+    None => None
+  }
+  merge_style(resolved, class_style)
+  merge_style(resolved, graph.node_styles.get(node_id))
+  if resolved.length() == 0 {
+    None
+  } else {
+    Some(resolved)
+  }
+}
+
+///|
 fn rank_pair_key(left_rank : Int, right_rank : Int) -> String {
   if left_rank <= right_rank {
     "\{left_rank}->\{right_rank}"

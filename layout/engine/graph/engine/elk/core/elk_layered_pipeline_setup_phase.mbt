@@ -87,6 +87,17 @@ fn final_phase_snapshot(
 }
 
 ///|
+fn build_order_index_by_node_id(
+  nodes_in_order : Array[MermaidNode],
+) -> Map[String, Int] {
+  let order_index_by_node_id : Map[String, Int] = {}
+  for i, node in nodes_in_order {
+    order_index_by_node_id[node.id] = i
+  }
+  order_index_by_node_id
+}
+
+///|
 priv struct ElkLayeredSetupState {
   graph : MermaidGraph
   options : RenderOptions
