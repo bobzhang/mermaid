@@ -1,4 +1,18 @@
 ///|
+fn graph_is_sequence_layout(graph : MermaidGraph) -> Bool {
+  let nodes = graph.nodes.values().to_array()
+  if nodes.length() == 0 {
+    return false
+  }
+  for node in nodes {
+    if node.shape != SequenceParticipant {
+      return false
+    }
+  }
+  true
+}
+
+///|
 fn layout_graph_legacy_with_subgraph_redirects(
   graph : MermaidGraph,
   options : RenderOptions,
@@ -6,7 +20,7 @@ fn layout_graph_legacy_with_subgraph_redirects(
   compact_fanin : Bool,
   layout_engine : LayoutEngine,
 ) -> PositionedGraph {
-  if @layout_engine_graph_group_core.is_sequence_graph(graph) {
+  if graph_is_sequence_layout(graph) {
     return @layout_engine_sequence_core.layout_sequence_graph(graph, options)
   }
 

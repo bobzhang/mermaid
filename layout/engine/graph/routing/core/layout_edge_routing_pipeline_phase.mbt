@@ -1,6 +1,22 @@
 ///|
 
 ///|
+fn resolve_edge_endpoint_id(
+  node_id : String,
+  use_subgraph_redirects : Bool,
+  redirects : Map[String, String],
+) -> String {
+  if use_subgraph_redirects {
+    match redirects.get(node_id) {
+      Some(found) => found
+      None => node_id
+    }
+  } else {
+    node_id
+  }
+}
+
+///|
 fn collect_edge_layout_contexts(
   graph : MermaidGraph,
   horizontal : Bool,
@@ -13,12 +29,12 @@ fn collect_edge_layout_contexts(
   let edge_layout_contexts : Array[EdgeLayoutContext] = []
   let directed_edge_count_by_key : Map[String, Int] = {}
   for edge in graph.edges {
-    let resolved_source_id = @layout_engine_graph_group_core.resolve_edge_endpoint_id(
+    let resolved_source_id = resolve_edge_endpoint_id(
       edge.source,
       use_subgraph_redirects,
       subgraph_exit_by_id,
     )
-    let resolved_target_id = @layout_engine_graph_group_core.resolve_edge_endpoint_id(
+    let resolved_target_id = resolve_edge_endpoint_id(
       edge.target,
       use_subgraph_redirects,
       subgraph_entry_by_id,

@@ -47,6 +47,42 @@ fn layout_state_nodes_in_definition_order(
 }
 
 ///|
+fn layout_state_merge_style(
+  target : Map[String, String],
+  style : Map[String, String]?,
+) -> Unit {
+  match style {
+    Some(found) =>
+      for entry in found.to_array() {
+        let (key, value) = entry
+        target[key] = value
+      }
+    None => ()
+  }
+}
+
+///|
+fn layout_state_resolve_inline_style(
+  graph : MermaidGraph,
+  node_id : String,
+) -> Map[String, String]? {
+  let resolved : Map[String, String] = {}
+  let class_style = match graph.class_assignments.get(node_id) {
+    Some(class_name) => graph.class_defs.get(class_name)
+    None => None
+  }
+
+  layout_state_merge_style(resolved, class_style)
+  layout_state_merge_style(resolved, graph.node_styles.get(node_id))
+
+  if resolved.length() == 0 {
+    None
+  } else {
+    Some(resolved)
+  }
+}
+
+///|
 /// Computes grid positions for state diagram nodes.
 fn layout_state_grid_positions(
   graph : MermaidGraph,
@@ -673,10 +709,7 @@ fn layout_flat_state_graph_for_ascii_grid(
           y: origin_y + (coord.y + 1) * cell_y,
           width: cell_x * 2,
           height: cell_y * 2,
-          inline_style: @layout_engine_graph_group_core.resolve_inline_style(
-            graph,
-            node.id,
-          ),
+          inline_style: layout_state_resolve_inline_style(graph, node.id),
         }
         positioned_nodes.push(positioned)
         positioned_by_id[node.id] = positioned

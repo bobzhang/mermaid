@@ -21,29 +21,6 @@ fn test_graph(
 }
 
 ///|
-test "group detects sequence graph only when all nodes are participants" {
-  let sequence_nodes : Map[String, @model.MermaidNode] = {
-    "A": { id: "A", label: "A", shape: SequenceParticipant },
-    "B": { id: "B", label: "B", shape: SequenceParticipant },
-  }
-  let mixed_nodes : Map[String, @model.MermaidNode] = {
-    "A": { id: "A", label: "A", shape: SequenceParticipant },
-    "B": { id: "B", label: "B", shape: Rectangle },
-  }
-
-  assert_true(is_sequence_graph(test_graph(sequence_nodes, [])))
-  assert_true(!is_sequence_graph(test_graph(mixed_nodes, [])))
-}
-
-///|
-test "group resolves redirect endpoints only when enabled" {
-  let redirects : Map[String, String] = { "SG": "A" }
-  assert_eq(resolve_edge_endpoint_id("SG", true, redirects), "A")
-  assert_eq(resolve_edge_endpoint_id("SG", false, redirects), "SG")
-  assert_eq(resolve_edge_endpoint_id("X", true, redirects), "X")
-}
-
-///|
 test "group builds positioned group and registers anchor" {
   let subgraph : @model.MermaidSubgraph = {
     id: "SG",
