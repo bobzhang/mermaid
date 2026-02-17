@@ -11,11 +11,14 @@ pub fn prepare_graph_inputs(@model.MermaidGraph, Bool) -> GraphPrepState
 // Errors
 
 // Types and methods
-pub(all) struct GraphPrepState {
+pub struct GraphPrepState {
   subgraph_entry_by_id : Map[String, String]
   subgraph_exit_by_id : Map[String, String]
   nodes_in_order : Array[@model.MermaidNode]
 }
+pub fn GraphPrepState::nodes_in_order(Self) -> Array[@model.MermaidNode]
+pub fn GraphPrepState::subgraph_entry_by_id(Self) -> Map[String, String]
+pub fn GraphPrepState::subgraph_exit_by_id(Self) -> Map[String, String]
 
 // Type aliases
 

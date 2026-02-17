@@ -56,10 +56,34 @@ fn collect_hidden_subgraph_node_ids(
 
 ///|
 /// Legacy prep phase output consumed by downstream phases.
-pub(all) struct GraphPrepState {
+pub struct GraphPrepState {
   subgraph_entry_by_id : Map[String, String]
   subgraph_exit_by_id : Map[String, String]
   nodes_in_order : Array[MermaidNode]
+}
+
+///|
+/// Returns subgraph entry-node redirects keyed by subgraph id.
+pub fn GraphPrepState::subgraph_entry_by_id(
+  self : GraphPrepState,
+) -> Map[String, String] {
+  self.subgraph_entry_by_id
+}
+
+///|
+/// Returns subgraph exit-node redirects keyed by subgraph id.
+pub fn GraphPrepState::subgraph_exit_by_id(
+  self : GraphPrepState,
+) -> Map[String, String] {
+  self.subgraph_exit_by_id
+}
+
+///|
+/// Returns normalized node order with redirected subgraph placeholders removed.
+pub fn GraphPrepState::nodes_in_order(
+  self : GraphPrepState,
+) -> Array[MermaidNode] {
+  self.nodes_in_order
 }
 
 ///|

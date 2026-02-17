@@ -48,9 +48,9 @@ pub fn build_legacy_layout_setup(
   let prep_state = @layout_engine_graph_prep_core.prepare_graph_inputs(
     graph, use_subgraph_redirects,
   )
-  let subgraph_entry_by_id = prep_state.subgraph_entry_by_id
-  let subgraph_exit_by_id = prep_state.subgraph_exit_by_id
-  let prepped_nodes_in_order = prep_state.nodes_in_order
+  let subgraph_entry_by_id = prep_state.subgraph_entry_by_id()
+  let subgraph_exit_by_id = prep_state.subgraph_exit_by_id()
+  let prepped_nodes_in_order = prep_state.nodes_in_order()
   let nodes_in_order = @layout_engine_graph_internal_core.reorder_nodes_for_flow_layout(
     prepped_nodes_in_order,
     graph.edges,
