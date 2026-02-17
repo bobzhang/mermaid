@@ -649,11 +649,11 @@ fn edge_label_bg_size(label : String) -> (Int, Int) {
 fn marker_start_for_class(operator : String?) -> String? {
   match operator {
     Some(op) =>
-      if op.has_prefix("<|") {
+      if op is [.. "<|", ..] {
         Some("class-inherit")
-      } else if op.has_prefix("*") {
+      } else if op is [.. "*", ..] {
         Some("class-composition")
-      } else if op.has_prefix("o") {
+      } else if op is [.. "o", ..] {
         Some("class-aggregation")
       } else if op.contains("<") {
         Some("class-arrow")
@@ -668,11 +668,11 @@ fn marker_start_for_class(operator : String?) -> String? {
 fn marker_end_for_class(operator : String?) -> String? {
   match operator {
     Some(op) =>
-      if op.has_suffix("|>") {
+      if op is [.., .. "|>"] {
         Some("class-inherit")
-      } else if op.has_suffix("*") {
+      } else if op is [.., .. "*"] {
         Some("class-composition")
-      } else if op.has_suffix("o") {
+      } else if op is [.., .. "o"] {
         Some("class-aggregation")
       } else if op.contains(">") {
         Some("class-arrow")
