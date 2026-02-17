@@ -1,6 +1,6 @@
 ///|
 /// Legacy lane/rank phase output consumed by placement and routing phases.
-pub struct LegacyLaneState {
+pub(all) struct LegacyLaneState {
   state_lane_by_node_id : Map[String, Int]
   state_label_y_offset_by_node_id : Map[String, Int]
   flow_rank_by_node_id : Map[String, Int]
