@@ -173,13 +173,19 @@ test "elk layered rank assignment keeps forward dependencies ordered" {
     prep_state.nodes_in_order(),
     graph.edges,
   )
-  let horizontal = @layout_engine_graph_internal_core.layout_direction_is_horizontal(
-    graph.direction,
+  let (
+    rank_by_node_id,
+    _max_rank,
+    _order_index_by_node_id,
+    _successors_by_node_id,
+    _predecessors_by_node_id,
+  ) = build_layered_rank_state(
+    graph,
+    false,
+    prep_state.subgraph_entry_by_id(),
+    prep_state.subgraph_exit_by_id(),
+    nodes_in_order,
   )
-  let lane_state = @layout_engine_graph_lane_core.compute_legacy_lane_state(
-    graph, nodes_in_order, false, false, horizontal, false, false, false,
-  )
-  let rank_by_node_id = lane_state.flow_rank_by_node_id()
 
   assert_eq(option_int_or(rank_by_node_id.get("A"), -1), 0)
   assert_eq(option_int_or(rank_by_node_id.get("B"), -1), 0)
@@ -209,29 +215,23 @@ test "elk layered order optimization reduces crossing count on bipartite rank pa
     prep_state.nodes_in_order(),
     graph.edges,
   )
-  let order_index_by_node_id = build_order_index_by_node_id(nodes_in_order)
-  let horizontal = @layout_engine_graph_internal_core.layout_direction_is_horizontal(
-    graph.direction,
-  )
-  let lane_state = @layout_engine_graph_lane_core.compute_legacy_lane_state(
-    graph, nodes_in_order, false, false, horizontal, false, false, false,
-  )
-  let rank_by_node_id = lane_state.flow_rank_by_node_id()
-  let max_rank = lane_state.flow_max_rank()
-  let rank_node_ids_by_rank = build_rank_node_ids_by_lane(
-    nodes_in_order,
+  let base_order_index_by_node_id = build_order_index_by_node_id(nodes_in_order)
+  let (
     rank_by_node_id,
-    lane_state.flow_lane_by_node_id(),
-    order_index_by_node_id,
     max_rank,
-  )
-  let (successors_by_node_id, predecessors_by_node_id) = collect_layered_adjacency_from_rank(
+    order_index_by_node_id,
+    successors_by_node_id,
+    predecessors_by_node_id,
+  ) = build_layered_rank_state(
     graph,
     false,
     prep_state.subgraph_entry_by_id(),
     prep_state.subgraph_exit_by_id(),
     nodes_in_order,
-    rank_by_node_id,
+  )
+  let rank_node_ids_by_rank = build_rank_node_ids_by_lane(
+    nodes_in_order, rank_by_node_id, order_index_by_node_id, base_order_index_by_node_id,
+    max_rank,
   )
   let crossings_before = wb_rank_crossings_between(
     match rank_node_ids_by_rank.get(0) {
@@ -260,6 +260,41 @@ test "elk layered order optimization reduces crossing count on bipartite rank pa
     successors_by_node_id,
   )
   assert_true(crossings_after <= crossings_before)
+}
+
+///|
+test "elk layered rank state breaks feedback cycles into forward-ranked edges" {
+  let graph = wb_graph(["A", "B", "C"], [("A", "B"), ("B", "C"), ("C", "A")])
+  let prep_state = @layout_engine_graph_prep_core.prepare_graph_inputs(
+    graph, false,
+  )
+  let nodes_in_order = @layout_engine_graph_internal_core.reorder_nodes_for_flow_layout(
+    prep_state.nodes_in_order(),
+    graph.edges,
+  )
+  let (
+    rank_by_node_id,
+    max_rank,
+    _order_index_by_node_id,
+    successors_by_node_id,
+    _predecessors_by_node_id,
+  ) = build_layered_rank_state(
+    graph,
+    false,
+    prep_state.subgraph_entry_by_id(),
+    prep_state.subgraph_exit_by_id(),
+    nodes_in_order,
+  )
+  assert_true(max_rank >= 2)
+  for source_id, successors in successors_by_node_id {
+    let source_rank = option_int_or(rank_by_node_id.get(source_id), -1)
+    for target_id in successors {
+      let target_rank = option_int_or(rank_by_node_id.get(target_id), -1)
+      assert_true(source_rank >= 0)
+      assert_true(target_rank >= 0)
+      assert_true(source_rank < target_rank)
+    }
+  }
 }
 
 ///|
