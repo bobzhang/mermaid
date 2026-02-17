@@ -310,6 +310,81 @@ test "elk layered rank order strategy uses optimized seed order for large native
 }
 
 ///|
+test "elk layered rank phase resolves native strategies on small graphs" {
+  let graph = wb_graph(["A", "B", "C"], [("A", "B"), ("B", "C")])
+  let setup_state = run_elk_layered_setup_phase({
+    graph,
+    options: RenderOptions::default(),
+    use_subgraph_redirects: true,
+    compact_fanin: false,
+  })
+  let rank_phase_state = run_elk_layered_rank_phase(setup_state)
+  let rank_seed_strategy = rank_phase_state.rank_seed_strategy
+  assert_true(rank_seed_strategy is NativeFeedback)
+  assert_true(
+    select_elk_layered_rank_order_strategy(graph, rank_seed_strategy)
+    is OptimizedSeedWithVirtualCandidate,
+  )
+  assert_true(
+    select_elk_layered_minor_placement_strategy(rank_seed_strategy)
+    is RelaxedNeighbor,
+  )
+  let mut total_nodes = 0
+  for _, node_ids in rank_phase_state.rank_node_ids_by_rank {
+    total_nodes += node_ids.length()
+  }
+  assert_eq(total_nodes, setup_state.nodes_in_order.length())
+}
+
+///|
+test "elk layered rank phase keeps strategy and minor mode consistent on large graphs" {
+  let nodes : Array[String] = []
+  for i in 0..<17 {
+    nodes.push("N\{i}")
+  }
+  let edges : Array[(String, String)] = []
+  for i in 0..<16 {
+    edges.push(("N\{i}", "N\{i + 1}"))
+  }
+  let graph = wb_graph(nodes, edges)
+  let setup_state = run_elk_layered_setup_phase({
+    graph,
+    options: RenderOptions::default(),
+    use_subgraph_redirects: true,
+    compact_fanin: false,
+  })
+  let rank_phase_state = run_elk_layered_rank_phase(setup_state)
+  let rank_seed_strategy = rank_phase_state.rank_seed_strategy
+  match rank_seed_strategy {
+    LegacyLaneSeed => {
+      assert_true(
+        select_elk_layered_minor_placement_strategy(rank_seed_strategy)
+        is LaneSeeded,
+      )
+      assert_true(
+        select_elk_layered_rank_order_strategy(graph, rank_seed_strategy)
+        is SeedOrderOnly,
+      )
+    }
+    NativeFeedback => {
+      assert_true(
+        select_elk_layered_minor_placement_strategy(rank_seed_strategy)
+        is RelaxedNeighbor,
+      )
+      assert_true(
+        select_elk_layered_rank_order_strategy(graph, rank_seed_strategy)
+        is OptimizedSeedOrder,
+      )
+    }
+  }
+  let mut total_nodes = 0
+  for _, node_ids in rank_phase_state.rank_node_ids_by_rank {
+    total_nodes += node_ids.length()
+  }
+  assert_eq(total_nodes, setup_state.nodes_in_order.length())
+}
+
+///|
 test "elk layered large-graph selector keeps legacy seed on crossing tie" {
   let all_nodes : Array[String] = []
   for i in 0..<17 {

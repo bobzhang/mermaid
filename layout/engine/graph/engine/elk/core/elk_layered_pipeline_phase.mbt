@@ -2294,22 +2294,24 @@ fn select_large_graph_rank_seed_state_by_score(
 }
 
 ///|
-/// Runs the ELK layered flow pipeline for non-state flowcharts.
-fn run_elk_layered_flow_backend(
-  request : GraphLayoutBackendRequest,
-  routing_policy : GraphBackendRoutingPolicy,
-) -> GraphLayoutBackendResult {
-  let setup_state = run_elk_layered_setup_phase(request)
+priv struct ElkLayeredRankPhaseState {
+  rank_seed_strategy : ElkLayeredRankSeedStrategy
+  rank_seed_state : ElkLayeredRankSeedState
+  rank_node_ids_by_rank : Map[Int, Array[String]]
+}
+
+///|
+fn run_elk_layered_rank_phase(
+  setup_state : ElkLayeredSetupState,
+) -> ElkLayeredRankPhaseState {
   let graph = setup_state.graph
-  let options = setup_state.options
   let use_subgraph_redirects = setup_state.use_subgraph_redirects
   let subgraph_entry_by_id = setup_state.subgraph_entry_by_id
   let subgraph_exit_by_id = setup_state.subgraph_exit_by_id
   let nodes_in_order = setup_state.nodes_in_order
-  let horizontal = setup_state.horizontal
-  let reverse = setup_state.reverse
   let base_order_index_by_node_id = setup_state.base_order_index_by_node_id
   let node_ids_in_order = setup_state.node_ids_in_order
+  let horizontal = setup_state.horizontal
   let default_rank_seed_strategy = select_elk_layered_rank_seed_strategy(graph)
   let (rank_seed_strategy, rank_seed_state) = if default_rank_seed_strategy
     is LegacyLaneSeed {
@@ -2357,26 +2359,56 @@ fn run_elk_layered_flow_backend(
       ),
     )
   }
-  let rank_by_node_id = rank_seed_state.rank_by_node_id
-  let max_rank = rank_seed_state.max_rank
-  let lane_by_node_id = rank_seed_state.lane_by_node_id
-  let order_index_by_node_id = rank_seed_state.order_index_by_node_id
-  let successors_by_node_id = rank_seed_state.successors_by_node_id
-  let predecessors_by_node_id = rank_seed_state.predecessors_by_node_id
   let rank_order_strategy = select_elk_layered_rank_order_strategy(
     graph, rank_seed_strategy,
   )
+  let base_rank_node_ids_by_rank = build_rank_node_ids_by_lane(
+    nodes_in_order,
+    rank_seed_state.rank_by_node_id,
+    rank_seed_state.lane_by_node_id,
+    base_order_index_by_node_id,
+    rank_seed_state.max_rank,
+  )
+  let rank_node_ids_by_rank = build_rank_node_ids_by_rank_for_order_strategy(
+    rank_order_strategy,
+    graph,
+    base_rank_node_ids_by_rank,
+    rank_seed_state.rank_by_node_id,
+    rank_seed_state.max_rank,
+    rank_seed_state.order_index_by_node_id,
+    rank_seed_state.successors_by_node_id,
+    rank_seed_state.predecessors_by_node_id,
+  )
+  { rank_seed_strategy, rank_seed_state, rank_node_ids_by_rank }
+}
+
+///|
+/// Runs the ELK layered flow pipeline for non-state flowcharts.
+fn run_elk_layered_flow_backend(
+  request : GraphLayoutBackendRequest,
+  routing_policy : GraphBackendRoutingPolicy,
+) -> GraphLayoutBackendResult {
+  let setup_state = run_elk_layered_setup_phase(request)
+  let graph = setup_state.graph
+  let options = setup_state.options
+  let use_subgraph_redirects = setup_state.use_subgraph_redirects
+  let subgraph_entry_by_id = setup_state.subgraph_entry_by_id
+  let subgraph_exit_by_id = setup_state.subgraph_exit_by_id
+  let nodes_in_order = setup_state.nodes_in_order
+  let horizontal = setup_state.horizontal
+  let reverse = setup_state.reverse
+  let rank_phase_state = run_elk_layered_rank_phase(setup_state)
+  let rank_seed_strategy = rank_phase_state.rank_seed_strategy
+  let rank_seed_state = rank_phase_state.rank_seed_state
+  let rank_by_node_id = rank_seed_state.rank_by_node_id
+  let max_rank = rank_seed_state.max_rank
+  let lane_by_node_id = rank_seed_state.lane_by_node_id
+  let successors_by_node_id = rank_seed_state.successors_by_node_id
+  let predecessors_by_node_id = rank_seed_state.predecessors_by_node_id
   let minor_placement_strategy = select_elk_layered_minor_placement_strategy(
     rank_seed_strategy,
   )
-  let base_rank_node_ids_by_rank = build_rank_node_ids_by_lane(
-    nodes_in_order, rank_by_node_id, lane_by_node_id, base_order_index_by_node_id,
-    max_rank,
-  )
-  let rank_node_ids_by_rank = build_rank_node_ids_by_rank_for_order_strategy(
-    rank_order_strategy, graph, base_rank_node_ids_by_rank, rank_by_node_id, max_rank,
-    order_index_by_node_id, successors_by_node_id, predecessors_by_node_id,
-  )
+  let rank_node_ids_by_rank = rank_phase_state.rank_node_ids_by_rank
 
   let node_size_state = build_elk_layered_node_size_state(nodes_in_order)
   let max_rank_size = compute_max_rank_size(rank_node_ids_by_rank, max_rank)
