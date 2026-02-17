@@ -39,15 +39,29 @@ fn ts_normalize_whitespace(text : String) -> String {
 
 ///|
 fn ts_count_occurrences(haystack : String, needle : String) -> Int {
-  if needle == "" {
+  let needle_len = needle.length()
+  if needle_len == 0 {
     return 0
   }
-  let parts = haystack.split(needle).to_array()
-  if parts.length() == 0 {
-    0
-  } else {
-    parts.length() - 1
+  let haystack_len = haystack.length()
+  let mut count = 0
+  let mut i = 0
+  while i + needle_len <= haystack_len {
+    let mut matched = true
+    for j in 0..<needle_len {
+      if haystack[i + j] != needle[j] {
+        matched = false
+        break
+      }
+    }
+    if matched {
+      count += 1
+      i = i + needle_len
+    } else {
+      i += 1
+    }
   }
+  count
 }
 
 ///|
