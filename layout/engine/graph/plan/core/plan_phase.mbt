@@ -7,15 +7,6 @@ pub(all) enum LayoutExecutionPlan {
 }
 
 ///|
-/// Resolves the effective layout engine from render options.
-pub fn resolve_layout_engine(options : RenderOptions) -> LayoutEngine {
-  match options.layout_engine {
-    Some(engine) => engine
-    None => Legacy
-  }
-}
-
-///|
 fn graph_is_sequence_layout(graph : MermaidGraph) -> Bool {
   let nodes = graph.nodes.values().to_array()
   if nodes.length() == 0 {

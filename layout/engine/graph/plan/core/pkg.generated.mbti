@@ -10,8 +10,6 @@ pub fn build_ascii_layout_execution_plan(@model.MermaidGraph) -> LayoutExecution
 
 pub fn build_svg_layout_execution_plan(@model.MermaidGraph) -> LayoutExecutionPlan
 
-pub fn resolve_layout_engine(@model.RenderOptions) -> @model.LayoutEngine
-
 // Errors
 
 // Types and methods

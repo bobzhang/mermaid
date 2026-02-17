@@ -23,17 +23,6 @@ fn resolve_graph_engine_routing_policy(
 }
 
 ///|
-fn run_non_elk_backend(
-  request : GraphLayoutBackendRequest,
-  engine : LayoutEngine,
-) -> GraphLayoutBackendResult {
-  @layout_engine_graph_backend_core.run_graph_backend_pipeline(
-    request,
-    resolve_graph_engine_routing_policy(engine),
-  )
-}
-
-///|
 /// Runs the shared backend pipeline with the selected engine profile.
 pub fn run_graph_layout_engine_backend(
   request : GraphLayoutBackendRequest,
@@ -42,7 +31,10 @@ pub fn run_graph_layout_engine_backend(
   match engine {
     Elk | ElkLayered =>
       @layout_engine_graph_engine_elk_core.layout_graph_elk_backend(request)
-    Legacy => run_non_elk_backend(request, engine)
-    DagreParity => run_non_elk_backend(request, engine)
+    Legacy | DagreParity =>
+      @layout_engine_graph_backend_core.run_graph_backend_pipeline(
+        request,
+        resolve_graph_engine_routing_policy(engine),
+      )
   }
 }
