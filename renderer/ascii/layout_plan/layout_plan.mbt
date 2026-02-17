@@ -554,7 +554,8 @@ fn class_sections(node : @model.MermaidNode) -> Array[Array[String]] {
       continue
     }
     let rendered = class_strip_method_marker(detail)
-    if detail.has_prefix("<<") && detail.has_suffix(">>") {
+    if detail.strip_prefix("<<") is Some(without_prefix) &&
+      without_prefix.strip_suffix(">>") is Some(_) {
       header.push(rendered.to_string())
     } else if class_is_method_detail(detail) {
       methods.push(rendered.to_string())
