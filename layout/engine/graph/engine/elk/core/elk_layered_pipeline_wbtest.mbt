@@ -167,6 +167,21 @@ test "elk layered rank order strategy uses optimized seed order for large native
 }
 
 ///|
+test "elk layered minor placement strategy uses lane seeded mode for legacy seed path" {
+  assert_true(
+    select_elk_layered_minor_placement_strategy(LegacyLaneSeed) is LaneSeeded,
+  )
+}
+
+///|
+test "elk layered minor placement strategy uses relaxed mode for native path" {
+  assert_true(
+    select_elk_layered_minor_placement_strategy(NativeFeedback)
+    is RelaxedNeighbor,
+  )
+}
+
+///|
 fn wb_rank_crossings_between(
   left_rank_node_ids : Array[String],
   right_rank_node_ids : Array[String],

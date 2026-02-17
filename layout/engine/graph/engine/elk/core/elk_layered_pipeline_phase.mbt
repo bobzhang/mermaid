@@ -1813,6 +1813,52 @@ fn select_elk_layered_rank_order_strategy(
 }
 
 ///|
+priv enum ElkLayeredMinorPlacementStrategy {
+  LaneSeeded
+  RelaxedNeighbor
+}
+
+///|
+fn select_elk_layered_minor_placement_strategy(
+  rank_seed_strategy : ElkLayeredRankSeedStrategy,
+) -> ElkLayeredMinorPlacementStrategy {
+  if rank_seed_strategy is LegacyLaneSeed {
+    LaneSeeded
+  } else {
+    RelaxedNeighbor
+  }
+}
+
+///|
+fn build_minor_coord_by_strategy(
+  strategy : ElkLayeredMinorPlacementStrategy,
+  rank_node_ids_by_rank : Map[Int, Array[String]],
+  max_rank : Int,
+  lane_by_node_id : Map[String, Int],
+  padding : Int,
+  minor_step : Int,
+  max_rank_minor_span : Int,
+  predecessors_by_node_id : Map[String, Array[String]],
+  successors_by_node_id : Map[String, Array[String]],
+  horizontal : Bool,
+  width_by_node_id : Map[String, Int],
+  height_by_node_id : Map[String, Int],
+) -> Map[String, Int] {
+  match strategy {
+    LaneSeeded =>
+      build_minor_coord_by_lane_seed(
+        rank_node_ids_by_rank, max_rank, lane_by_node_id, padding, minor_step,
+      )
+    RelaxedNeighbor =>
+      build_minor_coord_by_node_id(
+        rank_node_ids_by_rank, max_rank, padding, minor_step, max_rank_minor_span,
+        predecessors_by_node_id, successors_by_node_id, horizontal, width_by_node_id,
+        height_by_node_id,
+      )
+  }
+}
+
+///|
 fn build_rank_node_ids_by_rank_for_order_strategy(
   strategy : ElkLayeredRankOrderStrategy,
   graph : MermaidGraph,
@@ -1894,7 +1940,6 @@ fn run_elk_layered_flow_backend(
     node_ids_in_order.push(node.id)
   }
   let rank_seed_strategy = select_elk_layered_rank_seed_strategy(graph)
-  let use_legacy_rank_seed = rank_seed_strategy is LegacyLaneSeed
   let rank_seed_state = build_elk_layered_rank_seed_state(
     graph,
     rank_seed_strategy,
@@ -1915,6 +1960,9 @@ fn run_elk_layered_flow_backend(
   let predecessors_by_node_id = rank_seed_state.predecessors_by_node_id
   let rank_order_strategy = select_elk_layered_rank_order_strategy(
     graph, rank_seed_strategy,
+  )
+  let minor_placement_strategy = select_elk_layered_minor_placement_strategy(
+    rank_seed_strategy,
   )
   let base_rank_node_ids_by_rank = build_rank_node_ids_by_lane(
     nodes_in_order, rank_by_node_id, lane_by_node_id, base_order_index_by_node_id,
@@ -1970,17 +2018,11 @@ fn run_elk_layered_flow_backend(
   }
   let minor_step = minor_gap.max(min_minor_step)
   let max_rank_minor_span = (max_rank_size - 1).max(0) * minor_step
-  let minor_coord_by_node_id = if use_legacy_rank_seed {
-    build_minor_coord_by_lane_seed(
-      rank_node_ids_by_rank, max_rank, lane_by_node_id, padding, minor_step,
-    )
-  } else {
-    build_minor_coord_by_node_id(
-      rank_node_ids_by_rank, max_rank, padding, minor_step, max_rank_minor_span,
-      predecessors_by_node_id, successors_by_node_id, horizontal, width_by_node_id,
-      height_by_node_id,
-    )
-  }
+  let minor_coord_by_node_id = build_minor_coord_by_strategy(
+    minor_placement_strategy, rank_node_ids_by_rank, max_rank, lane_by_node_id, padding,
+    minor_step, max_rank_minor_span, predecessors_by_node_id, successors_by_node_id,
+    horizontal, width_by_node_id, height_by_node_id,
+  )
   let rank_pair_label_major_gap = build_rank_pair_label_major_gap(
     graph, use_subgraph_redirects, subgraph_entry_by_id, subgraph_exit_by_id, rank_by_node_id,
     horizontal,
