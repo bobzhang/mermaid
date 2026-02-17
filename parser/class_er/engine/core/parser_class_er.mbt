@@ -79,6 +79,11 @@ fn parse_alias_relation_parts(
 }
 
 ///|
+fn is_double_quoted_token(token : String) -> Bool {
+  token is [.. "\"", .., .. "\""]
+}
+
+///|
 fn parse_relation_parts(line : String) -> (String, String, String, String?)? {
   let (body, label) = lexmatch line[:] {
     (head, ":", raw_label) => {
@@ -100,7 +105,7 @@ fn parse_relation_parts(line : String) -> (String, String, String, String?)? {
   let source = parts[0]
   let mut operator_index = -1
   for i, part in parts {
-    if !(part.has_prefix("\"") && part.has_suffix("\"")) &&
+    if !is_double_quoted_token(part) &&
       (part.contains("-") || part.contains(".")) {
       operator_index = i
       break
@@ -114,7 +119,7 @@ fn parse_relation_parts(line : String) -> (String, String, String, String?)? {
   let mut target = ""
   for i in (operator_index + 1)..<parts.length() {
     let candidate = parts[i]
-    if !(candidate.has_prefix("\"") && candidate.has_suffix("\"")) {
+    if !is_double_quoted_token(candidate) {
       target = candidate
       break
     }
@@ -201,7 +206,7 @@ fn normalize_class_member(raw : String) -> String {
   if trimmed == "" {
     return ""
   }
-  if trimmed.has_prefix("<<") && trimmed.has_suffix(">>") {
+  if trimmed is [.. "<<", .., .. ">>"] {
     return trimmed
   }
 
