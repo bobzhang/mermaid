@@ -73,6 +73,7 @@ pub(all) enum LayoutEngine {
   Legacy
   DagreParity
   Elk
+  ElkLayered
 }
 pub impl Eq for LayoutEngine
 pub impl Show for LayoutEngine

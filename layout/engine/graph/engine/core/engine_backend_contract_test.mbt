@@ -139,4 +139,25 @@ test "engine backends keep phase snapshot invariants on stress graph" {
   assert_true(elk_snapshots[2].height > 0)
   assert_eq(elk_backend.positioned_graph.nodes.length(), expected_nodes)
   assert_eq(elk_backend.positioned_graph.edges.length(), expected_edges)
+
+  let elk_layered_backend = dispatch_graph_layout_engine_backend(
+    graph,
+    options,
+    true,
+    false,
+    ElkLayered,
+  )
+  let elk_layered_snapshots = elk_layered_backend.phase_snapshots
+  assert_eq(elk_layered_snapshots.length(), 3)
+  assert_eq(elk_layered_snapshots[0].phase, "setup")
+  assert_eq(elk_layered_snapshots[1].phase, "placement")
+  assert_eq(elk_layered_snapshots[2].phase, "final")
+  assert_eq(elk_layered_snapshots[0].node_count, expected_nodes)
+  assert_eq(elk_layered_snapshots[1].node_count, expected_nodes)
+  assert_eq(elk_layered_snapshots[2].node_count, expected_nodes)
+  assert_eq(elk_layered_snapshots[2].edge_count, expected_edges)
+  assert_true(elk_layered_snapshots[2].width > 0)
+  assert_true(elk_layered_snapshots[2].height > 0)
+  assert_eq(elk_layered_backend.positioned_graph.nodes.length(), expected_nodes)
+  assert_eq(elk_layered_backend.positioned_graph.edges.length(), expected_edges)
 }

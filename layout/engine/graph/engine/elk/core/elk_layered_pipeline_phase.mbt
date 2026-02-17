@@ -1309,16 +1309,19 @@ fn rank_pair_major_step(
 }
 
 ///|
-fn should_use_elk_layered_pipeline(graph : MermaidGraph) -> Bool {
-  // Keep ELK layered pass scoped to small/medium flowcharts where the
-  // lightweight MoonBit implementation is quality-competitive. Larger dense
-  // graphs fallback to the shared backend for stability.
-  let within_layered_complexity_budget = graph.nodes.length() <= 16 &&
-    graph.edges.length() <= 30
+fn elk_graph_supports_layered_pipeline(graph : MermaidGraph) -> Bool {
   graph.diagram_kind is Flowchart &&
   !@layout_engine_graph_internal_core.is_state_graph(graph) &&
-  !@layout_engine_graph_internal_core.is_class_or_er_graph(graph) &&
-  within_layered_complexity_budget
+  !@layout_engine_graph_internal_core.is_class_or_er_graph(graph)
+}
+
+///|
+fn should_use_elk_layered_pipeline(graph : MermaidGraph) -> Bool {
+  // Keep default ELK layered pass scoped to small/medium flowcharts where the
+  // lightweight MoonBit implementation is currently quality-competitive.
+  let within_layered_complexity_budget = graph.nodes.length() <= 16 &&
+    graph.edges.length() <= 30
+  elk_graph_supports_layered_pipeline(graph) && within_layered_complexity_budget
 }
 
 ///|

@@ -16,7 +16,7 @@ import { spawnSync } from 'node:child_process'
 import { join } from 'node:path'
 import { tmpdir } from 'node:os'
 
-type Engine = 'legacy' | 'dagre-parity' | 'elk'
+type Engine = 'legacy' | 'dagre-parity' | 'elk' | 'elk-layered'
 
 type StressSummary = {
   fixtures: number
@@ -256,14 +256,17 @@ function main(): void {
   const legacyJson = join(tempRoot, 'legacy.json')
   const parityJson = join(tempRoot, 'dagre-parity.json')
   const elkJson = join(tempRoot, 'elk.json')
+  const elkLayeredJson = join(tempRoot, 'elk-layered.json')
 
   const legacy = runStressCompare('legacy', legacyJson, options.passThroughArgs)
   const parity = runStressCompare('dagre-parity', parityJson, options.passThroughArgs)
   const elk = runStressCompare('elk', elkJson, options.passThroughArgs)
+  const elkLayered = runStressCompare('elk-layered', elkLayeredJson, options.passThroughArgs)
 
   const legacySummary = legacy.summary
   const paritySummary = parity.summary
   const elkSummary = elk.summary
+  const elkLayeredSummary = elkLayered.summary
   const parityAvgWeightedGapDelta =
     paritySummary.avgWeightedGapIndex - legacySummary.avgWeightedGapIndex
   const parityAvgLogicalMultiplierDelta =
@@ -279,20 +282,32 @@ function main(): void {
     elkSummary.totalLocalPolylineCrossings - legacySummary.totalLocalPolylineCrossings
   const elkTotalLogicalCrossingDelta =
     elkSummary.totalLocalLogicalCrossings - legacySummary.totalLocalLogicalCrossings
+  const elkLayeredAvgWeightedGapDelta =
+    elkLayeredSummary.avgWeightedGapIndex - legacySummary.avgWeightedGapIndex
+  const elkLayeredAvgLogicalMultiplierDelta =
+    elkLayeredSummary.avgLogicalCrossingMultiplier - legacySummary.avgLogicalCrossingMultiplier
+  const elkLayeredTotalPolylineCrossingDelta =
+    elkLayeredSummary.totalLocalPolylineCrossings - legacySummary.totalLocalPolylineCrossings
+  const elkLayeredTotalLogicalCrossingDelta =
+    elkLayeredSummary.totalLocalLogicalCrossings - legacySummary.totalLocalLogicalCrossings
 
   const legacyByFixture = fixtureIndex(legacy.results)
   const parityByFixture = fixtureIndex(parity.results)
   const elkByFixture = fixtureIndex(elk.results)
+  const elkLayeredByFixture = fixtureIndex(elkLayered.results)
   const allFixtures = [...legacyByFixture.keys()].sort()
   const parityWeightedGapDeltas: Array<{ fixture: string; delta: number }> = []
   const parityLogicalMultiplierDeltas: Array<{ fixture: string; delta: number }> = []
   const elkWeightedGapDeltas: Array<{ fixture: string; delta: number }> = []
   const elkLogicalMultiplierDeltas: Array<{ fixture: string; delta: number }> = []
+  const elkLayeredWeightedGapDeltas: Array<{ fixture: string; delta: number }> = []
+  const elkLayeredLogicalMultiplierDeltas: Array<{ fixture: string; delta: number }> = []
   for (const fixture of allFixtures) {
     const legacyFixture = legacyByFixture.get(fixture)
     const parityFixture = parityByFixture.get(fixture)
     const elkFixture = elkByFixture.get(fixture)
-    if (!legacyFixture || !parityFixture || !elkFixture) {
+    const elkLayeredFixture = elkLayeredByFixture.get(fixture)
+    if (!legacyFixture || !parityFixture || !elkFixture || !elkLayeredFixture) {
       fail(`fixture mismatch between engines: ${fixture}`)
     }
     parityWeightedGapDeltas.push({
@@ -311,12 +326,25 @@ function main(): void {
       fixture,
       delta: elkFixture.logicalCrossingMultiplier - legacyFixture.logicalCrossingMultiplier,
     })
+    elkLayeredWeightedGapDeltas.push({
+      fixture,
+      delta: elkLayeredFixture.weightedGapIndex - legacyFixture.weightedGapIndex,
+    })
+    elkLayeredLogicalMultiplierDeltas.push({
+      fixture,
+      delta:
+        elkLayeredFixture.logicalCrossingMultiplier - legacyFixture.logicalCrossingMultiplier,
+    })
   }
 
   const topParityWeightedDeltas = sortByAbsDelta(parityWeightedGapDeltas).slice(0, 8)
   const topParityLogicalMultiplierDeltas = sortByAbsDelta(parityLogicalMultiplierDeltas).slice(0, 8)
   const topElkWeightedDeltas = sortByAbsDelta(elkWeightedGapDeltas).slice(0, 8)
   const topElkLogicalMultiplierDeltas = sortByAbsDelta(elkLogicalMultiplierDeltas).slice(0, 8)
+  const topElkLayeredWeightedDeltas = sortByAbsDelta(elkLayeredWeightedGapDeltas).slice(0, 8)
+  const topElkLayeredLogicalMultiplierDeltas = sortByAbsDelta(
+    elkLayeredLogicalMultiplierDeltas,
+  ).slice(0, 8)
 
   console.log('=== local engine A/B summary (dagre-parity - legacy) ===')
   console.log(`fixtures=${allFixtures.length}`)
@@ -367,9 +395,34 @@ function main(): void {
       .map(item => `${item.fixture}:${round(item.delta)}`)
       .join(', ')}`,
   )
+  console.log('\n=== local engine A/B summary (elk-layered - legacy) ===')
+  console.log(`fixtures=${allFixtures.length}`)
+  console.log(
+    `avg_weighted_gap_index legacy=${round(legacySummary.avgWeightedGapIndex)} elk_layered=${round(elkLayeredSummary.avgWeightedGapIndex)} delta=${round(elkLayeredAvgWeightedGapDelta)}`,
+  )
+  console.log(
+    `avg_logical_crossing_multiplier legacy=${round(legacySummary.avgLogicalCrossingMultiplier)} elk_layered=${round(elkLayeredSummary.avgLogicalCrossingMultiplier)} delta=${round(elkLayeredAvgLogicalMultiplierDelta)}`,
+  )
+  console.log(
+    `total_local_polyline_crossings legacy=${legacySummary.totalLocalPolylineCrossings} elk_layered=${elkLayeredSummary.totalLocalPolylineCrossings} delta=${elkLayeredTotalPolylineCrossingDelta}`,
+  )
+  console.log(
+    `total_local_logical_crossings legacy=${legacySummary.totalLocalLogicalCrossings} elk_layered=${elkLayeredSummary.totalLocalLogicalCrossings} delta=${elkLayeredTotalLogicalCrossingDelta}`,
+  )
+  console.log(
+    `top_weighted_gap_fixture_deltas=${topElkLayeredWeightedDeltas
+      .map(item => `${item.fixture}:${round(item.delta)}`)
+      .join(', ')}`,
+  )
+  console.log(
+    `top_logical_multiplier_fixture_deltas=${topElkLayeredLogicalMultiplierDeltas
+      .map(item => `${item.fixture}:${round(item.delta)}`)
+      .join(', ')}`,
+  )
   console.log(`legacy_report=${legacyJson}`)
   console.log(`dagre_parity_report=${parityJson}`)
   console.log(`elk_report=${elkJson}`)
+  console.log(`elk_layered_report=${elkLayeredJson}`)
 
   if (
     options.maxAvgWeightedGapDelta !== undefined &&

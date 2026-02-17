@@ -59,6 +59,10 @@ test "engine profile resolves stable routing policy per engine" {
   let elk_policy = resolve_graph_engine_routing_policy(Elk)
   assert_eq(elk_policy.enable_target_boundary_ports, true)
   assert_eq(elk_policy.preserve_assigned_endpoint_ports, false)
+
+  let elk_layered_policy = resolve_graph_engine_routing_policy(ElkLayered)
+  assert_eq(elk_layered_policy.enable_target_boundary_ports, true)
+  assert_eq(elk_layered_policy.preserve_assigned_endpoint_ports, false)
 }
 
 ///|
@@ -93,4 +97,12 @@ test "engine profile runner emits valid backend snapshots for every engine" {
   assert_eq(elk_backend.phase_snapshots[2].phase, "final")
   assert_true(elk_backend.phase_snapshots[2].width > 0)
   assert_true(elk_backend.phase_snapshots[2].height > 0)
+
+  let elk_layered_backend = run_graph_layout_engine_backend(request, ElkLayered)
+  assert_eq(elk_layered_backend.phase_snapshots.length(), 3)
+  assert_eq(elk_layered_backend.phase_snapshots[0].phase, "setup")
+  assert_eq(elk_layered_backend.phase_snapshots[1].phase, "placement")
+  assert_eq(elk_layered_backend.phase_snapshots[2].phase, "final")
+  assert_true(elk_layered_backend.phase_snapshots[2].width > 0)
+  assert_true(elk_layered_backend.phase_snapshots[2].height > 0)
 }

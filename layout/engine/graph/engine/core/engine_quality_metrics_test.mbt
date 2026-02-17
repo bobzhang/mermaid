@@ -207,29 +207,43 @@ test "quality metrics are stable and backend-comparable on stress graph" {
     DagreParity,
   )
   let elk = dispatch_graph_layout_engine(graph, options, true, false, Elk)
+  let elk_layered = dispatch_graph_layout_engine(
+    graph,
+    options,
+    true,
+    false,
+    ElkLayered,
+  )
 
   let legacy_crossings = qm_crossings(legacy)
   let dagre_crossings = qm_crossings(dagre)
   let elk_crossings = qm_crossings(elk)
+  let elk_layered_crossings = qm_crossings(elk_layered)
 
   let legacy_length = qm_edge_manhattan_length(legacy)
   let dagre_length = qm_edge_manhattan_length(dagre)
   let elk_length = qm_edge_manhattan_length(elk)
+  let elk_layered_length = qm_edge_manhattan_length(elk_layered)
 
   let legacy_area = qm_area(legacy)
   let dagre_area = qm_area(dagre)
   let elk_area = qm_area(elk)
+  let elk_layered_area = qm_area(elk_layered)
 
   assert_true(legacy_crossings >= 0)
   assert_true(dagre_crossings >= 0)
   assert_true(elk_crossings >= 0)
+  assert_true(elk_layered_crossings >= 0)
   assert_true(legacy_length > 0)
   assert_true(dagre_length > 0)
   assert_true(elk_length > 0)
+  assert_true(elk_layered_length > 0)
   assert_true(legacy_area > 0)
   assert_true(dagre_area > 0)
   assert_true(elk_area > 0)
+  assert_true(elk_layered_area > 0)
 
   assert_true(dagre_crossings <= legacy_crossings + 2)
   assert_true(elk_crossings <= dagre_crossings + 2)
+  assert_true(elk_layered_crossings <= dagre_crossings + 4)
 }

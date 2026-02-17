@@ -19,6 +19,11 @@ pub fn resolve_graph_engine_routing_policy(
         enable_target_boundary_ports: true,
         preserve_assigned_endpoint_ports: false,
       }
+    ElkLayered =>
+      {
+        enable_target_boundary_ports: true,
+        preserve_assigned_endpoint_ports: false,
+      }
   }
 }
 
@@ -42,6 +47,10 @@ pub fn run_graph_layout_engine_backend(
   match engine {
     Elk =>
       @layout_engine_graph_engine_elk_core.layout_graph_elk_backend(request)
+    ElkLayered =>
+      @layout_engine_graph_engine_elk_core.layout_graph_elk_layered_backend(
+        request,
+      )
     Legacy => run_non_elk_backend(request, engine)
     DagreParity => run_non_elk_backend(request, engine)
   }

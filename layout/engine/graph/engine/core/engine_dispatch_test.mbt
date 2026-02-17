@@ -63,6 +63,13 @@ test "engine dispatch returns valid layouts for legacy dagre and elk backends" {
     false,
     Elk,
   )
+  let elk_layered_layout = dispatch_graph_layout_engine(
+    graph,
+    @model.RenderOptions::default(),
+    true,
+    false,
+    ElkLayered,
+  )
   let legacy_layout = dispatch_graph_layout_engine(
     graph,
     @model.RenderOptions::default(),
@@ -75,6 +82,8 @@ test "engine dispatch returns valid layouts for legacy dagre and elk backends" {
   assert_eq(dagre_parity_layout.edges.length(), 1)
   assert_eq(elk_layout.nodes.length(), 2)
   assert_eq(elk_layout.edges.length(), 1)
+  assert_eq(elk_layered_layout.nodes.length(), 2)
+  assert_eq(elk_layered_layout.edges.length(), 1)
   assert_eq(legacy_layout.nodes.length(), 2)
   assert_eq(legacy_layout.edges.length(), 1)
 }

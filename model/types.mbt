@@ -196,6 +196,7 @@ pub(all) enum LayoutEngine {
   Legacy
   DagreParity
   Elk
+  ElkLayered
 } derive(Eq, Show, ToJson)
 
 ///|
