@@ -12,25 +12,9 @@ async fn corpus_input_files() -> Array[String] {
 }
 
 ///|
-#cfg(target="native")
-fn corpus_files_for_chunk(
-  files : Array[String],
-  chunk_index : Int,
-  chunk_count : Int,
-) -> Array[String] {
-  let selected : Array[String] = []
-  for i in 0..<files.length() {
-    if i % chunk_count == chunk_index {
-      selected.push(files[i])
-    }
-  }
-  selected
-}
-
-///|
 async fn verify_corpus_chunk(chunk_index : Int, chunk_count : Int) -> Unit {
   let files = corpus_input_files()
-  let selected = corpus_files_for_chunk(files, chunk_index, chunk_count)
+  let selected = ts_files_for_chunk(files, chunk_index, chunk_count)
   if selected.length() == 0 {
     return
   }

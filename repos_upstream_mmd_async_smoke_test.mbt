@@ -26,22 +26,6 @@ async fn repos_upstream_mmd_files() -> Array[String] {
 
 ///|
 #cfg(target="native")
-fn repos_files_for_chunk(
-  files : Array[String],
-  chunk_index : Int,
-  chunk_count : Int,
-) -> Array[String] {
-  let selected : Array[String] = []
-  for i in 0..<files.length() {
-    if i % chunk_count == chunk_index {
-      selected.push(files[i])
-    }
-  }
-  selected
-}
-
-///|
-#cfg(target="native")
 async fn repos_verify_upstream_mmd_chunk(
   chunk_index : Int,
   chunk_count : Int,
@@ -50,7 +34,7 @@ async fn repos_verify_upstream_mmd_chunk(
   if files.length() == 0 {
     return
   }
-  let selected = repos_files_for_chunk(files, chunk_index, chunk_count)
+  let selected = ts_files_for_chunk(files, chunk_index, chunk_count)
   if selected.length() == 0 {
     return
   }

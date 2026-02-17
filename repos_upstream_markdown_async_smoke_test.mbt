@@ -124,21 +124,6 @@ fn repos_supported_mermaid_block(source : String) -> Bool {
 }
 
 ///|
-fn repos_markdown_files_for_chunk(
-  files : Array[String],
-  chunk_index : Int,
-  chunk_count : Int,
-) -> Array[String] {
-  let selected : Array[String] = []
-  for i in 0..<files.length() {
-    if i % chunk_count == chunk_index {
-      selected.push(files[i])
-    }
-  }
-  selected
-}
-
-///|
 #cfg(target="native")
 async fn repos_supported_markdown_case_count() -> Int {
   let files = repos_markdown_files()
@@ -164,7 +149,7 @@ async fn repos_verify_markdown_chunk(
   if files.length() == 0 {
     return
   }
-  let selected = repos_markdown_files_for_chunk(files, chunk_index, chunk_count)
+  let selected = ts_files_for_chunk(files, chunk_index, chunk_count)
   if selected.length() == 0 {
     return
   }
