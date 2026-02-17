@@ -55,11 +55,26 @@ fn collect_hidden_subgraph_node_ids(
 }
 
 ///|
+/// Legacy prep phase request assembled by the legacy orchestrator.
+pub(all) struct GraphPrepRequest {
+  graph : MermaidGraph
+  use_subgraph_redirects : Bool
+}
+
+///|
+/// Legacy prep phase output consumed by downstream phases.
+pub(all) struct GraphPrepState {
+  subgraph_entry_by_id : Map[String, String]
+  subgraph_exit_by_id : Map[String, String]
+  nodes_in_order : Array[MermaidNode]
+}
+
+///|
 /// Prepares normalized graph inputs used by downstream layout phases.
-pub fn prepare_graph_inputs(
-  graph : MermaidGraph,
-  use_subgraph_redirects : Bool,
-) -> (Map[String, String], Map[String, String], Array[MermaidNode]) {
+pub fn prepare_graph_inputs(request : GraphPrepRequest) -> GraphPrepState {
+  let graph = request.graph
+  let use_subgraph_redirects = request.use_subgraph_redirects
+
   let subgraph_entry_by_id : Map[String, String] = {}
   let subgraph_exit_by_id : Map[String, String] = {}
   if use_subgraph_redirects {
@@ -87,5 +102,5 @@ pub fn prepare_graph_inputs(
     }
   }
 
-  (subgraph_entry_by_id, subgraph_exit_by_id, nodes_in_order)
+  { subgraph_entry_by_id, subgraph_exit_by_id, nodes_in_order }
 }

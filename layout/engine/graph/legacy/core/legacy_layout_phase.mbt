@@ -42,9 +42,13 @@ pub fn layout_graph_legacy_with_subgraph_redirects(
     !horizontal &&
     graph.subgraphs.length() == 0
 
-  let (subgraph_entry_by_id, subgraph_exit_by_id, prepped_nodes_in_order) = @layout_engine_graph_prep_core.prepare_graph_inputs(
-    graph, use_subgraph_redirects,
-  )
+  let prep_state = @layout_engine_graph_prep_core.prepare_graph_inputs({
+    graph,
+    use_subgraph_redirects,
+  })
+  let subgraph_entry_by_id = prep_state.subgraph_entry_by_id
+  let subgraph_exit_by_id = prep_state.subgraph_exit_by_id
+  let prepped_nodes_in_order = prep_state.nodes_in_order
   let nodes_in_order = @layout_engine_graph_internal_core.reorder_nodes_for_flow_layout(
     prepped_nodes_in_order,
     graph.edges,
@@ -115,19 +119,19 @@ pub fn layout_graph_legacy_with_subgraph_redirects(
   }
   let node_horizontal_by_id : Map[String, Bool] = {}
   if state_graph {
-    @layout_engine_graph_group_core.apply_subgraph_direction_overrides(
-      graph.subgraphs,
-      horizontal,
-      reverse,
-      false,
-      horizontal,
-      reverse,
+    @layout_engine_graph_group_core.apply_subgraph_direction_overrides({
+      subgraphs: graph.subgraphs,
+      inherited_horizontal: horizontal,
+      inherited_reverse: reverse,
+      inherited_override_active: false,
+      global_horizontal: horizontal,
+      global_reverse: reverse,
       node_spacing,
       layer_spacing,
       positioned_nodes,
       positioned_index_by_id,
       node_horizontal_by_id,
-    )
+    })
   }
 
   max_right = padding
@@ -138,9 +142,18 @@ pub fn layout_graph_legacy_with_subgraph_redirects(
     max_bottom = max_bottom.max(node.y + node.height / 2)
   }
 
-  let positioned_groups = @layout_engine_graph_group_core.build_legacy_positioned_groups(
-    graph, padding, horizontal, reverse, state_graph, node_spacing, layer_spacing,
-    positioned_nodes, positioned_by_id, positioned_index_by_id,
+  let positioned_groups = @layout_engine_graph_group_core.build_legacy_positioned_groups({
+      graph,
+      padding,
+      horizontal,
+      reverse,
+      state_graph,
+      node_spacing,
+      layer_spacing,
+      positioned_nodes,
+      positioned_by_id,
+      positioned_index_by_id,
+    },
   )
 
   let positioned_edges = @layout_engine_graph_routing_core.route_legacy_positioned_edges({

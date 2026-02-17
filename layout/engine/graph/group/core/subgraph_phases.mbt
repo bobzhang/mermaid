@@ -570,20 +570,38 @@ fn apply_subgraph_direction_override_to_children(
 }
 
 ///|
+/// Legacy subgraph override request assembled by legacy orchestration.
+pub(all) struct LegacySubgraphOverrideRequest {
+  subgraphs : Array[MermaidSubgraph]
+  inherited_horizontal : Bool
+  inherited_reverse : Bool
+  inherited_override_active : Bool
+  global_horizontal : Bool
+  global_reverse : Bool
+  node_spacing : Int
+  layer_spacing : Int
+  positioned_nodes : Array[PositionedNode]
+  positioned_index_by_id : Map[String, Int]
+  node_horizontal_by_id : Map[String, Bool]
+}
+
+///|
 /// Applies subgraph-local direction overrides to positioned nodes.
 pub fn apply_subgraph_direction_overrides(
-  subgraphs : Array[MermaidSubgraph],
-  inherited_horizontal : Bool,
-  inherited_reverse : Bool,
-  inherited_override_active : Bool,
-  global_horizontal : Bool,
-  global_reverse : Bool,
-  node_spacing : Int,
-  layer_spacing : Int,
-  positioned_nodes : Array[PositionedNode],
-  positioned_index_by_id : Map[String, Int],
-  node_horizontal_by_id : Map[String, Bool],
+  request : LegacySubgraphOverrideRequest,
 ) -> Unit {
+  let subgraphs = request.subgraphs
+  let inherited_horizontal = request.inherited_horizontal
+  let inherited_reverse = request.inherited_reverse
+  let inherited_override_active = request.inherited_override_active
+  let global_horizontal = request.global_horizontal
+  let global_reverse = request.global_reverse
+  let node_spacing = request.node_spacing
+  let layer_spacing = request.layer_spacing
+  let positioned_nodes = request.positioned_nodes
+  let positioned_index_by_id = request.positioned_index_by_id
+  let node_horizontal_by_id = request.node_horizontal_by_id
+
   for subgraph in subgraphs {
     let (subgraph_horizontal, subgraph_reverse, override_active) = match
       subgraph.direction {
@@ -617,11 +635,11 @@ pub fn apply_subgraph_direction_overrides(
       )
     }
 
-    apply_subgraph_direction_overrides(
-      subgraph.children,
-      subgraph_horizontal,
-      subgraph_reverse,
-      override_active,
+    apply_subgraph_direction_overrides({
+      subgraphs: subgraph.children,
+      inherited_horizontal: subgraph_horizontal,
+      inherited_reverse: subgraph_reverse,
+      inherited_override_active: override_active,
       global_horizontal,
       global_reverse,
       node_spacing,
@@ -629,7 +647,7 @@ pub fn apply_subgraph_direction_overrides(
       positioned_nodes,
       positioned_index_by_id,
       node_horizontal_by_id,
-    )
+    })
 
     if override_active {
       apply_subgraph_direction_override_to_children(

@@ -37,7 +37,7 @@ pub(all) struct LegacyPlacementInput {
   layer_spacing : Int
 }
 
-pub struct LegacyPlacementState {
+pub(all) struct LegacyPlacementState {
   positioned_nodes : Array[@model.PositionedNode]
   positioned_by_id : Map[String, @model.PositionedNode]
   max_right : Int

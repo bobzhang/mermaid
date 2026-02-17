@@ -6,11 +6,21 @@ import {
 }
 
 // Values
-pub fn prepare_graph_inputs(@model.MermaidGraph, Bool) -> (Map[String, String], Map[String, String], Array[@model.MermaidNode])
+pub fn prepare_graph_inputs(GraphPrepRequest) -> GraphPrepState
 
 // Errors
 
 // Types and methods
+pub(all) struct GraphPrepRequest {
+  graph : @model.MermaidGraph
+  use_subgraph_redirects : Bool
+}
+
+pub(all) struct GraphPrepState {
+  subgraph_entry_by_id : Map[String, String]
+  subgraph_exit_by_id : Map[String, String]
+  nodes_in_order : Array[@model.MermaidNode]
+}
 
 // Type aliases
 

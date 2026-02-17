@@ -22,7 +22,7 @@ pub(all) struct LegacyLaneInput {
   flat_state_graph : Bool
 }
 
-pub struct LegacyLaneState {
+pub(all) struct LegacyLaneState {
   state_lane_by_node_id : Map[String, Int]
   state_label_y_offset_by_node_id : Map[String, Int]
   flow_rank_by_node_id : Map[String, Int]
