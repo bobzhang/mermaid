@@ -1,20 +1,4 @@
 ///|
-fn layout_snapshot_optional_text(value : String?) -> String {
-  match value {
-    Some(text) => text
-    None => "-"
-  }
-}
-
-///|
-fn layout_snapshot_optional_point(point : @model.Point?) -> String {
-  match point {
-    Some(value) => "\{value.x},\{value.y}"
-    None => "-"
-  }
-}
-
-///|
 fn collect_group_layout_lines(
   groups : Array[@model.PositionedGroup],
   parent_id : String,
@@ -67,8 +51,16 @@ fn positioned_graph_layout_snapshot(
   let edge_lines : Array[String] = []
   for edge in positioned.edges {
     let points = edge.points.iter().map(pt => "\{pt.x},\{pt.y}").join(" -> ")
+    let label_text = match edge.label {
+      Some(text) => text
+      None => "-"
+    }
+    let label_position = match edge.label_position {
+      Some(point) => "\{point.x},\{point.y}"
+      None => "-"
+    }
     edge_lines.push(
-      "edge \{edge.source}->\{edge.target} label=\{layout_snapshot_optional_text(edge.label)} label_pos=\{layout_snapshot_optional_point(edge.label_position)} points=\{points}",
+      "edge \{edge.source}->\{edge.target} label=\{label_text} label_pos=\{label_position} points=\{points}",
     )
   }
 
