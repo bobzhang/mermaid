@@ -1,52 +1,58 @@
 ///|
-/// Engine dispatch request assembled by graph core orchestration.
-pub(all) struct GraphEngineDispatchRequest {
-  graph : MermaidGraph
-  options : RenderOptions
-  use_subgraph_redirects : Bool
-  compact_fanin : Bool
-  engine : LayoutEngine
-}
-
-///|
-fn legacy_routing_profile(
-  engine : LayoutEngine,
-) -> @layout_engine_graph_engine_legacy_core.LegacyRoutingProfile {
+fn routing_flags_for_engine(engine : LayoutEngine) -> (Bool, Bool) {
   match engine {
-    Legacy => LegacyCompatible
-    DagreParity => DagreParityCompatible
-    Elk => DagreParityCompatible
+    Legacy => (false, false)
+    DagreParity => (true, true)
+    Elk => (true, true)
   }
 }
 
 ///|
 fn dispatch_legacy_backend(
-  request : GraphEngineDispatchRequest,
+  graph : MermaidGraph,
+  options : RenderOptions,
+  use_subgraph_redirects : Bool,
+  compact_fanin : Bool,
   engine : LayoutEngine,
 ) -> PositionedGraph {
-  @layout_engine_graph_engine_legacy_core.layout_graph_engine_legacy({
-    graph: request.graph,
-    options: request.options,
-    use_subgraph_redirects: request.use_subgraph_redirects,
-    compact_fanin: request.compact_fanin,
-    routing_profile: legacy_routing_profile(engine),
-  })
+  let (enable_target_boundary_ports, preserve_assigned_endpoint_ports) = routing_flags_for_engine(
+    engine,
+  )
+  @layout_engine_graph_legacy_pipeline_core.layout_graph_legacy(
+    graph, options, use_subgraph_redirects, compact_fanin, enable_target_boundary_ports,
+    preserve_assigned_endpoint_ports,
+  )
 }
 
 ///|
 /// Runs the selected graph layout engine through the current legacy-backed dispatcher.
 pub fn dispatch_graph_layout_engine(
-  request : GraphEngineDispatchRequest,
+  graph : MermaidGraph,
+  options : RenderOptions,
+  use_subgraph_redirects : Bool,
+  compact_fanin : Bool,
+  engine : LayoutEngine,
 ) -> PositionedGraph {
-  match request.engine {
-    Legacy => dispatch_legacy_backend(request, Legacy)
-    DagreParity => dispatch_legacy_backend(request, DagreParity)
+  match engine {
+    Legacy =>
+      dispatch_legacy_backend(
+        graph,
+        options,
+        use_subgraph_redirects,
+        compact_fanin,
+        Legacy,
+      )
+    DagreParity =>
+      dispatch_legacy_backend(
+        graph,
+        options,
+        use_subgraph_redirects,
+        compact_fanin,
+        DagreParity,
+      )
     Elk =>
-      @layout_engine_graph_engine_elk_core.layout_graph_elk({
-        graph: request.graph,
-        options: request.options,
-        use_subgraph_redirects: request.use_subgraph_redirects,
-        compact_fanin: request.compact_fanin,
-      })
+      @layout_engine_graph_engine_elk_core.layout_graph_elk(
+        graph, options, use_subgraph_redirects, compact_fanin,
+      )
   }
 }

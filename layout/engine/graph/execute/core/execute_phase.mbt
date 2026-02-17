@@ -4,13 +4,13 @@ fn run_layout_engine(
   options : RenderOptions,
 ) -> PositionedGraph {
   let engine = @layout_engine_graph_plan_core.resolve_layout_engine(options)
-  @layout_engine_graph_engine_core.dispatch_graph_layout_engine({
-    graph: plan.graph,
+  @layout_engine_graph_engine_core.dispatch_graph_layout_engine(
+    plan.graph,
     options,
-    use_subgraph_redirects: plan.use_subgraph_redirects,
-    compact_fanin: plan.compact_fanin,
+    plan.use_subgraph_redirects,
+    plan.compact_fanin,
     engine,
-  })
+  )
 }
 
 ///|

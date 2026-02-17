@@ -1,8 +1,0 @@
-import {
-  "bobzhang/beautiful_mermaid/layout/engine/graph/legacy/pipeline/core" @layout_engine_graph_legacy_pipeline_core,
-  "bobzhang/beautiful_mermaid/model" @model,
-}
-
-import {
-  "moonbitlang/core/test",
-} for "test"

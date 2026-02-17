@@ -49,27 +49,27 @@ fn flow_graph() -> @model.MermaidGraph {
 ///|
 test "engine dispatch routes elk through parity-compatible backend" {
   let graph = flow_graph()
-  let dagre_parity_layout = dispatch_graph_layout_engine({
+  let dagre_parity_layout = dispatch_graph_layout_engine(
     graph,
-    options: @model.RenderOptions::default(),
-    use_subgraph_redirects: true,
-    compact_fanin: false,
-    engine: DagreParity,
-  })
-  let elk_layout = dispatch_graph_layout_engine({
+    @model.RenderOptions::default(),
+    true,
+    false,
+    DagreParity,
+  )
+  let elk_layout = dispatch_graph_layout_engine(
     graph,
-    options: @model.RenderOptions::default(),
-    use_subgraph_redirects: true,
-    compact_fanin: false,
-    engine: Elk,
-  })
-  let legacy_layout = dispatch_graph_layout_engine({
+    @model.RenderOptions::default(),
+    true,
+    false,
+    Elk,
+  )
+  let legacy_layout = dispatch_graph_layout_engine(
     graph,
-    options: @model.RenderOptions::default(),
-    use_subgraph_redirects: true,
-    compact_fanin: false,
-    engine: Legacy,
-  })
+    @model.RenderOptions::default(),
+    true,
+    false,
+    Legacy,
+  )
 
   assert_eq(elk_layout, dagre_parity_layout)
   assert_eq(legacy_layout.nodes.length(), 2)

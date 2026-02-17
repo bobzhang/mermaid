@@ -1,24 +1,13 @@
 ///|
-/// Legacy graph layout request assembled by core orchestration.
-pub(all) struct LegacyLayoutRequest {
-  graph : MermaidGraph
-  options : RenderOptions
-  use_subgraph_redirects : Bool
-  compact_fanin : Bool
-  enable_target_boundary_ports : Bool
-  preserve_assigned_endpoint_ports : Bool
-}
-
-///|
 /// Runs the legacy graph layout pipeline with explicit routing toggles.
-pub fn layout_graph_legacy(request : LegacyLayoutRequest) -> PositionedGraph {
-  let graph = request.graph
-  let options = request.options
-  let use_subgraph_redirects = request.use_subgraph_redirects
-  let compact_fanin = request.compact_fanin
-  let enable_target_boundary_ports = request.enable_target_boundary_ports
-  let preserve_assigned_endpoint_ports = request.preserve_assigned_endpoint_ports
-
+pub fn layout_graph_legacy(
+  graph : MermaidGraph,
+  options : RenderOptions,
+  use_subgraph_redirects : Bool,
+  compact_fanin : Bool,
+  enable_target_boundary_ports : Bool,
+  preserve_assigned_endpoint_ports : Bool,
+) -> PositionedGraph {
   let setup_state = @layout_engine_graph_legacy_setup_core.build_legacy_layout_setup({
       graph,
       options,

@@ -49,19 +49,19 @@ fn flow_graph() -> @model.MermaidGraph {
 ///|
 test "elk backend currently matches dagre parity legacy backend" {
   let graph = flow_graph()
-  let elk_layout = layout_graph_elk({
+  let elk_layout = layout_graph_elk(
     graph,
-    options: @model.RenderOptions::default(),
-    use_subgraph_redirects: true,
-    compact_fanin: false,
-  })
-  let dagre_parity_layout = @layout_engine_graph_engine_legacy_core.layout_graph_engine_legacy({
-      graph,
-      options: @model.RenderOptions::default(),
-      use_subgraph_redirects: true,
-      compact_fanin: false,
-      routing_profile: DagreParityCompatible,
-    },
+    @model.RenderOptions::default(),
+    true,
+    false,
+  )
+  let dagre_parity_layout = @layout_engine_graph_legacy_pipeline_core.layout_graph_legacy(
+    graph,
+    @model.RenderOptions::default(),
+    true,
+    false,
+    true,
+    true,
   )
 
   assert_eq(elk_layout, dagre_parity_layout)
