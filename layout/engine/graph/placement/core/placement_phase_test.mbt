@@ -57,7 +57,7 @@ fn two_node_lane_map() -> Map[String, Int] {
 test "placement computes forward horizontal ordering from rank map" {
   let nodes = [test_node("A"), test_node("B")]
   let graph = test_graph(LR, nodes, [test_edge("A", "B")])
-  let state = compute_legacy_node_placement_state(
+  let (positioned_nodes, positioned_by_id, _, _) = compute_legacy_node_placement_state(
     graph,
     nodes,
     false,
@@ -83,17 +83,17 @@ test "placement computes forward horizontal ordering from rank map" {
     90,
   )
 
-  let ax = state.positioned_by_id["A"].x
-  let bx = state.positioned_by_id["B"].x
+  let ax = positioned_by_id["A"].x
+  let bx = positioned_by_id["B"].x
   assert_true(bx > ax)
-  assert_eq(state.positioned_nodes.length(), 2)
+  assert_eq(positioned_nodes.length(), 2)
 }
 
 ///|
 test "placement reverse mode flips horizontal rank ordering" {
   let nodes = [test_node("A"), test_node("B")]
   let graph = test_graph(RL, nodes, [test_edge("A", "B")])
-  let state = compute_legacy_node_placement_state(
+  let (_, positioned_by_id, _, _) = compute_legacy_node_placement_state(
     graph,
     nodes,
     true,
@@ -119,7 +119,7 @@ test "placement reverse mode flips horizontal rank ordering" {
     90,
   )
 
-  let ax = state.positioned_by_id["A"].x
-  let bx = state.positioned_by_id["B"].x
+  let ax = positioned_by_id["A"].x
+  let bx = positioned_by_id["B"].x
   assert_true(ax > bx)
 }

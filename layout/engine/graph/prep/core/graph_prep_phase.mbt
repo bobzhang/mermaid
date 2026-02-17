@@ -1,12 +1,4 @@
 ///|
-/// Canonical graph-preparation output shared by layout engines.
-pub struct GraphPrepResult {
-  subgraph_entry_by_id : Map[String, String]
-  subgraph_exit_by_id : Map[String, String]
-  nodes_in_order : Array[MermaidNode]
-}
-
-///|
 fn collect_subgraph_edge_redirects(
   subgraph : MermaidSubgraph,
   entry_by_subgraph : Map[String, String],
@@ -67,7 +59,7 @@ fn collect_hidden_subgraph_node_ids(
 pub fn prepare_graph_inputs(
   graph : MermaidGraph,
   use_subgraph_redirects : Bool,
-) -> GraphPrepResult {
+) -> (Map[String, String], Map[String, String], Array[MermaidNode]) {
   let subgraph_entry_by_id : Map[String, String] = {}
   let subgraph_exit_by_id : Map[String, String] = {}
   if use_subgraph_redirects {
@@ -95,5 +87,5 @@ pub fn prepare_graph_inputs(
     }
   }
 
-  { subgraph_entry_by_id, subgraph_exit_by_id, nodes_in_order }
+  (subgraph_entry_by_id, subgraph_exit_by_id, nodes_in_order)
 }

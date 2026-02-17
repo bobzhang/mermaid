@@ -23,13 +23,11 @@ fn layout_graph_legacy_with_subgraph_redirects(
     !horizontal &&
     graph.subgraphs.length() == 0
 
-  let graph_inputs = @layout_engine_graph_prep_core.prepare_graph_inputs(
+  let (subgraph_entry_by_id, subgraph_exit_by_id, prepped_nodes_in_order) = @layout_engine_graph_prep_core.prepare_graph_inputs(
     graph, use_subgraph_redirects,
   )
-  let subgraph_entry_by_id = graph_inputs.subgraph_entry_by_id
-  let subgraph_exit_by_id = graph_inputs.subgraph_exit_by_id
   let nodes_in_order = reorder_nodes_for_flow_layout(
-    graph_inputs.nodes_in_order,
+    prepped_nodes_in_order,
     graph.edges,
   )
   let enhanced_horizontal_state_flow = state_graph &&
@@ -62,7 +60,12 @@ fn layout_graph_legacy_with_subgraph_redirects(
   let horizontal_cycle_non_state_flow = lane_state.horizontal_cycle_non_state_flow
   let flow_max_rank = lane_state.flow_max_rank
 
-  let placement_state = @layout_engine_graph_placement_core.compute_legacy_node_placement_state(
+  let (
+    positioned_nodes,
+    positioned_by_id,
+    placement_max_right,
+    placement_max_bottom,
+  ) = @layout_engine_graph_placement_core.compute_legacy_node_placement_state(
     graph, nodes_in_order, reverse, horizontal, state_graph, flat_state_graph, compact_fanin,
     enhanced_horizontal_state_flow, refined_horizontal_non_state_flow, refined_horizontal_non_state_labeled_cycle_flow,
     horizontal_cycle_non_state_flow, use_subgraph_redirects, subgraph_entry_by_id,
@@ -70,10 +73,8 @@ fn layout_graph_legacy_with_subgraph_redirects(
     flow_label_y_offset_by_rank, state_lane_by_node_id, state_label_y_offset_by_node_id,
     padding, node_spacing, layer_spacing,
   )
-  let positioned_nodes = placement_state.positioned_nodes
-  let positioned_by_id = placement_state.positioned_by_id
-  let mut max_right = placement_state.max_right
-  let mut max_bottom = placement_state.max_bottom
+  let mut max_right = placement_max_right
+  let mut max_bottom = placement_max_bottom
 
   let positioned_index_by_id : Map[String, Int] = {}
   for i, node in positioned_nodes {

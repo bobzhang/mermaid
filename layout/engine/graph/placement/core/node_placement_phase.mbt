@@ -1,13 +1,4 @@
 ///|
-/// Intermediate node placement output consumed by later layout phases.
-pub struct LegacyNodePlacementState {
-  positioned_nodes : Array[PositionedNode]
-  positioned_by_id : Map[String, PositionedNode]
-  max_right : Int
-  max_bottom : Int
-}
-
-///|
 /// Computes legacy node coordinates and placement bounds.
 pub fn compute_legacy_node_placement_state(
   graph : MermaidGraph,
@@ -33,7 +24,7 @@ pub fn compute_legacy_node_placement_state(
   padding : Int,
   node_spacing : Int,
   layer_spacing : Int,
-) -> LegacyNodePlacementState {
+) -> (Array[PositionedNode], Map[String, PositionedNode], Int, Int) {
   let positioned_nodes : Array[PositionedNode] = []
   let positioned_by_id : Map[String, PositionedNode] = {}
   let max_width_by_flow_rank_index : Map[Int, Int] = {}
@@ -214,5 +205,5 @@ pub fn compute_legacy_node_placement_state(
     max_bottom = max_bottom.max(y + height / 2)
   }
 
-  { positioned_nodes, positioned_by_id, max_right, max_bottom }
+  (positioned_nodes, positioned_by_id, max_right, max_bottom)
 }

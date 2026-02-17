@@ -6,17 +6,11 @@ import {
 }
 
 // Values
-pub fn compute_legacy_node_placement_state(@model.MermaidGraph, Array[@model.MermaidNode], Bool, Bool, Bool, Bool, Bool, Bool, Bool, Bool, Bool, Bool, Map[String, String], Map[String, String], Int, Map[String, Int], Map[String, Int], Map[Int, Int], Map[String, Int], Map[String, Int], Int, Int, Int) -> LegacyNodePlacementState
+pub fn compute_legacy_node_placement_state(@model.MermaidGraph, Array[@model.MermaidNode], Bool, Bool, Bool, Bool, Bool, Bool, Bool, Bool, Bool, Bool, Map[String, String], Map[String, String], Int, Map[String, Int], Map[String, Int], Map[Int, Int], Map[String, Int], Map[String, Int], Int, Int, Int) -> (Array[@model.PositionedNode], Map[String, @model.PositionedNode], Int, Int)
 
 // Errors
 
 // Types and methods
-pub struct LegacyNodePlacementState {
-  positioned_nodes : Array[@model.PositionedNode]
-  positioned_by_id : Map[String, @model.PositionedNode]
-  max_right : Int
-  max_bottom : Int
-}
 
 // Type aliases
 

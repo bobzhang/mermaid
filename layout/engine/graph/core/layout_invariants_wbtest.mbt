@@ -308,7 +308,7 @@ fn has_interior_vertical_bend_segment(points : Array[Point]) -> Bool {
 fn count_logical_edge_crossings(
   positioned : PositionedGraph,
   edges : Array[MermaidEdge],
-) -> Int raise {
+) -> Int {
   let node_by_id : Map[String, PositionedNode] = {}
   for node in positioned.nodes {
     node_by_id[node.id] = node
