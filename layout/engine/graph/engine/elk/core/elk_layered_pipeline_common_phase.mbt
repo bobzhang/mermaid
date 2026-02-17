@@ -1,6 +1,9 @@
 ///|
 fn option_int_or(value : Int?, fallback : Int) -> Int {
-  @layout_engine_graph_internal_core.option_int_or(value, fallback)
+  match value {
+    Some(found) => found
+    None => fallback
+  }
 }
 
 ///|
