@@ -83,8 +83,7 @@ pub fn render_mermaid(
   text : String,
   options? : RenderOptions = RenderOptions::default(),
 ) -> String raise MermaidError {
-  let graph = @parser_header_core.parse_mermaid(text)
-  let positioned = @layout.layout_graph(graph, options)
+  let positioned = parse_and_layout_mermaid_graph(text, options)
   @renderer_svg.render_svg(
     positioned,
     build_colors(options),
@@ -160,6 +159,6 @@ pub fn render_mermaid_ascii(
   text : String,
   options? : AsciiRenderOptions = AsciiRenderOptions::default(),
 ) -> String raise MermaidError {
-  let graph = @parser_header_core.parse_mermaid(text)
+  let graph = parse_mermaid_graph_for_text_render(text)
   @renderer_ascii.render_ascii(graph, options)
 }
