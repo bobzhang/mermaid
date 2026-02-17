@@ -21,8 +21,6 @@ pub(all) struct GraphLayoutBackendResult {
   positioned_graph : @model.PositionedGraph
   phase_snapshots : Array[GraphLayoutPhaseSnapshot]
 }
-pub impl Eq for GraphLayoutBackendResult
-pub impl Show for GraphLayoutBackendResult
 
 pub(all) struct GraphLayoutPhaseSnapshot {
   phase : String
@@ -32,8 +30,6 @@ pub(all) struct GraphLayoutPhaseSnapshot {
   width : Int
   height : Int
 }
-pub impl Eq for GraphLayoutPhaseSnapshot
-pub impl Show for GraphLayoutPhaseSnapshot
 
 // Type aliases
 

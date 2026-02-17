@@ -189,6 +189,40 @@ fn simple_state_graph() -> @model.MermaidGraph {
 }
 
 ///|
+fn backend_snapshot_equal(
+  left : @layout_engine_graph_contract_core.GraphLayoutPhaseSnapshot,
+  right : @layout_engine_graph_contract_core.GraphLayoutPhaseSnapshot,
+) -> Bool {
+  left.phase == right.phase &&
+  left.node_count == right.node_count &&
+  left.edge_count == right.edge_count &&
+  left.group_count == right.group_count &&
+  left.width == right.width &&
+  left.height == right.height
+}
+
+///|
+fn backend_result_equal(
+  left : @layout_engine_graph_contract_core.GraphLayoutBackendResult,
+  right : @layout_engine_graph_contract_core.GraphLayoutBackendResult,
+) -> Bool {
+  if left.positioned_graph != right.positioned_graph {
+    return false
+  }
+  let left_snapshots = left.phase_snapshots
+  let right_snapshots = right.phase_snapshots
+  if left_snapshots.length() != right_snapshots.length() {
+    return false
+  }
+  for i in 0..<left_snapshots.length() {
+    if !backend_snapshot_equal(left_snapshots[i], right_snapshots[i]) {
+      return false
+    }
+  }
+  true
+}
+
+///|
 test "elk setup phase derives structure-aware spacing and preserves explicit spacing" {
   let graph = fanout_graph()
   let defaults = @model.RenderOptions::default()
@@ -270,7 +304,7 @@ test "elk backend differs from legacy on fanout-heavy graph when spacing is auto
     },
   )
   let elk_backend = layout_graph_elk_backend(request)
-  assert_true(elk_backend != legacy_backend)
+  assert_true(!backend_result_equal(elk_backend, legacy_backend))
 }
 
 ///|
@@ -295,7 +329,7 @@ test "elk backend falls back to shared backend pipeline on state graphs" {
       preserve_assigned_endpoint_ports: false,
     },
   )
-  assert_eq(elk_backend, fallback_backend)
+  assert_true(backend_result_equal(elk_backend, fallback_backend))
 }
 
 ///|
@@ -320,7 +354,7 @@ test "elk backend uses layered pipeline on large flowcharts" {
       preserve_assigned_endpoint_ports: false,
     },
   )
-  assert_eq(elk_backend, layered_backend)
+  assert_true(backend_result_equal(elk_backend, layered_backend))
 }
 
 ///|
@@ -334,7 +368,7 @@ test "elk layered backend forces layered pipeline for large flowcharts" {
   }
   let forced_backend = layout_graph_elk_layered_backend(request)
   let default_backend = layout_graph_elk_backend(request)
-  assert_eq(forced_backend, default_backend)
+  assert_true(backend_result_equal(forced_backend, default_backend))
 }
 
 ///|
@@ -359,7 +393,7 @@ test "elk layered backend still falls back on unsupported graph kinds" {
       preserve_assigned_endpoint_ports: false,
     },
   )
-  assert_eq(forced_backend, fallback_backend)
+  assert_true(backend_result_equal(forced_backend, fallback_backend))
 }
 
 ///|

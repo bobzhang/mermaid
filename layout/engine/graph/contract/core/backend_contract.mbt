@@ -16,11 +16,11 @@ pub(all) struct GraphLayoutPhaseSnapshot {
   group_count : Int
   width : Int
   height : Int
-} derive(Eq, Show)
+}
 
 ///|
 /// Backend output contract with final layout and optional intermediate snapshots.
 pub(all) struct GraphLayoutBackendResult {
   positioned_graph : PositionedGraph
   phase_snapshots : Array[GraphLayoutPhaseSnapshot]
-} derive(Eq, Show)
+}
