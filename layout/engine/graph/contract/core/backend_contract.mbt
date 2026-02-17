@@ -5,7 +5,7 @@ pub(all) struct GraphLayoutBackendRequest {
   options : RenderOptions
   use_subgraph_redirects : Bool
   compact_fanin : Bool
-} derive(Eq, Show)
+}
 
 ///|
 /// Lightweight phase-level snapshot used for backend evaluation.

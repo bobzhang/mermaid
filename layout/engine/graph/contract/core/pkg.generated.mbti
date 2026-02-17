@@ -16,8 +16,6 @@ pub(all) struct GraphLayoutBackendRequest {
   use_subgraph_redirects : Bool
   compact_fanin : Bool
 }
-pub impl Eq for GraphLayoutBackendRequest
-pub impl Show for GraphLayoutBackendRequest
 
 pub(all) struct GraphLayoutBackendResult {
   positioned_graph : @model.PositionedGraph
