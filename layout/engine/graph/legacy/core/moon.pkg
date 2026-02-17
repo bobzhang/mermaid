@@ -5,7 +5,6 @@ import {
   "bobzhang/beautiful_mermaid/layout/engine/graph/placement/core" @layout_engine_graph_placement_core,
   "bobzhang/beautiful_mermaid/layout/engine/graph/prep/core" @layout_engine_graph_prep_core,
   "bobzhang/beautiful_mermaid/layout/engine/graph/routing/core" @layout_engine_graph_routing_core,
-  "bobzhang/beautiful_mermaid/layout/engine/sequence/core" @layout_engine_sequence_core,
   "bobzhang/beautiful_mermaid/model" @model,
 }
 

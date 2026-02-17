@@ -1,18 +1,4 @@
 ///|
-fn graph_is_sequence_layout(graph : MermaidGraph) -> Bool {
-  let nodes = graph.nodes.values().to_array()
-  if nodes.length() == 0 {
-    return false
-  }
-  for node in nodes {
-    if node.shape != SequenceParticipant {
-      return false
-    }
-  }
-  true
-}
-
-///|
 /// Runs the legacy graph layout pipeline with explicit routing toggles.
 pub fn layout_graph_legacy_with_subgraph_redirects(
   graph : MermaidGraph,
@@ -22,10 +8,6 @@ pub fn layout_graph_legacy_with_subgraph_redirects(
   enable_target_boundary_ports : Bool,
   preserve_assigned_endpoint_ports : Bool,
 ) -> PositionedGraph {
-  if graph_is_sequence_layout(graph) {
-    return @layout_engine_sequence_core.layout_sequence_graph(graph, options)
-  }
-
   let base_padding = @layout_engine_graph_internal_core.resolve_padding(options)
   let base_node_spacing = @layout_engine_graph_internal_core.resolve_node_spacing(
     options,
