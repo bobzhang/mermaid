@@ -5,6 +5,18 @@ test "elk layered rank seed strategy uses native feedback for small graphs" {
 }
 
 ///|
+fn sequence_participant_kind_equal(
+  left : @model.SequenceParticipantKind,
+  right : @model.SequenceParticipantKind,
+) -> Bool {
+  match (left, right) {
+    (Participant, Participant) => true
+    (Actor, Actor) => true
+    _ => false
+  }
+}
+
+///|
 fn assert_mermaid_graph_equivalent(
   left : @model.MermaidGraph,
   right : @model.MermaidGraph,
@@ -41,7 +53,7 @@ fn assert_mermaid_graph_equivalent(
   )
   for actor_id, right_kind in right.sequence_actor_kinds {
     let left_kind = left.sequence_actor_kinds[actor_id]
-    assert_eq(left_kind.to_string(), right_kind.to_string())
+    assert_true(sequence_participant_kind_equal(left_kind, right_kind))
   }
   assert_eq(left.sequence_blocks.length(), right.sequence_blocks.length())
   assert_eq(left.sequence_notes.length(), right.sequence_notes.length())

@@ -90,7 +90,7 @@ pub(all) struct MermaidSubgraph {
 pub(all) enum SequenceParticipantKind {
   Participant
   Actor
-} derive(Show)
+}
 
 ///|
 /// Sequence block keyword kind (`alt`, `loop`, `par`, etc.).
@@ -127,7 +127,7 @@ pub(all) enum SequenceNotePosition {
   Left
   Right
   Over
-} derive(Show)
+}
 
 ///|
 /// Sequence note attached after a message index.

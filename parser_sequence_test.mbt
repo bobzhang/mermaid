@@ -141,19 +141,33 @@ test "Parser captures sequence notes and actor declarations" {
 
   assert_eq(graph.sequence_actor_order, ["U", "S"])
   match graph.sequence_actor_kinds.get("U") {
-    Some(kind) => assert_eq(kind.to_string(), "Actor")
+    Some(kind) =>
+      match kind {
+        Actor => ()
+        _ => fail("unexpected actor kind for U")
+      }
     None => fail("missing actor kind for U")
   }
   match graph.sequence_actor_kinds.get("S") {
-    Some(kind) => assert_eq(kind.to_string(), "Participant")
+    Some(kind) =>
+      match kind {
+        Participant => ()
+        _ => fail("unexpected actor kind for S")
+      }
     None => fail("missing actor kind for S")
   }
   assert_eq(graph.sequence_notes.length(), 2)
-  assert_eq(graph.sequence_notes[0].position.to_string(), "Right")
+  match graph.sequence_notes[0].position {
+    Right => ()
+    _ => fail("unexpected note position for note 0")
+  }
   assert_eq(graph.sequence_notes[0].actor_ids, ["S"])
   assert_eq(graph.sequence_notes[0].after_index, 0)
   assert_eq(graph.sequence_notes[0].text, "Validate credentials")
-  assert_eq(graph.sequence_notes[1].position.to_string(), "Over")
+  match graph.sequence_notes[1].position {
+    Over => ()
+    _ => fail("unexpected note position for note 1")
+  }
   assert_eq(graph.sequence_notes[1].actor_ids, ["U", "S"])
 }
 
@@ -300,7 +314,10 @@ test "Parser captures left sequence notes" {
 
   assert_eq(graph.sequence_notes.length(), 1)
   let note = graph.sequence_notes[0]
-  assert_eq(note.position.to_string(), "Left")
+  match note.position {
+    Left => ()
+    _ => fail("unexpected note position")
+  }
   assert_eq(note.actor_ids, ["A"])
   assert_eq(note.text, "Important note")
   assert_eq(note.after_index, 0)

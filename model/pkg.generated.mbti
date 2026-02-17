@@ -287,13 +287,11 @@ pub(all) enum SequenceNotePosition {
   Right
   Over
 }
-pub impl Show for SequenceNotePosition
 
 pub(all) enum SequenceParticipantKind {
   Participant
   Actor
 }
-pub impl Show for SequenceParticipantKind
 
 // Type aliases
 
