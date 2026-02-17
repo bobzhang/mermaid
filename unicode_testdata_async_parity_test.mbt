@@ -9,26 +9,6 @@ priv struct UnicodeGoldenTextCase {
 
 ///|
 #cfg(target="native")
-fn unicode_parse_padding_value(trimmed : String, prefix : String) -> Int? {
-  if !trimmed.to_lower().has_prefix(prefix) {
-    return None
-  }
-  let parts = trimmed.split("=").to_array()
-  if parts.length() < 2 {
-    return None
-  }
-  let raw_value = parts[1].trim().to_string()
-  let parsed : Result[Int, @strconv.StrConvError] = try? @strconv.parse_int(
-    raw_value,
-  )
-  match parsed {
-    Ok(value) => Some(value)
-    Err(_) => None
-  }
-}
-
-///|
-#cfg(target="native")
 fn unicode_parse_golden_text_case(content : String) -> UnicodeGoldenTextCase {
   let mut padding_x = 5
   let mut padding_y = 5
@@ -49,14 +29,14 @@ fn unicode_parse_golden_text_case(content : String) -> UnicodeGoldenTextCase {
         if trimmed == "" {
           continue
         }
-        match unicode_parse_padding_value(trimmed, "paddingx") {
+        match ts_parse_padding_value(trimmed, "paddingx") {
           Some(value) => {
             padding_x = value
             continue
           }
           None => ()
         }
-        match unicode_parse_padding_value(trimmed, "paddingy") {
+        match ts_parse_padding_value(trimmed, "paddingy") {
           Some(value) => {
             padding_y = value
             continue

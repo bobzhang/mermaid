@@ -104,6 +104,25 @@ fn ts_expected_case_name_from_json_path(path : String) -> String {
 }
 
 ///|
+fn ts_parse_padding_value(trimmed : String, prefix : String) -> Int? {
+  if !trimmed.to_lower().has_prefix(prefix) {
+    return None
+  }
+  let parts = trimmed.split("=").to_array()
+  if parts.length() < 2 {
+    return None
+  }
+  let raw_value = parts[1].trim().to_string()
+  let parsed : Result[Int, @strconv.StrConvError] = try? @strconv.parse_int(
+    raw_value,
+  )
+  match parsed {
+    Ok(value) => Some(value)
+    Err(_) => None
+  }
+}
+
+///|
 fn ts_svg_attr_int(svg : String, attr : String) -> Int? {
   let marker = "\{attr}=\""
   let parts = svg.split(marker).to_array()
