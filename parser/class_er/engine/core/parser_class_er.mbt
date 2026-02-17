@@ -205,21 +205,16 @@ fn normalize_class_member(raw : String) -> String {
     return trimmed
   }
 
-  let visibility = if trimmed.has_prefix("+") {
-    "+"
-  } else if trimmed.has_prefix("-") {
-    "-"
-  } else if trimmed.has_prefix("#") {
-    "#"
-  } else if trimmed.has_prefix("~") {
-    "~"
+  let (visibility, body) = if trimmed is [.. "+", .. member_body] {
+    ("+", @parser_common_engine_core.trim_owned(member_body.to_string()))
+  } else if trimmed is [.. "-", .. member_body] {
+    ("-", @parser_common_engine_core.trim_owned(member_body.to_string()))
+  } else if trimmed is [.. "#", .. member_body] {
+    ("#", @parser_common_engine_core.trim_owned(member_body.to_string()))
+  } else if trimmed is [.. "~", .. member_body] {
+    ("~", @parser_common_engine_core.trim_owned(member_body.to_string()))
   } else {
-    ""
-  }
-  let body = if visibility == "" {
-    trimmed
-  } else {
-    @parser_common_engine_core.trim_owned((try! trimmed[1:]).to_string())
+    ("", trimmed)
   }
   if body == "" {
     return trimmed
