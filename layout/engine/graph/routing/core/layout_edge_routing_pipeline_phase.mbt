@@ -401,6 +401,7 @@ fn materialize_positioned_edges_from_points(
 }
 
 ///|
+/// Routes all graph edges using the legacy/dagre-parity routing pipeline.
 pub fn route_legacy_positioned_edges(
   graph : MermaidGraph,
   state_graph : Bool,

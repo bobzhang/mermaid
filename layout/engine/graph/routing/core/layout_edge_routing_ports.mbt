@@ -391,6 +391,7 @@ fn edge_points_for_with_ports(
 }
 
 ///|
+/// Computes routed polyline points between two positioned nodes.
 pub fn edge_points_for(
   source : PositionedNode,
   target : PositionedNode,
