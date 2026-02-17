@@ -1,21 +1,4 @@
 ///|
-fn option_or_zero(value : Int?) -> Int {
-  match value {
-    Some(found) => found
-    None => 0
-  }
-}
-
-///|
-fn integration_count_occurrences(haystack : String, needle : String) -> Int {
-  let parts = haystack.split(needle).to_array()
-  if parts.length() == 0 {
-    return 0
-  }
-  parts.length() - 1
-}
-
-///|
 struct EdgeLabelRect {
   x : Int
   y : Int
@@ -134,10 +117,10 @@ test "Pipeline dimensions honor direction" (it : @test.Test) {
 
   snapshot_svg(it, "integration_pipeline_direction_lr.svg", lr_svg)
 
-  let lr_width = option_or_zero(ts_svg_attr_int(lr_svg, "width"))
-  let td_width = option_or_zero(ts_svg_attr_int(td_svg, "width"))
-  let lr_height = option_or_zero(ts_svg_attr_int(lr_svg, "height"))
-  let td_height = option_or_zero(ts_svg_attr_int(td_svg, "height"))
+  let lr_width = ts_option_or_zero(ts_svg_attr_int(lr_svg, "width"))
+  let td_width = ts_option_or_zero(ts_svg_attr_int(td_svg, "width"))
+  let lr_height = ts_option_or_zero(ts_svg_attr_int(lr_svg, "height"))
+  let td_height = ts_option_or_zero(ts_svg_attr_int(td_svg, "height"))
 
   assert_true(lr_width > td_width)
   assert_true(td_height > lr_height)
@@ -262,10 +245,10 @@ test "SVG dimensions expand with padding option" (it : @test.Test) {
   )
   snapshot_svg(it, "integration_flowchart_padding_small.svg", small_svg)
 
-  let small_width = option_or_zero(ts_svg_attr_int(small_svg, "width"))
-  let large_width = option_or_zero(ts_svg_attr_int(large_svg, "width"))
-  let small_height = option_or_zero(ts_svg_attr_int(small_svg, "height"))
-  let large_height = option_or_zero(ts_svg_attr_int(large_svg, "height"))
+  let small_width = ts_option_or_zero(ts_svg_attr_int(small_svg, "width"))
+  let large_width = ts_option_or_zero(ts_svg_attr_int(large_svg, "width"))
+  let small_height = ts_option_or_zero(ts_svg_attr_int(small_svg, "height"))
+  let large_height = ts_option_or_zero(ts_svg_attr_int(large_svg, "height"))
 
   assert_true(large_width > small_width)
   assert_true(large_height > small_height)
@@ -549,7 +532,7 @@ test "SVG renders double-circle shape with two circle elements" (
   )
   snapshot_svg(it, "integration_flowchart_double_circle.svg", svg)
   assert_true(svg.contains(">Important</text>"))
-  assert_true(integration_count_occurrences(svg, "<circle") >= 2)
+  assert_true(ts_count_occurrences(svg, "<circle") >= 2)
 }
 
 ///|
@@ -714,7 +697,7 @@ test "SVG parallel ampersand links emit one edge per source" (it : @test.Test) {
   assert_true(svg.contains(">A</text>"))
   assert_true(svg.contains(">B</text>"))
   assert_true(svg.contains(">C</text>"))
-  assert_true(integration_count_occurrences(svg, "<polyline") >= 2)
+  assert_true(ts_count_occurrences(svg, "<polyline") >= 2)
 }
 
 ///|
@@ -753,7 +736,7 @@ test "Flowchart ampersand fan-in renders across text and SVG modes" (
   assert_true(svg.contains(">Mobile</text>"))
   assert_true(svg.contains(">API</text>"))
   assert_true(svg.contains(">Database</text>"))
-  assert_true(integration_count_occurrences(svg, "<polyline") >= 3)
+  assert_true(ts_count_occurrences(svg, "<polyline") >= 3)
 }
 
 ///|
@@ -922,7 +905,7 @@ test "SVG renders state end pseudostate as bullseye" (it : @test.Test) {
     integration_input_state_done_end(),
   )
   snapshot_svg(it, "integration_state_end_pseudostate.svg", svg)
-  assert_true(integration_count_occurrences(svg, "<circle") >= 2)
+  assert_true(ts_count_occurrences(svg, "<circle") >= 2)
 }
 
 ///|
@@ -957,7 +940,7 @@ test "State multiple pseudostates render across text and SVG modes" (
   assert_true(unicode.contains("B"))
   assert_true(svg.contains(">A</text>"))
   assert_true(svg.contains(">B</text>"))
-  assert_true(integration_count_occurrences(svg, "<circle") >= 4)
+  assert_true(ts_count_occurrences(svg, "<circle") >= 4)
 }
 
 ///|
@@ -1255,7 +1238,7 @@ test "SVG does not duplicate composite state labels" (it : @test.Test) {
     ),
   )
   snapshot_svg(it, "integration_state_composite_dedup.svg", svg)
-  assert_eq(integration_count_occurrences(svg, ">Processing</text>"), 1)
+  assert_eq(ts_count_occurrences(svg, ">Processing</text>"), 1)
 }
 
 ///|
@@ -2410,9 +2393,7 @@ test "ER mixed cardinalities render across text and SVG modes" (it : @test.Test)
   assert_true(svg.contains(">many</text>"))
   assert_true(svg.contains(">optional</text>"))
   assert_true(svg.contains(">mixed</text>"))
-  assert_true(
-    integration_count_occurrences(svg, "class=\"edge-endpoint\"") >= 4,
-  )
+  assert_true(ts_count_occurrences(svg, "class=\"edge-endpoint\"") >= 4)
 }
 
 ///|

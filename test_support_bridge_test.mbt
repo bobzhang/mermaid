@@ -56,6 +56,14 @@ fn ts_count_occurrences(haystack : String, needle : String) -> Int {
 }
 
 ///|
+fn ts_option_or_zero(value : Int?) -> Int {
+  match value {
+    Some(found) => found
+    None => 0
+  }
+}
+
+///|
 fn ts_svg_attr_int(svg : String, attr : String) -> Int? {
   let marker = "\{attr}=\""
   let parts = svg.split(marker).to_array()

@@ -1,21 +1,4 @@
 ///|
-fn state_count_occurrences(haystack : String, needle : String) -> Int {
-  let parts = haystack.split(needle).to_array()
-  if parts.length() == 0 {
-    return 0
-  }
-  parts.length() - 1
-}
-
-///|
-fn state_option_or_zero(value : Int?) -> Int {
-  match value {
-    Some(found) => found
-    None => 0
-  }
-}
-
-///|
 struct StateEdgeLabelRect {
   x : Int
   y : Int
@@ -127,7 +110,7 @@ test "SVG state end pseudostate renders as a bullseye" (it : @test.Test) {
   )
   snapshot_state_svg(it, "semantic_state_end_pseudostate.svg", svg)
 
-  assert_true(state_count_occurrences(svg, "<circle") >= 2)
+  assert_true(ts_count_occurrences(svg, "<circle") >= 2)
   assert_true(svg.contains("fill=\"none\""))
   assert_true(svg.contains("stroke=\"none\""))
 }
@@ -161,7 +144,7 @@ test "SVG state composite declarations avoid duplicate state labels" (
   assert_true(svg.contains(">execute</text>"))
   assert_true(svg.contains(">submit</text>"))
   assert_true(svg.contains(">done</text>"))
-  assert_eq(state_count_occurrences(svg, ">Processing</text>"), 1)
+  assert_eq(ts_count_occurrences(svg, ">Processing</text>"), 1)
 }
 
 ///|
@@ -179,7 +162,7 @@ test "SVG state cycle renders edge label background pills" (it : @test.Test) {
   )
   snapshot_state_svg(it, "semantic_state_cycle_label_bg_pills.svg", svg)
 
-  assert_true(state_count_occurrences(svg, "class=\"edge-label-bg\"") >= 3)
+  assert_true(ts_count_occurrences(svg, "class=\"edge-label-bg\"") >= 3)
   assert_true(svg.contains(">start</text>"))
   assert_true(svg.contains(">pause</text>"))
   assert_true(svg.contains(">resume</text>"))
@@ -260,10 +243,10 @@ test "SVG state diagram direction override changes orientation" (
     ),
   )
 
-  let lr_width = state_option_or_zero(ts_svg_attr_int(lr_svg, "width"))
-  let td_width = state_option_or_zero(ts_svg_attr_int(td_svg, "width"))
-  let lr_height = state_option_or_zero(ts_svg_attr_int(lr_svg, "height"))
-  let td_height = state_option_or_zero(ts_svg_attr_int(td_svg, "height"))
+  let lr_width = ts_option_or_zero(ts_svg_attr_int(lr_svg, "width"))
+  let td_width = ts_option_or_zero(ts_svg_attr_int(td_svg, "width"))
+  let lr_height = ts_option_or_zero(ts_svg_attr_int(lr_svg, "height"))
+  let td_height = ts_option_or_zero(ts_svg_attr_int(td_svg, "height"))
 
   assert_true(lr_width > td_width)
   assert_true(td_height > lr_height)
