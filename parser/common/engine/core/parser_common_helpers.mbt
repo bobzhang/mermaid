@@ -9,8 +9,8 @@ pub fn trim_owned(s : String) -> String {
 pub fn is_plain_identifier(text : String) -> Bool {
   text != "" &&
   !text.contains(" ") &&
-  !text.has_prefix("+") &&
-  !text.has_prefix("-")
+  !(text is [.. "+", ..]) &&
+  !(text is [.. "-", ..])
 }
 
 ///|
