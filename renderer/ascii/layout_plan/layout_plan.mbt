@@ -177,14 +177,6 @@ fn sequence_note_lines(text : String) -> Array[String] {
 }
 
 ///|
-fn sequence_operator_has_suffix(operator : String?, suffix : String) -> Bool {
-  match operator {
-    Some(op) => op.has_suffix(suffix)
-    None => false
-  }
-}
-
-///|
 fn sequence_apply_activation_command(
   command : @model.SequenceActivationCommand,
   y : Int,
@@ -451,7 +443,7 @@ fn build_sequence_layout(graph : @model.MermaidGraph) -> AsciiSequenceLayout {
   for edge_index, edge in graph.edges {
     let row_y = message_arrow_y[edge_index]
 
-    if sequence_operator_has_suffix(edge.relation_operator, "+") {
+    if edge.relation_operator is Some(op) && op is [.., .. "+"] {
       sequence_apply_activation_command(
         { actor_id: edge.target, activate: true, after_index: edge_index },
         row_y,
@@ -461,7 +453,7 @@ fn build_sequence_layout(graph : @model.MermaidGraph) -> AsciiSequenceLayout {
       )
     }
 
-    if sequence_operator_has_suffix(edge.relation_operator, "-") {
+    if edge.relation_operator is Some(op) && op is [.., .. "-"] {
       sequence_apply_activation_command(
         { actor_id: edge.source, activate: false, after_index: edge_index },
         row_y,
