@@ -1,10 +1,4 @@
 ///|
-/// Trims whitespace and returns an owned copy of the string.
-pub fn trim_owned(s : String) -> String {
-  s.trim().to_string()
-}
-
-///|
 /// Returns true if the text is a plain identifier with no spaces or sign prefixes.
 pub fn is_plain_identifier(text : String) -> Bool {
   text != "" &&
@@ -27,10 +21,11 @@ fn parse_delimited_token(
       if prefix.length() < start + open.length() {
         return None
       }
-      let raw_id = trim_owned((try! prefix[:start]).to_string())
-      let raw_label = trim_owned(
-        (try! prefix[start + open.length():]).to_string(),
-      )
+      let raw_id = (try! prefix[:start]).to_string().trim().to_string()
+      let raw_label = (try! prefix[start + open.length():])
+        .to_string()
+        .trim()
+        .to_string()
       let id = if raw_id == "" {
         raw_label.to_lower().replace_all(old=" ", new="_")
       } else {
@@ -45,7 +40,7 @@ fn parse_delimited_token(
 ///|
 /// Parses a raw token string into a `MermaidNode` with shape detection.
 pub fn parse_node_token(raw_token : String) -> @model.MermaidNode {
-  let token = trim_owned(raw_token)
+  let token = raw_token.trim().to_string()
 
   if token == "" {
     return { id: "unnamed", label: "unnamed", shape: Rectangle }

@@ -10,8 +10,6 @@ pub fn is_plain_identifier(String) -> Bool
 
 pub fn parse_node_token(String) -> @model.MermaidNode
 
-pub fn trim_owned(String) -> String
-
 // Errors
 
 // Types and methods

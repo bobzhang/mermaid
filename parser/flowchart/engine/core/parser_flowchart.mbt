@@ -102,7 +102,7 @@ fn strip_node_metadata(raw_token : String) -> String {
   match token.find("@{") {
     Some(index) =>
       if token is [.., .. "}"] {
-        @parser_common_engine_core.trim_owned((try! token[:index]).to_string())
+        (try! token[:index]).to_string().trim().to_string()
       } else {
         token
       }
@@ -132,9 +132,7 @@ fn parse_node_shape_metadata(raw_token : String) -> @model.NodeShape? {
       let after = (try! token[start_index + 2:]).to_string()
       match after.find("}") {
         Some(end_index) =>
-          @parser_common_engine_core.trim_owned(
-            (try! after[:end_index]).to_string(),
-          )
+          (try! after[:end_index]).to_string().trim().to_string()
         None => return None
       }
     }
@@ -147,13 +145,11 @@ fn parse_node_shape_metadata(raw_token : String) -> @model.NodeShape? {
     }
     lexmatch kv[:] {
       (key_part, ":", value_part) => {
-        let key = @parser_common_engine_core.trim_owned(key_part.to_string())
+        let key = key_part.to_string().trim().to_string()
         if key.to_lower() != "shape" {
           continue
         }
-        let value = @parser_common_engine_core.trim_owned(
-          value_part.to_string(),
-        )
+        let value = value_part.to_string().trim().to_string()
         return parse_shape_alias(value)
       }
       _ => ()
@@ -243,9 +239,7 @@ fn split_parallel_node_segments(segment : String) -> Array[String] {
       continue
     }
     if unit == '&' && square_depth == 0 && round_depth == 0 && curly_depth == 0 {
-      let part = @parser_common_engine_core.trim_owned(
-        (try! segment[start:i]).to_string(),
-      )
+      let part = (try! segment[start:i]).to_string().trim().to_string()
       if part != "" {
         parts.push(part)
       }
@@ -254,7 +248,7 @@ fn split_parallel_node_segments(segment : String) -> Array[String] {
   }
 
   let tail = if start < segment.length() {
-    @parser_common_engine_core.trim_owned((try! segment[start:]).to_string())
+    (try! segment[start:]).to_string().trim().to_string()
   } else {
     ""
   }
@@ -371,7 +365,7 @@ fn is_clean_parallel_node_group(segment : String) -> Bool {
 
 ///|
 fn leading_node_token(raw_line : String) -> String {
-  let line = @parser_common_engine_core.trim_owned(raw_line)
+  let line = raw_line.trim().to_string()
   if line == "" {
     return ""
   }
@@ -444,7 +438,7 @@ fn leading_node_token(raw_line : String) -> String {
 
 ///|
 fn parse_leading_node_entry(line : String) -> (MermaidNode, String?)? {
-  let trimmed = @parser_common_engine_core.trim_owned(line)
+  let trimmed = line.trim().to_string()
   if trimmed == "" {
     return None
   }
@@ -689,23 +683,24 @@ fn parse_mid_label_edge(
     Some(found) =>
       match mid_label_left_marker(found.op.symbol) {
         Some(marker) => {
-          let lhs = @parser_common_engine_core.trim_owned(
-            (try! line[:found.index]).to_string(),
-          )
-          let rhs = @parser_common_engine_core.trim_owned(
-            (try! line[found.index + found.op.symbol.length():]).to_string(),
-          )
+          let lhs = (try! line[:found.index]).to_string().trim().to_string()
+          let rhs = (try! line[found.index + found.op.symbol.length():])
+            .to_string()
+            .trim()
+            .to_string()
           if !is_clean_parallel_node_group(rhs) {
             return None
           }
           match top_level_last_index(lhs, marker) {
             Some(marker_index) => {
-              let source_segment = @parser_common_engine_core.trim_owned(
-                (try! lhs[:marker_index]).to_string(),
-              )
-              let label = @parser_common_engine_core.trim_owned(
-                (try! lhs[marker_index + marker.length():]).to_string(),
-              )
+              let source_segment = (try! lhs[:marker_index])
+                .to_string()
+                .trim()
+                .to_string()
+              let label = (try! lhs[marker_index + marker.length():])
+                .to_string()
+                .trim()
+                .to_string()
               if label == "" || !is_clean_parallel_node_group(source_segment) {
                 return None
               }
@@ -1115,25 +1110,18 @@ fn parse_class_line(
   class_assignments : Map[String, String],
 ) -> Unit {
   let rest = lexmatch line[:] {
-    ("class ", class_rest) =>
-      @parser_common_engine_core.trim_owned(class_rest.to_string())
+    ("class ", class_rest) => class_rest.to_string().trim().to_string()
     _ => return
   }
   match rest.rev_find(" ") {
     Some(idx) => {
-      let node_list = @parser_common_engine_core.trim_owned(
-        (try! rest[:idx]).to_string(),
-      )
-      let class_name = @parser_common_engine_core.trim_owned(
-        (try! rest[idx + 1:]).to_string(),
-      )
+      let node_list = (try! rest[:idx]).to_string().trim().to_string()
+      let class_name = (try! rest[idx + 1:]).to_string().trim().to_string()
       if class_name == "" || node_list == "" {
         return
       }
       for node_part in node_list.split(",") {
-        let node_id = @parser_common_engine_core.trim_owned(
-          node_part.to_string(),
-        )
+        let node_id = node_part.to_string().trim().to_string()
         if node_id != "" {
           class_assignments[node_id] = class_name
         }
@@ -1203,7 +1191,7 @@ fn is_subgraph_id_token(token : String) -> Bool {
 fn normalize_subgraph_id_from_label(label : String) -> String {
   let collapsed = label
     .split(" ")
-    .map(part => @parser_common_engine_core.trim_owned(part.to_string()))
+    .map(part => part.to_string().trim().to_string())
     .filter(part => part != "")
     .iter()
     .join("_")
@@ -1224,8 +1212,7 @@ fn normalize_subgraph_id_from_label(label : String) -> String {
 ///|
 fn parse_subgraph_start_line(line : String) -> MermaidSubgraph? {
   let rest = lexmatch line[:] {
-    ("subgraph ", subgraph_rest) =>
-      @parser_common_engine_core.trim_owned(subgraph_rest.to_string())
+    ("subgraph ", subgraph_rest) => subgraph_rest.to_string().trim().to_string()
     _ => return None
   }
   if rest == "" {
@@ -1235,12 +1222,11 @@ fn parse_subgraph_start_line(line : String) -> MermaidSubgraph? {
   match rest.find("[") {
     Some(open_idx) =>
       if rest is [.. without_close, .. "]"] {
-        let raw_id = @parser_common_engine_core.trim_owned(
-          (try! rest[:open_idx]).to_string(),
-        )
-        let raw_label = @parser_common_engine_core.trim_owned(
-          (try! without_close[open_idx + 1:]).to_string(),
-        )
+        let raw_id = (try! rest[:open_idx]).to_string().trim().to_string()
+        let raw_label = (try! without_close[open_idx + 1:])
+          .to_string()
+          .trim()
+          .to_string()
         if raw_id != "" && raw_label != "" && is_subgraph_id_token(raw_id) {
           return Some({
             id: raw_id,
@@ -1304,9 +1290,10 @@ fn parse_flow_line(
   match find_top_level_edge_operator(line, edge_operators()) {
     Some(found) => {
       let touched_node_ids : Array[String] = []
-      let left_segment = @parser_common_engine_core.trim_owned(
-        (try! line[:found.index]).to_string(),
-      )
+      let left_segment = (try! line[:found.index])
+        .to_string()
+        .trim()
+        .to_string()
       if !is_clean_parallel_node_group(left_segment) {
         return ensure_leading_node_only(line, nodes, class_assignments)
       }
@@ -1318,9 +1305,10 @@ fn parse_flow_line(
       push_unique_node_ids(touched_node_ids, current_sources)
 
       let mut current_op = found.op
-      let mut rhs = @parser_common_engine_core.trim_owned(
-        (try! line[found.index + found.op.symbol.length():]).to_string(),
-      )
+      let mut rhs = (try! line[found.index + found.op.symbol.length():])
+        .to_string()
+        .trim()
+        .to_string()
 
       let mut done = false
       while !done {
@@ -1328,9 +1316,10 @@ fn parse_flow_line(
         match
           find_top_level_edge_operator(rhs_without_label, edge_operators()) {
           Some(next_found) => {
-            let target_segment = @parser_common_engine_core.trim_owned(
-              (try! rhs_without_label[:next_found.index]).to_string(),
-            )
+            let target_segment = (try! rhs_without_label[:next_found.index])
+              .to_string()
+              .trim()
+              .to_string()
             if !is_clean_parallel_node_group(target_segment) {
               done = true
               continue
@@ -1346,10 +1335,11 @@ fn parse_flow_line(
             )
             current_sources = next_targets
             current_op = next_found.op
-            rhs = @parser_common_engine_core.trim_owned(
-              (try! rhs_without_label[next_found.index +
-              next_found.op.symbol.length():]).to_string(),
-            )
+            rhs = (try! rhs_without_label[next_found.index +
+              next_found.op.symbol.length():])
+              .to_string()
+              .trim()
+              .to_string()
           }
           None => {
             if !is_clean_parallel_node_group(rhs_without_label) {
@@ -1419,9 +1409,7 @@ pub fn parse_flowchart(
     lexmatch line[:] {
       ("direction ", direction_token) => {
         if subgraph_stack.length() > 0 {
-          let token = @parser_common_engine_core.trim_owned(
-            direction_token.to_string(),
-          )
+          let token = direction_token.to_string().trim().to_string()
           match parse_direction_token_strict(token) {
             Some(parsed_direction) =>
               set_current_subgraph_direction(subgraph_stack, parsed_direction)
