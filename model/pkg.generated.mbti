@@ -62,8 +62,6 @@ pub(all) enum LayoutEngine {
   Elk
   ElkLayered
 }
-pub impl Eq for LayoutEngine
-pub impl Show for LayoutEngine
 
 pub(all) struct MermaidEdge {
   source : String

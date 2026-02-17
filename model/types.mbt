@@ -197,7 +197,7 @@ pub(all) enum LayoutEngine {
   DagreParity
   Elk
   ElkLayered
-} derive(Eq, Show)
+}
 
 ///|
 /// SVG render configuration (theme colors, font, spacing, transparency).

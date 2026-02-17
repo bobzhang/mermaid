@@ -1,4 +1,31 @@
 ///|
+fn layout_engine_equal(
+  left : @model.LayoutEngine,
+  right : @model.LayoutEngine,
+) -> Bool {
+  match (left, right) {
+    (Legacy, Legacy) => true
+    (DagreParity, DagreParity) => true
+    (Elk, Elk) => true
+    (ElkLayered, ElkLayered) => true
+    _ => false
+  }
+}
+
+///|
+fn assert_layout_engine_option_eq(
+  actual : @model.LayoutEngine?,
+  expected : @model.LayoutEngine?,
+) -> Unit raise {
+  match (actual, expected) {
+    (None, None) => ()
+    (Some(actual_engine), Some(expected_engine)) =>
+      assert_true(layout_engine_equal(actual_engine, expected_engine))
+    _ => fail("layout engine mismatch")
+  }
+}
+
+///|
 test "parse_non_negative_int accepts zero and positive integers" {
   assert_eq(parse_non_negative_int("0"), Some(0))
   assert_eq(parse_non_negative_int("1"), Some(1))
@@ -17,16 +44,31 @@ test "parse_non_negative_int rejects negatives and invalid values" {
 
 ///|
 test "parse_layout_engine accepts supported variants" {
-  assert_eq(parse_layout_engine("legacy"), Some(Legacy))
-  assert_eq(parse_layout_engine("dagre-parity"), Some(DagreParity))
-  assert_eq(parse_layout_engine("DAGRE_PARITY"), Some(DagreParity))
-  assert_eq(parse_layout_engine("parity"), Some(DagreParity))
-  assert_eq(parse_layout_engine("elk"), Some(Elk))
-  assert_eq(parse_layout_engine("ELK"), Some(Elk))
-  assert_eq(parse_layout_engine("elk-layered"), Some(ElkLayered))
-  assert_eq(parse_layout_engine("ELK_LAYERED"), Some(ElkLayered))
-  assert_eq(parse_layout_engine(""), None)
-  assert_eq(parse_layout_engine("experimental"), None)
+  assert_layout_engine_option_eq(parse_layout_engine("legacy"), Some(Legacy))
+  assert_layout_engine_option_eq(
+    parse_layout_engine("dagre-parity"),
+    Some(DagreParity),
+  )
+  assert_layout_engine_option_eq(
+    parse_layout_engine("DAGRE_PARITY"),
+    Some(DagreParity),
+  )
+  assert_layout_engine_option_eq(
+    parse_layout_engine("parity"),
+    Some(DagreParity),
+  )
+  assert_layout_engine_option_eq(parse_layout_engine("elk"), Some(Elk))
+  assert_layout_engine_option_eq(parse_layout_engine("ELK"), Some(Elk))
+  assert_layout_engine_option_eq(
+    parse_layout_engine("elk-layered"),
+    Some(ElkLayered),
+  )
+  assert_layout_engine_option_eq(
+    parse_layout_engine("ELK_LAYERED"),
+    Some(ElkLayered),
+  )
+  assert_layout_engine_option_eq(parse_layout_engine(""), None)
+  assert_layout_engine_option_eq(parse_layout_engine("experimental"), None)
 }
 
 ///|
