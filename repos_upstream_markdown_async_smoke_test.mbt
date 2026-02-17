@@ -77,16 +77,16 @@ fn repos_extract_mermaid_blocks(markdown : String) -> Array[String] {
 }
 
 ///|
-fn repos_first_non_comment_line(source : String) -> String {
+fn repos_supported_mermaid_block(source : String) -> Bool {
   let lines = source.split("\n").to_array()
   let mut i = 0
   while i < lines.length() {
-    let trimmed = lines[i].to_string().trim().to_string()
-    if trimmed == "" || trimmed.has_prefix("%%") {
+    let first = lines[i].to_string().trim().to_string()
+    if first == "" || first.has_prefix("%%") {
       i += 1
       continue
     }
-    if trimmed == "---" {
+    if first == "---" {
       i += 1
       while i < lines.length() {
         if lines[i].to_string().trim().to_string() == "---" {
@@ -97,23 +97,15 @@ fn repos_first_non_comment_line(source : String) -> String {
       }
       continue
     }
-    if trimmed != "" && !trimmed.has_prefix("%%") {
-      return trimmed
-    }
-    i += 1
-  }
-  ""
-}
 
-///|
-fn repos_supported_mermaid_block(source : String) -> Bool {
-  let first = repos_first_non_comment_line(source)
-  first.has_prefix("graph") ||
-  first.has_prefix("flowchart") ||
-  first.has_prefix("sequenceDiagram") ||
-  first.has_prefix("classDiagram") ||
-  first.has_prefix("erDiagram") ||
-  first.has_prefix("stateDiagram")
+    return first.has_prefix("graph") ||
+      first.has_prefix("flowchart") ||
+      first.has_prefix("sequenceDiagram") ||
+      first.has_prefix("classDiagram") ||
+      first.has_prefix("erDiagram") ||
+      first.has_prefix("stateDiagram")
+  }
+  false
 }
 
 ///|
