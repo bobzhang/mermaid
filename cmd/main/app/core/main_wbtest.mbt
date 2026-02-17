@@ -21,6 +21,8 @@ test "parse_layout_engine accepts supported variants" {
   assert_eq(parse_layout_engine("dagre-parity"), Some(DagreParity))
   assert_eq(parse_layout_engine("DAGRE_PARITY"), Some(DagreParity))
   assert_eq(parse_layout_engine("parity"), Some(DagreParity))
+  assert_eq(parse_layout_engine("elk"), Some(Elk))
+  assert_eq(parse_layout_engine("ELK"), Some(Elk))
   assert_eq(parse_layout_engine(""), None)
   assert_eq(parse_layout_engine("experimental"), None)
 }

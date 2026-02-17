@@ -23,6 +23,7 @@ fn print_usage() -> Unit {
     #|  moon run cmd/main -- --layer-spacing=90 "graph TD\nA --> B"
     #|  moon run cmd/main -- --layout-engine=legacy "graph TD\nA --> B"
     #|  moon run cmd/main -- --layout-engine=dagre-parity "graph TD\nA --> B"
+    #|  moon run cmd/main -- --layout-engine=elk "graph TD\nA --> B"
     #|  moon run cmd/main -- --transparent "graph TD\nA --> B"
     #|  moon run cmd/main -- --dump-edge-points "graph TD\nA --> B"
     #|  moon run cmd/main -- --list-themes
@@ -44,7 +45,7 @@ fn print_usage() -> Unit {
     #|  --padding  SVG/layout padding in px, e.g. 20
     #|  --node-spacing  Horizontal node spacing in px, e.g. 80
     #|  --layer-spacing  Vertical layer spacing in px, e.g. 90
-    #|  --layout-engine  Graph layout engine: legacy | dagre-parity
+    #|  --layout-engine  Graph layout engine: legacy | dagre-parity | elk
     #|  --transparent  Omit SVG background fill
     #|  --dump-edge-points  Print routed edge points instead of rendering SVG
     #|  --list-themes  Print built-in theme names
@@ -92,6 +93,9 @@ fn parse_layout_engine(raw : String) -> @model.LayoutEngine? {
   let normalized = raw.trim().to_lower()
   if normalized == "legacy" {
     return Some(Legacy)
+  }
+  if normalized == "elk" {
+    return Some(Elk)
   }
   if normalized == "dagre-parity" ||
     normalized == "dagre_parity" ||
@@ -315,7 +319,9 @@ pub fn run() -> Unit {
       match parse_layout_engine(arg) {
         Some(engine) => layout_engine = Some(engine)
         None => {
-          println("Error: --layout-engine must be one of: legacy, dagre-parity")
+          println(
+            "Error: --layout-engine must be one of: legacy, dagre-parity, elk",
+          )
           print_usage()
           return
         }
@@ -684,7 +690,9 @@ pub fn run() -> Unit {
       match parse_layout_engine(raw_layout_engine) {
         Some(engine) => layout_engine = Some(engine)
         None => {
-          println("Error: --layout-engine must be one of: legacy, dagre-parity")
+          println(
+            "Error: --layout-engine must be one of: legacy, dagre-parity, elk",
+          )
           print_usage()
           return
         }

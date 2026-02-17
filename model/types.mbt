@@ -195,6 +195,7 @@ pub fn DiagramColors::default() -> DiagramColors {
 pub(all) enum LayoutEngine {
   Legacy
   DagreParity
+  Elk
 } derive(Eq, Show, ToJson)
 
 ///|
