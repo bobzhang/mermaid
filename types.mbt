@@ -11,10 +11,6 @@ pub type MermaidSubgraph = @model.MermaidSubgraph
 pub type MermaidGraph = @model.MermaidGraph
 
 ///|
-/// Layout engine selection used by graph positioning.
-pub type LayoutEngine = @model.LayoutEngine
-
-///|
 /// Configuration options for SVG rendering.
 pub type RenderOptions = @model.RenderOptions
 
