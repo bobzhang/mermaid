@@ -117,7 +117,7 @@ test "Parser captures sequence blocks and dividers" {
   assert_eq(graph.edges.length(), 3)
   assert_eq(graph.sequence_blocks.length(), 1)
   let block = graph.sequence_blocks[0]
-  assert_eq(block.block_type.to_string(), "Alt")
+  assert_true(block.block_type == Alt)
   assert_eq(block.label, "Success")
   assert_eq(block.start_index, 1)
   assert_eq(block.end_index, 2)
@@ -219,24 +219,24 @@ test "Parser supports all sequence block keywords" {
 
   assert_eq(graph.sequence_blocks.length(), 6)
 
-  assert_eq(graph.sequence_blocks[0].block_type.to_string(), "Loop")
+  assert_true(graph.sequence_blocks[0].block_type == Loop)
   assert_eq(graph.sequence_blocks[0].label, "Retry")
 
-  assert_eq(graph.sequence_blocks[1].block_type.to_string(), "Opt")
+  assert_true(graph.sequence_blocks[1].block_type == Opt)
   assert_eq(graph.sequence_blocks[1].label, "Cache")
 
-  assert_eq(graph.sequence_blocks[2].block_type.to_string(), "Par")
+  assert_true(graph.sequence_blocks[2].block_type == Par)
   assert_eq(graph.sequence_blocks[2].label, "Left")
   assert_eq(graph.sequence_blocks[2].dividers.length(), 1)
   assert_eq(graph.sequence_blocks[2].dividers[0].label, "Right")
 
-  assert_eq(graph.sequence_blocks[3].block_type.to_string(), "Critical")
+  assert_true(graph.sequence_blocks[3].block_type == Critical)
   assert_eq(graph.sequence_blocks[3].label, "Txn")
 
-  assert_eq(graph.sequence_blocks[4].block_type.to_string(), "Break")
+  assert_true(graph.sequence_blocks[4].block_type == Break)
   assert_eq(graph.sequence_blocks[4].label, "Stop")
 
-  assert_eq(graph.sequence_blocks[5].block_type.to_string(), "Rect")
+  assert_true(graph.sequence_blocks[5].block_type == Rect)
   assert_eq(graph.sequence_blocks[5].label, "Highlight")
 }
 
@@ -364,7 +364,7 @@ test "Parser handles full authentication sequence flow" {
   assert_eq(graph.edges.length(), 6)
   assert_eq(graph.sequence_blocks.length(), 1)
   let block = graph.sequence_blocks[0]
-  assert_eq(block.block_type.to_string(), "Alt")
+  assert_true(block.block_type == Alt)
   assert_eq(block.label, "User found")
   assert_eq(block.dividers.length(), 1)
   assert_eq(block.dividers[0].label, "Not found")

@@ -378,57 +378,105 @@ pub fn parse_sequence_diagram(lines : Array[String]) -> MermaidGraph {
 }
 
 ///|
+fn assert_sequence_block_header_eq(
+  actual : (SequenceBlockType, String)?,
+  expected : (SequenceBlockType, String)?,
+) -> Unit raise {
+  match (actual, expected) {
+    (None, None) => ()
+    (Some((actual_kind, actual_label)), Some((expected_kind, expected_label))) => {
+      assert_true(actual_kind == expected_kind)
+      assert_eq(actual_label, expected_label)
+    }
+    _ => fail("sequence block header mismatch")
+  }
+}
+
+///|
 test "parse_sequence_block_header" {
   // exact keyword, no label
-  assert_eq(parse_sequence_block_header("loop"), Some((Loop, "")))
-  assert_eq(parse_sequence_block_header("alt"), Some((Alt, "")))
-  assert_eq(parse_sequence_block_header("opt"), Some((Opt, "")))
-  assert_eq(parse_sequence_block_header("par"), Some((Par, "")))
-  assert_eq(parse_sequence_block_header("critical"), Some((Critical, "")))
-  assert_eq(parse_sequence_block_header("break"), Some((Break, "")))
-  assert_eq(parse_sequence_block_header("rect"), Some((Rect, "")))
+  assert_sequence_block_header_eq(
+    parse_sequence_block_header("loop"),
+    Some((Loop, "")),
+  )
+  assert_sequence_block_header_eq(
+    parse_sequence_block_header("alt"),
+    Some((Alt, "")),
+  )
+  assert_sequence_block_header_eq(
+    parse_sequence_block_header("opt"),
+    Some((Opt, "")),
+  )
+  assert_sequence_block_header_eq(
+    parse_sequence_block_header("par"),
+    Some((Par, "")),
+  )
+  assert_sequence_block_header_eq(
+    parse_sequence_block_header("critical"),
+    Some((Critical, "")),
+  )
+  assert_sequence_block_header_eq(
+    parse_sequence_block_header("break"),
+    Some((Break, "")),
+  )
+  assert_sequence_block_header_eq(
+    parse_sequence_block_header("rect"),
+    Some((Rect, "")),
+  )
   // keyword with label
-  assert_eq(
+  assert_sequence_block_header_eq(
     parse_sequence_block_header("loop Every minute"),
     Some((Loop, "Every minute")),
   )
-  assert_eq(
+  assert_sequence_block_header_eq(
     parse_sequence_block_header("alt Successful case"),
     Some((Alt, "Successful case")),
   )
-  assert_eq(
+  assert_sequence_block_header_eq(
     parse_sequence_block_header("opt Optional path"),
     Some((Opt, "Optional path")),
   )
   // case-insensitive
-  assert_eq(
+  assert_sequence_block_header_eq(
     parse_sequence_block_header("LOOP big loop"),
     Some((Loop, "big loop")),
   )
-  assert_eq(parse_sequence_block_header("Loop"), Some((Loop, "")))
-  assert_eq(parse_sequence_block_header("ALT"), Some((Alt, "")))
-  assert_eq(
+  assert_sequence_block_header_eq(
+    parse_sequence_block_header("Loop"),
+    Some((Loop, "")),
+  )
+  assert_sequence_block_header_eq(
+    parse_sequence_block_header("ALT"),
+    Some((Alt, "")),
+  )
+  assert_sequence_block_header_eq(
     parse_sequence_block_header("Critical critical section"),
     Some((Critical, "critical section")),
   )
-  assert_eq(
+  assert_sequence_block_header_eq(
     parse_sequence_block_header("BREAK when error"),
     Some((Break, "when error")),
   )
-  assert_eq(
+  assert_sequence_block_header_eq(
     parse_sequence_block_header("Rect rgb(200,150,255)"),
     Some((Rect, "rgb(200,150,255)")),
   )
   // label with extra spaces trimmed
-  assert_eq(
+  assert_sequence_block_header_eq(
     parse_sequence_block_header("par   parallel task  "),
     Some((Par, "parallel task")),
   )
   // not a keyword
-  assert_eq(parse_sequence_block_header("looping"), None)
-  assert_eq(parse_sequence_block_header("alternative"), None)
-  assert_eq(parse_sequence_block_header("something else"), None)
-  assert_eq(parse_sequence_block_header(""), None)
+  assert_sequence_block_header_eq(parse_sequence_block_header("looping"), None)
+  assert_sequence_block_header_eq(
+    parse_sequence_block_header("alternative"),
+    None,
+  )
+  assert_sequence_block_header_eq(
+    parse_sequence_block_header("something else"),
+    None,
+  )
+  assert_sequence_block_header_eq(parse_sequence_block_header(""), None)
 }
 
 ///|

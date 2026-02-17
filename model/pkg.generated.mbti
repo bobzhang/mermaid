@@ -272,7 +272,6 @@ pub(all) enum SequenceBlockType {
   Rect
 }
 pub impl Eq for SequenceBlockType
-pub impl Show for SequenceBlockType
 
 pub(all) struct SequenceNote {
   actor_ids : Array[String]

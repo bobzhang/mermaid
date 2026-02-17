@@ -102,7 +102,7 @@ pub(all) enum SequenceBlockType {
   Critical
   Break
   Rect
-} derive(Eq, Show)
+} derive(Eq)
 
 ///|
 /// Divider row metadata (`else` / `and`) inside a sequence block.
