@@ -1108,6 +1108,64 @@ fn maybe_refine_rank_order_by_swaps(
 }
 
 ///|
+fn build_optimized_rank_node_ids_by_rank(
+  base_rank_node_ids_by_rank : Map[Int, Array[String]],
+  max_rank : Int,
+  predecessors_by_node_id : Map[String, Array[String]],
+  successors_by_node_id : Map[String, Array[String]],
+  order_index_by_node_id : Map[String, Int],
+  rank_by_node_id : Map[String, Int],
+  node_count : Int,
+  edge_count : Int,
+) -> Map[Int, Array[String]] {
+  let optimized_rank_node_ids_by_rank = clone_rank_node_ids_by_rank(
+    base_rank_node_ids_by_rank, max_rank,
+  )
+  optimize_rank_order(
+    optimized_rank_node_ids_by_rank, max_rank, predecessors_by_node_id, successors_by_node_id,
+    order_index_by_node_id,
+  )
+  maybe_refine_rank_order_by_swaps(
+    optimized_rank_node_ids_by_rank, max_rank, rank_by_node_id, successors_by_node_id,
+    node_count, edge_count,
+  )
+  optimized_rank_node_ids_by_rank
+}
+
+///|
+fn rank_order_crossing_score(
+  rank_node_ids_by_rank : Map[Int, Array[String]],
+  max_rank : Int,
+  rank_by_node_id : Map[String, Int],
+  successors_by_node_id : Map[String, Array[String]],
+) -> Int {
+  layered_crossing_count(
+    rank_node_ids_by_rank, max_rank, rank_by_node_id, successors_by_node_id,
+  )
+}
+
+///|
+fn select_lower_crossing_rank_order(
+  base_rank_node_ids_by_rank : Map[Int, Array[String]],
+  alternate_rank_node_ids_by_rank : Map[Int, Array[String]],
+  max_rank : Int,
+  rank_by_node_id : Map[String, Int],
+  successors_by_node_id : Map[String, Array[String]],
+) -> Map[Int, Array[String]] {
+  let base_score = rank_order_crossing_score(
+    base_rank_node_ids_by_rank, max_rank, rank_by_node_id, successors_by_node_id,
+  )
+  let alternate_score = rank_order_crossing_score(
+    alternate_rank_node_ids_by_rank, max_rank, rank_by_node_id, successors_by_node_id,
+  )
+  if alternate_score < base_score {
+    alternate_rank_node_ids_by_rank
+  } else {
+    base_rank_node_ids_by_rank
+  }
+}
+
+///|
 fn optimize_rank_order(
   rank_node_ids_by_rank : Map[Int, Array[String]],
   max_rank : Int,
@@ -1698,6 +1756,16 @@ fn run_elk_layered_flow_backend(
     nodes_in_order, rank_by_node_id, lane_by_node_id, base_order_index_by_node_id,
     max_rank,
   )
+  let optimized_base_rank_node_ids_by_rank = build_optimized_rank_node_ids_by_rank(
+    base_rank_node_ids_by_rank,
+    max_rank,
+    predecessors_by_node_id,
+    successors_by_node_id,
+    order_index_by_node_id,
+    rank_by_node_id,
+    nodes_in_order.length(),
+    graph.edges.length(),
+  )
   let rank_node_ids_by_rank = if use_legacy_rank_seed {
     base_rank_node_ids_by_rank
   } else if graph.nodes.length() <= 16 && graph.edges.length() <= 30 {
@@ -1705,40 +1773,27 @@ fn run_elk_layered_flow_backend(
       base_rank_node_ids_by_rank, rank_by_node_id, max_rank, order_index_by_node_id,
       successors_by_node_id,
     )
-    optimize_rank_order(
+    let optimized_virtual_rank_node_ids_by_rank = build_optimized_rank_node_ids_by_rank(
       virtual_ordering_state.rank_node_ids_by_rank,
       max_rank,
       virtual_ordering_state.predecessors_by_node_id,
       virtual_ordering_state.successors_by_node_id,
       virtual_ordering_state.order_index_by_node_id,
-    )
-    maybe_refine_rank_order_by_swaps(
-      virtual_ordering_state.rank_node_ids_by_rank,
-      max_rank,
       virtual_ordering_state.rank_by_node_id,
-      virtual_ordering_state.successors_by_node_id,
       virtual_ordering_state.rank_by_node_id.length(),
       graph.edges.length(),
     )
-    filter_real_rank_node_ids_by_rank(
-      virtual_ordering_state.rank_node_ids_by_rank,
+    let real_virtual_rank_node_ids_by_rank = filter_real_rank_node_ids_by_rank(
+      optimized_virtual_rank_node_ids_by_rank,
       max_rank,
       virtual_ordering_state.virtual_by_node_id,
     )
+    select_lower_crossing_rank_order(
+      optimized_base_rank_node_ids_by_rank, real_virtual_rank_node_ids_by_rank, max_rank,
+      rank_by_node_id, successors_by_node_id,
+    )
   } else {
-    optimize_rank_order(
-      base_rank_node_ids_by_rank, max_rank, predecessors_by_node_id, successors_by_node_id,
-      order_index_by_node_id,
-    )
-    maybe_refine_rank_order_by_swaps(
-      base_rank_node_ids_by_rank,
-      max_rank,
-      rank_by_node_id,
-      successors_by_node_id,
-      nodes_in_order.length(),
-      graph.edges.length(),
-    )
-    base_rank_node_ids_by_rank
+    optimized_base_rank_node_ids_by_rank
   }
 
   let padding = @layout_engine_graph_internal_core.resolve_padding(options)

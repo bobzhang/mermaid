@@ -273,6 +273,34 @@ test "elk layered order optimization reduces crossing count on bipartite rank pa
 }
 
 ///|
+test "elk layered crossing selector prefers lower-crossing rank order candidate" {
+  let rank_by_node_id : Map[String, Int] = { "A": 0, "B": 0, "C": 1, "D": 1 }
+  let successors_by_node_id : Map[String, Array[String]] = {
+    "A": ["D"],
+    "B": ["C"],
+    "C": [],
+    "D": [],
+  }
+  let base_rank_node_ids_by_rank : Map[Int, Array[String]] = {
+    0: ["A", "B"],
+    1: ["C", "D"],
+  }
+  let alternate_rank_node_ids_by_rank : Map[Int, Array[String]] = {
+    0: ["A", "B"],
+    1: ["D", "C"],
+  }
+  let selected_rank_node_ids_by_rank = select_lower_crossing_rank_order(
+    base_rank_node_ids_by_rank, alternate_rank_node_ids_by_rank, 1, rank_by_node_id,
+    successors_by_node_id,
+  )
+  let selected_rank_one = match selected_rank_node_ids_by_rank.get(1) {
+    Some(node_ids) => node_ids
+    None => []
+  }
+  assert_eq(selected_rank_one, ["D", "C"])
+}
+
+///|
 test "elk layered rank state breaks feedback cycles into forward-ranked edges" {
   let graph = wb_graph(["A", "B", "C"], [("A", "B"), ("B", "C"), ("C", "A")])
   let prep_state = @layout_engine_graph_prep_core.prepare_graph_inputs(
