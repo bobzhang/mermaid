@@ -3,7 +3,7 @@
 pub(all) suberror MermaidError {
   ParseFailure(String)
   UnknownTheme(String)
-} derive(Eq, Show)
+} derive(Show)
 
 ///|
 /// Flow/state layout direction.
@@ -215,7 +215,7 @@ pub(all) struct RenderOptions {
   layer_spacing : Int?
   transparent : Bool?
   layout_engine : LayoutEngine?
-} derive(Eq, Show)
+}
 
 ///|
 /// Default SVG render options (all optional fields unset).
@@ -244,7 +244,7 @@ pub(all) struct AsciiRenderOptions {
   padding_x : Int
   padding_y : Int
   box_border_padding : Int
-} derive(Eq, Show)
+}
 
 ///|
 /// Default ASCII render options (Unicode mode, standard spacing).

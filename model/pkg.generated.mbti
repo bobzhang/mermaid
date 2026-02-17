@@ -8,7 +8,6 @@ pub(all) suberror MermaidError {
   ParseFailure(String)
   UnknownTheme(String)
 }
-pub impl Eq for MermaidError
 pub impl Show for MermaidError
 
 // Types and methods
@@ -19,8 +18,6 @@ pub(all) struct AsciiRenderOptions {
   box_border_padding : Int
 }
 pub fn AsciiRenderOptions::default() -> Self
-pub impl Eq for AsciiRenderOptions
-pub impl Show for AsciiRenderOptions
 
 pub(all) struct DiagramColors {
   bg : String
@@ -266,8 +263,6 @@ pub(all) struct RenderOptions {
   layout_engine : LayoutEngine?
 }
 pub fn RenderOptions::default() -> Self
-pub impl Eq for RenderOptions
-pub impl Show for RenderOptions
 
 pub(all) struct SequenceActivationCommand {
   actor_id : String
