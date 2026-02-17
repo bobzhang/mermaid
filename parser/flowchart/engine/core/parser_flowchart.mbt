@@ -1193,11 +1193,8 @@ fn append_edges(
 }
 
 ///|
-fn is_subgraph_slug_char(unit : UInt16) -> Bool {
-  unit is ('a'..='z') ||
-  unit is ('A'..='Z') ||
-  unit is ('0'..='9') ||
-  unit == '_'
+fn is_subgraph_slug_char(ch : Char) -> Bool {
+  ch is ('a'..='z') || ch is ('A'..='Z') || ch is ('0'..='9') || ch == '_'
 }
 
 ///|
@@ -1214,9 +1211,9 @@ fn normalize_subgraph_id_from_label(label : String) -> String {
     .iter()
     .join("_")
   let sb = StringBuilder::new()
-  for i in 0..<collapsed.length() {
-    if is_subgraph_slug_char(collapsed[i]) {
-      sb.write_string((try! collapsed[i:i + 1]).to_string())
+  for ch in collapsed {
+    if is_subgraph_slug_char(ch) {
+      sb.write_char(ch)
     }
   }
   let id = sb.to_string()
