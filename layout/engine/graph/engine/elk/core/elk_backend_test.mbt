@@ -47,6 +47,112 @@ fn flow_graph() -> @model.MermaidGraph {
 }
 
 ///|
+fn fanout_graph() -> @model.MermaidGraph {
+  let nodes : Map[String, @model.MermaidNode] = {
+    "A": flow_node("A"),
+    "B": flow_node("B"),
+    "C": flow_node("C"),
+    "D": flow_node("D"),
+    "E": flow_node("E"),
+  }
+  let edges : Array[@model.MermaidEdge] = [
+    flow_edge("A", "B"),
+    {
+      source: "A",
+      target: "C",
+      label: Some("compile"),
+      style: Solid,
+      has_arrow_start: false,
+      has_arrow_end: true,
+      relation_operator: Some("-->"),
+    },
+    {
+      source: "A",
+      target: "D",
+      label: Some("integration-tests"),
+      style: Solid,
+      has_arrow_start: false,
+      has_arrow_end: true,
+      relation_operator: Some("-->"),
+    },
+    {
+      source: "A",
+      target: "E",
+      label: Some("publish-artifact"),
+      style: Solid,
+      has_arrow_start: false,
+      has_arrow_end: true,
+      relation_operator: Some("-->"),
+    },
+    {
+      source: "E",
+      target: "A",
+      label: Some("feedback-loop"),
+      style: Solid,
+      has_arrow_start: false,
+      has_arrow_end: true,
+      relation_operator: Some("-->"),
+    },
+  ]
+  let class_defs : Map[String, Map[String, String]] = {}
+  let class_assignments : Map[String, String] = {}
+  let node_styles : Map[String, Map[String, String]] = {}
+  let sequence_actor_kinds : Map[String, @model.SequenceParticipantKind] = {}
+  let sequence_blocks : Array[@model.SequenceBlock] = []
+  let sequence_notes : Array[@model.SequenceNote] = []
+  let sequence_activation_commands : Array[@model.SequenceActivationCommand] = []
+  {
+    diagram_kind: Flowchart,
+    direction: LR,
+    nodes,
+    edges,
+    subgraphs: [],
+    class_defs,
+    class_assignments,
+    node_styles,
+    sequence_actor_order: [],
+    sequence_actor_kinds,
+    sequence_blocks,
+    sequence_notes,
+    sequence_activation_commands,
+  }
+}
+
+///|
+test "elk setup phase derives structure-aware spacing and preserves explicit spacing" {
+  let graph = fanout_graph()
+  let defaults = @model.RenderOptions::default()
+  let tuned = derive_elk_render_options(graph, defaults)
+  assert_true(
+    @layout_engine_graph_internal_core.option_int_or(tuned.node_spacing, 0) >
+    @layout_engine_graph_internal_core.resolve_node_spacing(defaults),
+  )
+  assert_true(
+    @layout_engine_graph_internal_core.option_int_or(tuned.layer_spacing, 0) >
+    @layout_engine_graph_internal_core.resolve_layer_spacing(defaults),
+  )
+
+  let explicit_options : @model.RenderOptions = {
+    bg: None,
+    fg: None,
+    line: None,
+    accent: None,
+    muted: None,
+    surface: None,
+    border: None,
+    font: None,
+    padding: None,
+    node_spacing: Some(88),
+    layer_spacing: Some(66),
+    transparent: None,
+    layout_engine: Some(Elk),
+  }
+  let tuned_explicit = derive_elk_render_options(graph, explicit_options)
+  assert_eq(tuned_explicit.node_spacing, Some(88))
+  assert_eq(tuned_explicit.layer_spacing, Some(66))
+}
+
+///|
 test "elk backend produces a valid positioned graph" {
   let elk_layout = layout_graph_elk_backend({
       graph: flow_graph(),
@@ -58,6 +164,25 @@ test "elk backend produces a valid positioned graph" {
   assert_eq(elk_layout.edges.length(), 1)
   assert_true(elk_layout.width > 0)
   assert_true(elk_layout.height > 0)
+}
+
+///|
+test "elk backend differs from legacy on fanout-heavy graph when spacing is auto" {
+  let graph = fanout_graph()
+  let request : @layout_engine_graph_contract_core.GraphLayoutBackendRequest = {
+    graph,
+    options: @model.RenderOptions::default(),
+    use_subgraph_redirects: true,
+    compact_fanin: false,
+  }
+  let legacy_backend = @layout_engine_graph_engine_profile_core.run_graph_layout_engine_backend(
+    request,
+    Legacy,
+  )
+  let elk_backend = layout_graph_elk_backend(request)
+  assert_true(
+    elk_backend.positioned_graph.width > legacy_backend.positioned_graph.width,
+  )
 }
 
 ///|
