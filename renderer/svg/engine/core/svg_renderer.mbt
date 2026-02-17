@@ -18,11 +18,6 @@ fn style_for_edge(style : EdgeStyle) -> String {
 }
 
 ///|
-fn points_to_svg(points : Array[Point]) -> String {
-  points.iter().map(pt => "\{pt.x},\{pt.y}").join(" ")
-}
-
-///|
 fn dedupe_consecutive_points(points : Array[Point]) -> Array[Point] {
   let deduped : Array[Point] = []
   for point in points {
@@ -67,11 +62,6 @@ fn edge_segment_is_axis_aligned(start : Point, end_ : Point) -> Bool {
 }
 
 ///|
-fn edge_segment_manhattan_length(start : Point, end_ : Point) -> Int {
-  int_abs(end_.x - start.x) + int_abs(end_.y - start.y)
-}
-
-///|
 fn edge_is_axis_aligned_polyline(points : Array[Point]) -> Bool {
   if points.length() < 2 {
     return false
@@ -96,7 +86,8 @@ fn edge_has_short_terminal_stub_for_basis(points : Array[Point]) -> Bool {
   let third = points[2]
   if edge_segment_is_axis_aligned(first, second) &&
     !edge_segment_is_axis_aligned(second, third) &&
-    edge_segment_manhattan_length(first, second) <= short_stub_limit {
+    int_abs(second.x - first.x) + int_abs(second.y - first.y) <=
+    short_stub_limit {
     return true
   }
 
@@ -105,7 +96,8 @@ fn edge_has_short_terminal_stub_for_basis(points : Array[Point]) -> Bool {
   let before_before_last = points[points.length() - 3]
   edge_segment_is_axis_aligned(before_last, last) &&
   !edge_segment_is_axis_aligned(before_before_last, before_last) &&
-  edge_segment_manhattan_length(before_last, last) <= short_stub_limit
+  int_abs(last.x - before_last.x) + int_abs(last.y - before_last.y) <=
+  short_stub_limit
 }
 
 ///|
@@ -1070,8 +1062,12 @@ pub fn render_svg(
         "<path class=\"edge\" d=\"\{path_d}\"\{edge_style}\{marker_start}\{marker_end} />",
       )
     } else {
+      let rendered_points_svg = rendered_points
+        .iter()
+        .map(pt => "\{pt.x},\{pt.y}")
+        .join(" ")
       sb.write_string(
-        "<polyline class=\"edge\" points=\"\{points_to_svg(rendered_points)}\"\{edge_style}\{marker_start}\{marker_end} />",
+        "<polyline class=\"edge\" points=\"\{rendered_points_svg}\"\{edge_style}\{marker_start}\{marker_end} />",
       )
     }
     if er_mode {
