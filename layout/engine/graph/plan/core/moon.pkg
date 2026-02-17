@@ -1,0 +1,8 @@
+import {
+  "bobzhang/beautiful_mermaid/layout/engine/graph/internal/core" @layout_engine_graph_internal_core,
+  "bobzhang/beautiful_mermaid/model" @model,
+}
+
+import {
+  "moonbitlang/core/test",
+} for "test"

@@ -1,0 +1,33 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "bobzhang/beautiful_mermaid/layout/engine/graph/plan/core"
+
+import {
+  "bobzhang/beautiful_mermaid/model",
+}
+
+// Values
+pub fn build_ascii_layout_execution_plan(@model.MermaidGraph) -> LayoutExecutionPlan
+
+pub fn build_svg_layout_execution_plan(@model.MermaidGraph) -> LayoutExecutionPlan
+
+pub fn resolve_layout_engine(@model.RenderOptions) -> @model.LayoutEngine
+
+// Errors
+
+// Types and methods
+pub(all) enum LayoutExecutionPlan {
+  UseEngine(LayoutGraphPlan)
+  UseSequence(@model.MermaidGraph)
+  UseFlatStateAsciiGrid(@model.MermaidGraph)
+}
+
+pub(all) struct LayoutGraphPlan {
+  graph : @model.MermaidGraph
+  use_subgraph_redirects : Bool
+  compact_fanin : Bool
+}
+
+// Type aliases
+
+// Traits
+
