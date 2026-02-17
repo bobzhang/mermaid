@@ -64,6 +64,76 @@ fn parse_direction_token_strict(token : String) -> Direction? {
 }
 
 ///|
+fn push_unique_id(ids : Array[String], id : String) -> Unit {
+  if !ids.any(found => found == id) {
+    ids.push(id)
+  }
+}
+
+///|
+fn append_nodes_to_current_subgraph(
+  subgraph_stack : Array[MermaidSubgraph],
+  touched_node_ids : Array[String],
+) -> Unit {
+  if subgraph_stack.length() == 0 || touched_node_ids.length() == 0 {
+    return
+  }
+  let last_index = subgraph_stack.length() - 1
+  let current = subgraph_stack[last_index]
+  let node_ids = current.node_ids.copy()
+  for node_id in touched_node_ids {
+    push_unique_id(node_ids, node_id)
+  }
+  subgraph_stack[last_index] = {
+    id: current.id,
+    label: current.label,
+    node_ids,
+    children: current.children,
+    direction: current.direction,
+  }
+}
+
+///|
+fn append_child_subgraph(
+  subgraph_stack : Array[MermaidSubgraph],
+  child : MermaidSubgraph,
+) -> Unit {
+  if subgraph_stack.length() == 0 {
+    return
+  }
+  let last_index = subgraph_stack.length() - 1
+  let current = subgraph_stack[last_index]
+  let children = current.children.copy()
+  children.push(child)
+  subgraph_stack[last_index] = {
+    id: current.id,
+    label: current.label,
+    node_ids: current.node_ids,
+    children,
+    direction: current.direction,
+  }
+}
+
+///|
+fn set_current_subgraph_direction(
+  subgraph_stack : Array[MermaidSubgraph],
+  direction : Direction,
+) -> Unit {
+  if subgraph_stack.length() == 0 {
+    return
+  }
+  let last_index = subgraph_stack.length() - 1
+  let current = subgraph_stack[last_index]
+  subgraph_stack[last_index] = {
+    id: current.id,
+    label: current.label,
+    node_ids: current.node_ids,
+    children: current.children,
+    direction: Some(direction),
+  }
+}
+
+///|
 fn parse_state_declaration(
   line : String,
   nodes : Map[String, MermaidNode],
@@ -83,10 +153,7 @@ fn parse_state_declaration(
           label,
           shape: Rounded,
         })
-        @parser_common_engine_core.append_nodes_to_current_subgraph(
-          composite_stack,
-          [id],
-        )
+        append_nodes_to_current_subgraph(composite_stack, [id])
       }
     }
     _ => {
@@ -102,10 +169,7 @@ fn parse_state_declaration(
         },
       }
       @parser_common_engine_core.ensure_node(nodes, node)
-      @parser_common_engine_core.append_nodes_to_current_subgraph(
-        composite_stack,
-        [node.id],
-      )
+      append_nodes_to_current_subgraph(composite_stack, [node.id])
     }
   }
 }
@@ -163,9 +227,7 @@ fn append_state_node_to_current_composite(
   if node_id == "" {
     return
   }
-  @parser_common_engine_core.append_nodes_to_current_subgraph(composite_stack, [
-    node_id,
-  ])
+  append_nodes_to_current_subgraph(composite_stack, [node_id])
 }
 
 ///|
@@ -237,9 +299,7 @@ pub fn parse_state_diagram(lines : Array[String]) -> MermaidGraph {
       match parse_direction_token_strict(token) {
         Some(parsed_direction) =>
           if composite_stack.length() > 0 {
-            @parser_common_engine_core.set_current_subgraph_direction(
-              composite_stack, parsed_direction,
-            )
+            set_current_subgraph_direction(composite_stack, parsed_direction)
           } else {
             direction = parsed_direction
           }
@@ -260,9 +320,7 @@ pub fn parse_state_diagram(lines : Array[String]) -> MermaidGraph {
       match composite_stack.pop() {
         Some(completed) =>
           if composite_stack.length() > 0 {
-            @parser_common_engine_core.append_child_subgraph(
-              composite_stack, completed,
-            )
+            append_child_subgraph(composite_stack, completed)
           } else {
             subgraphs.push(completed)
           }
@@ -311,10 +369,7 @@ pub fn parse_state_diagram(lines : Array[String]) -> MermaidGraph {
           has_arrow_end: found.op.has_arrow_end,
           relation_operator: Some(found.op.symbol),
         })
-        @parser_common_engine_core.append_nodes_to_current_subgraph(
-          composite_stack,
-          [source_id, target_id],
-        )
+        append_nodes_to_current_subgraph(composite_stack, [source_id, target_id])
       }
       None =>
         match edge_label {

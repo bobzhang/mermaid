@@ -27,6 +27,76 @@ fn parse_flow_direction(header : String) -> Direction? {
 }
 
 ///|
+fn subgraph_push_unique_id(ids : Array[String], id : String) -> Unit {
+  if !ids.any(found => found == id) {
+    ids.push(id)
+  }
+}
+
+///|
+fn append_nodes_to_current_subgraph(
+  subgraph_stack : Array[MermaidSubgraph],
+  touched_node_ids : Array[String],
+) -> Unit {
+  if subgraph_stack.length() == 0 || touched_node_ids.length() == 0 {
+    return
+  }
+  let last_index = subgraph_stack.length() - 1
+  let current = subgraph_stack[last_index]
+  let node_ids = current.node_ids.copy()
+  for node_id in touched_node_ids {
+    subgraph_push_unique_id(node_ids, node_id)
+  }
+  subgraph_stack[last_index] = {
+    id: current.id,
+    label: current.label,
+    node_ids,
+    children: current.children,
+    direction: current.direction,
+  }
+}
+
+///|
+fn append_child_subgraph(
+  subgraph_stack : Array[MermaidSubgraph],
+  child : MermaidSubgraph,
+) -> Unit {
+  if subgraph_stack.length() == 0 {
+    return
+  }
+  let last_index = subgraph_stack.length() - 1
+  let current = subgraph_stack[last_index]
+  let children = current.children.copy()
+  children.push(child)
+  subgraph_stack[last_index] = {
+    id: current.id,
+    label: current.label,
+    node_ids: current.node_ids,
+    children,
+    direction: current.direction,
+  }
+}
+
+///|
+fn set_current_subgraph_direction(
+  subgraph_stack : Array[MermaidSubgraph],
+  direction : Direction,
+) -> Unit {
+  if subgraph_stack.length() == 0 {
+    return
+  }
+  let last_index = subgraph_stack.length() - 1
+  let current = subgraph_stack[last_index]
+  subgraph_stack[last_index] = {
+    id: current.id,
+    label: current.label,
+    node_ids: current.node_ids,
+    children: current.children,
+    direction: Some(direction),
+  }
+}
+
+///|
 fn strip_node_metadata(raw_token : String) -> String {
   let token = raw_token.trim().to_string()
   match token.find("@{") {
@@ -1309,9 +1379,7 @@ pub fn parse_flowchart(
         )
         match parse_direction_token_strict(token) {
           Some(parsed_direction) =>
-            @parser_common_engine_core.set_current_subgraph_direction(
-              subgraph_stack, parsed_direction,
-            )
+            set_current_subgraph_direction(subgraph_stack, parsed_direction)
           None => ()
         }
       }
@@ -1330,9 +1398,7 @@ pub fn parse_flowchart(
       match subgraph_stack.pop() {
         Some(completed) =>
           if subgraph_stack.length() > 0 {
-            @parser_common_engine_core.append_child_subgraph(
-              subgraph_stack, completed,
-            )
+            append_child_subgraph(subgraph_stack, completed)
           } else {
             subgraphs.push(completed)
           }
@@ -1354,9 +1420,7 @@ pub fn parse_flowchart(
         newly_defined_node_ids.push(node_id)
       }
     }
-    @parser_common_engine_core.append_nodes_to_current_subgraph(
-      subgraph_stack, newly_defined_node_ids,
-    )
+    append_nodes_to_current_subgraph(subgraph_stack, newly_defined_node_ids)
   }
 
   {

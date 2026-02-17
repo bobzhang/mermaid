@@ -6,17 +6,11 @@ import {
 }
 
 // Values
-pub fn append_child_subgraph(Array[@model.MermaidSubgraph], @model.MermaidSubgraph) -> Unit
-
-pub fn append_nodes_to_current_subgraph(Array[@model.MermaidSubgraph], Array[String]) -> Unit
-
 pub fn ensure_node(Map[String, @model.MermaidNode], @model.MermaidNode) -> Unit
 
 pub fn is_plain_identifier(String) -> Bool
 
 pub fn parse_node_token(String) -> @model.MermaidNode
-
-pub fn set_current_subgraph_direction(Array[@model.MermaidSubgraph], @model.Direction) -> Unit
 
 pub fn trim_owned(String) -> String
 
