@@ -142,33 +142,43 @@ fn final_phase_snapshot(
 }
 
 ///|
-fn should_include_layered_edge(
+fn build_order_index_by_node_id(
+  nodes_in_order : Array[MermaidNode],
+) -> Map[String, Int] {
+  let order_index_by_node_id : Map[String, Int] = {}
+  for i, node in nodes_in_order {
+    order_index_by_node_id[node.id] = i
+  }
+  order_index_by_node_id
+}
+
+///|
+fn should_include_ranked_layered_edge(
   source_id : String,
   target_id : String,
-  order_index_by_node_id : Map[String, Int],
+  rank_by_node_id : Map[String, Int],
 ) -> Bool {
   if source_id == target_id {
     return false
   }
-  let source_index = option_int_or(order_index_by_node_id.get(source_id), -1)
-  let target_index = option_int_or(order_index_by_node_id.get(target_id), -1)
-  source_index >= 0 && target_index >= 0 && source_index <= target_index
+  let source_rank = option_int_or(rank_by_node_id.get(source_id), -1)
+  let target_rank = option_int_or(rank_by_node_id.get(target_id), -1)
+  source_rank >= 0 && target_rank >= 0 && source_rank <= target_rank
 }
 
 ///|
-fn collect_layered_adjacency(
+fn collect_layered_adjacency_from_rank(
   graph : MermaidGraph,
   use_subgraph_redirects : Bool,
   subgraph_entry_by_id : Map[String, String],
   subgraph_exit_by_id : Map[String, String],
   nodes_in_order : Array[MermaidNode],
-) -> (Map[String, Array[String]], Map[String, Array[String]], Map[String, Int]) {
+  rank_by_node_id : Map[String, Int],
+) -> (Map[String, Array[String]], Map[String, Array[String]]) {
   let successors_by_node_id : Map[String, Array[String]] = {}
   let predecessors_by_node_id : Map[String, Array[String]] = {}
-  let order_index_by_node_id : Map[String, Int] = {}
   let visible_node_ids : Map[String, Bool] = {}
-  for i, node in nodes_in_order {
-    order_index_by_node_id[node.id] = i
+  for node in nodes_in_order {
     visible_node_ids[node.id] = true
     successors_by_node_id[node.id] = []
     predecessors_by_node_id[node.id] = []
@@ -188,8 +198,8 @@ fn collect_layered_adjacency(
       !visible_node_ids.contains(target_id) {
       continue
     }
-    if !should_include_layered_edge(
-        source_id, target_id, order_index_by_node_id,
+    if !should_include_ranked_layered_edge(
+        source_id, target_id, rank_by_node_id,
       ) {
       continue
     }
@@ -202,45 +212,7 @@ fn collect_layered_adjacency(
       None => ()
     }
   }
-  (successors_by_node_id, predecessors_by_node_id, order_index_by_node_id)
-}
-
-///|
-fn build_rank_by_node_id(
-  nodes_in_order : Array[MermaidNode],
-  successors_by_node_id : Map[String, Array[String]],
-) -> Map[String, Int] {
-  let rank_by_node_id : Map[String, Int] = {}
-  for node in nodes_in_order {
-    rank_by_node_id[node.id] = 0
-  }
-  for node in nodes_in_order {
-    let source_rank = option_int_or(rank_by_node_id.get(node.id), 0)
-    match successors_by_node_id.get(node.id) {
-      Some(successors) =>
-        for target_id in successors {
-          let current_rank = option_int_or(rank_by_node_id.get(target_id), 0)
-          let candidate_rank = source_rank + 1
-          if candidate_rank > current_rank {
-            rank_by_node_id[target_id] = candidate_rank
-          }
-        }
-      None => ()
-    }
-  }
-  rank_by_node_id
-}
-
-///|
-fn compute_max_rank(
-  nodes_in_order : Array[MermaidNode],
-  rank_by_node_id : Map[String, Int],
-) -> Int {
-  let mut max_rank = 0
-  for node in nodes_in_order {
-    max_rank = max_rank.max(option_int_or(rank_by_node_id.get(node.id), 0))
-  }
-  max_rank
+  (successors_by_node_id, predecessors_by_node_id)
 }
 
 ///|
@@ -257,6 +229,36 @@ fn build_rank_node_ids(
     let rank = option_int_or(rank_by_node_id.get(node.id), 0)
     match rank_node_ids_by_rank.get(rank) {
       Some(node_ids) => node_ids.push(node.id)
+      None => ()
+    }
+  }
+  rank_node_ids_by_rank
+}
+
+///|
+fn build_rank_node_ids_by_lane(
+  nodes_in_order : Array[MermaidNode],
+  rank_by_node_id : Map[String, Int],
+  lane_by_node_id : Map[String, Int],
+  order_index_by_node_id : Map[String, Int],
+  max_rank : Int,
+) -> Map[Int, Array[String]] {
+  let rank_node_ids_by_rank = build_rank_node_ids(
+    nodes_in_order, rank_by_node_id, max_rank,
+  )
+  for rank in 0..<=max_rank {
+    match rank_node_ids_by_rank.get(rank) {
+      Some(node_ids) =>
+        node_ids.sort_by((left, right) => {
+          let left_lane = option_int_or(lane_by_node_id.get(left), 0)
+          let right_lane = option_int_or(lane_by_node_id.get(right), 0)
+          if left_lane != right_lane {
+            return left_lane.compare(right_lane)
+          }
+          option_int_or(order_index_by_node_id.get(left), 0).compare(
+            option_int_or(order_index_by_node_id.get(right), 0),
+          )
+        })
       None => ()
     }
   }
@@ -826,9 +828,15 @@ fn build_minor_coord_by_node_id(
 
 ///|
 fn should_use_elk_layered_pipeline(graph : MermaidGraph) -> Bool {
+  // Keep ELK layered pass scoped to small/medium flowcharts where the
+  // lightweight MoonBit implementation is quality-competitive. Larger dense
+  // graphs fallback to the shared backend for stability.
+  let within_layered_complexity_budget = graph.nodes.length() <= 16 &&
+    graph.edges.length() <= 30
   graph.diagram_kind is Flowchart &&
   !@layout_engine_graph_internal_core.is_state_graph(graph) &&
-  !@layout_engine_graph_internal_core.is_class_or_er_graph(graph)
+  !@layout_engine_graph_internal_core.is_class_or_er_graph(graph) &&
+  within_layered_complexity_budget
 }
 
 ///|
@@ -849,15 +857,35 @@ pub fn run_elk_layered_flow_backend(
     prep_state.nodes_in_order(),
     graph.edges,
   )
-  let (successors_by_node_id, predecessors_by_node_id, order_index_by_node_id) = collect_layered_adjacency(
+  let horizontal = @layout_engine_graph_internal_core.layout_direction_is_horizontal(
+    graph.direction,
+  )
+  let reverse = @layout_engine_graph_internal_core.layout_direction_is_reverse(
+    graph.direction,
+  )
+  let order_index_by_node_id = build_order_index_by_node_id(nodes_in_order)
+  let lane_state = @layout_engine_graph_lane_core.compute_legacy_lane_state(
+    graph,
+    nodes_in_order,
+    false,
+    false,
+    horizontal,
+    request.compact_fanin,
+    false,
+    false,
+  )
+  let rank_by_node_id = lane_state.flow_rank_by_node_id()
+  let max_rank = lane_state.flow_max_rank()
+  let rank_node_ids_by_rank = build_rank_node_ids_by_lane(
+    nodes_in_order,
+    rank_by_node_id,
+    lane_state.flow_lane_by_node_id(),
+    order_index_by_node_id,
+    max_rank,
+  )
+  let (successors_by_node_id, predecessors_by_node_id) = collect_layered_adjacency_from_rank(
     graph, use_subgraph_redirects, subgraph_entry_by_id, subgraph_exit_by_id, nodes_in_order,
-  )
-  let rank_by_node_id = build_rank_by_node_id(
-    nodes_in_order, successors_by_node_id,
-  )
-  let max_rank = compute_max_rank(nodes_in_order, rank_by_node_id)
-  let rank_node_ids_by_rank = build_rank_node_ids(
-    nodes_in_order, rank_by_node_id, max_rank,
+    rank_by_node_id,
   )
   optimize_rank_order(
     rank_node_ids_by_rank, max_rank, predecessors_by_node_id, successors_by_node_id,
@@ -878,12 +906,6 @@ pub fn run_elk_layered_flow_backend(
   )
   let layer_spacing = @layout_engine_graph_internal_core.resolve_layer_spacing(
     options,
-  )
-  let horizontal = @layout_engine_graph_internal_core.layout_direction_is_horizontal(
-    graph.direction,
-  )
-  let reverse = @layout_engine_graph_internal_core.layout_direction_is_reverse(
-    graph.direction,
   )
 
   let width_by_node_id : Map[String, Int] = {}

@@ -119,6 +119,41 @@ fn fanout_graph() -> @model.MermaidGraph {
 }
 
 ///|
+fn large_flow_graph() -> @model.MermaidGraph {
+  let nodes : Map[String, @model.MermaidNode] = {}
+  for i in 0..<17 {
+    let node_id = "N\{i}"
+    nodes[node_id] = flow_node(node_id)
+  }
+  let edges : Array[@model.MermaidEdge] = []
+  for i in 0..<16 {
+    edges.push(flow_edge("N\{i}", "N\{i + 1}"))
+  }
+  let class_defs : Map[String, Map[String, String]] = {}
+  let class_assignments : Map[String, String] = {}
+  let node_styles : Map[String, Map[String, String]] = {}
+  let sequence_actor_kinds : Map[String, @model.SequenceParticipantKind] = {}
+  let sequence_blocks : Array[@model.SequenceBlock] = []
+  let sequence_notes : Array[@model.SequenceNote] = []
+  let sequence_activation_commands : Array[@model.SequenceActivationCommand] = []
+  {
+    diagram_kind: Flowchart,
+    direction: LR,
+    nodes,
+    edges,
+    subgraphs: [],
+    class_defs,
+    class_assignments,
+    node_styles,
+    sequence_actor_order: [],
+    sequence_actor_kinds,
+    sequence_blocks,
+    sequence_notes,
+    sequence_activation_commands,
+  }
+}
+
+///|
 fn simple_state_graph() -> @model.MermaidGraph {
   let nodes : Map[String, @model.MermaidNode] = {
     "start": { id: "start", label: "start", shape: StateStart },
@@ -200,6 +235,7 @@ test "elk setup phase keeps state-graph spacing unset for state-specific placeme
 ///|
 test "elk layered pipeline applies only to non-state flowcharts" {
   assert_eq(elk_should_use_layered_pipeline(flow_graph()), true)
+  assert_eq(elk_should_use_layered_pipeline(large_flow_graph()), false)
   assert_eq(elk_should_use_layered_pipeline(simple_state_graph()), false)
 }
 
@@ -239,6 +275,31 @@ test "elk backend differs from legacy on fanout-heavy graph when spacing is auto
 ///|
 test "elk backend falls back to shared backend pipeline on state graphs" {
   let graph = simple_state_graph()
+  let request : @layout_engine_graph_contract_core.GraphLayoutBackendRequest = {
+    graph,
+    options: @model.RenderOptions::default(),
+    use_subgraph_redirects: true,
+    compact_fanin: false,
+  }
+  let elk_backend = layout_graph_elk_backend(request)
+  let fallback_backend = @layout_engine_graph_backend_core.run_graph_backend_pipeline(
+    {
+      graph,
+      options: derive_elk_render_options(graph, @model.RenderOptions::default()),
+      use_subgraph_redirects: true,
+      compact_fanin: false,
+    },
+    {
+      enable_target_boundary_ports: true,
+      preserve_assigned_endpoint_ports: false,
+    },
+  )
+  assert_eq(elk_backend, fallback_backend)
+}
+
+///|
+test "elk backend falls back to shared backend pipeline on large flowcharts" {
+  let graph = large_flow_graph()
   let request : @layout_engine_graph_contract_core.GraphLayoutBackendRequest = {
     graph,
     options: @model.RenderOptions::default(),
