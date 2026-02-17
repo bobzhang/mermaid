@@ -356,6 +356,51 @@ fn assign_edge_boundary_offsets_to_contexts(
 }
 
 ///|
+fn materialize_positioned_edges_from_points(
+  edge_layout_contexts : Array[EdgeLayoutContext],
+  points_by_context_index : Map[Int, Array[Point]],
+  state_graph : Bool,
+) -> Array[PositionedEdge] {
+  let positioned_edges : Array[PositionedEdge] = []
+  let label_slots_by_anchor : Map[String, Int] = {}
+  for context_index, context in edge_layout_contexts {
+    match points_by_context_index.get(context_index) {
+      Some(points) => {
+        let edge = context.edge
+        let label_position = match edge.label {
+          Some(_) => {
+            let base = polyline_label_anchor(points)
+            let key = label_anchor_key(base)
+            let slot = option_int_or(label_slots_by_anchor.get(key), 0)
+            label_slots_by_anchor[key] = slot + 1
+            let label_x = if state_graph {
+              base.x + label_overlap_offset_x(slot)
+            } else {
+              base.x
+            }
+            Some(Point::{ x: label_x, y: base.y + label_overlap_offset(slot) })
+          }
+          None => None
+        }
+        positioned_edges.push({
+          source: edge.source,
+          target: edge.target,
+          label: edge.label,
+          style: edge.style,
+          has_arrow_start: edge.has_arrow_start,
+          has_arrow_end: edge.has_arrow_end,
+          relation_operator: edge.relation_operator,
+          points,
+          label_position,
+        })
+      }
+      None => ()
+    }
+  }
+  positioned_edges
+}
+
+///|
 fn route_legacy_positioned_edges(
   graph : MermaidGraph,
   state_graph : Bool,
@@ -373,9 +418,7 @@ fn route_legacy_positioned_edges(
   preserve_assigned_endpoint_ports : Bool,
   enhanced_horizontal_state_flow : Bool,
 ) -> Array[PositionedEdge] {
-  let positioned_edges : Array[PositionedEdge] = []
   let routed_edge_segments : Array[RoutedEdgeSegment] = []
-  let label_slots_by_anchor : Map[String, Int] = {}
   let back_edge_lane_reservations : Array[BackEdgeLaneReservation] = []
   let back_edge_column_reservations : Array[BackEdgeColumnReservation] = []
   let forward_fanout_out_count_by_bucket : Map[String, Int] = {}
@@ -827,40 +870,7 @@ fn route_legacy_positioned_edges(
       )
     }
   }
-  for context_index, context in edge_layout_contexts {
-    match points_by_context_index.get(context_index) {
-      Some(points) => {
-        let edge = context.edge
-        let label_position = match edge.label {
-          Some(_) => {
-            let base = polyline_label_anchor(points)
-            let key = label_anchor_key(base)
-            let slot = option_int_or(label_slots_by_anchor.get(key), 0)
-            label_slots_by_anchor[key] = slot + 1
-            let label_x = if state_graph {
-              base.x + label_overlap_offset_x(slot)
-            } else {
-              base.x
-            }
-            Some(Point::{ x: label_x, y: base.y + label_overlap_offset(slot) })
-          }
-          None => None
-        }
-        positioned_edges.push({
-          source: edge.source,
-          target: edge.target,
-          label: edge.label,
-          style: edge.style,
-          has_arrow_start: edge.has_arrow_start,
-          has_arrow_end: edge.has_arrow_end,
-          relation_operator: edge.relation_operator,
-          points,
-          label_position,
-        })
-      }
-      None => ()
-    }
-  }
-
-  positioned_edges
+  materialize_positioned_edges_from_points(
+    edge_layout_contexts, points_by_context_index, state_graph,
+  )
 }
