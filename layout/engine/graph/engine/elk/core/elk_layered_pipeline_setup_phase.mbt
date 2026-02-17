@@ -213,12 +213,17 @@ fn run_elk_layered_spacing_phase(
   max_rank_size : Int,
   node_size_state : ElkLayeredNodeSizeState,
 ) -> ElkLayeredSpacingState {
-  let padding = @layout_engine_graph_internal_core.resolve_padding(options)
-  let node_spacing = @layout_engine_graph_internal_core.resolve_node_spacing(
-    options,
+  let padding = @layout_engine_graph_internal_core.option_int_or(
+    options.padding,
+    40,
   )
-  let layer_spacing = @layout_engine_graph_internal_core.resolve_layer_spacing(
-    options,
+  let node_spacing = @layout_engine_graph_internal_core.option_int_or(
+    options.node_spacing,
+    130,
+  )
+  let layer_spacing = @layout_engine_graph_internal_core.option_int_or(
+    options.layer_spacing,
+    90,
   )
   let major_gap = if horizontal { node_spacing } else { layer_spacing }
   let minor_gap = if horizontal { layer_spacing } else { node_spacing }

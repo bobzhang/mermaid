@@ -171,7 +171,10 @@ fn derive_elk_render_options(
       } else {
         Some(
           elk_node_spacing(
-            @layout_engine_graph_internal_core.resolve_node_spacing(options),
+            @layout_engine_graph_internal_core.option_int_or(
+              options.node_spacing,
+              130,
+            ),
             graph,
             complexity,
           ),
@@ -186,7 +189,10 @@ fn derive_elk_render_options(
       } else {
         Some(
           elk_layer_spacing(
-            @layout_engine_graph_internal_core.resolve_layer_spacing(options),
+            @layout_engine_graph_internal_core.option_int_or(
+              options.layer_spacing,
+              90,
+            ),
             graph,
             complexity,
           ),

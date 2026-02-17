@@ -167,13 +167,18 @@ test "elk layered spacing phase resolves orientation-aware major/minor steps" {
     global_max_width: 140,
     global_max_height: 60,
   }
-  let node_spacing = @layout_engine_graph_internal_core.resolve_node_spacing(
-    options,
+  let node_spacing = @layout_engine_graph_internal_core.option_int_or(
+    options.node_spacing,
+    130,
   )
-  let layer_spacing = @layout_engine_graph_internal_core.resolve_layer_spacing(
-    options,
+  let layer_spacing = @layout_engine_graph_internal_core.option_int_or(
+    options.layer_spacing,
+    90,
   )
-  let padding = @layout_engine_graph_internal_core.resolve_padding(options)
+  let padding = @layout_engine_graph_internal_core.option_int_or(
+    options.padding,
+    40,
+  )
 
   let horizontal_spacing = run_elk_layered_spacing_phase(
     options, true, 3, node_size_state,

@@ -993,8 +993,9 @@ test "Layout horizontal rank spacing keeps wide adjacent nodes separated" {
   let positioned = layout_graph(graph, RenderOptions::default())
   let build = find_positioned_node(positioned.nodes, "Build")
   let ship = find_positioned_node(positioned.nodes, "Ship")
-  let required_gap = (@layout_engine_graph_internal_core.resolve_node_spacing(
-    RenderOptions::default(),
+  let required_gap = (@layout_engine_graph_internal_core.option_int_or(
+    RenderOptions::default().node_spacing,
+    130,
   ) /
   5).max(16)
 
@@ -2547,7 +2548,10 @@ test "Layout sequence without notes has no extra horizontal shift" {
   let first_left = first.x - first.width / 2
   assert_eq(
     first_left,
-    @layout_engine_graph_internal_core.resolve_padding(RenderOptions::default()),
+    @layout_engine_graph_internal_core.option_int_or(
+      RenderOptions::default().padding,
+      40,
+    ),
   )
 }
 

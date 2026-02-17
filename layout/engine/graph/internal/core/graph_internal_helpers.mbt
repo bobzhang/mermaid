@@ -8,24 +8,6 @@ pub fn option_int_or(value : Int?, fallback : Int) -> Int {
 }
 
 ///|
-/// Resolves render padding with the graph default.
-pub fn resolve_padding(options : RenderOptions) -> Int {
-  option_int_or(options.padding, 40)
-}
-
-///|
-/// Resolves node spacing with the graph default.
-pub fn resolve_node_spacing(options : RenderOptions) -> Int {
-  option_int_or(options.node_spacing, 130)
-}
-
-///|
-/// Resolves layer spacing with the graph default.
-pub fn resolve_layer_spacing(options : RenderOptions) -> Int {
-  option_int_or(options.layer_spacing, 90)
-}
-
-///|
 /// Resolves horizontal state spacing from options or node widths.
 pub fn resolve_horizontal_state_node_spacing(
   options : RenderOptions,

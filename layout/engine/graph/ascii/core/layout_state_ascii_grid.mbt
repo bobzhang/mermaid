@@ -697,12 +697,17 @@ pub fn layout_flat_state_graph_for_ascii_grid(
     return layout_state_empty_positioned_graph()
   }
 
-  let padding = @layout_engine_graph_internal_core.resolve_padding(options)
-  let node_spacing = @layout_engine_graph_internal_core.resolve_node_spacing(
-    options,
+  let padding = @layout_engine_graph_internal_core.option_int_or(
+    options.padding,
+    40,
   )
-  let layer_spacing = @layout_engine_graph_internal_core.resolve_layer_spacing(
-    options,
+  let node_spacing = @layout_engine_graph_internal_core.option_int_or(
+    options.node_spacing,
+    130,
+  )
+  let layer_spacing = @layout_engine_graph_internal_core.option_int_or(
+    options.layer_spacing,
+    90,
   )
   let cell_x = (node_spacing / 3).max(54)
   let cell_x_step = cell_x + 12

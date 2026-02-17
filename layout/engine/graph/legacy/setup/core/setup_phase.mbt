@@ -24,12 +24,17 @@ pub fn build_legacy_layout_setup(
   use_subgraph_redirects : Bool,
   compact_fanin : Bool,
 ) -> LegacyLayoutSetupState {
-  let base_padding = @layout_engine_graph_internal_core.resolve_padding(options)
-  let base_node_spacing = @layout_engine_graph_internal_core.resolve_node_spacing(
-    options,
+  let base_padding = @layout_engine_graph_internal_core.option_int_or(
+    options.padding,
+    40,
   )
-  let layer_spacing = @layout_engine_graph_internal_core.resolve_layer_spacing(
-    options,
+  let base_node_spacing = @layout_engine_graph_internal_core.option_int_or(
+    options.node_spacing,
+    130,
+  )
+  let layer_spacing = @layout_engine_graph_internal_core.option_int_or(
+    options.layer_spacing,
+    90,
   )
   let horizontal = @layout_engine_graph_internal_core.layout_direction_is_horizontal(
     graph.direction,

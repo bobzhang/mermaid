@@ -486,11 +486,11 @@ test "elk setup phase derives structure-aware spacing and preserves explicit spa
   let tuned = derive_elk_render_options(graph, defaults)
   assert_true(
     @layout_engine_graph_internal_core.option_int_or(tuned.node_spacing, 0) >
-    @layout_engine_graph_internal_core.resolve_node_spacing(defaults),
+    @layout_engine_graph_internal_core.option_int_or(defaults.node_spacing, 130),
   )
   assert_true(
     @layout_engine_graph_internal_core.option_int_or(tuned.layer_spacing, 0) >
-    @layout_engine_graph_internal_core.resolve_layer_spacing(defaults),
+    @layout_engine_graph_internal_core.option_int_or(defaults.layer_spacing, 90),
   )
 
   let explicit_options : @model.RenderOptions = {
