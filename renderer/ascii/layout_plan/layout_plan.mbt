@@ -519,7 +519,7 @@ fn build_sequence_layout(graph : @model.MermaidGraph) -> AsciiSequenceLayout {
 
 ///|
 fn class_is_method_detail(detail : StringView) -> Bool {
-  if detail.has_suffix(" ()") {
+  if detail.strip_suffix(" ()") is Some(_) {
     return true
   }
   if detail.contains("(") && detail.contains(")") {
