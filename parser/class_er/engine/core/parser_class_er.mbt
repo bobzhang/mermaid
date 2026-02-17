@@ -14,10 +14,10 @@ fn parse_compact_relation_parts(
   if trimmed == "" || trimmed.contains(" ") {
     return None
   }
-  let chars = trimmed.to_array()
+  let len = trimmed.length()
   let mut operator_start = -1
-  for i in 0..<chars.length() {
-    if chars[i] is ('|' | '{' | '}') {
+  for i in 0..<len {
+    if trimmed[i] is ('|' | '{' | '}') {
       operator_start = i
       break
     }
@@ -27,14 +27,14 @@ fn parse_compact_relation_parts(
   }
 
   let mut operator_end = -1
-  for i in 0..<chars.length() {
-    let j = chars.length() - i - 1
-    if chars[j] is ('|' | '{' | '}') {
+  for i in 0..<len {
+    let j = len - i - 1
+    if trimmed[j] is ('|' | '{' | '}') {
       operator_end = j
       break
     }
   }
-  if operator_end < operator_start || operator_end >= chars.length() - 1 {
+  if operator_end < operator_start || operator_end >= len - 1 {
     return None
   }
 
