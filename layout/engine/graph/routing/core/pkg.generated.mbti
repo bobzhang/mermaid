@@ -6,8 +6,6 @@ import {
 }
 
 // Values
-pub fn edge_points_for(@model.PositionedNode, @model.PositionedNode, Bool, Int?, Int?, Int?, Bool) -> Array[@model.Point]
-
 pub fn route_legacy_positioned_edges(LegacyRoutingInput) -> Array[@model.PositionedEdge]
 
 // Errors

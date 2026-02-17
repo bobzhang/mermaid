@@ -800,7 +800,7 @@ pub fn layout_flat_state_graph_for_ascii_grid(
                 path, origin_x, origin_y, cell_x_step, cell_y,
               )
             } else {
-              @layout_engine_graph_routing_core.edge_points_for(
+              @layout_engine_graph_edge_core.edge_points_for(
                 source,
                 target,
                 false,
@@ -812,7 +812,7 @@ pub fn layout_flat_state_graph_for_ascii_grid(
             }
           }
           None =>
-            @layout_engine_graph_routing_core.edge_points_for(
+            @layout_engine_graph_edge_core.edge_points_for(
               source,
               target,
               false,

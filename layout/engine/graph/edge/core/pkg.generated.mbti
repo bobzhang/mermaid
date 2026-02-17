@@ -1,0 +1,28 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "bobzhang/beautiful_mermaid/layout/engine/graph/edge/core"
+
+import {
+  "bobzhang/beautiful_mermaid/model",
+}
+
+// Values
+pub fn apply_endpoint_port_stubs(Array[@model.Point], @model.Point, @model.Point) -> Array[@model.Point]
+
+pub fn boundary_anchor_point(@model.PositionedNode, Bool, Bool, Bool, Int) -> @model.Point
+
+pub fn edge_points_for(@model.PositionedNode, @model.PositionedNode, Bool, Int?, Int?, Int?, Bool) -> Array[@model.Point]
+
+pub fn edge_points_for_with_ports(@model.PositionedNode, @model.PositionedNode, Bool, Int?, Int?, Int?, Bool, Int, Int) -> Array[@model.Point]
+
+pub fn edge_points_with_minor_lane_offset_with_ports(@model.PositionedNode, @model.PositionedNode, Bool, Int, Bool, Int, Int) -> Array[@model.Point]
+
+pub fn simplify_polyline_points(Array[@model.Point]) -> Array[@model.Point]
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits
+

@@ -195,7 +195,7 @@ fn maybe_resolve_forward_fanout_slots_for_bucket(
         candidate_slot_by_context_index.get(context_index),
         0,
       )
-      let points = edge_points_for_with_ports(
+      let points = @layout_engine_graph_edge_core.edge_points_for_with_ports(
         context.source,
         context.target,
         context.edge_horizontal,
@@ -218,7 +218,7 @@ fn maybe_resolve_forward_fanout_slots_for_bucket(
     }
     for context_index in bucket_context_indices {
       let context = edge_layout_contexts[context_index]
-      let points = edge_points_for_with_ports(
+      let points = @layout_engine_graph_edge_core.edge_points_for_with_ports(
         context.source,
         context.target,
         context.edge_horizontal,

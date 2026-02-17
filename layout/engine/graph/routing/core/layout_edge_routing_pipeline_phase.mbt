@@ -595,7 +595,7 @@ pub fn route_legacy_positioned_edges(
     } else {
       None
     }
-    let raw_base_points_with_ports = edge_points_for_with_ports(
+    let raw_base_points_with_ports = @layout_engine_graph_edge_core.edge_points_for_with_ports(
       source,
       target,
       edge_horizontal,
@@ -646,7 +646,7 @@ pub fn route_legacy_positioned_edges(
         force_reciprocal_back_edge_ports {
         base_points_with_ports
       } else {
-        let base_points_without_ports = edge_points_for_with_ports(
+        let base_points_without_ports = @layout_engine_graph_edge_core.edge_points_for_with_ports(
           source, target, edge_horizontal, back_edge_bend_y, back_edge_bend_x, resolved_forward_fanout_offset,
           enhanced_horizontal_state_flow, 0, 0,
         )
@@ -883,7 +883,7 @@ pub fn route_legacy_positioned_edges(
       } else {
         None
       }
-      let points = edge_points_for_with_ports(
+      let points = @layout_engine_graph_edge_core.edge_points_for_with_ports(
         source,
         target,
         context.edge_horizontal,
