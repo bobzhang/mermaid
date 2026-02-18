@@ -87,7 +87,7 @@ fn build_layered_rank_state(
   )
   let order_index_by_node_id = build_order_index_by_id(feedback_order_node_ids)
   let acyclic_edges = orient_edges_by_feedback_order(
-    resolved_edges, order_index_by_node_id,
+    node_ids, resolved_edges, order_index_by_node_id,
   )
 
   let rank_by_node_id : Map[String, Int] = {}

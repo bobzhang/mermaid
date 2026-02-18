@@ -241,22 +241,168 @@ fn sort_ready_nodes_by_order(
 }
 
 ///|
+fn collect_root_node_ids_for_orientation(
+  node_ids : Array[String],
+  resolved_edges : Array[(String, String)],
+  order_index_by_node_id : Map[String, Int],
+) -> Array[String] {
+  let indegree_by_node_id : Map[String, Int] = {}
+  for node_id in node_ids {
+    indegree_by_node_id[node_id] = 0
+  }
+  for edge in resolved_edges {
+    let (_, target_id) = edge
+    if !indegree_by_node_id.contains(target_id) {
+      continue
+    }
+    indegree_by_node_id[target_id] = option_int_or(
+        indegree_by_node_id.get(target_id),
+        0,
+      ) +
+      1
+  }
+
+  let roots : Array[String] = []
+  for node_id in node_ids {
+    if option_int_or(indegree_by_node_id.get(node_id), 0) == 0 {
+      roots.push(node_id)
+    }
+  }
+  if roots.length() > 0 {
+    roots.sort_by((left, right) => {
+      compare_node_ids_by_order(left, right, order_index_by_node_id)
+    })
+    return roots
+  }
+
+  let mut has_min_indegree = false
+  let mut min_indegree = 0
+  for node_id in node_ids {
+    let indegree = option_int_or(indegree_by_node_id.get(node_id), 0)
+    if !has_min_indegree || indegree < min_indegree {
+      has_min_indegree = true
+      min_indegree = indegree
+    }
+  }
+  for node_id in node_ids {
+    if option_int_or(indegree_by_node_id.get(node_id), 0) == min_indegree {
+      roots.push(node_id)
+    }
+  }
+  roots.sort_by((left, right) => {
+    compare_node_ids_by_order(left, right, order_index_by_node_id)
+  })
+  roots
+}
+
+///|
+fn build_root_distance_by_node_id(
+  node_ids : Array[String],
+  resolved_edges : Array[(String, String)],
+  order_index_by_node_id : Map[String, Int],
+) -> Map[String, Int] {
+  let successors_by_node_id : Map[String, Array[String]] = {}
+  for node_id in node_ids {
+    successors_by_node_id[node_id] = []
+  }
+  for edge in resolved_edges {
+    let (source_id, target_id) = edge
+    if !successors_by_node_id.contains(source_id) ||
+      !successors_by_node_id.contains(target_id) {
+      continue
+    }
+    match successors_by_node_id.get(source_id) {
+      Some(successors) => successors.push(target_id)
+      None => ()
+    }
+  }
+
+  let root_node_ids = collect_root_node_ids_for_orientation(
+    node_ids, resolved_edges, order_index_by_node_id,
+  )
+  let root_distance_by_node_id : Map[String, Int] = {}
+  let queue_node_ids : Array[String] = []
+  for root_id in root_node_ids {
+    if root_distance_by_node_id.contains(root_id) {
+      continue
+    }
+    root_distance_by_node_id[root_id] = 0
+    queue_node_ids.push(root_id)
+  }
+
+  let mut queue_head = 0
+  while queue_head < queue_node_ids.length() {
+    let node_id = queue_node_ids[queue_head]
+    queue_head += 1
+    let node_distance = option_int_or(root_distance_by_node_id.get(node_id), 0)
+    match successors_by_node_id.get(node_id) {
+      Some(successors) =>
+        for successor_id in successors {
+          if root_distance_by_node_id.contains(successor_id) {
+            continue
+          }
+          root_distance_by_node_id[successor_id] = node_distance + 1
+          queue_node_ids.push(successor_id)
+        }
+      None => ()
+    }
+  }
+
+  root_distance_by_node_id
+}
+
+///|
+fn compare_node_ids_by_orientation_priority(
+  left_node_id : String,
+  right_node_id : String,
+  root_distance_by_node_id : Map[String, Int],
+  order_index_by_node_id : Map[String, Int],
+) -> Int {
+  match
+    (
+      root_distance_by_node_id.get(left_node_id),
+      root_distance_by_node_id.get(right_node_id),
+    ) {
+    (Some(left_distance), Some(right_distance)) =>
+      if left_distance != right_distance {
+        left_distance.compare(right_distance)
+      } else {
+        compare_node_ids_by_order(
+          left_node_id, right_node_id, order_index_by_node_id,
+        )
+      }
+    (Some(_), None) => -1
+    (None, Some(_)) => 1
+    (None, None) =>
+      compare_node_ids_by_order(
+        left_node_id, right_node_id, order_index_by_node_id,
+      )
+  }
+}
+
+///|
 fn orient_edges_by_feedback_order(
+  node_ids : Array[String],
   resolved_edges : Array[(String, String)],
   order_index_by_node_id : Map[String, Int],
 ) -> Array[(String, String)] {
+  let root_distance_by_node_id = build_root_distance_by_node_id(
+    node_ids, resolved_edges, order_index_by_node_id,
+  )
   let acyclic_edges : Array[(String, String)] = []
   for edge in resolved_edges {
     let (source_id, target_id) = edge
     if source_id == target_id {
       continue
     }
-    let source_order = option_int_or(order_index_by_node_id.get(source_id), -1)
-    let target_order = option_int_or(order_index_by_node_id.get(target_id), -1)
-    if source_order < 0 || target_order < 0 || source_order == target_order {
+    if !order_index_by_node_id.contains(source_id) ||
+      !order_index_by_node_id.contains(target_id) {
       continue
     }
-    if source_order < target_order {
+    if compare_node_ids_by_orientation_priority(
+        source_id, target_id, root_distance_by_node_id, order_index_by_node_id,
+      ) <
+      0 {
       acyclic_edges.push((source_id, target_id))
     } else {
       acyclic_edges.push((target_id, source_id))
