@@ -1,0 +1,49 @@
+[fixture]
+path=fixtures/layout_stress_003_subgraph_bridges.mmd
+local_layer_count=16
+official_layer_count=16
+
+[official_layers]
+r0: [SRC]
+r1: [L1]
+r2: [L2]
+r3: [L3]
+r4: [L4]
+r5: [L5]
+r6: [M4]
+r7: [M5]
+r8: [M2]
+r9: [M3,R1]
+r10: [R2]
+r11: [R3]
+r12: [R4]
+r13: [M1]
+r14: [R5]
+r15: [SNK]
+
+[local_layers]
+r0: [SRC]
+r1: [L1]
+r2: [L2]
+r3: [L3]
+r4: [L4]
+r5: [L5]
+r6: [M4]
+r7: [M5]
+r8: [M2]
+r9: [M3,R1]
+r10: [R2]
+r11: [R3]
+r12: [R4]
+r13: [M1]
+r14: [R5]
+r15: [SNK]
+
+[composition_mismatch]
+(none)
+
+[summary]
+shared_nodes=17
+exact_matches=17
+displacement_sum=0
+composition_mismatch_count=0

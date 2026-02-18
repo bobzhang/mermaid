@@ -8,6 +8,7 @@ import {
 }
 
 import {
+  "bobzhang/beautiful_mermaid/layout/engine/graph/legacy/setup/core" @layout_legacy_setup,
   "moonbitlang/async",
   "moonbitlang/async/fs" @fs,
   "moonbitlang/core/json" @json,

@@ -1,0 +1,52 @@
+[fixture]
+path=fixtures/layout_stress_006_nested_bridge_loops.mmd
+local_layer_count=11
+official_layer_count=13
+
+[official_layers]
+r0: [SRC]
+r1: [L0]
+r2: [L1]
+r3: [L2]
+r4: [L3]
+r5: [L4,R0]
+r6: [R1,SNK]
+r7: [LI1,RI1]
+r8: [LI2,RI2]
+r9: [R2,RI3]
+r10: [R3]
+r11: [R4]
+r12: [LI3]
+
+[local_layers]
+r0: [SNK,SRC]
+r1: [L0,R0]
+r2: [L1]
+r3: [L2,LI1]
+r4: [L3,LI2]
+r5: [L4,R1,LI3]
+r6: [R2,RI1]
+r7: [RI2]
+r8: [RI3]
+r9: [R3]
+r10: [R4]
+
+[composition_mismatch]
+r0: local=[SNK,SRC] official=[SRC]
+r1: local=[L0,R0] official=[L0]
+r3: local=[L2,LI1] official=[L2]
+r4: local=[L3,LI2] official=[L3]
+r5: local=[L4,R1,LI3] official=[L4,R0]
+r6: local=[R2,RI1] official=[R1,SNK]
+r7: local=[RI2] official=[LI1,RI1]
+r8: local=[RI3] official=[LI2,RI2]
+r9: local=[R3] official=[R2,RI3]
+r10: local=[R4] official=[R3]
+r11: local=[] official=[R4]
+r12: local=[] official=[LI3]
+
+[summary]
+shared_nodes=18
+exact_matches=6
+displacement_sum=34
+composition_mismatch_count=12

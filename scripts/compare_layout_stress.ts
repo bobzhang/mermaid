@@ -16,6 +16,7 @@
  *   bun run scripts/compare_layout_stress.ts --local-timeout-ms 120000 --local-render-retries 2 --retry-backoff-ms 500
  *   bun run scripts/compare_layout_stress.ts fixtures/layout_challenge_001_nested_portal_mesh.mmd --explain-logical-crossings
  *   bun run scripts/compare_layout_stress.ts fixtures/layout_stress_010_bipartite_crossfire.mmd --explain-rank-order
+ *   bun run scripts/compare_layout_stress.ts fixtures/layout_stress_006_nested_bridge_loops.mmd --include-rank-layers --json /tmp/rank_layers.json
  *   bun run scripts/compare_layout_stress.ts --max-logical-crossing-multiplier 1.0 --explain-on-failure
  *   bun run scripts/compare_layout_stress.ts --max-weighted-gap-index 0.85
  *   bun run scripts/compare_layout_stress.ts --max-avg-weighted-gap-index 0.60
@@ -67,6 +68,8 @@ type Metrics = {
   majorAxis: Axis
   majorRankLayersLocal: number
   majorRankLayersOfficial: number
+  majorRankLayersLocalDetail?: string[][]
+  majorRankLayersOfficialDetail?: string[][]
   majorRankExactMatchRate: number
   majorRankAvgDisplacement: number
   majorRankCompositionMismatchCount: number
@@ -128,6 +131,7 @@ type CliOptions = {
   retryBackoffMs: number
   explainLogicalCrossings: boolean
   explainRankOrder: boolean
+  includeRankLayers: boolean
   explainOnFailure: boolean
   topCrossingPairs: number
   topCrossingEdges: number
@@ -1235,6 +1239,8 @@ function sampleLayerLabels(layer: string[], maxLabels: number): string {
 type MajorRankDiagnostics = {
   localLayers: number
   officialLayers: number
+  localLayerDetails?: string[][]
+  officialLayerDetails?: string[][]
   exactMatchRate: number
   avgDisplacement: number
   compositionMismatchCount: number
@@ -1248,6 +1254,7 @@ function computeMajorRankDiagnostics(
   localNodes: Map<string, Point>,
   majorAxis: Axis,
   includeSamples: boolean,
+  includeLayerDetails: boolean,
 ): MajorRankDiagnostics {
   if (sharedLabels.length === 0) {
     return {
@@ -1260,6 +1267,12 @@ function computeMajorRankDiagnostics(
         ? {
             orderMismatchSample: [],
             compositionMismatchSample: [],
+          }
+        : {}),
+      ...(includeLayerDetails
+        ? {
+            localLayerDetails: [],
+            officialLayerDetails: [],
           }
         : {}),
     }
@@ -1347,6 +1360,12 @@ function computeMajorRankDiagnostics(
     avgDisplacement:
       displacementCount === 0 ? Number.NaN : displacementSum / Math.max(displacementCount, 1),
     compositionMismatchCount,
+    ...(includeLayerDetails
+      ? {
+          localLayerDetails: localLayers,
+          officialLayerDetails: officialLayers,
+        }
+      : {}),
     ...(includeSamples
       ? {
           orderMismatchSample,
@@ -1788,6 +1807,7 @@ function compareFixture(
     localNodes,
     majorAxis,
     options.explainRankOrder,
+    options.includeRankLayers,
   )
   const structuralOk =
     sharedLabels.length === officialNodes.size &&
@@ -1846,6 +1866,12 @@ function compareFixture(
       majorAxis,
       majorRankLayersLocal: rankDiagnostics.localLayers,
       majorRankLayersOfficial: rankDiagnostics.officialLayers,
+      ...(options.includeRankLayers
+        ? {
+            majorRankLayersLocalDetail: rankDiagnostics.localLayerDetails,
+            majorRankLayersOfficialDetail: rankDiagnostics.officialLayerDetails,
+          }
+        : {}),
       majorRankExactMatchRate: rankDiagnostics.exactMatchRate,
       majorRankAvgDisplacement: rankDiagnostics.avgDisplacement,
       majorRankCompositionMismatchCount: rankDiagnostics.compositionMismatchCount,
@@ -1959,6 +1985,12 @@ function compareFixture(
     majorAxis,
     majorRankLayersLocal: rankDiagnostics.localLayers,
     majorRankLayersOfficial: rankDiagnostics.officialLayers,
+    ...(options.includeRankLayers
+      ? {
+          majorRankLayersLocalDetail: rankDiagnostics.localLayerDetails,
+          majorRankLayersOfficialDetail: rankDiagnostics.officialLayerDetails,
+        }
+      : {}),
     majorRankExactMatchRate: rankDiagnostics.exactMatchRate,
     majorRankAvgDisplacement: rankDiagnostics.avgDisplacement,
     majorRankCompositionMismatchCount: rankDiagnostics.compositionMismatchCount,
@@ -2052,6 +2084,7 @@ function parseCliOptions(args: string[]): CliOptions {
   let retryBackoffMs = DEFAULT_RETRY_BACKOFF_MS
   let explainLogicalCrossings = false
   let explainRankOrder = false
+  let includeRankLayers = false
   let explainOnFailure = false
   let topCrossingPairs = 8
   let topCrossingEdges = 8
@@ -2359,6 +2392,10 @@ function parseCliOptions(args: string[]): CliOptions {
       explainRankOrder = true
       continue
     }
+    if (arg === '--include-rank-layers') {
+      includeRankLayers = true
+      continue
+    }
     if (arg === '--explain-on-failure') {
       explainOnFailure = true
       continue
@@ -2453,6 +2490,7 @@ function parseCliOptions(args: string[]): CliOptions {
     retryBackoffMs,
     explainLogicalCrossings,
     explainRankOrder,
+    includeRankLayers,
     explainOnFailure,
     topCrossingPairs,
     topCrossingEdges,
