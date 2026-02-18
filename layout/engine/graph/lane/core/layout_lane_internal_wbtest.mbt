@@ -376,3 +376,53 @@ test "Layout cycle-aware rank collection rehydrates cyclic forward order" {
   assert_true(cycle_b > cycle_a)
   assert_true(cycle_d >= cycle_b)
 }
+
+///|
+test "Layout non-state rank selector keeps default strategy when exploration disabled" {
+  let nodes : Array[MermaidNode] = [
+    { id: "A", label: "A", shape: Rectangle },
+    { id: "B", label: "B", shape: Rectangle },
+  ]
+  let edges : Array[MermaidEdge] = [flow_edge("A", "B"), flow_edge("B", "A")]
+
+  let selected = select_non_state_flow_rank_candidate(
+    nodes, edges, false, true, false, false, false, true, true, true, false,
+  )
+
+  assert_true(selected.use_greedy_feedback_arc_set)
+}
+
+///|
+test "Layout non-state rank selector picks lower-scored candidate when exploration is enabled" {
+  let nodes : Array[MermaidNode] = [
+    { id: "A", label: "A", shape: Rectangle },
+    { id: "B", label: "B", shape: Rectangle },
+    { id: "C", label: "C", shape: Rectangle },
+    { id: "D", label: "D", shape: Rectangle },
+  ]
+  let edges : Array[MermaidEdge] = [
+    flow_edge("A", "B"),
+    flow_edge("B", "C"),
+    flow_edge("C", "A"),
+    flow_edge("C", "D"),
+    flow_edge("D", "B"),
+  ]
+
+  let dfs_candidate = collect_non_state_flow_rank_candidate(
+    nodes, edges, false, true, false, false, false, false, true, true, false,
+  )
+  let greedy_candidate = collect_non_state_flow_rank_candidate(
+    nodes, edges, false, true, false, false, false, false, true, true, true,
+  )
+  let selected = select_non_state_flow_rank_candidate(
+    nodes, edges, false, true, false, false, false, true, true, false, true,
+  )
+
+  let selected_score = non_state_flow_rank_candidate_score(selected)
+  assert_true(
+    selected_score <= non_state_flow_rank_candidate_score(dfs_candidate),
+  )
+  assert_true(
+    selected_score <= non_state_flow_rank_candidate_score(greedy_candidate),
+  )
+}

@@ -13,6 +13,156 @@ pub(all) struct LegacyLaneState {
 }
 
 ///|
+priv struct NonStateFlowRankCandidate {
+  use_greedy_feedback_arc_set : Bool
+  rank_by_id : Map[String, Int]
+  max_rank : Int
+  lane_by_id : Map[String, Int]
+  lane_crossings : Int
+  lane_span : Int
+  max_rank_load : Int
+  total_rank_edge_span : Int
+}
+
+///|
+fn collect_rank_peak_load(
+  nodes_in_order : Array[MermaidNode],
+  rank_by_id : Map[String, Int],
+) -> Int {
+  let rank_load_by_rank : Map[Int, Int] = {}
+  let mut peak_load = 0
+  for node in nodes_in_order {
+    let rank = option_int_or(rank_by_id.get(node.id), 0)
+    let next_load = option_int_or(rank_load_by_rank.get(rank), 0) + 1
+    rank_load_by_rank[rank] = next_load
+    if next_load > peak_load {
+      peak_load = next_load
+    }
+  }
+  peak_load
+}
+
+///|
+fn collect_total_rank_edge_span(
+  edges : Array[MermaidEdge],
+  rank_by_id : Map[String, Int],
+) -> Int {
+  let mut total_rank_edge_span = 0
+  for edge in edges {
+    if edge.source == edge.target {
+      continue
+    }
+    match (rank_by_id.get(edge.source), rank_by_id.get(edge.target)) {
+      (Some(source_rank), Some(target_rank)) =>
+        total_rank_edge_span += int_abs(target_rank - source_rank)
+      _ => ()
+    }
+  }
+  total_rank_edge_span
+}
+
+///|
+fn collect_non_state_flow_rank_candidate(
+  nodes_in_order : Array[MermaidNode],
+  edges : Array[MermaidEdge],
+  rank_compact_fanin : Bool,
+  cycle_aware_layout : Bool,
+  promote_backward_dotted_edges : Bool,
+  prefer_definition_back_edges : Bool,
+  compact_cycle_ranks_toward_sinks : Bool,
+  preserve_dummy_lane_channels : Bool,
+  base_enable_feedback_back_edge_ordering : Bool,
+  preserve_fanout_order_ties : Bool,
+  use_greedy_feedback_arc_set : Bool,
+) -> NonStateFlowRankCandidate {
+  let preserve_reversed_back_edge_constraints = use_greedy_feedback_arc_set
+  let enable_feedback_back_edge_ordering = base_enable_feedback_back_edge_ordering &&
+    !use_greedy_feedback_arc_set
+  let (rank_by_id, max_rank) = collect_non_state_flow_ranks(
+    nodes_in_order, edges, rank_compact_fanin, cycle_aware_layout, promote_backward_dotted_edges,
+    prefer_definition_back_edges, compact_cycle_ranks_toward_sinks, use_greedy_feedback_arc_set,
+    preserve_reversed_back_edge_constraints,
+  )
+  let lane_by_id = collect_non_state_flow_lanes(
+    nodes_in_order, rank_by_id, max_rank, edges, preserve_dummy_lane_channels, enable_feedback_back_edge_ordering,
+    preserve_fanout_order_ties,
+  )
+  let lane_crossings = count_lane_space_edge_crossings(
+    edges, rank_by_id, lane_by_id,
+  )
+  let candidate_lane_span = lane_span(nodes_in_order, lane_by_id)
+  let max_rank_load = collect_rank_peak_load(nodes_in_order, rank_by_id)
+  let total_rank_edge_span = collect_total_rank_edge_span(edges, rank_by_id)
+  {
+    use_greedy_feedback_arc_set,
+    rank_by_id,
+    max_rank,
+    lane_by_id,
+    lane_crossings,
+    lane_span: candidate_lane_span,
+    max_rank_load,
+    total_rank_edge_span,
+  }
+}
+
+///|
+fn non_state_flow_rank_candidate_score(
+  candidate : NonStateFlowRankCandidate,
+) -> Int {
+  candidate.lane_crossings * 10000 +
+  candidate.max_rank_load * 2000 +
+  candidate.total_rank_edge_span * 30 +
+  candidate.lane_span * 20 +
+  candidate.max_rank * 5
+}
+
+///|
+fn select_non_state_flow_rank_candidate(
+  nodes_in_order : Array[MermaidNode],
+  edges : Array[MermaidEdge],
+  rank_compact_fanin : Bool,
+  cycle_aware_layout : Bool,
+  promote_backward_dotted_edges : Bool,
+  prefer_definition_back_edges : Bool,
+  preserve_dummy_lane_channels : Bool,
+  base_enable_feedback_back_edge_ordering : Bool,
+  preserve_fanout_order_ties : Bool,
+  default_use_greedy_feedback_arc_set : Bool,
+  allow_feedback_strategy_selection : Bool,
+) -> NonStateFlowRankCandidate {
+  let default_candidate = collect_non_state_flow_rank_candidate(
+    nodes_in_order, edges, rank_compact_fanin, cycle_aware_layout, promote_backward_dotted_edges,
+    prefer_definition_back_edges, false, preserve_dummy_lane_channels, base_enable_feedback_back_edge_ordering,
+    preserve_fanout_order_ties, default_use_greedy_feedback_arc_set,
+  )
+  if !allow_feedback_strategy_selection {
+    return default_candidate
+  }
+  let alternative_candidate = collect_non_state_flow_rank_candidate(
+    nodes_in_order,
+    edges,
+    rank_compact_fanin,
+    cycle_aware_layout,
+    promote_backward_dotted_edges,
+    prefer_definition_back_edges,
+    false,
+    preserve_dummy_lane_channels,
+    base_enable_feedback_back_edge_ordering,
+    preserve_fanout_order_ties,
+    !default_use_greedy_feedback_arc_set,
+  )
+  let default_score = non_state_flow_rank_candidate_score(default_candidate)
+  let alternative_score = non_state_flow_rank_candidate_score(
+    alternative_candidate,
+  )
+  if alternative_score < default_score {
+    alternative_candidate
+  } else {
+    default_candidate
+  }
+}
+
+///|
 /// Computes legacy lane and rank assignments for graph layout.
 pub fn compute_legacy_lane_state(
   graph : MermaidGraph,
@@ -76,29 +226,36 @@ pub fn compute_legacy_lane_state(
           graph.edges.length() >= 60
         )
       )
-    let use_greedy_feedback_arc_set = legacy_should_use_greedy_feedback_arc_set(
+    let default_use_greedy_feedback_arc_set = legacy_should_use_greedy_feedback_arc_set(
       graph, cycle_aware_layout, horizontal, state_graph, class_or_er_graph,
     )
-    let preserve_reversed_back_edge_constraints = use_greedy_feedback_arc_set
-    let enable_feedback_back_edge_ordering = base_enable_feedback_back_edge_ordering &&
-      !use_greedy_feedback_arc_set
-    let precomputed_lane_by_id : Map[String, Int] = {}
-    let mut has_precomputed_lane_by_id = false
-    let (baseline_rank_by_id, baseline_max_rank) = collect_non_state_flow_ranks(
+    let allow_feedback_strategy_selection = !state_graph &&
+      !class_or_er_graph &&
+      cycle_aware_layout &&
+      graph.edges.length() >= 40 &&
+      (graph.subgraphs.length() > 0 || !horizontal)
+    let selected_rank_candidate = select_non_state_flow_rank_candidate(
       nodes_in_order,
       graph.edges,
       rank_compact_fanin,
       cycle_aware_layout,
       promote_backward_dotted_edges,
       prefer_definition_back_edges,
-      false,
-      use_greedy_feedback_arc_set,
-      preserve_reversed_back_edge_constraints,
+      preserve_dummy_lane_channels,
+      base_enable_feedback_back_edge_ordering,
+      !class_or_er_graph,
+      default_use_greedy_feedback_arc_set,
+      allow_feedback_strategy_selection,
     )
-    let mut selected_rank_by_id = baseline_rank_by_id
-    let mut selected_max_rank = baseline_max_rank
+    let use_greedy_feedback_arc_set = selected_rank_candidate.use_greedy_feedback_arc_set
+    let enable_feedback_back_edge_ordering = base_enable_feedback_back_edge_ordering &&
+      !use_greedy_feedback_arc_set
+    let precomputed_lane_by_id : Map[String, Int] = {}
+    let mut has_precomputed_lane_by_id = false
+    let mut selected_rank_by_id = selected_rank_candidate.rank_by_id
+    let mut selected_max_rank = selected_rank_candidate.max_rank
     if enable_cycle_rank_compaction {
-      let (compacted_rank_by_id, compacted_max_rank) = collect_non_state_flow_ranks(
+      let compacted_rank_candidate = collect_non_state_flow_rank_candidate(
         nodes_in_order,
         graph.edges,
         rank_compact_fanin,
@@ -106,51 +263,33 @@ pub fn compute_legacy_lane_state(
         promote_backward_dotted_edges,
         prefer_definition_back_edges,
         true,
+        preserve_dummy_lane_channels,
+        base_enable_feedback_back_edge_ordering,
+        !class_or_er_graph,
         use_greedy_feedback_arc_set,
-        preserve_reversed_back_edge_constraints,
       )
-      let baseline_lane_by_id = collect_non_state_flow_lanes(
-        nodes_in_order,
-        baseline_rank_by_id,
-        baseline_max_rank,
-        graph.edges,
-        preserve_dummy_lane_channels,
-        enable_feedback_back_edge_ordering,
-        !class_or_er_graph,
-      )
-      let compacted_lane_by_id = collect_non_state_flow_lanes(
-        nodes_in_order,
-        compacted_rank_by_id,
-        compacted_max_rank,
-        graph.edges,
-        preserve_dummy_lane_channels,
-        enable_feedback_back_edge_ordering,
-        !class_or_er_graph,
-      )
-      let baseline_lane_crossings = count_lane_space_edge_crossings(
-        graph.edges,
-        baseline_rank_by_id,
-        baseline_lane_by_id,
-      )
-      let compacted_lane_crossings = count_lane_space_edge_crossings(
-        graph.edges,
-        compacted_rank_by_id,
-        compacted_lane_by_id,
-      )
-      if compacted_lane_crossings < baseline_lane_crossings ||
+      if compacted_rank_candidate.lane_crossings <
+        selected_rank_candidate.lane_crossings ||
         (
-          compacted_lane_crossings == baseline_lane_crossings &&
-          compacted_max_rank < baseline_max_rank
+          compacted_rank_candidate.lane_crossings ==
+          selected_rank_candidate.lane_crossings &&
+          compacted_rank_candidate.max_rank < selected_rank_candidate.max_rank
         ) {
-        selected_rank_by_id = compacted_rank_by_id
-        selected_max_rank = compacted_max_rank
-        for node_id, lane in compacted_lane_by_id {
+        selected_rank_by_id = compacted_rank_candidate.rank_by_id
+        selected_max_rank = compacted_rank_candidate.max_rank
+        for node_id, lane in compacted_rank_candidate.lane_by_id {
           precomputed_lane_by_id[node_id] = lane
         }
       } else {
-        for node_id, lane in baseline_lane_by_id {
+        for node_id, lane in selected_rank_candidate.lane_by_id {
           precomputed_lane_by_id[node_id] = lane
         }
+      }
+      has_precomputed_lane_by_id = true
+    }
+    if !has_precomputed_lane_by_id && !compact_fanin {
+      for node_id, lane in selected_rank_candidate.lane_by_id {
+        precomputed_lane_by_id[node_id] = lane
       }
       has_precomputed_lane_by_id = true
     }
