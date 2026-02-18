@@ -378,7 +378,7 @@ test "elk layered large-graph selector keeps legacy seed on crossing tie" {
 }
 
 ///|
-test "elk layered large-graph selector prefers lower-crossing native seed" {
+test "elk layered large-graph selector keeps legacy seed for stability" {
   let all_nodes : Array[String] = []
   for i in 0..<17 {
     all_nodes.push("N\{i}")
@@ -425,28 +425,67 @@ test "elk layered large-graph selector prefers lower-crossing native seed" {
     successors_by_node_id,
     predecessors_by_node_id,
   )
-  let legacy_score = rank_seed_order_crossing_score(
-    graph,
-    LegacyLaneSeed,
-    legacy_state,
-    nodes_in_order,
-    order_index_by_node_id,
-  )
-  let native_score = rank_seed_order_crossing_score(
-    graph,
-    NativeFeedback,
-    native_state,
-    nodes_in_order,
-    order_index_by_node_id,
-  )
-  assert_true(native_score < legacy_score)
 
   let (strategy, selected_state) = select_large_graph_rank_seed_state_by_score(
     graph, legacy_state, native_state, nodes_in_order, order_index_by_node_id,
   )
-  assert_true(strategy is NativeFeedback)
-  assert_eq(option_int_or(selected_state.lane_by_node_id.get("D"), -1), 0)
-  assert_eq(option_int_or(selected_state.lane_by_node_id.get("C"), -1), 1)
+  assert_true(strategy is LegacyLaneSeed)
+  assert_eq(option_int_or(selected_state.lane_by_node_id.get("D"), -1), 1)
+  assert_eq(option_int_or(selected_state.lane_by_node_id.get("C"), -1), 0)
+}
+
+///|
+test "elk layered large-graph selector keeps legacy seed on compact-native tie" {
+  let all_nodes : Array[String] = []
+  for i in 0..<17 {
+    all_nodes.push("N\{i}")
+  }
+  let graph = wb_graph(all_nodes, [("A", "D"), ("B", "C")])
+  let nodes_in_order : Array[@model.MermaidNode] = [
+    wb_node("A"),
+    wb_node("B"),
+    wb_node("C"),
+    wb_node("D"),
+  ]
+  let order_index_by_node_id : Map[String, Int] = {
+    "A": 0,
+    "B": 1,
+    "C": 2,
+    "D": 3,
+  }
+  let successors_by_node_id : Map[String, Array[String]] = {
+    "A": ["D"],
+    "B": ["C"],
+    "C": [],
+    "D": [],
+  }
+  let predecessors_by_node_id : Map[String, Array[String]] = {
+    "A": [],
+    "B": [],
+    "C": ["B"],
+    "D": ["A"],
+  }
+  let legacy_state = wb_rank_seed_state(
+    { "A": 0, "B": 0, "C": 3, "D": 3 },
+    3,
+    { "A": 0, "B": 1, "C": 0, "D": 1 },
+    order_index_by_node_id,
+    successors_by_node_id,
+    predecessors_by_node_id,
+  )
+  let native_state = wb_rank_seed_state(
+    { "A": 0, "B": 0, "C": 1, "D": 1 },
+    1,
+    { "A": 0, "B": 1, "C": 1, "D": 0 },
+    order_index_by_node_id,
+    successors_by_node_id,
+    predecessors_by_node_id,
+  )
+  let (strategy, selected_state) = select_large_graph_rank_seed_state_by_score(
+    graph, legacy_state, native_state, nodes_in_order, order_index_by_node_id,
+  )
+  assert_true(strategy is LegacyLaneSeed)
+  assert_eq(option_int_or(selected_state.rank_by_node_id.get("D"), -1), 3)
 }
 
 ///|

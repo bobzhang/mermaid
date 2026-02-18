@@ -233,42 +233,6 @@ fn build_rank_node_ids_by_rank_for_order_strategy(
 }
 
 ///|
-fn rank_seed_order_crossing_score(
-  graph : MermaidGraph,
-  rank_seed_strategy : ElkLayeredRankSeedStrategy,
-  rank_seed_state : ElkLayeredRankSeedState,
-  nodes_in_order : Array[MermaidNode],
-  base_order_index_by_node_id : Map[String, Int],
-) -> Int {
-  let rank_order_strategy = select_elk_layered_rank_order_strategy(
-    graph, rank_seed_strategy,
-  )
-  let base_rank_node_ids_by_rank = build_rank_node_ids_by_lane(
-    nodes_in_order,
-    rank_seed_state.rank_by_node_id,
-    rank_seed_state.lane_by_node_id,
-    base_order_index_by_node_id,
-    rank_seed_state.max_rank,
-  )
-  let rank_node_ids_by_rank = build_rank_node_ids_by_rank_for_order_strategy(
-    rank_order_strategy,
-    graph,
-    base_rank_node_ids_by_rank,
-    rank_seed_state.rank_by_node_id,
-    rank_seed_state.max_rank,
-    rank_seed_state.order_index_by_node_id,
-    rank_seed_state.successors_by_node_id,
-    rank_seed_state.predecessors_by_node_id,
-  )
-  rank_order_crossing_score(
-    rank_node_ids_by_rank,
-    rank_seed_state.max_rank,
-    rank_seed_state.rank_by_node_id,
-    rank_seed_state.successors_by_node_id,
-  )
-}
-
-///|
 fn select_large_graph_rank_seed_state_by_score(
   graph : MermaidGraph,
   legacy_state : ElkLayeredRankSeedState,
@@ -276,23 +240,12 @@ fn select_large_graph_rank_seed_state_by_score(
   nodes_in_order : Array[MermaidNode],
   base_order_index_by_node_id : Map[String, Int],
 ) -> (ElkLayeredRankSeedStrategy, ElkLayeredRankSeedState) {
-  let legacy_score = rank_seed_order_crossing_score(
-    graph,
-    LegacyLaneSeed,
-    legacy_state,
-    nodes_in_order,
-    base_order_index_by_node_id,
-  )
-  let native_score = rank_seed_order_crossing_score(
-    graph,
-    NativeFeedback,
-    native_state,
-    nodes_in_order,
-    base_order_index_by_node_id,
-  )
-  if native_score < legacy_score {
-    (NativeFeedback, native_state)
-  } else {
-    (LegacyLaneSeed, legacy_state)
-  }
+  // Large-graph native seeding is currently less stable than legacy lane
+  // seeding on parity stress fixtures; keep large graphs on legacy ranks
+  // until native ranking has feature-complete parity.
+  let _ = graph
+  let _ = native_state
+  let _ = nodes_in_order
+  let _ = base_order_index_by_node_id
+  (LegacyLaneSeed, legacy_state)
 }
