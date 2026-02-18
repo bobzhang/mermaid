@@ -19,11 +19,40 @@ fn sorted_int_array(values : Array[Int]) -> Array[Int] {
 }
 
 ///|
+fn sorted_string_array(values : Array[String]) -> Array[String] {
+  let sorted = values.copy()
+  sorted.sort()
+  sorted
+}
+
+///|
 fn option_edge_index_count(indices : Array[Int]?) -> Int {
   match indices {
     Some(found) => found.length()
     None => 0
   }
+}
+
+///|
+fn active_tree_edge_keys_from_seed_state(
+  nodes_in_order : Array[MermaidNode],
+  seed_state : DagreNetworkSimplexSeedState,
+) -> Array[String] {
+  let keys : Array[String] = []
+  for tree_edge_index in 0..<seed_state.tree_edge_u.length() {
+    if !seed_state.tree_edge_active[tree_edge_index] {
+      continue
+    }
+    let left_id = nodes_in_order[seed_state.tree_edge_u[tree_edge_index]].id
+    let right_id = nodes_in_order[seed_state.tree_edge_v[tree_edge_index]].id
+    let normalized_key = if left_id < right_id {
+      "\{left_id}->\{right_id}"
+    } else {
+      "\{right_id}->\{left_id}"
+    }
+    keys.push(normalized_key)
+  }
+  keys
 }
 
 ///|
@@ -525,6 +554,107 @@ test "Layout simplex prep adds zero-cost connectors across weak components" {
   }
   assert_eq(prepared.edge_minlen[edge_to_e], 0)
   assert_eq(prepared.edge_weight[edge_to_e], 0)
+}
+
+///|
+test "Layout simplex seed phase matches upstream fanout baseline" {
+  let nodes : Array[MermaidNode] = [
+    { id: "A", label: "A", shape: Rectangle },
+    { id: "B", label: "B", shape: Rectangle },
+    { id: "C", label: "C", shape: Rectangle },
+    { id: "D", label: "D", shape: Rectangle },
+    { id: "E", label: "E", shape: Rectangle },
+    { id: "F", label: "F", shape: Rectangle },
+  ]
+  let edges : Array[MermaidEdge] = [
+    flow_edge("A", "B"),
+    flow_edge("A", "E"),
+    flow_edge("A", "F"),
+    flow_edge("B", "D"),
+    flow_edge("C", "D"),
+  ]
+  let prepared = prepare_dagre_network_simplex_graph(
+    nodes,
+    edges,
+    [0, 1, 2, 3, 4],
+    [],
+  )
+  let seed_state = collect_dagre_network_simplex_seed_state(nodes, prepared)
+  guard seed_state is Some(seed) else { fail("expected simplex seed state") }
+
+  assert_eq(seed.longest_path_rank_by_node_index, [-2, -1, -1, 0, 0, 0])
+  assert_eq(seed.feasible_rank_by_node_index, [-1, 0, 0, 1, 0, 0])
+  assert_eq(
+    sorted_string_array(active_tree_edge_keys_from_seed_state(nodes, seed)),
+    ["A->B", "A->E", "A->F", "B->D", "C->D"],
+  )
+}
+
+///|
+test "Layout simplex seed phase matches upstream pivot baseline" {
+  let nodes : Array[MermaidNode] = [
+    { id: "A", label: "A", shape: Rectangle },
+    { id: "B", label: "B", shape: Rectangle },
+    { id: "C", label: "C", shape: Rectangle },
+    { id: "D", label: "D", shape: Rectangle },
+    { id: "E", label: "E", shape: Rectangle },
+  ]
+  let edges : Array[MermaidEdge] = [
+    flow_edge("A", "C"),
+    flow_edge("A", "D"),
+    flow_edge("A", "E"),
+    flow_edge("B", "C"),
+    flow_edge("B", "D"),
+    flow_edge("B", "E"),
+  ]
+  let prepared = prepare_dagre_network_simplex_graph(
+    nodes,
+    edges,
+    [0, 1, 2, 3, 4, 5],
+    [],
+  )
+  let seed_state = collect_dagre_network_simplex_seed_state(nodes, prepared)
+  guard seed_state is Some(seed) else { fail("expected simplex seed state") }
+
+  assert_eq(seed.longest_path_rank_by_node_index, [-1, -1, 0, 0, 0])
+  assert_eq(seed.feasible_rank_by_node_index, [-1, -1, 0, 0, 0])
+  assert_eq(
+    sorted_string_array(active_tree_edge_keys_from_seed_state(nodes, seed)),
+    ["A->C", "B->C", "B->D", "B->E"],
+  )
+}
+
+///|
+test "Layout simplex ranker matches upstream pivot baseline final ranks" {
+  let nodes : Array[MermaidNode] = [
+    { id: "A", label: "A", shape: Rectangle },
+    { id: "B", label: "B", shape: Rectangle },
+    { id: "C", label: "C", shape: Rectangle },
+    { id: "D", label: "D", shape: Rectangle },
+    { id: "E", label: "E", shape: Rectangle },
+  ]
+  let edges : Array[MermaidEdge] = [
+    flow_edge("A", "C"),
+    flow_edge("A", "D"),
+    flow_edge("A", "E"),
+    flow_edge("B", "C"),
+    flow_edge("B", "D"),
+    flow_edge("B", "E"),
+  ]
+
+  let (ranks, max_rank, ok) = collect_dagre_network_simplex_ranks(
+    nodes,
+    edges,
+    [0, 1, 2, 3, 4, 5],
+    [],
+  )
+  assert_eq(ok, true)
+  assert_eq(max_rank, 1)
+  assert_eq(option_int_or(ranks.get("A"), -1), 0)
+  assert_eq(option_int_or(ranks.get("B"), -1), 0)
+  assert_eq(option_int_or(ranks.get("C"), -1), 1)
+  assert_eq(option_int_or(ranks.get("D"), -1), 1)
+  assert_eq(option_int_or(ranks.get("E"), -1), 1)
 }
 
 ///|

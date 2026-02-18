@@ -20,6 +20,18 @@ priv struct DagreNetworkSimplexPreparedGraph {
 }
 
 ///|
+priv struct DagreNetworkSimplexSeedState {
+  longest_path_rank_by_node_index : Array[Int]
+  feasible_rank_by_node_index : Array[Int]
+  tree_incident_edge_indices_by_node : Array[Array[Int]]
+  tree_edge_u : Array[Int]
+  tree_edge_v : Array[Int]
+  tree_edge_cutvalue : Array[Int]
+  tree_edge_active : Array[Bool]
+  feasible_root_index : Int
+}
+
+///|
 fn prepare_dagre_network_simplex_graph(
   nodes_in_order : Array[MermaidNode],
   edges : Array[MermaidEdge],
@@ -152,6 +164,215 @@ fn prepare_dagre_network_simplex_graph(
 }
 
 ///|
+fn collect_dagre_network_simplex_seed_state(
+  nodes_in_order : Array[MermaidNode],
+  prepared_graph : DagreNetworkSimplexPreparedGraph,
+) -> DagreNetworkSimplexSeedState? {
+  let edge_source_index = prepared_graph.edge_source_index
+  let edge_target_index = prepared_graph.edge_target_index
+  let edge_minlen = prepared_graph.edge_minlen
+  let out_edge_indices_by_source = prepared_graph.out_edge_indices_by_source
+  let in_edge_indices_by_target = prepared_graph.in_edge_indices_by_target
+  let incident_edge_indices_by_node = prepared_graph.incident_edge_indices_by_node
+
+  let feasible_rank_by_node_index : Array[Int] = []
+  for _ in 0..<nodes_in_order.length() {
+    feasible_rank_by_node_index.push(0)
+  }
+  let visit_state_by_node_index : Array[Int] = []
+  for _ in 0..<nodes_in_order.length() {
+    visit_state_by_node_index.push(0)
+  }
+  let mut has_rank_cycle = false
+
+  fn edge_slack(edge_index : Int) -> Int {
+    let source_index = edge_source_index[edge_index]
+    let target_index = edge_target_index[edge_index]
+    feasible_rank_by_node_index[target_index] -
+    feasible_rank_by_node_index[source_index] -
+    edge_minlen[edge_index]
+  }
+
+  fn longest_path_dfs(node_index : Int) -> Int {
+    let visit_state = visit_state_by_node_index[node_index]
+    if visit_state == 2 {
+      return feasible_rank_by_node_index[node_index]
+    }
+    if visit_state == 1 {
+      has_rank_cycle = true
+      return feasible_rank_by_node_index[node_index]
+    }
+    visit_state_by_node_index[node_index] = 1
+    let mut has_outgoing = false
+    let mut best_rank = 0
+    for edge_index in out_edge_indices_by_source[node_index] {
+      let target_index = edge_target_index[edge_index]
+      let target_rank = longest_path_dfs(target_index)
+      let candidate_rank = target_rank - edge_minlen[edge_index]
+      if !has_outgoing || candidate_rank < best_rank {
+        best_rank = candidate_rank
+        has_outgoing = true
+      }
+    }
+    let resolved_rank = if has_outgoing { best_rank } else { 0 }
+    feasible_rank_by_node_index[node_index] = resolved_rank
+    visit_state_by_node_index[node_index] = 2
+    resolved_rank
+  }
+
+  for node_index in 0..<nodes_in_order.length() {
+    if in_edge_indices_by_target[node_index].length() == 0 {
+      let _ = longest_path_dfs(node_index)
+    }
+  }
+  for node_index in 0..<nodes_in_order.length() {
+    if visit_state_by_node_index[node_index] == 0 {
+      let _ = longest_path_dfs(node_index)
+    }
+  }
+  if has_rank_cycle {
+    return None
+  }
+  let longest_path_rank_by_node_index = feasible_rank_by_node_index.copy()
+
+  let node_in_tree : Array[Bool] = []
+  let tree_incident_edge_indices_by_node : Array[Array[Int]] = []
+  for _ in 0..<nodes_in_order.length() {
+    node_in_tree.push(false)
+    tree_incident_edge_indices_by_node.push([])
+  }
+  let tree_edge_u : Array[Int] = []
+  let tree_edge_v : Array[Int] = []
+  let tree_edge_cutvalue : Array[Int] = []
+  let tree_edge_active : Array[Bool] = []
+
+  fn tree_find_edge_index(left : Int, right : Int) -> Int {
+    for tree_edge_index in tree_incident_edge_indices_by_node[left] {
+      if !tree_edge_active[tree_edge_index] {
+        continue
+      }
+      let edge_left = tree_edge_u[tree_edge_index]
+      let edge_right = tree_edge_v[tree_edge_index]
+      if (edge_left == left && edge_right == right) ||
+        (edge_left == right && edge_right == left) {
+        return tree_edge_index
+      }
+    }
+    -1
+  }
+
+  fn tree_add_edge(left : Int, right : Int) -> Unit {
+    if tree_find_edge_index(left, right) >= 0 {
+      return
+    }
+    let tree_edge_index = tree_edge_u.length()
+    tree_edge_u.push(left)
+    tree_edge_v.push(right)
+    tree_edge_cutvalue.push(0)
+    tree_edge_active.push(true)
+    tree_incident_edge_indices_by_node[left].push(tree_edge_index)
+    tree_incident_edge_indices_by_node[right].push(tree_edge_index)
+  }
+
+  fn tight_tree_expand() -> Int {
+    fn expand_from_tight_neighbors(node_index : Int) -> Unit {
+      for edge_index in incident_edge_indices_by_node[node_index] {
+        let source_index = edge_source_index[edge_index]
+        let target_index = edge_target_index[edge_index]
+        let other_index = if source_index == node_index {
+          target_index
+        } else {
+          source_index
+        }
+        if node_in_tree[other_index] || edge_slack(edge_index) != 0 {
+          continue
+        }
+        node_in_tree[other_index] = true
+        tree_add_edge(node_index, other_index)
+        expand_from_tight_neighbors(other_index)
+      }
+    }
+
+    for node_index in 0..<nodes_in_order.length() {
+      if node_in_tree[node_index] {
+        expand_from_tight_neighbors(node_index)
+      }
+    }
+    let mut tree_node_count = 0
+    for is_in_tree in node_in_tree {
+      if is_in_tree {
+        tree_node_count += 1
+      }
+    }
+    tree_node_count
+  }
+
+  fn find_min_slack_crossing_edge() -> Int? {
+    let mut has_edge = false
+    let mut best_edge_index = 0
+    let mut best_slack = 0
+    for edge_index in 0..<edge_source_index.length() {
+      let source_index = edge_source_index[edge_index]
+      let target_index = edge_target_index[edge_index]
+      if node_in_tree[source_index] == node_in_tree[target_index] {
+        continue
+      }
+      let slack_value = edge_slack(edge_index)
+      if !has_edge || slack_value < best_slack {
+        has_edge = true
+        best_slack = slack_value
+        best_edge_index = edge_index
+      }
+    }
+    if has_edge {
+      Some(best_edge_index)
+    } else {
+      None
+    }
+  }
+
+  fn shift_tree_ranks(delta : Int) -> Unit {
+    if delta == 0 {
+      return
+    }
+    for node_index in 0..<nodes_in_order.length() {
+      if node_in_tree[node_index] {
+        feasible_rank_by_node_index[node_index] = feasible_rank_by_node_index[node_index] +
+          delta
+      }
+    }
+  }
+
+  let feasible_root_index = 0
+  node_in_tree[feasible_root_index] = true
+  while tight_tree_expand() < nodes_in_order.length() {
+    match find_min_slack_crossing_edge() {
+      Some(edge_index) => {
+        let source_index = edge_source_index[edge_index]
+        let delta = edge_slack(edge_index)
+        if node_in_tree[source_index] {
+          shift_tree_ranks(delta)
+        } else {
+          shift_tree_ranks(-delta)
+        }
+      }
+      None => return None
+    }
+  }
+
+  Some({
+    longest_path_rank_by_node_index,
+    feasible_rank_by_node_index,
+    tree_incident_edge_indices_by_node,
+    tree_edge_u,
+    tree_edge_v,
+    tree_edge_cutvalue,
+    tree_edge_active,
+    feasible_root_index,
+  })
+}
+
+///|
 fn collect_dagre_network_simplex_ranks(
   nodes_in_order : Array[MermaidNode],
   edges : Array[MermaidEdge],
@@ -175,23 +396,34 @@ fn collect_dagre_network_simplex_ranks(
   let edge_minlen = prepared_graph.edge_minlen
   let edge_weight = prepared_graph.edge_weight
   let directed_edge_index_by_key = prepared_graph.directed_edge_index_by_key
-  let out_edge_indices_by_source = prepared_graph.out_edge_indices_by_source
-  let in_edge_indices_by_target = prepared_graph.in_edge_indices_by_target
   let incident_edge_indices_by_node = prepared_graph.incident_edge_indices_by_node
 
   if edge_source_index.length() == 0 {
     return (rank_by_id, 0, true)
   }
 
-  let rank_by_node_index : Array[Int] = []
-  for _ in 0..<nodes_in_order.length() {
-    rank_by_node_index.push(0)
+  let seed_state = collect_dagre_network_simplex_seed_state(
+    nodes_in_order, prepared_graph,
+  )
+  guard seed_state is Some(seed) else { return (rank_by_id, 0, false) }
+  let rank_by_node_index = seed.feasible_rank_by_node_index
+  if seed.longest_path_rank_by_node_index.length() != nodes_in_order.length() {
+    return (rank_by_id, 0, false)
   }
-  let visit_state_by_node_index : Array[Int] = []
+  let tree_incident_edge_indices_by_node = seed.tree_incident_edge_indices_by_node
+  let tree_edge_u = seed.tree_edge_u
+  let tree_edge_v = seed.tree_edge_v
+  let tree_edge_cutvalue = seed.tree_edge_cutvalue
+  let tree_edge_active = seed.tree_edge_active
+  let feasible_root_index = seed.feasible_root_index
+  let parent_by_node : Array[Int] = []
+  let low_by_node : Array[Int] = []
+  let lim_by_node : Array[Int] = []
   for _ in 0..<nodes_in_order.length() {
-    visit_state_by_node_index.push(0)
+    parent_by_node.push(-1)
+    low_by_node.push(0)
+    lim_by_node.push(0)
   }
-  let mut has_rank_cycle = false
 
   fn edge_slack(edge_index : Int) -> Int {
     let source_index = edge_source_index[edge_index]
@@ -200,64 +432,6 @@ fn collect_dagre_network_simplex_ranks(
     rank_by_node_index[source_index] -
     edge_minlen[edge_index]
   }
-
-  fn longest_path_dfs(node_index : Int) -> Int {
-    let visit_state = visit_state_by_node_index[node_index]
-    if visit_state == 2 {
-      return rank_by_node_index[node_index]
-    }
-    if visit_state == 1 {
-      has_rank_cycle = true
-      return rank_by_node_index[node_index]
-    }
-    visit_state_by_node_index[node_index] = 1
-    let mut has_outgoing = false
-    let mut best_rank = 0
-    for edge_index in out_edge_indices_by_source[node_index] {
-      let target_index = edge_target_index[edge_index]
-      let target_rank = longest_path_dfs(target_index)
-      let candidate_rank = target_rank - edge_minlen[edge_index]
-      if !has_outgoing || candidate_rank < best_rank {
-        best_rank = candidate_rank
-        has_outgoing = true
-      }
-    }
-    let resolved_rank = if has_outgoing { best_rank } else { 0 }
-    rank_by_node_index[node_index] = resolved_rank
-    visit_state_by_node_index[node_index] = 2
-    resolved_rank
-  }
-
-  for node_index in 0..<nodes_in_order.length() {
-    if in_edge_indices_by_target[node_index].length() == 0 {
-      let _ = longest_path_dfs(node_index)
-    }
-  }
-  for node_index in 0..<nodes_in_order.length() {
-    if visit_state_by_node_index[node_index] == 0 {
-      let _ = longest_path_dfs(node_index)
-    }
-  }
-  if has_rank_cycle {
-    return (rank_by_id, 0, false)
-  }
-
-  let node_in_tree : Array[Bool] = []
-  let tree_incident_edge_indices_by_node : Array[Array[Int]] = []
-  let parent_by_node : Array[Int] = []
-  let low_by_node : Array[Int] = []
-  let lim_by_node : Array[Int] = []
-  for _ in 0..<nodes_in_order.length() {
-    node_in_tree.push(false)
-    tree_incident_edge_indices_by_node.push([])
-    parent_by_node.push(-1)
-    low_by_node.push(0)
-    lim_by_node.push(0)
-  }
-  let tree_edge_u : Array[Int] = []
-  let tree_edge_v : Array[Int] = []
-  let tree_edge_cutvalue : Array[Int] = []
-  let tree_edge_active : Array[Bool] = []
 
   fn tree_other_node(tree_edge_index : Int, node_index : Int) -> Int {
     let left = tree_edge_u[tree_edge_index]
@@ -294,100 +468,6 @@ fn collect_dagre_network_simplex_ranks(
     tree_edge_active.push(true)
     tree_incident_edge_indices_by_node[left].push(tree_edge_index)
     tree_incident_edge_indices_by_node[right].push(tree_edge_index)
-  }
-
-  fn tight_tree_expand() -> Int {
-    let stack : Array[Int] = []
-    let stack_seen : Array[Bool] = []
-    for _ in 0..<nodes_in_order.length() {
-      stack_seen.push(false)
-    }
-    let mut tree_node_count = 0
-    for node_index in 0..<nodes_in_order.length() {
-      if node_in_tree[node_index] {
-        tree_node_count += 1
-        if !stack_seen[node_index] {
-          stack.push(node_index)
-          stack_seen[node_index] = true
-        }
-      }
-    }
-    while stack.length() > 0 {
-      let node_index = stack[stack.length() - 1]
-      let _ = stack.pop()
-      for edge_index in incident_edge_indices_by_node[node_index] {
-        let source_index = edge_source_index[edge_index]
-        let target_index = edge_target_index[edge_index]
-        let other_index = if source_index == node_index {
-          target_index
-        } else {
-          source_index
-        }
-        if node_in_tree[other_index] || edge_slack(edge_index) != 0 {
-          continue
-        }
-        node_in_tree[other_index] = true
-        tree_node_count += 1
-        tree_add_edge(node_index, other_index)
-        if !stack_seen[other_index] {
-          stack.push(other_index)
-          stack_seen[other_index] = true
-        }
-      }
-    }
-    tree_node_count
-  }
-
-  fn find_min_slack_crossing_edge() -> Int? {
-    let mut has_edge = false
-    let mut best_edge_index = 0
-    let mut best_slack = 0
-    for edge_index in 0..<edge_source_index.length() {
-      let source_index = edge_source_index[edge_index]
-      let target_index = edge_target_index[edge_index]
-      if node_in_tree[source_index] == node_in_tree[target_index] {
-        continue
-      }
-      let slack_value = edge_slack(edge_index)
-      if !has_edge || slack_value < best_slack {
-        has_edge = true
-        best_slack = slack_value
-        best_edge_index = edge_index
-      }
-    }
-    if has_edge {
-      Some(best_edge_index)
-    } else {
-      None
-    }
-  }
-
-  fn shift_tree_ranks(delta : Int) -> Unit {
-    if delta == 0 {
-      return
-    }
-    for node_index in 0..<nodes_in_order.length() {
-      if node_in_tree[node_index] {
-        rank_by_node_index[node_index] = rank_by_node_index[node_index] + delta
-      }
-    }
-  }
-
-  let feasible_root_index = 0
-  node_in_tree[feasible_root_index] = true
-  while tight_tree_expand() < nodes_in_order.length() {
-    match find_min_slack_crossing_edge() {
-      Some(edge_index) => {
-        let source_index = edge_source_index[edge_index]
-        let delta = edge_slack(edge_index)
-        if node_in_tree[source_index] {
-          shift_tree_ranks(delta)
-        } else {
-          shift_tree_ranks(-delta)
-        }
-      }
-      None => return (rank_by_id, 0, false)
-    }
   }
 
   fn assign_low_lim(
@@ -585,6 +665,7 @@ fn collect_dagre_network_simplex_ranks(
       directed_tail = head_index
       directed_head = tail_index
     }
+    tail_index = directed_tail
     if lim_by_node[directed_tail] > lim_by_node[directed_head] {
       tail_index = directed_head
       flip = true
