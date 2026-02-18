@@ -97,12 +97,52 @@ priv struct ElkLayeredPlacementState {
 }
 
 ///|
+fn run_elk_layered_legacy_compatible_placement_phase(
+  setup_state : ElkLayeredSetupState,
+) -> ElkLayeredPlacementState {
+  let legacy_setup_state = @layout_engine_graph_legacy_setup_core.build_legacy_layout_setup(
+    setup_state.graph,
+    setup_state.options,
+    setup_state.use_subgraph_redirects,
+    setup_state.compact_fanin,
+  )
+  let legacy_placement_state = @layout_engine_graph_placement_core.run_legacy_placement_phase(
+    setup_state.graph,
+    legacy_setup_state,
+    setup_state.use_subgraph_redirects,
+    setup_state.compact_fanin,
+  )
+  let positioned_nodes = legacy_placement_state.positioned_nodes
+  let positioned_by_id = legacy_placement_state.positioned_by_id
+  let node_horizontal_by_id = build_node_horizontal_by_id(
+    positioned_nodes,
+    setup_state.horizontal,
+  )
+  let (max_right, max_bottom) = positioned_nodes_layout_extent(
+    positioned_nodes,
+    legacy_setup_state.padding,
+  )
+  {
+    positioned_nodes,
+    positioned_by_id,
+    node_horizontal_by_id,
+    max_right,
+    max_bottom,
+  }
+}
+
+///|
 fn run_elk_layered_node_placement_phase(
   setup_state : ElkLayeredSetupState,
   rank_phase_state : ElkLayeredRankPhaseState,
   node_size_state : ElkLayeredNodeSizeState,
   spacing_state : ElkLayeredSpacingState,
 ) -> ElkLayeredPlacementState {
+  let rank_seed_strategy = rank_phase_state.rank_seed_strategy
+  if rank_seed_strategy is LegacyLaneSeed {
+    return run_elk_layered_legacy_compatible_placement_phase(setup_state)
+  }
+
   let graph = setup_state.graph
   let nodes_in_order = setup_state.nodes_in_order
   let horizontal = setup_state.horizontal
@@ -111,7 +151,6 @@ fn run_elk_layered_node_placement_phase(
   let subgraph_entry_by_id = setup_state.subgraph_entry_by_id
   let subgraph_exit_by_id = setup_state.subgraph_exit_by_id
   let rank_seed_state = rank_phase_state.rank_seed_state
-  let rank_seed_strategy = rank_phase_state.rank_seed_strategy
   let rank_node_ids_by_rank = rank_phase_state.rank_node_ids_by_rank
   let rank_by_node_id = rank_seed_state.rank_by_node_id
   let max_rank = rank_seed_state.max_rank

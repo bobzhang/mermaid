@@ -602,7 +602,7 @@ test "elk backend uses layered pipeline on large flowcharts" {
   let layered_backend = run_elk_layered_flow_backend(
     {
       graph,
-      options: derive_elk_render_options(graph, @model.RenderOptions::default()),
+      options: request.options,
       use_subgraph_redirects: true,
       compact_fanin: false,
     },

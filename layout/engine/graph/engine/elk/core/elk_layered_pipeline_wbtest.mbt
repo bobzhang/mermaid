@@ -344,6 +344,72 @@ test "elk layered rank phase keeps strategy and minor mode consistent on large g
 }
 
 ///|
+test "elk layered legacy-seed placement reuses legacy coordinate phase" {
+  let nodes : Array[String] = []
+  for i in 0..<17 {
+    nodes.push("N\{i}")
+  }
+  let edges : Array[(String, String)] = []
+  for i in 0..<16 {
+    edges.push(("N\{i}", "N\{i + 1}"))
+  }
+  let graph = wb_graph(nodes, edges)
+  let request : GraphLayoutBackendRequest = {
+    graph,
+    options: RenderOptions::default(),
+    use_subgraph_redirects: true,
+    compact_fanin: false,
+  }
+  let setup_state = run_elk_layered_setup_phase(request)
+  let rank_phase_state = run_elk_layered_rank_phase(setup_state)
+  assert_true(rank_phase_state.rank_seed_strategy is LegacyLaneSeed)
+
+  let node_size_state = build_elk_layered_node_size_state(
+    setup_state.nodes_in_order,
+  )
+  let max_rank_size = compute_max_rank_size(
+    rank_phase_state.rank_node_ids_by_rank,
+    rank_phase_state.rank_seed_state.max_rank,
+  )
+  let spacing_state = run_elk_layered_spacing_phase(
+    setup_state.options,
+    setup_state.horizontal,
+    max_rank_size,
+    node_size_state,
+  )
+  let placement_state = run_elk_layered_node_placement_phase(
+    setup_state, rank_phase_state, node_size_state, spacing_state,
+  )
+
+  let legacy_setup_state = @layout_engine_graph_legacy_setup_core.build_legacy_layout_setup(
+    graph,
+    setup_state.options,
+    setup_state.use_subgraph_redirects,
+    setup_state.compact_fanin,
+  )
+  let legacy_placement_state = @layout_engine_graph_placement_core.run_legacy_placement_phase(
+    graph,
+    legacy_setup_state,
+    setup_state.use_subgraph_redirects,
+    setup_state.compact_fanin,
+  )
+  assert_eq(
+    placement_state.positioned_nodes.length(),
+    legacy_placement_state.positioned_nodes.length(),
+  )
+  for node in legacy_placement_state.positioned_nodes {
+    let positioned = match placement_state.positioned_by_id.get(node.id) {
+      Some(found) => found
+      None => fail("expected positioned node \{node.id}")
+    }
+    assert_eq(positioned.x, node.x)
+    assert_eq(positioned.y, node.y)
+    assert_eq(positioned.width, node.width)
+    assert_eq(positioned.height, node.height)
+  }
+}
+
+///|
 test "elk layered large-graph selector keeps legacy seed on crossing tie" {
   let all_nodes : Array[String] = []
   for i in 0..<17 {
