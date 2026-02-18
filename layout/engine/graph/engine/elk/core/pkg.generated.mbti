@@ -18,6 +18,8 @@ pub(all) struct ElkLayeredRankTrace {
   rank_order_strategy : String
   rank_order_optimized_seed_layers : Array[Array[String]]
   rank_order_optimized_seed_crossings : Int
+  rank_order_optimized_reversed_seed_layers : Array[Array[String]]
+  rank_order_optimized_reversed_seed_crossings : Int
   rank_order_virtual_candidate_layers : Array[Array[String]]
   rank_order_virtual_candidate_crossings : Int
   rank_order_selected_layers : Array[Array[String]]

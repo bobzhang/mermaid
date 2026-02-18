@@ -9,6 +9,8 @@ pub(all) struct ElkLayeredRankTrace {
   rank_order_strategy : String
   rank_order_optimized_seed_layers : Array[Array[String]]
   rank_order_optimized_seed_crossings : Int
+  rank_order_optimized_reversed_seed_layers : Array[Array[String]]
+  rank_order_optimized_reversed_seed_crossings : Int
   rank_order_virtual_candidate_layers : Array[Array[String]]
   rank_order_virtual_candidate_crossings : Int
   rank_order_selected_layers : Array[Array[String]]
@@ -120,6 +122,11 @@ pub fn collect_elk_layered_rank_trace(
       rank_seed_state.max_rank,
     ),
     rank_order_optimized_seed_crossings: rank_order_debug_state.optimized_seed_crossing_score,
+    rank_order_optimized_reversed_seed_layers: rank_layers_from_rank_map(
+      rank_order_debug_state.optimized_reversed_seed_rank_node_ids_by_rank,
+      rank_seed_state.max_rank,
+    ),
+    rank_order_optimized_reversed_seed_crossings: rank_order_debug_state.optimized_reversed_seed_crossing_score,
     rank_order_virtual_candidate_layers: rank_layers_from_rank_map(
       rank_order_debug_state.virtual_candidate_rank_node_ids_by_rank,
       rank_seed_state.max_rank,

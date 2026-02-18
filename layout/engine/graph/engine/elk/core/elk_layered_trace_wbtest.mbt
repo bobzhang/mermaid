@@ -32,6 +32,14 @@ test "elk layered rank trace keeps fanout kernel baseline" {
   assert_eq(trace.rank_order_strategy, "optimized-seed-with-virtual-candidate")
   assert_eq(trace.rank_order_selected_source, "virtual")
   assert_eq(trace.rank_seed_layers, [["A"], ["C", "B"], ["E", "D"], ["F"]])
+  assert_eq(
+    trace.rank_order_optimized_reversed_seed_layers,
+    trace.rank_order_optimized_seed_layers,
+  )
+  assert_eq(
+    trace.rank_order_optimized_reversed_seed_crossings,
+    trace.rank_order_optimized_seed_crossings,
+  )
   assert_eq(trace.rank_order_selected_layers, [
     ["A"],
     ["C", "B"],
@@ -58,6 +66,14 @@ test "elk layered rank trace keeps feedback mesh kernel baseline" {
   assert_eq(trace.rank_order_strategy, "optimized-seed-with-virtual-candidate")
   assert_eq(trace.rank_order_selected_source, "virtual")
   assert_eq(trace.rank_seed_layers, [["S"], ["B", "A"], ["C"], ["D"], ["T"]])
+  assert_eq(
+    trace.rank_order_optimized_reversed_seed_layers,
+    trace.rank_order_optimized_seed_layers,
+  )
+  assert_eq(
+    trace.rank_order_optimized_reversed_seed_crossings,
+    trace.rank_order_optimized_seed_crossings,
+  )
   assert_eq(trace.rank_order_optimized_seed_layers, [
     ["S"],
     ["B", "A"],
@@ -112,6 +128,14 @@ test "elk layered rank trace keeps long span kernel baseline" {
     ["N3"],
     ["N4"],
   ])
+  assert_eq(
+    trace.rank_order_optimized_reversed_seed_layers,
+    trace.rank_order_optimized_seed_layers,
+  )
+  assert_eq(
+    trace.rank_order_optimized_reversed_seed_crossings,
+    trace.rank_order_optimized_seed_crossings,
+  )
   assert_eq(trace.rank_order_selected_layers, [
     ["N0"],
     ["N1"],

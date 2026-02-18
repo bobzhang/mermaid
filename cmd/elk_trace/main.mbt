@@ -256,6 +256,9 @@ fn dump_case_trace(case_name : String) -> Bool {
             "ORDER_SCORE\toptimized-seed\t\{trace.rank_order_optimized_seed_crossings}",
           )
           println(
+            "ORDER_SCORE\toptimized-reversed-seed\t\{trace.rank_order_optimized_reversed_seed_crossings}",
+          )
+          println(
             "ORDER_SCORE\tvirtual-candidate\t\{trace.rank_order_virtual_candidate_crossings}",
           )
           println(
@@ -285,6 +288,10 @@ fn dump_case_trace(case_name : String) -> Bool {
           dump_rank_layers(
             "ORDER_LAYER_OPTIMIZED_SEED",
             trace.rank_order_optimized_seed_layers,
+          )
+          dump_rank_layers(
+            "ORDER_LAYER_OPTIMIZED_REVERSED_SEED",
+            trace.rank_order_optimized_reversed_seed_layers,
           )
           dump_rank_layers(
             "ORDER_LAYER_VIRTUAL_CANDIDATE",
