@@ -329,6 +329,82 @@ test "Layout lane dagre parity ordering phase matches upstream corpus" {
     collect_rank_orders_from_lanes(case1_nodes, case1_ranks, case1_lanes, 2),
     [["B", "A"], ["M"], ["X", "Y"]],
   )
+
+  let case2_nodes : Array[MermaidNode] = [
+    { id: "A", label: "A", shape: Rectangle },
+    { id: "B", label: "B", shape: Rectangle },
+    { id: "C", label: "C", shape: Rectangle },
+    { id: "D", label: "D", shape: Rectangle },
+    { id: "E", label: "E", shape: Rectangle },
+    { id: "F", label: "F", shape: Rectangle },
+  ]
+  let case2_ranks : Map[String, Int] = {
+    "A": 0,
+    "B": 0,
+    "C": 1,
+    "D": 1,
+    "E": 2,
+    "F": 2,
+  }
+  let case2_edges : Array[MermaidEdge] = [
+    flow_edge("A", "D"),
+    flow_edge("B", "C"),
+    flow_edge("A", "E"),
+    flow_edge("B", "F"),
+    flow_edge("C", "F"),
+    flow_edge("D", "E"),
+    flow_edge("A", "F"),
+    flow_edge("B", "E"),
+  ]
+  let case2_lanes = collect_non_state_flow_lanes(
+    case2_nodes, case2_ranks, 2, case2_edges, false, false, false, true,
+  )
+  assert_eq(
+    collect_rank_orders_from_lanes(case2_nodes, case2_ranks, case2_lanes, 2),
+    [["A", "B"], ["D", "C"], ["E", "F"]],
+  )
+
+  let case3_nodes : Array[MermaidNode] = [
+    { id: "A", label: "A", shape: Rectangle },
+    { id: "B", label: "B", shape: Rectangle },
+    { id: "C", label: "C", shape: Rectangle },
+    { id: "D", label: "D", shape: Rectangle },
+    { id: "E", label: "E", shape: Rectangle },
+    { id: "F", label: "F", shape: Rectangle },
+    { id: "G", label: "G", shape: Rectangle },
+    { id: "H", label: "H", shape: Rectangle },
+  ]
+  let case3_ranks : Map[String, Int] = {
+    "A": 0,
+    "B": 0,
+    "C": 1,
+    "D": 1,
+    "E": 2,
+    "F": 2,
+    "G": 3,
+    "H": 3,
+  }
+  let case3_edges : Array[MermaidEdge] = [
+    flow_edge("A", "C"),
+    flow_edge("A", "D"),
+    flow_edge("B", "C"),
+    flow_edge("B", "D"),
+    flow_edge("C", "E"),
+    flow_edge("D", "F"),
+    flow_edge("C", "F"),
+    flow_edge("D", "E"),
+    flow_edge("E", "G"),
+    flow_edge("F", "H"),
+    flow_edge("E", "H"),
+    flow_edge("F", "G"),
+  ]
+  let case3_lanes = collect_non_state_flow_lanes(
+    case3_nodes, case3_ranks, 3, case3_edges, false, false, false, true,
+  )
+  assert_eq(
+    collect_rank_orders_from_lanes(case3_nodes, case3_ranks, case3_lanes, 3),
+    [["B", "A"], ["D", "C"], ["F", "E"], ["H", "G"]],
+  )
 }
 
 ///|

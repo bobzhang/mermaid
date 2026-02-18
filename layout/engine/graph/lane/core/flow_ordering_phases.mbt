@@ -1322,6 +1322,15 @@ fn collect_non_state_flow_lanes(
     }
   }
 
+  let dagre_parity_order_index_by_rank_node : Map[Int, Map[String, Int]] = {}
+  for rank in 0..<=max_rank {
+    let order_index_by_node : Map[String, Int] = {}
+    for i, node_id in rank_nodes[rank] {
+      order_index_by_node[node_id] = i
+    }
+    dagre_parity_order_index_by_rank_node[rank] = order_index_by_node
+  }
+
   if prefer_dagre_order_parity {
     let outgoing_lane_target_ids_by_source : Map[String, Array[String]] = {}
     for node_id in lane_node_ids_in_insert_order {
@@ -1554,6 +1563,121 @@ fn collect_non_state_flow_lanes(
     total
   }
 
+  fn dagre_parity_two_layer_cross_count(
+    north_layer : Array[String],
+    south_layer : Array[String],
+    upper_rank : Int,
+    adjacent_edge_indices_by_upper_rank : Map[Int, Array[Int]],
+    lane_edges : Array[MermaidEdge],
+  ) -> Int {
+    if north_layer.length() == 0 || south_layer.length() == 0 {
+      return 0
+    }
+    let south_pos_by_id : Map[String, Int] = {}
+    for i, node_id in south_layer {
+      south_pos_by_id[node_id] = i
+    }
+
+    let south_entries_pos : Array[Int] = []
+    let south_entries_weight : Array[Int] = []
+    for north_id in north_layer {
+      let weight_by_pos : Map[Int, Int] = {}
+      match adjacent_edge_indices_by_upper_rank.get(upper_rank) {
+        Some(edge_indices) =>
+          for edge_index in edge_indices {
+            let edge = lane_edges[edge_index]
+            if edge.source != north_id {
+              continue
+            }
+            match south_pos_by_id.get(edge.target) {
+              Some(target_pos) => {
+                let current_weight = option_int_or(
+                  weight_by_pos.get(target_pos),
+                  0,
+                )
+                weight_by_pos[target_pos] = current_weight + 1
+              }
+              None => ()
+            }
+          }
+        None => ()
+      }
+
+      let positions : Array[Int] = []
+      for target_pos, _ in weight_by_pos {
+        positions.push(target_pos)
+      }
+      positions.sort()
+      for target_pos in positions {
+        south_entries_pos.push(target_pos)
+        south_entries_weight.push(
+          option_int_or(weight_by_pos.get(target_pos), 0),
+        )
+      }
+    }
+
+    if south_entries_pos.length() == 0 {
+      return 0
+    }
+
+    let bit_size = south_layer.length() + 2
+    let bit : Array[Int] = []
+    for _ in 0..<bit_size {
+      bit.push(0)
+    }
+
+    fn bit_add(bit : Array[Int], index : Int, delta : Int) -> Unit {
+      let mut i = index
+      while i < bit.length() {
+        bit[i] = bit[i] + delta
+        i += i & -i
+      }
+    }
+
+    fn bit_prefix_sum(bit : Array[Int], index : Int) -> Int {
+      let mut total = 0
+      let mut i = index
+      while i > 0 {
+        total += bit[i]
+        i -= i & -i
+      }
+      total
+    }
+
+    let mut total_seen_weight = 0
+    let mut crossings = 0
+    for entry_index in 0..<south_entries_pos.length() {
+      let pos = south_entries_pos[entry_index]
+      let weight = south_entries_weight[entry_index]
+      let one_based_pos = pos + 1
+      let left_or_equal_weight = bit_prefix_sum(bit, one_based_pos)
+      let right_weight = total_seen_weight - left_or_equal_weight
+      crossings += weight * right_weight
+      bit_add(bit, one_based_pos, weight)
+      total_seen_weight += weight
+    }
+    crossings
+  }
+
+  fn dagre_parity_cross_count(
+    rank_nodes : Array[Array[String]],
+    max_rank : Int,
+    adjacent_edge_indices_by_upper_rank : Map[Int, Array[Int]],
+    lane_edges : Array[MermaidEdge],
+  ) -> Int {
+    let mut total = 0
+    for upper_rank in 0..<max_rank {
+      total += dagre_parity_two_layer_cross_count(
+        rank_nodes[upper_rank],
+        rank_nodes[upper_rank + 1],
+        upper_rank,
+        adjacent_edge_indices_by_upper_rank,
+        lane_edges,
+      )
+    }
+    total
+  }
+
   fn clone_rank_nodes(
     rank_nodes : Array[Array[String]],
   ) -> Array[Array[String]] {
@@ -1690,6 +1814,7 @@ fn collect_non_state_flow_lanes(
       Int,
       Map[String, Array[String]],
     ],
+    order_index_by_rank_node : Map[Int, Map[String, Int]],
   ) -> Unit {
     let mut rank = start_rank
     while rank != end_rank {
@@ -1704,6 +1829,7 @@ fn collect_non_state_flow_lanes(
         neighbor_order[node_id] = i
       }
       let current = rank_nodes[rank]
+      let order_index_by_node = order_index_by_rank_node.get(rank)
       let neighbor_ids_by_node = if incoming_from_neighbor {
         incoming_adjacent_neighbor_ids_by_rank_node.get(rank)
       } else {
@@ -1741,10 +1867,18 @@ fn collect_non_state_flow_lanes(
           sortable_ids.push(node_id)
           sortable_num_by_id[node_id] = sum
           sortable_den_by_id[node_id] = count
-          sortable_index_by_id[node_id] = i
+          let order_index = match order_index_by_node {
+            Some(index_by_node) => option_int_or(index_by_node.get(node_id), i)
+            None => i
+          }
+          sortable_index_by_id[node_id] = order_index
         } else {
           unsortable_ids.push(node_id)
-          unsortable_index_by_id[node_id] = i
+          let order_index = match order_index_by_node {
+            Some(index_by_node) => option_int_or(index_by_node.get(node_id), i)
+            None => i
+          }
+          unsortable_index_by_id[node_id] = order_index
         }
       }
 
@@ -1902,9 +2036,7 @@ fn collect_non_state_flow_lanes(
   if max_rank > 0 {
     if prefer_dagre_order_parity {
       let best_rank_nodes = clone_rank_nodes(rank_nodes)
-      let mut best_crossings = total_adjacent_crossings(
-        rank_nodes, max_rank, adjacent_edge_indices_by_upper_rank, lane_edges,
-      )
+      let mut best_crossings = 1 << 30
       let mut rounds_since_best = 0
       let mut pass = 0
       while rounds_since_best < 4 {
@@ -1919,6 +2051,7 @@ fn collect_non_state_flow_lanes(
             bias_right,
             incoming_adjacent_neighbor_ids_by_rank_node,
             outgoing_adjacent_neighbor_ids_by_rank_node,
+            dagre_parity_order_index_by_rank_node,
           )
         } else {
           dagre_parity_barycenter_pass(
@@ -1930,22 +2063,21 @@ fn collect_non_state_flow_lanes(
             bias_right,
             incoming_adjacent_neighbor_ids_by_rank_node,
             outgoing_adjacent_neighbor_ids_by_rank_node,
+            dagre_parity_order_index_by_rank_node,
           )
         }
-        let candidate_crossings = total_adjacent_crossings(
+        let candidate_dagre_crossings = dagre_parity_cross_count(
           rank_nodes, max_rank, adjacent_edge_indices_by_upper_rank, lane_edges,
         )
-        if candidate_crossings < best_crossings {
-          best_crossings = candidate_crossings
+        if candidate_dagre_crossings < best_crossings {
+          best_crossings = candidate_dagre_crossings
           copy_rank_nodes_into(rank_nodes, best_rank_nodes)
           rounds_since_best = 0
-        } else if candidate_crossings == best_crossings {
+        } else if candidate_dagre_crossings == best_crossings {
           copy_rank_nodes_into(rank_nodes, best_rank_nodes)
-          rounds_since_best += 1
-        } else {
-          rounds_since_best += 1
         }
         pass = pass + 1
+        rounds_since_best += 1
       }
       copy_rank_nodes_into(best_rank_nodes, rank_nodes)
     } else if enable_multi_sweep_ordering {
