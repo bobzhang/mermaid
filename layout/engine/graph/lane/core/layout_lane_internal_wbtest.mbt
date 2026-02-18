@@ -1272,6 +1272,83 @@ test "Layout acyclic phase excludes definition-backward edges from relaxed DAG" 
 }
 
 ///|
+test "Layout definition-backward heuristic can collapse sink rank when sink is declared early" {
+  let nodes : Array[MermaidNode] = [
+    { id: "SRC", label: "SRC", shape: Rectangle },
+    { id: "SNK", label: "SNK", shape: Rectangle },
+    { id: "A", label: "A", shape: Rectangle },
+    { id: "B", label: "B", shape: Rectangle },
+    { id: "C", label: "C", shape: Rectangle },
+    { id: "D", label: "D", shape: Rectangle },
+  ]
+  let edges : Array[MermaidEdge] = [
+    flow_edge("SRC", "A"),
+    flow_edge("A", "B"),
+    flow_edge("B", "C"),
+    flow_edge("C", "D"),
+    flow_edge("D", "SNK"),
+    flow_edge("SNK", "B"),
+  ]
+
+  let with_definition_filter = collect_non_state_flow_acyclic_phase_state(
+    nodes, edges, true, false,
+  )
+  assert_eq(
+    sorted_int_array(with_definition_filter.definition_backward_edge_indices),
+    [4],
+  )
+  assert_eq(
+    sorted_int_array(with_definition_filter.reversed_back_edge_indices),
+    [5],
+  )
+  assert_eq(sorted_int_array(with_definition_filter.relaxed_edge_indices), [
+    0, 1, 2, 3,
+  ])
+
+  let without_definition_filter = collect_non_state_flow_acyclic_phase_state(
+    nodes, edges, false, false,
+  )
+  assert_eq(
+    sorted_int_array(without_definition_filter.definition_backward_edge_indices),
+    [],
+  )
+  assert_eq(
+    sorted_int_array(without_definition_filter.reversed_back_edge_indices),
+    [5],
+  )
+  assert_eq(sorted_int_array(without_definition_filter.relaxed_edge_indices), [
+    0, 1, 2, 3, 4,
+  ])
+
+  let (ranks_with_definition_filter, _) = collect_non_state_flow_ranks(
+    nodes, edges, false, true, false, true, false, false, false, false,
+  )
+  let (ranks_without_definition_filter, _) = collect_non_state_flow_ranks(
+    nodes, edges, false, true, false, false, false, false, false, false,
+  )
+
+  let snk_rank_with_definition_filter = option_int_or(
+    ranks_with_definition_filter.get("SNK"),
+    -1,
+  )
+  let snk_rank_without_definition_filter = option_int_or(
+    ranks_without_definition_filter.get("SNK"),
+    -1,
+  )
+  let d_rank_with_definition_filter = option_int_or(
+    ranks_with_definition_filter.get("D"),
+    -1,
+  )
+
+  assert_true(snk_rank_with_definition_filter >= 0)
+  assert_true(snk_rank_without_definition_filter >= 0)
+  assert_true(
+    snk_rank_without_definition_filter > snk_rank_with_definition_filter,
+  )
+  assert_true(d_rank_with_definition_filter > snk_rank_with_definition_filter)
+}
+
+///|
 test "Layout cycle-aware rank collection rehydrates cyclic forward order" {
   let nodes : Array[MermaidNode] = [
     { id: "A", label: "A", shape: Rectangle },
