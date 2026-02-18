@@ -1282,18 +1282,10 @@ function computeMajorRankDiagnostics(
   const localLayers = buildMajorRankLayers(sharedLabels, localNodes, majorAxis)
   const officialRankByLabel = buildRankIndexByLabel(officialLayers)
   const localRankByLabel = buildRankIndexByLabel(localLayers)
-
-  let exactMatches = 0
-  let displacementSum = 0
-  let displacementCount = 0
-  for (const label of sharedLabels) {
-    const officialRank = officialRankByLabel.get(label)
-    const localRank = localRankByLabel.get(label)
-    if (officialRank === undefined || localRank === undefined) continue
-    if (officialRank === localRank) exactMatches += 1
-    displacementSum += Math.abs(localRank - officialRank)
-    displacementCount += 1
-  }
+  const officialMinorIndexByLabel = new Map<string, number>()
+  const localMinorIndexByLabel = new Map<string, number>()
+  const layerSizeByRank = new Map<number, number>()
+  const compositionMismatchRanks = new Set<number>()
 
   const maxLayerCount = Math.max(officialLayers.length, localLayers.length)
   let compositionMismatchCount = 0
@@ -1316,6 +1308,7 @@ function computeMajorRankDiagnostics(
 
     if (!sameComposition) {
       compositionMismatchCount += 1
+      compositionMismatchRanks.add(rank)
       if (includeSamples && compositionMismatchSample.length < 5) {
         compositionMismatchSample.push(
           `r${rank}: local=[${sampleLayerLabels(sortedLocal, 6)}] official=[${sampleLayerLabels(sortedOfficial, 6)}]`,
@@ -1324,9 +1317,16 @@ function computeMajorRankDiagnostics(
       continue
     }
 
-    if (officialLayer.length < 2) continue
     const officialOrder = orderByMinorAxis(officialLayer, officialNodes, majorAxis)
     const localOrder = orderByMinorAxis(officialLayer, localNodes, majorAxis)
+    layerSizeByRank.set(rank, officialOrder.length)
+    officialOrder.forEach((label, index) => {
+      officialMinorIndexByLabel.set(label, index)
+    })
+    localOrder.forEach((label, index) => {
+      localMinorIndexByLabel.set(label, index)
+    })
+    if (officialLayer.length < 2) continue
     const inversions = countPairInversions(officialOrder, localOrder)
     const pairCount = (officialOrder.length * (officialOrder.length - 1)) / 2
     if (pairCount <= 0 || inversions <= 0) continue
@@ -1337,6 +1337,47 @@ function computeMajorRankDiagnostics(
       localOrder,
     })
   }
+
+  let exactMatches = 0
+  let displacementSum = 0
+  let displacementCount = 0
+  for (const label of sharedLabels) {
+    const officialRank = officialRankByLabel.get(label)
+    const localRank = localRankByLabel.get(label)
+    if (officialRank === undefined || localRank === undefined) continue
+
+    displacementCount += 1
+    if (officialRank !== localRank) {
+      displacementSum += Math.abs(localRank - officialRank)
+      continue
+    }
+
+    if (compositionMismatchRanks.has(officialRank)) {
+      // Same major layer index but different layer membership: treat as maximal minor mismatch.
+      displacementSum += 1
+      continue
+    }
+
+    const officialMinor = officialMinorIndexByLabel.get(label)
+    const localMinor = localMinorIndexByLabel.get(label)
+    if (officialMinor === undefined || localMinor === undefined) {
+      displacementSum += 1
+      continue
+    }
+
+    const layerSize = Math.max(layerSizeByRank.get(officialRank) ?? 1, 1)
+    const minorDenominator = Math.max(layerSize - 1, 1)
+    const minorDisplacement = Math.abs(localMinor - officialMinor) / minorDenominator
+    displacementSum += minorDisplacement
+    if (minorDisplacement === 0) {
+      exactMatches += 1
+    }
+  }
+
+  // The rank diagnostics intentionally mix:
+  // 1) major layer assignment parity and
+  // 2) within-layer minor-order parity
+  // so "exact" means fully aligned major/minor placement order.
 
   orderMismatches.sort((left, right) => {
     if (left.inversionRate !== right.inversionRate) {
