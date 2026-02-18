@@ -228,6 +228,28 @@ fn run_elk_layered_finalize_phase(
 }
 
 ///|
+fn rank_phase_snapshot(
+  request : GraphLayoutBackendRequest,
+  nodes_in_order : Array[MermaidNode],
+  max_rank : Int,
+) -> GraphLayoutPhaseSnapshot {
+  let rank_layer_count = if nodes_in_order.length() == 0 {
+    0
+  } else {
+    max_rank + 1
+  }
+  {
+    phase: "rank",
+    node_count: nodes_in_order.length(),
+    edge_count: request.graph.edges.length(),
+    group_count: request.graph.subgraphs.length(),
+    rank_layer_count,
+    width: 0,
+    height: 0,
+  }
+}
+
+///|
 /// Runs the ELK layered flow pipeline for non-state flowcharts.
 fn run_elk_layered_flow_backend(
   request : GraphLayoutBackendRequest,
@@ -257,6 +279,7 @@ fn run_elk_layered_flow_backend(
   )
   let phase_snapshots = [
     setup_phase_snapshot(request, nodes_in_order),
+    rank_phase_snapshot(request, nodes_in_order, max_rank),
     placement_phase_snapshot(request, placement_state.positioned_nodes),
     final_phase_snapshot(positioned_graph),
   ]

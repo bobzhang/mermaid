@@ -197,6 +197,7 @@ fn backend_snapshot_equal(
   left.node_count == right.node_count &&
   left.edge_count == right.edge_count &&
   left.group_count == right.group_count &&
+  left.rank_layer_count == right.rank_layer_count &&
   left.width == right.width &&
   left.height == right.height
 }
@@ -625,14 +626,16 @@ test "elk backend exposes stable phase snapshots and counts" {
   }
   let elk_backend = layout_graph_elk_backend(request)
   let snapshots = elk_backend.phase_snapshots
-  assert_eq(snapshots.length(), 3)
+  assert_eq(snapshots.length(), 4)
   assert_eq(snapshots[0].phase, "setup")
-  assert_eq(snapshots[1].phase, "placement")
-  assert_eq(snapshots[2].phase, "final")
-  assert_eq(snapshots[2].node_count, 2)
-  assert_eq(snapshots[2].edge_count, 1)
-  assert_true(snapshots[2].width > 0)
-  assert_true(snapshots[2].height > 0)
+  assert_eq(snapshots[1].phase, "rank")
+  assert_eq(snapshots[2].phase, "placement")
+  assert_eq(snapshots[3].phase, "final")
+  assert_true(snapshots[1].rank_layer_count > 0)
+  assert_eq(snapshots[3].node_count, 2)
+  assert_eq(snapshots[3].edge_count, 1)
+  assert_true(snapshots[3].width > 0)
+  assert_true(snapshots[3].height > 0)
   assert_eq(elk_backend.positioned_graph.nodes.length(), 2)
   assert_eq(elk_backend.positioned_graph.edges.length(), 1)
 }

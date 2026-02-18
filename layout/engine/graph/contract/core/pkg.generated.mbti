@@ -27,6 +27,7 @@ pub(all) struct GraphLayoutPhaseSnapshot {
   node_count : Int
   edge_count : Int
   group_count : Int
+  rank_layer_count : Int
   width : Int
   height : Int
 }

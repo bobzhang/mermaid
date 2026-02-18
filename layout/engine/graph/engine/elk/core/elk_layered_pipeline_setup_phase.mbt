@@ -52,6 +52,7 @@ fn setup_phase_snapshot(
     node_count: nodes_in_order.length(),
     edge_count: request.graph.edges.length(),
     group_count: request.graph.subgraphs.length(),
+    rank_layer_count: 0,
     width: 0,
     height: 0,
   }
@@ -67,6 +68,7 @@ fn placement_phase_snapshot(
     node_count: positioned_nodes.length(),
     edge_count: request.graph.edges.length(),
     group_count: request.graph.subgraphs.length(),
+    rank_layer_count: 0,
     width: 0,
     height: 0,
   }
@@ -81,6 +83,7 @@ fn final_phase_snapshot(
     node_count: positioned_graph.nodes.length(),
     edge_count: positioned_graph.edges.length(),
     group_count: positioned_graph.groups.length(),
+    rank_layer_count: 0,
     width: positioned_graph.width,
     height: positioned_graph.height,
   }

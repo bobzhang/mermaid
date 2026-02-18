@@ -100,10 +100,12 @@ test "engine backend dispatch exposes phase snapshots" {
     },
     DagreParity,
   )
-  assert_eq(backend.phase_snapshots.length(), 3)
+  assert_eq(backend.phase_snapshots.length(), 4)
   assert_eq(backend.phase_snapshots[0].phase, "setup")
-  assert_eq(backend.phase_snapshots[1].phase, "placement")
-  assert_eq(backend.phase_snapshots[2].phase, "final")
-  assert_true(backend.phase_snapshots[2].width > 0)
-  assert_true(backend.phase_snapshots[2].height > 0)
+  assert_eq(backend.phase_snapshots[1].phase, "rank")
+  assert_eq(backend.phase_snapshots[2].phase, "placement")
+  assert_eq(backend.phase_snapshots[3].phase, "final")
+  assert_true(backend.phase_snapshots[1].rank_layer_count > 0)
+  assert_true(backend.phase_snapshots[3].width > 0)
+  assert_true(backend.phase_snapshots[3].height > 0)
 }
