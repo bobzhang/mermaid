@@ -13,6 +13,24 @@ pub(all) struct LegacyLaneState {
 }
 
 ///|
+/// Public snapshot for a single dagre parity sweep step.
+pub(all) struct DagreParityOrderSweepStep {
+  pass_index : Int
+  incoming_from_neighbor : Bool
+  bias_right : Bool
+  candidate_crossings : Int
+  barycenters_by_rank : Map[Int, Map[String, String]]
+  rank_nodes : Array[Array[String]]
+}
+
+///|
+/// Public trace payload for dagre parity ordering.
+pub(all) struct DagreParityOrderTrace {
+  rank_nodes_trace : Array[Array[Array[String]]]
+  sweep_step_trace : Array[DagreParityOrderSweepStep]
+}
+
+///|
 priv struct NonStateFlowRankCandidate {
   use_greedy_feedback_arc_set : Bool
   rank_by_id : Map[String, Int]
@@ -341,6 +359,42 @@ fn select_primary_non_state_flow_rank_candidate(
   } else {
     legacy_order_candidate
   }
+}
+
+///|
+/// Collect dagre parity ordering traces from an existing rank assignment.
+pub fn collect_dagre_parity_order_trace(
+  nodes_in_order : Array[MermaidNode],
+  rank_by_id : Map[String, Int],
+  max_rank : Int,
+  edges : Array[MermaidEdge],
+) -> DagreParityOrderTrace {
+  let rank_nodes_trace : Array[Array[Array[String]]] = []
+  let internal_sweep_step_trace : Array[DagreParitySweepStepTrace] = []
+  let _ = collect_non_state_flow_lanes_internal(
+    nodes_in_order,
+    rank_by_id,
+    max_rank,
+    edges,
+    false,
+    false,
+    false,
+    true,
+    Some(rank_nodes_trace),
+    Some(internal_sweep_step_trace),
+  )
+  let sweep_step_trace : Array[DagreParityOrderSweepStep] = []
+  for step in internal_sweep_step_trace {
+    sweep_step_trace.push({
+      pass_index: step.pass_index,
+      incoming_from_neighbor: step.incoming_from_neighbor,
+      bias_right: step.bias_right,
+      candidate_crossings: step.candidate_crossings,
+      barycenters_by_rank: step.barycenters_by_rank,
+      rank_nodes: step.rank_nodes,
+    })
+  }
+  { rank_nodes_trace, sweep_step_trace }
 }
 
 ///|

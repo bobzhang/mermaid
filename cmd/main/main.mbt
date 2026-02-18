@@ -32,6 +32,7 @@ fn print_usage() -> Unit {
     #|  moon run cmd/main -- --layout-engine=elk-layered "graph TD\nA --> B"
     #|  moon run cmd/main -- --transparent "graph TD\nA --> B"
     #|  moon run cmd/main -- --dump-edge-points "graph TD\nA --> B"
+    #|  moon run cmd/main -- --dump-dagre-order-trace "graph TD\nA --> B"
     #|  moon run cmd/main -- --list-themes
     #|Flags:
     #|  --ascii    Render ASCII output
@@ -54,6 +55,7 @@ fn print_usage() -> Unit {
     #|  --layout-engine  Graph layout engine: legacy | dagre-parity | elk | elk-layered
     #|  --transparent  Omit SVG background fill
     #|  --dump-edge-points  Print routed edge points instead of rendering SVG
+    #|  --dump-dagre-order-trace  Print dagre ordering trace (trace/pass/layer/barycenter)
     #|  --list-themes  Print built-in theme names
     #|  --help     Show this help
     #|
@@ -203,6 +205,98 @@ fn print_routed_edge_points(
 }
 
 ///|
+fn bool_literal(value : Bool) -> String {
+  if value {
+    "true"
+  } else {
+    "false"
+  }
+}
+
+///|
+fn sorted_int_keys_for_barycenters(
+  entries : Map[Int, Map[String, String]],
+) -> Array[Int] {
+  let keys : Array[Int] = []
+  for rank, _ in entries {
+    keys.push(rank)
+  }
+  keys.sort()
+  keys
+}
+
+///|
+fn sorted_string_keys_for_barycenter_rank(
+  entries : Map[String, String],
+) -> Array[String] {
+  let keys : Array[String] = []
+  for node_id, _ in entries {
+    keys.push(node_id)
+  }
+  keys.sort()
+  keys
+}
+
+///|
+fn print_dagre_order_trace(
+  input : String,
+  options : @model.RenderOptions,
+) -> Unit {
+  let parsed : Result[@model.MermaidGraph, @model.MermaidError] = try? @parser_header_core.parse_mermaid(
+    input,
+  )
+  match parsed {
+    Ok(graph) => {
+      let dagre_options : @model.RenderOptions = {
+        ..options,
+        layout_engine: Some(DagreParity),
+      }
+      let setup_state = @layout_engine_graph_legacy_setup_core.build_legacy_layout_setup(
+        graph, dagre_options, true, false,
+      )
+      let lane_state = setup_state.lane_state
+      let trace = @layout_engine_graph_lane_core.collect_dagre_parity_order_trace(
+        setup_state.nodes_in_order,
+        lane_state.flow_rank_by_node_id,
+        lane_state.flow_max_rank,
+        graph.edges,
+      )
+      for trace_index, rank_nodes in trace.rank_nodes_trace {
+        for rank, node_ids in rank_nodes {
+          let joined_node_ids = node_ids.join(",")
+          println("TRACE\t\{trace_index}\t\{rank}\t\{joined_node_ids}")
+        }
+      }
+      for step in trace.sweep_step_trace {
+        println(
+          "PASS\t\{step.pass_index}\t\{bool_literal(step.incoming_from_neighbor)}\t\{bool_literal(step.bias_right)}\t\{step.candidate_crossings}",
+        )
+        for rank, node_ids in step.rank_nodes {
+          let joined_node_ids = node_ids.join(",")
+          println("PASS_LAYER\t\{step.pass_index}\t\{rank}\t\{joined_node_ids}")
+        }
+        for rank in sorted_int_keys_for_barycenters(step.barycenters_by_rank) {
+          match step.barycenters_by_rank.get(rank) {
+            Some(entries) =>
+              for node_id in sorted_string_keys_for_barycenter_rank(entries) {
+                match entries.get(node_id) {
+                  Some(value) =>
+                    println(
+                      "BARY\t\{step.pass_index}\t\{rank}\t\{node_id}\t\{value}",
+                    )
+                  None => ()
+                }
+              }
+            None => ()
+          }
+        }
+      }
+    }
+    Err(err) => println("Error: \{err}")
+  }
+}
+
+///|
 /// CLI entry point: parses arguments and renders a mermaid diagram.
 fn run() -> Unit {
   let args = cli_args_without_program()
@@ -226,6 +320,7 @@ fn run() -> Unit {
   let mut layout_engine : @model.LayoutEngine? = None
   let mut transparent = false
   let mut dump_edge_points = false
+  let mut dump_dagre_order_trace = false
   let mut diagram : String? = None
   let mut expect_theme_value = false
   let mut expect_font_value = false
@@ -508,6 +603,10 @@ fn run() -> Unit {
     }
     if arg == "--dump-edge-points" {
       dump_edge_points = true
+      continue
+    }
+    if arg == "--dump-dagre-order-trace" {
+      dump_dagre_order_trace = true
       continue
     }
     if arg == "--font" {
@@ -878,6 +977,18 @@ fn run() -> Unit {
     print_usage()
     return
   }
+  if dump_dagre_order_trace && render_text {
+    println("Error: --dump-dagre-order-trace requires SVG output mode")
+    print_usage()
+    return
+  }
+  if dump_edge_points && dump_dagre_order_trace {
+    println(
+      "Error: --dump-edge-points and --dump-dagre-order-trace cannot be combined",
+    )
+    print_usage()
+    return
+  }
   if render_text &&
     svg_options_overridden(
       theme_slug, font_name, bg_color, fg_color, line_color, accent_color, muted_color,
@@ -919,27 +1030,7 @@ fn run() -> Unit {
     return
   }
 
-  if dump_edge_points {
-    let layout_options = @model.RenderOptions::{
-      bg: bg_color,
-      fg: fg_color,
-      line: line_color,
-      accent: accent_color,
-      muted: muted_color,
-      surface: surface_color,
-      border: border_color,
-      font: font_name,
-      padding,
-      node_spacing,
-      layer_spacing,
-      transparent: Some(transparent),
-      layout_engine,
-    }
-    print_routed_edge_points(input, layout_options)
-    return
-  }
-
-  let svg_options = @model.RenderOptions::{
+  let layout_options = @model.RenderOptions::{
     bg: bg_color,
     fg: fg_color,
     line: line_color,
@@ -954,6 +1045,18 @@ fn run() -> Unit {
     transparent: Some(transparent),
     layout_engine,
   }
+
+  if dump_edge_points {
+    print_routed_edge_points(input, layout_options)
+    return
+  }
+
+  if dump_dagre_order_trace {
+    print_dagre_order_trace(input, layout_options)
+    return
+  }
+
+  let svg_options = layout_options
 
   let rendered_svg = match theme_slug {
     Some(slug) =>

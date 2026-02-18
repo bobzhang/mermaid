@@ -1,0 +1,9 @@
+import {
+  "bobzhang/beautiful_mermaid/layout/engine/graph/lane/core" @layout_engine_graph_lane_core,
+  "bobzhang/beautiful_mermaid/model" @model,
+  "moonbitlang/core/env" @env,
+}
+
+options(
+  "is-main": true,
+)

@@ -2185,7 +2185,7 @@ fn collect_non_state_flow_lanes_internal(
         )
         match dagre_parity_sweep_step_trace {
           Some(step_trace) => {
-            let step = {
+            let step : DagreParitySweepStepTrace = {
               pass_index: pass,
               incoming_from_neighbor: pass % 2 == 1,
               bias_right,

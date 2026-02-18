@@ -1,6 +1,8 @@
 import {
   "bobzhang/beautiful_mermaid" @beautiful_mermaid,
   "bobzhang/beautiful_mermaid/layout/engine/graph/core" @layout_engine_graph_core,
+  "bobzhang/beautiful_mermaid/layout/engine/graph/lane/core" @layout_engine_graph_lane_core,
+  "bobzhang/beautiful_mermaid/layout/engine/graph/legacy/setup/core" @layout_engine_graph_legacy_setup_core,
   "bobzhang/beautiful_mermaid/model" @model,
   "bobzhang/beautiful_mermaid/parser/header/core" @parser_header_core,
   "bobzhang/beautiful_mermaid/themes/core" @themes,
