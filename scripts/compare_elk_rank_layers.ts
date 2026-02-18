@@ -9,6 +9,7 @@
  */
 
 import { spawnSync } from 'node:child_process'
+import { existsSync } from 'node:fs'
 
 type Layering = string[][]
 
@@ -207,6 +208,11 @@ function computeRankLayerParity(localLayers: Layering, upstreamLayers: Layering)
 }
 
 function upstreamLayers(kernel: Kernel): Layering {
+  if (!existsSync('.repos/elkjs_pkg/package/lib/main.js')) {
+    fail(
+      "missing upstream elkjs bundle at .repos/elkjs_pkg/package/lib/main.js (run: mkdir -p .repos/elkjs_pkg && cd .repos/elkjs_pkg && npm pack elkjs@0.11.0 --silent && tar -xzf elkjs-0.11.0.tgz)",
+    )
+  }
   const nodeScript = [
     "const ELK = require('./.repos/elkjs_pkg/package/lib/main.js');",
     'const kernel = JSON.parse(process.argv[1]);',
