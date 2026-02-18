@@ -27,6 +27,8 @@ type RankLayerParityMetrics = {
   compositionMismatchCount: number
 }
 
+type UpstreamModelOrderMode = 'default' | 'force'
+
 const KERNELS: Kernel[] = [
   {
     name: 'fanout',
@@ -207,7 +209,7 @@ function computeRankLayerParity(localLayers: Layering, upstreamLayers: Layering)
   }
 }
 
-function upstreamLayers(kernel: Kernel): Layering {
+function upstreamLayers(kernel: Kernel, modelOrderMode: UpstreamModelOrderMode): Layering {
   if (!existsSync('.repos/elkjs_pkg/package/lib/main.js')) {
     fail(
       "missing upstream elkjs bundle at .repos/elkjs_pkg/package/lib/main.js (run: mkdir -p .repos/elkjs_pkg && cd .repos/elkjs_pkg && npm pack elkjs@0.11.0 --silent && tar -xzf elkjs-0.11.0.tgz)",
@@ -225,6 +227,9 @@ function upstreamLayers(kernel: Kernel): Layering {
     "    'elk.spacing.nodeNode': '130',",
     "    'elk.layered.spacing.nodeNodeBetweenLayers': '90',",
     "    'elk.edgeRouting': 'POLYLINE',",
+    ...(modelOrderMode === 'force'
+      ? ["    'elk.layered.crossingMinimization.forceNodeModelOrder': 'true',"]
+      : []),
     '  },',
     '  children: kernel.nodes.map(id => ({ id, width: 80, height: 40 })),',
     '  edges: kernel.edges.map(([source, target], index) => ({',
@@ -291,15 +296,21 @@ function localRankLayers(caseName: string): { seedStrategy: string; layers: Laye
 }
 
 function compareCase(kernel: Kernel): void {
-  const upstream = upstreamLayers(kernel)
+  const upstream = upstreamLayers(kernel, 'default')
+  const upstreamForceModelOrder = upstreamLayers(kernel, 'force')
   const local = localRankLayers(kernel.name)
   const metrics = computeRankLayerParity(local.layers, upstream)
+  const forceMetrics = computeRankLayerParity(local.layers, upstreamForceModelOrder)
   console.log(`\n=== ${kernel.name} ===`)
   console.log(`seed_strategy=${local.seedStrategy}`)
   console.log(`upstream_layers=${JSON.stringify(upstream)}`)
+  console.log(`upstream_layers_force_model_order=${JSON.stringify(upstreamForceModelOrder)}`)
   console.log(`local_rank_layers=${JSON.stringify(local.layers)}`)
   console.log(
     `shared=${metrics.sharedNodeCount} exact=${metrics.exactMatchCount} displacement_sum=${metrics.displacementSum} composition_mismatch=${metrics.compositionMismatchCount}`,
+  )
+  console.log(
+    `force_model_order_shared=${forceMetrics.sharedNodeCount} force_model_order_exact=${forceMetrics.exactMatchCount} force_model_order_displacement_sum=${forceMetrics.displacementSum} force_model_order_composition_mismatch=${forceMetrics.compositionMismatchCount}`,
   )
 }
 
