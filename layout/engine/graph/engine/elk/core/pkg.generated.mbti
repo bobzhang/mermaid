@@ -2,11 +2,18 @@
 package "bobzhang/beautiful_mermaid/layout/engine/graph/engine/elk/core"
 
 // Values
+pub fn collect_elk_layered_rank_trace(@bobzhang/beautiful_mermaid/layout/engine/graph/contract/core.GraphLayoutBackendRequest) -> ElkLayeredRankTrace?
+
 pub fn layout_graph_elk_backend(@bobzhang/beautiful_mermaid/layout/engine/graph/contract/core.GraphLayoutBackendRequest) -> @bobzhang/beautiful_mermaid/layout/engine/graph/contract/core.GraphLayoutBackendResult
 
 // Errors
 
 // Types and methods
+pub(all) struct ElkLayeredRankTrace {
+  rank_seed_strategy : String
+  rank_seed_layers : Array[Array[String]]
+  rank_layers : Array[Array[String]]
+}
 
 // Type aliases
 

@@ -1,0 +1,84 @@
+///|
+fn trace_request_for_graph(
+  graph : @model.MermaidGraph,
+) -> GraphLayoutBackendRequest {
+  let options = { ..@model.RenderOptions::default(), layout_engine: Some(Elk) }
+  { graph, options, use_subgraph_redirects: true, compact_fanin: false }
+}
+
+///|
+fn collect_rank_trace_for_graph(
+  graph : @model.MermaidGraph,
+) -> ElkLayeredRankTrace raise {
+  match collect_elk_layered_rank_trace(trace_request_for_graph(graph)) {
+    Some(trace) => trace
+    None => fail("expected elk layered rank trace")
+  }
+}
+
+///|
+test "elk layered rank trace keeps fanout kernel baseline" {
+  let graph = wb_graph(["A", "B", "C", "D", "E", "F"], [
+    ("A", "B"),
+    ("A", "C"),
+    ("A", "D"),
+    ("B", "E"),
+    ("C", "E"),
+    ("D", "F"),
+    ("E", "F"),
+  ])
+  let trace = collect_rank_trace_for_graph(graph)
+  assert_eq(trace.rank_seed_strategy, "native-feedback")
+  assert_eq(trace.rank_seed_layers, [["A"], ["C", "B", "D"], ["E"], ["F"]])
+  assert_eq(trace.rank_layers, [["A"], ["C", "B", "D"], ["E"], ["F"]])
+}
+
+///|
+test "elk layered rank trace keeps feedback mesh kernel baseline" {
+  let graph = wb_graph(["S", "A", "B", "C", "D", "T"], [
+    ("S", "A"),
+    ("S", "B"),
+    ("A", "C"),
+    ("B", "C"),
+    ("C", "D"),
+    ("D", "T"),
+    ("D", "B"),
+    ("C", "A"),
+  ])
+  let trace = collect_rank_trace_for_graph(graph)
+  assert_eq(trace.rank_seed_strategy, "native-feedback")
+  assert_eq(trace.rank_seed_layers, [["S"], ["B", "A"], ["C"], ["D"], ["T"]])
+  assert_eq(trace.rank_layers, [["S"], ["B", "A"], ["C"], ["D"], ["T"]])
+}
+
+///|
+test "elk layered rank trace keeps long span kernel baseline" {
+  let graph = wb_graph(["N0", "N1", "N2", "N3", "N4", "N5", "N6"], [
+    ("N0", "N1"),
+    ("N1", "N2"),
+    ("N2", "N3"),
+    ("N3", "N4"),
+    ("N4", "N5"),
+    ("N5", "N6"),
+    ("N0", "N4"),
+    ("N1", "N5"),
+    ("N2", "N6"),
+    ("N6", "N3"),
+  ])
+  let trace = collect_rank_trace_for_graph(graph)
+  assert_eq(trace.rank_seed_strategy, "native-feedback")
+  assert_eq(trace.rank_seed_layers, [
+    ["N0"],
+    ["N1", "N4"],
+    ["N2", "N5"],
+    ["N3"],
+    ["N6"],
+  ])
+  assert_eq(trace.rank_layers, [
+    ["N0"],
+    ["N1", "N4"],
+    ["N2", "N5"],
+    ["N3"],
+    ["N6"],
+  ])
+}
