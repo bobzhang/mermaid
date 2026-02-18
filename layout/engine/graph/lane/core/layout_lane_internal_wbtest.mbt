@@ -154,6 +154,38 @@ fn map_string_int_entry_count(entries : Map[String, Int]) -> Int {
 }
 
 ///|
+fn collect_simplex_rank_trace_case(
+  edges : Array[MermaidEdge],
+) -> (Bool, Int, Int, Array[Int]) {
+  let nodes : Array[MermaidNode] = [
+    { id: "A", label: "A", shape: Rectangle },
+    { id: "B", label: "B", shape: Rectangle },
+    { id: "C", label: "C", shape: Rectangle },
+    { id: "D", label: "D", shape: Rectangle },
+    { id: "E", label: "E", shape: Rectangle },
+    { id: "F", label: "F", shape: Rectangle },
+    { id: "G", label: "G", shape: Rectangle },
+    { id: "H", label: "H", shape: Rectangle },
+  ]
+  let relaxed_edge_indices : Array[Int] = []
+  for edge_index in 0..<edges.length() {
+    relaxed_edge_indices.push(edge_index)
+  }
+  let (ranks, max_rank, ok, exchange_trace) = collect_dagre_network_simplex_ranks_with_trace(
+    nodes,
+    edges,
+    relaxed_edge_indices,
+    [],
+    true,
+  )
+  let rank_vector : Array[Int] = []
+  for node in nodes {
+    rank_vector.push(option_int_or(ranks.get(node.id), -1))
+  }
+  (ok, max_rank, exchange_trace.length(), rank_vector)
+}
+
+///|
 test "Layout lane collection accounts for long-span edges via virtual segments" {
   let nodes : Array[MermaidNode] = [
     { id: "A", label: "A", shape: Rectangle },
@@ -968,6 +1000,106 @@ test "Layout simplex exchange trace matches upstream multi-pivot baseline" {
   assert_eq(option_int_or(cut_entries2.get("D->G"), -999), 1)
   assert_eq(option_int_or(cut_entries2.get("D->H"), -999), 2)
   assert_eq(option_int_or(cut_entries2.get("E->F"), -999), 3)
+}
+
+///|
+test "Layout simplex ranker matches upstream rank corpus with pivot coverage" {
+  let (ok0, max_rank0, pivots0, ranks0) = collect_simplex_rank_trace_case([
+    flow_edge("A", "E"),
+    flow_edge("A", "G"),
+    flow_edge("A", "H"),
+    flow_edge("B", "E"),
+    flow_edge("C", "D"),
+    flow_edge("C", "E"),
+    flow_edge("C", "G"),
+    flow_edge("F", "G"),
+  ])
+  assert_eq(ok0, true)
+  assert_eq(max_rank0, 1)
+  assert_eq(pivots0, 0)
+  assert_eq(ranks0, [0, 0, 0, 1, 1, 0, 1, 1])
+
+  let (ok1, max_rank1, pivots1, ranks1) = collect_simplex_rank_trace_case([
+    flow_edge("A", "C"),
+    flow_edge("A", "D"),
+    flow_edge("A", "F"),
+    flow_edge("A", "H"),
+    flow_edge("B", "D"),
+    flow_edge("B", "G"),
+    flow_edge("E", "F"),
+    flow_edge("E", "G"),
+    flow_edge("E", "H"),
+  ])
+  assert_eq(ok1, true)
+  assert_eq(max_rank1, 1)
+  assert_eq(pivots1, 1)
+  assert_eq(ranks1, [0, 0, 1, 1, 0, 1, 1, 1])
+
+  let (ok2, max_rank2, pivots2, ranks2) = collect_simplex_rank_trace_case([
+    flow_edge("A", "C"),
+    flow_edge("A", "D"),
+    flow_edge("A", "G"),
+    flow_edge("A", "H"),
+    flow_edge("B", "F"),
+    flow_edge("B", "G"),
+    flow_edge("C", "G"),
+    flow_edge("C", "H"),
+    flow_edge("D", "F"),
+    flow_edge("E", "F"),
+    flow_edge("E", "H"),
+  ])
+  assert_eq(ok2, true)
+  assert_eq(max_rank2, 2)
+  assert_eq(pivots2, 2)
+  assert_eq(ranks2, [0, 1, 1, 1, 1, 2, 2, 2])
+
+  let (ok3, max_rank3, pivots3, ranks3) = collect_simplex_rank_trace_case([
+    flow_edge("A", "C"),
+    flow_edge("A", "D"),
+    flow_edge("A", "E"),
+    flow_edge("A", "F"),
+    flow_edge("B", "C"),
+    flow_edge("B", "D"),
+    flow_edge("B", "E"),
+    flow_edge("B", "F"),
+    flow_edge("B", "G"),
+    flow_edge("C", "G"),
+    flow_edge("C", "H"),
+    flow_edge("D", "F"),
+    flow_edge("D", "G"),
+    flow_edge("E", "F"),
+    flow_edge("E", "G"),
+  ])
+  assert_eq(ok3, true)
+  assert_eq(max_rank3, 2)
+  assert_eq(pivots3, 3)
+  assert_eq(ranks3, [0, 0, 1, 1, 1, 2, 2, 2])
+
+  let (ok4, max_rank4, pivots4, ranks4) = collect_simplex_rank_trace_case([
+    flow_edge("A", "C"),
+    flow_edge("A", "D"),
+    flow_edge("A", "E"),
+    flow_edge("A", "F"),
+    flow_edge("A", "G"),
+    flow_edge("A", "H"),
+    flow_edge("B", "C"),
+    flow_edge("B", "D"),
+    flow_edge("B", "E"),
+    flow_edge("B", "F"),
+    flow_edge("B", "G"),
+    flow_edge("B", "H"),
+    flow_edge("C", "D"),
+    flow_edge("C", "F"),
+    flow_edge("C", "H"),
+    flow_edge("D", "H"),
+    flow_edge("E", "G"),
+    flow_edge("F", "H"),
+    flow_edge("G", "H"),
+  ])
+  assert_eq(ok4, true)
+  assert_eq(max_rank4, 3)
+  assert_eq(pivots4, 4)
+  assert_eq(ranks4, [0, 0, 1, 2, 1, 2, 2, 3])
 }
 
 ///|
