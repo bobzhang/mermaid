@@ -1293,6 +1293,125 @@ test "Layout simplex ranker matches upstream rank corpus with pivot coverage" {
 }
 
 ///|
+test "Layout simplex exchange sequence matches upstream corpus" {
+  let nodes : Array[MermaidNode] = [
+    { id: "A", label: "A", shape: Rectangle },
+    { id: "B", label: "B", shape: Rectangle },
+    { id: "C", label: "C", shape: Rectangle },
+    { id: "D", label: "D", shape: Rectangle },
+    { id: "E", label: "E", shape: Rectangle },
+    { id: "F", label: "F", shape: Rectangle },
+    { id: "G", label: "G", shape: Rectangle },
+    { id: "H", label: "H", shape: Rectangle },
+  ]
+
+  fn collect_exchange_sequence_case(
+    edges : Array[MermaidEdge],
+  ) -> (Bool, Array[String], Array[String]) {
+    let relaxed_edge_indices : Array[Int] = []
+    for edge_index in 0..<edges.length() {
+      relaxed_edge_indices.push(edge_index)
+    }
+    let (_, _, ok, exchange_steps) = collect_dagre_network_simplex_ranks_with_trace(
+      nodes,
+      edges,
+      relaxed_edge_indices,
+      [],
+      true,
+    )
+    let leave_keys : Array[String] = []
+    let enter_keys : Array[String] = []
+    for step in exchange_steps {
+      leave_keys.push(
+        normalized_leave_tree_edge_key_from_exchange_step(nodes, step),
+      )
+      enter_keys.push(
+        directed_enter_graph_edge_key_from_exchange_step(nodes, step),
+      )
+    }
+    (ok, leave_keys, enter_keys)
+  }
+
+  let (ok1, leave1, enter1) = collect_exchange_sequence_case([
+    flow_edge("A", "C"),
+    flow_edge("A", "D"),
+    flow_edge("A", "F"),
+    flow_edge("A", "H"),
+    flow_edge("B", "D"),
+    flow_edge("B", "G"),
+    flow_edge("E", "F"),
+    flow_edge("E", "G"),
+    flow_edge("E", "H"),
+  ])
+  assert_eq(ok1, true)
+  assert_eq(leave1, ["B->D"])
+  assert_eq(enter1, ["A->F"])
+
+  let (ok2, leave2, enter2) = collect_exchange_sequence_case([
+    flow_edge("A", "C"),
+    flow_edge("A", "D"),
+    flow_edge("A", "G"),
+    flow_edge("A", "H"),
+    flow_edge("B", "F"),
+    flow_edge("B", "G"),
+    flow_edge("C", "G"),
+    flow_edge("C", "H"),
+    flow_edge("D", "F"),
+    flow_edge("E", "F"),
+    flow_edge("E", "H"),
+  ])
+  assert_eq(ok2, true)
+  assert_eq(leave2, ["B->G", "E->F"])
+  assert_eq(enter2, ["A->D", "C->H"])
+
+  let (ok3, leave3, enter3) = collect_exchange_sequence_case([
+    flow_edge("A", "C"),
+    flow_edge("A", "D"),
+    flow_edge("A", "E"),
+    flow_edge("A", "F"),
+    flow_edge("B", "C"),
+    flow_edge("B", "D"),
+    flow_edge("B", "E"),
+    flow_edge("B", "F"),
+    flow_edge("B", "G"),
+    flow_edge("C", "G"),
+    flow_edge("C", "H"),
+    flow_edge("D", "F"),
+    flow_edge("D", "G"),
+    flow_edge("E", "F"),
+    flow_edge("E", "G"),
+  ])
+  assert_eq(ok3, true)
+  assert_eq(leave3, ["B->C", "E->F", "A->D"])
+  assert_eq(enter3, ["A->D", "A->E", "B->C"])
+
+  let (ok4, leave4, enter4) = collect_exchange_sequence_case([
+    flow_edge("A", "C"),
+    flow_edge("A", "D"),
+    flow_edge("A", "E"),
+    flow_edge("A", "F"),
+    flow_edge("A", "G"),
+    flow_edge("A", "H"),
+    flow_edge("B", "C"),
+    flow_edge("B", "D"),
+    flow_edge("B", "E"),
+    flow_edge("B", "F"),
+    flow_edge("B", "G"),
+    flow_edge("B", "H"),
+    flow_edge("C", "D"),
+    flow_edge("C", "F"),
+    flow_edge("C", "H"),
+    flow_edge("D", "H"),
+    flow_edge("E", "G"),
+    flow_edge("F", "H"),
+    flow_edge("G", "H"),
+  ])
+  assert_eq(ok4, true)
+  assert_eq(leave4, ["B->C", "A->C", "D->H", "F->H"])
+  assert_eq(enter4, ["A->E", "C->D", "A->C", "C->F"])
+}
+
+///|
 test "Layout dagre simplex ranker matches upstream fanout compaction baseline" {
   let nodes : Array[MermaidNode] = [
     { id: "A", label: "A", shape: Rectangle },
