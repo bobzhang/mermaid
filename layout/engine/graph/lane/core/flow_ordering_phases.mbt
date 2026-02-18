@@ -1,5 +1,168 @@
 ///|
 /// Computes flow ranks for non-state diagrams under legacy heuristics.
+priv struct NonStateFlowAcyclicPhaseState {
+  relaxed_edge_indices : Array[Int]
+  reversed_back_edge_indices : Array[Int]
+  definition_backward_edge_indices : Array[Int]
+  incoming_relaxed_edge_indices_by_target : Map[String, Array[Int]]
+  outgoing_relaxed_edge_indices_by_source : Map[String, Array[Int]]
+}
+
+///|
+fn collect_non_state_flow_acyclic_phase_state(
+  nodes_in_order : Array[MermaidNode],
+  edges : Array[MermaidEdge],
+  prefer_definition_back_edges : Bool,
+  use_greedy_feedback_arc_set : Bool,
+) -> NonStateFlowAcyclicPhaseState {
+  let node_order_by_id : Map[String, Int] = {}
+  let node_exists : Map[String, Bool] = {}
+  let outgoing_edge_indices_by_source : Map[String, Array[Int]] = {}
+  let considered_edge_indices : Array[Int] = []
+  let definition_back_edge_by_index : Map[Int, Bool] = {}
+  let back_edge_by_index : Map[Int, Bool] = {}
+
+  for i, node in nodes_in_order {
+    node_order_by_id[node.id] = i
+    node_exists[node.id] = true
+    outgoing_edge_indices_by_source[node.id] = []
+  }
+
+  for i, edge in edges {
+    if !node_exists.contains(edge.source) || !node_exists.contains(edge.target) {
+      continue
+    }
+    considered_edge_indices.push(i)
+    match outgoing_edge_indices_by_source.get(edge.source) {
+      Some(indices) => indices.push(i)
+      None => ()
+    }
+  }
+
+  if prefer_definition_back_edges {
+    for edge_index in considered_edge_indices {
+      let edge = edges[edge_index]
+      match
+        (node_order_by_id.get(edge.source), node_order_by_id.get(edge.target)) {
+        (Some(source_order), Some(target_order)) =>
+          if target_order < source_order {
+            definition_back_edge_by_index[edge_index] = true
+          }
+        _ => ()
+      }
+    }
+  }
+
+  if use_greedy_feedback_arc_set {
+    let greedy_back_edge_by_index = collect_greedy_feedback_edge_indices(
+      nodes_in_order, edges, considered_edge_indices,
+    )
+    for edge_index, _ in greedy_back_edge_by_index {
+      back_edge_by_index[edge_index] = true
+    }
+  } else {
+    let visit_state_by_id : Map[String, Int] = {}
+
+    fn mark_back_edges_from(
+      node_id : String,
+      edges : Array[MermaidEdge],
+      outgoing_edge_indices_by_source : Map[String, Array[Int]],
+      visit_state_by_id : Map[String, Int],
+      back_edge_by_index : Map[Int, Bool],
+    ) -> Unit {
+      let state = option_int_or(visit_state_by_id.get(node_id), 0)
+      if state != 0 {
+        return
+      }
+
+      visit_state_by_id[node_id] = 1
+      match outgoing_edge_indices_by_source.get(node_id) {
+        Some(outgoing_indices) =>
+          for edge_index in outgoing_indices {
+            let edge = edges[edge_index]
+            let target_state = option_int_or(
+              visit_state_by_id.get(edge.target),
+              0,
+            )
+            if target_state == 0 {
+              mark_back_edges_from(
+                edge.target,
+                edges,
+                outgoing_edge_indices_by_source,
+                visit_state_by_id,
+                back_edge_by_index,
+              )
+            } else if target_state == 1 {
+              back_edge_by_index[edge_index] = true
+            }
+          }
+        None => ()
+      }
+      visit_state_by_id[node_id] = 2
+    }
+
+    // Dagre parity: DFS acyclic reduction walks nodes in definition order
+    // without source pre-prioritization.
+    for node in nodes_in_order {
+      if option_int_or(visit_state_by_id.get(node.id), 0) == 0 {
+        mark_back_edges_from(
+          node.id,
+          edges,
+          outgoing_edge_indices_by_source,
+          visit_state_by_id,
+          back_edge_by_index,
+        )
+      }
+    }
+  }
+
+  let relaxed_edge_indices : Array[Int] = []
+  let reversed_back_edge_indices : Array[Int] = []
+  let definition_backward_edge_indices : Array[Int] = []
+  let incoming_relaxed_edge_indices_by_target : Map[String, Array[Int]] = {}
+  let outgoing_relaxed_edge_indices_by_source : Map[String, Array[Int]] = {}
+  for node in nodes_in_order {
+    incoming_relaxed_edge_indices_by_target[node.id] = []
+    outgoing_relaxed_edge_indices_by_source[node.id] = []
+  }
+
+  for edge_index in considered_edge_indices {
+    let is_definition_back_edge = definition_back_edge_by_index.contains(
+      edge_index,
+    )
+    if is_definition_back_edge {
+      definition_backward_edge_indices.push(edge_index)
+    }
+    if back_edge_by_index.contains(edge_index) {
+      reversed_back_edge_indices.push(edge_index)
+      continue
+    }
+    if is_definition_back_edge {
+      continue
+    }
+    relaxed_edge_indices.push(edge_index)
+    let edge = edges[edge_index]
+    match incoming_relaxed_edge_indices_by_target.get(edge.target) {
+      Some(indices) => indices.push(edge_index)
+      None => ()
+    }
+    match outgoing_relaxed_edge_indices_by_source.get(edge.source) {
+      Some(indices) => indices.push(edge_index)
+      None => ()
+    }
+  }
+
+  {
+    relaxed_edge_indices,
+    reversed_back_edge_indices,
+    definition_backward_edge_indices,
+    incoming_relaxed_edge_indices_by_target,
+    outgoing_relaxed_edge_indices_by_source,
+  }
+}
+
+///|
+/// Computes flow ranks for non-state diagrams under legacy heuristics.
 fn collect_non_state_flow_ranks(
   nodes_in_order : Array[MermaidNode],
   edges : Array[MermaidEdge],
@@ -164,20 +327,9 @@ fn collect_non_state_flow_ranks(
     return (rank_by_id, max_rank)
   }
 
-  let node_order_by_id : Map[String, Int] = {}
-  let node_exists : Map[String, Bool] = {}
-  let indegree_by_id : Map[String, Int] = {}
-  let outgoing_edge_indices_by_source : Map[String, Array[Int]] = {}
-  let incoming_edge_indices_by_target : Map[String, Array[Int]] = {}
-  let considered_edge_indices : Array[Int] = []
   let rank_by_id : Map[String, Int] = {}
 
-  for i, node in nodes_in_order {
-    node_order_by_id[node.id] = i
-    node_exists[node.id] = true
-    indegree_by_id[node.id] = 0
-    outgoing_edge_indices_by_source[node.id] = []
-    incoming_edge_indices_by_target[node.id] = []
+  for _, node in nodes_in_order {
     rank_by_id[node.id] = 0
   }
 
@@ -185,135 +337,14 @@ fn collect_non_state_flow_ranks(
     return (rank_by_id, 0)
   }
 
-  let definition_back_edge_by_index : Map[Int, Bool] = {}
-  for i, edge in edges {
-    if !node_exists.contains(edge.source) || !node_exists.contains(edge.target) {
-      continue
-    }
-    considered_edge_indices.push(i)
-    match outgoing_edge_indices_by_source.get(edge.source) {
-      Some(indices) => indices.push(i)
-      None => ()
-    }
-    match incoming_edge_indices_by_target.get(edge.target) {
-      Some(indices) => indices.push(i)
-      None => ()
-    }
-    let current_indegree = option_int_or(indegree_by_id.get(edge.target), 0)
-    indegree_by_id[edge.target] = current_indegree + 1
-  }
-  if prefer_definition_back_edges {
-    for edge_index in considered_edge_indices {
-      let edge = edges[edge_index]
-      match
-        (node_order_by_id.get(edge.source), node_order_by_id.get(edge.target)) {
-        (Some(source_order), Some(target_order)) =>
-          if target_order < source_order {
-            definition_back_edge_by_index[edge_index] = true
-          }
-        _ => ()
-      }
-    }
-  }
-
-  let back_edge_by_index : Map[Int, Bool] = {}
-  if use_greedy_feedback_arc_set {
-    let greedy_back_edge_by_index = collect_greedy_feedback_edge_indices(
-      nodes_in_order, edges, considered_edge_indices,
-    )
-    for edge_index, _ in greedy_back_edge_by_index {
-      back_edge_by_index[edge_index] = true
-    }
-  } else {
-    let visit_state_by_id : Map[String, Int] = {}
-
-    fn mark_back_edges_from(
-      node_id : String,
-      edges : Array[MermaidEdge],
-      outgoing_edge_indices_by_source : Map[String, Array[Int]],
-      visit_state_by_id : Map[String, Int],
-      back_edge_by_index : Map[Int, Bool],
-    ) -> Unit {
-      let state = option_int_or(visit_state_by_id.get(node_id), 0)
-      if state != 0 {
-        return
-      }
-
-      visit_state_by_id[node_id] = 1
-      match outgoing_edge_indices_by_source.get(node_id) {
-        Some(outgoing_indices) =>
-          for edge_index in outgoing_indices {
-            let edge = edges[edge_index]
-            let target_state = option_int_or(
-              visit_state_by_id.get(edge.target),
-              0,
-            )
-            if target_state == 0 {
-              mark_back_edges_from(
-                edge.target,
-                edges,
-                outgoing_edge_indices_by_source,
-                visit_state_by_id,
-                back_edge_by_index,
-              )
-            } else if target_state == 1 {
-              back_edge_by_index[edge_index] = true
-            }
-          }
-        None => ()
-      }
-      visit_state_by_id[node_id] = 2
-    }
-
-    // Dagre parity: DFS acyclic reduction walks nodes in definition order
-    // without source pre-prioritization.
-    for node in nodes_in_order {
-      if option_int_or(visit_state_by_id.get(node.id), 0) == 0 {
-        mark_back_edges_from(
-          node.id,
-          edges,
-          outgoing_edge_indices_by_source,
-          visit_state_by_id,
-          back_edge_by_index,
-        )
-      }
-    }
-  }
-
-  let relaxed_edge_indices : Array[Int] = []
-  let reversed_back_edge_indices : Array[Int] = []
-  let definition_backward_edge_indices : Array[Int] = []
-  let incoming_relaxed_edge_indices_by_target : Map[String, Array[Int]] = {}
-  let outgoing_relaxed_edge_indices_by_source : Map[String, Array[Int]] = {}
-  for node in nodes_in_order {
-    incoming_relaxed_edge_indices_by_target[node.id] = []
-    outgoing_relaxed_edge_indices_by_source[node.id] = []
-  }
-  for edge_index in considered_edge_indices {
-    let is_definition_back_edge = definition_back_edge_by_index.contains(
-      edge_index,
-    )
-    if is_definition_back_edge {
-      definition_backward_edge_indices.push(edge_index)
-    }
-    if back_edge_by_index.contains(edge_index) {
-      reversed_back_edge_indices.push(edge_index)
-      continue
-    }
-    if is_definition_back_edge {
-      continue
-    }
-    relaxed_edge_indices.push(edge_index)
-    let edge = edges[edge_index]
-    match incoming_relaxed_edge_indices_by_target.get(edge.target) {
-      Some(indices) => indices.push(edge_index)
-      None => ()
-    }
-    match outgoing_relaxed_edge_indices_by_source.get(edge.source) {
-      Some(indices) => indices.push(edge_index)
-      None => ()
-    }
-  }
+  let acyclic_phase_state = collect_non_state_flow_acyclic_phase_state(
+    nodes_in_order, edges, prefer_definition_back_edges, use_greedy_feedback_arc_set,
+  )
+  let relaxed_edge_indices = acyclic_phase_state.relaxed_edge_indices
+  let reversed_back_edge_indices = acyclic_phase_state.reversed_back_edge_indices
+  let definition_backward_edge_indices = acyclic_phase_state.definition_backward_edge_indices
+  let incoming_relaxed_edge_indices_by_target = acyclic_phase_state.incoming_relaxed_edge_indices_by_target
+  let outgoing_relaxed_edge_indices_by_source = acyclic_phase_state.outgoing_relaxed_edge_indices_by_source
 
   let should_use_dagre_network_simplex = use_dagre_network_simplex &&
     !compact_fanin &&

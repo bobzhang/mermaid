@@ -12,6 +12,21 @@ fn flow_edge(source : String, target : String) -> MermaidEdge {
 }
 
 ///|
+fn sorted_int_array(values : Array[Int]) -> Array[Int] {
+  let sorted = values.copy()
+  sorted.sort()
+  sorted
+}
+
+///|
+fn option_edge_index_count(indices : Array[Int]?) -> Int {
+  match indices {
+    Some(found) => found.length()
+    None => 0
+  }
+}
+
+///|
 test "Layout lane collection accounts for long-span edges via virtual segments" {
   let nodes : Array[MermaidNode] = [
     { id: "A", label: "A", shape: Rectangle },
@@ -309,6 +324,81 @@ test "Layout greedy feedback edge selector expands aggregated reverse multi-edge
   assert_true(back_edges.contains(0))
   assert_eq(back_edges.contains(1), false)
   assert_eq(back_edges.contains(2), false)
+}
+
+///|
+test "Layout acyclic DFS phase matches upstream back-edge decomposition" {
+  let nodes : Array[MermaidNode] = [
+    { id: "A", label: "A", shape: Rectangle },
+    { id: "B", label: "B", shape: Rectangle },
+    { id: "C", label: "C", shape: Rectangle },
+    { id: "D", label: "D", shape: Rectangle },
+  ]
+  let edges : Array[MermaidEdge] = [
+    flow_edge("B", "A"),
+    flow_edge("A", "C"),
+    flow_edge("C", "B"),
+    flow_edge("C", "D"),
+  ]
+
+  let phase_state = collect_non_state_flow_acyclic_phase_state(
+    nodes, edges, false, false,
+  )
+
+  assert_eq(sorted_int_array(phase_state.relaxed_edge_indices), [1, 2, 3])
+  assert_eq(sorted_int_array(phase_state.reversed_back_edge_indices), [0])
+  assert_eq(sorted_int_array(phase_state.definition_backward_edge_indices), [])
+  assert_eq(
+    option_edge_index_count(
+      phase_state.incoming_relaxed_edge_indices_by_target.get("A"),
+    ),
+    0,
+  )
+  assert_eq(
+    option_edge_index_count(
+      phase_state.incoming_relaxed_edge_indices_by_target.get("B"),
+    ),
+    1,
+  )
+}
+
+///|
+test "Layout acyclic greedy phase matches upstream multi-edge decomposition" {
+  let nodes : Array[MermaidNode] = [
+    { id: "N1", label: "N1", shape: Rectangle },
+    { id: "N2", label: "N2", shape: Rectangle },
+  ]
+  let edges : Array[MermaidEdge] = [
+    flow_edge("N1", "N2"),
+    flow_edge("N2", "N1"),
+    flow_edge("N2", "N1"),
+  ]
+
+  let phase_state = collect_non_state_flow_acyclic_phase_state(
+    nodes, edges, false, true,
+  )
+
+  assert_eq(sorted_int_array(phase_state.relaxed_edge_indices), [1, 2])
+  assert_eq(sorted_int_array(phase_state.reversed_back_edge_indices), [0])
+  assert_eq(sorted_int_array(phase_state.definition_backward_edge_indices), [])
+}
+
+///|
+test "Layout acyclic phase excludes definition-backward edges from relaxed DAG" {
+  let nodes : Array[MermaidNode] = [
+    { id: "A", label: "A", shape: Rectangle },
+    { id: "B", label: "B", shape: Rectangle },
+    { id: "C", label: "C", shape: Rectangle },
+  ]
+  let edges : Array[MermaidEdge] = [flow_edge("C", "A"), flow_edge("A", "B")]
+
+  let phase_state = collect_non_state_flow_acyclic_phase_state(
+    nodes, edges, true, false,
+  )
+
+  assert_eq(sorted_int_array(phase_state.relaxed_edge_indices), [1])
+  assert_eq(sorted_int_array(phase_state.reversed_back_edge_indices), [])
+  assert_eq(sorted_int_array(phase_state.definition_backward_edge_indices), [0])
 }
 
 ///|
