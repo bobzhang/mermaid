@@ -12,6 +12,34 @@ fn flow_edge(source : String, target : String) -> MermaidEdge {
 }
 
 ///|
+fn lane_policy_graph(
+  direction : @model.Direction,
+  nodes_in_order : Array[MermaidNode],
+  edges : Array[MermaidEdge],
+  subgraphs : Array[MermaidSubgraph],
+) -> MermaidGraph {
+  let nodes : Map[String, MermaidNode] = {}
+  for node in nodes_in_order {
+    nodes[node.id] = node
+  }
+  {
+    diagram_kind: Flowchart,
+    direction,
+    nodes,
+    edges,
+    subgraphs,
+    class_defs: {},
+    class_assignments: {},
+    node_styles: {},
+    sequence_actor_order: [],
+    sequence_actor_kinds: {},
+    sequence_blocks: [],
+    sequence_notes: [],
+    sequence_activation_commands: [],
+  }
+}
+
+///|
 fn sorted_int_array(values : Array[Int]) -> Array[Int] {
   let sorted = values.copy()
   sorted.sort()
@@ -2148,5 +2176,48 @@ test "Layout non-state rank selector picks lower-scored candidate when explorati
   )
   assert_true(
     selected_score <= non_state_flow_rank_candidate_score(greedy_candidate),
+  )
+}
+
+///|
+test "Layout lane feedback strategy policy disables greedy path in dagre simplex mode" {
+  let node_ids = [
+    "N0", "N1", "N2", "N3", "N4", "N5", "N6", "N7", "N8", "N9", "N10", "N11",
+  ]
+  let nodes : Array[MermaidNode] = []
+  for node_id in node_ids {
+    nodes.push({ id: node_id, label: node_id, shape: Rectangle })
+  }
+  let edges : Array[MermaidEdge] = []
+  let node_count = node_ids.length()
+  for i in 0..<node_count {
+    edges.push(flow_edge(node_ids[i], node_ids[(i + 1) % node_count]))
+    edges.push(flow_edge(node_ids[i], node_ids[(i + 2) % node_count]))
+    edges.push(flow_edge(node_ids[i], node_ids[(i + 5) % node_count]))
+    edges.push(flow_edge(node_ids[(i + 3) % node_count], node_ids[i]))
+    edges.push(flow_edge(node_ids[(i + 6) % node_count], node_ids[i]))
+    edges.push(flow_edge(node_ids[(i + 7) % node_count], node_ids[i]))
+  }
+  let graph = lane_policy_graph(TB, nodes, edges, [])
+
+  assert_true(
+    select_default_use_greedy_feedback_arc_set(
+      graph, true, false, false, false, false,
+    ),
+  )
+  assert_true(
+    should_allow_feedback_strategy_selection(
+      graph, true, false, false, false, false,
+    ),
+  )
+  assert_true(
+    !select_default_use_greedy_feedback_arc_set(
+      graph, true, false, false, false, true,
+    ),
+  )
+  assert_true(
+    !should_allow_feedback_strategy_selection(
+      graph, true, false, false, false, true,
+    ),
   )
 }

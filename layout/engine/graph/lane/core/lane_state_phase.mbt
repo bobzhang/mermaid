@@ -170,6 +170,41 @@ fn select_non_state_flow_rank_candidate(
 }
 
 ///|
+fn select_default_use_greedy_feedback_arc_set(
+  graph : MermaidGraph,
+  cycle_aware_layout : Bool,
+  horizontal : Bool,
+  state_graph : Bool,
+  class_or_er_graph : Bool,
+  prefer_dagre_network_simplex : Bool,
+) -> Bool {
+  if prefer_dagre_network_simplex {
+    false
+  } else {
+    legacy_should_use_greedy_feedback_arc_set(
+      graph, cycle_aware_layout, horizontal, state_graph, class_or_er_graph,
+    )
+  }
+}
+
+///|
+fn should_allow_feedback_strategy_selection(
+  graph : MermaidGraph,
+  cycle_aware_layout : Bool,
+  horizontal : Bool,
+  state_graph : Bool,
+  class_or_er_graph : Bool,
+  prefer_dagre_network_simplex : Bool,
+) -> Bool {
+  !prefer_dagre_network_simplex &&
+  !state_graph &&
+  !class_or_er_graph &&
+  cycle_aware_layout &&
+  graph.edges.length() >= 40 &&
+  (graph.subgraphs.length() > 0 || !horizontal)
+}
+
+///|
 /// Computes legacy lane and rank assignments for graph layout.
 pub fn compute_legacy_lane_state(
   graph : MermaidGraph,
@@ -234,14 +269,12 @@ pub fn compute_legacy_lane_state(
           graph.edges.length() >= 60
         )
       )
-    let default_use_greedy_feedback_arc_set = legacy_should_use_greedy_feedback_arc_set(
-      graph, cycle_aware_layout, horizontal, state_graph, class_or_er_graph,
+    let default_use_greedy_feedback_arc_set = select_default_use_greedy_feedback_arc_set(
+      graph, cycle_aware_layout, horizontal, state_graph, class_or_er_graph, prefer_dagre_network_simplex,
     )
-    let allow_feedback_strategy_selection = !state_graph &&
-      !class_or_er_graph &&
-      cycle_aware_layout &&
-      graph.edges.length() >= 40 &&
-      (graph.subgraphs.length() > 0 || !horizontal)
+    let allow_feedback_strategy_selection = should_allow_feedback_strategy_selection(
+      graph, cycle_aware_layout, horizontal, state_graph, class_or_er_graph, prefer_dagre_network_simplex,
+    )
     let preserve_fanout_order_ties = !class_or_er_graph
     let selected_rank_candidate = select_non_state_flow_rank_candidate(
       nodes_in_order,
