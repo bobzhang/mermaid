@@ -488,6 +488,108 @@ fn stress_006_nested_bridge_loops_source() -> String {
 }
 
 ///|
+fn stress_010_bipartite_crossfire_source() -> String {
+  (
+    #|graph LR
+    #|U1[U1]
+    #|U2[U2]
+    #|U3[U3]
+    #|U4[U4]
+    #|U5[U5]
+    #|U6[U6]
+    #|
+    #|H1[H1]
+    #|H2[H2]
+    #|H3[H3]
+    #|H4[H4]
+    #|
+    #|T1[T1]
+    #|T2[T2]
+    #|T3[T3]
+    #|T4[T4]
+    #|T5[T5]
+    #|T6[T6]
+    #|
+    #|M1[M1]
+    #|M2[M2]
+    #|M3[M3]
+    #|M4[M4]
+    #|
+    #|Z1[Z1]
+    #|Z2[Z2]
+    #|Z3[Z3]
+    #|Z4[Z4]
+    #|
+    #|U1 --> H1
+    #|U1 --> H2
+    #|U2 --> H1
+    #|U2 --> H3
+    #|U3 --> H2
+    #|U3 --> H4
+    #|U4 --> H3
+    #|U4 --> H4
+    #|U5 --> H1
+    #|U5 --> H4
+    #|U6 --> H2
+    #|U6 --> H3
+    #|
+    #|H1 --> T1
+    #|H1 --> T2
+    #|H1 --> T4
+    #|H2 --> T2
+    #|H2 --> T3
+    #|H2 --> T5
+    #|H3 --> T1
+    #|H3 --> T4
+    #|H3 --> T6
+    #|H4 --> T3
+    #|H4 --> T5
+    #|H4 --> T6
+    #|
+    #|U1 --> T5
+    #|U2 --> T6
+    #|U3 --> T1
+    #|U4 --> T2
+    #|U5 --> T3
+    #|U6 --> T4
+    #|
+    #|T1 --> M1
+    #|T1 --> M2
+    #|T2 --> M1
+    #|T2 --> M3
+    #|T3 --> M2
+    #|T3 --> M4
+    #|T4 --> M1
+    #|T4 --> M4
+    #|T5 --> M2
+    #|T5 --> M3
+    #|T6 --> M3
+    #|T6 --> M4
+    #|
+    #|M1 --> Z1
+    #|M1 --> Z2
+    #|M2 --> Z2
+    #|M2 --> Z3
+    #|M3 --> Z3
+    #|M3 --> Z4
+    #|M4 --> Z1
+    #|M4 --> Z4
+    #|
+    #|Z2 --> H2
+    #|Z3 --> H3
+    #|Z4 --> H1
+    #|M4 --> H2
+    #|T6 --> H4
+    #|T5 --> H1
+    #|Z1 --> T3
+    #|Z4 --> T2
+    #|
+  )
+  .trim_end()
+  .to_string()
+}
+
+///|
 fn stress_012_interleaved_subgraph_feedback_source() -> String {
   (
     #|graph LR
@@ -1868,6 +1970,24 @@ test "Layout acyclic DFS phase matches upstream stress fixture decomposition" {
     sorted_string_array(["LI3->L3", "R4->SNK", "R3->L2", "R2->LI2", "RI3->L1"]),
   )
   assert_eq(stress006_phase_state.definition_backward_edge_indices.length(), 0)
+
+  let (stress010_nodes, stress010_edges) = fixture_nodes_and_edges_for_acyclic_phase(
+    stress_010_bipartite_crossfire_source(),
+  )
+  let stress010_phase_state = collect_non_state_flow_acyclic_phase_state(
+    stress010_nodes, stress010_edges, false, false,
+  )
+  assert_eq(
+    reversed_back_edge_keys(
+      stress010_edges,
+      stress010_phase_state.reversed_back_edge_indices,
+    ),
+    sorted_string_array([
+      "H2->T3", "H3->T1", "H4->T3", "H4->T6", "M4->H2", "M4->Z1", "T2->M1", "T4->M1",
+      "T5->H1", "T5->M2", "T5->M3", "T6->M3", "Z4->H1", "Z4->T2",
+    ]),
+  )
+  assert_eq(stress010_phase_state.definition_backward_edge_indices.length(), 0)
 
   let (stress012_nodes, stress012_edges) = fixture_nodes_and_edges_for_acyclic_phase(
     stress_012_interleaved_subgraph_feedback_source(),
