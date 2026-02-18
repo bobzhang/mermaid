@@ -502,6 +502,33 @@ test "Layout lane dagre parity ordering phase matches upstream sweep trace" {
   assert_eq(step_trace.length(), 4)
   assert_eq(
     [
+      step_trace[0].pass_index,
+      step_trace[1].pass_index,
+      step_trace[2].pass_index,
+      step_trace[3].pass_index,
+    ],
+    [0, 1, 2, 3],
+  )
+  assert_eq(
+    [
+      step_trace[0].incoming_from_neighbor,
+      step_trace[1].incoming_from_neighbor,
+      step_trace[2].incoming_from_neighbor,
+      step_trace[3].incoming_from_neighbor,
+    ],
+    [false, true, false, true],
+  )
+  assert_eq(
+    [
+      step_trace[0].bias_right,
+      step_trace[1].bias_right,
+      step_trace[2].bias_right,
+      step_trace[3].bias_right,
+    ],
+    [false, false, true, true],
+  )
+  assert_eq(
+    [
       step_trace[0].candidate_crossings,
       step_trace[1].candidate_crossings,
       step_trace[2].candidate_crossings,
@@ -509,13 +536,38 @@ test "Layout lane dagre parity ordering phase matches upstream sweep trace" {
     ],
     [3, 3, 3, 3],
   )
-  assert_eq(step_trace[2].pass_index, 2)
-  assert_eq(step_trace[2].incoming_from_neighbor, false)
-  assert_eq(step_trace[2].bias_right, true)
-  match step_trace[2].barycenters_by_rank.get(0) {
-    Some(rank0_barycenters) =>
-      assert_eq(rank0_barycenters, { "A": "6/3", "B": "9/3" })
-    None => fail("missing case2 rank0 barycenters for pass2")
+  assert_eq(step_trace[0].barycenters_by_rank, {
+    0: { "A": "6/3", "B": "9/3" },
+    1: {
+      "C": "1/1",
+      "D": "0/1",
+      "__lane_dummy_f_2_1": "0/1",
+      "__lane_dummy_f_3_1": "1/1",
+      "__lane_dummy_f_6_1": "1/1",
+      "__lane_dummy_f_7_1": "0/1",
+    },
+  })
+  assert_eq(step_trace[1].barycenters_by_rank, {
+    1: {
+      "C": "1/1",
+      "D": "0/1",
+      "__lane_dummy_f_2_1": "0/1",
+      "__lane_dummy_f_3_1": "1/1",
+      "__lane_dummy_f_6_1": "0/1",
+      "__lane_dummy_f_7_1": "1/1",
+    },
+    2: { "E": "6/3", "F": "9/3" },
+  })
+  assert_eq(
+    step_trace[2].barycenters_by_rank,
+    step_trace[0].barycenters_by_rank,
+  )
+  assert_eq(
+    step_trace[3].barycenters_by_rank,
+    step_trace[1].barycenters_by_rank,
+  )
+  for i in 0..<step_trace.length() {
+    assert_eq(step_trace[i].rank_nodes, trace[i + 1])
   }
 
   let case3_nodes : Array[MermaidNode] = [
@@ -577,6 +629,33 @@ test "Layout lane dagre parity ordering phase matches upstream sweep trace" {
   assert_eq(case3_step_trace.length(), 4)
   assert_eq(
     [
+      case3_step_trace[0].pass_index,
+      case3_step_trace[1].pass_index,
+      case3_step_trace[2].pass_index,
+      case3_step_trace[3].pass_index,
+    ],
+    [0, 1, 2, 3],
+  )
+  assert_eq(
+    [
+      case3_step_trace[0].incoming_from_neighbor,
+      case3_step_trace[1].incoming_from_neighbor,
+      case3_step_trace[2].incoming_from_neighbor,
+      case3_step_trace[3].incoming_from_neighbor,
+    ],
+    [false, true, false, true],
+  )
+  assert_eq(
+    [
+      case3_step_trace[0].bias_right,
+      case3_step_trace[1].bias_right,
+      case3_step_trace[2].bias_right,
+      case3_step_trace[3].bias_right,
+    ],
+    [false, false, true, true],
+  )
+  assert_eq(
+    [
       case3_step_trace[0].candidate_crossings,
       case3_step_trace[1].candidate_crossings,
       case3_step_trace[2].candidate_crossings,
@@ -584,13 +663,26 @@ test "Layout lane dagre parity ordering phase matches upstream sweep trace" {
     ],
     [3, 3, 3, 3],
   )
-  assert_eq(case3_step_trace[2].pass_index, 2)
-  assert_eq(case3_step_trace[2].incoming_from_neighbor, false)
-  assert_eq(case3_step_trace[2].bias_right, true)
-  match case3_step_trace[2].barycenters_by_rank.get(0) {
-    Some(rank0_barycenters) =>
-      assert_eq(rank0_barycenters, { "A": "1/2", "B": "1/2" })
-    None => fail("missing case3 rank0 barycenters for pass2")
+  assert_eq(case3_step_trace[0].barycenters_by_rank, {
+    0: { "A": "1/2", "B": "1/2" },
+    1: { "C": "1/2", "D": "1/2" },
+    2: { "E": "1/2", "F": "1/2" },
+  })
+  assert_eq(case3_step_trace[1].barycenters_by_rank, {
+    1: { "C": "1/2", "D": "1/2" },
+    2: { "E": "1/2", "F": "1/2" },
+    3: { "G": "1/2", "H": "1/2" },
+  })
+  assert_eq(
+    case3_step_trace[2].barycenters_by_rank,
+    case3_step_trace[0].barycenters_by_rank,
+  )
+  assert_eq(
+    case3_step_trace[3].barycenters_by_rank,
+    case3_step_trace[1].barycenters_by_rank,
+  )
+  for i in 0..<case3_step_trace.length() {
+    assert_eq(case3_step_trace[i].rank_nodes, case3_trace[i + 1])
   }
   assert_eq(case3_step_trace[3].rank_nodes, case3_trace[4])
   assert_eq(case3_trace[5], case3_trace[4])
