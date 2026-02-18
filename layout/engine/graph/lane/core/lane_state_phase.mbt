@@ -178,6 +178,8 @@ fn select_default_use_greedy_feedback_arc_set(
   class_or_er_graph : Bool,
   prefer_dagre_network_simplex : Bool,
 ) -> Bool {
+  // Mermaid's dagre renderer does not set acyclicer, so dagre defaults to
+  // DFS FAS. Dagre-parity mode should keep that behavior.
   if prefer_dagre_network_simplex {
     false
   } else {
