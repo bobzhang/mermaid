@@ -408,6 +408,98 @@ test "Layout lane dagre parity ordering phase matches upstream corpus" {
 }
 
 ///|
+test "Layout lane dagre parity ordering phase matches upstream sweep trace" {
+  let nodes : Array[MermaidNode] = [
+    { id: "A", label: "A", shape: Rectangle },
+    { id: "B", label: "B", shape: Rectangle },
+    { id: "C", label: "C", shape: Rectangle },
+    { id: "D", label: "D", shape: Rectangle },
+    { id: "E", label: "E", shape: Rectangle },
+    { id: "F", label: "F", shape: Rectangle },
+  ]
+  let ranks : Map[String, Int] = {
+    "A": 0,
+    "B": 0,
+    "C": 1,
+    "D": 1,
+    "E": 2,
+    "F": 2,
+  }
+  let edges : Array[MermaidEdge] = [
+    flow_edge("A", "D"),
+    flow_edge("B", "C"),
+    flow_edge("A", "E"),
+    flow_edge("B", "F"),
+    flow_edge("C", "F"),
+    flow_edge("D", "E"),
+    flow_edge("A", "F"),
+    flow_edge("B", "E"),
+  ]
+  let trace : Array[Array[Array[String]]] = []
+  let _ = collect_non_state_flow_lanes_internal(
+    nodes,
+    ranks,
+    2,
+    edges,
+    false,
+    false,
+    false,
+    true,
+    Some(trace),
+  )
+  assert_eq(trace, [
+    [
+      ["A", "B"],
+      [
+        "D", "__lane_dummy_f_2_1", "__lane_dummy_f_6_1", "C", "__lane_dummy_f_3_1",
+        "__lane_dummy_f_7_1",
+      ],
+      ["E", "F"],
+    ],
+    [
+      ["A", "B"],
+      [
+        "D", "__lane_dummy_f_2_1", "__lane_dummy_f_7_1", "C", "__lane_dummy_f_3_1",
+        "__lane_dummy_f_6_1",
+      ],
+      ["E", "F"],
+    ],
+    [
+      ["A", "B"],
+      [
+        "D", "__lane_dummy_f_2_1", "__lane_dummy_f_6_1", "C", "__lane_dummy_f_3_1",
+        "__lane_dummy_f_7_1",
+      ],
+      ["E", "F"],
+    ],
+    [
+      ["A", "B"],
+      [
+        "__lane_dummy_f_7_1", "__lane_dummy_f_2_1", "D", "__lane_dummy_f_6_1", "__lane_dummy_f_3_1",
+        "C",
+      ],
+      ["E", "F"],
+    ],
+    [
+      ["A", "B"],
+      [
+        "__lane_dummy_f_6_1", "__lane_dummy_f_2_1", "D", "__lane_dummy_f_7_1", "__lane_dummy_f_3_1",
+        "C",
+      ],
+      ["E", "F"],
+    ],
+    [
+      ["A", "B"],
+      [
+        "__lane_dummy_f_6_1", "__lane_dummy_f_2_1", "D", "__lane_dummy_f_7_1", "__lane_dummy_f_3_1",
+        "C",
+      ],
+      ["E", "F"],
+    ],
+  ])
+}
+
+///|
 test "Layout cycle detection flags simple feedback loops" {
   let nodes : Array[MermaidNode] = [
     { id: "A", label: "A", shape: Rectangle },

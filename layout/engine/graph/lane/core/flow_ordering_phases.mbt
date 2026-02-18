@@ -1178,6 +1178,31 @@ fn collect_non_state_flow_lanes(
   preserve_fanout_order_ties : Bool,
   prefer_dagre_order_parity : Bool,
 ) -> Map[String, Int] {
+  collect_non_state_flow_lanes_internal(
+    nodes_in_order,
+    rank_by_id,
+    max_rank,
+    edges,
+    preserve_dummy_lane_channels,
+    enable_feedback_back_edge_ordering,
+    preserve_fanout_order_ties,
+    prefer_dagre_order_parity,
+    None,
+  )
+}
+
+///|
+fn collect_non_state_flow_lanes_internal(
+  nodes_in_order : Array[MermaidNode],
+  rank_by_id : Map[String, Int],
+  max_rank : Int,
+  edges : Array[MermaidEdge],
+  preserve_dummy_lane_channels : Bool,
+  enable_feedback_back_edge_ordering : Bool,
+  preserve_fanout_order_ties : Bool,
+  prefer_dagre_order_parity : Bool,
+  dagre_parity_rank_nodes_trace : Array[Array[Array[String]]]?,
+) -> Map[String, Int] {
   if nodes_in_order.length() == 0 {
     return {}
   }
@@ -1705,6 +1730,16 @@ fn collect_non_state_flow_lanes(
     }
   }
 
+  fn maybe_record_dagre_parity_rank_nodes(
+    rank_nodes_trace : Array[Array[Array[String]]]?,
+    rank_nodes : Array[Array[String]],
+  ) -> Unit {
+    match rank_nodes_trace {
+      Some(trace) => trace.push(clone_rank_nodes(rank_nodes))
+      None => ()
+    }
+  }
+
   fn barycenter_pass(
     rank_nodes : Array[Array[String]],
     start_rank : Int,
@@ -2039,6 +2074,9 @@ fn collect_non_state_flow_lanes(
       let mut best_crossings = 1 << 30
       let mut rounds_since_best = 0
       let mut pass = 0
+      maybe_record_dagre_parity_rank_nodes(
+        dagre_parity_rank_nodes_trace, rank_nodes,
+      )
       while rounds_since_best < 4 {
         let bias_right = pass % 4 >= 2
         if pass % 2 == 0 {
@@ -2076,10 +2114,16 @@ fn collect_non_state_flow_lanes(
         } else if candidate_dagre_crossings == best_crossings {
           copy_rank_nodes_into(rank_nodes, best_rank_nodes)
         }
+        maybe_record_dagre_parity_rank_nodes(
+          dagre_parity_rank_nodes_trace, rank_nodes,
+        )
         pass = pass + 1
         rounds_since_best += 1
       }
       copy_rank_nodes_into(best_rank_nodes, rank_nodes)
+      maybe_record_dagre_parity_rank_nodes(
+        dagre_parity_rank_nodes_trace, rank_nodes,
+      )
     } else if enable_multi_sweep_ordering {
       let best_rank_nodes = clone_rank_nodes(rank_nodes)
       let mut best_crossings = total_adjacent_crossings(
