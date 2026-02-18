@@ -1176,6 +1176,7 @@ fn collect_non_state_flow_lanes(
   preserve_dummy_lane_channels : Bool,
   enable_feedback_back_edge_ordering : Bool,
   preserve_fanout_order_ties : Bool,
+  prefer_dagre_order_parity : Bool,
 ) -> Map[String, Int] {
   if nodes_in_order.length() == 0 {
     return {}
@@ -1184,6 +1185,9 @@ fn collect_non_state_flow_lanes(
   let rank_nodes : Array[Array[String]] = []
   let real_node_ids : Map[String, Bool] = {}
   let lane_rank_by_id : Map[String, Int] = {}
+  let lane_node_insert_order_by_id : Map[String, Int] = {}
+  let lane_node_ids_in_insert_order : Array[String] = []
+  let mut lane_node_insert_serial = 0
   for _ in 0..<=max_rank {
     rank_nodes.push([])
   }
@@ -1192,6 +1196,9 @@ fn collect_non_state_flow_lanes(
     rank_nodes[rank].push(node.id)
     real_node_ids[node.id] = true
     lane_rank_by_id[node.id] = rank
+    lane_node_insert_order_by_id[node.id] = lane_node_insert_serial
+    lane_node_ids_in_insert_order.push(node.id)
+    lane_node_insert_serial = lane_node_insert_serial + 1
   }
 
   fn make_lane_edge(source : String, target : String) -> MermaidEdge {
@@ -1224,6 +1231,9 @@ fn collect_non_state_flow_lanes(
       let dummy_id = "__lane_dummy_\{path_id_prefix}_\{rank}"
       rank_nodes[rank].push(dummy_id)
       lane_rank_by_id[dummy_id] = rank
+      lane_node_insert_order_by_id[dummy_id] = lane_node_insert_serial
+      lane_node_ids_in_insert_order.push(dummy_id)
+      lane_node_insert_serial = lane_node_insert_serial + 1
       lane_edges.push(make_lane_edge(previous_id, dummy_id))
       previous_id = dummy_id
     }
@@ -1260,7 +1270,8 @@ fn collect_non_state_flow_lanes(
       order_feedback_multi_target_count += 1
     }
   }
-  let include_non_dotted_feedback_back_edges = enable_feedback_back_edge_ordering &&
+  let include_non_dotted_feedback_back_edges = !prefer_dagre_order_parity &&
+    enable_feedback_back_edge_ordering &&
     edges.length() >= 30 &&
     order_feedback_edge_count >= 6 &&
     order_feedback_multi_target_count >= 2
@@ -1282,7 +1293,8 @@ fn collect_non_state_flow_lanes(
             lane_rank_by_id,
             lane_edges,
           )
-        } else if source_rank > target_rank &&
+        } else if !prefer_dagre_order_parity &&
+          source_rank > target_rank &&
           (
             (
               source_rank - target_rank >= dotted_back_edge_ordering_min_span &&
@@ -1307,6 +1319,85 @@ fn collect_non_state_flow_lanes(
           )
         }
       _ => ()
+    }
+  }
+
+  if prefer_dagre_order_parity {
+    let outgoing_lane_target_ids_by_source : Map[String, Array[String]] = {}
+    for node_id in lane_node_ids_in_insert_order {
+      outgoing_lane_target_ids_by_source[node_id] = []
+    }
+    for edge in lane_edges {
+      match outgoing_lane_target_ids_by_source.get(edge.source) {
+        Some(target_ids) => target_ids.push(edge.target)
+        None => ()
+      }
+    }
+
+    let ordered_lane_node_ids : Array[String] = []
+    for node_id in lane_node_ids_in_insert_order {
+      ordered_lane_node_ids.push(node_id)
+    }
+    ordered_lane_node_ids.sort_by((left_id, right_id) => {
+      let left_rank = option_int_or(lane_rank_by_id.get(left_id), 0)
+      let right_rank = option_int_or(lane_rank_by_id.get(right_id), 0)
+      let rank_cmp = left_rank.compare(right_rank)
+      if rank_cmp != 0 {
+        rank_cmp
+      } else {
+        let left_scan = option_int_or(
+          lane_node_insert_order_by_id.get(left_id),
+          0,
+        )
+        let right_scan = option_int_or(
+          lane_node_insert_order_by_id.get(right_id),
+          0,
+        )
+        left_scan.compare(right_scan)
+      }
+    })
+
+    let dagre_init_rank_nodes : Array[Array[String]] = []
+    for _ in 0..<=max_rank {
+      dagre_init_rank_nodes.push([])
+    }
+    let visited_lane_node_by_id : Map[String, Bool] = {}
+    fn dagre_init_dfs(
+      node_id : String,
+      lane_rank_by_id : Map[String, Int],
+      outgoing_lane_target_ids_by_source : Map[String, Array[String]],
+      visited_lane_node_by_id : Map[String, Bool],
+      dagre_init_rank_nodes : Array[Array[String]],
+    ) -> Unit {
+      if visited_lane_node_by_id.contains(node_id) {
+        return
+      }
+      visited_lane_node_by_id[node_id] = true
+      let rank = option_int_or(lane_rank_by_id.get(node_id), 0)
+      dagre_init_rank_nodes[rank].push(node_id)
+      match outgoing_lane_target_ids_by_source.get(node_id) {
+        Some(target_ids) =>
+          for target_id in target_ids {
+            dagre_init_dfs(
+              target_id, lane_rank_by_id, outgoing_lane_target_ids_by_source, visited_lane_node_by_id,
+              dagre_init_rank_nodes,
+            )
+          }
+        None => ()
+      }
+    }
+    for node_id in ordered_lane_node_ids {
+      dagre_init_dfs(
+        node_id, lane_rank_by_id, outgoing_lane_target_ids_by_source, visited_lane_node_by_id,
+        dagre_init_rank_nodes,
+      )
+    }
+    for i in 0..<dagre_init_rank_nodes.length() {
+      let copied_node_ids : Array[String] = []
+      for node_id in dagre_init_rank_nodes[i] {
+        copied_node_ids.push(node_id)
+      }
+      rank_nodes[i] = copied_node_ids
     }
   }
 
@@ -1584,6 +1675,153 @@ fn collect_non_state_flow_lanes(
     }
   }
 
+  fn dagre_parity_barycenter_pass(
+    rank_nodes : Array[Array[String]],
+    start_rank : Int,
+    end_rank : Int,
+    step : Int,
+    incoming_from_neighbor : Bool,
+    bias_right : Bool,
+    incoming_adjacent_neighbor_ids_by_rank_node : Map[
+      Int,
+      Map[String, Array[String]],
+    ],
+    outgoing_adjacent_neighbor_ids_by_rank_node : Map[
+      Int,
+      Map[String, Array[String]],
+    ],
+  ) -> Unit {
+    let mut rank = start_rank
+    while rank != end_rank {
+      let neighbor_rank = rank - step
+      if neighbor_rank < 0 || neighbor_rank >= rank_nodes.length() {
+        rank = rank + step
+        continue
+      }
+
+      let neighbor_order : Map[String, Int] = {}
+      for i, node_id in rank_nodes[neighbor_rank] {
+        neighbor_order[node_id] = i
+      }
+      let current = rank_nodes[rank]
+      let neighbor_ids_by_node = if incoming_from_neighbor {
+        incoming_adjacent_neighbor_ids_by_rank_node.get(rank)
+      } else {
+        outgoing_adjacent_neighbor_ids_by_rank_node.get(rank)
+      }
+
+      let sortable_ids : Array[String] = []
+      let sortable_num_by_id : Map[String, Int] = {}
+      let sortable_den_by_id : Map[String, Int] = {}
+      let sortable_index_by_id : Map[String, Int] = {}
+      let unsortable_ids : Array[String] = []
+      let unsortable_index_by_id : Map[String, Int] = {}
+
+      for i, node_id in current {
+        let mut sum = 0
+        let mut count = 0
+        match neighbor_ids_by_node {
+          Some(neighbor_ids_by_node) =>
+            match neighbor_ids_by_node.get(node_id) {
+              Some(neighbor_ids) =>
+                for neighbor_id in neighbor_ids {
+                  match neighbor_order.get(neighbor_id) {
+                    Some(order) => {
+                      sum += order
+                      count += 1
+                    }
+                    None => ()
+                  }
+                }
+              None => ()
+            }
+          None => ()
+        }
+        if count > 0 {
+          sortable_ids.push(node_id)
+          sortable_num_by_id[node_id] = sum
+          sortable_den_by_id[node_id] = count
+          sortable_index_by_id[node_id] = i
+        } else {
+          unsortable_ids.push(node_id)
+          unsortable_index_by_id[node_id] = i
+        }
+      }
+
+      sortable_ids.sort_by((left_id, right_id) => {
+        let left_num = option_int_or(sortable_num_by_id.get(left_id), 0)
+        let left_den = option_int_or(sortable_den_by_id.get(left_id), 1)
+        let right_num = option_int_or(sortable_num_by_id.get(right_id), 0)
+        let right_den = option_int_or(sortable_den_by_id.get(right_id), 1)
+        let ratio_cmp = compare_rational(
+          left_num, left_den, right_num, right_den,
+        )
+        if ratio_cmp != 0 {
+          return ratio_cmp
+        }
+        let left_index = option_int_or(sortable_index_by_id.get(left_id), 0)
+        let right_index = option_int_or(sortable_index_by_id.get(right_id), 0)
+        if bias_right {
+          right_index.compare(left_index)
+        } else {
+          left_index.compare(right_index)
+        }
+      })
+
+      unsortable_ids.sort_by((left_id, right_id) => {
+        let left_index = option_int_or(unsortable_index_by_id.get(left_id), 0)
+        let right_index = option_int_or(unsortable_index_by_id.get(right_id), 0)
+        right_index.compare(left_index)
+      })
+
+      let ordered : Array[String] = []
+      let mut ordered_size = 0
+      let mut unsortable_size = unsortable_ids.length()
+
+      while unsortable_size > 0 {
+        let candidate_index = unsortable_size - 1
+        let candidate_id = unsortable_ids[candidate_index]
+        let candidate_order = option_int_or(
+          unsortable_index_by_id.get(candidate_id),
+          0,
+        )
+        if candidate_order > ordered_size {
+          break
+        }
+        ordered.push(candidate_id)
+        ordered_size += 1
+        unsortable_size = candidate_index
+      }
+
+      for node_id in sortable_ids {
+        ordered.push(node_id)
+        ordered_size += 1
+        while unsortable_size > 0 {
+          let candidate_index = unsortable_size - 1
+          let candidate_id = unsortable_ids[candidate_index]
+          let candidate_order = option_int_or(
+            unsortable_index_by_id.get(candidate_id),
+            0,
+          )
+          if candidate_order > ordered_size {
+            break
+          }
+          ordered.push(candidate_id)
+          ordered_size += 1
+          unsortable_size = candidate_index
+        }
+      }
+
+      while unsortable_size > 0 {
+        let candidate_index = unsortable_size - 1
+        ordered.push(unsortable_ids[candidate_index])
+        unsortable_size = candidate_index
+      }
+      rank_nodes[rank] = ordered
+      rank = rank + step
+    }
+  }
+
   fn transpose_adjacent_ranks_pass(
     rank_nodes : Array[Array[String]],
     max_rank : Int,
@@ -1662,7 +1900,55 @@ fn collect_non_state_flow_lanes(
   }
 
   if max_rank > 0 {
-    if enable_multi_sweep_ordering {
+    if prefer_dagre_order_parity {
+      let best_rank_nodes = clone_rank_nodes(rank_nodes)
+      let mut best_crossings = total_adjacent_crossings(
+        rank_nodes, max_rank, adjacent_edge_indices_by_upper_rank, lane_edges,
+      )
+      let mut rounds_since_best = 0
+      let mut pass = 0
+      while rounds_since_best < 4 {
+        let bias_right = pass % 4 >= 2
+        if pass % 2 == 0 {
+          dagre_parity_barycenter_pass(
+            rank_nodes,
+            max_rank - 1,
+            -1,
+            -1,
+            false,
+            bias_right,
+            incoming_adjacent_neighbor_ids_by_rank_node,
+            outgoing_adjacent_neighbor_ids_by_rank_node,
+          )
+        } else {
+          dagre_parity_barycenter_pass(
+            rank_nodes,
+            1,
+            max_rank + 1,
+            1,
+            true,
+            bias_right,
+            incoming_adjacent_neighbor_ids_by_rank_node,
+            outgoing_adjacent_neighbor_ids_by_rank_node,
+          )
+        }
+        let candidate_crossings = total_adjacent_crossings(
+          rank_nodes, max_rank, adjacent_edge_indices_by_upper_rank, lane_edges,
+        )
+        if candidate_crossings < best_crossings {
+          best_crossings = candidate_crossings
+          copy_rank_nodes_into(rank_nodes, best_rank_nodes)
+          rounds_since_best = 0
+        } else if candidate_crossings == best_crossings {
+          copy_rank_nodes_into(rank_nodes, best_rank_nodes)
+          rounds_since_best += 1
+        } else {
+          rounds_since_best += 1
+        }
+        pass = pass + 1
+      }
+      copy_rank_nodes_into(best_rank_nodes, rank_nodes)
+    } else if enable_multi_sweep_ordering {
       let best_rank_nodes = clone_rank_nodes(rank_nodes)
       let mut best_crossings = total_adjacent_crossings(
         rank_nodes, max_rank, adjacent_edge_indices_by_upper_rank, lane_edges,
@@ -1954,7 +2240,8 @@ fn collect_non_state_flow_lanes(
   }
 
   // Keep source fanout ordering for all flowchart-style graphs.
-  let enable_fanout_tie_breaks = preserve_fanout_order_ties
+  let enable_fanout_tie_breaks = preserve_fanout_order_ties &&
+    !prefer_dagre_order_parity
   // Keep span-cost tie-break refinements for larger graphs only.
   let enable_lane_span_tie_breaks = enable_fanout_tie_breaks &&
     edges.length() >= 30
@@ -2326,7 +2613,7 @@ fn collect_non_state_flow_lanes(
     }
   }
 
-  if crossing_edge_indexes.length() >= 2 {
+  if !prefer_dagre_order_parity && crossing_edge_indexes.length() >= 2 {
     let adjacent_pass_budget = if crossing_edge_indexes.length() >= 120 {
       24
     } else if crossing_edge_indexes.length() >= 60 {

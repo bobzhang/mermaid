@@ -75,6 +75,7 @@ fn collect_non_state_flow_rank_candidate(
   preserve_fanout_order_ties : Bool,
   use_greedy_feedback_arc_set : Bool,
   prefer_dagre_network_simplex : Bool,
+  prefer_dagre_order_parity : Bool,
 ) -> NonStateFlowRankCandidate {
   let preserve_reversed_back_edge_constraints = use_greedy_feedback_arc_set
   let enable_feedback_back_edge_ordering = base_enable_feedback_back_edge_ordering &&
@@ -86,7 +87,7 @@ fn collect_non_state_flow_rank_candidate(
   )
   let lane_by_id = collect_non_state_flow_lanes(
     nodes_in_order, rank_by_id, max_rank, edges, preserve_dummy_lane_channels, enable_feedback_back_edge_ordering,
-    preserve_fanout_order_ties,
+    preserve_fanout_order_ties, prefer_dagre_order_parity,
   )
   let lane_crossings = count_lane_space_edge_crossings(
     edges, rank_by_id, lane_by_id,
@@ -131,11 +132,13 @@ fn select_non_state_flow_rank_candidate(
   default_use_greedy_feedback_arc_set : Bool,
   allow_feedback_strategy_selection : Bool,
   prefer_dagre_network_simplex : Bool,
+  prefer_dagre_order_parity : Bool,
 ) -> NonStateFlowRankCandidate {
   let default_candidate = collect_non_state_flow_rank_candidate(
     nodes_in_order, edges, rank_compact_fanin, cycle_aware_layout, promote_backward_dotted_edges,
     prefer_definition_back_edges, false, preserve_dummy_lane_channels, base_enable_feedback_back_edge_ordering,
     preserve_fanout_order_ties, default_use_greedy_feedback_arc_set, prefer_dagre_network_simplex,
+    prefer_dagre_order_parity,
   )
   if !allow_feedback_strategy_selection {
     return default_candidate
@@ -153,6 +156,7 @@ fn select_non_state_flow_rank_candidate(
     preserve_fanout_order_ties,
     !default_use_greedy_feedback_arc_set,
     prefer_dagre_network_simplex,
+    prefer_dagre_order_parity,
   )
   let default_score = non_state_flow_rank_candidate_score(default_candidate)
   let alternative_score = non_state_flow_rank_candidate_score(
@@ -238,6 +242,7 @@ pub fn compute_legacy_lane_state(
       cycle_aware_layout &&
       graph.edges.length() >= 40 &&
       (graph.subgraphs.length() > 0 || !horizontal)
+    let preserve_fanout_order_ties = !class_or_er_graph
     let selected_rank_candidate = select_non_state_flow_rank_candidate(
       nodes_in_order,
       graph.edges,
@@ -247,10 +252,11 @@ pub fn compute_legacy_lane_state(
       prefer_definition_back_edges,
       preserve_dummy_lane_channels,
       base_enable_feedback_back_edge_ordering,
-      !class_or_er_graph,
+      preserve_fanout_order_ties,
       default_use_greedy_feedback_arc_set,
       allow_feedback_strategy_selection,
       prefer_dagre_network_simplex,
+      false,
     )
     let use_greedy_feedback_arc_set = selected_rank_candidate.use_greedy_feedback_arc_set
     let enable_feedback_back_edge_ordering = base_enable_feedback_back_edge_ordering &&
@@ -270,9 +276,10 @@ pub fn compute_legacy_lane_state(
         true,
         preserve_dummy_lane_channels,
         base_enable_feedback_back_edge_ordering,
-        !class_or_er_graph,
+        preserve_fanout_order_ties,
         use_greedy_feedback_arc_set,
         prefer_dagre_network_simplex,
+        false,
       )
       if compacted_rank_candidate.lane_crossings <
         selected_rank_candidate.lane_crossings ||
@@ -384,7 +391,8 @@ pub fn compute_legacy_lane_state(
         graph.edges,
         preserve_dummy_lane_channels,
         enable_feedback_back_edge_ordering,
-        !class_or_er_graph,
+        preserve_fanout_order_ties,
+        false,
       )
     }
     for node_id, lane in lane_by_id {

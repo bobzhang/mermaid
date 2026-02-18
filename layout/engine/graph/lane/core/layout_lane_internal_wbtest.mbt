@@ -26,6 +26,36 @@ fn sorted_string_array(values : Array[String]) -> Array[String] {
 }
 
 ///|
+fn collect_rank_orders_from_lanes(
+  nodes_in_order : Array[MermaidNode],
+  rank_by_id : Map[String, Int],
+  lane_by_id : Map[String, Int],
+  max_rank : Int,
+) -> Array[Array[String]] {
+  let rank_orders : Array[Array[String]] = []
+  for rank in 0..<=max_rank {
+    let node_ids : Array[String] = []
+    for node in nodes_in_order {
+      if option_int_or(rank_by_id.get(node.id), -1) == rank {
+        node_ids.push(node.id)
+      }
+    }
+    node_ids.sort_by((left_id, right_id) => {
+      let left_lane = option_int_or(lane_by_id.get(left_id), 0)
+      let right_lane = option_int_or(lane_by_id.get(right_id), 0)
+      let lane_cmp = left_lane.compare(right_lane)
+      if lane_cmp != 0 {
+        lane_cmp
+      } else {
+        left_id.compare(right_id)
+      }
+    })
+    rank_orders.push(node_ids)
+  }
+  rank_orders
+}
+
+///|
 fn option_edge_index_count(indices : Array[Int]?) -> Int {
   match indices {
     Some(found) => found.length()
@@ -214,7 +244,7 @@ test "Layout lane collection accounts for long-span edges via virtual segments" 
   ]
 
   let lanes = collect_non_state_flow_lanes(
-    nodes, rank_by_id, 2, edges, false, false, true,
+    nodes, rank_by_id, 2, edges, false, false, true, false,
   )
   assert_true(
     option_int_or(lanes.get("Y"), 0) < option_int_or(lanes.get("X"), 0),
@@ -261,10 +291,43 @@ test "Layout lane collection uses long-span backward edges for ordering" {
   ]
 
   let lanes = collect_non_state_flow_lanes(
-    nodes, rank_by_id, 3, edges, false, false, true,
+    nodes, rank_by_id, 3, edges, false, false, true, false,
   )
   assert_true(
     option_int_or(lanes.get("F"), 0) < option_int_or(lanes.get("E"), 0),
+  )
+}
+
+///|
+test "Layout lane dagre parity ordering phase matches upstream corpus" {
+  let case1_nodes : Array[MermaidNode] = [
+    { id: "A", label: "A", shape: Rectangle },
+    { id: "B", label: "B", shape: Rectangle },
+    { id: "M", label: "M", shape: Rectangle },
+    { id: "X", label: "X", shape: Rectangle },
+    { id: "Y", label: "Y", shape: Rectangle },
+  ]
+  let case1_ranks : Map[String, Int] = {
+    "A": 0,
+    "B": 0,
+    "M": 1,
+    "X": 2,
+    "Y": 2,
+  }
+  let case1_edges : Array[MermaidEdge] = [
+    flow_edge("A", "M"),
+    flow_edge("B", "M"),
+    flow_edge("M", "X"),
+    flow_edge("M", "Y"),
+    flow_edge("A", "Y"),
+    flow_edge("B", "X"),
+  ]
+  let case1_lanes = collect_non_state_flow_lanes(
+    case1_nodes, case1_ranks, 2, case1_edges, false, false, false, true,
+  )
+  assert_eq(
+    collect_rank_orders_from_lanes(case1_nodes, case1_ranks, case1_lanes, 2),
+    [["B", "A"], ["M"], ["X", "Y"]],
   )
 }
 
@@ -1509,6 +1572,7 @@ test "Layout non-state rank selector keeps default strategy when exploration dis
 
   let selected = select_non_state_flow_rank_candidate(
     nodes, edges, false, true, false, false, false, true, true, true, false, false,
+    false,
   )
 
   assert_true(selected.use_greedy_feedback_arc_set)
@@ -1532,12 +1596,15 @@ test "Layout non-state rank selector picks lower-scored candidate when explorati
 
   let dfs_candidate = collect_non_state_flow_rank_candidate(
     nodes, edges, false, true, false, false, false, false, true, true, false, false,
+    false,
   )
   let greedy_candidate = collect_non_state_flow_rank_candidate(
     nodes, edges, false, true, false, false, false, false, true, true, true, false,
+    false,
   )
   let selected = select_non_state_flow_rank_candidate(
     nodes, edges, false, true, false, false, false, true, true, false, true, false,
+    false,
   )
 
   let selected_score = non_state_flow_rank_candidate_score(selected)
