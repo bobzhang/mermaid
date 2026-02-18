@@ -394,7 +394,16 @@ fn collect_dagre_network_simplex_ranks(
     node_index : Int,
     parent_index : Int,
     next_lim : Int,
+    visit_state_by_node : Array[Int],
   ) -> Int {
+    let visit_state = visit_state_by_node[node_index]
+    if visit_state == 1 {
+      return next_lim
+    }
+    if visit_state == 2 {
+      return next_lim
+    }
+    visit_state_by_node[node_index] = 1
     let low = next_lim
     let mut cursor = next_lim
     for tree_edge_index in tree_incident_edge_indices_by_node[node_index] {
@@ -405,11 +414,14 @@ fn collect_dagre_network_simplex_ranks(
       if other_index == parent_index {
         continue
       }
-      cursor = assign_low_lim(other_index, node_index, cursor)
+      cursor = assign_low_lim(
+        other_index, node_index, cursor, visit_state_by_node,
+      )
     }
     low_by_node[node_index] = low
     lim_by_node[node_index] = cursor
     parent_by_node[node_index] = parent_index
+    visit_state_by_node[node_index] = 2
     cursor + 1
   }
 
@@ -417,7 +429,12 @@ fn collect_dagre_network_simplex_ranks(
     node_index : Int,
     parent_index : Int,
     postorder : Array[Int],
+    visited : Array[Bool],
   ) -> Unit {
+    if visited[node_index] {
+      return
+    }
+    visited[node_index] = true
     for tree_edge_index in tree_incident_edge_indices_by_node[node_index] {
       if !tree_edge_active[tree_edge_index] {
         continue
@@ -426,7 +443,7 @@ fn collect_dagre_network_simplex_ranks(
       if other_index == parent_index {
         continue
       }
-      collect_postorder(other_index, node_index, postorder)
+      collect_postorder(other_index, node_index, postorder, visited)
     }
     postorder.push(node_index)
   }
@@ -487,15 +504,42 @@ fn collect_dagre_network_simplex_ranks(
     cut_value
   }
 
-  fn reinitialize_tree_state() -> Unit {
+  fn reinitialize_tree_state() -> Bool {
     for node_index in 0..<nodes_in_order.length() {
       parent_by_node[node_index] = -1
       low_by_node[node_index] = 0
       lim_by_node[node_index] = 0
     }
-    let _ = assign_low_lim(feasible_root_index, -1, 1)
+    let mut active_tree_edge_count = 0
+    for tree_edge_index in 0..<tree_edge_active.length() {
+      if tree_edge_active[tree_edge_index] {
+        active_tree_edge_count += 1
+      }
+    }
+    if active_tree_edge_count != nodes_in_order.length() - 1 {
+      return false
+    }
+    let low_lim_visit_state : Array[Int] = []
+    for _ in 0..<nodes_in_order.length() {
+      low_lim_visit_state.push(0)
+    }
+    let _ = assign_low_lim(feasible_root_index, -1, 1, low_lim_visit_state)
+    for node_index in 0..<nodes_in_order.length() {
+      if low_lim_visit_state[node_index] != 2 {
+        return false
+      }
+    }
     let postorder : Array[Int] = []
-    collect_postorder(feasible_root_index, -1, postorder)
+    let postorder_visited : Array[Bool] = []
+    for _ in 0..<nodes_in_order.length() {
+      postorder_visited.push(false)
+    }
+    collect_postorder(feasible_root_index, -1, postorder, postorder_visited)
+    for node_index in 0..<nodes_in_order.length() {
+      if !postorder_visited[node_index] {
+        return false
+      }
+    }
     for node_index in postorder {
       if node_index == feasible_root_index {
         continue
@@ -510,6 +554,7 @@ fn collect_dagre_network_simplex_ranks(
       }
       tree_edge_cutvalue[tree_edge_index] = calc_tree_cut_value(node_index)
     }
+    true
   }
 
   fn find_leave_tree_edge() -> Int? {
@@ -611,7 +656,9 @@ fn collect_dagre_network_simplex_ranks(
     }
   }
 
-  reinitialize_tree_state()
+  if !reinitialize_tree_state() {
+    return (rank_by_id, 0, false)
+  }
   let max_exchange_count = edge_source_index.length() * nodes_in_order.length() +
     1
   let mut exchange_count = 0
@@ -624,7 +671,9 @@ fn collect_dagre_network_simplex_ranks(
             let source_index = edge_source_index[enter_graph_edge_index]
             let target_index = edge_target_index[enter_graph_edge_index]
             tree_add_edge(source_index, target_index)
-            reinitialize_tree_state()
+            if !reinitialize_tree_state() {
+              return (rank_by_id, 0, false)
+            }
             update_ranks_from_tree()
             exchange_count += 1
             if exchange_count > max_exchange_count {
