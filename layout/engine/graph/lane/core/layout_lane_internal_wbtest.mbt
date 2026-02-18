@@ -627,6 +627,91 @@ test "Layout acyclic DFS phase matches upstream back-edge decomposition" {
 }
 
 ///|
+test "Layout acyclic DFS phase matches upstream corpus" {
+  let nodes : Array[MermaidNode] = [
+    { id: "A", label: "A", shape: Rectangle },
+    { id: "B", label: "B", shape: Rectangle },
+    { id: "C", label: "C", shape: Rectangle },
+    { id: "D", label: "D", shape: Rectangle },
+    { id: "E", label: "E", shape: Rectangle },
+    { id: "F", label: "F", shape: Rectangle },
+  ]
+
+  let case0_edges : Array[MermaidEdge] = [
+    flow_edge("E", "B"),
+    flow_edge("A", "E"),
+    flow_edge("C", "D"),
+    flow_edge("F", "A"),
+    flow_edge("E", "A"),
+    flow_edge("A", "E"),
+    flow_edge("A", "C"),
+    flow_edge("D", "F"),
+    flow_edge("B", "D"),
+  ]
+  let case0_state = collect_non_state_flow_acyclic_phase_state(
+    nodes, case0_edges, false, false,
+  )
+  assert_eq(sorted_int_array(case0_state.reversed_back_edge_indices), [3, 4])
+
+  let case1_edges : Array[MermaidEdge] = [
+    flow_edge("A", "C"),
+    flow_edge("A", "B"),
+    flow_edge("C", "F"),
+    flow_edge("C", "D"),
+    flow_edge("F", "B"),
+    flow_edge("C", "B"),
+    flow_edge("D", "B"),
+    flow_edge("F", "A"),
+    flow_edge("C", "B"),
+    flow_edge("D", "B"),
+    flow_edge("D", "C"),
+  ]
+  let case1_state = collect_non_state_flow_acyclic_phase_state(
+    nodes, case1_edges, false, false,
+  )
+  assert_eq(sorted_int_array(case1_state.reversed_back_edge_indices), [7, 10])
+
+  let case2_edges : Array[MermaidEdge] = [
+    flow_edge("F", "C"),
+    flow_edge("C", "F"),
+    flow_edge("C", "D"),
+    flow_edge("B", "F"),
+    flow_edge("B", "C"),
+    flow_edge("B", "E"),
+    flow_edge("A", "E"),
+    flow_edge("C", "F"),
+    flow_edge("F", "B"),
+    flow_edge("F", "C"),
+    flow_edge("C", "A"),
+    flow_edge("A", "E"),
+  ]
+  let case2_state = collect_non_state_flow_acyclic_phase_state(
+    nodes, case2_edges, false, false,
+  )
+  assert_eq(sorted_int_array(case2_state.reversed_back_edge_indices), [1, 7, 8])
+
+  let case3_edges : Array[MermaidEdge] = [
+    flow_edge("A", "B"),
+    flow_edge("D", "F"),
+    flow_edge("E", "D"),
+    flow_edge("E", "C"),
+    flow_edge("A", "B"),
+    flow_edge("D", "B"),
+    flow_edge("D", "A"),
+    flow_edge("D", "A"),
+    flow_edge("C", "D"),
+    flow_edge("A", "D"),
+    flow_edge("D", "B"),
+    flow_edge("D", "C"),
+    flow_edge("A", "B"),
+  ]
+  let case3_state = collect_non_state_flow_acyclic_phase_state(
+    nodes, case3_edges, false, false,
+  )
+  assert_eq(sorted_int_array(case3_state.reversed_back_edge_indices), [6, 7, 8])
+}
+
+///|
 test "Layout acyclic greedy phase matches upstream multi-edge decomposition" {
   let nodes : Array[MermaidNode] = [
     { id: "N1", label: "N1", shape: Rectangle },
