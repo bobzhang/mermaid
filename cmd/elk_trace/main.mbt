@@ -202,6 +202,34 @@ fn dump_rank_layers(prefix : String, layers : Array[Array[String]]) -> Unit {
 }
 
 ///|
+fn sorted_string_keys(entries : Map[String, Int]) -> Array[String] {
+  let keys : Array[String] = []
+  for key, _ in entries {
+    keys.push(key)
+  }
+  keys.sort()
+  keys
+}
+
+///|
+fn sorted_oriented_edges(
+  edges : Array[(String, String)],
+) -> Array[(String, String)] {
+  let sorted = edges.copy()
+  sorted.sort_by((left, right) => {
+    let (left_source, left_target) = left
+    let (right_source, right_target) = right
+    let source_cmp = left_source.compare(right_source)
+    if source_cmp != 0 {
+      source_cmp
+    } else {
+      left_target.compare(right_target)
+    }
+  })
+  sorted
+}
+
+///|
 fn dump_case_trace(case_name : String) -> Bool {
   match kernel_by_case_name(case_name) {
     Some(kernel) => {
@@ -222,6 +250,26 @@ fn dump_case_trace(case_name : String) -> Bool {
         ) {
         Some(trace) => {
           println("SEED\t\{trace.rank_seed_strategy}")
+          for node_id in sorted_string_keys(trace.rank_seed_rank_by_node_id) {
+            match trace.rank_seed_rank_by_node_id.get(node_id) {
+              Some(rank) => println("SEED_RANK\t\{node_id}\t\{rank}")
+              None => ()
+            }
+          }
+          for
+            node_id in sorted_string_keys(
+              trace.rank_seed_order_index_by_node_id,
+            ) {
+            match trace.rank_seed_order_index_by_node_id.get(node_id) {
+              Some(order_index) =>
+                println("SEED_ORDER\t\{node_id}\t\{order_index}")
+              None => ()
+            }
+          }
+          for edge in sorted_oriented_edges(trace.rank_seed_oriented_edges) {
+            let (source_id, target_id) = edge
+            println("SEED_EDGE\t\{source_id}\t\{target_id}")
+          }
           dump_rank_layers("SEED_LAYER", trace.rank_seed_layers)
           dump_rank_layers("RANK_LAYER", trace.rank_layers)
           true

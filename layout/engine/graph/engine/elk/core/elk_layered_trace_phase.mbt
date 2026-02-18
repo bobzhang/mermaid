@@ -2,6 +2,9 @@
 /// Rank-phase trace payload for ELK layered layout.
 pub(all) struct ElkLayeredRankTrace {
   rank_seed_strategy : String
+  rank_seed_rank_by_node_id : Map[String, Int]
+  rank_seed_order_index_by_node_id : Map[String, Int]
+  rank_seed_oriented_edges : Array[(String, String)]
   rank_seed_layers : Array[Array[String]]
   rank_layers : Array[Array[String]]
 }
@@ -19,6 +22,19 @@ fn rank_layers_from_rank_map(
     }
   }
   layers
+}
+
+///|
+fn oriented_edges_from_successors(
+  successors_by_node_id : Map[String, Array[String]],
+) -> Array[(String, String)] {
+  let oriented_edges : Array[(String, String)] = []
+  for source_id, successors in successors_by_node_id {
+    for target_id in successors {
+      oriented_edges.push((source_id, target_id))
+    }
+  }
+  oriented_edges
 }
 
 ///|
@@ -66,6 +82,11 @@ pub fn collect_elk_layered_rank_trace(
   Some({
     rank_seed_strategy: rank_seed_strategy_tag(
       rank_phase_state.rank_seed_strategy,
+    ),
+    rank_seed_rank_by_node_id: rank_seed_state.rank_by_node_id,
+    rank_seed_order_index_by_node_id: rank_seed_state.order_index_by_node_id,
+    rank_seed_oriented_edges: oriented_edges_from_successors(
+      rank_seed_state.successors_by_node_id,
     ),
     rank_seed_layers: rank_layers_from_rank_map(
       rank_seed_layers_by_rank,
