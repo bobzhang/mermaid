@@ -2,6 +2,8 @@
 priv struct ElkLayeredRankPhaseState {
   rank_seed_strategy : ElkLayeredRankSeedStrategy
   rank_seed_state : ElkLayeredRankSeedState
+  rank_order_strategy : ElkLayeredRankOrderStrategy
+  rank_order_debug_state : ElkLayeredRankOrderDebugState
   rank_node_ids_by_rank : Map[Int, Array[String]]
 }
 
@@ -74,7 +76,7 @@ fn run_elk_layered_rank_phase(
     base_order_index_by_node_id,
     rank_seed_state.max_rank,
   )
-  let rank_node_ids_by_rank = build_rank_node_ids_by_rank_for_order_strategy(
+  let (rank_node_ids_by_rank, rank_order_debug_state) = build_rank_node_ids_by_rank_for_order_strategy_with_debug(
     rank_order_strategy,
     graph,
     base_rank_node_ids_by_rank,
@@ -84,7 +86,13 @@ fn run_elk_layered_rank_phase(
     rank_seed_state.successors_by_node_id,
     rank_seed_state.predecessors_by_node_id,
   )
-  { rank_seed_strategy, rank_seed_state, rank_node_ids_by_rank }
+  {
+    rank_seed_strategy,
+    rank_seed_state,
+    rank_order_strategy,
+    rank_order_debug_state,
+    rank_node_ids_by_rank,
+  }
 }
 
 ///|

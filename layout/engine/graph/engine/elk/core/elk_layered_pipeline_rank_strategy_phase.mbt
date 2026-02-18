@@ -122,6 +122,17 @@ priv enum ElkLayeredRankOrderStrategy {
 }
 
 ///|
+priv struct ElkLayeredRankOrderDebugState {
+  optimized_seed_rank_node_ids_by_rank : Map[Int, Array[String]]
+  optimized_seed_crossing_score : Int
+  virtual_candidate_rank_node_ids_by_rank : Map[Int, Array[String]]
+  virtual_candidate_crossing_score : Int
+  selected_rank_node_ids_by_rank : Map[Int, Array[String]]
+  selected_crossing_score : Int
+  selected_source : String
+}
+
+///|
 fn select_elk_layered_rank_order_strategy(
   graph : MermaidGraph,
   rank_seed_strategy : ElkLayeredRankSeedStrategy,
@@ -182,7 +193,7 @@ fn build_minor_coord_by_strategy(
 }
 
 ///|
-fn build_rank_node_ids_by_rank_for_order_strategy(
+fn build_rank_node_ids_by_rank_for_order_strategy_with_debug(
   strategy : ElkLayeredRankOrderStrategy,
   graph : MermaidGraph,
   base_rank_node_ids_by_rank : Map[Int, Array[String]],
@@ -191,7 +202,7 @@ fn build_rank_node_ids_by_rank_for_order_strategy(
   order_index_by_node_id : Map[String, Int],
   successors_by_node_id : Map[String, Array[String]],
   predecessors_by_node_id : Map[String, Array[String]],
-) -> Map[Int, Array[String]] {
+) -> (Map[Int, Array[String]], ElkLayeredRankOrderDebugState) {
   let optimized_base_rank_node_ids_by_rank = build_optimized_rank_node_ids_by_rank(
     base_rank_node_ids_by_rank,
     max_rank,
@@ -202,9 +213,40 @@ fn build_rank_node_ids_by_rank_for_order_strategy(
     rank_by_node_id.length(),
     graph.edges.length(),
   )
+  let optimized_seed_crossing_score = rank_order_crossing_score(
+    optimized_base_rank_node_ids_by_rank, max_rank, rank_by_node_id, successors_by_node_id,
+  )
   match strategy {
-    SeedOrderOnly => base_rank_node_ids_by_rank
-    OptimizedSeedOrder => optimized_base_rank_node_ids_by_rank
+    SeedOrderOnly => {
+      let selected_crossing_score = rank_order_crossing_score(
+        base_rank_node_ids_by_rank, max_rank, rank_by_node_id, successors_by_node_id,
+      )
+      (
+        base_rank_node_ids_by_rank,
+        {
+          optimized_seed_rank_node_ids_by_rank: optimized_base_rank_node_ids_by_rank,
+          optimized_seed_crossing_score,
+          virtual_candidate_rank_node_ids_by_rank: optimized_base_rank_node_ids_by_rank,
+          virtual_candidate_crossing_score: optimized_seed_crossing_score,
+          selected_rank_node_ids_by_rank: base_rank_node_ids_by_rank,
+          selected_crossing_score,
+          selected_source: "seed-order",
+        },
+      )
+    }
+    OptimizedSeedOrder =>
+      (
+        optimized_base_rank_node_ids_by_rank,
+        {
+          optimized_seed_rank_node_ids_by_rank: optimized_base_rank_node_ids_by_rank,
+          optimized_seed_crossing_score,
+          virtual_candidate_rank_node_ids_by_rank: optimized_base_rank_node_ids_by_rank,
+          virtual_candidate_crossing_score: optimized_seed_crossing_score,
+          selected_rank_node_ids_by_rank: optimized_base_rank_node_ids_by_rank,
+          selected_crossing_score: optimized_seed_crossing_score,
+          selected_source: "optimized-seed",
+        },
+      )
     OptimizedSeedWithVirtualCandidate => {
       let virtual_ordering_state = build_virtual_ordering_state(
         base_rank_node_ids_by_rank, rank_by_node_id, max_rank, order_index_by_node_id,
@@ -225,9 +267,34 @@ fn build_rank_node_ids_by_rank_for_order_strategy(
         max_rank,
         virtual_ordering_state.virtual_by_node_id,
       )
-      select_lower_crossing_rank_order(
+      let virtual_candidate_crossing_score = rank_order_crossing_score(
+        real_virtual_rank_node_ids_by_rank, max_rank, rank_by_node_id, successors_by_node_id,
+      )
+      let selected_rank_node_ids_by_rank = select_lower_crossing_rank_order(
         optimized_base_rank_node_ids_by_rank, real_virtual_rank_node_ids_by_rank,
         max_rank, rank_by_node_id, successors_by_node_id,
+      )
+      let select_virtual_candidate = virtual_candidate_crossing_score <=
+        optimized_seed_crossing_score
+      (
+        selected_rank_node_ids_by_rank,
+        {
+          optimized_seed_rank_node_ids_by_rank: optimized_base_rank_node_ids_by_rank,
+          optimized_seed_crossing_score,
+          virtual_candidate_rank_node_ids_by_rank: real_virtual_rank_node_ids_by_rank,
+          virtual_candidate_crossing_score,
+          selected_rank_node_ids_by_rank,
+          selected_crossing_score: if select_virtual_candidate {
+            virtual_candidate_crossing_score
+          } else {
+            optimized_seed_crossing_score
+          },
+          selected_source: if select_virtual_candidate {
+            "virtual"
+          } else {
+            "optimized-seed"
+          },
+        },
       )
     }
   }

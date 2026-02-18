@@ -250,6 +250,17 @@ fn dump_case_trace(case_name : String) -> Bool {
         ) {
         Some(trace) => {
           println("SEED\t\{trace.rank_seed_strategy}")
+          println("ORDER_STRATEGY\t\{trace.rank_order_strategy}")
+          println("ORDER_SELECTED_SOURCE\t\{trace.rank_order_selected_source}")
+          println(
+            "ORDER_SCORE\toptimized-seed\t\{trace.rank_order_optimized_seed_crossings}",
+          )
+          println(
+            "ORDER_SCORE\tvirtual-candidate\t\{trace.rank_order_virtual_candidate_crossings}",
+          )
+          println(
+            "ORDER_SCORE\tselected\t\{trace.rank_order_selected_crossings}",
+          )
           for node_id in sorted_string_keys(trace.rank_seed_rank_by_node_id) {
             match trace.rank_seed_rank_by_node_id.get(node_id) {
               Some(rank) => println("SEED_RANK\t\{node_id}\t\{rank}")
@@ -271,6 +282,18 @@ fn dump_case_trace(case_name : String) -> Bool {
             println("SEED_EDGE\t\{source_id}\t\{target_id}")
           }
           dump_rank_layers("SEED_LAYER", trace.rank_seed_layers)
+          dump_rank_layers(
+            "ORDER_LAYER_OPTIMIZED_SEED",
+            trace.rank_order_optimized_seed_layers,
+          )
+          dump_rank_layers(
+            "ORDER_LAYER_VIRTUAL_CANDIDATE",
+            trace.rank_order_virtual_candidate_layers,
+          )
+          dump_rank_layers(
+            "ORDER_LAYER_SELECTED",
+            trace.rank_order_selected_layers,
+          )
           dump_rank_layers("RANK_LAYER", trace.rank_layers)
           true
         }

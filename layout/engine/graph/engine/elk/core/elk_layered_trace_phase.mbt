@@ -6,6 +6,14 @@ pub(all) struct ElkLayeredRankTrace {
   rank_seed_order_index_by_node_id : Map[String, Int]
   rank_seed_oriented_edges : Array[(String, String)]
   rank_seed_layers : Array[Array[String]]
+  rank_order_strategy : String
+  rank_order_optimized_seed_layers : Array[Array[String]]
+  rank_order_optimized_seed_crossings : Int
+  rank_order_virtual_candidate_layers : Array[Array[String]]
+  rank_order_virtual_candidate_crossings : Int
+  rank_order_selected_layers : Array[Array[String]]
+  rank_order_selected_crossings : Int
+  rank_order_selected_source : String
   rank_layers : Array[Array[String]]
 }
 
@@ -48,6 +56,17 @@ fn rank_seed_strategy_tag(
 }
 
 ///|
+fn rank_order_strategy_tag(
+  rank_order_strategy : ElkLayeredRankOrderStrategy,
+) -> String {
+  match rank_order_strategy {
+    SeedOrderOnly => "seed-order-only"
+    OptimizedSeedOrder => "optimized-seed-order"
+    OptimizedSeedWithVirtualCandidate => "optimized-seed-with-virtual-candidate"
+  }
+}
+
+///|
 /// Collects ELK layered rank-phase trace for flowchart graphs.
 pub fn collect_elk_layered_rank_trace(
   request : GraphLayoutBackendRequest,
@@ -72,6 +91,7 @@ pub fn collect_elk_layered_rank_trace(
   let setup_state = run_elk_layered_setup_phase(tuned_request)
   let rank_phase_state = run_elk_layered_rank_phase(setup_state)
   let rank_seed_state = rank_phase_state.rank_seed_state
+  let rank_order_debug_state = rank_phase_state.rank_order_debug_state
   let rank_seed_layers_by_rank = build_rank_node_ids_by_lane(
     setup_state.nodes_in_order,
     rank_seed_state.rank_by_node_id,
@@ -92,6 +112,25 @@ pub fn collect_elk_layered_rank_trace(
       rank_seed_layers_by_rank,
       rank_seed_state.max_rank,
     ),
+    rank_order_strategy: rank_order_strategy_tag(
+      rank_phase_state.rank_order_strategy,
+    ),
+    rank_order_optimized_seed_layers: rank_layers_from_rank_map(
+      rank_order_debug_state.optimized_seed_rank_node_ids_by_rank,
+      rank_seed_state.max_rank,
+    ),
+    rank_order_optimized_seed_crossings: rank_order_debug_state.optimized_seed_crossing_score,
+    rank_order_virtual_candidate_layers: rank_layers_from_rank_map(
+      rank_order_debug_state.virtual_candidate_rank_node_ids_by_rank,
+      rank_seed_state.max_rank,
+    ),
+    rank_order_virtual_candidate_crossings: rank_order_debug_state.virtual_candidate_crossing_score,
+    rank_order_selected_layers: rank_layers_from_rank_map(
+      rank_order_debug_state.selected_rank_node_ids_by_rank,
+      rank_seed_state.max_rank,
+    ),
+    rank_order_selected_crossings: rank_order_debug_state.selected_crossing_score,
+    rank_order_selected_source: rank_order_debug_state.selected_source,
     rank_layers: rank_layers_from_rank_map(
       rank_phase_state.rank_node_ids_by_rank,
       rank_seed_state.max_rank,
