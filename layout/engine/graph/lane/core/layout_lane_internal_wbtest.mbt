@@ -115,6 +115,87 @@ fn dagre_cross_count_from_layering(
 }
 
 ///|
+fn collect_rank_barycenters_from_layering(
+  layering : Array[Array[String]],
+  rank : Int,
+  incoming_from_neighbor : Bool,
+  edges : Array[MermaidEdge],
+  rank_by_id : Map[String, Int],
+) -> Map[String, String] {
+  let result : Map[String, String] = {}
+  if rank < 0 || rank >= layering.length() {
+    return result
+  }
+  let neighbor_rank = if incoming_from_neighbor { rank - 1 } else { rank + 1 }
+  if neighbor_rank < 0 || neighbor_rank >= layering.length() {
+    return result
+  }
+  let neighbor_order : Map[String, Int] = {}
+  for i, node_id in layering[neighbor_rank] {
+    neighbor_order[node_id] = i
+  }
+  for node_id in layering[rank] {
+    let mut sum = 0
+    let mut weight = 0
+    for edge_index, edge in edges {
+      match (rank_by_id.get(edge.source), rank_by_id.get(edge.target)) {
+        (Some(source_rank), Some(target_rank)) =>
+          if target_rank > source_rank {
+            if incoming_from_neighbor {
+              if source_rank < rank && rank <= target_rank {
+                let current_node = if rank == target_rank {
+                  edge.target
+                } else {
+                  "__lane_dummy_f_\{edge_index}_\{rank}"
+                }
+                if current_node == node_id {
+                  let neighbor_node = if neighbor_rank == source_rank {
+                    edge.source
+                  } else {
+                    "__lane_dummy_f_\{edge_index}_\{neighbor_rank}"
+                  }
+                  match neighbor_order.get(neighbor_node) {
+                    Some(order) => {
+                      sum += order
+                      weight += 1
+                    }
+                    None => ()
+                  }
+                }
+              }
+            } else if source_rank <= rank && rank < target_rank {
+              let current_node = if rank == source_rank {
+                edge.source
+              } else {
+                "__lane_dummy_f_\{edge_index}_\{rank}"
+              }
+              if current_node == node_id {
+                let neighbor_node = if neighbor_rank == target_rank {
+                  edge.target
+                } else {
+                  "__lane_dummy_f_\{edge_index}_\{neighbor_rank}"
+                }
+                match neighbor_order.get(neighbor_node) {
+                  Some(order) => {
+                    sum += order
+                    weight += 1
+                  }
+                  None => ()
+                }
+              }
+            }
+          }
+        _ => ()
+      }
+    }
+    if weight > 0 {
+      result[node_id] = "\{sum}/\{weight}"
+    }
+  }
+  result
+}
+
+///|
 fn option_edge_index_count(indices : Array[Int]?) -> Int {
   match indices {
     Some(found) => found.length()
@@ -556,6 +637,14 @@ test "Layout lane dagre parity ordering phase matches upstream sweep trace" {
       ["E", "F"],
     ],
   ])
+  let case2_pass2_rank0_bary = collect_rank_barycenters_from_layering(
+    trace[3],
+    0,
+    false,
+    edges,
+    ranks,
+  )
+  assert_eq(case2_pass2_rank0_bary, { "A": "6/3", "B": "9/3" })
 
   let case3_nodes : Array[MermaidNode] = [
     { id: "A", label: "A", shape: Rectangle },
@@ -611,6 +700,14 @@ test "Layout lane dagre parity ordering phase matches upstream sweep trace" {
     [["B", "A"], ["D", "C"], ["F", "E"], ["H", "G"]],
     [["B", "A"], ["D", "C"], ["F", "E"], ["H", "G"]],
   ])
+  let case3_pass2_rank0_bary = collect_rank_barycenters_from_layering(
+    case3_trace[3],
+    0,
+    false,
+    case3_edges,
+    case3_ranks,
+  )
+  assert_eq(case3_pass2_rank0_bary, { "A": "1/2", "B": "1/2" })
   let case3_pass_cross_counts : Array[Int] = []
   for pass_trace_index in 1..<5 {
     case3_pass_cross_counts.push(
