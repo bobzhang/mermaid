@@ -458,6 +458,26 @@ fn collect_dagre_network_simplex_cut_phase_state(
     -1
   }
 
+  fn sorted_active_tree_edge_indices(node_index : Int) -> Array[Int] {
+    let ordered : Array[Int] = []
+    for tree_edge_index in tree_incident_edge_indices_by_node[node_index] {
+      if !tree_edge_active[tree_edge_index] {
+        continue
+      }
+      ordered.push(tree_edge_index)
+    }
+    ordered.sort_by((left_edge_index, right_edge_index) => {
+      let left_other = tree_other_node(left_edge_index, node_index)
+      let right_other = tree_other_node(right_edge_index, node_index)
+      let other_cmp = left_other.compare(right_other)
+      if other_cmp != 0 {
+        return other_cmp
+      }
+      left_edge_index.compare(right_edge_index)
+    })
+    ordered
+  }
+
   fn assign_low_lim(
     node_index : Int,
     parent_index : Int,
@@ -474,10 +494,7 @@ fn collect_dagre_network_simplex_cut_phase_state(
     visit_state_by_node[node_index] = 1
     let low = next_lim
     let mut cursor = next_lim
-    for tree_edge_index in tree_incident_edge_indices_by_node[node_index] {
-      if !tree_edge_active[tree_edge_index] {
-        continue
-      }
+    for tree_edge_index in sorted_active_tree_edge_indices(node_index) {
       let other_index = tree_other_node(tree_edge_index, node_index)
       if other_index == parent_index {
         continue
@@ -503,10 +520,7 @@ fn collect_dagre_network_simplex_cut_phase_state(
       return
     }
     visited[node_index] = true
-    for tree_edge_index in tree_incident_edge_indices_by_node[node_index] {
-      if !tree_edge_active[tree_edge_index] {
-        continue
-      }
+    for tree_edge_index in sorted_active_tree_edge_indices(node_index) {
       let other_index = tree_other_node(tree_edge_index, node_index)
       if other_index == parent_index {
         continue
