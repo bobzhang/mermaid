@@ -188,6 +188,93 @@ test "elk layered crossing selector prefers lower-crossing rank order candidate"
 }
 
 ///|
+test "elk layered long-span rank-order candidates stay score-tied" {
+  let graph = wb_graph(["N0", "N1", "N2", "N3", "N4", "N5", "N6"], [
+    ("N0", "N1"),
+    ("N1", "N2"),
+    ("N2", "N3"),
+    ("N3", "N4"),
+    ("N4", "N5"),
+    ("N5", "N6"),
+    ("N0", "N4"),
+    ("N1", "N5"),
+    ("N2", "N6"),
+    ("N6", "N3"),
+  ])
+  let prep_state = @layout_engine_graph_prep_core.prepare_graph_inputs(
+    graph, false,
+  )
+  let nodes_in_order = @layout_engine_graph_internal_core.reorder_nodes_for_flow_layout(
+    prep_state.nodes_in_order,
+    graph.edges,
+  )
+  let base_order_index_by_node_id = build_order_index_by_node_id(nodes_in_order)
+  let (
+    rank_by_node_id,
+    max_rank,
+    order_index_by_node_id,
+    successors_by_node_id,
+    predecessors_by_node_id,
+  ) = build_layered_rank_state(
+    graph,
+    false,
+    prep_state.subgraph_entry_by_id,
+    prep_state.subgraph_exit_by_id,
+    nodes_in_order,
+  )
+  let base_rank_node_ids_by_rank = build_rank_node_ids_by_lane(
+    nodes_in_order, rank_by_node_id, order_index_by_node_id, base_order_index_by_node_id,
+    max_rank,
+  )
+  let optimized_base_rank_node_ids_by_rank = build_optimized_rank_node_ids_by_rank(
+    base_rank_node_ids_by_rank,
+    max_rank,
+    predecessors_by_node_id,
+    successors_by_node_id,
+    order_index_by_node_id,
+    rank_by_node_id,
+    rank_by_node_id.length(),
+    graph.edges.length(),
+  )
+  let virtual_ordering_state = build_virtual_ordering_state(
+    base_rank_node_ids_by_rank, rank_by_node_id, max_rank, order_index_by_node_id,
+    successors_by_node_id,
+  )
+  let optimized_virtual_rank_node_ids_by_rank = build_optimized_rank_node_ids_by_rank(
+    virtual_ordering_state.rank_node_ids_by_rank,
+    max_rank,
+    virtual_ordering_state.predecessors_by_node_id,
+    virtual_ordering_state.successors_by_node_id,
+    virtual_ordering_state.order_index_by_node_id,
+    virtual_ordering_state.rank_by_node_id,
+    virtual_ordering_state.rank_by_node_id.length(),
+    graph.edges.length(),
+  )
+  let real_virtual_rank_node_ids_by_rank = filter_real_rank_node_ids_by_rank(
+    optimized_virtual_rank_node_ids_by_rank,
+    max_rank,
+    virtual_ordering_state.virtual_by_node_id,
+  )
+  let base_score = rank_order_crossing_score(
+    optimized_base_rank_node_ids_by_rank, max_rank, rank_by_node_id, successors_by_node_id,
+  )
+  let virtual_score = rank_order_crossing_score(
+    real_virtual_rank_node_ids_by_rank, max_rank, rank_by_node_id, successors_by_node_id,
+  )
+  assert_eq(base_score, virtual_score)
+  let base_rank_two = match optimized_base_rank_node_ids_by_rank.get(2) {
+    Some(node_ids) => node_ids
+    None => []
+  }
+  let virtual_rank_two = match real_virtual_rank_node_ids_by_rank.get(2) {
+    Some(node_ids) => node_ids
+    None => []
+  }
+  assert_eq(base_rank_two, ["N2", "N5"])
+  assert_eq(virtual_rank_two, ["N2", "N5"])
+}
+
+///|
 test "elk layered rank state breaks feedback cycles into forward-ranked edges" {
   let graph = wb_graph(["A", "B", "C"], [("A", "B"), ("B", "C"), ("C", "A")])
   let prep_state = @layout_engine_graph_prep_core.prepare_graph_inputs(
