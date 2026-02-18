@@ -9,6 +9,16 @@ priv struct NonStateFlowAcyclicPhaseState {
 }
 
 ///|
+priv struct DagreParitySweepStepTrace {
+  pass_index : Int
+  incoming_from_neighbor : Bool
+  bias_right : Bool
+  candidate_crossings : Int
+  barycenters_by_rank : Map[Int, Map[String, String]]
+  rank_nodes : Array[Array[String]]
+}
+
+///|
 fn collect_non_state_flow_acyclic_phase_state(
   nodes_in_order : Array[MermaidNode],
   edges : Array[MermaidEdge],
@@ -1188,6 +1198,7 @@ fn collect_non_state_flow_lanes(
     preserve_fanout_order_ties,
     prefer_dagre_order_parity,
     None,
+    None,
   )
 }
 
@@ -1202,6 +1213,7 @@ fn collect_non_state_flow_lanes_internal(
   preserve_fanout_order_ties : Bool,
   prefer_dagre_order_parity : Bool,
   dagre_parity_rank_nodes_trace : Array[Array[Array[String]]]?,
+  dagre_parity_sweep_step_trace : Array[DagreParitySweepStepTrace]?,
 ) -> Map[String, Int] {
   if nodes_in_order.length() == 0 {
     return {}
@@ -1740,6 +1752,41 @@ fn collect_non_state_flow_lanes_internal(
     }
   }
 
+  fn map_string_string_entry_count(entries : Map[String, String]) -> Int {
+    let mut count = 0
+    for _, _ in entries {
+      count += 1
+    }
+    count
+  }
+
+  fn map_int_map_string_string_entry_count(
+    entries : Map[Int, Map[String, String]],
+  ) -> Int {
+    let mut count = 0
+    for _, by_node in entries {
+      count += map_string_string_entry_count(by_node)
+    }
+    count
+  }
+
+  // Keep trace-only fields considered "read" in production code so MoonBit
+  // does not warn when these fields are asserted from wbtests.
+  fn consume_dagre_parity_sweep_step_trace(
+    step : DagreParitySweepStepTrace,
+  ) -> Int {
+    let mut acc = step.pass_index + step.candidate_crossings
+    if step.incoming_from_neighbor {
+      acc += 1
+    }
+    if step.bias_right {
+      acc += 1
+    }
+    acc += map_int_map_string_string_entry_count(step.barycenters_by_rank)
+    acc += step.rank_nodes.length()
+    acc
+  }
+
   fn barycenter_pass(
     rank_nodes : Array[Array[String]],
     start_rank : Int,
@@ -1850,6 +1897,7 @@ fn collect_non_state_flow_lanes_internal(
       Map[String, Array[String]],
     ],
     order_index_by_rank_node : Map[Int, Map[String, Int]],
+    pass_barycenters_by_rank : Map[Int, Map[String, String]]?,
   ) -> Unit {
     let mut rank = start_rank
     while rank != end_rank {
@@ -1915,6 +1963,21 @@ fn collect_non_state_flow_lanes_internal(
           }
           unsortable_index_by_id[node_id] = order_index
         }
+      }
+
+      match pass_barycenters_by_rank {
+        Some(barycenters_by_rank) => {
+          let barycenters_by_node : Map[String, String] = {}
+          for node_id in sortable_ids {
+            let sum = option_int_or(sortable_num_by_id.get(node_id), 0)
+            let count = option_int_or(sortable_den_by_id.get(node_id), 1)
+            barycenters_by_node[node_id] = "\{sum}/\{count}"
+          }
+          if map_string_string_entry_count(barycenters_by_node) > 0 {
+            barycenters_by_rank[rank] = barycenters_by_node
+          }
+        }
+        None => ()
       }
 
       sortable_ids.sort_by((left_id, right_id) => {
@@ -2079,6 +2142,7 @@ fn collect_non_state_flow_lanes_internal(
       )
       while rounds_since_best < 4 {
         let bias_right = pass % 4 >= 2
+        let pass_barycenters_by_rank : Map[Int, Map[String, String]] = {}
         if pass % 2 == 0 {
           dagre_parity_barycenter_pass(
             rank_nodes,
@@ -2090,6 +2154,7 @@ fn collect_non_state_flow_lanes_internal(
             incoming_adjacent_neighbor_ids_by_rank_node,
             outgoing_adjacent_neighbor_ids_by_rank_node,
             dagre_parity_order_index_by_rank_node,
+            Some(pass_barycenters_by_rank),
           )
         } else {
           dagre_parity_barycenter_pass(
@@ -2102,6 +2167,7 @@ fn collect_non_state_flow_lanes_internal(
             incoming_adjacent_neighbor_ids_by_rank_node,
             outgoing_adjacent_neighbor_ids_by_rank_node,
             dagre_parity_order_index_by_rank_node,
+            Some(pass_barycenters_by_rank),
           )
         }
         let candidate_dagre_crossings = dagre_parity_cross_count(
@@ -2117,6 +2183,21 @@ fn collect_non_state_flow_lanes_internal(
         maybe_record_dagre_parity_rank_nodes(
           dagre_parity_rank_nodes_trace, rank_nodes,
         )
+        match dagre_parity_sweep_step_trace {
+          Some(step_trace) => {
+            let step = {
+              pass_index: pass,
+              incoming_from_neighbor: pass % 2 == 1,
+              bias_right,
+              candidate_crossings: candidate_dagre_crossings,
+              barycenters_by_rank: pass_barycenters_by_rank,
+              rank_nodes: clone_rank_nodes(rank_nodes),
+            }
+            let _ = consume_dagre_parity_sweep_step_trace(step)
+            step_trace.push(step)
+          }
+          None => ()
+        }
         pass = pass + 1
         rounds_since_best += 1
       }

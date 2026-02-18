@@ -56,146 +56,6 @@ fn collect_rank_orders_from_lanes(
 }
 
 ///|
-fn dagre_cross_count_from_layering(
-  layering : Array[Array[String]],
-  edges : Array[MermaidEdge],
-  rank_by_id : Map[String, Int],
-) -> Int {
-  if layering.length() <= 1 {
-    return 0
-  }
-  let mut total = 0
-  for upper_rank in 0..<(layering.length() - 1) {
-    let north_pos : Map[String, Int] = {}
-    let south_pos : Map[String, Int] = {}
-    for i, node_id in layering[upper_rank] {
-      north_pos[node_id] = i
-    }
-    for i, node_id in layering[upper_rank + 1] {
-      south_pos[node_id] = i
-    }
-
-    let source_orders : Array[Int] = []
-    let target_orders : Array[Int] = []
-    for edge in edges {
-      match (rank_by_id.get(edge.source), rank_by_id.get(edge.target)) {
-        (Some(source_rank), Some(target_rank)) =>
-          if source_rank == upper_rank && target_rank == upper_rank + 1 {
-            match (north_pos.get(edge.source), south_pos.get(edge.target)) {
-              (Some(source_order), Some(target_order)) => {
-                source_orders.push(source_order)
-                target_orders.push(target_order)
-              }
-              _ => ()
-            }
-          }
-        _ => ()
-      }
-    }
-    for i in 0..<source_orders.length() {
-      let left_source_order = source_orders[i]
-      let left_target_order = target_orders[i]
-      for j in (i + 1)..<source_orders.length() {
-        let right_source_order = source_orders[j]
-        let right_target_order = target_orders[j]
-        if (
-            left_source_order < right_source_order &&
-            left_target_order > right_target_order
-          ) ||
-          (
-            left_source_order > right_source_order &&
-            left_target_order < right_target_order
-          ) {
-          total += 1
-        }
-      }
-    }
-  }
-  total
-}
-
-///|
-fn collect_rank_barycenters_from_layering(
-  layering : Array[Array[String]],
-  rank : Int,
-  incoming_from_neighbor : Bool,
-  edges : Array[MermaidEdge],
-  rank_by_id : Map[String, Int],
-) -> Map[String, String] {
-  let result : Map[String, String] = {}
-  if rank < 0 || rank >= layering.length() {
-    return result
-  }
-  let neighbor_rank = if incoming_from_neighbor { rank - 1 } else { rank + 1 }
-  if neighbor_rank < 0 || neighbor_rank >= layering.length() {
-    return result
-  }
-  let neighbor_order : Map[String, Int] = {}
-  for i, node_id in layering[neighbor_rank] {
-    neighbor_order[node_id] = i
-  }
-  for node_id in layering[rank] {
-    let mut sum = 0
-    let mut weight = 0
-    for edge_index, edge in edges {
-      match (rank_by_id.get(edge.source), rank_by_id.get(edge.target)) {
-        (Some(source_rank), Some(target_rank)) =>
-          if target_rank > source_rank {
-            if incoming_from_neighbor {
-              if source_rank < rank && rank <= target_rank {
-                let current_node = if rank == target_rank {
-                  edge.target
-                } else {
-                  "__lane_dummy_f_\{edge_index}_\{rank}"
-                }
-                if current_node == node_id {
-                  let neighbor_node = if neighbor_rank == source_rank {
-                    edge.source
-                  } else {
-                    "__lane_dummy_f_\{edge_index}_\{neighbor_rank}"
-                  }
-                  match neighbor_order.get(neighbor_node) {
-                    Some(order) => {
-                      sum += order
-                      weight += 1
-                    }
-                    None => ()
-                  }
-                }
-              }
-            } else if source_rank <= rank && rank < target_rank {
-              let current_node = if rank == source_rank {
-                edge.source
-              } else {
-                "__lane_dummy_f_\{edge_index}_\{rank}"
-              }
-              if current_node == node_id {
-                let neighbor_node = if neighbor_rank == target_rank {
-                  edge.target
-                } else {
-                  "__lane_dummy_f_\{edge_index}_\{neighbor_rank}"
-                }
-                match neighbor_order.get(neighbor_node) {
-                  Some(order) => {
-                    sum += order
-                    weight += 1
-                  }
-                  None => ()
-                }
-              }
-            }
-          }
-        _ => ()
-      }
-    }
-    if weight > 0 {
-      result[node_id] = "\{sum}/\{weight}"
-    }
-  }
-  result
-}
-
-///|
 fn option_edge_index_count(indices : Array[Int]?) -> Int {
   match indices {
     Some(found) => found.length()
@@ -576,6 +436,7 @@ test "Layout lane dagre parity ordering phase matches upstream sweep trace" {
     flow_edge("B", "E"),
   ]
   let trace : Array[Array[Array[String]]] = []
+  let step_trace : Array[DagreParitySweepStepTrace] = []
   let _ = collect_non_state_flow_lanes_internal(
     nodes,
     ranks,
@@ -586,6 +447,7 @@ test "Layout lane dagre parity ordering phase matches upstream sweep trace" {
     false,
     true,
     Some(trace),
+    Some(step_trace),
   )
   assert_eq(trace, [
     [
@@ -637,14 +499,24 @@ test "Layout lane dagre parity ordering phase matches upstream sweep trace" {
       ["E", "F"],
     ],
   ])
-  let case2_pass2_rank0_bary = collect_rank_barycenters_from_layering(
-    trace[3],
-    0,
-    false,
-    edges,
-    ranks,
+  assert_eq(step_trace.length(), 4)
+  assert_eq(
+    [
+      step_trace[0].candidate_crossings,
+      step_trace[1].candidate_crossings,
+      step_trace[2].candidate_crossings,
+      step_trace[3].candidate_crossings,
+    ],
+    [3, 3, 3, 3],
   )
-  assert_eq(case2_pass2_rank0_bary, { "A": "6/3", "B": "9/3" })
+  assert_eq(step_trace[2].pass_index, 2)
+  assert_eq(step_trace[2].incoming_from_neighbor, false)
+  assert_eq(step_trace[2].bias_right, true)
+  match step_trace[2].barycenters_by_rank.get(0) {
+    Some(rank0_barycenters) =>
+      assert_eq(rank0_barycenters, { "A": "6/3", "B": "9/3" })
+    None => fail("missing case2 rank0 barycenters for pass2")
+  }
 
   let case3_nodes : Array[MermaidNode] = [
     { id: "A", label: "A", shape: Rectangle },
@@ -681,6 +553,7 @@ test "Layout lane dagre parity ordering phase matches upstream sweep trace" {
     flow_edge("F", "G"),
   ]
   let case3_trace : Array[Array[Array[String]]] = []
+  let case3_step_trace : Array[DagreParitySweepStepTrace] = []
   let _ = collect_non_state_flow_lanes_internal(
     case3_nodes,
     case3_ranks,
@@ -691,6 +564,7 @@ test "Layout lane dagre parity ordering phase matches upstream sweep trace" {
     false,
     true,
     Some(case3_trace),
+    Some(case3_step_trace),
   )
   assert_eq(case3_trace, [
     [["A", "B"], ["C", "D"], ["E", "F"], ["G", "H"]],
@@ -700,25 +574,25 @@ test "Layout lane dagre parity ordering phase matches upstream sweep trace" {
     [["B", "A"], ["D", "C"], ["F", "E"], ["H", "G"]],
     [["B", "A"], ["D", "C"], ["F", "E"], ["H", "G"]],
   ])
-  let case3_pass2_rank0_bary = collect_rank_barycenters_from_layering(
-    case3_trace[3],
-    0,
-    false,
-    case3_edges,
-    case3_ranks,
+  assert_eq(case3_step_trace.length(), 4)
+  assert_eq(
+    [
+      case3_step_trace[0].candidate_crossings,
+      case3_step_trace[1].candidate_crossings,
+      case3_step_trace[2].candidate_crossings,
+      case3_step_trace[3].candidate_crossings,
+    ],
+    [3, 3, 3, 3],
   )
-  assert_eq(case3_pass2_rank0_bary, { "A": "1/2", "B": "1/2" })
-  let case3_pass_cross_counts : Array[Int] = []
-  for pass_trace_index in 1..<5 {
-    case3_pass_cross_counts.push(
-      dagre_cross_count_from_layering(
-        case3_trace[pass_trace_index],
-        case3_edges,
-        case3_ranks,
-      ),
-    )
+  assert_eq(case3_step_trace[2].pass_index, 2)
+  assert_eq(case3_step_trace[2].incoming_from_neighbor, false)
+  assert_eq(case3_step_trace[2].bias_right, true)
+  match case3_step_trace[2].barycenters_by_rank.get(0) {
+    Some(rank0_barycenters) =>
+      assert_eq(rank0_barycenters, { "A": "1/2", "B": "1/2" })
+    None => fail("missing case3 rank0 barycenters for pass2")
   }
-  assert_eq(case3_pass_cross_counts, [3, 3, 3, 3])
+  assert_eq(case3_step_trace[3].rank_nodes, case3_trace[4])
   assert_eq(case3_trace[5], case3_trace[4])
 }
 
