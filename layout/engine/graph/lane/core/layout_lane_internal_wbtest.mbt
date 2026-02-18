@@ -106,6 +106,45 @@ fn active_tree_cut_entries_from_cut_phase(
 }
 
 ///|
+fn active_tree_cut_entries_from_exchange_step(
+  nodes_in_order : Array[MermaidNode],
+  exchange_step : DagreNetworkSimplexExchangeStep,
+) -> Map[String, Int] {
+  let entries : Map[String, Int] = {}
+  for tree_edge_index in 0..<exchange_step.tree_edge_u.length() {
+    if !exchange_step.tree_edge_active[tree_edge_index] {
+      continue
+    }
+    let left_id = nodes_in_order[exchange_step.tree_edge_u[tree_edge_index]].id
+    let right_id = nodes_in_order[exchange_step.tree_edge_v[tree_edge_index]].id
+    let key = normalized_node_pair_key(left_id, right_id)
+    entries[key] = exchange_step.tree_edge_cutvalue[tree_edge_index]
+  }
+  entries
+}
+
+///|
+fn normalized_leave_tree_edge_key_from_exchange_step(
+  nodes_in_order : Array[MermaidNode],
+  exchange_step : DagreNetworkSimplexExchangeStep,
+) -> String {
+  normalized_node_pair_key(
+    nodes_in_order[exchange_step.leave_tree_edge_u].id,
+    nodes_in_order[exchange_step.leave_tree_edge_v].id,
+  )
+}
+
+///|
+fn directed_enter_graph_edge_key_from_exchange_step(
+  nodes_in_order : Array[MermaidNode],
+  exchange_step : DagreNetworkSimplexExchangeStep,
+) -> String {
+  let source_id = nodes_in_order[exchange_step.enter_graph_edge_source].id
+  let target_id = nodes_in_order[exchange_step.enter_graph_edge_target].id
+  "\{source_id}->\{target_id}"
+}
+
+///|
 fn map_string_int_entry_count(entries : Map[String, Int]) -> Int {
   let mut count = 0
   for _, _ in entries {
@@ -821,6 +860,114 @@ test "Layout simplex ranker matches upstream pivot baseline final ranks" {
   assert_eq(option_int_or(ranks.get("C"), -1), 1)
   assert_eq(option_int_or(ranks.get("D"), -1), 1)
   assert_eq(option_int_or(ranks.get("E"), -1), 1)
+}
+
+///|
+test "Layout simplex exchange trace matches upstream multi-pivot baseline" {
+  let nodes : Array[MermaidNode] = [
+    { id: "A", label: "A", shape: Rectangle },
+    { id: "B", label: "B", shape: Rectangle },
+    { id: "C", label: "C", shape: Rectangle },
+    { id: "D", label: "D", shape: Rectangle },
+    { id: "E", label: "E", shape: Rectangle },
+    { id: "F", label: "F", shape: Rectangle },
+    { id: "G", label: "G", shape: Rectangle },
+    { id: "H", label: "H", shape: Rectangle },
+  ]
+  let edges : Array[MermaidEdge] = [
+    flow_edge("A", "C"),
+    flow_edge("B", "C"),
+    flow_edge("B", "E"),
+    flow_edge("C", "F"),
+    flow_edge("C", "G"),
+    flow_edge("D", "F"),
+    flow_edge("D", "G"),
+    flow_edge("D", "H"),
+    flow_edge("E", "F"),
+    flow_edge("E", "G"),
+    flow_edge("E", "H"),
+  ]
+
+  let (_, _, ok, exchange_steps) = collect_dagre_network_simplex_ranks_with_trace(
+    nodes,
+    edges,
+    [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+    [],
+    true,
+  )
+  if !ok {
+    fail("expected simplex exchange trace")
+  }
+  assert_eq(exchange_steps.length(), 3)
+
+  let step0 = exchange_steps[0]
+  assert_eq(
+    normalized_leave_tree_edge_key_from_exchange_step(nodes, step0),
+    "B->C",
+  )
+  assert_eq(
+    directed_enter_graph_edge_key_from_exchange_step(nodes, step0),
+    "C->F",
+  )
+  assert_eq(step0.rank_by_node_index, [-2, -2, -1, -1, -1, 0, 0, 0])
+  assert_eq(step0.parent_by_node, [-1, 4, 0, 5, 5, 2, 3, 3])
+  assert_eq(step0.low_by_node, [1, 4, 1, 1, 4, 1, 1, 2])
+  assert_eq(step0.lim_by_node, [8, 4, 7, 3, 5, 6, 1, 2])
+  let cut_entries0 = active_tree_cut_entries_from_exchange_step(nodes, step0)
+  assert_eq(map_string_int_entry_count(cut_entries0), 7)
+  assert_eq(option_int_or(cut_entries0.get("A->C"), -999), 1)
+  assert_eq(option_int_or(cut_entries0.get("B->E"), -999), 2)
+  assert_eq(option_int_or(cut_entries0.get("C->F"), -999), 1)
+  assert_eq(option_int_or(cut_entries0.get("D->F"), -999), -2)
+  assert_eq(option_int_or(cut_entries0.get("D->G"), -999), 3)
+  assert_eq(option_int_or(cut_entries0.get("D->H"), -999), 2)
+  assert_eq(option_int_or(cut_entries0.get("E->F"), -999), 4)
+
+  let step1 = exchange_steps[1]
+  assert_eq(
+    normalized_leave_tree_edge_key_from_exchange_step(nodes, step1),
+    "D->F",
+  )
+  assert_eq(
+    directed_enter_graph_edge_key_from_exchange_step(nodes, step1),
+    "C->G",
+  )
+  assert_eq(step1.rank_by_node_index, [-2, -2, -1, -1, -1, 0, 0, 0])
+  assert_eq(step1.parent_by_node, [-1, 4, 0, 6, 5, 2, 2, 3])
+  assert_eq(step1.low_by_node, [1, 1, 1, 4, 1, 1, 4, 4])
+  assert_eq(step1.lim_by_node, [8, 1, 7, 5, 2, 3, 6, 4])
+  let cut_entries1 = active_tree_cut_entries_from_exchange_step(nodes, step1)
+  assert_eq(map_string_int_entry_count(cut_entries1), 7)
+  assert_eq(option_int_or(cut_entries1.get("A->C"), -999), 1)
+  assert_eq(option_int_or(cut_entries1.get("B->E"), -999), 2)
+  assert_eq(option_int_or(cut_entries1.get("C->F"), -999), -1)
+  assert_eq(option_int_or(cut_entries1.get("C->G"), -999), 2)
+  assert_eq(option_int_or(cut_entries1.get("D->G"), -999), 1)
+  assert_eq(option_int_or(cut_entries1.get("D->H"), -999), 2)
+  assert_eq(option_int_or(cut_entries1.get("E->F"), -999), 4)
+
+  let step2 = exchange_steps[2]
+  assert_eq(
+    normalized_leave_tree_edge_key_from_exchange_step(nodes, step2),
+    "C->F",
+  )
+  assert_eq(
+    directed_enter_graph_edge_key_from_exchange_step(nodes, step2),
+    "B->C",
+  )
+  assert_eq(step2.rank_by_node_index, [-2, -2, -1, -1, -1, 0, 0, 0])
+  assert_eq(step2.parent_by_node, [-1, 2, 0, 6, 1, 4, 2, 3])
+  assert_eq(step2.low_by_node, [1, 1, 1, 4, 1, 1, 4, 4])
+  assert_eq(step2.lim_by_node, [8, 3, 7, 5, 2, 1, 6, 4])
+  let cut_entries2 = active_tree_cut_entries_from_exchange_step(nodes, step2)
+  assert_eq(map_string_int_entry_count(cut_entries2), 7)
+  assert_eq(option_int_or(cut_entries2.get("A->C"), -999), 1)
+  assert_eq(option_int_or(cut_entries2.get("B->C"), -999), 1)
+  assert_eq(option_int_or(cut_entries2.get("B->E"), -999), 1)
+  assert_eq(option_int_or(cut_entries2.get("C->G"), -999), 2)
+  assert_eq(option_int_or(cut_entries2.get("D->G"), -999), 1)
+  assert_eq(option_int_or(cut_entries2.get("D->H"), -999), 2)
+  assert_eq(option_int_or(cut_entries2.get("E->F"), -999), 3)
 }
 
 ///|
