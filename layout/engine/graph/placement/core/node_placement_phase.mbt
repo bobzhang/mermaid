@@ -18,7 +18,6 @@ priv struct LegacyPlacementInput {
   enhanced_horizontal_state_flow : Bool
   refined_horizontal_non_state_flow : Bool
   refined_horizontal_non_state_labeled_cycle_flow : Bool
-  horizontal_cycle_non_state_flow : Bool
   use_subgraph_redirects : Bool
   subgraph_entry_by_id : Map[String, String]
   subgraph_exit_by_id : Map[String, String]
@@ -65,7 +64,6 @@ pub fn run_legacy_placement_phase(
     enhanced_horizontal_state_flow,
     refined_horizontal_non_state_flow: lane_state.refined_horizontal_non_state_flow,
     refined_horizontal_non_state_labeled_cycle_flow: lane_state.refined_horizontal_non_state_labeled_cycle_flow,
-    horizontal_cycle_non_state_flow: lane_state.horizontal_cycle_non_state_flow,
     use_subgraph_redirects,
     subgraph_entry_by_id,
     subgraph_exit_by_id,
@@ -96,7 +94,6 @@ fn compute_legacy_node_placement_state(
   let enhanced_horizontal_state_flow = input.enhanced_horizontal_state_flow
   let refined_horizontal_non_state_flow = input.refined_horizontal_non_state_flow
   let refined_horizontal_non_state_labeled_cycle_flow = input.refined_horizontal_non_state_labeled_cycle_flow
-  let horizontal_cycle_non_state_flow = input.horizontal_cycle_non_state_flow
   let use_subgraph_redirects = input.use_subgraph_redirects
   let subgraph_entry_by_id = input.subgraph_entry_by_id
   let subgraph_exit_by_id = input.subgraph_exit_by_id
@@ -197,7 +194,7 @@ fn compute_legacy_node_placement_state(
     }
   }
   let horizontal_rank_center_x_by_index : Map[Int, Int] = {}
-  if horizontal && horizontal_cycle_non_state_flow {
+  if horizontal {
     for flow_rank_index in 0..<=flow_max_rank {
       let rank_width = option_int_or(
         max_width_by_flow_rank_index.get(flow_rank_index),
@@ -227,18 +224,10 @@ fn compute_legacy_node_placement_state(
       flow_rank
     }
     let x = if horizontal {
-      if horizontal_cycle_non_state_flow {
-        option_int_or(
-          horizontal_rank_center_x_by_index.get(flow_rank_index),
-          padding + flow_rank_index * node_spacing + width / 2,
-        )
-      } else {
-        let rank_shift = option_int_or(
-          horizontal_rank_shift_by_index.get(flow_rank_index),
-          0,
-        )
-        padding + flow_rank_index * node_spacing + rank_shift + width / 2
-      }
+      option_int_or(
+        horizontal_rank_center_x_by_index.get(flow_rank_index),
+        padding + flow_rank_index * node_spacing + width / 2,
+      )
     } else if flat_state_graph {
       padding +
       90 +
