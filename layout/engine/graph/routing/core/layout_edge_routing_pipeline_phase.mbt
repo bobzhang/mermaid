@@ -314,6 +314,7 @@ fn assign_edge_boundary_offsets_to_contexts(
       if source_cohort_assignments.length() >= 2 {
         assign_compact_boundary_offsets_for_cohort(
           source_cohort_assignments, edge_layout_contexts, true, source_boundary_offset_by_context_index,
+          false,
         )
       }
     }

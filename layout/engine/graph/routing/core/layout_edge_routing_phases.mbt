@@ -218,6 +218,7 @@ fn assign_compact_boundary_offsets_for_cohort(
   edge_layout_contexts : Array[EdgeLayoutContext],
   source_endpoint : Bool,
   offsets_by_context_index : Map[Int, Int],
+  preserve_existing_offsets : Bool,
 ) -> Unit {
   if cohort_assignments.length() <= 1 {
     return
@@ -253,14 +254,17 @@ fn assign_compact_boundary_offsets_for_cohort(
     )
   }
   let used_offsets : Map[Int, Bool] = {}
-  for assignment in cohort_assignments {
-    match offsets_by_context_index.get(assignment.context_index) {
-      Some(offset) => used_offsets[offset] = true
-      None => ()
+  if preserve_existing_offsets {
+    for assignment in cohort_assignments {
+      match offsets_by_context_index.get(assignment.context_index) {
+        Some(offset) => used_offsets[offset] = true
+        None => ()
+      }
     }
   }
   for slot, assignment in cohort_assignments {
-    if offsets_by_context_index.contains(assignment.context_index) {
+    if preserve_existing_offsets &&
+      offsets_by_context_index.contains(assignment.context_index) {
       continue
     }
     let preferred_offset = candidate_offsets[slot]

@@ -73,6 +73,53 @@ fn wb_points_equal(left : Array[Point], right : Array[Point]) -> Bool {
 }
 
 ///|
+fn find_context(
+  contexts : Array[EdgeLayoutContext],
+  source_id : String,
+  target_id : String,
+) -> EdgeLayoutContext {
+  for context in contexts {
+    if context.resolved_source_id == source_id &&
+      context.resolved_target_id == target_id {
+      return context
+    }
+  }
+  contexts[0]
+}
+
+///|
+fn context_source_anchor(context : EdgeLayoutContext) -> Point {
+  let moving_forward = if context.edge_horizontal {
+    context.target.x >= context.source.x
+  } else {
+    context.target.y >= context.source.y
+  }
+  @layout_engine_graph_edge_core.boundary_anchor_point(
+    context.source,
+    context.edge_horizontal,
+    true,
+    moving_forward,
+    context.source_boundary_offset_minor,
+  )
+}
+
+///|
+fn context_target_anchor(context : EdgeLayoutContext) -> Point {
+  let moving_forward = if context.edge_horizontal {
+    context.target.x >= context.source.x
+  } else {
+    context.target.y >= context.source.y
+  }
+  @layout_engine_graph_edge_core.boundary_anchor_point(
+    context.target,
+    context.edge_horizontal,
+    false,
+    moving_forward,
+    context.target_boundary_offset_minor,
+  )
+}
+
+///|
 test "Layout simplify polyline removes duplicate and interior collinear points" {
   let points : Array[Point] = [
     { x: 0, y: 0 },
@@ -609,4 +656,152 @@ test "Layout boundary offsets keep source fanout separation on large graphs" {
     }
   }
   assert_eq(fanout_offsets.length(), 3)
+}
+
+///|
+test "Layout compact cohort assignment can rebalance preassigned source offsets" {
+  let source = positioned_box("A", 100, 100)
+  let target_1 = positioned_box("B1", 300, 40)
+  let target_2 = positioned_box("B2", 300, 100)
+  let target_3 = positioned_box("B3", 300, 160)
+  let contexts : Array[EdgeLayoutContext] = [
+    {
+      edge: flow_edge("A", "B1"),
+      resolved_source_id: "A",
+      resolved_target_id: "B1",
+      source,
+      target: target_1,
+      edge_horizontal: true,
+      compact_endpoint_port_priority: true,
+      source_boundary_cohort_size: 0,
+      source_boundary_offset_minor: 0,
+      target_boundary_offset_minor: 0,
+    },
+    {
+      edge: flow_edge("A", "B2"),
+      resolved_source_id: "A",
+      resolved_target_id: "B2",
+      source,
+      target: target_2,
+      edge_horizontal: true,
+      compact_endpoint_port_priority: true,
+      source_boundary_cohort_size: 0,
+      source_boundary_offset_minor: 0,
+      target_boundary_offset_minor: 0,
+    },
+    {
+      edge: flow_edge("A", "B3"),
+      resolved_source_id: "A",
+      resolved_target_id: "B3",
+      source,
+      target: target_3,
+      edge_horizontal: true,
+      compact_endpoint_port_priority: true,
+      source_boundary_cohort_size: 0,
+      source_boundary_offset_minor: 0,
+      target_boundary_offset_minor: 0,
+    },
+  ]
+  let cohort_assignments : Array[BoundaryEndpointAssignment] = [
+    {
+      context_index: 0,
+      source_endpoint: true,
+      side: Right,
+      peer_major: target_1.x,
+      peer_minor: target_1.y,
+      edge_span: edge_layout_context_span(contexts[0]),
+    },
+    {
+      context_index: 1,
+      source_endpoint: true,
+      side: Right,
+      peer_major: target_2.x,
+      peer_minor: target_2.y,
+      edge_span: edge_layout_context_span(contexts[1]),
+    },
+    {
+      context_index: 2,
+      source_endpoint: true,
+      side: Right,
+      peer_major: target_3.x,
+      peer_minor: target_3.y,
+      edge_span: edge_layout_context_span(contexts[2]),
+    },
+  ]
+  let preserved_offsets : Map[Int, Int] = { 0: 0 }
+  assign_compact_boundary_offsets_for_cohort(
+    cohort_assignments, contexts, true, preserved_offsets, true,
+  )
+  assert_eq(option_int_or(preserved_offsets.get(0), -999), 0)
+
+  let rebalanced_offsets : Map[Int, Int] = { 0: 0 }
+  assign_compact_boundary_offsets_for_cohort(
+    cohort_assignments, contexts, true, rebalanced_offsets, false,
+  )
+  assert_true(option_int_or(rebalanced_offsets.get(0), 0) != 0)
+  let unique_offsets : Map[Int, Bool] = {}
+  for _, offset in rebalanced_offsets {
+    unique_offsets[offset] = true
+  }
+  assert_eq(unique_offsets.length(), 3)
+}
+
+///|
+test "Layout boundary offsets keep reciprocal and fanout anchors separated on flow pattern" {
+  let edges : Array[MermaidEdge] = [
+    flow_edge("Start", "Check"),
+    flow_edge("Check", "Build"),
+    flow_edge("Check", "Fix"),
+    flow_edge("Fix", "Check"),
+    flow_edge("Build", "Ship"),
+  ]
+  let graph = flow_graph_with_edges(edges)
+  let positioned_by_id : Map[String, PositionedNode] = {
+    "Start": positioned_box("Start", 80, 100),
+    "Check": positioned_box("Check", 200, 100),
+    "Build": positioned_box("Build", 380, 60),
+    "Fix": positioned_box("Fix", 380, 140),
+    "Ship": positioned_box("Ship", 520, 60),
+  }
+  let node_horizontal_by_id : Map[String, Bool] = {
+    "Start": true,
+    "Check": true,
+    "Build": true,
+    "Fix": true,
+    "Ship": true,
+  }
+  let (contexts, _) = collect_edge_layout_contexts(
+    graph,
+    true,
+    false,
+    {},
+    {},
+    positioned_by_id,
+    node_horizontal_by_id,
+  )
+  assign_edge_boundary_offsets_to_contexts(graph, false, false, true, contexts)
+
+  let check_build = find_context(contexts, "Check", "Build")
+  let check_fix = find_context(contexts, "Check", "Fix")
+  let start_check = find_context(contexts, "Start", "Check")
+  let fix_check = find_context(contexts, "Fix", "Check")
+
+  assert_eq(check_build.source_boundary_cohort_size, 2)
+  assert_eq(check_fix.source_boundary_cohort_size, 2)
+  assert_true(
+    check_build.source_boundary_offset_minor !=
+    check_fix.source_boundary_offset_minor,
+  )
+
+  let start_check_target_anchor = context_target_anchor(start_check)
+  let fix_check_target_anchor = context_target_anchor(fix_check)
+  assert_true(
+    !wb_point_equal(start_check_target_anchor, fix_check_target_anchor),
+  )
+
+  let check_build_source_anchor = context_source_anchor(check_build)
+  let check_fix_source_anchor = context_source_anchor(check_fix)
+  assert_true(
+    !wb_point_equal(check_build_source_anchor, check_fix_source_anchor),
+  )
 }
