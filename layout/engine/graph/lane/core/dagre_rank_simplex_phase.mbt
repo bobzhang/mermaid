@@ -1295,3 +1295,28 @@ fn collect_dagre_network_simplex_ranks_from_rank_edge_specs(
   let _ = dagre_network_simplex_exchange_trace_checksum(exchange_trace)
   (ranks, max_rank, ok)
 }
+
+///|
+/// Compute dagre network simplex ranks from a pre-oriented edge list.
+pub fn collect_dagre_network_simplex_ranks_from_directed_edges(
+  nodes_in_order : Array[MermaidNode],
+  directed_edges : Array[(String, String)],
+) -> (Map[String, Int], Int, Bool) {
+  let edge_specs : Array[DagreRankEdgeSpec] = []
+  for edge in directed_edges {
+    let (source_id, target_id) = edge
+    if source_id == target_id {
+      continue
+    }
+    edge_specs.push({
+      source_id,
+      target_id,
+      minlen: 1,
+      weight: 1,
+      nesting_edge: false,
+    })
+  }
+  collect_dagre_network_simplex_ranks_from_rank_edge_specs(
+    nodes_in_order, edge_specs, true,
+  )
+}

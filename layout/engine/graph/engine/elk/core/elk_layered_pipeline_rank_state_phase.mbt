@@ -61,53 +61,62 @@ fn collect_visible_resolved_edges(
 }
 
 ///|
-fn build_layered_rank_state(
-  graph : MermaidGraph,
-  use_subgraph_redirects : Bool,
-  subgraph_entry_by_id : Map[String, String],
-  subgraph_exit_by_id : Map[String, String],
-  nodes_in_order : Array[MermaidNode],
-) -> (
-  Map[String, Int],
-  Int,
-  Map[String, Int],
-  Map[String, Array[String]],
-  Map[String, Array[String]],
-) {
-  let node_ids : Array[String] = []
-  for node in nodes_in_order {
-    node_ids.push(node.id)
+fn build_rank_neighbors_from_oriented_edges(
+  node_ids : Array[String],
+  oriented_edges : Array[(String, String)],
+  rank_by_node_id : Map[String, Int],
+  order_index_by_node_id : Map[String, Int],
+) -> (Map[String, Array[String]], Map[String, Array[String]]) {
+  let successors_by_node_id : Map[String, Array[String]] = {}
+  let predecessors_by_node_id : Map[String, Array[String]] = {}
+  for node_id in node_ids {
+    successors_by_node_id[node_id] = []
+    predecessors_by_node_id[node_id] = []
   }
-  let base_order_index_by_node_id = build_order_index_by_node_id(nodes_in_order)
-  let resolved_edges = collect_visible_resolved_edges(
-    graph, use_subgraph_redirects, subgraph_entry_by_id, subgraph_exit_by_id, node_ids,
-  )
-  let feedback_order_node_ids = compute_feedback_acyclic_node_order(
-    node_ids, resolved_edges, base_order_index_by_node_id,
-  )
-  let order_index_by_node_id = build_order_index_by_id(feedback_order_node_ids)
-  let acyclic_edges = orient_edges_by_feedback_order(
-    node_ids, resolved_edges, order_index_by_node_id,
-  )
+  for edge in oriented_edges {
+    let (source_id, target_id) = edge
+    let source_rank = option_int_or(rank_by_node_id.get(source_id), -1)
+    let target_rank = option_int_or(rank_by_node_id.get(target_id), -1)
+    if source_rank < 0 || target_rank < 0 {
+      continue
+    }
+    let (oriented_source_id, oriented_target_id) = if source_rank < target_rank {
+      (source_id, target_id)
+    } else if source_rank > target_rank {
+      (target_id, source_id)
+    } else if compare_node_ids_by_order(
+        source_id, target_id, order_index_by_node_id,
+      ) <=
+      0 {
+      (source_id, target_id)
+    } else {
+      (target_id, source_id)
+    }
+    append_normalized_ordering_edge(
+      oriented_source_id, oriented_target_id, successors_by_node_id, predecessors_by_node_id,
+    )
+  }
+  (successors_by_node_id, predecessors_by_node_id)
+}
 
+///|
+fn build_longest_path_rank_by_node_id_from_oriented_edges(
+  node_ids : Array[String],
+  oriented_edges : Array[(String, String)],
+  order_index_by_node_id : Map[String, Int],
+) -> (Map[String, Int], Int) {
   let rank_by_node_id : Map[String, Int] = {}
   let indegree_by_node_id : Map[String, Int] = {}
   let successors_by_node_id : Map[String, Array[String]] = {}
-  let predecessors_by_node_id : Map[String, Array[String]] = {}
   for node_id in node_ids {
     rank_by_node_id[node_id] = 0
     indegree_by_node_id[node_id] = 0
     successors_by_node_id[node_id] = []
-    predecessors_by_node_id[node_id] = []
   }
-  for edge in acyclic_edges {
+  for edge in oriented_edges {
     let (source_id, target_id) = edge
     match successors_by_node_id.get(source_id) {
       Some(successors) => successors.push(target_id)
-      None => ()
-    }
-    match predecessors_by_node_id.get(target_id) {
-      Some(predecessors) => predecessors.push(source_id)
       None => ()
     }
     indegree_by_node_id[target_id] = option_int_or(
@@ -156,6 +165,70 @@ fn build_layered_rank_state(
       max_rank = rank
     }
   }
+  (rank_by_node_id, max_rank)
+}
+
+///|
+fn build_native_feedback_rank_by_node_id(
+  node_ids : Array[String],
+  nodes_in_order : Array[MermaidNode],
+  oriented_edges : Array[(String, String)],
+  order_index_by_node_id : Map[String, Int],
+) -> (Map[String, Int], Int) {
+  let (simplex_rank_by_node_id, simplex_max_rank, simplex_ok) = @layout_engine_graph_lane_core.collect_dagre_network_simplex_ranks_from_directed_edges(
+    nodes_in_order, oriented_edges,
+  )
+  if simplex_ok {
+    let mut all_nodes_present = true
+    for node_id in node_ids {
+      if !simplex_rank_by_node_id.contains(node_id) {
+        all_nodes_present = false
+        break
+      }
+    }
+    if all_nodes_present {
+      return (simplex_rank_by_node_id, simplex_max_rank)
+    }
+  }
+  build_longest_path_rank_by_node_id_from_oriented_edges(
+    node_ids, oriented_edges, order_index_by_node_id,
+  )
+}
+
+///|
+fn build_layered_rank_state(
+  graph : MermaidGraph,
+  use_subgraph_redirects : Bool,
+  subgraph_entry_by_id : Map[String, String],
+  subgraph_exit_by_id : Map[String, String],
+  nodes_in_order : Array[MermaidNode],
+) -> (
+  Map[String, Int],
+  Int,
+  Map[String, Int],
+  Map[String, Array[String]],
+  Map[String, Array[String]],
+) {
+  let node_ids : Array[String] = []
+  for node in nodes_in_order {
+    node_ids.push(node.id)
+  }
+  let base_order_index_by_node_id = build_order_index_by_node_id(nodes_in_order)
+  let resolved_edges = collect_visible_resolved_edges(
+    graph, use_subgraph_redirects, subgraph_entry_by_id, subgraph_exit_by_id, node_ids,
+  )
+  let feedback_orientation_state = compute_feedback_order_orientation_state(
+    node_ids, resolved_edges, base_order_index_by_node_id,
+  )
+  let order_index_by_node_id = feedback_orientation_state.order_index_by_node_id
+  let acyclic_edges = feedback_orientation_state.oriented_edges
+
+  let (rank_by_node_id, max_rank) = build_native_feedback_rank_by_node_id(
+    node_ids, nodes_in_order, acyclic_edges, order_index_by_node_id,
+  )
+  let (successors_by_node_id, predecessors_by_node_id) = build_rank_neighbors_from_oriented_edges(
+    node_ids, acyclic_edges, rank_by_node_id, order_index_by_node_id,
+  )
   (
     rank_by_node_id, max_rank, order_index_by_node_id, successors_by_node_id, predecessors_by_node_id,
   )

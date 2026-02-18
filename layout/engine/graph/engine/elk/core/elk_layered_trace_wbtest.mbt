@@ -29,8 +29,8 @@ test "elk layered rank trace keeps fanout kernel baseline" {
   ])
   let trace = collect_rank_trace_for_graph(graph)
   assert_eq(trace.rank_seed_strategy, "native-feedback")
-  assert_eq(trace.rank_seed_layers, [["A"], ["C", "B", "D"], ["E"], ["F"]])
-  assert_eq(trace.rank_layers, [["A"], ["C", "B", "D"], ["E"], ["F"]])
+  assert_eq(trace.rank_seed_layers, [["A"], ["C", "B"], ["E", "D"], ["F"]])
+  assert_eq(trace.rank_layers, [["A"], ["C", "B"], ["E", "D"], ["F"]])
 }
 
 ///|
@@ -69,16 +69,18 @@ test "elk layered rank trace keeps long span kernel baseline" {
   assert_eq(trace.rank_seed_strategy, "native-feedback")
   assert_eq(trace.rank_seed_layers, [
     ["N0"],
-    ["N1", "N4"],
+    ["N1"],
     ["N2", "N5"],
-    ["N3"],
     ["N6"],
+    ["N3"],
+    ["N4"],
   ])
   assert_eq(trace.rank_layers, [
     ["N0"],
-    ["N1", "N4"],
+    ["N1"],
     ["N2", "N5"],
-    ["N3"],
     ["N6"],
+    ["N3"],
+    ["N4"],
   ])
 }
