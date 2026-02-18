@@ -5,3 +5,9 @@ import {
 import {
   "moonbitlang/core/test",
 } for "test"
+
+import {
+  "bobzhang/beautiful_mermaid/layout/engine/graph/internal/core" @layout_engine_graph_internal_core,
+  "bobzhang/beautiful_mermaid/layout/engine/graph/prep/core" @layout_engine_graph_prep_core,
+  "bobzhang/beautiful_mermaid/parser/header/core" @parser,
+} for "wbtest"

@@ -221,6 +221,315 @@ fn sorted_back_edge_indices(back_edges : Map[Int, Bool]) -> Array[Int] {
 }
 
 ///|
+fn fixture_nodes_and_edges_for_acyclic_phase(
+  source : String,
+) -> (Array[MermaidNode], Array[MermaidEdge]) raise {
+  let graph = @parser.parse_mermaid(source.trim_end().to_string())
+  let prep_state = @layout_engine_graph_prep_core.prepare_graph_inputs(
+    graph, true,
+  )
+  let nodes_in_order = @layout_engine_graph_internal_core.reorder_nodes_for_flow_layout(
+    prep_state.nodes_in_order,
+    graph.edges,
+  )
+  (nodes_in_order, graph.edges)
+}
+
+///|
+fn edge_key_from_index(edges : Array[MermaidEdge], edge_index : Int) -> String {
+  let edge = edges[edge_index]
+  "\{edge.source}->\{edge.target}"
+}
+
+///|
+fn reversed_back_edge_keys(
+  edges : Array[MermaidEdge],
+  reversed_back_edge_indices : Array[Int],
+) -> Array[String] {
+  let keys : Array[String] = []
+  for edge_index in reversed_back_edge_indices {
+    keys.push(edge_key_from_index(edges, edge_index))
+  }
+  sorted_string_array(keys)
+}
+
+///|
+fn stress_003_subgraph_bridges_source() -> String {
+  (
+    #|graph LR
+    #|SRC[SRC]
+    #|SNK[SNK]
+    #|
+    #|subgraph LEFT
+    #|L1[L1]
+    #|L2[L2]
+    #|L3[L3]
+    #|L4[L4]
+    #|L5[L5]
+    #|end
+    #|
+    #|subgraph MID
+    #|M1[M1]
+    #|M2[M2]
+    #|M3[M3]
+    #|M4[M4]
+    #|M5[M5]
+    #|end
+    #|
+    #|subgraph RIGHT
+    #|R1[R1]
+    #|R2[R2]
+    #|R3[R3]
+    #|R4[R4]
+    #|R5[R5]
+    #|end
+    #|
+    #|SRC --> L1
+    #|SRC --> M1
+    #|SRC --> R1
+    #|
+    #|L1 --> L2
+    #|L2 --> L3
+    #|L3 --> L4
+    #|L4 --> L5
+    #|L5 --> L2
+    #|
+    #|M1 --> M2
+    #|M2 --> M3
+    #|M3 --> M4
+    #|M4 --> M5
+    #|M5 --> M2
+    #|
+    #|R1 --> R2
+    #|R2 --> R3
+    #|R3 --> R4
+    #|R4 --> R5
+    #|R5 --> R2
+    #|
+    #|L2 --> M1
+    #|L3 --> M2
+    #|L4 --> M3
+    #|L5 --> M4
+    #|L1 --> M5
+    #|
+    #|M2 --> R1
+    #|M3 --> R2
+    #|M4 --> R3
+    #|M5 --> R4
+    #|M1 --> R5
+    #|
+    #|R4 --> M1
+    #|R3 --> L2
+    #|M3 --> L1
+    #|R2 --> L4
+    #|
+    #|L5 --> SNK
+    #|M5 --> SNK
+    #|R5 --> SNK
+    #|SNK --> M2
+    #|
+  )
+  .trim_end()
+  .to_string()
+}
+
+///|
+fn stress_006_nested_bridge_loops_source() -> String {
+  (
+    #|graph TB
+    #|SRC[SRC]
+    #|SNK[SNK]
+    #|
+    #|subgraph LEFT_CLUSTER
+    #|L0[L0]
+    #|L1[L1]
+    #|L2[L2]
+    #|subgraph LEFT_INNER
+    #|LI1[LI1]
+    #|LI2[LI2]
+    #|LI3[LI3]
+    #|end
+    #|L3[L3]
+    #|L4[L4]
+    #|end
+    #|
+    #|subgraph RIGHT_CLUSTER
+    #|R0[R0]
+    #|R1[R1]
+    #|R2[R2]
+    #|subgraph RIGHT_INNER
+    #|RI1[RI1]
+    #|RI2[RI2]
+    #|RI3[RI3]
+    #|end
+    #|R3[R3]
+    #|R4[R4]
+    #|end
+    #|
+    #|SRC --> L0
+    #|SRC --> R0
+    #|
+    #|L0 --> L1
+    #|L1 --> L2
+    #|L2 --> L3
+    #|L3 --> L4
+    #|L4 --> SNK
+    #|
+    #|R0 --> R1
+    #|R1 --> R2
+    #|R2 --> R3
+    #|R3 --> R4
+    #|R4 --> SNK
+    #|
+    #|L1 --> LI1
+    #|LI1 --> LI2
+    #|LI2 --> LI3
+    #|LI3 --> L3
+    #|
+    #|R1 --> RI1
+    #|RI1 --> RI2
+    #|RI2 --> RI3
+    #|RI3 --> R3
+    #|
+    #|LI1 --> RI2
+    #|LI2 --> R2
+    #|L2 --> RI1
+    #|L3 --> R1
+    #|
+    #|RI1 --> LI3
+    #|R2 --> LI2
+    #|RI3 --> L1
+    #|R3 --> L2
+    #|
+    #|L4 --> RI3
+    #|R4 --> LI3
+    #|SNK --> LI1
+    #|
+  )
+  .trim_end()
+  .to_string()
+}
+
+///|
+fn stress_012_interleaved_subgraph_feedback_source() -> String {
+  (
+    #|graph LR
+    #|SRC[SRC]
+    #|SNK[SNK]
+    #|
+    #|subgraph LEFT_FLOW
+    #|L1[L1]
+    #|L2[L2]
+    #|L3[L3]
+    #|L4[L4]
+    #|subgraph LEFT_CORE
+    #|LC1[LC1]
+    #|LC2[LC2]
+    #|LC3[LC3]
+    #|end
+    #|L5[L5]
+    #|L6[L6]
+    #|end
+    #|
+    #|subgraph MID_FLOW
+    #|M1[M1]
+    #|M2[M2]
+    #|M3[M3]
+    #|M4[M4]
+    #|M5[M5]
+    #|M6[M6]
+    #|end
+    #|
+    #|subgraph RIGHT_FLOW
+    #|R1[R1]
+    #|R2[R2]
+    #|R3[R3]
+    #|R4[R4]
+    #|subgraph RIGHT_CORE
+    #|RC1[RC1]
+    #|RC2[RC2]
+    #|RC3[RC3]
+    #|end
+    #|R5[R5]
+    #|R6[R6]
+    #|end
+    #|
+    #|SRC --> L1
+    #|SRC --> M1
+    #|SRC --> R1
+    #|
+    #|L1 --> L2
+    #|L2 --> L3
+    #|L3 --> L4
+    #|L4 --> L5
+    #|L5 --> L6
+    #|
+    #|R1 --> R2
+    #|R2 --> R3
+    #|R3 --> R4
+    #|R4 --> R5
+    #|R5 --> R6
+    #|
+    #|M1 --> M2
+    #|M2 --> M3
+    #|M3 --> M4
+    #|M4 --> M5
+    #|M5 --> M6
+    #|
+    #|L2 --> LC1
+    #|LC1 --> LC2
+    #|LC2 --> LC3
+    #|LC3 --> L5
+    #|
+    #|R2 --> RC1
+    #|RC1 --> RC2
+    #|RC2 --> RC3
+    #|RC3 --> R5
+    #|
+    #|L3 --> M2
+    #|L4 --> M3
+    #|L5 --> M4
+    #|LC2 --> M5
+    #|
+    #|M2 --> R2
+    #|M3 --> R3
+    #|M4 --> R4
+    #|M5 --> R5
+    #|
+    #|R3 --> M2
+    #|R4 --> M3
+    #|R5 --> M4
+    #|RC2 --> M5
+    #|
+    #|M3 --> LC1
+    #|M4 --> LC2
+    #|M5 --> LC3
+    #|
+    #|M2 --> RC1
+    #|M3 --> RC2
+    #|M4 --> RC3
+    #|
+    #|L6 --> SNK
+    #|M6 --> SNK
+    #|R6 --> SNK
+    #|
+    #|R6 --> L3
+    #|M6 --> L2
+    #|M6 --> R2
+    #|LC3 --> R1
+    #|RC3 --> L1
+    #|R4 --> LC2
+    #|L4 --> RC2
+    #|SNK --> M3
+    #|SNK --> L4
+    #|SNK --> R4
+    #|
+  )
+  .trim_end()
+  .to_string()
+}
+
+///|
 fn collect_simplex_rank_trace_case(
   edges : Array[MermaidEdge],
 ) -> (Bool, Int, Int, Array[Int]) {
@@ -1258,6 +1567,59 @@ test "Layout acyclic DFS phase matches upstream corpus" {
     nodes, case3_edges, false, false,
   )
   assert_eq(sorted_int_array(case3_state.reversed_back_edge_indices), [6, 7, 8])
+}
+
+///|
+test "Layout acyclic DFS phase matches upstream stress fixture decomposition" {
+  let (stress003_nodes, stress003_edges) = fixture_nodes_and_edges_for_acyclic_phase(
+    stress_003_subgraph_bridges_source(),
+  )
+  let stress003_phase_state = collect_non_state_flow_acyclic_phase_state(
+    stress003_nodes, stress003_edges, false, false,
+  )
+  assert_eq(
+    reversed_back_edge_keys(
+      stress003_edges,
+      stress003_phase_state.reversed_back_edge_indices,
+    ),
+    sorted_string_array([
+      "L5->L2", "M3->M4", "R5->R2", "SNK->M2", "M1->M2", "R3->L2", "R2->L4", "M3->L1",
+    ]),
+  )
+  assert_eq(stress003_phase_state.definition_backward_edge_indices.length(), 0)
+
+  let (stress006_nodes, stress006_edges) = fixture_nodes_and_edges_for_acyclic_phase(
+    stress_006_nested_bridge_loops_source(),
+  )
+  let stress006_phase_state = collect_non_state_flow_acyclic_phase_state(
+    stress006_nodes, stress006_edges, false, false,
+  )
+  assert_eq(
+    reversed_back_edge_keys(
+      stress006_edges,
+      stress006_phase_state.reversed_back_edge_indices,
+    ),
+    sorted_string_array(["LI3->L3", "R4->SNK", "R3->L2", "R2->LI2", "RI3->L1"]),
+  )
+  assert_eq(stress006_phase_state.definition_backward_edge_indices.length(), 0)
+
+  let (stress012_nodes, stress012_edges) = fixture_nodes_and_edges_for_acyclic_phase(
+    stress_012_interleaved_subgraph_feedback_source(),
+  )
+  let stress012_phase_state = collect_non_state_flow_acyclic_phase_state(
+    stress012_nodes, stress012_edges, false, false,
+  )
+  assert_eq(
+    reversed_back_edge_keys(
+      stress012_edges,
+      stress012_phase_state.reversed_back_edge_indices,
+    ),
+    sorted_string_array([
+      "M6->SNK", "M6->L2", "R6->SNK", "R6->L3", "R5->M4", "R4->M3", "LC3->L5", "R1->R2",
+      "LC2->M5", "M2->M3", "M2->R2", "RC3->L1", "RC2->M5", "SNK->L4",
+    ]),
+  )
+  assert_eq(stress012_phase_state.definition_backward_edge_indices.length(), 0)
 }
 
 ///|
