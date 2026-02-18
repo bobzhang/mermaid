@@ -1261,6 +1261,97 @@ test "Layout acyclic DFS phase matches upstream corpus" {
 }
 
 ///|
+test "Layout dagre simplex ranker matches upstream nested bridge loop baseline" {
+  let nodes : Array[MermaidNode] = [
+    { id: "SRC", label: "SRC", shape: Rectangle },
+    { id: "SNK", label: "SNK", shape: Rectangle },
+    { id: "L0", label: "L0", shape: Rectangle },
+    { id: "L1", label: "L1", shape: Rectangle },
+    { id: "L2", label: "L2", shape: Rectangle },
+    { id: "LI1", label: "LI1", shape: Rectangle },
+    { id: "LI2", label: "LI2", shape: Rectangle },
+    { id: "LI3", label: "LI3", shape: Rectangle },
+    { id: "L3", label: "L3", shape: Rectangle },
+    { id: "L4", label: "L4", shape: Rectangle },
+    { id: "R0", label: "R0", shape: Rectangle },
+    { id: "R1", label: "R1", shape: Rectangle },
+    { id: "R2", label: "R2", shape: Rectangle },
+    { id: "RI1", label: "RI1", shape: Rectangle },
+    { id: "RI2", label: "RI2", shape: Rectangle },
+    { id: "RI3", label: "RI3", shape: Rectangle },
+    { id: "R3", label: "R3", shape: Rectangle },
+    { id: "R4", label: "R4", shape: Rectangle },
+  ]
+  let edges : Array[MermaidEdge] = [
+    flow_edge("SRC", "L0"),
+    flow_edge("SRC", "R0"),
+    flow_edge("L0", "L1"),
+    flow_edge("L1", "L2"),
+    flow_edge("L2", "L3"),
+    flow_edge("L3", "L4"),
+    flow_edge("L4", "SNK"),
+    flow_edge("R0", "R1"),
+    flow_edge("R1", "R2"),
+    flow_edge("R2", "R3"),
+    flow_edge("R3", "R4"),
+    flow_edge("R4", "SNK"),
+    flow_edge("L1", "LI1"),
+    flow_edge("LI1", "LI2"),
+    flow_edge("LI2", "LI3"),
+    flow_edge("LI3", "L3"),
+    flow_edge("R1", "RI1"),
+    flow_edge("RI1", "RI2"),
+    flow_edge("RI2", "RI3"),
+    flow_edge("RI3", "R3"),
+    flow_edge("LI1", "RI2"),
+    flow_edge("LI2", "R2"),
+    flow_edge("L2", "RI1"),
+    flow_edge("L3", "R1"),
+    flow_edge("RI1", "LI3"),
+    flow_edge("R2", "LI2"),
+    flow_edge("RI3", "L1"),
+    flow_edge("R3", "L2"),
+    flow_edge("L4", "RI3"),
+    flow_edge("R4", "LI3"),
+    flow_edge("SNK", "LI1"),
+  ]
+
+  let phase_state = collect_non_state_flow_acyclic_phase_state(
+    nodes, edges, false, false,
+  )
+  assert_eq(sorted_int_array(phase_state.reversed_back_edge_indices), [
+    11, 15, 25, 26, 27,
+  ])
+
+  let (rank_by_id, max_rank, simplex_ok) = collect_dagre_network_simplex_ranks(
+    nodes,
+    edges,
+    phase_state.relaxed_edge_indices,
+    phase_state.reversed_back_edge_indices,
+  )
+  assert_true(simplex_ok)
+  assert_eq(max_rank, 12)
+  assert_eq(option_int_or(rank_by_id.get("SRC"), -1), 0)
+  assert_eq(option_int_or(rank_by_id.get("L0"), -1), 1)
+  assert_eq(option_int_or(rank_by_id.get("L1"), -1), 2)
+  assert_eq(option_int_or(rank_by_id.get("L2"), -1), 3)
+  assert_eq(option_int_or(rank_by_id.get("L3"), -1), 4)
+  assert_eq(option_int_or(rank_by_id.get("L4"), -1), 5)
+  assert_eq(option_int_or(rank_by_id.get("R0"), -1), 5)
+  assert_eq(option_int_or(rank_by_id.get("SNK"), -1), 6)
+  assert_eq(option_int_or(rank_by_id.get("R1"), -1), 6)
+  assert_eq(option_int_or(rank_by_id.get("LI1"), -1), 7)
+  assert_eq(option_int_or(rank_by_id.get("RI1"), -1), 7)
+  assert_eq(option_int_or(rank_by_id.get("LI2"), -1), 8)
+  assert_eq(option_int_or(rank_by_id.get("RI2"), -1), 8)
+  assert_eq(option_int_or(rank_by_id.get("R2"), -1), 9)
+  assert_eq(option_int_or(rank_by_id.get("RI3"), -1), 9)
+  assert_eq(option_int_or(rank_by_id.get("R3"), -1), 10)
+  assert_eq(option_int_or(rank_by_id.get("R4"), -1), 11)
+  assert_eq(option_int_or(rank_by_id.get("LI3"), -1), 12)
+}
+
+///|
 test "Layout acyclic greedy phase matches upstream multi-edge decomposition" {
   let nodes : Array[MermaidNode] = [
     { id: "N1", label: "N1", shape: Rectangle },
