@@ -530,6 +530,156 @@ fn stress_012_interleaved_subgraph_feedback_source() -> String {
 }
 
 ///|
+fn normalize_rank_layers_for_assert(
+  layers : Array[Array[String]],
+) -> Array[Array[String]] {
+  let normalized : Array[Array[String]] = []
+  for layer in layers {
+    normalized.push(sorted_string_array(layer))
+  }
+  normalized
+}
+
+///|
+fn collect_rank_layers_from_assignment(
+  nodes_in_order : Array[MermaidNode],
+  rank_by_id : Map[String, Int],
+  max_rank : Int,
+) -> Array[Array[String]] {
+  let layers : Array[Array[String]] = []
+  for _ in 0..<=max_rank {
+    layers.push([])
+  }
+  for node in nodes_in_order {
+    let rank = option_int_or(rank_by_id.get(node.id), 0)
+    if rank < 0 {
+      continue
+    }
+    if rank >= layers.length() {
+      for _ in layers.length()..<=rank {
+        layers.push([])
+      }
+    }
+    layers[rank].push(node.id)
+  }
+  normalize_rank_layers_for_assert(layers)
+}
+
+///|
+fn official_layers_layout_stress_003() -> Array[Array[String]] {
+  normalize_rank_layers_for_assert([
+    ["SRC"],
+    ["L1"],
+    ["L2"],
+    ["L3"],
+    ["L4"],
+    ["L5"],
+    ["M4"],
+    ["M5"],
+    ["M2"],
+    ["M3", "R1"],
+    ["R2"],
+    ["R3"],
+    ["R4"],
+    ["M1"],
+    ["R5"],
+    ["SNK"],
+  ])
+}
+
+///|
+fn official_layers_layout_stress_006() -> Array[Array[String]] {
+  normalize_rank_layers_for_assert([
+    ["SRC"],
+    [],
+    ["L0"],
+    ["L1"],
+    ["L2"],
+    ["L3"],
+    [],
+    ["L4", "R0"],
+    ["R1", "SNK"],
+    [],
+    ["LI1", "RI1"],
+    ["LI2", "RI2"],
+    ["R2", "RI3"],
+    [],
+    ["R3"],
+    ["R4"],
+    [],
+    ["LI3"],
+  ])
+}
+
+///|
+fn official_layers_layout_stress_012() -> Array[Array[String]] {
+  normalize_rank_layers_for_assert([
+    ["SRC"],
+    ["L1"],
+    ["L2"],
+    ["L3"],
+    ["L4"],
+    ["L5"],
+    ["L6"],
+    ["SNK"],
+    ["M3"],
+    ["M4"],
+    ["M5"],
+    ["M6"],
+    ["R2"],
+    ["M1", "R3"],
+    ["LC1", "M2", "R4"],
+    ["LC2", "RC1"],
+    ["LC3", "RC2"],
+    ["R1", "RC3"],
+    ["R5"],
+    ["R6"],
+  ])
+}
+
+///|
+fn collect_fixture_dagre_nesting_rank_layers(
+  source : String,
+) -> Array[Array[String]] raise {
+  let graph = @parser.parse_mermaid(source.trim_end().to_string())
+  let prep_state = @layout_engine_graph_prep_core.prepare_graph_inputs(
+    graph, true,
+  )
+  let nodes_in_order = @layout_engine_graph_internal_core.reorder_nodes_for_flow_layout(
+    prep_state.nodes_in_order,
+    graph.edges,
+  )
+  let acyclic_phase_state = collect_non_state_flow_acyclic_phase_state(
+    nodes_in_order,
+    graph.edges,
+    false,
+    false,
+  )
+  let rank_edge_specs = collect_dagre_rank_edge_specs(
+    graph.edges,
+    acyclic_phase_state.relaxed_edge_indices,
+    acyclic_phase_state.reversed_back_edge_indices,
+  )
+  let (raw_rank_by_id, raw_max_rank, rank_ok) = collect_dagre_nesting_rank_result(
+    nodes_in_order,
+    rank_edge_specs,
+    graph.subgraphs,
+  )
+  if !rank_ok {
+    fail("expected dagre nesting rank result")
+  }
+  let horizontal = @layout_engine_graph_internal_core.layout_direction_is_horizontal(
+    graph.direction,
+  )
+  let (rank_by_id, max_rank) = if horizontal && graph.subgraphs.length() > 0 {
+    densify_rank_assignment(nodes_in_order, raw_rank_by_id)
+  } else {
+    (raw_rank_by_id, raw_max_rank)
+  }
+  collect_rank_layers_from_assignment(nodes_in_order, rank_by_id, max_rank)
+}
+
+///|
 fn collect_simplex_rank_trace_case(
   edges : Array[MermaidEdge],
 ) -> (Bool, Int, Int, Array[Int]) {
@@ -1620,6 +1770,24 @@ test "Layout acyclic DFS phase matches upstream stress fixture decomposition" {
     ]),
   )
   assert_eq(stress012_phase_state.definition_backward_edge_indices.length(), 0)
+}
+
+///|
+test "Layout dagre nesting rank phase matches upstream stress fixture layers" {
+  let stress003_layers = collect_fixture_dagre_nesting_rank_layers(
+    stress_003_subgraph_bridges_source(),
+  )
+  assert_eq(stress003_layers, official_layers_layout_stress_003())
+
+  let stress006_layers = collect_fixture_dagre_nesting_rank_layers(
+    stress_006_nested_bridge_loops_source(),
+  )
+  assert_eq(stress006_layers, official_layers_layout_stress_006())
+
+  let stress012_layers = collect_fixture_dagre_nesting_rank_layers(
+    stress_012_interleaved_subgraph_feedback_source(),
+  )
+  assert_eq(stress012_layers, official_layers_layout_stress_012())
 }
 
 ///|
