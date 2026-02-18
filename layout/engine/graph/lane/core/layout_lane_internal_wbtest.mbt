@@ -56,6 +56,65 @@ fn active_tree_edge_keys_from_seed_state(
 }
 
 ///|
+fn normalized_node_pair_key(left_id : String, right_id : String) -> String {
+  if left_id < right_id {
+    "\{left_id}->\{right_id}"
+  } else {
+    "\{right_id}->\{left_id}"
+  }
+}
+
+///|
+fn normalized_tree_edge_key_from_seed_state(
+  nodes_in_order : Array[MermaidNode],
+  seed_state : DagreNetworkSimplexSeedState,
+  tree_edge_index : Int,
+) -> String {
+  let left_id = nodes_in_order[seed_state.tree_edge_u[tree_edge_index]].id
+  let right_id = nodes_in_order[seed_state.tree_edge_v[tree_edge_index]].id
+  normalized_node_pair_key(left_id, right_id)
+}
+
+///|
+fn directed_graph_edge_key_from_index(
+  nodes_in_order : Array[MermaidNode],
+  prepared_graph : DagreNetworkSimplexPreparedGraph,
+  edge_index : Int,
+) -> String {
+  let source_id = nodes_in_order[prepared_graph.edge_source_index[edge_index]].id
+  let target_id = nodes_in_order[prepared_graph.edge_target_index[edge_index]].id
+  "\{source_id}->\{target_id}"
+}
+
+///|
+fn active_tree_cut_entries_from_cut_phase(
+  nodes_in_order : Array[MermaidNode],
+  seed_state : DagreNetworkSimplexSeedState,
+  cut_phase_state : DagreNetworkSimplexCutPhaseState,
+) -> Map[String, Int] {
+  let entries : Map[String, Int] = {}
+  for tree_edge_index in 0..<seed_state.tree_edge_u.length() {
+    if !seed_state.tree_edge_active[tree_edge_index] {
+      continue
+    }
+    let key = normalized_tree_edge_key_from_seed_state(
+      nodes_in_order, seed_state, tree_edge_index,
+    )
+    entries[key] = cut_phase_state.tree_edge_cutvalue[tree_edge_index]
+  }
+  entries
+}
+
+///|
+fn map_string_int_entry_count(entries : Map[String, Int]) -> Int {
+  let mut count = 0
+  for _, _ in entries {
+    count += 1
+  }
+  count
+}
+
+///|
 test "Layout lane collection accounts for long-span edges via virtual segments" {
   let nodes : Array[MermaidNode] = [
     { id: "A", label: "A", shape: Rectangle },
@@ -621,6 +680,113 @@ test "Layout simplex seed phase matches upstream pivot baseline" {
   assert_eq(
     sorted_string_array(active_tree_edge_keys_from_seed_state(nodes, seed)),
     ["A->C", "B->C", "B->D", "B->E"],
+  )
+}
+
+///|
+test "Layout simplex cut phase matches upstream fanout baseline" {
+  let nodes : Array[MermaidNode] = [
+    { id: "A", label: "A", shape: Rectangle },
+    { id: "B", label: "B", shape: Rectangle },
+    { id: "C", label: "C", shape: Rectangle },
+    { id: "D", label: "D", shape: Rectangle },
+    { id: "E", label: "E", shape: Rectangle },
+    { id: "F", label: "F", shape: Rectangle },
+  ]
+  let edges : Array[MermaidEdge] = [
+    flow_edge("A", "B"),
+    flow_edge("A", "E"),
+    flow_edge("A", "F"),
+    flow_edge("B", "D"),
+    flow_edge("C", "D"),
+  ]
+  let prepared = prepare_dagre_network_simplex_graph(
+    nodes,
+    edges,
+    [0, 1, 2, 3, 4],
+    [],
+  )
+  let seed_state = collect_dagre_network_simplex_seed_state(nodes, prepared)
+  guard seed_state is Some(seed) else { fail("expected simplex seed state") }
+  let cut_phase_state = collect_dagre_network_simplex_cut_phase_state(
+    nodes, prepared, seed,
+  )
+  guard cut_phase_state is Some(cut_phase) else {
+    fail("expected simplex cut phase state")
+  }
+
+  assert_eq(cut_phase.parent_by_node, [-1, 0, 3, 1, 0, 0])
+  assert_eq(cut_phase.low_by_node, [1, 1, 1, 1, 4, 5])
+  assert_eq(cut_phase.lim_by_node, [6, 3, 1, 2, 4, 5])
+  let cut_entries = active_tree_cut_entries_from_cut_phase(
+    nodes, seed, cut_phase,
+  )
+  assert_eq(map_string_int_entry_count(cut_entries), 5)
+  assert_eq(option_int_or(cut_entries.get("A->B"), -999), 1)
+  assert_eq(option_int_or(cut_entries.get("A->E"), -999), 1)
+  assert_eq(option_int_or(cut_entries.get("A->F"), -999), 1)
+  assert_eq(option_int_or(cut_entries.get("B->D"), -999), 1)
+  assert_eq(option_int_or(cut_entries.get("C->D"), -999), 1)
+  assert_eq(cut_phase.leave_tree_edge_index is None, true)
+  assert_eq(cut_phase.enter_graph_edge_index is None, true)
+}
+
+///|
+test "Layout simplex cut phase matches upstream pivot baseline" {
+  let nodes : Array[MermaidNode] = [
+    { id: "A", label: "A", shape: Rectangle },
+    { id: "B", label: "B", shape: Rectangle },
+    { id: "C", label: "C", shape: Rectangle },
+    { id: "D", label: "D", shape: Rectangle },
+    { id: "E", label: "E", shape: Rectangle },
+  ]
+  let edges : Array[MermaidEdge] = [
+    flow_edge("A", "C"),
+    flow_edge("A", "D"),
+    flow_edge("A", "E"),
+    flow_edge("B", "C"),
+    flow_edge("B", "D"),
+    flow_edge("B", "E"),
+  ]
+  let prepared = prepare_dagre_network_simplex_graph(
+    nodes,
+    edges,
+    [0, 1, 2, 3, 4, 5],
+    [],
+  )
+  let seed_state = collect_dagre_network_simplex_seed_state(nodes, prepared)
+  guard seed_state is Some(seed) else { fail("expected simplex seed state") }
+  let cut_phase_state = collect_dagre_network_simplex_cut_phase_state(
+    nodes, prepared, seed,
+  )
+  guard cut_phase_state is Some(cut_phase) else {
+    fail("expected simplex cut phase state")
+  }
+
+  assert_eq(cut_phase.parent_by_node, [-1, 2, 0, 1, 1])
+  assert_eq(cut_phase.low_by_node, [1, 1, 1, 1, 2])
+  assert_eq(cut_phase.lim_by_node, [5, 3, 4, 1, 2])
+  let cut_entries = active_tree_cut_entries_from_cut_phase(
+    nodes, seed, cut_phase,
+  )
+  assert_eq(map_string_int_entry_count(cut_entries), 4)
+  assert_eq(option_int_or(cut_entries.get("A->C"), -999), 3)
+  assert_eq(option_int_or(cut_entries.get("B->C"), -999), -1)
+  assert_eq(option_int_or(cut_entries.get("B->D"), -999), 2)
+  assert_eq(option_int_or(cut_entries.get("B->E"), -999), 2)
+  guard cut_phase.leave_tree_edge_index is Some(leave_tree_edge_index) else {
+    fail("expected negative cut edge")
+  }
+  assert_eq(
+    normalized_tree_edge_key_from_seed_state(nodes, seed, leave_tree_edge_index),
+    "B->C",
+  )
+  guard cut_phase.enter_graph_edge_index is Some(enter_graph_edge_index) else {
+    fail("expected enter graph edge")
+  }
+  assert_eq(
+    directed_graph_edge_key_from_index(nodes, prepared, enter_graph_edge_index),
+    "A->D",
   )
 }
 

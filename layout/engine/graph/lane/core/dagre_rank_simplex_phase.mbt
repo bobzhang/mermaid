@@ -32,6 +32,16 @@ priv struct DagreNetworkSimplexSeedState {
 }
 
 ///|
+priv struct DagreNetworkSimplexCutPhaseState {
+  parent_by_node : Array[Int]
+  low_by_node : Array[Int]
+  lim_by_node : Array[Int]
+  tree_edge_cutvalue : Array[Int]
+  leave_tree_edge_index : Int?
+  enter_graph_edge_index : Int?
+}
+
+///|
 fn prepare_dagre_network_simplex_graph(
   nodes_in_order : Array[MermaidNode],
   edges : Array[MermaidEdge],
@@ -369,6 +379,310 @@ fn collect_dagre_network_simplex_seed_state(
     tree_edge_cutvalue,
     tree_edge_active,
     feasible_root_index,
+  })
+}
+
+///|
+fn collect_dagre_network_simplex_cut_phase_state(
+  nodes_in_order : Array[MermaidNode],
+  prepared_graph : DagreNetworkSimplexPreparedGraph,
+  seed_state : DagreNetworkSimplexSeedState,
+) -> DagreNetworkSimplexCutPhaseState? {
+  let edge_source_index = prepared_graph.edge_source_index
+  let edge_target_index = prepared_graph.edge_target_index
+  let edge_minlen = prepared_graph.edge_minlen
+  let edge_weight = prepared_graph.edge_weight
+  let directed_edge_index_by_key = prepared_graph.directed_edge_index_by_key
+  let incident_edge_indices_by_node = prepared_graph.incident_edge_indices_by_node
+  let rank_by_node_index = seed_state.feasible_rank_by_node_index
+  let tree_incident_edge_indices_by_node = seed_state.tree_incident_edge_indices_by_node
+  let tree_edge_u = seed_state.tree_edge_u
+  let tree_edge_v = seed_state.tree_edge_v
+  let tree_edge_cutvalue = seed_state.tree_edge_cutvalue.copy()
+  let tree_edge_active = seed_state.tree_edge_active.copy()
+  let feasible_root_index = seed_state.feasible_root_index
+  let parent_by_node : Array[Int] = []
+  let low_by_node : Array[Int] = []
+  let lim_by_node : Array[Int] = []
+  for _ in 0..<nodes_in_order.length() {
+    parent_by_node.push(-1)
+    low_by_node.push(0)
+    lim_by_node.push(0)
+  }
+
+  fn edge_slack(edge_index : Int) -> Int {
+    let source_index = edge_source_index[edge_index]
+    let target_index = edge_target_index[edge_index]
+    rank_by_node_index[target_index] -
+    rank_by_node_index[source_index] -
+    edge_minlen[edge_index]
+  }
+
+  fn tree_other_node(tree_edge_index : Int, node_index : Int) -> Int {
+    let left = tree_edge_u[tree_edge_index]
+    if left == node_index {
+      tree_edge_v[tree_edge_index]
+    } else {
+      left
+    }
+  }
+
+  fn tree_find_edge_index(left : Int, right : Int) -> Int {
+    for tree_edge_index in tree_incident_edge_indices_by_node[left] {
+      if !tree_edge_active[tree_edge_index] {
+        continue
+      }
+      let edge_left = tree_edge_u[tree_edge_index]
+      let edge_right = tree_edge_v[tree_edge_index]
+      if (edge_left == left && edge_right == right) ||
+        (edge_left == right && edge_right == left) {
+        return tree_edge_index
+      }
+    }
+    -1
+  }
+
+  fn assign_low_lim(
+    node_index : Int,
+    parent_index : Int,
+    next_lim : Int,
+    visit_state_by_node : Array[Int],
+  ) -> Int {
+    let visit_state = visit_state_by_node[node_index]
+    if visit_state == 1 {
+      return next_lim
+    }
+    if visit_state == 2 {
+      return next_lim
+    }
+    visit_state_by_node[node_index] = 1
+    let low = next_lim
+    let mut cursor = next_lim
+    for tree_edge_index in tree_incident_edge_indices_by_node[node_index] {
+      if !tree_edge_active[tree_edge_index] {
+        continue
+      }
+      let other_index = tree_other_node(tree_edge_index, node_index)
+      if other_index == parent_index {
+        continue
+      }
+      cursor = assign_low_lim(
+        other_index, node_index, cursor, visit_state_by_node,
+      )
+    }
+    low_by_node[node_index] = low
+    lim_by_node[node_index] = cursor
+    parent_by_node[node_index] = parent_index
+    visit_state_by_node[node_index] = 2
+    cursor + 1
+  }
+
+  fn collect_postorder(
+    node_index : Int,
+    parent_index : Int,
+    postorder : Array[Int],
+    visited : Array[Bool],
+  ) -> Unit {
+    if visited[node_index] {
+      return
+    }
+    visited[node_index] = true
+    for tree_edge_index in tree_incident_edge_indices_by_node[node_index] {
+      if !tree_edge_active[tree_edge_index] {
+        continue
+      }
+      let other_index = tree_other_node(tree_edge_index, node_index)
+      if other_index == parent_index {
+        continue
+      }
+      collect_postorder(other_index, node_index, postorder, visited)
+    }
+    postorder.push(node_index)
+  }
+
+  fn directed_edge_index(source_index : Int, target_index : Int) -> Int? {
+    directed_edge_index_by_key.get(
+      dagre_rank_directed_edge_key(source_index, target_index),
+    )
+  }
+
+  fn calc_tree_cut_value(child_index : Int) -> Int {
+    let parent_index = parent_by_node[child_index]
+    if parent_index < 0 {
+      return 0
+    }
+    let mut child_is_tail = true
+    let mut graph_edge_index = -1
+    match directed_edge_index(child_index, parent_index) {
+      Some(edge_index) => graph_edge_index = edge_index
+      None =>
+        match directed_edge_index(parent_index, child_index) {
+          Some(edge_index) => {
+            graph_edge_index = edge_index
+            child_is_tail = false
+          }
+          None => return 0
+        }
+    }
+
+    let mut cut_value = edge_weight[graph_edge_index]
+    for edge_index in incident_edge_indices_by_node[child_index] {
+      let source_index = edge_source_index[edge_index]
+      let target_index = edge_target_index[edge_index]
+      let is_out_edge = source_index == child_index
+      let other_index = if is_out_edge { target_index } else { source_index }
+      if other_index == parent_index {
+        continue
+      }
+      let points_to_head = is_out_edge == child_is_tail
+      let other_weight = edge_weight[edge_index]
+      let weight_delta = if points_to_head {
+        other_weight
+      } else {
+        -other_weight
+      }
+      cut_value = cut_value + weight_delta
+      let tree_edge_index = tree_find_edge_index(child_index, other_index)
+      if tree_edge_index >= 0 {
+        let other_cut_value = tree_edge_cutvalue[tree_edge_index]
+        let cut_delta = if points_to_head {
+          -other_cut_value
+        } else {
+          other_cut_value
+        }
+        cut_value = cut_value + cut_delta
+      }
+    }
+    cut_value
+  }
+
+  fn reinitialize_tree_state() -> Bool {
+    for node_index in 0..<nodes_in_order.length() {
+      parent_by_node[node_index] = -1
+      low_by_node[node_index] = 0
+      lim_by_node[node_index] = 0
+    }
+    let mut active_tree_edge_count = 0
+    for tree_edge_index in 0..<tree_edge_active.length() {
+      if tree_edge_active[tree_edge_index] {
+        active_tree_edge_count += 1
+      }
+    }
+    if active_tree_edge_count != nodes_in_order.length() - 1 {
+      return false
+    }
+    let low_lim_visit_state : Array[Int] = []
+    for _ in 0..<nodes_in_order.length() {
+      low_lim_visit_state.push(0)
+    }
+    let _ = assign_low_lim(feasible_root_index, -1, 1, low_lim_visit_state)
+    for node_index in 0..<nodes_in_order.length() {
+      if low_lim_visit_state[node_index] != 2 {
+        return false
+      }
+    }
+    let postorder : Array[Int] = []
+    let postorder_visited : Array[Bool] = []
+    for _ in 0..<nodes_in_order.length() {
+      postorder_visited.push(false)
+    }
+    collect_postorder(feasible_root_index, -1, postorder, postorder_visited)
+    for node_index in 0..<nodes_in_order.length() {
+      if !postorder_visited[node_index] {
+        return false
+      }
+    }
+    for node_index in postorder {
+      if node_index == feasible_root_index {
+        continue
+      }
+      let parent_index = parent_by_node[node_index]
+      if parent_index < 0 {
+        continue
+      }
+      let tree_edge_index = tree_find_edge_index(node_index, parent_index)
+      if tree_edge_index < 0 {
+        continue
+      }
+      tree_edge_cutvalue[tree_edge_index] = calc_tree_cut_value(node_index)
+    }
+    true
+  }
+
+  fn find_leave_tree_edge() -> Int? {
+    for tree_edge_index in 0..<tree_edge_u.length() {
+      if !tree_edge_active[tree_edge_index] {
+        continue
+      }
+      if tree_edge_cutvalue[tree_edge_index] < 0 {
+        return Some(tree_edge_index)
+      }
+    }
+    None
+  }
+
+  fn is_descendant(node_index : Int, root_index : Int) -> Bool {
+    low_by_node[root_index] <= lim_by_node[node_index] &&
+    lim_by_node[node_index] <= lim_by_node[root_index]
+  }
+
+  fn find_enter_graph_edge(leave_tree_edge_index : Int) -> Int? {
+    let mut tail_index = tree_edge_u[leave_tree_edge_index]
+    let mut flip = false
+    let head_index = tree_edge_v[leave_tree_edge_index]
+
+    let mut directed_tail = tail_index
+    let mut directed_head = head_index
+    if directed_edge_index(directed_tail, directed_head) is None {
+      directed_tail = head_index
+      directed_head = tail_index
+    }
+    tail_index = directed_tail
+    if lim_by_node[directed_tail] > lim_by_node[directed_head] {
+      tail_index = directed_head
+      flip = true
+    }
+
+    let mut has_candidate = false
+    let mut best_edge_index = 0
+    let mut best_slack = 0
+    for edge_index in 0..<edge_source_index.length() {
+      let source_index = edge_source_index[edge_index]
+      let target_index = edge_target_index[edge_index]
+      let source_in_tail = is_descendant(source_index, tail_index)
+      let target_in_tail = is_descendant(target_index, tail_index)
+      if source_in_tail != flip || target_in_tail == flip {
+        continue
+      }
+      let slack_value = edge_slack(edge_index)
+      if !has_candidate || slack_value < best_slack {
+        has_candidate = true
+        best_edge_index = edge_index
+        best_slack = slack_value
+      }
+    }
+    if has_candidate {
+      Some(best_edge_index)
+    } else {
+      None
+    }
+  }
+
+  if !reinitialize_tree_state() {
+    return None
+  }
+  let leave_tree_edge_index = find_leave_tree_edge()
+  let enter_graph_edge_index = match leave_tree_edge_index {
+    Some(leave_tree_edge_index) => find_enter_graph_edge(leave_tree_edge_index)
+    None => None
+  }
+  Some({
+    parent_by_node,
+    low_by_node,
+    lim_by_node,
+    tree_edge_cutvalue,
+    leave_tree_edge_index,
+    enter_graph_edge_index,
   })
 }
 
@@ -737,16 +1051,30 @@ fn collect_dagre_network_simplex_ranks(
     }
   }
 
-  if !reinitialize_tree_state() {
+  let initial_cut_phase_state = collect_dagre_network_simplex_cut_phase_state(
+    nodes_in_order, prepared_graph, seed,
+  )
+  guard initial_cut_phase_state is Some(initial_cut_phase) else {
     return (rank_by_id, 0, false)
   }
+  for node_index in 0..<nodes_in_order.length() {
+    parent_by_node[node_index] = initial_cut_phase.parent_by_node[node_index]
+    low_by_node[node_index] = initial_cut_phase.low_by_node[node_index]
+    lim_by_node[node_index] = initial_cut_phase.lim_by_node[node_index]
+  }
+  for tree_edge_index in 0..<tree_edge_cutvalue.length() {
+    tree_edge_cutvalue[tree_edge_index] = initial_cut_phase.tree_edge_cutvalue[tree_edge_index]
+  }
+
+  let mut next_leave_tree_edge_index = initial_cut_phase.leave_tree_edge_index
+  let mut next_enter_graph_edge_index = initial_cut_phase.enter_graph_edge_index
   let max_exchange_count = edge_source_index.length() * nodes_in_order.length() +
     1
   let mut exchange_count = 0
   while true {
-    match find_leave_tree_edge() {
+    match next_leave_tree_edge_index {
       Some(leave_tree_edge_index) =>
-        match find_enter_graph_edge(leave_tree_edge_index) {
+        match next_enter_graph_edge_index {
           Some(enter_graph_edge_index) => {
             tree_edge_active[leave_tree_edge_index] = false
             let source_index = edge_source_index[enter_graph_edge_index]
@@ -756,6 +1084,12 @@ fn collect_dagre_network_simplex_ranks(
               return (rank_by_id, 0, false)
             }
             update_ranks_from_tree()
+            next_leave_tree_edge_index = find_leave_tree_edge()
+            next_enter_graph_edge_index = match next_leave_tree_edge_index {
+              Some(leave_tree_edge_index) =>
+                find_enter_graph_edge(leave_tree_edge_index)
+              None => None
+            }
             exchange_count += 1
             if exchange_count > max_exchange_count {
               return (rank_by_id, 0, false)
