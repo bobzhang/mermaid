@@ -15,21 +15,17 @@ test "Parser captures classDef/class/style metadata" {
   assert_eq(graph.class_assignments.get("A"), Some("entry"))
   assert_eq(graph.class_assignments.get("B"), Some("finish"))
 
-  match graph.class_defs.get("entry") {
-    Some(entry_style) => {
-      assert_eq(entry_style.get("fill"), Some("#f9f"))
-      assert_eq(entry_style.get("stroke"), Some("#333"))
-    }
-    None => fail("missing classDef entry")
+  guard graph.class_defs.get("entry") is Some(entry_style) else {
+    fail("missing classDef entry")
   }
+  assert_eq(entry_style.get("fill"), Some("#f9f"))
+  assert_eq(entry_style.get("stroke"), Some("#333"))
 
-  match graph.node_styles.get("A") {
-    Some(node_style) => {
-      assert_eq(node_style.get("fill"), Some("#fff"))
-      assert_eq(node_style.get("stroke"), Some("#000"))
-    }
-    None => fail("missing node style for A")
+  guard graph.node_styles.get("A") is Some(node_style) else {
+    fail("missing node style for A")
   }
+  assert_eq(node_style.get("fill"), Some("#fff"))
+  assert_eq(node_style.get("stroke"), Some("#000"))
 }
 
 ///|

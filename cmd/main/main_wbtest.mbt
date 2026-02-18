@@ -17,12 +17,13 @@ fn assert_layout_engine_option_eq(
   actual : @model.LayoutEngine?,
   expected : @model.LayoutEngine?,
 ) -> Unit raise {
-  match (actual, expected) {
-    (None, None) => ()
-    (Some(actual_engine), Some(expected_engine)) =>
-      assert_true(layout_engine_equal(actual_engine, expected_engine))
-    _ => fail("layout engine mismatch")
+  if actual is None && expected is None {
+    return
   }
+  guard (actual, expected) is (Some(actual_engine), Some(expected_engine)) else {
+    fail("layout engine mismatch")
+  }
+  assert_true(layout_engine_equal(actual_engine, expected_engine))
 }
 
 ///|

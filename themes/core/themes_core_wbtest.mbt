@@ -20,9 +20,8 @@ fn built_in_theme_slugs_wb() -> Array[String] {
 
 ///|
 test "Theme presets include tokyo-night enrichment colors" {
-  let colors = match theme_by_name("tokyo-night") {
-    Some(found) => found
-    None => fail("missing tokyo-night preset")
+  guard theme_by_name("tokyo-night") is Some(colors) else {
+    fail("missing tokyo-night preset")
   }
   assert_eq(colors.bg, "#1a1b26")
   assert_eq(colors.fg, "#a9b1d6")
@@ -33,9 +32,8 @@ test "Theme presets include tokyo-night enrichment colors" {
 
 ///|
 test "Theme presets include zinc-dark mono defaults" {
-  let colors = match theme_by_name("zinc-dark") {
-    Some(found) => found
-    None => fail("missing zinc-dark preset")
+  guard theme_by_name("zinc-dark") is Some(colors) else {
+    fail("missing zinc-dark preset")
   }
   assert_eq(colors.bg, "#18181B")
   assert_eq(colors.fg, "#FAFAFA")
@@ -46,9 +44,8 @@ test "Theme presets include zinc-dark mono defaults" {
 
 ///|
 test "Theme presets include zinc-light default colors" {
-  let colors = match theme_by_name("zinc-light") {
-    Some(found) => found
-    None => fail("missing zinc-light preset")
+  guard theme_by_name("zinc-light") is Some(colors) else {
+    fail("missing zinc-light preset")
   }
   assert_eq(colors.bg, "#FFFFFF")
   assert_eq(colors.fg, "#27272A")
@@ -73,13 +70,11 @@ test "Theme parser is case-insensitive and unknown-safe" {
   assert_true(parse_theme_name("tokyo\t night") is Some(_))
   assert_true(parse_theme_name(github_newline_dark()) is Some(_))
   assert_true(parse_theme_name("not-a-theme") is None)
-  let default_theme = match theme_by_name("DEFAULT") {
-    Some(found) => found
-    None => fail("missing default theme")
+  guard theme_by_name("DEFAULT") is Some(default_theme) else {
+    fail("missing default theme")
   }
-  let zinc_light = match theme_by_name("zinc-light") {
-    Some(found) => found
-    None => fail("missing zinc-light theme")
+  guard theme_by_name("zinc-light") is Some(zinc_light) else {
+    fail("missing zinc-light theme")
   }
   assert_eq(default_theme.bg, zinc_light.bg)
   assert_eq(default_theme.fg, zinc_light.fg)
@@ -92,9 +87,8 @@ test "Theme parser is case-insensitive and unknown-safe" {
 
 ///|
 test "Theme lookup by name returns colors or none" {
-  let github_dark = match theme_by_name("github-dark") {
-    Some(found) => found
-    None => fail("missing github-dark preset")
+  guard theme_by_name("github-dark") is Some(github_dark) else {
+    fail("missing github-dark preset")
   }
   assert_eq(github_dark.bg, "#0d1117")
   assert_eq(github_dark.fg, "#e6edf3")
@@ -148,9 +142,8 @@ test "theme_by_name resolves built-in slugs" {
     assert_true(theme_by_name(slug) is Some(_))
   }
 
-  let tokyo_night = match theme_by_name("tokyo-night") {
-    Some(found) => found
-    None => fail("missing tokyo-night")
+  guard theme_by_name("tokyo-night") is Some(tokyo_night) else {
+    fail("missing tokyo-night")
   }
   assert_eq(tokyo_night.bg, "#1a1b26")
   assert_eq(tokyo_night.accent, Some("#7aa2f7"))

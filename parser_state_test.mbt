@@ -4,10 +4,10 @@ fn assert_state_label(
   node_id : String,
   expected_label : String,
 ) -> Unit raise {
-  match graph.nodes.get(node_id) {
-    Some(node) => assert_eq(node.label, expected_label)
-    None => fail("missing state node \{node_id}")
+  guard graph.nodes.get(node_id) is Some(node) else {
+    fail("missing state node \{node_id}")
   }
+  assert_eq(node.label, expected_label)
 }
 
 ///|
@@ -16,10 +16,10 @@ fn assert_state_shape(
   node_id : String,
   expected_shape : String,
 ) -> Unit raise {
-  match graph.nodes.get(node_id) {
-    Some(node) => assert_eq(node_shape_name(node.shape), expected_shape)
-    None => fail("missing state node \{node_id}")
+  guard graph.nodes.get(node_id) is Some(node) else {
+    fail("missing state node \{node_id}")
   }
+  assert_eq(node_shape_name(node.shape), expected_shape)
 }
 
 ///|
@@ -80,14 +80,15 @@ test "Parser parses start and end state pseudostates with unique ids" {
   assert_true(graph.nodes.get("state_end_1") is Some(_))
   assert_true(graph.nodes.get("state_end_2") is Some(_))
 
-  match graph.nodes.get("state_start_1") {
-    Some(node) => assert_eq(node_shape_name(node.shape), "StateStart")
-    None => fail("missing state_start_1")
+  guard graph.nodes.get("state_start_1") is Some(state_start_1) else {
+    fail("missing state_start_1")
   }
-  match graph.nodes.get("state_end_1") {
-    Some(node) => assert_eq(node_shape_name(node.shape), "StateEnd")
-    None => fail("missing state_end_1")
+  assert_eq(node_shape_name(state_start_1.shape), "StateStart")
+
+  guard graph.nodes.get("state_end_1") is Some(state_end_1) else {
+    fail("missing state_end_1")
   }
+  assert_eq(node_shape_name(state_end_1.shape), "StateEnd")
 }
 
 ///|
@@ -216,10 +217,10 @@ test "Parser captures direction override inside state composite" {
 
   assert_eq(direction_name(graph.direction), "TD")
   assert_eq(graph.subgraphs.length(), 1)
-  match graph.subgraphs[0].direction {
-    Some(direction) => assert_eq(direction_name(direction), "LR")
-    None => fail("expected composite direction override")
+  guard graph.subgraphs[0].direction is Some(direction) else {
+    fail("expected composite direction override")
   }
+  assert_eq(direction_name(direction), "LR")
 }
 
 ///|

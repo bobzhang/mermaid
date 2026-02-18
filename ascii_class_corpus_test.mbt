@@ -14,14 +14,13 @@ test "ASCII class corpus parity" {
       case_data.input,
       options~,
     )
-    match case_data.expected_ascii {
-      Some(expected) =>
-        assert_eq(
-          ts_normalize_whitespace(actual),
-          ts_normalize_whitespace(expected),
-        )
-      None => fail("missing expected ascii for \{case_data.name}")
+    guard case_data.expected_ascii is Some(expected) else {
+      fail("missing expected ascii for \{case_data.name}")
     }
+    assert_eq(
+      ts_normalize_whitespace(actual),
+      ts_normalize_whitespace(expected),
+    )
   }
 }
 
@@ -41,13 +40,12 @@ test "Unicode class corpus parity" {
       case_data.input,
       options~,
     )
-    match case_data.expected_unicode {
-      Some(expected) =>
-        assert_eq(
-          ts_normalize_whitespace(actual),
-          ts_normalize_whitespace(expected),
-        )
-      None => fail("missing expected unicode for \{case_data.name}")
+    guard case_data.expected_unicode is Some(expected) else {
+      fail("missing expected unicode for \{case_data.name}")
     }
+    assert_eq(
+      ts_normalize_whitespace(actual),
+      ts_normalize_whitespace(expected),
+    )
   }
 }

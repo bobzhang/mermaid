@@ -108,10 +108,10 @@ test "Parser captures direction override inside subgraph only" {
 
   assert_eq(direction_name(graph.direction), "TD")
   assert_eq(graph.subgraphs.length(), 1)
-  match graph.subgraphs[0].direction {
-    Some(direction) => assert_eq(direction_name(direction), "LR")
-    None => fail("expected subgraph direction override")
+  guard graph.subgraphs[0].direction is Some(direction) else {
+    fail("expected subgraph direction override")
   }
+  assert_eq(direction_name(direction), "LR")
 }
 
 ///|
@@ -143,8 +143,7 @@ test "Parser ignores invalid direction override inside subgraph" {
 
   assert_eq(direction_name(graph.direction), "LR")
   assert_eq(graph.subgraphs.length(), 1)
-  match graph.subgraphs[0].direction {
-    Some(_) => fail("expected invalid direction token to be ignored")
-    None => ()
+  guard graph.subgraphs[0].direction is None else {
+    fail("expected invalid direction token to be ignored")
   }
 }

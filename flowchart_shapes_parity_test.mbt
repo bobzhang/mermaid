@@ -4,10 +4,10 @@ fn assert_node_shape(
   node_id : String,
   expected : String,
 ) -> Unit raise {
-  match graph.nodes.get(node_id) {
-    Some(node) => assert_eq(node_shape_name(node.shape), expected)
-    None => fail("missing node \{node_id}")
+  guard graph.nodes.get(node_id) is Some(node) else {
+    fail("missing node \{node_id}")
   }
+  assert_eq(node_shape_name(node.shape), expected)
 }
 
 ///|

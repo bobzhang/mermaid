@@ -77,14 +77,9 @@ test "render_mermaid_with_theme_name rejects unknown theme" {
     simple_graph_ab(),
     "moonbit-neon",
   )
-  match rendered {
-    Ok(_) => fail("expected unknown theme to fail")
-    Err(err) =>
-      match err {
-        UnknownTheme(name) => assert_eq(name, "moonbit-neon")
-        _ => fail("expected UnknownTheme error")
-      }
-  }
+  guard rendered is Err(err) else { fail("expected unknown theme to fail") }
+  guard err is UnknownTheme(name) else { fail("expected UnknownTheme error") }
+  assert_eq(name, "moonbit-neon")
 }
 
 ///|
@@ -93,12 +88,7 @@ test "render_mermaid_with_theme_name unknown error keeps original input" {
     simple_graph_ab(),
     "  moonbit   neon  ",
   )
-  match rendered {
-    Ok(_) => fail("expected unknown theme to fail")
-    Err(err) =>
-      match err {
-        UnknownTheme(name) => assert_eq(name, "  moonbit   neon  ")
-        _ => fail("expected UnknownTheme error")
-      }
-  }
+  guard rendered is Err(err) else { fail("expected unknown theme to fail") }
+  guard err is UnknownTheme(name) else { fail("expected UnknownTheme error") }
+  assert_eq(name, "  moonbit   neon  ")
 }

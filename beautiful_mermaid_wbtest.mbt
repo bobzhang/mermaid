@@ -8,9 +8,8 @@ fn simple_graph_ab_wb() -> String {
 
 ///|
 test "render_mermaid_with_colors applies theme colors by default" {
-  let colors = match @themes.theme_by_name("tokyo-night") {
-    Some(found) => found
-    None => fail("missing tokyo-night theme")
+  guard @themes.theme_by_name("tokyo-night") is Some(colors) else {
+    fail("missing tokyo-night theme")
   }
   let svg = render_mermaid_with_colors(simple_graph_ab_wb(), colors)
 
@@ -21,9 +20,8 @@ test "render_mermaid_with_colors applies theme colors by default" {
 
 ///|
 test "merge_options_with_colors fills missing fields from theme colors" {
-  let colors = match @themes.theme_by_name("dracula") {
-    Some(found) => found
-    None => fail("missing dracula theme")
+  guard @themes.theme_by_name("dracula") is Some(colors) else {
+    fail("missing dracula theme")
   }
   let merged = merge_options_with_colors(
     @model.RenderOptions::default(),
@@ -38,9 +36,8 @@ test "merge_options_with_colors fills missing fields from theme colors" {
 
 ///|
 test "merge_options_with_colors preserves explicit overrides" {
-  let colors = match @themes.theme_by_name("dracula") {
-    Some(found) => found
-    None => fail("missing dracula theme")
+  guard @themes.theme_by_name("dracula") is Some(colors) else {
+    fail("missing dracula theme")
   }
   let base = @model.RenderOptions::{
     bg: Some("#101010"),
@@ -70,9 +67,8 @@ test "merge_options_with_colors preserves explicit overrides" {
 
 ///|
 test "render_mermaid_with_colors keeps explicit option overrides" {
-  let colors = match @themes.theme_by_name("tokyo-night") {
-    Some(found) => found
-    None => fail("missing tokyo-night theme")
+  guard @themes.theme_by_name("tokyo-night") is Some(colors) else {
+    fail("missing tokyo-night theme")
   }
   let options = @model.RenderOptions::{
     bg: Some("#000000"),

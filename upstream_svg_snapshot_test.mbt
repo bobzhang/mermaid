@@ -6,10 +6,10 @@ fn upstream_sample_by_title(title : String) -> UpstreamSample raise {
       matched = Some(sample)
     }
   }
-  match matched {
-    Some(sample) => sample
-    None => fail("missing upstream sample \{title}")
+  guard matched is Some(sample) else {
+    fail("missing upstream sample \{title}")
   }
+  sample
 }
 
 ///|

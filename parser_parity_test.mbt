@@ -122,13 +122,9 @@ test "Parser keeps first node definition for shape and label" {
       #|A --> B
     ),
   )
-  match graph.nodes.get("A") {
-    Some(node) => {
-      assert_eq(node.label, "Start")
-      assert_eq(node_shape_name(node.shape), "Rectangle")
-    }
-    None => fail("missing node A")
-  }
+  guard graph.nodes.get("A") is Some(node_a) else { fail("missing node A") }
+  assert_eq(node_a.label, "Start")
+  assert_eq(node_shape_name(node_a.shape), "Rectangle")
 }
 
 ///|
@@ -156,20 +152,12 @@ test "Parser creates default rectangle nodes for bare references" {
     ),
   )
 
-  match graph.nodes.get("A") {
-    Some(node) => {
-      assert_eq(node_shape_name(node.shape), "Rectangle")
-      assert_eq(node.label, "A")
-    }
-    None => fail("missing node A")
-  }
-  match graph.nodes.get("B") {
-    Some(node) => {
-      assert_eq(node_shape_name(node.shape), "Rectangle")
-      assert_eq(node.label, "B")
-    }
-    None => fail("missing node B")
-  }
+  guard graph.nodes.get("A") is Some(node_a) else { fail("missing node A") }
+  assert_eq(node_shape_name(node_a.shape), "Rectangle")
+  assert_eq(node_a.label, "A")
+  guard graph.nodes.get("B") is Some(node_b) else { fail("missing node B") }
+  assert_eq(node_shape_name(node_b.shape), "Rectangle")
+  assert_eq(node_b.label, "B")
 }
 
 ///|
@@ -192,54 +180,30 @@ test "Parser recognizes all flowchart node shape variants together" {
     ),
   )
 
-  match graph.nodes.get("A") {
-    Some(node) => assert_eq(node_shape_name(node.shape), "Rectangle")
-    None => fail("missing node A")
-  }
-  match graph.nodes.get("B") {
-    Some(node) => assert_eq(node_shape_name(node.shape), "Rounded")
-    None => fail("missing node B")
-  }
-  match graph.nodes.get("C") {
-    Some(node) => assert_eq(node_shape_name(node.shape), "Diamond")
-    None => fail("missing node C")
-  }
-  match graph.nodes.get("D") {
-    Some(node) => assert_eq(node_shape_name(node.shape), "Stadium")
-    None => fail("missing node D")
-  }
-  match graph.nodes.get("E") {
-    Some(node) => assert_eq(node_shape_name(node.shape), "Circle")
-    None => fail("missing node E")
-  }
-  match graph.nodes.get("F") {
-    Some(node) => assert_eq(node_shape_name(node.shape), "Subroutine")
-    None => fail("missing node F")
-  }
-  match graph.nodes.get("G") {
-    Some(node) => assert_eq(node_shape_name(node.shape), "DoubleCircle")
-    None => fail("missing node G")
-  }
-  match graph.nodes.get("H") {
-    Some(node) => assert_eq(node_shape_name(node.shape), "Hexagon")
-    None => fail("missing node H")
-  }
-  match graph.nodes.get("I") {
-    Some(node) => assert_eq(node_shape_name(node.shape), "Cylinder")
-    None => fail("missing node I")
-  }
-  match graph.nodes.get("J") {
-    Some(node) => assert_eq(node_shape_name(node.shape), "Asymmetric")
-    None => fail("missing node J")
-  }
-  match graph.nodes.get("K") {
-    Some(node) => assert_eq(node_shape_name(node.shape), "Trapezoid")
-    None => fail("missing node K")
-  }
-  match graph.nodes.get("L") {
-    Some(node) => assert_eq(node_shape_name(node.shape), "TrapezoidAlt")
-    None => fail("missing node L")
-  }
+  guard graph.nodes.get("A") is Some(node_a) else { fail("missing node A") }
+  assert_eq(node_shape_name(node_a.shape), "Rectangle")
+  guard graph.nodes.get("B") is Some(node_b) else { fail("missing node B") }
+  assert_eq(node_shape_name(node_b.shape), "Rounded")
+  guard graph.nodes.get("C") is Some(node_c) else { fail("missing node C") }
+  assert_eq(node_shape_name(node_c.shape), "Diamond")
+  guard graph.nodes.get("D") is Some(node_d) else { fail("missing node D") }
+  assert_eq(node_shape_name(node_d.shape), "Stadium")
+  guard graph.nodes.get("E") is Some(node_e) else { fail("missing node E") }
+  assert_eq(node_shape_name(node_e.shape), "Circle")
+  guard graph.nodes.get("F") is Some(node_f) else { fail("missing node F") }
+  assert_eq(node_shape_name(node_f.shape), "Subroutine")
+  guard graph.nodes.get("G") is Some(node_g) else { fail("missing node G") }
+  assert_eq(node_shape_name(node_g.shape), "DoubleCircle")
+  guard graph.nodes.get("H") is Some(node_h) else { fail("missing node H") }
+  assert_eq(node_shape_name(node_h.shape), "Hexagon")
+  guard graph.nodes.get("I") is Some(node_i) else { fail("missing node I") }
+  assert_eq(node_shape_name(node_i.shape), "Cylinder")
+  guard graph.nodes.get("J") is Some(node_j) else { fail("missing node J") }
+  assert_eq(node_shape_name(node_j.shape), "Asymmetric")
+  guard graph.nodes.get("K") is Some(node_k) else { fail("missing node K") }
+  assert_eq(node_shape_name(node_k.shape), "Trapezoid")
+  guard graph.nodes.get("L") is Some(node_l) else { fail("missing node L") }
+  assert_eq(node_shape_name(node_l.shape), "TrapezoidAlt")
 }
 
 ///|
@@ -429,18 +393,12 @@ test "Parser expands chained edges while preserving inline shapes" {
   )
   assert_eq(graph.edges.length(), 2)
 
-  match graph.nodes.get("A") {
-    Some(node) => assert_eq(node_shape_name(node.shape), "Rectangle")
-    None => fail("missing node A")
-  }
-  match graph.nodes.get("B") {
-    Some(node) => assert_eq(node_shape_name(node.shape), "Diamond")
-    None => fail("missing node B")
-  }
-  match graph.nodes.get("C") {
-    Some(node) => assert_eq(node_shape_name(node.shape), "Rounded")
-    None => fail("missing node C")
-  }
+  guard graph.nodes.get("A") is Some(node_a) else { fail("missing node A") }
+  assert_eq(node_shape_name(node_a.shape), "Rectangle")
+  guard graph.nodes.get("B") is Some(node_b) else { fail("missing node B") }
+  assert_eq(node_shape_name(node_b.shape), "Diamond")
+  guard graph.nodes.get("C") is Some(node_c) else { fail("missing node C") }
+  assert_eq(node_shape_name(node_c.shape), "Rounded")
 }
 
 ///|
@@ -456,13 +414,9 @@ test "Parser keeps ampersand inside node labels while still expanding parallel l
   assert_eq(graph.nodes.length(), 4)
   assert_eq(graph.edges.length(), 3)
 
-  match graph.nodes.get("D") {
-    Some(node) => {
-      assert_eq(node.id, "D")
-      assert_eq(node.label, "Fix & Retry")
-    }
-    None => fail("missing node D")
-  }
+  guard graph.nodes.get("D") is Some(node_d) else { fail("missing node D") }
+  assert_eq(node_d.id, "D")
+  assert_eq(node_d.label, "Fix & Retry")
 }
 
 ///|

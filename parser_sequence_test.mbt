@@ -11,10 +11,10 @@ test "Parser supports basic sequence messages" {
   assert_eq(direction_name(graph.direction), "LR")
   assert_eq(graph.nodes.length(), 2)
   assert_eq(graph.edges.length(), 2)
-  match graph.nodes.get("Alice") {
-    Some(node) => assert_eq(node_shape_name(node.shape), "SequenceParticipant")
-    None => fail("missing participant Alice")
+  guard graph.nodes.get("Alice") is Some(alice) else {
+    fail("missing participant Alice")
   }
+  assert_eq(node_shape_name(alice.shape), "SequenceParticipant")
 
   let first = graph.edges[0]
   assert_eq(first.source, "Alice")
@@ -42,10 +42,10 @@ test "Parser keeps sequence self messages" {
   assert_eq(direction_name(graph.direction), "LR")
   assert_eq(graph.nodes.length(), 2)
   assert_eq(graph.edges.length(), 2)
-  match graph.nodes.get("Bob") {
-    Some(node) => assert_eq(node_shape_name(node.shape), "SequenceParticipant")
-    None => fail("missing participant Bob")
+  guard graph.nodes.get("Bob") is Some(bob) else {
+    fail("missing participant Bob")
   }
+  assert_eq(node_shape_name(bob.shape), "SequenceParticipant")
   assert_eq(graph.edges[0].source, "Alice")
   assert_eq(graph.edges[0].target, "Alice")
   assert_eq(graph.edges[0].label, Some("Think"))
@@ -140,33 +140,23 @@ test "Parser captures sequence notes and actor declarations" {
   )
 
   assert_eq(graph.sequence_actor_order, ["U", "S"])
-  match graph.sequence_actor_kinds.get("U") {
-    Some(kind) =>
-      match kind {
-        Actor => ()
-        _ => fail("unexpected actor kind for U")
-      }
-    None => fail("missing actor kind for U")
+  guard graph.sequence_actor_kinds.get("U") is Some(u_kind) else {
+    fail("missing actor kind for U")
   }
-  match graph.sequence_actor_kinds.get("S") {
-    Some(kind) =>
-      match kind {
-        Participant => ()
-        _ => fail("unexpected actor kind for S")
-      }
-    None => fail("missing actor kind for S")
+  guard u_kind is Actor else { fail("unexpected actor kind for U") }
+  guard graph.sequence_actor_kinds.get("S") is Some(s_kind) else {
+    fail("missing actor kind for S")
   }
+  guard s_kind is Participant else { fail("unexpected actor kind for S") }
   assert_eq(graph.sequence_notes.length(), 2)
-  match graph.sequence_notes[0].position {
-    Right => ()
-    _ => fail("unexpected note position for note 0")
+  guard graph.sequence_notes[0].position is Right else {
+    fail("unexpected note position for note 0")
   }
   assert_eq(graph.sequence_notes[0].actor_ids, ["S"])
   assert_eq(graph.sequence_notes[0].after_index, 0)
   assert_eq(graph.sequence_notes[0].text, "Validate credentials")
-  match graph.sequence_notes[1].position {
-    Over => ()
-    _ => fail("unexpected note position for note 1")
+  guard graph.sequence_notes[1].position is Over else {
+    fail("unexpected note position for note 1")
   }
   assert_eq(graph.sequence_notes[1].actor_ids, ["U", "S"])
 }
@@ -251,14 +241,14 @@ test "Parser auto-creates sequence participants from messages" {
 
   assert_eq(graph.nodes.length(), 2)
   assert_eq(graph.sequence_actor_order, ["Alice", "Bob"])
-  match graph.nodes.get("Alice") {
-    Some(node) => assert_eq(node.label, "Alice")
-    None => fail("missing auto-created actor Alice")
+  guard graph.nodes.get("Alice") is Some(alice) else {
+    fail("missing auto-created actor Alice")
   }
-  match graph.nodes.get("Bob") {
-    Some(node) => assert_eq(node.label, "Bob")
-    None => fail("missing auto-created actor Bob")
+  assert_eq(alice.label, "Alice")
+  guard graph.nodes.get("Bob") is Some(bob) else {
+    fail("missing auto-created actor Bob")
   }
+  assert_eq(bob.label, "Bob")
 }
 
 ///|
@@ -276,10 +266,10 @@ test "Parser avoids duplicate declared participants used in messages" {
   assert_eq(graph.sequence_actor_order.length(), 2)
   assert_eq(graph.sequence_actor_order[0], "A")
   assert_eq(graph.sequence_actor_order[1], "B")
-  match graph.nodes.get("A") {
-    Some(node) => assert_eq(node.label, "Alice")
-    None => fail("missing declared participant A")
+  guard graph.nodes.get("A") is Some(a) else {
+    fail("missing declared participant A")
   }
+  assert_eq(a.label, "Alice")
 }
 
 ///|
@@ -293,13 +283,11 @@ test "Parser participant without alias uses id as label" {
   )
 
   assert_eq(graph.nodes.length(), 1)
-  match graph.nodes.get("Server") {
-    Some(node) => {
-      assert_eq(node.id, "Server")
-      assert_eq(node.label, "Server")
-    }
-    None => fail("missing participant Server")
+  guard graph.nodes.get("Server") is Some(server) else {
+    fail("missing participant Server")
   }
+  assert_eq(server.id, "Server")
+  assert_eq(server.label, "Server")
 }
 
 ///|
@@ -314,10 +302,7 @@ test "Parser captures left sequence notes" {
 
   assert_eq(graph.sequence_notes.length(), 1)
   let note = graph.sequence_notes[0]
-  match note.position {
-    Left => ()
-    _ => fail("unexpected note position")
-  }
+  guard note.position is Left else { fail("unexpected note position") }
   assert_eq(note.actor_ids, ["A"])
   assert_eq(note.text, "Important note")
   assert_eq(note.after_index, 0)

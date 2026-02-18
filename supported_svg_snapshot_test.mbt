@@ -6,10 +6,10 @@ fn supported_case_by_name(name : String) -> CorpusCase raise {
       matched = Some(case_data)
     }
   }
-  match matched {
-    Some(case_data) => case_data
-    None => fail("missing supported case \{name}")
+  guard matched is Some(case_data) else {
+    fail("missing supported case \{name}")
   }
+  case_data
 }
 
 ///|

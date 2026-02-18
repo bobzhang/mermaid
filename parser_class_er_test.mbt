@@ -106,16 +106,14 @@ test "Parser captures class members from blocks and property lines" {
   )
 
   assert_eq(graph.nodes.length(), 1)
-  match graph.nodes.get("Animal") {
-    Some(node) => {
-      assert_eq(node_shape_name(node.shape), "ClassEntity")
-      assert_true(node.label.contains("Animal"))
-      assert_true(node.label.contains("+name: String"))
-      assert_true(node.label.contains("+eat: void"))
-      assert_true(node.label.contains("+int: weight"))
-    }
-    None => fail("missing class node Animal")
+  guard graph.nodes.get("Animal") is Some(animal) else {
+    fail("missing class node Animal")
   }
+  assert_eq(node_shape_name(animal.shape), "ClassEntity")
+  assert_true(animal.label.contains("Animal"))
+  assert_true(animal.label.contains("+name: String"))
+  assert_true(animal.label.contains("+eat: void"))
+  assert_true(animal.label.contains("+int: weight"))
 }
 
 ///|
@@ -129,14 +127,12 @@ test "Parser parses inline class attributes in Type Name form" {
     ),
   )
 
-  match graph.nodes.get("Animal") {
-    Some(node) => {
-      assert_true(node.label.contains("Animal"))
-      assert_true(node.label.contains("+name: String"))
-      assert_true(node.label.contains("+age: int"))
-    }
-    None => fail("missing class node Animal")
+  guard graph.nodes.get("Animal") is Some(animal) else {
+    fail("missing class node Animal")
   }
+  assert_true(animal.label.contains("Animal"))
+  assert_true(animal.label.contains("+name: String"))
+  assert_true(animal.label.contains("+age: int"))
 }
 
 ///|
@@ -149,14 +145,12 @@ test "Parser captures inline class annotation declarations" {
   )
 
   assert_eq(graph.nodes.length(), 1)
-  match graph.nodes.get("Shape") {
-    Some(node) => {
-      assert_eq(node_shape_name(node.shape), "ClassEntity")
-      assert_true(node.label.contains("Shape"))
-      assert_true(node.label.contains("<<abstract>>"))
-    }
-    None => fail("missing class node Shape")
+  guard graph.nodes.get("Shape") is Some(shape) else {
+    fail("missing class node Shape")
   }
+  assert_eq(node_shape_name(shape.shape), "ClassEntity")
+  assert_true(shape.label.contains("Shape"))
+  assert_true(shape.label.contains("<<abstract>>"))
 }
 
 ///|
@@ -173,15 +167,13 @@ test "Parser normalizes class member visibilities including package scope" {
     ),
   )
 
-  match graph.nodes.get("MyClass") {
-    Some(node) => {
-      assert_true(node.label.contains("+publicField: String"))
-      assert_true(node.label.contains("-privateField: int"))
-      assert_true(node.label.contains("#protectedField: double"))
-      assert_true(node.label.contains("~packageField: bool"))
-    }
-    None => fail("missing class node MyClass")
+  guard graph.nodes.get("MyClass") is Some(my_class) else {
+    fail("missing class node MyClass")
   }
+  assert_true(my_class.label.contains("+publicField: String"))
+  assert_true(my_class.label.contains("-privateField: int"))
+  assert_true(my_class.label.contains("#protectedField: double"))
+  assert_true(my_class.label.contains("~packageField: bool"))
 }
 
 ///|
@@ -199,10 +191,10 @@ test "Parser supports ER diagram relationships" {
   assert_eq(graph.edges[0].source, "CUSTOMER")
   assert_eq(graph.edges[0].target, "ORDER")
   assert_eq(graph.edges[0].label, Some("places"))
-  match graph.nodes.get("ORDER") {
-    Some(node) => assert_eq(node_shape_name(node.shape), "ErEntity")
-    None => fail("missing entity ORDER")
+  guard graph.nodes.get("ORDER") is Some(order) else {
+    fail("missing entity ORDER")
   }
+  assert_eq(node_shape_name(order.shape), "ErEntity")
 }
 
 ///|
@@ -256,14 +248,12 @@ test "Parser captures ER attributes from entity blocks" {
     ),
   )
 
-  match graph.nodes.get("CUSTOMER") {
-    Some(node) => {
-      assert_true(node.label.contains("CUSTOMER"))
-      assert_true(node.label.contains("PK string name"))
-      assert_true(node.label.contains("int age"))
-    }
-    None => fail("missing entity CUSTOMER")
+  guard graph.nodes.get("CUSTOMER") is Some(customer) else {
+    fail("missing entity CUSTOMER")
   }
+  assert_true(customer.label.contains("CUSTOMER"))
+  assert_true(customer.label.contains("PK string name"))
+  assert_true(customer.label.contains("int age"))
 }
 
 ///|
@@ -319,20 +309,16 @@ test "Parser handles complete ER e-commerce schema" {
   assert_eq(graph.nodes.length(), 4)
   assert_eq(graph.edges.length(), 3)
 
-  match graph.nodes.get("CUSTOMER") {
-    Some(node) => {
-      assert_true(node.label.contains("PK int id"))
-      assert_true(node.label.contains("UK string email"))
-    }
-    None => fail("missing CUSTOMER entity")
+  guard graph.nodes.get("CUSTOMER") is Some(customer) else {
+    fail("missing CUSTOMER entity")
   }
-  match graph.nodes.get("LINE_ITEM") {
-    Some(node) => {
-      assert_true(node.label.contains("FK int order_id"))
-      assert_true(node.label.contains("FK int product_id"))
-    }
-    None => fail("missing LINE_ITEM entity")
+  assert_true(customer.label.contains("PK int id"))
+  assert_true(customer.label.contains("UK string email"))
+  guard graph.nodes.get("LINE_ITEM") is Some(line_item) else {
+    fail("missing LINE_ITEM entity")
   }
+  assert_true(line_item.label.contains("FK int order_id"))
+  assert_true(line_item.label.contains("FK int product_id"))
   assert_eq(graph.edges[0].label, Some("places"))
   assert_eq(graph.edges[1].label, Some("contains"))
   assert_eq(graph.edges[2].label, Some("includes"))
@@ -349,11 +335,10 @@ test "Parser normalizes ER attributes with keys and quoted comments" {
     ),
   )
 
-  match graph.nodes.get("USER") {
-    Some(node) =>
-      assert_true(node.label.contains("UK string email \"user email address\""))
-    None => fail("missing USER entity")
+  guard graph.nodes.get("USER") is Some(user) else {
+    fail("missing USER entity")
   }
+  assert_true(user.label.contains("UK string email \"user email address\""))
 }
 
 ///|
@@ -367,10 +352,10 @@ test "Parser preserves ER attribute quoted comments" {
     ),
   )
 
-  match graph.nodes.get("USER") {
-    Some(node) => assert_true(node.label.contains("\"contact address\""))
-    None => fail("missing USER entity")
+  guard graph.nodes.get("USER") is Some(user) else {
+    fail("missing USER entity")
   }
+  assert_true(user.label.contains("\"contact address\""))
 }
 
 ///|
