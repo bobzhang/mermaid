@@ -277,6 +277,73 @@ fn should_allow_feedback_strategy_selection(
 }
 
 ///|
+fn should_compare_horizontal_dagre_ordering_candidates(
+  prefer_dagre_network_simplex : Bool,
+  horizontal : Bool,
+  cycle_aware_layout : Bool,
+  edge_count : Int,
+) -> Bool {
+  prefer_dagre_network_simplex &&
+  horizontal &&
+  cycle_aware_layout &&
+  edge_count >= 30
+}
+
+///|
+fn select_primary_non_state_flow_rank_candidate(
+  nodes_in_order : Array[MermaidNode],
+  edges : Array[MermaidEdge],
+  subgraphs : Array[MermaidSubgraph],
+  horizontal : Bool,
+  rank_compact_fanin : Bool,
+  cycle_aware_layout : Bool,
+  promote_backward_dotted_edges : Bool,
+  prefer_definition_back_edges : Bool,
+  preserve_dummy_lane_channels : Bool,
+  base_enable_feedback_back_edge_ordering : Bool,
+  preserve_fanout_order_ties : Bool,
+  default_use_greedy_feedback_arc_set : Bool,
+  allow_feedback_strategy_selection : Bool,
+  prefer_dagre_network_simplex : Bool,
+) -> NonStateFlowRankCandidate {
+  let default_prefer_dagre_order_parity = prefer_dagre_network_simplex &&
+    !horizontal
+  if !should_compare_horizontal_dagre_ordering_candidates(
+      prefer_dagre_network_simplex,
+      horizontal,
+      cycle_aware_layout,
+      edges.length(),
+    ) {
+    return select_non_state_flow_rank_candidate(
+      nodes_in_order, edges, subgraphs, horizontal, rank_compact_fanin, cycle_aware_layout,
+      promote_backward_dotted_edges, prefer_definition_back_edges, preserve_dummy_lane_channels,
+      base_enable_feedback_back_edge_ordering, preserve_fanout_order_ties, default_use_greedy_feedback_arc_set,
+      allow_feedback_strategy_selection, prefer_dagre_network_simplex, default_prefer_dagre_order_parity,
+    )
+  }
+
+  // Horizontal dagre parity: compare parity-vs-legacy ordering directly.
+  let legacy_order_candidate = select_non_state_flow_rank_candidate(
+    nodes_in_order, edges, subgraphs, horizontal, rank_compact_fanin, cycle_aware_layout,
+    promote_backward_dotted_edges, prefer_definition_back_edges, preserve_dummy_lane_channels,
+    base_enable_feedback_back_edge_ordering, preserve_fanout_order_ties, default_use_greedy_feedback_arc_set,
+    allow_feedback_strategy_selection, prefer_dagre_network_simplex, false,
+  )
+  let parity_order_candidate = select_non_state_flow_rank_candidate(
+    nodes_in_order, edges, subgraphs, horizontal, rank_compact_fanin, cycle_aware_layout,
+    promote_backward_dotted_edges, prefer_definition_back_edges, preserve_dummy_lane_channels,
+    base_enable_feedback_back_edge_ordering, preserve_fanout_order_ties, default_use_greedy_feedback_arc_set,
+    allow_feedback_strategy_selection, prefer_dagre_network_simplex, true,
+  )
+  if non_state_flow_rank_candidate_score(parity_order_candidate) <
+    non_state_flow_rank_candidate_score(legacy_order_candidate) {
+    parity_order_candidate
+  } else {
+    legacy_order_candidate
+  }
+}
+
+///|
 /// Computes legacy lane and rank assignments for graph layout.
 pub fn compute_legacy_lane_state(
   graph : MermaidGraph,
@@ -351,7 +418,7 @@ pub fn compute_legacy_lane_state(
     )
     let prefer_dagre_order_parity = prefer_dagre_network_simplex && !horizontal
     let preserve_fanout_order_ties = !class_or_er_graph
-    let selected_rank_candidate = select_non_state_flow_rank_candidate(
+    let selected_rank_candidate = select_primary_non_state_flow_rank_candidate(
       nodes_in_order,
       graph.edges,
       graph.subgraphs,
@@ -366,7 +433,6 @@ pub fn compute_legacy_lane_state(
       default_use_greedy_feedback_arc_set,
       allow_feedback_strategy_selection,
       prefer_dagre_network_simplex,
-      prefer_dagre_order_parity,
     )
     let use_greedy_feedback_arc_set = selected_rank_candidate.use_greedy_feedback_arc_set
     let enable_feedback_back_edge_ordering = base_enable_feedback_back_edge_ordering &&

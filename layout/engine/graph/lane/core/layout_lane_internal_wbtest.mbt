@@ -224,6 +224,14 @@ fn sorted_back_edge_indices(back_edges : Map[Int, Bool]) -> Array[Int] {
 fn fixture_nodes_and_edges_for_acyclic_phase(
   source : String,
 ) -> (Array[MermaidNode], Array[MermaidEdge]) raise {
+  let (graph, nodes_in_order) = fixture_graph_and_nodes_for_flow_layout(source)
+  (nodes_in_order, graph.edges)
+}
+
+///|
+fn fixture_graph_and_nodes_for_flow_layout(
+  source : String,
+) -> (MermaidGraph, Array[MermaidNode]) raise {
   let graph = @parser.parse_mermaid(source.trim_end().to_string())
   let prep_state = @layout_engine_graph_prep_core.prepare_graph_inputs(
     graph, true,
@@ -232,7 +240,7 @@ fn fixture_nodes_and_edges_for_acyclic_phase(
     prep_state.nodes_in_order,
     graph.edges,
   )
-  (nodes_in_order, graph.edges)
+  (graph, nodes_in_order)
 }
 
 ///|
@@ -327,6 +335,75 @@ fn stress_003_subgraph_bridges_source() -> String {
     #|M5 --> SNK
     #|R5 --> SNK
     #|SNK --> M2
+    #|
+  )
+  .trim_end()
+  .to_string()
+}
+
+///|
+fn stress_005_long_span_backjumps_source() -> String {
+  (
+    #|graph LR
+    #|S[S]
+    #|T[T]
+    #|A1[A1]
+    #|A2[A2]
+    #|A3[A3]
+    #|B1[B1]
+    #|B2[B2]
+    #|B3[B3]
+    #|C1[C1]
+    #|C2[C2]
+    #|C3[C3]
+    #|D1[D1]
+    #|D2[D2]
+    #|D3[D3]
+    #|E1[E1]
+    #|E2[E2]
+    #|E3[E3]
+    #|
+    #|S --> A1
+    #|S --> A2
+    #|S --> A3
+    #|
+    #|A1 --> B1
+    #|A2 --> B2
+    #|A3 --> B3
+    #|
+    #|B1 --> C1
+    #|B2 --> C2
+    #|B3 --> C3
+    #|
+    #|C1 --> D1
+    #|C2 --> D2
+    #|C3 --> D3
+    #|
+    #|D1 --> E1
+    #|D2 --> E2
+    #|D3 --> E3
+    #|
+    #|E1 --> T
+    #|E2 --> T
+    #|E3 --> T
+    #|
+    #|A1 --> D2
+    #|A2 --> D3
+    #|A3 --> D1
+    #|B1 --> E2
+    #|B2 --> E3
+    #|B3 --> E1
+    #|A1 --> E3
+    #|A3 --> E2
+    #|S --> C2
+    #|S --> D3
+    #|
+    #|E3 --> B1
+    #|E2 --> B3
+    #|D3 --> A2
+    #|C3 --> A1
+    #|D1 --> C2
+    #|T --> C1
     #|
   )
   .trim_end()
@@ -3193,6 +3270,114 @@ test "Layout non-state rank selector picks lower-scored candidate when explorati
   )
   assert_true(
     selected_score <= non_state_flow_rank_candidate_score(greedy_candidate),
+  )
+}
+
+///|
+test "Layout horizontal dagre parity candidate comparison gate follows policy" {
+  assert_true(
+    should_compare_horizontal_dagre_ordering_candidates(true, true, true, 30),
+  )
+  assert_true(
+    !should_compare_horizontal_dagre_ordering_candidates(true, true, true, 29),
+  )
+  assert_true(
+    !should_compare_horizontal_dagre_ordering_candidates(false, true, true, 40),
+  )
+  assert_true(
+    !should_compare_horizontal_dagre_ordering_candidates(true, false, true, 40),
+  )
+  assert_true(
+    !should_compare_horizontal_dagre_ordering_candidates(true, true, false, 40),
+  )
+}
+
+///|
+test "Layout primary rank selection prefers lower-scored parity ordering on stress 005" {
+  let (graph, nodes_in_order) = fixture_graph_and_nodes_for_flow_layout(
+    stress_005_long_span_backjumps_source(),
+  )
+  let horizontal = @layout_engine_graph_internal_core.layout_direction_is_horizontal(
+    graph.direction,
+  )
+  let cycle_aware_layout = graph_has_cycle(nodes_in_order, graph.edges)
+
+  assert_true(horizontal)
+  assert_true(cycle_aware_layout)
+  assert_true(graph.edges.length() >= 30)
+  assert_true(
+    should_compare_horizontal_dagre_ordering_candidates(
+      true,
+      horizontal,
+      cycle_aware_layout,
+      graph.edges.length(),
+    ),
+  )
+
+  let legacy_order_candidate = select_non_state_flow_rank_candidate(
+    nodes_in_order,
+    graph.edges,
+    graph.subgraphs,
+    horizontal,
+    false,
+    cycle_aware_layout,
+    false,
+    false,
+    true,
+    true,
+    true,
+    false,
+    false,
+    true,
+    false,
+  )
+  let parity_order_candidate = select_non_state_flow_rank_candidate(
+    nodes_in_order,
+    graph.edges,
+    graph.subgraphs,
+    horizontal,
+    false,
+    cycle_aware_layout,
+    false,
+    false,
+    true,
+    true,
+    true,
+    false,
+    false,
+    true,
+    true,
+  )
+  let selected_candidate = select_primary_non_state_flow_rank_candidate(
+    nodes_in_order,
+    graph.edges,
+    graph.subgraphs,
+    horizontal,
+    false,
+    cycle_aware_layout,
+    false,
+    false,
+    true,
+    true,
+    true,
+    false,
+    false,
+    true,
+  )
+
+  let legacy_score = non_state_flow_rank_candidate_score(legacy_order_candidate)
+  let parity_score = non_state_flow_rank_candidate_score(parity_order_candidate)
+  let selected_score = non_state_flow_rank_candidate_score(selected_candidate)
+
+  assert_true(parity_score < legacy_score)
+  assert_eq(selected_score, parity_score)
+  assert_eq(
+    selected_candidate.lane_crossings,
+    parity_order_candidate.lane_crossings,
+  )
+  assert_eq(
+    selected_candidate.total_rank_edge_span,
+    parity_order_candidate.total_rank_edge_span,
   )
 }
 
