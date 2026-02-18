@@ -65,6 +65,7 @@ fn collect_total_rank_edge_span(
 fn collect_non_state_flow_rank_candidate(
   nodes_in_order : Array[MermaidNode],
   edges : Array[MermaidEdge],
+  subgraphs : Array[MermaidSubgraph],
   rank_compact_fanin : Bool,
   cycle_aware_layout : Bool,
   promote_backward_dotted_edges : Bool,
@@ -80,11 +81,33 @@ fn collect_non_state_flow_rank_candidate(
   let preserve_reversed_back_edge_constraints = use_greedy_feedback_arc_set
   let enable_feedback_back_edge_ordering = base_enable_feedback_back_edge_ordering &&
     !use_greedy_feedback_arc_set
-  let (rank_by_id, max_rank) = collect_non_state_flow_ranks(
+  let fallback_rank_result = collect_non_state_flow_ranks(
     nodes_in_order, edges, rank_compact_fanin, cycle_aware_layout, promote_backward_dotted_edges,
     prefer_definition_back_edges, compact_cycle_ranks_toward_sinks, use_greedy_feedback_arc_set,
     preserve_reversed_back_edge_constraints, prefer_dagre_network_simplex,
   )
+  let (rank_by_id, max_rank) = if prefer_dagre_network_simplex &&
+    subgraphs.length() > 0 &&
+    !rank_compact_fanin {
+    let acyclic_phase_state = collect_non_state_flow_acyclic_phase_state(
+      nodes_in_order, edges, prefer_definition_back_edges, use_greedy_feedback_arc_set,
+    )
+    let base_edge_specs = collect_dagre_rank_edge_specs(
+      edges,
+      acyclic_phase_state.relaxed_edge_indices,
+      acyclic_phase_state.reversed_back_edge_indices,
+    )
+    let (nested_rank_by_id, nested_max_rank, nested_ok) = collect_dagre_nesting_rank_result(
+      nodes_in_order, base_edge_specs, subgraphs,
+    )
+    if nested_ok {
+      (nested_rank_by_id, nested_max_rank)
+    } else {
+      fallback_rank_result
+    }
+  } else {
+    fallback_rank_result
+  }
   let lane_by_id = collect_non_state_flow_lanes(
     nodes_in_order, rank_by_id, max_rank, edges, preserve_dummy_lane_channels, enable_feedback_back_edge_ordering,
     preserve_fanout_order_ties, prefer_dagre_order_parity,
@@ -122,6 +145,7 @@ fn non_state_flow_rank_candidate_score(
 fn select_non_state_flow_rank_candidate(
   nodes_in_order : Array[MermaidNode],
   edges : Array[MermaidEdge],
+  subgraphs : Array[MermaidSubgraph],
   rank_compact_fanin : Bool,
   cycle_aware_layout : Bool,
   promote_backward_dotted_edges : Bool,
@@ -135,7 +159,7 @@ fn select_non_state_flow_rank_candidate(
   prefer_dagre_order_parity : Bool,
 ) -> NonStateFlowRankCandidate {
   let default_candidate = collect_non_state_flow_rank_candidate(
-    nodes_in_order, edges, rank_compact_fanin, cycle_aware_layout, promote_backward_dotted_edges,
+    nodes_in_order, edges, subgraphs, rank_compact_fanin, cycle_aware_layout, promote_backward_dotted_edges,
     prefer_definition_back_edges, false, preserve_dummy_lane_channels, base_enable_feedback_back_edge_ordering,
     preserve_fanout_order_ties, default_use_greedy_feedback_arc_set, prefer_dagre_network_simplex,
     prefer_dagre_order_parity,
@@ -146,6 +170,7 @@ fn select_non_state_flow_rank_candidate(
   let alternative_candidate = collect_non_state_flow_rank_candidate(
     nodes_in_order,
     edges,
+    subgraphs,
     rank_compact_fanin,
     cycle_aware_layout,
     promote_backward_dotted_edges,
@@ -282,6 +307,7 @@ pub fn compute_legacy_lane_state(
     let selected_rank_candidate = select_non_state_flow_rank_candidate(
       nodes_in_order,
       graph.edges,
+      graph.subgraphs,
       rank_compact_fanin,
       cycle_aware_layout,
       promote_backward_dotted_edges,
@@ -305,6 +331,7 @@ pub fn compute_legacy_lane_state(
       let compacted_rank_candidate = collect_non_state_flow_rank_candidate(
         nodes_in_order,
         graph.edges,
+        graph.subgraphs,
         rank_compact_fanin,
         cycle_aware_layout,
         promote_backward_dotted_edges,

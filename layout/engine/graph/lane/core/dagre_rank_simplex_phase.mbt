@@ -64,6 +64,20 @@ fn prepare_dagre_network_simplex_graph(
   relaxed_edge_indices : Array[Int],
   reversed_back_edge_indices : Array[Int],
 ) -> DagreNetworkSimplexPreparedGraph {
+  let edge_specs = collect_dagre_rank_edge_specs(
+    edges, relaxed_edge_indices, reversed_back_edge_indices,
+  )
+  prepare_dagre_network_simplex_graph_from_edge_specs(
+    nodes_in_order, edge_specs, true,
+  )
+}
+
+///|
+fn prepare_dagre_network_simplex_graph_from_edge_specs(
+  nodes_in_order : Array[MermaidNode],
+  edge_specs : Array[DagreRankEdgeSpec],
+  add_component_connectors : Bool,
+) -> DagreNetworkSimplexPreparedGraph {
   let node_index_by_id : Map[String, Int] = {}
   for i, node in nodes_in_order {
     node_index_by_id[node.id] = i
@@ -112,26 +126,27 @@ fn prepare_dagre_network_simplex_graph(
     }
   }
 
-  for edge_index in relaxed_edge_indices {
-    let edge = edges[edge_index]
-    match
-      (node_index_by_id.get(edge.source), node_index_by_id.get(edge.target)) {
-      (Some(source_index), Some(target_index)) =>
-        append_rank_edge(source_index, target_index, 1, 1)
-      _ => ()
+  for edge_spec in edge_specs {
+    if edge_spec.weight < 0 {
+      continue
     }
-  }
-  for edge_index in reversed_back_edge_indices {
-    let edge = edges[edge_index]
     match
-      (node_index_by_id.get(edge.source), node_index_by_id.get(edge.target)) {
+      (
+        node_index_by_id.get(edge_spec.source_id),
+        node_index_by_id.get(edge_spec.target_id),
+      ) {
       (Some(source_index), Some(target_index)) =>
-        append_rank_edge(target_index, source_index, 1, 1)
+        append_rank_edge(
+          source_index,
+          target_index,
+          edge_spec.minlen.max(0),
+          edge_spec.weight,
+        )
       _ => ()
     }
   }
 
-  if edge_source_index.length() > 0 {
+  if add_component_connectors && edge_source_index.length() > 0 {
     // Dagre's feasible-tree phase requires connectivity. We add zero-cost
     // virtual connectors between weak components to satisfy that precondition
     // without distorting weighted edge optimization.
@@ -717,11 +732,9 @@ fn collect_dagre_network_simplex_cut_phase_state(
 }
 
 ///|
-fn collect_dagre_network_simplex_ranks_with_trace(
+fn collect_dagre_network_simplex_ranks_with_trace_from_prepared(
   nodes_in_order : Array[MermaidNode],
-  edges : Array[MermaidEdge],
-  relaxed_edge_indices : Array[Int],
-  reversed_back_edge_indices : Array[Int],
+  prepared_graph : DagreNetworkSimplexPreparedGraph,
   capture_exchange_trace : Bool,
 ) -> (Map[String, Int], Int, Bool, Array[DagreNetworkSimplexExchangeStep]) {
   let rank_by_id : Map[String, Int] = {}
@@ -733,9 +746,6 @@ fn collect_dagre_network_simplex_ranks_with_trace(
     return (rank_by_id, 0, true, exchange_trace)
   }
 
-  let prepared_graph = prepare_dagre_network_simplex_graph(
-    nodes_in_order, edges, relaxed_edge_indices, reversed_back_edge_indices,
-  )
   let node_index_by_id = prepared_graph.node_index_by_id
   let edge_source_index = prepared_graph.edge_source_index
   let edge_target_index = prepared_graph.edge_target_index
@@ -1211,6 +1221,22 @@ fn collect_dagre_network_simplex_ranks_with_trace(
 }
 
 ///|
+fn collect_dagre_network_simplex_ranks_with_trace(
+  nodes_in_order : Array[MermaidNode],
+  edges : Array[MermaidEdge],
+  relaxed_edge_indices : Array[Int],
+  reversed_back_edge_indices : Array[Int],
+  capture_exchange_trace : Bool,
+) -> (Map[String, Int], Int, Bool, Array[DagreNetworkSimplexExchangeStep]) {
+  let prepared_graph = prepare_dagre_network_simplex_graph(
+    nodes_in_order, edges, relaxed_edge_indices, reversed_back_edge_indices,
+  )
+  collect_dagre_network_simplex_ranks_with_trace_from_prepared(
+    nodes_in_order, prepared_graph, capture_exchange_trace,
+  )
+}
+
+///|
 fn dagre_network_simplex_exchange_trace_checksum(
   exchange_trace : Array[DagreNetworkSimplexExchangeStep],
 ) -> Int {
@@ -1242,6 +1268,29 @@ fn collect_dagre_network_simplex_ranks(
 ) -> (Map[String, Int], Int, Bool) {
   let (ranks, max_rank, ok, exchange_trace) = collect_dagre_network_simplex_ranks_with_trace(
     nodes_in_order, edges, relaxed_edge_indices, reversed_back_edge_indices, false,
+  )
+  let _ = dagre_network_simplex_exchange_trace_checksum(exchange_trace)
+  (ranks, max_rank, ok)
+}
+
+///|
+fn collect_dagre_network_simplex_ranks_from_rank_edge_specs(
+  nodes_in_order : Array[MermaidNode],
+  edge_specs : Array[DagreRankEdgeSpec],
+  add_component_connectors : Bool,
+) -> (Map[String, Int], Int, Bool) {
+  let rank_by_id : Map[String, Int] = {}
+  for node in nodes_in_order {
+    rank_by_id[node.id] = 0
+  }
+  if nodes_in_order.length() == 0 {
+    return (rank_by_id, 0, true)
+  }
+  let prepared_graph = prepare_dagre_network_simplex_graph_from_edge_specs(
+    nodes_in_order, edge_specs, add_component_connectors,
+  )
+  let (ranks, max_rank, ok, exchange_trace) = collect_dagre_network_simplex_ranks_with_trace_from_prepared(
+    nodes_in_order, prepared_graph, false,
   )
   let _ = dagre_network_simplex_exchange_trace_checksum(exchange_trace)
   (ranks, max_rank, ok)

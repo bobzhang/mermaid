@@ -1594,6 +1594,272 @@ test "Layout simplex prep adds zero-cost connectors across weak components" {
 }
 
 ///|
+fn find_rank_edge_spec(
+  edge_specs : Array[DagreRankEdgeSpec],
+  source_id : String,
+  target_id : String,
+) -> DagreRankEdgeSpec? {
+  for edge_spec in edge_specs {
+    if edge_spec.source_id == source_id && edge_spec.target_id == target_id {
+      return Some(edge_spec)
+    }
+  }
+  None
+}
+
+///|
+test "Layout dagre rank edge specs respect relaxed and reversed directions" {
+  let edges : Array[MermaidEdge] = [
+    flow_edge("A", "B"),
+    flow_edge("B", "C"),
+    flow_edge("D", "A"),
+  ]
+  let specs = collect_dagre_rank_edge_specs(edges, [0, 1], [2])
+
+  assert_eq(specs.length(), 3)
+  assert_true(find_rank_edge_spec(specs, "A", "B") is Some(_))
+  assert_true(find_rank_edge_spec(specs, "B", "C") is Some(_))
+  assert_true(find_rank_edge_spec(specs, "A", "D") is Some(_))
+  match find_rank_edge_spec(specs, "A", "D") {
+    Some(spec) => {
+      assert_eq(spec.minlen, 1)
+      assert_eq(spec.weight, 1)
+      assert_eq(spec.nesting_edge, false)
+    }
+    None => fail("expected reversed edge spec")
+  }
+}
+
+///|
+test "Layout dagre nesting prep mirrors upstream minlen and weight rules" {
+  let nodes : Array[MermaidNode] = [
+    { id: "A", label: "A", shape: Rectangle },
+    { id: "B", label: "B", shape: Rectangle },
+    { id: "C", label: "C", shape: Rectangle },
+    { id: "D", label: "D", shape: Rectangle },
+  ]
+  let edges : Array[MermaidEdge] = [
+    flow_edge("A", "B"),
+    flow_edge("B", "C"),
+    flow_edge("D", "A"),
+  ]
+  let base_specs = collect_dagre_rank_edge_specs(edges, [0, 1], [2])
+  let subgraphs : Array[MermaidSubgraph] = [
+    {
+      id: "SG_A",
+      label: "SG_A",
+      node_ids: ["A"],
+      children: [
+        {
+          id: "SG_B",
+          label: "SG_B",
+          node_ids: ["B"],
+          children: [],
+          direction: None,
+        },
+      ],
+      direction: None,
+    },
+    {
+      id: "SG_C",
+      label: "SG_C",
+      node_ids: ["C"],
+      children: [],
+      direction: None,
+    },
+  ]
+
+  let prep_state = collect_dagre_nesting_rank_prep_state(
+    nodes, base_specs, subgraphs,
+  )
+
+  assert_eq(prep_state.node_rank_factor, 5)
+  assert_eq(prep_state.expanded_nodes.length(), 11)
+  assert_eq(prep_state.bounds_by_subgraph_id.length(), 3)
+  assert_true(prep_state.node_in_subgraph.contains("A"))
+  assert_true(prep_state.node_in_subgraph.contains("B"))
+  assert_true(prep_state.node_in_subgraph.contains("C"))
+  assert_true(!prep_state.node_in_subgraph.contains("D"))
+
+  match prep_state.root_id {
+    Some(root_id) => {
+      let sg_a_bounds = prep_state.bounds_by_subgraph_id.get("SG_A")
+      let sg_b_bounds = prep_state.bounds_by_subgraph_id.get("SG_B")
+      let sg_c_bounds = prep_state.bounds_by_subgraph_id.get("SG_C")
+      guard sg_a_bounds is Some(a_bounds) else { fail("expected SG_A bounds") }
+      guard sg_b_bounds is Some(b_bounds) else { fail("expected SG_B bounds") }
+      guard sg_c_bounds is Some(c_bounds) else { fail("expected SG_C bounds") }
+
+      let base_ab = find_rank_edge_spec(prep_state.edge_specs, "A", "B")
+      let base_bc = find_rank_edge_spec(prep_state.edge_specs, "B", "C")
+      let base_ad = find_rank_edge_spec(prep_state.edge_specs, "A", "D")
+      guard base_ab is Some(base_ab_spec) else {
+        fail("expected A->B base edge")
+      }
+      guard base_bc is Some(base_bc_spec) else {
+        fail("expected B->C base edge")
+      }
+      guard base_ad is Some(base_ad_spec) else {
+        fail("expected A->D base edge")
+      }
+      assert_eq(base_ab_spec.minlen, 5)
+      assert_eq(base_bc_spec.minlen, 5)
+      assert_eq(base_ad_spec.minlen, 5)
+      assert_eq(base_ab_spec.nesting_edge, false)
+      assert_eq(base_bc_spec.nesting_edge, false)
+      assert_eq(base_ad_spec.nesting_edge, false)
+
+      let root_to_a_top = find_rank_edge_spec(
+        prep_state.edge_specs,
+        root_id,
+        a_bounds.top_id,
+      )
+      let root_to_c_top = find_rank_edge_spec(
+        prep_state.edge_specs,
+        root_id,
+        c_bounds.top_id,
+      )
+      let root_to_d = find_rank_edge_spec(prep_state.edge_specs, root_id, "D")
+      guard root_to_a_top is Some(root_to_a_top_spec) else {
+        fail("expected root to SG_A top edge")
+      }
+      guard root_to_c_top is Some(root_to_c_top_spec) else {
+        fail("expected root to SG_C top edge")
+      }
+      guard root_to_d is Some(root_to_d_spec) else {
+        fail("expected root to outside node edge")
+      }
+      assert_eq(root_to_a_top_spec.minlen, 3)
+      assert_eq(root_to_c_top_spec.minlen, 3)
+      assert_eq(root_to_d_spec.minlen, 5)
+      assert_eq(root_to_a_top_spec.weight, 0)
+      assert_eq(root_to_c_top_spec.weight, 0)
+      assert_eq(root_to_d_spec.weight, 0)
+      assert_eq(root_to_a_top_spec.nesting_edge, true)
+      assert_eq(root_to_c_top_spec.nesting_edge, true)
+      assert_eq(root_to_d_spec.nesting_edge, true)
+
+      let a_to_a_bottom = find_rank_edge_spec(
+        prep_state.edge_specs,
+        "A",
+        a_bounds.bottom_id,
+      )
+      let a_top_to_a = find_rank_edge_spec(
+        prep_state.edge_specs,
+        a_bounds.top_id,
+        "A",
+      )
+      guard a_to_a_bottom is Some(a_to_a_bottom_spec) else {
+        fail("expected SG_A leaf bottom edge")
+      }
+      guard a_top_to_a is Some(a_top_to_a_spec) else {
+        fail("expected SG_A leaf top edge")
+      }
+      assert_eq(a_top_to_a_spec.minlen, 2)
+      assert_eq(a_to_a_bottom_spec.minlen, 2)
+      assert_eq(a_top_to_a_spec.weight, 8)
+      assert_eq(a_to_a_bottom_spec.weight, 8)
+
+      let b_top_to_b = find_rank_edge_spec(
+        prep_state.edge_specs,
+        b_bounds.top_id,
+        "B",
+      )
+      let b_to_bottom = find_rank_edge_spec(
+        prep_state.edge_specs,
+        "B",
+        b_bounds.bottom_id,
+      )
+      guard b_top_to_b is Some(b_top_to_b_spec) else {
+        fail("expected SG_B leaf top edge")
+      }
+      guard b_to_bottom is Some(b_to_bottom_spec) else {
+        fail("expected SG_B leaf bottom edge")
+      }
+      assert_eq(b_top_to_b_spec.minlen, 1)
+      assert_eq(b_to_bottom_spec.minlen, 1)
+      assert_eq(b_top_to_b_spec.weight, 8)
+      assert_eq(b_to_bottom_spec.weight, 8)
+
+      let a_top_to_b_top = find_rank_edge_spec(
+        prep_state.edge_specs,
+        a_bounds.top_id,
+        b_bounds.top_id,
+      )
+      let b_bottom_to_a_bottom = find_rank_edge_spec(
+        prep_state.edge_specs,
+        b_bounds.bottom_id,
+        a_bounds.bottom_id,
+      )
+      guard a_top_to_b_top is Some(a_top_to_b_top_spec) else {
+        fail("expected SG_A to SG_B top constraint")
+      }
+      guard b_bottom_to_a_bottom is Some(b_bottom_to_a_bottom_spec) else {
+        fail("expected SG_B to SG_A bottom constraint")
+      }
+      assert_eq(a_top_to_b_top_spec.minlen, 1)
+      assert_eq(b_bottom_to_a_bottom_spec.minlen, 1)
+      assert_eq(a_top_to_b_top_spec.weight, 4)
+      assert_eq(b_bottom_to_a_bottom_spec.weight, 4)
+      assert_eq(a_top_to_b_top_spec.nesting_edge, true)
+      assert_eq(b_bottom_to_a_bottom_spec.nesting_edge, true)
+    }
+    None => fail("expected nesting root")
+  }
+}
+
+///|
+test "Layout dagre nesting rank phase matches upstream tiny compound baseline" {
+  let nodes : Array[MermaidNode] = [
+    { id: "A", label: "A", shape: Rectangle },
+    { id: "B", label: "B", shape: Rectangle },
+    { id: "C", label: "C", shape: Rectangle },
+    { id: "D", label: "D", shape: Rectangle },
+  ]
+  let edges : Array[MermaidEdge] = [
+    flow_edge("A", "B"),
+    flow_edge("B", "C"),
+    flow_edge("D", "A"),
+  ]
+  let base_specs = collect_dagre_rank_edge_specs(edges, [0, 1], [2])
+  let subgraphs : Array[MermaidSubgraph] = [
+    {
+      id: "SG_A",
+      label: "SG_A",
+      node_ids: ["A"],
+      children: [
+        {
+          id: "SG_B",
+          label: "SG_B",
+          node_ids: ["B"],
+          children: [],
+          direction: None,
+        },
+      ],
+      direction: None,
+    },
+    {
+      id: "SG_C",
+      label: "SG_C",
+      node_ids: ["C"],
+      children: [],
+      direction: None,
+    },
+  ]
+
+  let (rank_by_id, max_rank, ok) = collect_dagre_nesting_rank_result(
+    nodes, base_specs, subgraphs,
+  )
+
+  assert_true(ok)
+  assert_eq(max_rank, 7)
+  assert_eq(option_int_or(rank_by_id.get("A"), -1), 1)
+  assert_eq(option_int_or(rank_by_id.get("B"), -1), 3)
+  assert_eq(option_int_or(rank_by_id.get("C"), -1), 7)
+  assert_eq(option_int_or(rank_by_id.get("D"), -1), 3)
+}
+
+///|
 test "Layout simplex seed phase matches upstream fanout baseline" {
   let nodes : Array[MermaidNode] = [
     { id: "A", label: "A", shape: Rectangle },
@@ -2225,7 +2491,19 @@ test "Layout non-state rank selector keeps default strategy when exploration dis
   let edges : Array[MermaidEdge] = [flow_edge("A", "B"), flow_edge("B", "A")]
 
   let selected = select_non_state_flow_rank_candidate(
-    nodes, edges, false, true, false, false, false, true, true, true, false, false,
+    nodes,
+    edges,
+    [],
+    false,
+    true,
+    false,
+    false,
+    false,
+    true,
+    true,
+    true,
+    false,
+    false,
     false,
   )
 
@@ -2249,15 +2527,51 @@ test "Layout non-state rank selector picks lower-scored candidate when explorati
   ]
 
   let dfs_candidate = collect_non_state_flow_rank_candidate(
-    nodes, edges, false, true, false, false, false, false, true, true, false, false,
+    nodes,
+    edges,
+    [],
+    false,
+    true,
+    false,
+    false,
+    false,
+    false,
+    true,
+    true,
+    false,
+    false,
     false,
   )
   let greedy_candidate = collect_non_state_flow_rank_candidate(
-    nodes, edges, false, true, false, false, false, false, true, true, true, false,
+    nodes,
+    edges,
+    [],
+    false,
+    true,
+    false,
+    false,
+    false,
+    false,
+    true,
+    true,
+    true,
+    false,
     false,
   )
   let selected = select_non_state_flow_rank_candidate(
-    nodes, edges, false, true, false, false, false, true, true, false, true, false,
+    nodes,
+    edges,
+    [],
+    false,
+    true,
+    false,
+    false,
+    false,
+    true,
+    true,
+    false,
+    true,
+    false,
     false,
   )
 
