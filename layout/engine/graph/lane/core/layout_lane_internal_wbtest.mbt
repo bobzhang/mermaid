@@ -680,6 +680,31 @@ fn collect_fixture_dagre_nesting_rank_layers(
 }
 
 ///|
+fn collect_fixture_lane_state_rank_layers_for_dagre_parity(
+  source : String,
+) -> Array[Array[String]] raise {
+  let graph = @parser.parse_mermaid(source.trim_end().to_string())
+  let prep_state = @layout_engine_graph_prep_core.prepare_graph_inputs(
+    graph, true,
+  )
+  let nodes_in_order = @layout_engine_graph_internal_core.reorder_nodes_for_flow_layout(
+    prep_state.nodes_in_order,
+    graph.edges,
+  )
+  let horizontal = @layout_engine_graph_internal_core.layout_direction_is_horizontal(
+    graph.direction,
+  )
+  let lane_state = compute_legacy_lane_state(
+    graph, nodes_in_order, false, false, horizontal, false, false, false, true,
+  )
+  collect_rank_layers_from_assignment(
+    nodes_in_order,
+    lane_state.flow_rank_by_node_id,
+    lane_state.flow_max_rank,
+  )
+}
+
+///|
 fn collect_simplex_rank_trace_case(
   edges : Array[MermaidEdge],
 ) -> (Bool, Int, Int, Array[Int]) {
@@ -1799,6 +1824,24 @@ test "Layout dagre nesting rank phase matches upstream stress fixture layers" {
   assert_eq(stress006_layers, official_layers_layout_stress_006())
 
   let stress012_layers = collect_fixture_dagre_nesting_rank_layers(
+    stress_012_interleaved_subgraph_feedback_source(),
+  )
+  assert_eq(stress012_layers, official_layers_layout_stress_012())
+}
+
+///|
+test "Layout lane state dagre parity keeps stress fixture rank layers faithful" {
+  let stress003_layers = collect_fixture_lane_state_rank_layers_for_dagre_parity(
+    stress_003_subgraph_bridges_source(),
+  )
+  assert_eq(stress003_layers, official_layers_layout_stress_003())
+
+  let stress006_layers = collect_fixture_lane_state_rank_layers_for_dagre_parity(
+    stress_006_nested_bridge_loops_source(),
+  )
+  assert_eq(stress006_layers, official_layers_layout_stress_006())
+
+  let stress012_layers = collect_fixture_lane_state_rank_layers_for_dagre_parity(
     stress_012_interleaved_subgraph_feedback_source(),
   )
   assert_eq(stress012_layers, official_layers_layout_stress_012())

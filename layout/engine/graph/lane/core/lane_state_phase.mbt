@@ -303,6 +303,7 @@ pub fn compute_legacy_lane_state(
       (!class_or_er_graph && graph_has_cycle(nodes_in_order, graph.edges))
     let adaptive_compact_fanin = !state_graph &&
       !class_or_er_graph &&
+      !prefer_dagre_network_simplex &&
       horizontal &&
       cycle_aware_layout &&
       graph.subgraphs.length() > 0 &&

@@ -36,7 +36,7 @@ pub fn build_legacy_positioned_groups(
       graph, node_spacing, layer_spacing, positioned_nodes, positioned_groups, positioned_index_by_id,
       positioned_by_id,
     )
-  } else if !(dagre_parity_mode && !horizontal) {
+  } else if !dagre_parity_mode {
     shift_top_level_flow_subgraphs_with_gap(
       graph, horizontal, reverse, layer_spacing, positioned_nodes, positioned_groups,
       positioned_index_by_id, positioned_by_id,
