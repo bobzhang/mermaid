@@ -97,6 +97,27 @@ fn wb_is_acyclic_orientation(
 }
 
 ///|
+test "elk layered feedback random selection matches java random nextInt samples" {
+  let mut state = java_random_state_from_seed(1)
+  let sampled_bound_7 : Array[Int] = []
+  for _ in 0..<10 {
+    let (next_state, sampled) = java_random_next_int(state, 7)
+    state = next_state
+    sampled_bound_7.push(sampled)
+  }
+  assert_eq(sampled_bound_7, [4, 4, 1, 0, 6, 6, 0, 1, 3, 6])
+
+  let mut state2 = java_random_state_from_seed(1)
+  let sampled_bound_2 : Array[Int] = []
+  for _ in 0..<10 {
+    let (next_state, sampled) = java_random_next_int(state2, 2)
+    state2 = next_state
+    sampled_bound_2.push(sampled)
+  }
+  assert_eq(sampled_bound_2, [1, 0, 0, 0, 0, 0, 0, 1, 1, 1])
+}
+
+///|
 test "elk layered feedback orientation preserves inter-component edge direction" {
   let node_ids = ["A", "B", "C", "D"]
   let resolved_edges = [

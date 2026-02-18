@@ -30,14 +30,48 @@ fn pop_next_unmarked_node(
 }
 
 ///|
-fn next_feedback_cycle_seed(seed : Int) -> Int {
-  let modulus = 2147483647
-  let next = (seed * 1103515245 + 12345) % modulus
-  if next <= 0 {
-    next + modulus
-  } else {
-    next
+let java_random_multiplier : UInt64 = 25214903917
+
+///|
+let java_random_addend : UInt64 = 11
+
+///|
+let java_random_mask : UInt64 = 0xffffffffffff
+
+///|
+fn java_random_state_from_seed(seed : Int) -> UInt64 {
+  (seed.to_uint64() ^ 0x5deece66d) & java_random_mask
+}
+
+///|
+fn java_random_next_bits(state : UInt64, bits : Int) -> (UInt64, Int) {
+  let next_state = (state * java_random_multiplier + java_random_addend) &
+    java_random_mask
+  let value = (next_state >> (48 - bits)).to_int()
+  (next_state, value)
+}
+
+///|
+fn java_random_next_int(state : UInt64, bound : Int) -> (UInt64, Int) {
+  if bound <= 0 {
+    return (state, 0)
   }
+  let bound_u = bound.to_uint64()
+  if (bound_u & (bound_u - 1)) == 0 {
+    let (next_state, bits) = java_random_next_bits(state, 31)
+    let value = ((bound.to_int64() * bits.to_int64()) >> 31).to_int()
+    return (next_state, value)
+  }
+  let mut next_state = state
+  while true {
+    let (candidate_state, bits) = java_random_next_bits(next_state, 31)
+    next_state = candidate_state
+    let value = bits % bound
+    if bits - value + (bound - 1) >= 0 {
+      return (next_state, value)
+    }
+  }
+  (next_state, 0)
 }
 
 ///|
@@ -46,8 +80,8 @@ fn choose_feedback_break_node_by_outflow(
   mark_by_node_id : Map[String, Int],
   indegree_by_node_id : Map[String, Int],
   outdegree_by_node_id : Map[String, Int],
-  random_seed : Int,
-) -> (String?, Int) {
+  random_state : UInt64,
+) -> (String?, UInt64) {
   let mut max_outflow = 0
   let mut break_candidates : Array[String] = []
   let node_order_index_by_node_id = build_order_index_by_id(node_ids_in_order)
@@ -82,7 +116,7 @@ fn choose_feedback_break_node_by_outflow(
     }
   }
   if break_candidates.length() == 0 {
-    return (None, random_seed)
+    return (None, random_state)
   }
   if max_candidate_indegree != min_candidate_indegree {
     break_candidates.sort_by((left, right) => {
@@ -95,9 +129,11 @@ fn choose_feedback_break_node_by_outflow(
       }
     })
   }
-  let next_seed = next_feedback_cycle_seed(random_seed)
-  let selected_index = next_seed % break_candidates.length()
-  (Some(break_candidates[selected_index]), next_seed)
+  let (next_state, selected_index) = java_random_next_int(
+    random_state,
+    break_candidates.length(),
+  )
+  (Some(break_candidates[selected_index]), next_state)
 }
 
 ///|
@@ -279,7 +315,7 @@ fn compute_feedback_order_orientation_state(
 
   let mut next_right = -1
   let mut next_left = 1
-  let mut random_seed = 1
+  let mut random_state = java_random_state_from_seed(1)
   let mut unprocessed_count = node_ids_in_order.length()
   while unprocessed_count > 0 {
     while pop_next_unmarked_node(sinks, mark_by_node_id) is Some(sink_id) {
@@ -306,11 +342,11 @@ fn compute_feedback_order_orientation_state(
       break
     }
 
-    let (break_node_id, next_seed) = choose_feedback_break_node_by_outflow(
+    let (break_node_id, next_state) = choose_feedback_break_node_by_outflow(
       node_ids_in_order, mark_by_node_id, indegree_by_node_id, outdegree_by_node_id,
-      random_seed,
+      random_state,
     )
-    random_seed = next_seed
+    random_state = next_state
     match break_node_id {
       Some(node_id) => {
         mark_by_node_id[node_id] = next_left
