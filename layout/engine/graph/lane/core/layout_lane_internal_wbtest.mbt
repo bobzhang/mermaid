@@ -990,7 +990,7 @@ test "Layout lane collection uses long-span backward edges for ordering" {
 }
 
 ///|
-test "Layout lane dagre parity ordering phase matches upstream corpus" {
+test "Layout lane dagre parity ordering phase keeps corpus baseline" {
   let case1_nodes : Array[MermaidNode] = [
     { id: "A", label: "A", shape: Rectangle },
     { id: "B", label: "B", shape: Rectangle },
@@ -1099,7 +1099,7 @@ test "Layout lane dagre parity ordering phase matches upstream corpus" {
 }
 
 ///|
-test "Layout lane dagre parity ordering phase matches upstream sweep trace" {
+test "Layout lane dagre parity ordering phase keeps sweep trace baseline" {
   let case1_nodes : Array[MermaidNode] = [
     { id: "A", label: "A", shape: Rectangle },
     { id: "B", label: "B", shape: Rectangle },
