@@ -56,6 +56,65 @@ fn collect_rank_orders_from_lanes(
 }
 
 ///|
+fn dagre_cross_count_from_layering(
+  layering : Array[Array[String]],
+  edges : Array[MermaidEdge],
+  rank_by_id : Map[String, Int],
+) -> Int {
+  if layering.length() <= 1 {
+    return 0
+  }
+  let mut total = 0
+  for upper_rank in 0..<(layering.length() - 1) {
+    let north_pos : Map[String, Int] = {}
+    let south_pos : Map[String, Int] = {}
+    for i, node_id in layering[upper_rank] {
+      north_pos[node_id] = i
+    }
+    for i, node_id in layering[upper_rank + 1] {
+      south_pos[node_id] = i
+    }
+
+    let source_orders : Array[Int] = []
+    let target_orders : Array[Int] = []
+    for edge in edges {
+      match (rank_by_id.get(edge.source), rank_by_id.get(edge.target)) {
+        (Some(source_rank), Some(target_rank)) =>
+          if source_rank == upper_rank && target_rank == upper_rank + 1 {
+            match (north_pos.get(edge.source), south_pos.get(edge.target)) {
+              (Some(source_order), Some(target_order)) => {
+                source_orders.push(source_order)
+                target_orders.push(target_order)
+              }
+              _ => ()
+            }
+          }
+        _ => ()
+      }
+    }
+    for i in 0..<source_orders.length() {
+      let left_source_order = source_orders[i]
+      let left_target_order = target_orders[i]
+      for j in (i + 1)..<source_orders.length() {
+        let right_source_order = source_orders[j]
+        let right_target_order = target_orders[j]
+        if (
+            left_source_order < right_source_order &&
+            left_target_order > right_target_order
+          ) ||
+          (
+            left_source_order > right_source_order &&
+            left_target_order < right_target_order
+          ) {
+          total += 1
+        }
+      }
+    }
+  }
+  total
+}
+
+///|
 fn option_edge_index_count(indices : Array[Int]?) -> Int {
   match indices {
     Some(found) => found.length()
@@ -552,6 +611,18 @@ test "Layout lane dagre parity ordering phase matches upstream sweep trace" {
     [["B", "A"], ["D", "C"], ["F", "E"], ["H", "G"]],
     [["B", "A"], ["D", "C"], ["F", "E"], ["H", "G"]],
   ])
+  let case3_pass_cross_counts : Array[Int] = []
+  for pass_trace_index in 1..<5 {
+    case3_pass_cross_counts.push(
+      dagre_cross_count_from_layering(
+        case3_trace[pass_trace_index],
+        case3_edges,
+        case3_ranks,
+      ),
+    )
+  }
+  assert_eq(case3_pass_cross_counts, [3, 3, 3, 3])
+  assert_eq(case3_trace[5], case3_trace[4])
 }
 
 ///|
