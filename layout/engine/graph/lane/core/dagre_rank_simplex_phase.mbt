@@ -7,20 +7,25 @@ fn dagre_rank_directed_edge_key(
 }
 
 ///|
-fn collect_dagre_network_simplex_ranks(
+priv struct DagreNetworkSimplexPreparedGraph {
+  node_index_by_id : Map[String, Int]
+  edge_source_index : Array[Int]
+  edge_target_index : Array[Int]
+  edge_minlen : Array[Int]
+  edge_weight : Array[Int]
+  directed_edge_index_by_key : Map[String, Int]
+  out_edge_indices_by_source : Array[Array[Int]]
+  in_edge_indices_by_target : Array[Array[Int]]
+  incident_edge_indices_by_node : Array[Array[Int]]
+}
+
+///|
+fn prepare_dagre_network_simplex_graph(
   nodes_in_order : Array[MermaidNode],
   edges : Array[MermaidEdge],
   relaxed_edge_indices : Array[Int],
   reversed_back_edge_indices : Array[Int],
-) -> (Map[String, Int], Int, Bool) {
-  let rank_by_id : Map[String, Int] = {}
-  for node in nodes_in_order {
-    rank_by_id[node.id] = 0
-  }
-  if nodes_in_order.length() == 0 {
-    return (rank_by_id, 0, true)
-  }
-
+) -> DagreNetworkSimplexPreparedGraph {
   let node_index_by_id : Map[String, Int] = {}
   for i, node in nodes_in_order {
     node_index_by_id[node.id] = i
@@ -88,51 +93,94 @@ fn collect_dagre_network_simplex_ranks(
     }
   }
 
-  if edge_source_index.length() == 0 {
-    return (rank_by_id, 0, true)
-  }
-
-  // Dagre's feasible-tree phase requires connectivity. We add zero-cost
-  // virtual connectors between weak components to satisfy that precondition
-  // without distorting weighted edge optimization.
-  let component_by_node_index : Array[Int] = []
-  let component_representative : Array[Int] = []
-  for _ in 0..<nodes_in_order.length() {
-    component_by_node_index.push(-1)
-  }
-  let stack : Array[Int] = []
-  for start_node_index in 0..<nodes_in_order.length() {
-    if component_by_node_index[start_node_index] >= 0 {
-      continue
+  if edge_source_index.length() > 0 {
+    // Dagre's feasible-tree phase requires connectivity. We add zero-cost
+    // virtual connectors between weak components to satisfy that precondition
+    // without distorting weighted edge optimization.
+    let component_by_node_index : Array[Int] = []
+    let component_representative : Array[Int] = []
+    for _ in 0..<nodes_in_order.length() {
+      component_by_node_index.push(-1)
     }
-    let component_index = component_representative.length()
-    component_representative.push(start_node_index)
-    component_by_node_index[start_node_index] = component_index
-    stack.push(start_node_index)
-    while stack.length() > 0 {
-      let node_index = stack[stack.length() - 1]
-      let _ = stack.pop()
-      for edge_index in incident_edge_indices_by_node[node_index] {
-        let edge_source = edge_source_index[edge_index]
-        let edge_target = edge_target_index[edge_index]
-        let other = if edge_source == node_index {
-          edge_target
-        } else {
-          edge_source
+    let stack : Array[Int] = []
+    for start_node_index in 0..<nodes_in_order.length() {
+      if component_by_node_index[start_node_index] >= 0 {
+        continue
+      }
+      let component_index = component_representative.length()
+      component_representative.push(start_node_index)
+      component_by_node_index[start_node_index] = component_index
+      stack.push(start_node_index)
+      while stack.length() > 0 {
+        let node_index = stack[stack.length() - 1]
+        let _ = stack.pop()
+        for edge_index in incident_edge_indices_by_node[node_index] {
+          let edge_source = edge_source_index[edge_index]
+          let edge_target = edge_target_index[edge_index]
+          let other = if edge_source == node_index {
+            edge_target
+          } else {
+            edge_source
+          }
+          if component_by_node_index[other] >= 0 {
+            continue
+          }
+          component_by_node_index[other] = component_index
+          stack.push(other)
         }
-        if component_by_node_index[other] >= 0 {
-          continue
-        }
-        component_by_node_index[other] = component_index
-        stack.push(other)
+      }
+    }
+    if component_representative.length() > 1 {
+      let root_index = component_representative[0]
+      for i in 1..<component_representative.length() {
+        append_rank_edge(root_index, component_representative[i], 0, 0)
       }
     }
   }
-  if component_representative.length() > 1 {
-    let root_index = component_representative[0]
-    for i in 1..<component_representative.length() {
-      append_rank_edge(root_index, component_representative[i], 0, 0)
-    }
+
+  {
+    node_index_by_id,
+    edge_source_index,
+    edge_target_index,
+    edge_minlen,
+    edge_weight,
+    directed_edge_index_by_key,
+    out_edge_indices_by_source,
+    in_edge_indices_by_target,
+    incident_edge_indices_by_node,
+  }
+}
+
+///|
+fn collect_dagre_network_simplex_ranks(
+  nodes_in_order : Array[MermaidNode],
+  edges : Array[MermaidEdge],
+  relaxed_edge_indices : Array[Int],
+  reversed_back_edge_indices : Array[Int],
+) -> (Map[String, Int], Int, Bool) {
+  let rank_by_id : Map[String, Int] = {}
+  for node in nodes_in_order {
+    rank_by_id[node.id] = 0
+  }
+  if nodes_in_order.length() == 0 {
+    return (rank_by_id, 0, true)
+  }
+
+  let prepared_graph = prepare_dagre_network_simplex_graph(
+    nodes_in_order, edges, relaxed_edge_indices, reversed_back_edge_indices,
+  )
+  let node_index_by_id = prepared_graph.node_index_by_id
+  let edge_source_index = prepared_graph.edge_source_index
+  let edge_target_index = prepared_graph.edge_target_index
+  let edge_minlen = prepared_graph.edge_minlen
+  let edge_weight = prepared_graph.edge_weight
+  let directed_edge_index_by_key = prepared_graph.directed_edge_index_by_key
+  let out_edge_indices_by_source = prepared_graph.out_edge_indices_by_source
+  let in_edge_indices_by_target = prepared_graph.in_edge_indices_by_target
+  let incident_edge_indices_by_node = prepared_graph.incident_edge_indices_by_node
+
+  if edge_source_index.length() == 0 {
+    return (rank_by_id, 0, true)
   }
 
   let rank_by_node_index : Array[Int] = []

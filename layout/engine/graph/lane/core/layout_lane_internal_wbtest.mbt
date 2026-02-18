@@ -468,6 +468,66 @@ test "Layout cycle-aware rank collection rehydrates cyclic forward order" {
 }
 
 ///|
+test "Layout simplex prep aggregates relaxed and reversed edges into one directed edge" {
+  let nodes : Array[MermaidNode] = [
+    { id: "A", label: "A", shape: Rectangle },
+    { id: "B", label: "B", shape: Rectangle },
+  ]
+  let edges : Array[MermaidEdge] = [
+    flow_edge("A", "B"),
+    flow_edge("A", "B"),
+    flow_edge("B", "A"),
+  ]
+
+  let prepared = prepare_dagre_network_simplex_graph(nodes, edges, [0, 1], [2])
+  let aggregated_edge_index = prepared.directed_edge_index_by_key.get(
+    dagre_rank_directed_edge_key(0, 1),
+  )
+
+  assert_eq(prepared.edge_source_index.length(), 1)
+  assert_eq(aggregated_edge_index is Some(_), true)
+  guard aggregated_edge_index is Some(edge_index) else {
+    fail("expected aggregated edge")
+  }
+  assert_eq(prepared.edge_source_index[edge_index], 0)
+  assert_eq(prepared.edge_target_index[edge_index], 1)
+  assert_eq(prepared.edge_minlen[edge_index], 1)
+  assert_eq(prepared.edge_weight[edge_index], 3)
+}
+
+///|
+test "Layout simplex prep adds zero-cost connectors across weak components" {
+  let nodes : Array[MermaidNode] = [
+    { id: "A", label: "A", shape: Rectangle },
+    { id: "B", label: "B", shape: Rectangle },
+    { id: "C", label: "C", shape: Rectangle },
+    { id: "D", label: "D", shape: Rectangle },
+    { id: "E", label: "E", shape: Rectangle },
+  ]
+  let edges : Array[MermaidEdge] = [flow_edge("A", "B"), flow_edge("C", "D")]
+
+  let prepared = prepare_dagre_network_simplex_graph(nodes, edges, [0, 1], [])
+  let connector_to_component_two = prepared.directed_edge_index_by_key.get(
+    dagre_rank_directed_edge_key(0, 2),
+  )
+  let connector_to_component_three = prepared.directed_edge_index_by_key.get(
+    dagre_rank_directed_edge_key(0, 4),
+  )
+
+  assert_eq(prepared.edge_source_index.length(), 4)
+  guard connector_to_component_two is Some(edge_to_c) else {
+    fail("expected connector to second component")
+  }
+  assert_eq(prepared.edge_minlen[edge_to_c], 0)
+  assert_eq(prepared.edge_weight[edge_to_c], 0)
+  guard connector_to_component_three is Some(edge_to_e) else {
+    fail("expected connector to isolated component")
+  }
+  assert_eq(prepared.edge_minlen[edge_to_e], 0)
+  assert_eq(prepared.edge_weight[edge_to_e], 0)
+}
+
+///|
 test "Layout dagre simplex ranker matches upstream fanout compaction baseline" {
   let nodes : Array[MermaidNode] = [
     { id: "A", label: "A", shape: Rectangle },
