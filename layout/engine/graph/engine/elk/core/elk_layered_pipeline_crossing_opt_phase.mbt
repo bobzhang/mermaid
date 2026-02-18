@@ -255,7 +255,7 @@ fn select_lower_crossing_rank_order(
   let alternate_score = rank_order_crossing_score(
     alternate_rank_node_ids_by_rank, max_rank, rank_by_node_id, successors_by_node_id,
   )
-  if alternate_score < base_score {
+  if alternate_score <= base_score {
     alternate_rank_node_ids_by_rank
   } else {
     base_rank_node_ids_by_rank

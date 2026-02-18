@@ -48,7 +48,7 @@ test "elk layered rank trace keeps feedback mesh kernel baseline" {
   let trace = collect_rank_trace_for_graph(graph)
   assert_eq(trace.rank_seed_strategy, "native-feedback")
   assert_eq(trace.rank_seed_layers, [["S"], ["B", "A"], ["C"], ["D"], ["T"]])
-  assert_eq(trace.rank_layers, [["S"], ["B", "A"], ["C"], ["D"], ["T"]])
+  assert_eq(trace.rank_layers, [["S"], ["A", "B"], ["C"], ["D"], ["T"]])
 }
 
 ///|
