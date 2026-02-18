@@ -154,6 +154,15 @@ fn map_string_int_entry_count(entries : Map[String, Int]) -> Int {
 }
 
 ///|
+fn sorted_back_edge_indices(back_edges : Map[Int, Bool]) -> Array[Int] {
+  let indices : Array[Int] = []
+  for edge_index, _ in back_edges {
+    indices.push(edge_index)
+  }
+  sorted_int_array(indices)
+}
+
+///|
 fn collect_simplex_rank_trace_case(
   edges : Array[MermaidEdge],
 ) -> (Bool, Int, Int, Array[Int]) {
@@ -483,6 +492,102 @@ test "Layout greedy feedback edge selector expands aggregated reverse multi-edge
   assert_true(back_edges.contains(0))
   assert_eq(back_edges.contains(1), false)
   assert_eq(back_edges.contains(2), false)
+}
+
+///|
+test "Layout greedy feedback edge selector matches upstream corpus" {
+  let nodes : Array[MermaidNode] = [
+    { id: "A", label: "A", shape: Rectangle },
+    { id: "B", label: "B", shape: Rectangle },
+    { id: "C", label: "C", shape: Rectangle },
+    { id: "D", label: "D", shape: Rectangle },
+    { id: "E", label: "E", shape: Rectangle },
+    { id: "F", label: "F", shape: Rectangle },
+  ]
+
+  let case0_edges : Array[MermaidEdge] = [
+    flow_edge("A", "C"),
+    flow_edge("E", "C"),
+    flow_edge("A", "E"),
+    flow_edge("E", "D"),
+    flow_edge("E", "C"),
+    flow_edge("D", "E"),
+    flow_edge("A", "D"),
+    flow_edge("D", "B"),
+    flow_edge("C", "B"),
+    flow_edge("A", "D"),
+  ]
+  let case0_back_edges = collect_greedy_feedback_edge_indices(
+    nodes,
+    case0_edges,
+    [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+  )
+  assert_eq(sorted_back_edge_indices(case0_back_edges), [5])
+
+  let case1_edges : Array[MermaidEdge] = [
+    flow_edge("D", "E"),
+    flow_edge("F", "D"),
+    flow_edge("D", "B"),
+    flow_edge("C", "B"),
+    flow_edge("B", "D"),
+    flow_edge("D", "B"),
+    flow_edge("C", "F"),
+    flow_edge("D", "F"),
+    flow_edge("F", "E"),
+    flow_edge("E", "F"),
+    flow_edge("C", "F"),
+  ]
+  let case1_back_edges = collect_greedy_feedback_edge_indices(
+    nodes,
+    case1_edges,
+    [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+  )
+  assert_eq(sorted_back_edge_indices(case1_back_edges), [1, 4, 8])
+
+  let case2_edges : Array[MermaidEdge] = [
+    flow_edge("E", "D"),
+    flow_edge("B", "A"),
+    flow_edge("C", "D"),
+    flow_edge("B", "E"),
+    flow_edge("C", "E"),
+    flow_edge("B", "E"),
+    flow_edge("F", "B"),
+    flow_edge("A", "E"),
+    flow_edge("E", "F"),
+    flow_edge("F", "A"),
+    flow_edge("E", "B"),
+    flow_edge("F", "A"),
+    flow_edge("A", "F"),
+  ]
+  let case2_back_edges = collect_greedy_feedback_edge_indices(
+    nodes,
+    case2_edges,
+    [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+  )
+  assert_eq(sorted_back_edge_indices(case2_back_edges), [6, 8, 10, 12])
+
+  let case3_edges : Array[MermaidEdge] = [
+    flow_edge("A", "F"),
+    flow_edge("D", "F"),
+    flow_edge("B", "E"),
+    flow_edge("F", "D"),
+    flow_edge("A", "F"),
+    flow_edge("C", "E"),
+    flow_edge("B", "C"),
+    flow_edge("A", "F"),
+    flow_edge("D", "F"),
+    flow_edge("E", "F"),
+    flow_edge("C", "F"),
+    flow_edge("C", "B"),
+    flow_edge("D", "C"),
+    flow_edge("F", "A"),
+  ]
+  let case3_back_edges = collect_greedy_feedback_edge_indices(
+    nodes,
+    case3_edges,
+    [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13],
+  )
+  assert_eq(sorted_back_edge_indices(case3_back_edges), [3, 11, 13])
 }
 
 ///|
