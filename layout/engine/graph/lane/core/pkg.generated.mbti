@@ -6,7 +6,7 @@ import {
 }
 
 // Values
-pub fn compute_legacy_lane_state(@model.MermaidGraph, Array[@model.MermaidNode], Bool, Bool, Bool, Bool, Bool, Bool) -> LegacyLaneState
+pub fn compute_legacy_lane_state(@model.MermaidGraph, Array[@model.MermaidNode], Bool, Bool, Bool, Bool, Bool, Bool, Bool) -> LegacyLaneState
 
 // Errors
 

@@ -359,10 +359,10 @@ test "Layout cycle-aware rank collection rehydrates cyclic forward order" {
   ]
 
   let (legacy_ranks, _) = collect_non_state_flow_ranks(
-    nodes, edges, false, false, false, false, false, false, false,
+    nodes, edges, false, false, false, false, false, false, false, false,
   )
   let (cycle_ranks, _) = collect_non_state_flow_ranks(
-    nodes, edges, false, true, false, false, false, false, false,
+    nodes, edges, false, true, false, false, false, false, false, false,
   )
 
   let legacy_b = option_int_or(legacy_ranks.get("B"), -1)
@@ -378,6 +378,94 @@ test "Layout cycle-aware rank collection rehydrates cyclic forward order" {
 }
 
 ///|
+test "Layout dagre simplex ranker matches upstream fanout compaction baseline" {
+  let nodes : Array[MermaidNode] = [
+    { id: "A", label: "A", shape: Rectangle },
+    { id: "B", label: "B", shape: Rectangle },
+    { id: "C", label: "C", shape: Rectangle },
+    { id: "D", label: "D", shape: Rectangle },
+    { id: "E", label: "E", shape: Rectangle },
+    { id: "F", label: "F", shape: Rectangle },
+  ]
+  let edges : Array[MermaidEdge] = [
+    flow_edge("A", "B"),
+    flow_edge("A", "E"),
+    flow_edge("A", "F"),
+    flow_edge("B", "D"),
+    flow_edge("C", "D"),
+  ]
+
+  let (ranks, max_rank) = collect_non_state_flow_ranks(
+    nodes, edges, false, false, false, false, false, false, false, true,
+  )
+
+  assert_eq(max_rank, 2)
+  assert_eq(option_int_or(ranks.get("A"), -1), 0)
+  assert_eq(option_int_or(ranks.get("B"), -1), 1)
+  assert_eq(option_int_or(ranks.get("C"), -1), 1)
+  assert_eq(option_int_or(ranks.get("D"), -1), 2)
+  assert_eq(option_int_or(ranks.get("E"), -1), 1)
+  assert_eq(option_int_or(ranks.get("F"), -1), 1)
+}
+
+///|
+test "Layout legacy ranker baseline stays unchanged when dagre simplex is disabled" {
+  let nodes : Array[MermaidNode] = [
+    { id: "A", label: "A", shape: Rectangle },
+    { id: "B", label: "B", shape: Rectangle },
+    { id: "C", label: "C", shape: Rectangle },
+    { id: "D", label: "D", shape: Rectangle },
+    { id: "E", label: "E", shape: Rectangle },
+    { id: "F", label: "F", shape: Rectangle },
+  ]
+  let edges : Array[MermaidEdge] = [
+    flow_edge("A", "B"),
+    flow_edge("A", "E"),
+    flow_edge("A", "F"),
+    flow_edge("B", "D"),
+    flow_edge("C", "D"),
+  ]
+
+  let (ranks, max_rank) = collect_non_state_flow_ranks(
+    nodes, edges, false, false, false, false, false, false, false, false,
+  )
+
+  assert_eq(max_rank, 2)
+  assert_eq(option_int_or(ranks.get("A"), -1), 0)
+  assert_eq(option_int_or(ranks.get("B"), -1), 1)
+  assert_eq(option_int_or(ranks.get("C"), -1), 0)
+  assert_eq(option_int_or(ranks.get("D"), -1), 2)
+  assert_eq(option_int_or(ranks.get("E"), -1), 1)
+  assert_eq(option_int_or(ranks.get("F"), -1), 1)
+}
+
+///|
+test "Layout dagre simplex ranker preserves reversed feedback constraint baseline" {
+  let nodes : Array[MermaidNode] = [
+    { id: "A", label: "A", shape: Rectangle },
+    { id: "B", label: "B", shape: Rectangle },
+    { id: "C", label: "C", shape: Rectangle },
+    { id: "D", label: "D", shape: Rectangle },
+  ]
+  let edges : Array[MermaidEdge] = [
+    flow_edge("A", "B"),
+    flow_edge("B", "C"),
+    flow_edge("C", "A"),
+    flow_edge("C", "D"),
+  ]
+
+  let (ranks, max_rank) = collect_non_state_flow_ranks(
+    nodes, edges, false, true, false, false, false, true, true, true,
+  )
+
+  assert_eq(max_rank, 3)
+  assert_eq(option_int_or(ranks.get("A"), -1), 0)
+  assert_eq(option_int_or(ranks.get("B"), -1), 1)
+  assert_eq(option_int_or(ranks.get("C"), -1), 2)
+  assert_eq(option_int_or(ranks.get("D"), -1), 3)
+}
+
+///|
 test "Layout non-state rank selector keeps default strategy when exploration disabled" {
   let nodes : Array[MermaidNode] = [
     { id: "A", label: "A", shape: Rectangle },
@@ -386,7 +474,7 @@ test "Layout non-state rank selector keeps default strategy when exploration dis
   let edges : Array[MermaidEdge] = [flow_edge("A", "B"), flow_edge("B", "A")]
 
   let selected = select_non_state_flow_rank_candidate(
-    nodes, edges, false, true, false, false, false, true, true, true, false,
+    nodes, edges, false, true, false, false, false, true, true, true, false, false,
   )
 
   assert_true(selected.use_greedy_feedback_arc_set)
@@ -409,13 +497,13 @@ test "Layout non-state rank selector picks lower-scored candidate when explorati
   ]
 
   let dfs_candidate = collect_non_state_flow_rank_candidate(
-    nodes, edges, false, true, false, false, false, false, true, true, false,
+    nodes, edges, false, true, false, false, false, false, true, true, false, false,
   )
   let greedy_candidate = collect_non_state_flow_rank_candidate(
-    nodes, edges, false, true, false, false, false, false, true, true, true,
+    nodes, edges, false, true, false, false, false, false, true, true, true, false,
   )
   let selected = select_non_state_flow_rank_candidate(
-    nodes, edges, false, true, false, false, false, true, true, false, true,
+    nodes, edges, false, true, false, false, false, true, true, false, true, false,
   )
 
   let selected_score = non_state_flow_rank_candidate_score(selected)

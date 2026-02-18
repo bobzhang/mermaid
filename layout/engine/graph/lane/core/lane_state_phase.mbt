@@ -74,6 +74,7 @@ fn collect_non_state_flow_rank_candidate(
   base_enable_feedback_back_edge_ordering : Bool,
   preserve_fanout_order_ties : Bool,
   use_greedy_feedback_arc_set : Bool,
+  prefer_dagre_network_simplex : Bool,
 ) -> NonStateFlowRankCandidate {
   let preserve_reversed_back_edge_constraints = use_greedy_feedback_arc_set
   let enable_feedback_back_edge_ordering = base_enable_feedback_back_edge_ordering &&
@@ -81,7 +82,7 @@ fn collect_non_state_flow_rank_candidate(
   let (rank_by_id, max_rank) = collect_non_state_flow_ranks(
     nodes_in_order, edges, rank_compact_fanin, cycle_aware_layout, promote_backward_dotted_edges,
     prefer_definition_back_edges, compact_cycle_ranks_toward_sinks, use_greedy_feedback_arc_set,
-    preserve_reversed_back_edge_constraints,
+    preserve_reversed_back_edge_constraints, prefer_dagre_network_simplex,
   )
   let lane_by_id = collect_non_state_flow_lanes(
     nodes_in_order, rank_by_id, max_rank, edges, preserve_dummy_lane_channels, enable_feedback_back_edge_ordering,
@@ -129,11 +130,12 @@ fn select_non_state_flow_rank_candidate(
   preserve_fanout_order_ties : Bool,
   default_use_greedy_feedback_arc_set : Bool,
   allow_feedback_strategy_selection : Bool,
+  prefer_dagre_network_simplex : Bool,
 ) -> NonStateFlowRankCandidate {
   let default_candidate = collect_non_state_flow_rank_candidate(
     nodes_in_order, edges, rank_compact_fanin, cycle_aware_layout, promote_backward_dotted_edges,
     prefer_definition_back_edges, false, preserve_dummy_lane_channels, base_enable_feedback_back_edge_ordering,
-    preserve_fanout_order_ties, default_use_greedy_feedback_arc_set,
+    preserve_fanout_order_ties, default_use_greedy_feedback_arc_set, prefer_dagre_network_simplex,
   )
   if !allow_feedback_strategy_selection {
     return default_candidate
@@ -150,6 +152,7 @@ fn select_non_state_flow_rank_candidate(
     base_enable_feedback_back_edge_ordering,
     preserve_fanout_order_ties,
     !default_use_greedy_feedback_arc_set,
+    prefer_dagre_network_simplex,
   )
   let default_score = non_state_flow_rank_candidate_score(default_candidate)
   let alternative_score = non_state_flow_rank_candidate_score(
@@ -173,6 +176,7 @@ pub fn compute_legacy_lane_state(
   compact_fanin : Bool,
   enhanced_horizontal_state_flow : Bool,
   flat_state_graph : Bool,
+  prefer_dagre_network_simplex : Bool,
 ) -> LegacyLaneState {
   let state_lane_by_node_id : Map[String, Int] = {}
   let state_label_y_offset_by_node_id : Map[String, Int] = {}
@@ -246,6 +250,7 @@ pub fn compute_legacy_lane_state(
       !class_or_er_graph,
       default_use_greedy_feedback_arc_set,
       allow_feedback_strategy_selection,
+      prefer_dagre_network_simplex,
     )
     let use_greedy_feedback_arc_set = selected_rank_candidate.use_greedy_feedback_arc_set
     let enable_feedback_back_edge_ordering = base_enable_feedback_back_edge_ordering &&
@@ -267,6 +272,7 @@ pub fn compute_legacy_lane_state(
         base_enable_feedback_back_edge_ordering,
         !class_or_er_graph,
         use_greedy_feedback_arc_set,
+        prefer_dagre_network_simplex,
       )
       if compacted_rank_candidate.lane_crossings <
         selected_rank_candidate.lane_crossings ||

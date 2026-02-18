@@ -64,3 +64,52 @@ test "legacy setup derives flow defaults and lane state for a simple graph" {
   assert_eq(setup_state.nodes_in_order.length(), 2)
   assert_eq(setup_state.lane_state.flow_max_rank, 1)
 }
+
+///|
+test "legacy setup enables dagre simplex only when dagre-parity is selected" {
+  let graph = test_graph(
+    LR,
+    [
+      test_node("A"),
+      test_node("B"),
+      test_node("C"),
+      test_node("D"),
+      test_node("E"),
+      test_node("F"),
+    ],
+    [
+      test_edge("A", "B"),
+      test_edge("A", "E"),
+      test_edge("A", "F"),
+      test_edge("B", "D"),
+      test_edge("C", "D"),
+    ],
+  )
+  let legacy_setup = build_legacy_layout_setup(
+    graph,
+    @model.RenderOptions::default(),
+    true,
+    false,
+  )
+  let dagre_setup = build_legacy_layout_setup(
+    graph,
+    { ..@model.RenderOptions::default(), layout_engine: Some(DagreParity) },
+    true,
+    false,
+  )
+
+  assert_eq(
+    @layout_engine_graph_internal_core.option_int_or(
+      legacy_setup.lane_state.flow_rank_by_node_id.get("C"),
+      -1,
+    ),
+    0,
+  )
+  assert_eq(
+    @layout_engine_graph_internal_core.option_int_or(
+      dagre_setup.lane_state.flow_rank_by_node_id.get("C"),
+      -1,
+    ),
+    1,
+  )
+}

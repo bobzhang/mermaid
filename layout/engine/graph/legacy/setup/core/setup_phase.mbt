@@ -77,9 +77,11 @@ pub fn build_legacy_layout_setup(
   } else {
     base_node_spacing
   }
+  let selected_engine : LayoutEngine? = options.layout_engine
+  let prefer_dagre_network_simplex = selected_engine is Some(DagreParity)
   let lane_state = @layout_engine_graph_lane_core.compute_legacy_lane_state(
     graph, nodes_in_order, state_graph, class_or_er_graph, horizontal, compact_fanin,
-    enhanced_horizontal_state_flow, flat_state_graph,
+    enhanced_horizontal_state_flow, flat_state_graph, prefer_dagre_network_simplex,
   )
 
   {

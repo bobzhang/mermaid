@@ -39,6 +39,7 @@ fn build_legacy_lane_rank_seed_state(
 ) -> ElkLayeredRankSeedState {
   let legacy_lane_state = @layout_engine_graph_lane_core.compute_legacy_lane_state(
     graph, nodes_in_order, false, false, horizontal, compact_fanin, false, false,
+    false,
   )
   let rank_by_node_id = legacy_lane_state.flow_rank_by_node_id
   let max_rank = legacy_lane_state.flow_max_rank

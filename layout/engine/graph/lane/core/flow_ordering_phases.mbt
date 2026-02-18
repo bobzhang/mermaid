@@ -10,6 +10,7 @@ fn collect_non_state_flow_ranks(
   compact_cycle_ranks_toward_sinks : Bool,
   use_greedy_feedback_arc_set : Bool,
   preserve_reversed_back_edge_constraints : Bool,
+  use_dagre_network_simplex : Bool,
 ) -> (Map[String, Int], Int) {
   if !cycle_aware {
     let node_order_by_id : Map[String, Int] = {}
@@ -41,6 +42,28 @@ fn collect_non_state_flow_ranks(
             }
           }
         _ => ()
+      }
+    }
+
+    if use_dagre_network_simplex {
+      let all_relaxed_edge_indices : Array[Int] = []
+      for i, edge in edges {
+        if edge.source == edge.target {
+          continue
+        }
+        if node_order_by_id.contains(edge.source) &&
+          node_order_by_id.contains(edge.target) {
+          all_relaxed_edge_indices.push(i)
+        }
+      }
+      let (simplex_rank_by_id, simplex_max_rank, simplex_ok) = collect_dagre_network_simplex_ranks(
+        nodes_in_order,
+        edges,
+        all_relaxed_edge_indices,
+        [],
+      )
+      if simplex_ok {
+        return (simplex_rank_by_id, simplex_max_rank)
       }
     }
 
@@ -274,9 +297,7 @@ fn collect_non_state_flow_ranks(
       definition_backward_edge_indices.push(edge_index)
     }
     if back_edge_by_index.contains(edge_index) {
-      if preserve_reversed_back_edge_constraints {
-        reversed_back_edge_indices.push(edge_index)
-      }
+      reversed_back_edge_indices.push(edge_index)
       continue
     }
     if is_definition_back_edge {
@@ -291,6 +312,18 @@ fn collect_non_state_flow_ranks(
     match outgoing_relaxed_edge_indices_by_source.get(edge.source) {
       Some(indices) => indices.push(edge_index)
       None => ()
+    }
+  }
+
+  let should_use_dagre_network_simplex = use_dagre_network_simplex &&
+    !compact_fanin &&
+    !prefer_definition_back_edges
+  if should_use_dagre_network_simplex {
+    let (simplex_rank_by_id, simplex_max_rank, simplex_ok) = collect_dagre_network_simplex_ranks(
+      nodes_in_order, edges, relaxed_edge_indices, reversed_back_edge_indices,
+    )
+    if simplex_ok {
+      return (simplex_rank_by_id, simplex_max_rank)
     }
   }
 
