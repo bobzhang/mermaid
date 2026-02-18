@@ -497,6 +497,61 @@ test "Layout lane dagre parity ordering phase matches upstream sweep trace" {
       ["E", "F"],
     ],
   ])
+
+  let case3_nodes : Array[MermaidNode] = [
+    { id: "A", label: "A", shape: Rectangle },
+    { id: "B", label: "B", shape: Rectangle },
+    { id: "C", label: "C", shape: Rectangle },
+    { id: "D", label: "D", shape: Rectangle },
+    { id: "E", label: "E", shape: Rectangle },
+    { id: "F", label: "F", shape: Rectangle },
+    { id: "G", label: "G", shape: Rectangle },
+    { id: "H", label: "H", shape: Rectangle },
+  ]
+  let case3_ranks : Map[String, Int] = {
+    "A": 0,
+    "B": 0,
+    "C": 1,
+    "D": 1,
+    "E": 2,
+    "F": 2,
+    "G": 3,
+    "H": 3,
+  }
+  let case3_edges : Array[MermaidEdge] = [
+    flow_edge("A", "C"),
+    flow_edge("A", "D"),
+    flow_edge("B", "C"),
+    flow_edge("B", "D"),
+    flow_edge("C", "E"),
+    flow_edge("D", "F"),
+    flow_edge("C", "F"),
+    flow_edge("D", "E"),
+    flow_edge("E", "G"),
+    flow_edge("F", "H"),
+    flow_edge("E", "H"),
+    flow_edge("F", "G"),
+  ]
+  let case3_trace : Array[Array[Array[String]]] = []
+  let _ = collect_non_state_flow_lanes_internal(
+    case3_nodes,
+    case3_ranks,
+    3,
+    case3_edges,
+    false,
+    false,
+    false,
+    true,
+    Some(case3_trace),
+  )
+  assert_eq(case3_trace, [
+    [["A", "B"], ["C", "D"], ["E", "F"], ["G", "H"]],
+    [["A", "B"], ["C", "D"], ["E", "F"], ["G", "H"]],
+    [["A", "B"], ["C", "D"], ["E", "F"], ["G", "H"]],
+    [["B", "A"], ["D", "C"], ["F", "E"], ["G", "H"]],
+    [["B", "A"], ["D", "C"], ["F", "E"], ["H", "G"]],
+    [["B", "A"], ["D", "C"], ["F", "E"], ["H", "G"]],
+  ])
 }
 
 ///|
