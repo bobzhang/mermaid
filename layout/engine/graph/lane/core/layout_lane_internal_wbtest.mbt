@@ -2495,6 +2495,7 @@ test "Layout non-state rank selector keeps default strategy when exploration dis
     edges,
     [],
     false,
+    false,
     true,
     false,
     false,
@@ -2508,6 +2509,27 @@ test "Layout non-state rank selector keeps default strategy when exploration dis
   )
 
   assert_true(selected.use_greedy_feedback_arc_set)
+}
+
+///|
+test "Layout rank densify phase compacts sparse rank indices while preserving order" {
+  let nodes : Array[MermaidNode] = [
+    { id: "A", label: "A", shape: Rectangle },
+    { id: "B", label: "B", shape: Rectangle },
+    { id: "C", label: "C", shape: Rectangle },
+    { id: "D", label: "D", shape: Rectangle },
+  ]
+  let sparse_rank_by_id : Map[String, Int] = { "A": 0, "B": 2, "C": 5, "D": 2 }
+
+  let (dense_rank_by_id, max_dense_rank) = densify_rank_assignment(
+    nodes, sparse_rank_by_id,
+  )
+
+  assert_eq(max_dense_rank, 2)
+  assert_eq(option_int_or(dense_rank_by_id.get("A"), -1), 0)
+  assert_eq(option_int_or(dense_rank_by_id.get("B"), -1), 1)
+  assert_eq(option_int_or(dense_rank_by_id.get("D"), -1), 1)
+  assert_eq(option_int_or(dense_rank_by_id.get("C"), -1), 2)
 }
 
 ///|
@@ -2531,6 +2553,7 @@ test "Layout non-state rank selector picks lower-scored candidate when explorati
     edges,
     [],
     false,
+    false,
     true,
     false,
     false,
@@ -2547,6 +2570,7 @@ test "Layout non-state rank selector picks lower-scored candidate when explorati
     edges,
     [],
     false,
+    false,
     true,
     false,
     false,
@@ -2562,6 +2586,7 @@ test "Layout non-state rank selector picks lower-scored candidate when explorati
     nodes,
     edges,
     [],
+    false,
     false,
     true,
     false,
