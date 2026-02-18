@@ -409,6 +409,107 @@ test "Layout lane dagre parity ordering phase matches upstream corpus" {
 
 ///|
 test "Layout lane dagre parity ordering phase matches upstream sweep trace" {
+  let case1_nodes : Array[MermaidNode] = [
+    { id: "A", label: "A", shape: Rectangle },
+    { id: "B", label: "B", shape: Rectangle },
+    { id: "M", label: "M", shape: Rectangle },
+    { id: "X", label: "X", shape: Rectangle },
+    { id: "Y", label: "Y", shape: Rectangle },
+  ]
+  let case1_ranks : Map[String, Int] = {
+    "A": 0,
+    "B": 0,
+    "M": 1,
+    "X": 2,
+    "Y": 2,
+  }
+  let case1_edges : Array[MermaidEdge] = [
+    flow_edge("A", "M"),
+    flow_edge("B", "M"),
+    flow_edge("M", "X"),
+    flow_edge("M", "Y"),
+    flow_edge("A", "Y"),
+    flow_edge("B", "X"),
+  ]
+  let case1_trace : Array[Array[Array[String]]] = []
+  let case1_step_trace : Array[DagreParitySweepStepTrace] = []
+  let _ = collect_non_state_flow_lanes_internal(
+    case1_nodes,
+    case1_ranks,
+    2,
+    case1_edges,
+    false,
+    false,
+    false,
+    true,
+    Some(case1_trace),
+    Some(case1_step_trace),
+  )
+  assert_eq(case1_trace, [
+    [["A", "B"], ["M", "__lane_dummy_f_4_1", "__lane_dummy_f_5_1"], ["X", "Y"]],
+    [["B", "A"], ["__lane_dummy_f_5_1", "M", "__lane_dummy_f_4_1"], ["X", "Y"]],
+    [["B", "A"], ["__lane_dummy_f_5_1", "M", "__lane_dummy_f_4_1"], ["X", "Y"]],
+    [["B", "A"], ["__lane_dummy_f_5_1", "M", "__lane_dummy_f_4_1"], ["X", "Y"]],
+    [["B", "A"], ["__lane_dummy_f_5_1", "M", "__lane_dummy_f_4_1"], ["X", "Y"]],
+    [["B", "A"], ["__lane_dummy_f_5_1", "M", "__lane_dummy_f_4_1"], ["X", "Y"]],
+  ])
+  assert_eq(case1_step_trace.length(), 4)
+  assert_eq(
+    [
+      case1_step_trace[0].pass_index,
+      case1_step_trace[1].pass_index,
+      case1_step_trace[2].pass_index,
+      case1_step_trace[3].pass_index,
+    ],
+    [0, 1, 2, 3],
+  )
+  assert_eq(
+    [
+      case1_step_trace[0].incoming_from_neighbor,
+      case1_step_trace[1].incoming_from_neighbor,
+      case1_step_trace[2].incoming_from_neighbor,
+      case1_step_trace[3].incoming_from_neighbor,
+    ],
+    [false, true, false, true],
+  )
+  assert_eq(
+    [
+      case1_step_trace[0].bias_right,
+      case1_step_trace[1].bias_right,
+      case1_step_trace[2].bias_right,
+      case1_step_trace[3].bias_right,
+    ],
+    [false, false, true, true],
+  )
+  assert_eq(
+    [
+      case1_step_trace[0].candidate_crossings,
+      case1_step_trace[1].candidate_crossings,
+      case1_step_trace[2].candidate_crossings,
+      case1_step_trace[3].candidate_crossings,
+    ],
+    [0, 0, 0, 0],
+  )
+  assert_eq(case1_step_trace[0].barycenters_by_rank, {
+    0: { "A": "3/2", "B": "1/2" },
+    1: { "M": "1/2", "__lane_dummy_f_4_1": "1/1", "__lane_dummy_f_5_1": "0/1" },
+  })
+  assert_eq(case1_step_trace[1].barycenters_by_rank, {
+    1: { "M": "1/2", "__lane_dummy_f_4_1": "1/1", "__lane_dummy_f_5_1": "0/1" },
+    2: { "X": "1/2", "Y": "3/2" },
+  })
+  assert_eq(
+    case1_step_trace[2].barycenters_by_rank,
+    case1_step_trace[0].barycenters_by_rank,
+  )
+  assert_eq(
+    case1_step_trace[3].barycenters_by_rank,
+    case1_step_trace[1].barycenters_by_rank,
+  )
+  for i in 0..<case1_step_trace.length() {
+    assert_eq(case1_step_trace[i].rank_nodes, case1_trace[i + 1])
+  }
+
   let nodes : Array[MermaidNode] = [
     { id: "A", label: "A", shape: Rectangle },
     { id: "B", label: "B", shape: Rectangle },
