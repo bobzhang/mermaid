@@ -6,6 +6,7 @@ pub fn build_legacy_positioned_groups(
   horizontal : Bool,
   reverse : Bool,
   state_graph : Bool,
+  dagre_parity_mode : Bool,
   node_spacing : Int,
   layer_spacing : Int,
   positioned_nodes : Array[PositionedNode],
@@ -35,7 +36,7 @@ pub fn build_legacy_positioned_groups(
       graph, node_spacing, layer_spacing, positioned_nodes, positioned_groups, positioned_index_by_id,
       positioned_by_id,
     )
-  } else {
+  } else if !(dagre_parity_mode && !horizontal) {
     shift_top_level_flow_subgraphs_with_gap(
       graph, horizontal, reverse, layer_spacing, positioned_nodes, positioned_groups,
       positioned_index_by_id, positioned_by_id,

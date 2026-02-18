@@ -256,7 +256,8 @@ pub fn compute_legacy_lane_state(
       cycle_aware_layout &&
       graph.subgraphs.length() == 0 &&
       graph.edges.length() >= 30
-    let prefer_definition_back_edges = !state_graph &&
+    let prefer_definition_back_edges = !prefer_dagre_network_simplex &&
+      !state_graph &&
       cycle_aware_layout &&
       !horizontal &&
       graph.edges.length() < 50

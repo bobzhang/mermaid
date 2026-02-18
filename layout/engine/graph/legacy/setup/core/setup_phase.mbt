@@ -11,6 +11,7 @@ pub(all) struct LegacyLayoutSetupState {
   reverse : Bool
   state_graph : Bool
   class_or_er_graph : Bool
+  dagre_parity_mode : Bool
   flat_state_graph : Bool
   enhanced_horizontal_state_flow : Bool
   lane_state : LegacyLaneState
@@ -78,7 +79,8 @@ pub fn build_legacy_layout_setup(
     base_node_spacing
   }
   let selected_engine : LayoutEngine? = options.layout_engine
-  let prefer_dagre_network_simplex = selected_engine is Some(DagreParity)
+  let dagre_parity_mode = selected_engine is Some(DagreParity)
+  let prefer_dagre_network_simplex = dagre_parity_mode
   let lane_state = @layout_engine_graph_lane_core.compute_legacy_lane_state(
     graph, nodes_in_order, state_graph, class_or_er_graph, horizontal, compact_fanin,
     enhanced_horizontal_state_flow, flat_state_graph, prefer_dagre_network_simplex,
@@ -95,6 +97,7 @@ pub fn build_legacy_layout_setup(
     reverse,
     state_graph,
     class_or_er_graph,
+    dagre_parity_mode,
     flat_state_graph,
     enhanced_horizontal_state_flow,
     lane_state,

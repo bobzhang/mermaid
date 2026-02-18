@@ -17,6 +17,7 @@ pub fn finalize_legacy_layout_from_placement(
   let reverse = setup_state.reverse
   let state_graph = setup_state.state_graph
   let class_or_er_graph = setup_state.class_or_er_graph
+  let dagre_parity_mode = setup_state.dagre_parity_mode
   let enhanced_horizontal_state_flow = setup_state.enhanced_horizontal_state_flow
 
   let positioned_nodes = placement_state.positioned_nodes
@@ -53,8 +54,8 @@ pub fn finalize_legacy_layout_from_placement(
   }
 
   let positioned_groups = @layout_engine_graph_group_core.build_legacy_positioned_groups(
-    graph, padding, horizontal, reverse, state_graph, node_spacing, layer_spacing,
-    positioned_nodes, positioned_by_id, positioned_index_by_id,
+    graph, padding, horizontal, reverse, state_graph, dagre_parity_mode, node_spacing,
+    layer_spacing, positioned_nodes, positioned_by_id, positioned_index_by_id,
   )
 
   let positioned_edges = @layout_engine_graph_routing_core.route_legacy_positioned_edges(

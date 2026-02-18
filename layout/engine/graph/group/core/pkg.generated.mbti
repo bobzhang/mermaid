@@ -10,7 +10,7 @@ pub fn apply_subgraph_direction_overrides(Array[@model.MermaidSubgraph], Bool, B
 
 pub fn build_ascii_state_positioned_groups(@model.MermaidGraph, Int, Map[String, @model.PositionedNode]) -> Array[@model.PositionedGroup]
 
-pub fn build_legacy_positioned_groups(@model.MermaidGraph, Int, Bool, Bool, Bool, Int, Int, Array[@model.PositionedNode], Map[String, @model.PositionedNode], Map[String, Int]) -> Array[@model.PositionedGroup]
+pub fn build_legacy_positioned_groups(@model.MermaidGraph, Int, Bool, Bool, Bool, Bool, Int, Int, Array[@model.PositionedNode], Map[String, @model.PositionedNode], Map[String, Int]) -> Array[@model.PositionedGroup]
 
 // Errors
 

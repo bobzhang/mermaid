@@ -22,6 +22,7 @@ pub(all) struct LegacyLayoutSetupState {
   reverse : Bool
   state_graph : Bool
   class_or_er_graph : Bool
+  dagre_parity_mode : Bool
   flat_state_graph : Bool
   enhanced_horizontal_state_flow : Bool
   lane_state : @bobzhang/beautiful_mermaid/layout/engine/graph/lane/core.LegacyLaneState
