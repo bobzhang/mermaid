@@ -1049,8 +1049,8 @@ test "Layout lane dagre parity ordering phase matches upstream sweep trace" {
     [
       ["A", "B"],
       [
-        "D", "__lane_dummy_f_2_1", "__lane_dummy_f_7_1", "C", "__lane_dummy_f_3_1",
-        "__lane_dummy_f_6_1",
+        "D", "__lane_dummy_f_2_1", "__lane_dummy_f_7_1", "__lane_dummy_f_6_1", "C",
+        "__lane_dummy_f_3_1",
       ],
       ["E", "F"],
     ],
@@ -1063,26 +1063,26 @@ test "Layout lane dagre parity ordering phase matches upstream sweep trace" {
       ["E", "F"],
     ],
     [
-      ["A", "B"],
+      ["B", "A"],
       [
-        "__lane_dummy_f_7_1", "__lane_dummy_f_2_1", "D", "__lane_dummy_f_6_1", "__lane_dummy_f_3_1",
-        "C",
+        "__lane_dummy_f_7_1", "__lane_dummy_f_2_1", "D", "__lane_dummy_f_3_1", "C",
+        "__lane_dummy_f_6_1",
       ],
       ["E", "F"],
     ],
     [
-      ["A", "B"],
+      ["B", "A"],
       [
-        "__lane_dummy_f_6_1", "__lane_dummy_f_2_1", "D", "__lane_dummy_f_7_1", "__lane_dummy_f_3_1",
-        "C",
+        "__lane_dummy_f_7_1", "__lane_dummy_f_3_1", "C", "__lane_dummy_f_6_1", "__lane_dummy_f_2_1",
+        "D",
       ],
-      ["E", "F"],
+      ["F", "E"],
     ],
     [
       ["A", "B"],
       [
-        "__lane_dummy_f_6_1", "__lane_dummy_f_2_1", "D", "__lane_dummy_f_7_1", "__lane_dummy_f_3_1",
-        "C",
+        "D", "__lane_dummy_f_2_1", "__lane_dummy_f_7_1", "__lane_dummy_f_6_1", "C",
+        "__lane_dummy_f_3_1",
       ],
       ["E", "F"],
     ],
@@ -1122,10 +1122,10 @@ test "Layout lane dagre parity ordering phase matches upstream sweep trace" {
       step_trace[2].candidate_crossings,
       step_trace[3].candidate_crossings,
     ],
-    [3, 3, 3, 3],
+    [1, 3, 4, 3],
   )
   assert_eq(step_trace[0].barycenters_by_rank, {
-    0: { "A": "6/3", "B": "9/3" },
+    0: { "A": "4/3", "B": "11/3" },
     1: {
       "C": "1/1",
       "D": "0/1",
@@ -1146,14 +1146,28 @@ test "Layout lane dagre parity ordering phase matches upstream sweep trace" {
     },
     2: { "E": "6/3", "F": "9/3" },
   })
-  assert_eq(
-    step_trace[2].barycenters_by_rank,
-    step_trace[0].barycenters_by_rank,
-  )
-  assert_eq(
-    step_trace[3].barycenters_by_rank,
-    step_trace[1].barycenters_by_rank,
-  )
+  assert_eq(step_trace[2].barycenters_by_rank, {
+    0: { "A": "8/3", "B": "7/3" },
+    1: {
+      "C": "1/1",
+      "D": "0/1",
+      "__lane_dummy_f_2_1": "0/1",
+      "__lane_dummy_f_3_1": "1/1",
+      "__lane_dummy_f_6_1": "1/1",
+      "__lane_dummy_f_7_1": "0/1",
+    },
+  })
+  assert_eq(step_trace[3].barycenters_by_rank, {
+    1: {
+      "C": "0/1",
+      "D": "1/1",
+      "__lane_dummy_f_2_1": "1/1",
+      "__lane_dummy_f_3_1": "0/1",
+      "__lane_dummy_f_6_1": "1/1",
+      "__lane_dummy_f_7_1": "0/1",
+    },
+    2: { "E": "9/3", "F": "6/3" },
+  })
   for i in 0..<step_trace.length() {
     assert_eq(step_trace[i].rank_nodes, trace[i + 1])
   }

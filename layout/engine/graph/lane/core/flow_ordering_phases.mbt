@@ -1359,15 +1359,6 @@ fn collect_non_state_flow_lanes_internal(
     }
   }
 
-  let dagre_parity_order_index_by_rank_node : Map[Int, Map[String, Int]] = {}
-  for rank in 0..<=max_rank {
-    let order_index_by_node : Map[String, Int] = {}
-    for i, node_id in rank_nodes[rank] {
-      order_index_by_node[node_id] = i
-    }
-    dagre_parity_order_index_by_rank_node[rank] = order_index_by_node
-  }
-
   if prefer_dagre_order_parity {
     let outgoing_lane_target_ids_by_source : Map[String, Array[String]] = {}
     for node_id in lane_node_ids_in_insert_order {
@@ -1445,6 +1436,15 @@ fn collect_non_state_flow_lanes_internal(
       }
       rank_nodes[i] = copied_node_ids
     }
+  }
+
+  let dagre_parity_order_index_by_rank_node : Map[Int, Map[String, Int]] = {}
+  for rank in 0..<=max_rank {
+    let order_index_by_node : Map[String, Int] = {}
+    for i, node_id in rank_nodes[rank] {
+      order_index_by_node[node_id] = i
+    }
+    dagre_parity_order_index_by_rank_node[rank] = order_index_by_node
   }
 
   let adjacent_edge_indices_by_upper_rank : Map[Int, Array[Int]] = {}

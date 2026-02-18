@@ -348,6 +348,7 @@ pub fn compute_legacy_lane_state(
     let allow_feedback_strategy_selection = should_allow_feedback_strategy_selection(
       graph, cycle_aware_layout, horizontal, state_graph, class_or_er_graph, prefer_dagre_network_simplex,
     )
+    let prefer_dagre_order_parity = prefer_dagre_network_simplex && !horizontal
     let preserve_fanout_order_ties = !class_or_er_graph
     let selected_rank_candidate = select_non_state_flow_rank_candidate(
       nodes_in_order,
@@ -364,7 +365,7 @@ pub fn compute_legacy_lane_state(
       default_use_greedy_feedback_arc_set,
       allow_feedback_strategy_selection,
       prefer_dagre_network_simplex,
-      false,
+      prefer_dagre_order_parity,
     )
     let use_greedy_feedback_arc_set = selected_rank_candidate.use_greedy_feedback_arc_set
     let enable_feedback_back_edge_ordering = base_enable_feedback_back_edge_ordering &&
@@ -389,7 +390,7 @@ pub fn compute_legacy_lane_state(
         preserve_fanout_order_ties,
         use_greedy_feedback_arc_set,
         prefer_dagre_network_simplex,
-        false,
+        prefer_dagre_order_parity,
       )
       if compacted_rank_candidate.lane_crossings <
         selected_rank_candidate.lane_crossings ||
@@ -502,7 +503,7 @@ pub fn compute_legacy_lane_state(
         preserve_dummy_lane_channels,
         enable_feedback_back_edge_ordering,
         preserve_fanout_order_ties,
-        false,
+        prefer_dagre_order_parity,
       )
     }
     for node_id, lane in lane_by_id {
