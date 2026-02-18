@@ -12,6 +12,49 @@ fn flow_edge(source : String, target : String) -> MermaidEdge {
 }
 
 ///|
+fn flow_node(id : String) -> @model.MermaidNode {
+  { id, label: id, shape: Rectangle }
+}
+
+///|
+fn positioned_box(id : String, x : Int, y : Int) -> PositionedNode {
+  {
+    id,
+    label: id,
+    shape: Rectangle,
+    x,
+    y,
+    width: 80,
+    height: 40,
+    inline_style: None,
+  }
+}
+
+///|
+fn flow_graph_with_edges(edges : Array[MermaidEdge]) -> MermaidGraph {
+  let nodes : Map[String, @model.MermaidNode] = {}
+  for edge in edges {
+    nodes[edge.source] = flow_node(edge.source)
+    nodes[edge.target] = flow_node(edge.target)
+  }
+  {
+    diagram_kind: Flowchart,
+    direction: LR,
+    nodes,
+    edges,
+    subgraphs: [],
+    class_defs: {},
+    class_assignments: {},
+    node_styles: {},
+    sequence_actor_order: [],
+    sequence_actor_kinds: {},
+    sequence_blocks: [],
+    sequence_notes: [],
+    sequence_activation_commands: [],
+  }
+}
+
+///|
 fn wb_point_equal(left : Point, right : Point) -> Bool {
   left.x == right.x && left.y == right.y
 }
@@ -513,4 +556,57 @@ test "Layout deferred minor-axis key uses x for vertical edges" {
   assert_eq(deferred_back_edge_minor_axis_key(context, 0), 30)
   assert_eq(deferred_back_edge_minor_axis_key(context, 1), 150)
   assert_eq(deferred_back_edge_minor_axis_key(context, 2), 180)
+}
+
+///|
+test "Layout boundary offsets keep source fanout separation on large graphs" {
+  let edges : Array[MermaidEdge] = [
+    flow_edge("A", "B1"),
+    flow_edge("A", "B2"),
+    flow_edge("A", "B3"),
+  ]
+  for i in 0..<21 {
+    edges.push(flow_edge("F\{i}", "F\{i + 1}"))
+  }
+  let graph = flow_graph_with_edges(edges)
+  assert_true(graph.edges.length() > 20)
+
+  let positioned_by_id : Map[String, PositionedNode] = {}
+  let node_horizontal_by_id : Map[String, Bool] = {}
+  positioned_by_id["A"] = positioned_box("A", 100, 100)
+  positioned_by_id["B1"] = positioned_box("B1", 300, 40)
+  positioned_by_id["B2"] = positioned_box("B2", 300, 100)
+  positioned_by_id["B3"] = positioned_box("B3", 300, 160)
+  node_horizontal_by_id["A"] = true
+  node_horizontal_by_id["B1"] = true
+  node_horizontal_by_id["B2"] = true
+  node_horizontal_by_id["B3"] = true
+  for i in 0..<=21 {
+    let node_id = "F\{i}"
+    positioned_by_id[node_id] = positioned_box(
+      node_id,
+      40 + i * 22,
+      260 + i % 2 * 40,
+    )
+    node_horizontal_by_id[node_id] = true
+  }
+
+  let (contexts, _) = collect_edge_layout_contexts(
+    graph,
+    true,
+    false,
+    {},
+    {},
+    positioned_by_id,
+    node_horizontal_by_id,
+  )
+  assign_edge_boundary_offsets_to_contexts(graph, false, false, false, contexts)
+
+  let fanout_offsets : Map[Int, Bool] = {}
+  for context in contexts {
+    if context.resolved_source_id == "A" {
+      fanout_offsets[context.source_boundary_offset_minor] = true
+    }
+  }
+  assert_eq(fanout_offsets.length(), 3)
 }

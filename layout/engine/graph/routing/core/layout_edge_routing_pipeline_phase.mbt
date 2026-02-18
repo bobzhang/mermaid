@@ -260,8 +260,7 @@ fn assign_edge_boundary_offsets_to_contexts(
       }
     }
 
-    if graph.edges.length() <= 20 &&
-      assignments.length() <= 3 &&
+    if assignments.length() <= 4 &&
       source_endpoint_count == assignments.length() &&
       target_endpoint_count == 0 &&
       boundary_side_is_horizontal(assignments[0].side) {

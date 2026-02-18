@@ -15,6 +15,63 @@ fn wb_count_oriented_edge(
 }
 
 ///|
+test "elk layered feedback SCC index groups mutually reachable nodes" {
+  let node_ids = ["A", "B", "C", "D", "E"]
+  let resolved_edges = [
+    ("A", "B"),
+    ("B", "A"),
+    ("B", "C"),
+    ("C", "D"),
+    ("D", "E"),
+    ("E", "D"),
+  ]
+  let order_index_by_node_id : Map[String, Int] = {
+    "A": 0,
+    "B": 1,
+    "C": 2,
+    "D": 3,
+    "E": 4,
+  }
+  let scc_index_by_node_id = build_scc_index_by_node_id(
+    node_ids, resolved_edges, order_index_by_node_id,
+  )
+  let scc_a = option_int_or(scc_index_by_node_id.get("A"), -1)
+  let scc_b = option_int_or(scc_index_by_node_id.get("B"), -1)
+  let scc_c = option_int_or(scc_index_by_node_id.get("C"), -1)
+  let scc_d = option_int_or(scc_index_by_node_id.get("D"), -1)
+  let scc_e = option_int_or(scc_index_by_node_id.get("E"), -1)
+  assert_true(scc_a >= 0)
+  assert_eq(scc_a, scc_b)
+  assert_true(scc_c >= 0)
+  assert_true(scc_c != scc_a)
+  assert_eq(scc_d, scc_e)
+  assert_true(scc_d != scc_a && scc_d != scc_c)
+}
+
+///|
+test "elk layered feedback orientation preserves inter-SCC edge direction" {
+  let node_ids = ["A", "B", "C", "D"]
+  let resolved_edges = [
+    ("A", "B"),
+    ("B", "A"),
+    ("B", "C"),
+    ("C", "D"),
+    ("D", "C"),
+  ]
+  let order_index_by_node_id : Map[String, Int] = {
+    "A": 0,
+    "B": 3,
+    "C": 1,
+    "D": 2,
+  }
+  let oriented_edges = orient_edges_by_feedback_order(
+    node_ids, resolved_edges, order_index_by_node_id,
+  )
+  assert_eq(wb_count_oriented_edge(oriented_edges, "B", "C"), 1)
+  assert_eq(wb_count_oriented_edge(oriented_edges, "C", "B"), 0)
+}
+
+///|
 test "elk layered feedback orientation uses root-distance before order for back edges" {
   let node_ids = ["SRC", "SNK", "M3"]
   let resolved_edges = [("SRC", "M3"), ("M3", "SNK"), ("SNK", "M3")]

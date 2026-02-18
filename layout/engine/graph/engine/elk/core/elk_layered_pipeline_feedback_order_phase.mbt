@@ -241,6 +241,117 @@ fn sort_ready_nodes_by_order(
 }
 
 ///|
+fn build_feedback_neighbors_by_node_id(
+  node_ids : Array[String],
+  resolved_edges : Array[(String, String)],
+) -> (Map[String, Array[String]], Map[String, Array[String]]) {
+  let successors_by_node_id : Map[String, Array[String]] = {}
+  let predecessors_by_node_id : Map[String, Array[String]] = {}
+  for node_id in node_ids {
+    successors_by_node_id[node_id] = []
+    predecessors_by_node_id[node_id] = []
+  }
+  for edge in resolved_edges {
+    let (source_id, target_id) = edge
+    if !successors_by_node_id.contains(source_id) ||
+      !successors_by_node_id.contains(target_id) {
+      continue
+    }
+    match successors_by_node_id.get(source_id) {
+      Some(successors) => successors.push(target_id)
+      None => ()
+    }
+    match predecessors_by_node_id.get(target_id) {
+      Some(predecessors) => predecessors.push(source_id)
+      None => ()
+    }
+  }
+  (successors_by_node_id, predecessors_by_node_id)
+}
+
+///|
+fn collect_reachable_node_ids(
+  start_node_id : String,
+  neighbors_by_node_id : Map[String, Array[String]],
+) -> Map[String, Bool] {
+  let visited_by_node_id : Map[String, Bool] = {}
+  if !neighbors_by_node_id.contains(start_node_id) {
+    return visited_by_node_id
+  }
+  let queue_node_ids : Array[String] = [start_node_id]
+  visited_by_node_id[start_node_id] = true
+  let mut queue_head = 0
+  while queue_head < queue_node_ids.length() {
+    let node_id = queue_node_ids[queue_head]
+    queue_head += 1
+    match neighbors_by_node_id.get(node_id) {
+      Some(neighbors) =>
+        for neighbor_id in neighbors {
+          if visited_by_node_id.contains(neighbor_id) {
+            continue
+          }
+          visited_by_node_id[neighbor_id] = true
+          queue_node_ids.push(neighbor_id)
+        }
+      None => ()
+    }
+  }
+  visited_by_node_id
+}
+
+///|
+fn build_scc_index_by_node_id(
+  node_ids : Array[String],
+  resolved_edges : Array[(String, String)],
+  order_index_by_node_id : Map[String, Int],
+) -> Map[String, Int] {
+  let (successors_by_node_id, predecessors_by_node_id) = build_feedback_neighbors_by_node_id(
+    node_ids, resolved_edges,
+  )
+  let ordered_node_ids : Array[String] = []
+  for node_id in node_ids {
+    ordered_node_ids.push(node_id)
+  }
+  ordered_node_ids.sort_by((left, right) => {
+    compare_node_ids_by_order(left, right, order_index_by_node_id)
+  })
+  let assigned_by_node_id : Map[String, Bool] = {}
+  let scc_index_by_node_id : Map[String, Int] = {}
+  let mut next_scc_index = 0
+  for node_id in ordered_node_ids {
+    if option_bool_or(assigned_by_node_id.get(node_id), false) {
+      continue
+    }
+    let forward_reachable_by_node_id = collect_reachable_node_ids(
+      node_id, successors_by_node_id,
+    )
+    let backward_reachable_by_node_id = collect_reachable_node_ids(
+      node_id, predecessors_by_node_id,
+    )
+    let component_node_ids : Array[String] = []
+    for candidate_id in ordered_node_ids {
+      if option_bool_or(assigned_by_node_id.get(candidate_id), false) {
+        continue
+      }
+      if !forward_reachable_by_node_id.contains(candidate_id) ||
+        !backward_reachable_by_node_id.contains(candidate_id) {
+        continue
+      }
+      component_node_ids.push(candidate_id)
+    }
+    if component_node_ids.length() == 0 {
+      component_node_ids.push(node_id)
+    }
+    for component_node_id in component_node_ids {
+      assigned_by_node_id[component_node_id] = true
+      scc_index_by_node_id[component_node_id] = next_scc_index
+    }
+    next_scc_index += 1
+  }
+  scc_index_by_node_id
+}
+
+///|
 fn collect_root_node_ids_for_orientation(
   node_ids : Array[String],
   resolved_edges : Array[(String, String)],
@@ -386,6 +497,9 @@ fn orient_edges_by_feedback_order(
   resolved_edges : Array[(String, String)],
   order_index_by_node_id : Map[String, Int],
 ) -> Array[(String, String)] {
+  let scc_index_by_node_id = build_scc_index_by_node_id(
+    node_ids, resolved_edges, order_index_by_node_id,
+  )
   let root_distance_by_node_id = build_root_distance_by_node_id(
     node_ids, resolved_edges, order_index_by_node_id,
   )
@@ -397,6 +511,20 @@ fn orient_edges_by_feedback_order(
     }
     if !order_index_by_node_id.contains(source_id) ||
       !order_index_by_node_id.contains(target_id) {
+      continue
+    }
+    let source_scc_index = option_int_or(
+      scc_index_by_node_id.get(source_id),
+      -1,
+    )
+    let target_scc_index = option_int_or(
+      scc_index_by_node_id.get(target_id),
+      -1,
+    )
+    if source_scc_index >= 0 &&
+      target_scc_index >= 0 &&
+      source_scc_index != target_scc_index {
+      acyclic_edges.push((source_id, target_id))
       continue
     }
     if compare_node_ids_by_orientation_priority(
