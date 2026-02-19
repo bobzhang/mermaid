@@ -146,17 +146,8 @@ fn flow_graph(
 fn case1_kernel() -> DagrePipelineKernel {
   {
     graph: flow_graph(
-      ["A", "B", "M", "X", "Y", "__lane_dummy_f_4_1", "__lane_dummy_f_5_1"],
-      [
-        ("A", "M"),
-        ("B", "M"),
-        ("M", "X"),
-        ("M", "Y"),
-        ("A", "__lane_dummy_f_4_1"),
-        ("__lane_dummy_f_4_1", "Y"),
-        ("B", "__lane_dummy_f_5_1"),
-        ("__lane_dummy_f_5_1", "X"),
-      ],
+      ["A", "B", "M", "X", "Y"],
+      [("A", "M"), ("B", "M"), ("M", "X"), ("M", "Y"), ("A", "Y"), ("B", "X")],
       LR,
     ),
   }
@@ -166,23 +157,16 @@ fn case1_kernel() -> DagrePipelineKernel {
 fn case2_kernel() -> DagrePipelineKernel {
   {
     graph: flow_graph(
-      [
-        "A", "B", "D", "__lane_dummy_f_2_1", "__lane_dummy_f_6_1", "C", "__lane_dummy_f_3_1",
-        "__lane_dummy_f_7_1", "E", "F",
-      ],
+      ["A", "B", "C", "D", "E", "F"],
       [
         ("A", "D"),
         ("B", "C"),
-        ("A", "__lane_dummy_f_2_1"),
-        ("__lane_dummy_f_2_1", "E"),
-        ("B", "__lane_dummy_f_3_1"),
-        ("__lane_dummy_f_3_1", "F"),
+        ("A", "E"),
+        ("B", "F"),
         ("C", "F"),
         ("D", "E"),
-        ("A", "__lane_dummy_f_6_1"),
-        ("__lane_dummy_f_6_1", "F"),
-        ("B", "__lane_dummy_f_7_1"),
-        ("__lane_dummy_f_7_1", "E"),
+        ("A", "F"),
+        ("B", "E"),
       ],
       LR,
     ),
