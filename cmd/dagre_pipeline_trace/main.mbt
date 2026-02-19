@@ -24,8 +24,10 @@ fn print_usage() -> Unit {
     #|  moon run cmd/dagre_pipeline_trace -- --case case2
     #|  moon run cmd/dagre_pipeline_trace -- --case case3
     #|  moon run cmd/dagre_pipeline_trace -- --case all
+    #|  moon run cmd/dagre_pipeline_trace -- --source "graph LR\nA --> B"
     #|Flags:
     #|  --case   case1 | case2 | case3 | all
+    #|  --source  Mermaid source text
     #|  --help   Show this help
     #|
   println(usage.trim_end().to_string())
@@ -70,6 +72,28 @@ fn parse_case_arg(args : Array[String]) -> String? {
       return None
     }
     return Some(case_name.to_string())
+  }
+  None
+}
+
+///|
+fn parse_source_arg(args : Array[String]) -> String? {
+  if args.length() == 1 {
+    let arg = args[0]
+    if arg is [.. "--source=", .. raw_source] {
+      let source = raw_source.trim()
+      if source == "" {
+        return None
+      }
+      return Some(source.to_string())
+    }
+  }
+  if args.length() == 2 && args[0] == "--source" {
+    let source = args[1].trim()
+    if source == "" {
+      return None
+    }
+    return Some(source.to_string())
   }
   None
 }
@@ -270,51 +294,7 @@ fn dump_case_trace(case_name : String) -> Bool {
   }
   match kernel {
     Some(found) => {
-      let graph = found.graph
-      let options : @model.RenderOptions = {
-        ..@model.RenderOptions::default(),
-        layout_engine: Some(DagreParity),
-      }
-      let setup_state = @layout_engine_graph_legacy_setup_core.build_legacy_layout_setup(
-        graph, options, true, false,
-      )
-      let placement_state = @layout_engine_graph_placement_core.run_legacy_placement_phase(
-        graph, setup_state, true, false,
-      )
-
-      println("CASE\t\{case_name}")
-      println("DIRECTION\t\{direction_tag(graph.direction)}")
-      for edge in graph.edges {
-        println("EDGE\t\{edge.source}\t\{edge.target}")
-      }
-
-      let sorted_node_ids = sorted_graph_node_ids(graph)
-      for node in setup_state.nodes_in_order {
-        println("NODE_ORDER\t\{node.id}")
-      }
-      for node_id in sorted_node_ids {
-        match placement_state.positioned_by_id.get(node_id) {
-          Some(node) =>
-            println("NODE_SIZE\t\{node_id}\t\{node.width}\t\{node.height}")
-          None => ()
-        }
-      }
-      for node_id in sorted_node_ids {
-        println(
-          "RANK\t\{node_id}\t\{option_int_or(setup_state.lane_state.flow_rank_by_node_id.get(node_id), 0)}",
-        )
-      }
-      let layers = rank_layers(setup_state)
-      for rank, layer in layers {
-        let joined_layer = layer.join(",")
-        println("LAYER\t\{rank}\t\{joined_layer}")
-      }
-      for node_id in sorted_node_ids {
-        match placement_state.positioned_by_id.get(node_id) {
-          Some(node) => println("POS\t\{node_id}\t\{node.x}\t\{node.y}")
-          None => ()
-        }
-      }
+      dump_graph_trace(case_name, found.graph)
       true
     }
     None => false
@@ -322,8 +302,83 @@ fn dump_case_trace(case_name : String) -> Bool {
 }
 
 ///|
+fn dump_graph_trace(case_name : String, graph : @model.MermaidGraph) -> Unit {
+  let options : @model.RenderOptions = {
+    ..@model.RenderOptions::default(),
+    layout_engine: Some(DagreParity),
+  }
+  let setup_state = @layout_engine_graph_legacy_setup_core.build_legacy_layout_setup(
+    graph, options, true, false,
+  )
+  let placement_state = @layout_engine_graph_placement_core.run_legacy_placement_phase(
+    graph, setup_state, true, false,
+  )
+
+  println("CASE\t\{case_name}")
+  println("DIRECTION\t\{direction_tag(graph.direction)}")
+  for edge in graph.edges {
+    println("EDGE\t\{edge.source}\t\{edge.target}")
+  }
+
+  let sorted_node_ids = sorted_graph_node_ids(graph)
+  for node in setup_state.nodes_in_order {
+    println("NODE_ORDER\t\{node.id}")
+  }
+  for node_id in sorted_node_ids {
+    match placement_state.positioned_by_id.get(node_id) {
+      Some(node) =>
+        println("NODE_SIZE\t\{node_id}\t\{node.width}\t\{node.height}")
+      None => ()
+    }
+  }
+  for node_id in sorted_node_ids {
+    println(
+      "RANK\t\{node_id}\t\{option_int_or(setup_state.lane_state.flow_rank_by_node_id.get(node_id), 0)}",
+    )
+  }
+  let layers = rank_layers(setup_state)
+  for rank, layer in layers {
+    let joined_layer = layer.join(",")
+    println("LAYER\t\{rank}\t\{joined_layer}")
+  }
+  for node_id in sorted_node_ids {
+    match placement_state.positioned_by_id.get(node_id) {
+      Some(node) => println("POS\t\{node_id}\t\{node.x}\t\{node.y}")
+      None => ()
+    }
+  }
+}
+
+///|
+fn dump_source_trace(source : String) -> Bool {
+  let parsed : Result[@model.MermaidGraph, @model.MermaidError] = try? @parser_header_core.parse_mermaid(
+    source,
+  )
+  match parsed {
+    Ok(graph) => {
+      dump_graph_trace("source", graph)
+      true
+    }
+    Err(err) => {
+      println("Error: failed to parse source: \{err}")
+      false
+    }
+  }
+}
+
+///|
 fn run() -> Unit {
   let args = cli_args_without_program()
+  match parse_source_arg(args) {
+    Some(source) => {
+      let ok = dump_source_trace(source)
+      if !ok {
+        print_usage()
+      }
+      return
+    }
+    None => ()
+  }
   match parse_case_arg(args) {
     Some(case_name) =>
       if case_name == "help" {

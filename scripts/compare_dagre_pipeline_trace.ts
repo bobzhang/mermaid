@@ -6,9 +6,11 @@
  *   bun run scripts/compare_dagre_pipeline_trace.ts --case case1
  *   bun run scripts/compare_dagre_pipeline_trace.ts --case case2
  *   bun run scripts/compare_dagre_pipeline_trace.ts --case case3
+ *   bun run scripts/compare_dagre_pipeline_trace.ts --source-file fixtures/flow.mmd
  */
 
 import { spawnSync } from 'node:child_process'
+import { readFileSync } from 'node:fs'
 
 const dagre = require('../.repos/dagre')
 
@@ -79,6 +81,27 @@ function parseCaseArg(args: string[]): string {
     }
   }
   return 'all'
+}
+
+function parseSourceFileArg(args: string[]): string | null {
+  for (let i = 0; i < args.length; i += 1) {
+    const arg = args[i]!
+    if (arg === '--source-file') {
+      const value = args[i + 1]
+      if (!value) {
+        fail('missing value for --source-file')
+      }
+      return value
+    }
+    if (arg.startsWith('--source-file=')) {
+      const value = arg.slice('--source-file='.length)
+      if (value.trim() === '') {
+        fail('missing value for --source-file')
+      }
+      return value
+    }
+  }
+  return null
 }
 
 function parseIntStrict(raw: string): number {
@@ -423,16 +446,28 @@ function collectNodePositionErrors(
 }
 
 function main(): void {
-  const caseArg = parseCaseArg(process.argv.slice(2)).toLowerCase()
-  const localStdout = runOrThrow('moon', [
-    'run',
-    'cmd/dagre_pipeline_trace',
-    '--target',
-    'native',
-    '--',
-    '--case',
-    caseArg,
-  ])
+  const cliArgs = process.argv.slice(2)
+  const sourceFilePath = parseSourceFileArg(cliArgs)
+  const localStdout =
+    sourceFilePath === null
+      ? runOrThrow('moon', [
+          'run',
+          'cmd/dagre_pipeline_trace',
+          '--target',
+          'native',
+          '--',
+          '--case',
+          parseCaseArg(cliArgs).toLowerCase(),
+        ])
+      : runOrThrow('moon', [
+          'run',
+          'cmd/dagre_pipeline_trace',
+          '--target',
+          'native',
+          '--',
+          '--source',
+          readFileSync(sourceFilePath, 'utf8'),
+        ])
   const localByCase = parseLocalTrace(localStdout)
   const selectedCaseNames = Object.keys(localByCase).sort()
   if (selectedCaseNames.length === 0) {
