@@ -33,6 +33,47 @@ fn copy_layering(values : Array[Array[String]]) -> Array[Array[String]] {
 }
 
 ///|
+fn reversed_string_array(values : Array[String]) -> Array[String] {
+  let reversed : Array[String] = []
+  if values.length() == 0 {
+    return reversed
+  }
+  let mut i = values.length() - 1
+  while true {
+    reversed.push(values[i])
+    if i == 0 {
+      break
+    }
+    i -= 1
+  }
+  reversed
+}
+
+///|
+fn reversed_layering(values : Array[Array[String]]) -> Array[Array[String]] {
+  let reversed : Array[Array[String]] = []
+  if values.length() == 0 {
+    return reversed
+  }
+  let mut i = values.length() - 1
+  while true {
+    reversed.push(copy_string_array(values[i]))
+    if i == 0 {
+      break
+    }
+    i -= 1
+  }
+  reversed
+}
+
+///|
+fn reverse_layering_in_place(values : Array[Array[String]]) -> Unit {
+  for i in 0..<values.length() {
+    values[i] = reversed_string_array(values[i])
+  }
+}
+
+///|
 fn push_unique_string(values : Array[String], value : String) -> Unit {
   if !values.contains(value) {
     values.push(value)
@@ -460,6 +501,140 @@ fn dagre_minor_horizontal_compaction(
 }
 
 ///|
+fn dagre_minor_collect_alignment_coordinates2(
+  layering : Array[Array[String]],
+  conflicts : Map[String, Map[String, Bool]],
+  predecessors_by_id : Map[String, Array[String]],
+  successors_by_id : Map[String, Array[String]],
+  width_by_id : Map[String, Int],
+  dummy_by_id : Map[String, Bool],
+  node_spacing : Int,
+  edge_spacing : Int,
+  incoming : Bool,
+  reverse_ranks : Bool,
+  reverse_layers : Bool,
+) -> Map[String, Int] {
+  let adjusted_layering = if reverse_ranks {
+    reversed_layering(layering)
+  } else {
+    copy_layering(layering)
+  }
+  if reverse_layers {
+    reverse_layering_in_place(adjusted_layering)
+  }
+  let (root_by_id, align_by_id) = dagre_minor_vertical_alignment(
+    adjusted_layering, conflicts, predecessors_by_id, successors_by_id, incoming,
+  )
+  let coordinate2_by_id = dagre_minor_horizontal_compaction(
+    adjusted_layering, root_by_id, align_by_id, width_by_id, dummy_by_id, node_spacing,
+    edge_spacing,
+  )
+  if reverse_layers {
+    let node_ids : Array[String] = []
+    for node_id, _ in coordinate2_by_id {
+      node_ids.push(node_id)
+    }
+    for node_id in node_ids {
+      coordinate2_by_id[node_id] = -option_int_or(
+        coordinate2_by_id.get(node_id),
+        0,
+      )
+    }
+  }
+  coordinate2_by_id
+}
+
+///|
+fn dagre_minor_coordinate_bounds2(
+  coordinate2_by_id : Map[String, Int],
+) -> (Int, Int, Bool) {
+  let mut min_coordinate2 = 0
+  let mut max_coordinate2 = 0
+  let mut has_coordinate = false
+  for _, coordinate2 in coordinate2_by_id {
+    if !has_coordinate {
+      min_coordinate2 = coordinate2
+      max_coordinate2 = coordinate2
+      has_coordinate = true
+    } else {
+      min_coordinate2 = min_coordinate2.min(coordinate2)
+      max_coordinate2 = max_coordinate2.max(coordinate2)
+    }
+  }
+  (min_coordinate2, max_coordinate2, has_coordinate)
+}
+
+///|
+fn dagre_minor_alignment_span2(
+  coordinate2_by_id : Map[String, Int],
+  width_by_id : Map[String, Int],
+) -> Int {
+  let mut min_boundary2 = 0
+  let mut max_boundary2 = 0
+  let mut has_boundary = false
+  for node_id, coordinate2 in coordinate2_by_id {
+    let width = option_int_or(width_by_id.get(node_id), 0)
+    let left_boundary2 = coordinate2 - width
+    let right_boundary2 = coordinate2 + width
+    if !has_boundary {
+      min_boundary2 = left_boundary2
+      max_boundary2 = right_boundary2
+      has_boundary = true
+    } else {
+      min_boundary2 = min_boundary2.min(left_boundary2)
+      max_boundary2 = max_boundary2.max(right_boundary2)
+    }
+  }
+  if has_boundary {
+    max_boundary2 - min_boundary2
+  } else {
+    0
+  }
+}
+
+///|
+fn dagre_minor_shift_coordinates2(
+  coordinate2_by_id : Map[String, Int],
+  delta2 : Int,
+) -> Unit {
+  if delta2 == 0 {
+    return
+  }
+  let node_ids : Array[String] = []
+  for node_id, _ in coordinate2_by_id {
+    node_ids.push(node_id)
+  }
+  for node_id in node_ids {
+    coordinate2_by_id[node_id] = option_int_or(
+        coordinate2_by_id.get(node_id),
+        0,
+      ) +
+      delta2
+  }
+}
+
+///|
+fn dagre_minor_balance_coordinates2(
+  ul : Map[String, Int],
+  ur : Map[String, Int],
+  dl : Map[String, Int],
+  dr : Map[String, Int],
+) -> Map[String, Int] {
+  let balanced : Map[String, Int] = {}
+  for node_id, _ in ul {
+    let values = [
+      option_int_or(ul.get(node_id), 0),
+      option_int_or(ur.get(node_id), 0),
+      option_int_or(dl.get(node_id), 0),
+      option_int_or(dr.get(node_id), 0),
+    ]
+    values.sort()
+    balanced[node_id] = (values[1] + values[2]) / 2
+  }
+  balanced
+}
+
+///|
 fn collect_dagre_parity_minor_offsets(
   graph : MermaidGraph,
   nodes_in_order : Array[MermaidNode],
@@ -567,12 +742,77 @@ fn collect_dagre_parity_minor_offsets(
   let conflicts = dagre_minor_find_type1_conflicts(
     layering, dummy_by_id, order_by_id, predecessors_by_id,
   )
-  let (root_by_id, align_by_id) = dagre_minor_vertical_alignment(
-    layering, conflicts, predecessors_by_id, successors_by_id, true,
+  let ul_coordinates2 = dagre_minor_collect_alignment_coordinates2(
+    layering, conflicts, predecessors_by_id, successors_by_id, width_by_id, dummy_by_id,
+    node_spacing, 20, true, false, false,
   )
-
-  let coordinate2_by_id = dagre_minor_horizontal_compaction(
-    layering, root_by_id, align_by_id, width_by_id, dummy_by_id, node_spacing, 20,
+  let ur_coordinates2 = dagre_minor_collect_alignment_coordinates2(
+    layering, conflicts, predecessors_by_id, successors_by_id, width_by_id, dummy_by_id,
+    node_spacing, 20, true, false, true,
+  )
+  let dl_coordinates2 = dagre_minor_collect_alignment_coordinates2(
+    layering, conflicts, predecessors_by_id, successors_by_id, width_by_id, dummy_by_id,
+    node_spacing, 20, false, true, false,
+  )
+  let dr_coordinates2 = dagre_minor_collect_alignment_coordinates2(
+    layering, conflicts, predecessors_by_id, successors_by_id, width_by_id, dummy_by_id,
+    node_spacing, 20, false, true, true,
+  )
+  let ul_span2 = dagre_minor_alignment_span2(ul_coordinates2, width_by_id)
+  let ur_span2 = dagre_minor_alignment_span2(ur_coordinates2, width_by_id)
+  let dl_span2 = dagre_minor_alignment_span2(dl_coordinates2, width_by_id)
+  let dr_span2 = dagre_minor_alignment_span2(dr_coordinates2, width_by_id)
+  let mut align_to_tag = "ul"
+  let mut align_to_span2 = ul_span2
+  if ur_span2 < align_to_span2 {
+    align_to_tag = "ur"
+    align_to_span2 = ur_span2
+  }
+  if dl_span2 < align_to_span2 {
+    align_to_tag = "dl"
+    align_to_span2 = dl_span2
+  }
+  if dr_span2 < align_to_span2 {
+    align_to_tag = "dr"
+  }
+  let (align_to_min2, align_to_max2, align_to_has_coordinate) = if align_to_tag ==
+    "ul" {
+    dagre_minor_coordinate_bounds2(ul_coordinates2)
+  } else if align_to_tag == "ur" {
+    dagre_minor_coordinate_bounds2(ur_coordinates2)
+  } else if align_to_tag == "dl" {
+    dagre_minor_coordinate_bounds2(dl_coordinates2)
+  } else {
+    dagre_minor_coordinate_bounds2(dr_coordinates2)
+  }
+  if align_to_has_coordinate {
+    let (ul_min2, _, ul_has_coordinate) = dagre_minor_coordinate_bounds2(
+      ul_coordinates2,
+    )
+    if ul_has_coordinate {
+      dagre_minor_shift_coordinates2(ul_coordinates2, align_to_min2 - ul_min2)
+    }
+    let (dl_min2, _, dl_has_coordinate) = dagre_minor_coordinate_bounds2(
+      dl_coordinates2,
+    )
+    if dl_has_coordinate {
+      dagre_minor_shift_coordinates2(dl_coordinates2, align_to_min2 - dl_min2)
+    }
+    let (_, ur_max2, ur_has_coordinate) = dagre_minor_coordinate_bounds2(
+      ur_coordinates2,
+    )
+    if ur_has_coordinate {
+      dagre_minor_shift_coordinates2(ur_coordinates2, align_to_max2 - ur_max2)
+    }
+    let (_, dr_max2, dr_has_coordinate) = dagre_minor_coordinate_bounds2(
+      dr_coordinates2,
+    )
+    if dr_has_coordinate {
+      dagre_minor_shift_coordinates2(dr_coordinates2, align_to_max2 - dr_max2)
+    }
+  }
+  let coordinate2_by_id = dagre_minor_balance_coordinates2(
+    ul_coordinates2, ur_coordinates2, dl_coordinates2, dr_coordinates2,
   )
 
   let mut has_real_coordinate = false
