@@ -119,7 +119,9 @@ fn choose_feedback_break_node_by_outflow(
   if break_candidates.length() == 0 {
     return (None, random_state)
   }
-  if max_candidate_indegree != min_candidate_indegree {
+  let use_indegree_tie_sort = prefer_forward_order_on_tie ||
+    node_ids_in_order.length() <= 16
+  if use_indegree_tie_sort && max_candidate_indegree != min_candidate_indegree {
     break_candidates.sort_by((left, right) => {
       let left_indegree = option_int_or(indegree_by_node_id.get(left), 0)
       let right_indegree = option_int_or(indegree_by_node_id.get(right), 0)
