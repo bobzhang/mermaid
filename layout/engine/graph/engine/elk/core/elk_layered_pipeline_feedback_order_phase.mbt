@@ -83,6 +83,7 @@ fn choose_feedback_break_node_by_outflow(
   random_state : UInt64,
 ) -> (String?, UInt64) {
   let mut max_outflow = 0
+  let mut has_candidate = false
   let mut break_candidates : Array[String] = []
   let node_order_index_by_node_id = build_order_index_by_id(node_ids_in_order)
   let mut min_candidate_indegree = 0
@@ -94,25 +95,24 @@ fn choose_feedback_break_node_by_outflow(
     }
     let outflow = option_int_or(outdegree_by_node_id.get(node_id), 0) -
       option_int_or(indegree_by_node_id.get(node_id), 0)
-    if outflow >= max_outflow {
-      if outflow > max_outflow {
-        break_candidates = [node_id]
-        max_outflow = outflow
-        let indegree = option_int_or(indegree_by_node_id.get(node_id), 0)
+    if !has_candidate || outflow > max_outflow {
+      break_candidates = [node_id]
+      max_outflow = outflow
+      has_candidate = true
+      let indegree = option_int_or(indegree_by_node_id.get(node_id), 0)
+      min_candidate_indegree = indegree
+      max_candidate_indegree = indegree
+      has_indegree_range = true
+    } else if outflow == max_outflow {
+      break_candidates.push(node_id)
+      let indegree = option_int_or(indegree_by_node_id.get(node_id), 0)
+      if !has_indegree_range || indegree < min_candidate_indegree {
         min_candidate_indegree = indegree
-        max_candidate_indegree = indegree
-        has_indegree_range = true
-      } else {
-        break_candidates.push(node_id)
-        let indegree = option_int_or(indegree_by_node_id.get(node_id), 0)
-        if !has_indegree_range || indegree < min_candidate_indegree {
-          min_candidate_indegree = indegree
-        }
-        if !has_indegree_range || indegree > max_candidate_indegree {
-          max_candidate_indegree = indegree
-        }
-        has_indegree_range = true
       }
+      if !has_indegree_range || indegree > max_candidate_indegree {
+        max_candidate_indegree = indegree
+      }
+      has_indegree_range = true
     }
   }
   if break_candidates.length() == 0 {

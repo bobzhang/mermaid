@@ -186,3 +186,19 @@ test "elk layered feedback orientation state keeps long-span kernel acyclic" {
     orientation_state.oriented_edges.length() == resolved_edges.length(),
   )
 }
+
+///|
+test "elk layered feedback break selector still picks candidate for all-negative outflow" {
+  let node_ids = ["A", "B", "C"]
+  let mark_by_node_id : Map[String, Int] = { "A": 0, "B": 0, "C": 0 }
+  let indegree_by_node_id : Map[String, Int] = { "A": 3, "B": 2, "C": 4 }
+  let outdegree_by_node_id : Map[String, Int] = { "A": 1, "B": 0, "C": 1 }
+  let (selected, _) = choose_feedback_break_node_by_outflow(
+    node_ids,
+    mark_by_node_id,
+    indegree_by_node_id,
+    outdegree_by_node_id,
+    java_random_state_from_seed(1),
+  )
+  assert_true(selected is Some(_))
+}
