@@ -134,7 +134,7 @@ test "elk layered feedback orientation preserves inter-component edge direction"
     "D": 2,
   }
   let oriented_edges = compute_feedback_order_orientation_state(
-      node_ids, resolved_edges, order_index_by_node_id, false,
+      node_ids, resolved_edges, order_index_by_node_id, true, false,
     ).oriented_edges
   assert_eq(wb_count_oriented_edge(oriented_edges, "B", "C"), 1)
   assert_eq(wb_count_oriented_edge(oriented_edges, "C", "B"), 0)
@@ -146,7 +146,7 @@ test "elk layered feedback orientation breaks 3-cycle with one reversed edge" {
   let resolved_edges = [("A", "B"), ("B", "C"), ("C", "A")]
   let order_index_by_node_id : Map[String, Int] = { "A": 0, "B": 1, "C": 2 }
   let oriented_edges = compute_feedback_order_orientation_state(
-      node_ids, resolved_edges, order_index_by_node_id, false,
+      node_ids, resolved_edges, order_index_by_node_id, true, false,
     ).oriented_edges
   assert_true(wb_is_acyclic_orientation(node_ids, oriented_edges))
   assert_eq(wb_reversed_edge_count(resolved_edges, oriented_edges), 1)
@@ -177,7 +177,7 @@ test "elk layered feedback orientation state keeps long-span kernel acyclic" {
     "N6": 6,
   }
   let orientation_state = compute_feedback_order_orientation_state(
-    node_ids, resolved_edges, base_order_index_by_node_id, false,
+    node_ids, resolved_edges, base_order_index_by_node_id, true, false,
   )
   assert_true(
     wb_is_acyclic_orientation(node_ids, orientation_state.oriented_edges),
@@ -198,6 +198,7 @@ test "elk layered feedback break selector still picks candidate for all-negative
     mark_by_node_id,
     indegree_by_node_id,
     outdegree_by_node_id,
+    true,
     false,
     java_random_state_from_seed(1),
   )

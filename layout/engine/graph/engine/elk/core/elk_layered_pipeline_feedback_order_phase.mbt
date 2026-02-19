@@ -80,6 +80,7 @@ fn choose_feedback_break_node_by_outflow(
   mark_by_node_id : Map[String, Int],
   indegree_by_node_id : Map[String, Int],
   outdegree_by_node_id : Map[String, Int],
+  use_indegree_tie_sort : Bool,
   prefer_forward_order_on_tie : Bool,
   random_state : UInt64,
 ) -> (String?, UInt64) {
@@ -119,8 +120,6 @@ fn choose_feedback_break_node_by_outflow(
   if break_candidates.length() == 0 {
     return (None, random_state)
   }
-  let use_indegree_tie_sort = prefer_forward_order_on_tie ||
-    node_ids_in_order.length() <= 16
   if use_indegree_tie_sort && max_candidate_indegree != min_candidate_indegree {
     break_candidates.sort_by((left, right) => {
       let left_indegree = option_int_or(indegree_by_node_id.get(left), 0)
@@ -290,6 +289,7 @@ fn compute_feedback_order_orientation_state(
   node_ids : Array[String],
   resolved_edges : Array[(String, String)],
   base_order_index_by_node_id : Map[String, Int],
+  use_indegree_tie_sort : Bool,
   prefer_forward_order_on_tie : Bool,
 ) -> FeedbackGreedyOrientationState {
   let (
@@ -350,7 +350,7 @@ fn compute_feedback_order_orientation_state(
 
     let (break_node_id, next_state) = choose_feedback_break_node_by_outflow(
       node_ids_in_order, mark_by_node_id, indegree_by_node_id, outdegree_by_node_id,
-      prefer_forward_order_on_tie, random_state,
+      use_indegree_tie_sort, prefer_forward_order_on_tie, random_state,
     )
     random_state = next_state
     match break_node_id {
