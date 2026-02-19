@@ -103,7 +103,9 @@ pub fn prepare_graph_inputs(
     }
   }
 
-  fn append_subgraph_nodes_in_order(subgraphs : Array[MermaidSubgraph]) -> Unit {
+  fn append_subgraph_nodes_in_order(
+    subgraphs : Array[MermaidSubgraph],
+  ) -> Unit {
     for subgraph in subgraphs {
       append_visible_node(subgraph.id)
       for node_id in subgraph.node_ids {
