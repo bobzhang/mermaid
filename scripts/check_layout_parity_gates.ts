@@ -1,5 +1,6 @@
 /**
  * Run stress parity checks for dagre-parity and elk engines with explicit quality gates.
+ * Dagre is compared against official Dagre rendering, ELK against official ELK rendering.
  *
  * Usage:
  *   bun run scripts/check_layout_parity_gates.ts
@@ -66,10 +67,10 @@ const PROFILES: Record<'baseline' | 'target', Profile> = {
         maxAvgLogicalCrossingMultiplier: 0.95,
       },
       elk: {
-        maxAvgWeightedGapIndex: 0.13,
-        minAvgMajorRankExactMatchRate: 0.52,
-        maxTotalMajorRankCompositionMismatches: 60,
-        maxAvgLogicalCrossingMultiplier: 1.0,
+        maxAvgWeightedGapIndex: 0.30,
+        minAvgMajorRankExactMatchRate: 0.10,
+        maxTotalMajorRankCompositionMismatches: 180,
+        maxAvgLogicalCrossingMultiplier: 1.05,
       },
     },
     delta: {
@@ -80,10 +81,10 @@ const PROFILES: Record<'baseline' | 'target', Profile> = {
         maxAvgLogicalCrossingMultiplierIncrease: 0.05,
       },
       elk: {
-        maxAvgWeightedGapIndexIncrease: 0.02,
-        maxAvgMajorRankExactMatchRateDrop: 0.05,
-        maxTotalMajorRankCompositionMismatchesIncrease: 8,
-        maxAvgLogicalCrossingMultiplierIncrease: 0.08,
+        maxAvgWeightedGapIndexIncrease: 0.03,
+        maxAvgMajorRankExactMatchRateDrop: 0.03,
+        maxTotalMajorRankCompositionMismatchesIncrease: 24,
+        maxAvgLogicalCrossingMultiplierIncrease: 0.10,
       },
     },
   },
@@ -154,11 +155,14 @@ function parseArgs(args: string[]): CliOptions {
 }
 
 function runStress(engine: Engine, jsonPath: string, passThroughArgs: string[]): StressReport {
+  const officialRenderer = engine === 'elk' ? 'elk' : 'dagre'
   const args = [
     'run',
     'scripts/compare_layout_stress.ts',
     '--local-layout-engine',
     engine,
+    '--official-flowchart-renderer',
+    officialRenderer,
     '--json',
     jsonPath,
     ...passThroughArgs,
