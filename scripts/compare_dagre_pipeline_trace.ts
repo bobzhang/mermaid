@@ -207,6 +207,15 @@ function sortLayerNodes(
     .map(item => item.id)
 }
 
+function compressRankIndex(rawRanks: Iterable<number>): Map<number, number> {
+  const sortedRawRanks = [...new Set([...rawRanks])].sort((a, b) => a - b)
+  const byRawRank = new Map<number, number>()
+  sortedRawRanks.forEach((rawRank, normalizedRank) => {
+    byRawRank.set(rawRank, normalizedRank)
+  })
+  return byRawRank
+}
+
 function upstreamTrace(local: KernelTrace): KernelTrace {
   const Graph = dagre.graphlib.Graph
   const g = new Graph({ directed: true, multigraph: true, compound: true })
@@ -226,7 +235,7 @@ function upstreamTrace(local: KernelTrace): KernelTrace {
   })
   dagre.layout(g)
 
-  const ranks = new Map<string, number>()
+  const rawRanks = new Map<string, number>()
   const positions = new Map<string, { x: number; y: number }>()
   const layersByRank = new Map<number, Array<{ id: string; order: number }>>()
 
@@ -243,7 +252,7 @@ function upstreamTrace(local: KernelTrace): KernelTrace {
     const order = Number.isFinite(node.order) ? Number(node.order) : 0
     const x = Number.isFinite(node.x) ? Number(node.x) : 0
     const y = Number.isFinite(node.y) ? Number(node.y) : 0
-    ranks.set(nodeId, rank)
+    rawRanks.set(nodeId, rank)
     positions.set(nodeId, { x, y })
     if (!layersByRank.has(rank)) {
       layersByRank.set(rank, [])
@@ -251,11 +260,15 @@ function upstreamTrace(local: KernelTrace): KernelTrace {
     layersByRank.get(rank)!.push({ id: nodeId, order })
   }
 
-  const normalizedLayers = normalizeLayers(
-    new Map<number, string[]>(
-      [...layersByRank.entries()].map(([rank, entries]) => [rank, sortLayerNodes(entries)]),
-    ),
-  )
+  const rankIndexByRawRank = compressRankIndex(rawRanks.values())
+  const ranks = new Map<string, number>()
+  for (const [nodeId, rawRank] of rawRanks.entries()) {
+    ranks.set(nodeId, rankIndexByRawRank.get(rawRank) ?? 0)
+  }
+
+  const normalizedLayers = [...rankIndexByRawRank.entries()]
+    .sort((a, b) => a[1] - b[1])
+    .map(([rawRank]) => sortLayerNodes(layersByRank.get(rawRank) ?? []))
 
   return {
     caseName: local.caseName,
