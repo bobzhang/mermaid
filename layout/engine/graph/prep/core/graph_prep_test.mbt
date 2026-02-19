@@ -6,17 +6,31 @@ fn test_node(id : String) -> @model.MermaidNode {
 ///|
 fn test_graph(
   node_ids : Array[String],
+  edges : Array[(String, String)],
   subgraphs : Array[@model.MermaidSubgraph],
 ) -> @model.MermaidGraph {
   let nodes : Map[String, @model.MermaidNode] = {}
   for node_id in node_ids {
     nodes[node_id] = test_node(node_id)
   }
+  let graph_edges : Array[@model.MermaidEdge] = []
+  for edge in edges {
+    let (source, target) = edge
+    graph_edges.push({
+      source,
+      target,
+      label: None,
+      style: Solid,
+      has_arrow_start: false,
+      has_arrow_end: true,
+      relation_operator: Some("-->"),
+    })
+  }
   {
     diagram_kind: Flowchart,
     direction: TD,
     nodes,
-    edges: [],
+    edges: graph_edges,
     subgraphs,
     class_defs: {},
     class_assignments: {},
@@ -39,15 +53,19 @@ fn contains_node_id(
 
 ///|
 test "prepare graph inputs keeps nodes untouched when redirects are disabled" {
-  let graph = test_graph(["A", "B", "Group", "Standalone"], [
-    {
-      id: "Group",
-      label: "Group",
-      node_ids: ["A", "B"],
-      children: [],
-      direction: None,
-    },
-  ])
+  let graph = test_graph(
+    ["A", "B", "Group", "Standalone"],
+    [],
+    [
+      {
+        id: "Group",
+        label: "Group",
+        node_ids: ["A", "B"],
+        children: [],
+        direction: None,
+      },
+    ],
+  )
 
   let prep_state = prepare_graph_inputs(graph, false)
   assert_eq(prep_state.subgraph_entry_by_id.length(), 0)
@@ -79,9 +97,11 @@ test "prepare graph inputs resolves nested and empty subgraph redirects" {
     children: [],
     direction: None,
   }
-  let graph = test_graph(["A", "B", "Loose", "Inner", "Outer", "Empty"], [
-    outer, empty,
-  ])
+  let graph = test_graph(
+    ["A", "B", "Loose", "Inner", "Outer", "Empty"],
+    [],
+    [outer, empty],
+  )
 
   let prep_state = prepare_graph_inputs(graph, true)
   assert_eq(prep_state.subgraph_entry_by_id.get("Inner"), Some("A"))
@@ -98,4 +118,18 @@ test "prepare graph inputs resolves nested and empty subgraph redirects" {
   assert_true(!contains_node_id(prep_state.nodes_in_order, "Inner"))
   assert_true(!contains_node_id(prep_state.nodes_in_order, "Outer"))
   assert_true(!contains_node_id(prep_state.nodes_in_order, "Empty"))
+}
+
+///|
+test "prepare graph inputs prioritizes edge encounter order for nodes" {
+  let graph = test_graph(
+    ["A", "B", "C", "D", "E"],
+    [("C", "E"), ("B", "D"), ("B", "C")],
+    [],
+  )
+  let prep_state = prepare_graph_inputs(graph, false)
+  assert_eq(
+    prep_state.nodes_in_order.map(node => node.id),
+    ["C", "E", "B", "D", "A"],
+  )
 }
