@@ -83,6 +83,8 @@ test "engine profile runner emits valid backend snapshots for every engine" {
   assert_true(legacy_backend.phase_snapshots[1].rank_layer_count > 0)
   assert_true(legacy_backend.phase_snapshots[3].width > 0)
   assert_true(legacy_backend.phase_snapshots[3].height > 0)
+  assert_eq(legacy_backend.phase_traces.length(), 4)
+  assert_true(legacy_backend.phase_traces[1].labels.contains("rank_layers"))
 
   let dagre_backend = run_graph_layout_engine_backend(request, DagreParity)
   assert_eq(dagre_backend.phase_snapshots.length(), 4)
@@ -93,6 +95,8 @@ test "engine profile runner emits valid backend snapshots for every engine" {
   assert_true(dagre_backend.phase_snapshots[1].rank_layer_count > 0)
   assert_true(dagre_backend.phase_snapshots[3].width > 0)
   assert_true(dagre_backend.phase_snapshots[3].height > 0)
+  assert_eq(dagre_backend.phase_traces.length(), 4)
+  assert_true(dagre_backend.phase_traces[1].labels.contains("rank_layers"))
 
   let elk_backend = run_graph_layout_engine_backend(request, Elk)
   assert_eq(elk_backend.phase_snapshots.length(), 4)
@@ -103,6 +107,14 @@ test "engine profile runner emits valid backend snapshots for every engine" {
   assert_true(elk_backend.phase_snapshots[1].rank_layer_count > 0)
   assert_true(elk_backend.phase_snapshots[3].width > 0)
   assert_true(elk_backend.phase_snapshots[3].height > 0)
+  assert_eq(elk_backend.phase_traces.length(), 4)
+  assert_true(elk_backend.phase_traces[1].labels.contains("rank_seed_strategy"))
+  assert_true(
+    elk_backend.phase_traces[1].labels.contains("rank_order_strategy"),
+  )
+  assert_true(
+    elk_backend.phase_traces[2].labels.contains("minor_placement_strategy"),
+  )
 
   let elk_layered_backend = run_graph_layout_engine_backend(request, ElkLayered)
   assert_eq(elk_layered_backend.phase_snapshots.length(), 4)
@@ -113,4 +125,13 @@ test "engine profile runner emits valid backend snapshots for every engine" {
   assert_true(elk_layered_backend.phase_snapshots[1].rank_layer_count > 0)
   assert_true(elk_layered_backend.phase_snapshots[3].width > 0)
   assert_true(elk_layered_backend.phase_snapshots[3].height > 0)
+  assert_eq(elk_layered_backend.phase_traces.length(), 4)
+  assert_true(
+    elk_layered_backend.phase_traces[1].labels.contains("rank_seed_strategy"),
+  )
+  assert_true(
+    elk_layered_backend.phase_traces[2].labels.contains(
+      "minor_placement_strategy",
+    ),
+  )
 }

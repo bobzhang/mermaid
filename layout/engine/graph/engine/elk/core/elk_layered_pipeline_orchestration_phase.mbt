@@ -258,21 +258,156 @@ fn rank_phase_snapshot(
 }
 
 ///|
-fn phase_trace_from_snapshot(
+fn bool_flag(value : Bool) -> Int {
+  if value {
+    1
+  } else {
+    0
+  }
+}
+
+///|
+fn diagram_kind_tag(graph : MermaidGraph) -> String {
+  match graph.diagram_kind {
+    Flowchart => "flowchart"
+    State => "state"
+    Sequence => "sequence"
+    Class => "class"
+    Er => "er"
+  }
+}
+
+///|
+fn direction_tag(graph : MermaidGraph) -> String {
+  match graph.direction {
+    TD => "TD"
+    TB => "TB"
+    LR => "LR"
+    BT => "BT"
+    RL => "RL"
+  }
+}
+
+///|
+fn phase_metrics(snapshot : GraphLayoutPhaseSnapshot) -> Map[String, Int] {
+  {
+    "node_count": snapshot.node_count,
+    "edge_count": snapshot.edge_count,
+    "group_count": snapshot.group_count,
+    "rank_layer_count": snapshot.rank_layer_count,
+    "width": snapshot.width,
+    "height": snapshot.height,
+  }
+}
+
+///|
+fn collect_rank_layers(
+  rank_node_ids_by_rank : Map[Int, Array[String]],
+  max_rank : Int,
+) -> Array[Array[String]] {
+  let rank_layers : Array[Array[String]] = []
+  for rank in 0..<=max_rank {
+    match rank_node_ids_by_rank.get(rank) {
+      Some(node_ids) => rank_layers.push(node_ids.copy())
+      None => rank_layers.push([])
+    }
+  }
+  rank_layers
+}
+
+///|
+fn encode_rank_layers(rank_layers : Array[Array[String]]) -> String {
+  if rank_layers.length() == 0 {
+    return "(none)"
+  }
+  let lines : Array[String] = []
+  for rank, node_ids in rank_layers {
+    let joined = node_ids.join(",")
+    lines.push("r\{rank}:\{joined}")
+  }
+  lines.join("|")
+}
+
+///|
+fn setup_phase_trace(
+  setup_state : ElkLayeredSetupState,
   snapshot : GraphLayoutPhaseSnapshot,
 ) -> GraphLayoutPhaseTrace {
-  {
-    phase: snapshot.phase,
-    metrics: {
-      "node_count": snapshot.node_count,
-      "edge_count": snapshot.edge_count,
-      "group_count": snapshot.group_count,
-      "rank_layer_count": snapshot.rank_layer_count,
-      "width": snapshot.width,
-      "height": snapshot.height,
-    },
-    labels: {},
+  let metrics = phase_metrics(snapshot)
+  metrics["horizontal"] = bool_flag(setup_state.horizontal)
+  metrics["reverse"] = bool_flag(setup_state.reverse)
+  metrics["use_subgraph_redirects"] = bool_flag(
+    setup_state.use_subgraph_redirects,
+  )
+  metrics["compact_fanin"] = bool_flag(setup_state.compact_fanin)
+  let labels : Map[String, String] = {}
+  labels["diagram_kind"] = diagram_kind_tag(setup_state.graph)
+  labels["direction"] = direction_tag(setup_state.graph)
+  labels["layout_family"] = "elk-layered"
+  { phase: snapshot.phase, metrics, labels }
+}
+
+///|
+fn rank_phase_trace(
+  rank_phase_state : ElkLayeredRankPhaseState,
+  snapshot : GraphLayoutPhaseSnapshot,
+) -> GraphLayoutPhaseTrace {
+  let rank_seed_state = rank_phase_state.rank_seed_state
+  let rank_order_debug_state = rank_phase_state.rank_order_debug_state
+  let rank_layers = collect_rank_layers(
+    rank_phase_state.rank_node_ids_by_rank,
+    rank_seed_state.max_rank,
+  )
+  let metrics = phase_metrics(snapshot)
+  metrics["max_rank"] = rank_seed_state.max_rank
+  metrics["rank_order_selected_crossings"] = rank_order_debug_state.selected_crossing_score
+  metrics["rank_order_seed_crossings"] = rank_order_debug_state.optimized_seed_crossing_score
+  metrics["rank_order_reversed_seed_crossings"] = rank_order_debug_state.optimized_reversed_seed_crossing_score
+  metrics["rank_order_virtual_crossings"] = rank_order_debug_state.virtual_candidate_crossing_score
+  metrics["legacy_seed_mode"] = bool_flag(
+    rank_phase_state.rank_seed_strategy is LegacyLaneSeed,
+  )
+  let labels : Map[String, String] = {}
+  labels["rank_seed_strategy"] = rank_seed_strategy_tag(
+    rank_phase_state.rank_seed_strategy,
+  )
+  labels["rank_order_strategy"] = rank_order_strategy_tag(
+    rank_phase_state.rank_order_strategy,
+  )
+  labels["rank_order_selected_source"] = rank_order_debug_state.selected_source
+  labels["rank_layers"] = encode_rank_layers(rank_layers)
+  labels["layout_family"] = "elk-layered"
+  { phase: snapshot.phase, metrics, labels }
+}
+
+///|
+fn placement_phase_trace(
+  rank_phase_state : ElkLayeredRankPhaseState,
+  placement_state : ElkLayeredPlacementState,
+  snapshot : GraphLayoutPhaseSnapshot,
+) -> GraphLayoutPhaseTrace {
+  let metrics = phase_metrics(snapshot)
+  metrics["max_right"] = placement_state.max_right
+  metrics["max_bottom"] = placement_state.max_bottom
+  metrics["legacy_seed_mode"] = bool_flag(
+    rank_phase_state.rank_seed_strategy is LegacyLaneSeed,
+  )
+  let labels : Map[String, String] = {}
+  labels["minor_placement_strategy"] = if rank_phase_state.rank_seed_strategy
+    is LegacyLaneSeed {
+    "lane-seeded"
+  } else {
+    "relaxed-neighbor"
   }
+  labels["layout_family"] = "elk-layered"
+  { phase: snapshot.phase, metrics, labels }
+}
+
+///|
+fn default_phase_trace(
+  snapshot : GraphLayoutPhaseSnapshot,
+) -> GraphLayoutPhaseTrace {
+  { phase: snapshot.phase, metrics: phase_metrics(snapshot), labels: {} }
 }
 
 ///|
@@ -303,15 +438,21 @@ fn run_elk_layered_flow_backend(
   let positioned_graph = run_elk_layered_finalize_phase(
     setup_state, spacing_state, placement_state, routing_policy,
   )
+  let setup_snapshot = setup_phase_snapshot(request, nodes_in_order)
+  let rank_snapshot = rank_phase_snapshot(request, nodes_in_order, max_rank)
+  let placement_snapshot = placement_phase_snapshot(
+    request,
+    placement_state.positioned_nodes,
+  )
+  let final_snapshot = final_phase_snapshot(positioned_graph)
   let phase_snapshots = [
-    setup_phase_snapshot(request, nodes_in_order),
-    rank_phase_snapshot(request, nodes_in_order, max_rank),
-    placement_phase_snapshot(request, placement_state.positioned_nodes),
-    final_phase_snapshot(positioned_graph),
+    setup_snapshot, rank_snapshot, placement_snapshot, final_snapshot,
   ]
-  let phase_traces : Array[GraphLayoutPhaseTrace] = []
-  for snapshot in phase_snapshots {
-    phase_traces.push(phase_trace_from_snapshot(snapshot))
-  }
+  let phase_traces = [
+    setup_phase_trace(setup_state, setup_snapshot),
+    rank_phase_trace(rank_phase_state, rank_snapshot),
+    placement_phase_trace(rank_phase_state, placement_state, placement_snapshot),
+    default_phase_trace(final_snapshot),
+  ]
   { positioned_graph, phase_snapshots, phase_traces }
 }

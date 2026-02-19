@@ -83,6 +83,24 @@ fn run_backend_with_snapshots(
 }
 
 ///|
+fn assert_base_phase_traces(
+  backend : @layout_engine_graph_contract_core.GraphLayoutBackendResult,
+) -> Unit raise {
+  let phase_traces = backend.phase_traces
+  assert_eq(phase_traces.length(), 4)
+  assert_eq(phase_traces[0].phase, "setup")
+  assert_eq(phase_traces[1].phase, "rank")
+  assert_eq(phase_traces[2].phase, "placement")
+  assert_eq(phase_traces[3].phase, "final")
+  assert_true(phase_traces[0].labels.contains("layout_family"))
+  assert_true(phase_traces[1].labels.contains("rank_layers"))
+  assert_true(phase_traces[1].metrics.contains("max_rank"))
+  assert_true(phase_traces[2].metrics.contains("node_count"))
+  assert_true(phase_traces[3].metrics.contains("width"))
+  assert_true(phase_traces[3].metrics.contains("height"))
+}
+
+///|
 test "engine backends keep phase snapshot invariants on stress graph" {
   let graph = stress_graph()
   let expected_nodes = graph.nodes.length()
@@ -106,6 +124,7 @@ test "engine backends keep phase snapshot invariants on stress graph" {
   assert_true(legacy_snapshots[3].height > 0)
   assert_eq(legacy_backend.positioned_graph.nodes.length(), expected_nodes)
   assert_eq(legacy_backend.positioned_graph.edges.length(), expected_edges)
+  assert_base_phase_traces(legacy_backend)
 
   let dagre_backend = run_backend_with_snapshots(graph, options, DagreParity)
   let dagre_snapshots = dagre_backend.phase_snapshots
@@ -124,6 +143,7 @@ test "engine backends keep phase snapshot invariants on stress graph" {
   assert_true(dagre_snapshots[3].height > 0)
   assert_eq(dagre_backend.positioned_graph.nodes.length(), expected_nodes)
   assert_eq(dagre_backend.positioned_graph.edges.length(), expected_edges)
+  assert_base_phase_traces(dagre_backend)
 
   let elk_backend = run_backend_with_snapshots(graph, options, Elk)
   let elk_snapshots = elk_backend.phase_snapshots
@@ -142,6 +162,17 @@ test "engine backends keep phase snapshot invariants on stress graph" {
   assert_true(elk_snapshots[3].height > 0)
   assert_eq(elk_backend.positioned_graph.nodes.length(), expected_nodes)
   assert_eq(elk_backend.positioned_graph.edges.length(), expected_edges)
+  assert_base_phase_traces(elk_backend)
+  assert_true(elk_backend.phase_traces[1].labels.contains("rank_seed_strategy"))
+  assert_true(
+    elk_backend.phase_traces[1].labels.contains("rank_order_strategy"),
+  )
+  assert_true(
+    elk_backend.phase_traces[1].labels.contains("rank_order_selected_source"),
+  )
+  assert_true(
+    elk_backend.phase_traces[2].labels.contains("minor_placement_strategy"),
+  )
 
   let elk_layered_backend = run_backend_with_snapshots(
     graph,
@@ -164,4 +195,16 @@ test "engine backends keep phase snapshot invariants on stress graph" {
   assert_true(elk_layered_snapshots[3].height > 0)
   assert_eq(elk_layered_backend.positioned_graph.nodes.length(), expected_nodes)
   assert_eq(elk_layered_backend.positioned_graph.edges.length(), expected_edges)
+  assert_base_phase_traces(elk_layered_backend)
+  assert_true(
+    elk_layered_backend.phase_traces[1].labels.contains("rank_seed_strategy"),
+  )
+  assert_true(
+    elk_layered_backend.phase_traces[1].labels.contains("rank_order_strategy"),
+  )
+  assert_true(
+    elk_layered_backend.phase_traces[2].labels.contains(
+      "minor_placement_strategy",
+    ),
+  )
 }

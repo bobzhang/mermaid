@@ -1,4 +1,7 @@
 ///|
+type MermaidGraph = @model.MermaidGraph
+
+///|
 /// Input contract shared by pluggable graph layout backends.
 type GraphLayoutBackendRequest = @layout_engine_graph_contract_core.GraphLayoutBackendRequest
 
