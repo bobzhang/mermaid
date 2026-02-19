@@ -22,4 +22,5 @@ Use:
 ```sh
 bun run scripts/check_layout_parity_gates.ts
 bun run scripts/check_layout_parity_gates.ts --profile target
+bun run scripts/check_phase_parity_gates.ts
 ```
