@@ -10,6 +10,7 @@ pub(all) struct LegacyPlacementState {
 priv struct LegacyPlacementInput {
   graph : MermaidGraph
   nodes_in_order : Array[MermaidNode]
+  dagre_parity_mode : Bool
   reverse : Bool
   horizontal : Bool
   state_graph : Bool
@@ -56,6 +57,7 @@ pub fn run_legacy_placement_phase(
   compute_legacy_node_placement_state({
     graph,
     nodes_in_order,
+    dagre_parity_mode: setup_state.dagre_parity_mode,
     reverse,
     horizontal,
     state_graph,
@@ -86,6 +88,7 @@ fn compute_legacy_node_placement_state(
 ) -> LegacyPlacementState {
   let graph = input.graph
   let nodes_in_order = input.nodes_in_order
+  let dagre_parity_mode = input.dagre_parity_mode
   let reverse = input.reverse
   let horizontal = input.horizontal
   let state_graph = input.state_graph
@@ -132,7 +135,7 @@ fn compute_legacy_node_placement_state(
   // Apply minimal rank shifts only where wide labels would collapse adjacent
   // horizontal ranks, preserving compaction on normal-width graphs.
   let horizontal_label_min_boundary_extra_by_index : Map[Int, Int] = {}
-  if horizontal {
+  if horizontal && !dagre_parity_mode {
     let label_rank_constraints = collect_horizontal_label_rank_constraints(
       graph.edges,
       flow_rank_by_node_id,
@@ -159,37 +162,43 @@ fn compute_legacy_node_placement_state(
   // collapse adjacent horizontal ranks, preserving compaction on normal-width graphs.
   let horizontal_rank_shift_by_index : Map[Int, Int] = {}
   if horizontal {
-    let min_horizontal_rank_clearance = (node_spacing / 3).max(24)
-    let mut running_shift = 0
-    for flow_rank_index in 0..<=flow_max_rank {
-      horizontal_rank_shift_by_index[flow_rank_index] = running_shift
-      if flow_rank_index == flow_max_rank {
-        continue
+    if dagre_parity_mode {
+      for flow_rank_index in 0..<=flow_max_rank {
+        horizontal_rank_shift_by_index[flow_rank_index] = 0
       }
-      let label_boundary_extra = option_int_or(
-        horizontal_label_min_boundary_extra_by_index.get(flow_rank_index),
-        0,
-      )
-      let current_width = option_int_or(
-        max_width_by_flow_rank_index.get(flow_rank_index),
-        0,
-      )
-      let current_left = padding +
-        flow_rank_index * node_spacing +
-        running_shift
-      let current_right = current_left + current_width
-      let next_left = padding +
-        (flow_rank_index + 1) * node_spacing +
-        running_shift
-      let required_next_left = current_right + min_horizontal_rank_clearance
-      let node_boundary_extra = if next_left < required_next_left {
-        required_next_left - next_left
-      } else {
-        0
-      }
-      let boundary_extra = node_boundary_extra.max(label_boundary_extra)
-      if boundary_extra > 0 {
-        running_shift += boundary_extra
+    } else {
+      let min_horizontal_rank_clearance = (node_spacing / 3).max(24)
+      let mut running_shift = 0
+      for flow_rank_index in 0..<=flow_max_rank {
+        horizontal_rank_shift_by_index[flow_rank_index] = running_shift
+        if flow_rank_index == flow_max_rank {
+          continue
+        }
+        let label_boundary_extra = option_int_or(
+          horizontal_label_min_boundary_extra_by_index.get(flow_rank_index),
+          0,
+        )
+        let current_width = option_int_or(
+          max_width_by_flow_rank_index.get(flow_rank_index),
+          0,
+        )
+        let current_left = padding +
+          flow_rank_index * node_spacing +
+          running_shift
+        let current_right = current_left + current_width
+        let next_left = padding +
+          (flow_rank_index + 1) * node_spacing +
+          running_shift
+        let required_next_left = current_right + min_horizontal_rank_clearance
+        let node_boundary_extra = if next_left < required_next_left {
+          required_next_left - next_left
+        } else {
+          0
+        }
+        let boundary_extra = node_boundary_extra.max(label_boundary_extra)
+        if boundary_extra > 0 {
+          running_shift += boundary_extra
+        }
       }
     }
   }
@@ -204,10 +213,11 @@ fn compute_legacy_node_placement_state(
         horizontal_rank_shift_by_index.get(flow_rank_index),
         0,
       )
-      horizontal_rank_center_x_by_index[flow_rank_index] = padding +
-        flow_rank_index * node_spacing +
-        rank_shift +
-        rank_width / 2
+      horizontal_rank_center_x_by_index[flow_rank_index] = if dagre_parity_mode {
+        padding + flow_rank_index * node_spacing + rank_width / 2
+      } else {
+        padding + flow_rank_index * node_spacing + rank_shift + rank_width / 2
+      }
     }
   }
 
@@ -238,7 +248,9 @@ fn compute_legacy_node_placement_state(
       padding + 90 + flow_lane * node_spacing
     }
     let y = if horizontal {
-      if enhanced_horizontal_state_flow {
+      if dagre_parity_mode {
+        padding + 70 + flow_lane * layer_spacing
+      } else if enhanced_horizontal_state_flow {
         padding + 70 + flow_lane * layer_spacing / 4
       } else if state_graph && !compact_fanin {
         padding + 70 + flow_lane * layer_spacing / 2

@@ -718,6 +718,13 @@ pub fn compute_legacy_lane_state(
         }
       }
     }
+    if prefer_dagre_network_simplex && horizontal {
+      // Dagre assigns distinct order slots per rank. Keep this invariant even
+      // when optional refinement perturbs lane values.
+      enforce_unique_lanes_per_rank(
+        nodes_in_order, flow_rank_by_node_id, flow_lane_by_node_id,
+      )
+    }
     if !horizontal &&
       graph.subgraphs.length() > 0 &&
       graph.edges.any(edge => edge.label is Some(_)) {

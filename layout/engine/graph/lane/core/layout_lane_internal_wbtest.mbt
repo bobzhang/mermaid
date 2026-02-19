@@ -3502,6 +3502,58 @@ test "Layout primary rank selection prefers lower-scored parity ordering on stre
 }
 
 ///|
+fn map_int_bool_entry_count(entries : Map[Int, Bool]) -> Int {
+  let mut count = 0
+  for _, _ in entries {
+    count += 1
+  }
+  count
+}
+
+///|
+test "Layout dagre simplex horizontal mode keeps per-rank lanes distinct" {
+  let nodes : Array[MermaidNode] = [
+    { id: "A", label: "A", shape: Rectangle },
+    { id: "B", label: "B", shape: Rectangle },
+    { id: "C", label: "C", shape: Rectangle },
+    { id: "D", label: "D", shape: Rectangle },
+    { id: "E", label: "E", shape: Rectangle },
+    { id: "F", label: "F", shape: Rectangle },
+    { id: "G", label: "G", shape: Rectangle },
+    { id: "H", label: "H", shape: Rectangle },
+  ]
+  let edges : Array[MermaidEdge] = [
+    flow_edge("A", "C"),
+    flow_edge("A", "D"),
+    flow_edge("B", "C"),
+    flow_edge("B", "D"),
+    flow_edge("C", "E"),
+    flow_edge("D", "F"),
+    flow_edge("C", "F"),
+    flow_edge("D", "E"),
+    flow_edge("E", "G"),
+    flow_edge("F", "H"),
+    flow_edge("E", "H"),
+    flow_edge("F", "G"),
+  ]
+  let graph = lane_policy_graph(LR, nodes, edges, [])
+  let lane_state = compute_legacy_lane_state(
+    graph, nodes, false, false, true, false, false, false, true,
+  )
+  for rank in 0..<=lane_state.flow_max_rank {
+    let lanes : Map[Int, Bool] = {}
+    let mut node_count = 0
+    for node in nodes {
+      if option_int_or(lane_state.flow_rank_by_node_id.get(node.id), -1) == rank {
+        node_count += 1
+        lanes[option_int_or(lane_state.flow_lane_by_node_id.get(node.id), 0)] = true
+      }
+    }
+    assert_eq(map_int_bool_entry_count(lanes), node_count)
+  }
+}
+
+///|
 test "Layout lane feedback strategy policy disables greedy path in dagre simplex mode" {
   let node_ids = [
     "N0", "N1", "N2", "N3", "N4", "N5", "N6", "N7", "N8", "N9", "N10", "N11",
