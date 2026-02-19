@@ -81,46 +81,11 @@ fn collect_total_rank_edge_span(
 }
 
 ///|
-fn densify_rank_assignment(
-  nodes_in_order : Array[MermaidNode],
-  rank_by_id : Map[String, Int],
-) -> (Map[String, Int], Int) {
-  let seen_rank : Map[Int, Bool] = {}
-  let sorted_ranks : Array[Int] = []
-  for node in nodes_in_order {
-    let rank = option_int_or(rank_by_id.get(node.id), 0)
-    if seen_rank.contains(rank) {
-      continue
-    }
-    seen_rank[rank] = true
-    sorted_ranks.push(rank)
-  }
-  sorted_ranks.sort()
-
-  let dense_rank_by_rank : Map[Int, Int] = {}
-  for dense_rank, rank in sorted_ranks {
-    dense_rank_by_rank[rank] = dense_rank
-  }
-
-  let dense_rank_by_id : Map[String, Int] = {}
-  let mut max_dense_rank = 0
-  for node in nodes_in_order {
-    let rank = option_int_or(rank_by_id.get(node.id), 0)
-    let dense_rank = option_int_or(dense_rank_by_rank.get(rank), 0)
-    dense_rank_by_id[node.id] = dense_rank
-    if dense_rank > max_dense_rank {
-      max_dense_rank = dense_rank
-    }
-  }
-  (dense_rank_by_id, max_dense_rank)
-}
-
-///|
 fn collect_non_state_flow_rank_candidate(
   nodes_in_order : Array[MermaidNode],
   edges : Array[MermaidEdge],
   subgraphs : Array[MermaidSubgraph],
-  horizontal : Bool,
+  _horizontal : Bool,
   rank_compact_fanin : Bool,
   cycle_aware_layout : Bool,
   promote_backward_dotted_edges : Bool,
