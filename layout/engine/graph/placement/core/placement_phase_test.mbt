@@ -113,3 +113,44 @@ test "placement keeps same-rank horizontal nodes aligned on rank center" {
   let positioned_by_id = placement_state.positioned_by_id
   assert_eq(positioned_by_id["A"].x, positioned_by_id["LONG"].x)
 }
+
+///|
+test "placement dagre parity horizontal axis uses rank width plus ranksep spacing" {
+  let nodes = [
+    test_node("A"),
+    test_node("B"),
+    test_node("M"),
+    test_node("X"),
+    test_node("Y"),
+    test_node("__lane_dummy_f_4_1"),
+    test_node("__lane_dummy_f_5_1"),
+  ]
+  let graph = test_graph(LR, nodes, [
+    test_edge("A", "M"),
+    test_edge("B", "M"),
+    test_edge("M", "X"),
+    test_edge("M", "Y"),
+    test_edge("A", "__lane_dummy_f_4_1"),
+    test_edge("__lane_dummy_f_4_1", "Y"),
+    test_edge("B", "__lane_dummy_f_5_1"),
+    test_edge("__lane_dummy_f_5_1", "X"),
+  ])
+  let setup_state = @layout_engine_graph_legacy_setup_core.build_legacy_layout_setup(
+    graph,
+    { ..@model.RenderOptions::default(), layout_engine: Some(DagreParity) },
+    true,
+    false,
+  )
+  let placement_state = run_legacy_placement_phase(
+    graph, setup_state, true, false,
+  )
+  let positioned_by_id = placement_state.positioned_by_id
+
+  assert_eq(positioned_by_id["A"].x, 75)
+  assert_eq(positioned_by_id["M"].x, 284)
+  assert_eq(positioned_by_id["X"].x, 493)
+  assert_eq(positioned_by_id["__lane_dummy_f_4_1"].x, 284)
+  assert_eq(positioned_by_id["__lane_dummy_f_5_1"].x, 284)
+  assert_eq(positioned_by_id["M"].x - positioned_by_id["A"].x, 209)
+  assert_eq(positioned_by_id["X"].x - positioned_by_id["M"].x, 209)
+}

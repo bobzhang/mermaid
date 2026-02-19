@@ -204,23 +204,47 @@ fn compute_legacy_node_placement_state(
   }
   let horizontal_rank_center_x_by_index : Map[Int, Int] = {}
   if horizontal {
-    for flow_rank_index in 0..<=flow_max_rank {
-      let rank_width = option_int_or(
-        max_width_by_flow_rank_index.get(flow_rank_index),
+    if dagre_parity_mode {
+      let first_rank_width = option_int_or(
+        max_width_by_flow_rank_index.get(0),
         0,
       )
-      let rank_shift = option_int_or(
-        horizontal_rank_shift_by_index.get(flow_rank_index),
-        0,
-      )
-      horizontal_rank_center_x_by_index[flow_rank_index] = if dagre_parity_mode {
-        padding + flow_rank_index * node_spacing + rank_width / 2
-      } else {
-        padding + flow_rank_index * node_spacing + rank_shift + rank_width / 2
+      horizontal_rank_center_x_by_index[0] = padding + first_rank_width / 2
+      for flow_rank_index in 1..<=flow_max_rank {
+        let previous_rank_width = option_int_or(
+          max_width_by_flow_rank_index.get(flow_rank_index - 1),
+          0,
+        )
+        let rank_width = option_int_or(
+          max_width_by_flow_rank_index.get(flow_rank_index),
+          0,
+        )
+        let previous_rank_center = option_int_or(
+          horizontal_rank_center_x_by_index.get(flow_rank_index - 1),
+          padding + previous_rank_width / 2,
+        )
+        horizontal_rank_center_x_by_index[flow_rank_index] = previous_rank_center +
+          previous_rank_width / 2 +
+          layer_spacing +
+          rank_width / 2
+      }
+    } else {
+      for flow_rank_index in 0..<=flow_max_rank {
+        let rank_width = option_int_or(
+          max_width_by_flow_rank_index.get(flow_rank_index),
+          0,
+        )
+        let rank_shift = option_int_or(
+          horizontal_rank_shift_by_index.get(flow_rank_index),
+          0,
+        )
+        horizontal_rank_center_x_by_index[flow_rank_index] = padding +
+          flow_rank_index * node_spacing +
+          rank_shift +
+          rank_width / 2
       }
     }
   }
-
   let total_nodes = nodes_in_order.length()
   let state_lane_step = (node_spacing / 3).max(26)
   for i, node in nodes_in_order {
