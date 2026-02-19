@@ -1280,6 +1280,8 @@ fn collect_non_state_flow_lanes_internal(
   let lane_edges : Array[MermaidEdge] = []
   let dotted_back_edge_ordering_min_span = 3
   let feedback_back_edge_ordering_min_span = 2
+  let mut rank_backward_edge_count = 0
+  let rank_backward_count_by_target : Map[String, Int] = {}
   let node_order_by_id : Map[String, Int] = {}
   for order, node in nodes_in_order {
     node_order_by_id[node.id] = order
@@ -1330,34 +1332,52 @@ fn collect_non_state_flow_lanes_internal(
             lane_rank_by_id,
             lane_edges,
           )
-        } else if !prefer_dagre_order_parity &&
-          source_rank > target_rank &&
-          (
-            (
-              source_rank - target_rank >= dotted_back_edge_ordering_min_span &&
-              edge.style is Dotted
-            ) ||
-            (
-              include_non_dotted_feedback_back_edges &&
-              source_rank - target_rank >= feedback_back_edge_ordering_min_span
-            )
-          ) {
-          // Feed long-span back edges into ordering as reversed constraints so
-          // cycle-heavy graphs can reduce crossings before routing.
-          append_lane_path(
-            "b_\{edge_index}",
-            edge.target,
-            target_rank,
-            edge.source,
-            source_rank,
-            rank_nodes,
-            lane_rank_by_id,
-            lane_edges,
+        } else if source_rank > target_rank {
+          rank_backward_edge_count += 1
+          let current_count = option_int_or(
+            rank_backward_count_by_target.get(edge.target),
+            0,
           )
+          rank_backward_count_by_target[edge.target] = current_count + 1
+          if !prefer_dagre_order_parity &&
+            (
+              (
+                source_rank - target_rank >= dotted_back_edge_ordering_min_span &&
+                edge.style is Dotted
+              ) ||
+              (
+                include_non_dotted_feedback_back_edges &&
+                source_rank - target_rank >=
+                feedback_back_edge_ordering_min_span
+              )
+            ) {
+            // Feed long-span back edges into ordering as reversed constraints so
+            // cycle-heavy graphs can reduce crossings before routing.
+            append_lane_path(
+              "b_\{edge_index}",
+              edge.target,
+              target_rank,
+              edge.source,
+              source_rank,
+              rank_nodes,
+              lane_rank_by_id,
+              lane_edges,
+            )
+          }
         }
       _ => ()
     }
   }
+  let mut rank_backward_multi_target_count = 0
+  for _, target_count in rank_backward_count_by_target {
+    if target_count >= 2 {
+      rank_backward_multi_target_count += 1
+    }
+  }
+  let enable_parity_real_insert_order_rebase = prefer_dagre_order_parity &&
+    edges.length() >= 40 &&
+    rank_backward_edge_count >= 8 &&
+    rank_backward_multi_target_count >= 2
 
   if prefer_dagre_order_parity {
     let outgoing_lane_target_ids_by_source : Map[String, Array[String]] = {}
@@ -1435,6 +1455,19 @@ fn collect_non_state_flow_lanes_internal(
         copied_node_ids.push(node_id)
       }
       rank_nodes[i] = copied_node_ids
+    }
+    if enable_parity_real_insert_order_rebase {
+      // Rebase only real-node tie-break indices to parity-initialized order.
+      // Keep dummy insertion indices stable to preserve routing topology.
+      let mut parity_real_insert_serial = 0
+      for rank_nodes in dagre_init_rank_nodes {
+        for node_id in rank_nodes {
+          if real_node_ids.contains(node_id) {
+            lane_node_insert_order_by_id[node_id] = parity_real_insert_serial
+            parity_real_insert_serial = parity_real_insert_serial + 1
+          }
+        }
+      }
     }
   }
 
