@@ -395,11 +395,11 @@ fn build_rank_node_ids_by_rank_for_order_strategy_with_debug(
         real_virtual_rank_node_ids_by_rank, max_rank, rank_by_node_id, successors_by_node_id,
       )
       let selected_rank_node_ids_by_rank = select_lower_crossing_rank_order(
-        optimized_base_rank_node_ids_by_rank, real_virtual_rank_node_ids_by_rank,
+        optimized_seed_selected_rank_node_ids_by_rank, real_virtual_rank_node_ids_by_rank,
         max_rank, rank_by_node_id, successors_by_node_id,
       )
       let select_virtual_candidate = virtual_candidate_crossing_score <=
-        optimized_seed_crossing_score
+        optimized_seed_selected_crossing_score
       (
         selected_rank_node_ids_by_rank,
         {
@@ -413,12 +413,12 @@ fn build_rank_node_ids_by_rank_for_order_strategy_with_debug(
           selected_crossing_score: if select_virtual_candidate {
             virtual_candidate_crossing_score
           } else {
-            optimized_seed_crossing_score
+            optimized_seed_selected_crossing_score
           },
           selected_source: if select_virtual_candidate {
             "virtual"
           } else {
-            "optimized-seed"
+            optimized_seed_selected_source
           },
         },
       )
