@@ -13,3 +13,7 @@ type LayoutEngine = @model.LayoutEngine
 ///|
 /// The complete positioned diagram ready for rendering.
 type PositionedGraph = @model.PositionedGraph
+
+///|
+/// Backend output contract with final layout and optional intermediate snapshots.
+type GraphLayoutBackendResult = @layout_engine_graph_contract_core.GraphLayoutBackendResult

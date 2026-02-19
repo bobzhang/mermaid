@@ -20,6 +20,7 @@ pub(all) struct GraphLayoutBackendRequest {
 pub(all) struct GraphLayoutBackendResult {
   positioned_graph : @model.PositionedGraph
   phase_snapshots : Array[GraphLayoutPhaseSnapshot]
+  phase_traces : Array[@bobzhang/beautiful_mermaid/layout/engine/graph/phase_contract/core.PhaseTrace]
 }
 
 pub(all) struct GraphLayoutPhaseSnapshot {

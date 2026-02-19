@@ -79,6 +79,24 @@ fn final_phase_snapshot(
 }
 
 ///|
+fn phase_trace_from_snapshot(
+  snapshot : GraphLayoutPhaseSnapshot,
+) -> GraphLayoutPhaseTrace {
+  {
+    phase: snapshot.phase,
+    metrics: {
+      "node_count": snapshot.node_count,
+      "edge_count": snapshot.edge_count,
+      "group_count": snapshot.group_count,
+      "rank_layer_count": snapshot.rank_layer_count,
+      "width": snapshot.width,
+      "height": snapshot.height,
+    },
+    labels: {},
+  }
+}
+
+///|
 /// Executes the shared graph-layout backend pipeline with backend-specific routing policy.
 pub fn run_graph_backend_pipeline(
   request : GraphLayoutBackendRequest,
@@ -109,5 +127,9 @@ pub fn run_graph_backend_pipeline(
     placement_phase_snapshot(request, placement_state),
     final_phase_snapshot(positioned_graph),
   ]
-  { positioned_graph, phase_snapshots }
+  let phase_traces : Array[GraphLayoutPhaseTrace] = []
+  for snapshot in phase_snapshots {
+    phase_traces.push(phase_trace_from_snapshot(snapshot))
+  }
+  { positioned_graph, phase_snapshots, phase_traces }
 }

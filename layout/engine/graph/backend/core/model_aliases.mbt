@@ -7,6 +7,10 @@ type GraphLayoutBackendRequest = @layout_engine_graph_contract_core.GraphLayoutB
 type GraphLayoutPhaseSnapshot = @layout_engine_graph_contract_core.GraphLayoutPhaseSnapshot
 
 ///|
+/// Canonical phase trace payload used by parity tooling.
+type GraphLayoutPhaseTrace = @layout_engine_graph_phase_contract_core.PhaseTrace
+
+///|
 /// Backend output contract with final layout and optional intermediate snapshots.
 type GraphLayoutBackendResult = @layout_engine_graph_contract_core.GraphLayoutBackendResult
 

@@ -24,4 +24,5 @@ pub(all) struct GraphLayoutPhaseSnapshot {
 pub(all) struct GraphLayoutBackendResult {
   positioned_graph : PositionedGraph
   phase_snapshots : Array[GraphLayoutPhaseSnapshot]
+  phase_traces : Array[@layout_engine_graph_phase_contract_core.PhaseTrace]
 }

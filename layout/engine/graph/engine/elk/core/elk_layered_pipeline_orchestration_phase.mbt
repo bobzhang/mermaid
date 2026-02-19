@@ -258,6 +258,24 @@ fn rank_phase_snapshot(
 }
 
 ///|
+fn phase_trace_from_snapshot(
+  snapshot : GraphLayoutPhaseSnapshot,
+) -> GraphLayoutPhaseTrace {
+  {
+    phase: snapshot.phase,
+    metrics: {
+      "node_count": snapshot.node_count,
+      "edge_count": snapshot.edge_count,
+      "group_count": snapshot.group_count,
+      "rank_layer_count": snapshot.rank_layer_count,
+      "width": snapshot.width,
+      "height": snapshot.height,
+    },
+    labels: {},
+  }
+}
+
+///|
 /// Runs the ELK layered flow pipeline for non-state flowcharts.
 fn run_elk_layered_flow_backend(
   request : GraphLayoutBackendRequest,
@@ -291,5 +309,9 @@ fn run_elk_layered_flow_backend(
     placement_phase_snapshot(request, placement_state.positioned_nodes),
     final_phase_snapshot(positioned_graph),
   ]
-  { positioned_graph, phase_snapshots }
+  let phase_traces : Array[GraphLayoutPhaseTrace] = []
+  for snapshot in phase_snapshots {
+    phase_traces.push(phase_trace_from_snapshot(snapshot))
+  }
+  { positioned_graph, phase_snapshots, phase_traces }
 }

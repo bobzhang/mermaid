@@ -6,6 +6,7 @@ import {
   "bobzhang/beautiful_mermaid/layout/engine/graph/internal/core" @layout_engine_graph_internal_core,
   "bobzhang/beautiful_mermaid/layout/engine/graph/lane/core" @layout_engine_graph_lane_core,
   "bobzhang/beautiful_mermaid/layout/engine/graph/legacy/setup/core" @layout_engine_graph_legacy_setup_core,
+  "bobzhang/beautiful_mermaid/layout/engine/graph/phase_contract/core" @layout_engine_graph_phase_contract_core,
   "bobzhang/beautiful_mermaid/layout/engine/graph/placement/core" @layout_engine_graph_placement_core,
   "bobzhang/beautiful_mermaid/layout/engine/graph/prep/core" @layout_engine_graph_prep_core,
   "bobzhang/beautiful_mermaid/layout/engine/graph/routing/core" @layout_engine_graph_routing_core,
