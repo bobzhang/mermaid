@@ -1356,11 +1356,28 @@ fn collect_non_state_flow_lanes_internal(
     }
   }
   let enable_parity_reverse_back_edges = prefer_dagre_order_parity &&
-    edges.length() >= 50 &&
-    edges.length() <= 70 &&
-    rank_backward_edge_count >= 12 &&
-    rank_backward_multi_target_count >= 4 &&
-    rank_backward_max_target_count <= 2
+    (
+      (
+        edges.length() >= 50 &&
+        edges.length() <= 70 &&
+        rank_backward_edge_count >= 12 &&
+        rank_backward_multi_target_count >= 4 &&
+        rank_backward_max_target_count <= 2
+      ) ||
+      (
+        edges.length() >= 42 &&
+        edges.length() <= 48 &&
+        rank_backward_edge_count >= 6 &&
+        rank_backward_multi_target_count == 0 &&
+        rank_backward_max_target_count <= 1
+      ) ||
+      (
+        edges.length() >= 60 &&
+        rank_backward_edge_count >= 18 &&
+        rank_backward_multi_target_count >= 5 &&
+        rank_backward_max_target_count >= 4
+      )
+    )
   for item in backward_rank_edges {
     let (edge_index, edge, source_rank, target_rank) = item
     if prefer_dagre_order_parity {
