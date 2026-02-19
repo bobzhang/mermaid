@@ -351,12 +351,12 @@ fn select_large_graph_rank_seed_state_by_score(
   nodes_in_order : Array[MermaidNode],
   base_order_index_by_node_id : Map[String, Int],
 ) -> (ElkLayeredRankSeedStrategy, ElkLayeredRankSeedState) {
-  // Large-graph native seeding is currently less stable than legacy lane
-  // seeding on parity stress fixtures; keep large graphs on legacy ranks
-  // until native ranking has feature-complete parity.
+  // Prefer native feedback seed for large graphs to align with upstream ELK
+  // layered ranking behavior. Keep selector boundary so future scoring logic
+  // can be introduced without touching orchestration call sites.
   let _ = graph
-  let _ = native_state
+  let _ = legacy_state
   let _ = nodes_in_order
   let _ = base_order_index_by_node_id
-  (LegacyLaneSeed, legacy_state)
+  (NativeFeedback, native_state)
 }

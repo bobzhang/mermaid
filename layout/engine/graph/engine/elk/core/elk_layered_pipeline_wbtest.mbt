@@ -345,7 +345,7 @@ test "elk layered rank phase keeps strategy and minor mode consistent on large g
 }
 
 ///|
-test "elk layered legacy-seed placement reuses legacy coordinate phase" {
+test "elk layered large-graph placement uses native seed path" {
   let nodes : Array[String] = []
   for i in 0..<17 {
     nodes.push("N\{i}")
@@ -363,7 +363,13 @@ test "elk layered legacy-seed placement reuses legacy coordinate phase" {
   }
   let setup_state = run_elk_layered_setup_phase(request)
   let rank_phase_state = run_elk_layered_rank_phase(setup_state)
-  assert_true(rank_phase_state.rank_seed_strategy is LegacyLaneSeed)
+  assert_true(rank_phase_state.rank_seed_strategy is NativeFeedback)
+  assert_true(
+    select_elk_layered_minor_placement_strategy(
+      rank_phase_state.rank_seed_strategy,
+    )
+    is RelaxedNeighbor,
+  )
 
   let node_size_state = build_elk_layered_node_size_state(
     setup_state.nodes_in_order,
@@ -381,37 +387,14 @@ test "elk layered legacy-seed placement reuses legacy coordinate phase" {
   let placement_state = run_elk_layered_node_placement_phase(
     setup_state, rank_phase_state, node_size_state, spacing_state,
   )
-
-  let legacy_setup_state = @layout_engine_graph_legacy_setup_core.build_legacy_layout_setup(
-    graph,
-    setup_state.options,
-    setup_state.use_subgraph_redirects,
-    setup_state.compact_fanin,
-  )
-  let legacy_placement_state = @layout_engine_graph_placement_core.run_legacy_placement_phase(
-    graph,
-    legacy_setup_state,
-    setup_state.use_subgraph_redirects,
-    setup_state.compact_fanin,
-  )
   assert_eq(
     placement_state.positioned_nodes.length(),
-    legacy_placement_state.positioned_nodes.length(),
+    setup_state.nodes_in_order.length(),
   )
-  for node in legacy_placement_state.positioned_nodes {
-    let positioned = match placement_state.positioned_by_id.get(node.id) {
-      Some(found) => found
-      None => fail("expected positioned node \{node.id}")
-    }
-    assert_eq(positioned.x, node.x)
-    assert_eq(positioned.y, node.y)
-    assert_eq(positioned.width, node.width)
-    assert_eq(positioned.height, node.height)
-  }
 }
 
 ///|
-test "elk layered large-graph selector keeps legacy seed on crossing tie" {
+test "elk layered large-graph selector prefers native seed on crossing tie" {
   let all_nodes : Array[String] = []
   for i in 0..<17 {
     all_nodes.push("N\{i}")
@@ -440,12 +423,12 @@ test "elk layered large-graph selector keeps legacy seed on crossing tie" {
   let (strategy, selected_state) = select_large_graph_rank_seed_state_by_score(
     graph, legacy_state, native_state, nodes_in_order, order_index_by_node_id,
   )
-  assert_true(strategy is LegacyLaneSeed)
+  assert_true(strategy is NativeFeedback)
   assert_eq(option_int_or(selected_state.rank_by_node_id.get("A"), -1), 0)
 }
 
 ///|
-test "elk layered large-graph selector keeps legacy seed for stability" {
+test "elk layered large-graph selector prefers native seed for stability" {
   let all_nodes : Array[String] = []
   for i in 0..<17 {
     all_nodes.push("N\{i}")
@@ -496,13 +479,13 @@ test "elk layered large-graph selector keeps legacy seed for stability" {
   let (strategy, selected_state) = select_large_graph_rank_seed_state_by_score(
     graph, legacy_state, native_state, nodes_in_order, order_index_by_node_id,
   )
-  assert_true(strategy is LegacyLaneSeed)
-  assert_eq(option_int_or(selected_state.lane_by_node_id.get("D"), -1), 1)
-  assert_eq(option_int_or(selected_state.lane_by_node_id.get("C"), -1), 0)
+  assert_true(strategy is NativeFeedback)
+  assert_eq(option_int_or(selected_state.lane_by_node_id.get("D"), -1), 0)
+  assert_eq(option_int_or(selected_state.lane_by_node_id.get("C"), -1), 1)
 }
 
 ///|
-test "elk layered large-graph selector keeps legacy seed on compact-native tie" {
+test "elk layered large-graph selector prefers native seed on compact-native tie" {
   let all_nodes : Array[String] = []
   for i in 0..<17 {
     all_nodes.push("N\{i}")
@@ -551,8 +534,8 @@ test "elk layered large-graph selector keeps legacy seed on compact-native tie" 
   let (strategy, selected_state) = select_large_graph_rank_seed_state_by_score(
     graph, legacy_state, native_state, nodes_in_order, order_index_by_node_id,
   )
-  assert_true(strategy is LegacyLaneSeed)
-  assert_eq(option_int_or(selected_state.rank_by_node_id.get("D"), -1), 3)
+  assert_true(strategy is NativeFeedback)
+  assert_eq(option_int_or(selected_state.rank_by_node_id.get("D"), -1), 1)
 }
 
 ///|
