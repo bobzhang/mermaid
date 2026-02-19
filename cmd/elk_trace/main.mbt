@@ -17,9 +17,11 @@ fn print_usage() -> Unit {
     #|  moon run cmd/elk_trace -- --case fanout
     #|  moon run cmd/elk_trace -- --case feedback_mesh
     #|  moon run cmd/elk_trace -- --case long_span
+    #|  moon run cmd/elk_trace -- --source "graph LR\nA --> B\nB --> C"
     #|  moon run cmd/elk_trace -- --case all
     #|Flags:
     #|  --case   fanout | feedback_mesh | long_span | all
+    #|  --source Mermaid source text (use shell command substitution for fixture files)
     #|  --help   Show this help
     #|
   println(usage.trim_end().to_string())
@@ -40,32 +42,92 @@ fn cli_args_without_program() -> Array[String] {
 }
 
 ///|
-fn parse_case_arg(args : Array[String]) -> String? {
-  if args.length() == 0 {
-    return Some("all")
-  }
-  if args.length() == 1 {
-    let arg = args[0]
+priv struct ElkTraceCliArgs {
+  show_help : Bool
+  case_name : String?
+  source : String?
+}
+
+///|
+fn decode_source_arg(raw : String) -> String {
+  raw
+  .replace_all(old="\\n", new="\n")
+  .replace_all(old="\\t", new="\t")
+  .replace_all(old="\\r", new="\r")
+}
+
+///|
+fn parse_cli_args(args : Array[String]) -> ElkTraceCliArgs? {
+  let mut show_help = false
+  let mut case_name : String? = None
+  let mut source : String? = None
+
+  let mut i = 0
+  while i < args.length() {
+    let arg = args[i]
     if arg == "--help" {
-      return Some("help")
+      show_help = true
+      i += 1
+      continue
     }
-    if arg is [.. "--case=", .. raw_case] {
-      let case_name = raw_case.trim().to_lower()
-      if case_name == "" {
+    if arg == "--case" {
+      if i + 1 >= args.length() {
         return None
       }
-      return Some(case_name.to_string())
+      let parsed_case_name = args[i + 1].trim().to_lower()
+      if parsed_case_name == "" {
+        return None
+      }
+      case_name = Some(parsed_case_name.to_string())
+      i += 2
+      continue
+    }
+    if arg == "--source" {
+      if i + 1 >= args.length() {
+        return None
+      }
+      let parsed_source = decode_source_arg(args[i + 1])
+      if parsed_source.trim() == "" {
+        return None
+      }
+      source = Some(parsed_source.to_string())
+      i += 2
+      continue
+    }
+    if arg is [.. "--case=", .. raw_case] {
+      let parsed_case_name = raw_case.trim().to_lower()
+      if parsed_case_name == "" {
+        return None
+      }
+      case_name = Some(parsed_case_name.to_string())
+      i += 1
+      continue
+    }
+    if arg is [.. "--source=", .. raw_source] {
+      let parsed_source = decode_source_arg(raw_source.to_string())
+      if parsed_source.trim() == "" {
+        return None
+      }
+      source = Some(parsed_source.to_string())
+      i += 1
+      continue
     }
     return None
   }
-  if args.length() == 2 && args[0] == "--case" {
-    let case_name = args[1].trim().to_lower()
-    if case_name == "" {
-      return None
-    }
-    return Some(case_name.to_string())
+
+  if case_name is Some(_) && source is Some(_) {
+    return None
   }
-  None
+
+  let resolved_case_name = if show_help {
+    case_name
+  } else {
+    match case_name {
+      Some(name) => Some(name)
+      None => if source is Some(_) { None } else { Some("all") }
+    }
+  }
+  Some({ show_help, case_name: resolved_case_name, source })
 }
 
 ///|
@@ -231,106 +293,118 @@ fn sorted_oriented_edges(
 }
 
 ///|
+fn dump_graph_trace(graph : @model.MermaidGraph) -> Bool {
+  let options = { ..@model.RenderOptions::default(), layout_engine: Some(Elk) }
+  let request : @layout_engine_graph_contract_core.GraphLayoutBackendRequest = {
+    graph,
+    options,
+    use_subgraph_redirects: true,
+    compact_fanin: false,
+  }
+  match
+    @layout_engine_graph_engine_elk_core.collect_elk_layered_rank_trace(request) {
+    Some(trace) => {
+      println("SEED\t\{trace.rank_seed_strategy}")
+      println("ORDER_STRATEGY\t\{trace.rank_order_strategy}")
+      println("ORDER_SELECTED_SOURCE\t\{trace.rank_order_selected_source}")
+      println(
+        "ORDER_SCORE\toptimized-seed\t\{trace.rank_order_optimized_seed_crossings}",
+      )
+      println(
+        "ORDER_SCORE\toptimized-reversed-seed\t\{trace.rank_order_optimized_reversed_seed_crossings}",
+      )
+      println(
+        "ORDER_SCORE\tvirtual-candidate\t\{trace.rank_order_virtual_candidate_crossings}",
+      )
+      println("ORDER_SCORE\tselected\t\{trace.rank_order_selected_crossings}")
+      for node_id in sorted_string_keys(trace.rank_seed_rank_by_node_id) {
+        match trace.rank_seed_rank_by_node_id.get(node_id) {
+          Some(rank) => println("SEED_RANK\t\{node_id}\t\{rank}")
+          None => ()
+        }
+      }
+      for node_id in sorted_string_keys(trace.rank_seed_order_index_by_node_id) {
+        match trace.rank_seed_order_index_by_node_id.get(node_id) {
+          Some(order_index) => println("SEED_ORDER\t\{node_id}\t\{order_index}")
+          None => ()
+        }
+      }
+      for edge in sorted_oriented_edges(trace.rank_seed_oriented_edges) {
+        let (source_id, target_id) = edge
+        println("SEED_EDGE\t\{source_id}\t\{target_id}")
+      }
+      dump_rank_layers("SEED_LAYER", trace.rank_seed_layers)
+      dump_rank_layers(
+        "ORDER_LAYER_OPTIMIZED_SEED",
+        trace.rank_order_optimized_seed_layers,
+      )
+      dump_rank_layers(
+        "ORDER_LAYER_OPTIMIZED_REVERSED_SEED",
+        trace.rank_order_optimized_reversed_seed_layers,
+      )
+      dump_rank_layers(
+        "ORDER_LAYER_VIRTUAL_CANDIDATE",
+        trace.rank_order_virtual_candidate_layers,
+      )
+      dump_rank_layers("ORDER_LAYER_SELECTED", trace.rank_order_selected_layers)
+      dump_rank_layers("RANK_LAYER", trace.rank_layers)
+      true
+    }
+    None => {
+      println("Error: graph does not support elk layered trace")
+      false
+    }
+  }
+}
+
+///|
 fn dump_case_trace(case_name : String) -> Bool {
   match kernel_by_case_name(case_name) {
-    Some(kernel) => {
-      let graph = build_graph(kernel)
-      let options = {
-        ..@model.RenderOptions::default(),
-        layout_engine: Some(Elk),
-      }
-      let request : @layout_engine_graph_contract_core.GraphLayoutBackendRequest = {
-        graph,
-        options,
-        use_subgraph_redirects: true,
-        compact_fanin: false,
-      }
-      match
-        @layout_engine_graph_engine_elk_core.collect_elk_layered_rank_trace(
-          request,
-        ) {
-        Some(trace) => {
-          println("SEED\t\{trace.rank_seed_strategy}")
-          println("ORDER_STRATEGY\t\{trace.rank_order_strategy}")
-          println("ORDER_SELECTED_SOURCE\t\{trace.rank_order_selected_source}")
-          println(
-            "ORDER_SCORE\toptimized-seed\t\{trace.rank_order_optimized_seed_crossings}",
-          )
-          println(
-            "ORDER_SCORE\toptimized-reversed-seed\t\{trace.rank_order_optimized_reversed_seed_crossings}",
-          )
-          println(
-            "ORDER_SCORE\tvirtual-candidate\t\{trace.rank_order_virtual_candidate_crossings}",
-          )
-          println(
-            "ORDER_SCORE\tselected\t\{trace.rank_order_selected_crossings}",
-          )
-          for node_id in sorted_string_keys(trace.rank_seed_rank_by_node_id) {
-            match trace.rank_seed_rank_by_node_id.get(node_id) {
-              Some(rank) => println("SEED_RANK\t\{node_id}\t\{rank}")
-              None => ()
-            }
-          }
-          for
-            node_id in sorted_string_keys(
-              trace.rank_seed_order_index_by_node_id,
-            ) {
-            match trace.rank_seed_order_index_by_node_id.get(node_id) {
-              Some(order_index) =>
-                println("SEED_ORDER\t\{node_id}\t\{order_index}")
-              None => ()
-            }
-          }
-          for edge in sorted_oriented_edges(trace.rank_seed_oriented_edges) {
-            let (source_id, target_id) = edge
-            println("SEED_EDGE\t\{source_id}\t\{target_id}")
-          }
-          dump_rank_layers("SEED_LAYER", trace.rank_seed_layers)
-          dump_rank_layers(
-            "ORDER_LAYER_OPTIMIZED_SEED",
-            trace.rank_order_optimized_seed_layers,
-          )
-          dump_rank_layers(
-            "ORDER_LAYER_OPTIMIZED_REVERSED_SEED",
-            trace.rank_order_optimized_reversed_seed_layers,
-          )
-          dump_rank_layers(
-            "ORDER_LAYER_VIRTUAL_CANDIDATE",
-            trace.rank_order_virtual_candidate_layers,
-          )
-          dump_rank_layers(
-            "ORDER_LAYER_SELECTED",
-            trace.rank_order_selected_layers,
-          )
-          dump_rank_layers("RANK_LAYER", trace.rank_layers)
-          true
-        }
-        None => {
-          println("Error: graph does not support elk layered trace")
-          false
-        }
-      }
-    }
+    Some(kernel) => dump_graph_trace(build_graph(kernel))
     None => false
+  }
+}
+
+///|
+fn dump_source_trace(source : String) -> Bool {
+  let graph_result : Result[@model.MermaidGraph, @model.MermaidError] = try? @parser_header_core.parse_mermaid(
+    source,
+  )
+  match graph_result {
+    Ok(graph) => dump_graph_trace(graph)
+    Err(err) => {
+      println("Error: failed to parse --source payload")
+      println("\{err}")
+      false
+    }
   }
 }
 
 ///|
 fn run() -> Unit {
   let args = cli_args_without_program()
-  match parse_case_arg(args) {
-    Some(case_name) =>
-      if case_name == "help" {
+  match parse_cli_args(args) {
+    Some(parsed_args) =>
+      if parsed_args.show_help {
         print_usage()
-      } else if case_name == "all" {
-        println("CASE\tfanout")
-        let _ = dump_case_trace("fanout")
-        println("CASE\tfeedback_mesh")
-        let _ = dump_case_trace("feedback_mesh")
-        println("CASE\tlong_span")
-        let _ = dump_case_trace("long_span")
-      } else if !dump_case_trace(case_name) {
-        println("Error: unknown case '\{case_name}'")
+      } else if parsed_args.source is Some(source) {
+        if !dump_source_trace(source) {
+          print_usage()
+        }
+      } else if parsed_args.case_name is Some(case_name) {
+        if case_name == "all" {
+          println("CASE\tfanout")
+          let _ = dump_case_trace("fanout")
+          println("CASE\tfeedback_mesh")
+          let _ = dump_case_trace("feedback_mesh")
+          println("CASE\tlong_span")
+          let _ = dump_case_trace("long_span")
+        } else if !dump_case_trace(case_name) {
+          println("Error: unknown case '\{case_name}'")
+          print_usage()
+        }
+      } else {
+        println("Error: invalid arguments")
         print_usage()
       }
     None => {

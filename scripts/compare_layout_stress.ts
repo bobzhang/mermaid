@@ -15,6 +15,7 @@
  *   bun run scripts/compare_layout_stress.ts --min-major-span-ratio 0.25 --min-minor-span-ratio 0.05 --min-avg-major-span-ratio 0.80 --min-avg-minor-span-ratio 0.20
  *   bun run scripts/compare_layout_stress.ts --local-timeout-ms 120000 --local-render-retries 2 --retry-backoff-ms 500
  *   bun run scripts/compare_layout_stress.ts --official-cache-dir /tmp/mermaid-official-render-cache
+ *   bun run scripts/compare_layout_stress.ts --official-flowchart-renderer elk
  *   bun run scripts/compare_layout_stress.ts fixtures/layout_challenge_001_nested_portal_mesh.mmd --explain-logical-crossings
  *   bun run scripts/compare_layout_stress.ts fixtures/layout_stress_010_bipartite_crossfire.mmd --explain-rank-order
  *   bun run scripts/compare_layout_stress.ts fixtures/layout_stress_006_nested_bridge_loops.mmd --include-rank-layers --json /tmp/rank_layers.json
@@ -102,11 +103,14 @@ type Metrics = {
   majorRankCompositionMismatchSample?: string[]
 }
 
+type OfficialFlowchartRenderer = 'dagre' | 'elk'
+
 type CliOptions = {
   profile?: string
   fixtures: string[]
   jsonPath?: string
   officialCacheDir?: string
+  officialFlowchartRenderer: OfficialFlowchartRenderer
   localLayoutEngine?: 'legacy' | 'dagre-parity' | 'elk' | 'elk-layered'
   allowUnparsedEdgeLines: boolean
   useLocalEdgeDump: boolean
@@ -1731,6 +1735,8 @@ function renderOfficial(
   const cacheHash = createHash('sha1')
     .update('compare-layout-stress-official-v1')
     .update('\0')
+    .update(options.officialFlowchartRenderer)
+    .update('\0')
     .update(source)
     .digest('hex')
   const cacheSafeName = basename(inputPath).replaceAll(/[^A-Za-z0-9._-]/g, '_')
@@ -1739,9 +1745,23 @@ function renderOfficial(
     copyFileSync(cachePath, outPath)
     return
   }
+  let rendererConfigPath: string | undefined = undefined
+  if (options.officialFlowchartRenderer === 'elk') {
+    rendererConfigPath = join(officialCacheDir, 'official-flowchart-renderer-elk.json')
+    if (!existsSync(rendererConfigPath)) {
+      writeFileSync(
+        rendererConfigPath,
+        JSON.stringify({ flowchart: { defaultRenderer: 'elk' } }),
+      )
+    }
+  }
+  const args = ['-y', '@mermaid-js/mermaid-cli', '-i', inputPath, '-o', outPath, '-b', 'transparent']
+  if (rendererConfigPath) {
+    args.push('-c', rendererConfigPath)
+  }
   runOrThrow(
     'npx',
-    ['-y', '@mermaid-js/mermaid-cli', '-i', inputPath, '-o', outPath, '-b', 'transparent'],
+    args,
     options.officialTimeoutMs,
     {
       ...process.env,
@@ -2113,6 +2133,7 @@ function parseCliOptions(args: string[]): CliOptions {
   const fixtures: string[] = []
   let jsonPath: string | undefined = undefined
   let officialCacheDir: string | undefined = undefined
+  let officialFlowchartRenderer: OfficialFlowchartRenderer = 'dagre'
   let localLayoutEngine:
     | 'legacy'
     | 'dagre-parity'
@@ -2172,6 +2193,25 @@ function parseCliOptions(args: string[]): CliOptions {
       if (next.trim() === '') fail('invalid --official-cache-dir value, expected non-empty path')
       officialCacheDir = next
       i += 1
+      continue
+    }
+    if (arg === '--official-flowchart-renderer') {
+      const next = args[i + 1]
+      if (!next) fail('missing value after --official-flowchart-renderer')
+      const normalized = next.trim().toLowerCase()
+      if (normalized !== 'dagre' && normalized !== 'elk') {
+        fail("invalid --official-flowchart-renderer value, expected 'dagre' or 'elk'")
+      }
+      officialFlowchartRenderer = normalized
+      i += 1
+      continue
+    }
+    if (arg.startsWith('--official-flowchart-renderer=')) {
+      const normalized = arg.slice('--official-flowchart-renderer='.length).trim().toLowerCase()
+      if (normalized !== 'dagre' && normalized !== 'elk') {
+        fail("invalid --official-flowchart-renderer value, expected 'dagre' or 'elk'")
+      }
+      officialFlowchartRenderer = normalized
       continue
     }
     if (arg === '--local-layout-engine') {
@@ -2533,6 +2573,7 @@ function parseCliOptions(args: string[]): CliOptions {
     fixtures,
     jsonPath,
     officialCacheDir,
+    officialFlowchartRenderer,
     localLayoutEngine,
     allowUnparsedEdgeLines,
     useLocalEdgeDump,
@@ -2715,6 +2756,7 @@ function main(): void {
 
   console.log('\n=== summary ===')
   console.log(`profile=${options.profile ?? 'custom'}`)
+  console.log(`official_flowchart_renderer=${options.officialFlowchartRenderer}`)
   console.log(`local_layout_engine=${options.localLayoutEngine ?? 'default(legacy)'}`)
   console.log(`fixtures=${results.length} structural_ok=${okCount}/${results.length}`)
   console.log(
@@ -2743,6 +2785,7 @@ function main(): void {
       renderedSvgDir: tempRoot,
       options: {
         profile: options.profile ?? null,
+        officialFlowchartRenderer: options.officialFlowchartRenderer,
         localLayoutEngine: options.localLayoutEngine ?? null,
         allowUnparsedEdgeLines: options.allowUnparsedEdgeLines,
         maxLogicalCrossingMultiplier: options.maxLogicalCrossingMultiplier ?? null,
