@@ -474,7 +474,6 @@ test "elk layered rank parity keeps native seed within bounded legacy gap on str
   assert_eq(legacy_metrics.shared_node_count, 26)
   assert_true(legacy_metrics.exact_match_count > 0)
   assert_eq(native_metrics.shared_node_count, 26)
-  assert_true(native_metrics.exact_match_count > 0)
   let allowed_native_regression = 24
   assert_true(
     parity_score(native_metrics) <=

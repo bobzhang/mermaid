@@ -217,8 +217,11 @@ fn build_layered_rank_state(
   let resolved_edges = collect_visible_resolved_edges(
     graph, use_subgraph_redirects, subgraph_entry_by_id, subgraph_exit_by_id, node_ids,
   )
+  let prefer_forward_order_on_tie = @layout_engine_graph_internal_core.layout_direction_is_horizontal(
+    graph.direction,
+  )
   let feedback_orientation_state = compute_feedback_order_orientation_state(
-    node_ids, resolved_edges, base_order_index_by_node_id,
+    node_ids, resolved_edges, base_order_index_by_node_id, prefer_forward_order_on_tie,
   )
   let order_index_by_node_id = feedback_orientation_state.order_index_by_node_id
   let acyclic_edges = feedback_orientation_state.oriented_edges
