@@ -53,6 +53,7 @@ fn wb_graph_with_edges(
     diagram_kind: Flowchart,
     direction: LR,
     nodes: node_map,
+    node_definition_order: nodes.copy(),
     edges: graph_edges,
     subgraphs: [],
     class_defs,

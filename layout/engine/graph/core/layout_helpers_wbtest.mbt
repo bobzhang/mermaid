@@ -7,6 +7,7 @@ fn test_graph(nodes : Map[String, MermaidNode]) -> MermaidGraph {
     diagram_kind: Flowchart,
     direction: TD,
     nodes,
+    node_definition_order: [],
     edges: [],
     subgraphs: [],
     class_defs: {},

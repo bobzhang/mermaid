@@ -50,6 +50,7 @@ fn graph_with_defaults(
     diagram_kind,
     direction,
     nodes,
+    node_definition_order: [],
     edges,
     subgraphs,
     class_defs,

@@ -57,6 +57,7 @@ fn stress_graph() -> @model.MermaidGraph {
     diagram_kind: Flowchart,
     direction: LR,
     nodes,
+    node_definition_order: [],
     edges,
     subgraphs: [],
     class_defs,

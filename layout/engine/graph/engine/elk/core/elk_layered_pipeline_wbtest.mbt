@@ -115,6 +115,7 @@ test "elk layered setup phase tracks reverse orientation for RL direction" {
     diagram_kind: graph.diagram_kind,
     direction: RL,
     nodes: graph.nodes,
+    node_definition_order: graph.node_definition_order,
     edges: graph.edges,
     subgraphs: graph.subgraphs,
     class_defs: graph.class_defs,

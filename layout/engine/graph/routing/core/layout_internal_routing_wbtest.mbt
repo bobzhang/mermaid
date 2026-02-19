@@ -33,14 +33,25 @@ fn positioned_box(id : String, x : Int, y : Int) -> PositionedNode {
 ///|
 fn flow_graph_with_edges(edges : Array[MermaidEdge]) -> MermaidGraph {
   let nodes : Map[String, @model.MermaidNode] = {}
+  let node_definition_order : Array[String] = []
+  let seen_node_id : Map[String, Bool] = {}
+  fn append_node(id : String) -> Unit {
+    nodes[id] = flow_node(id)
+    if seen_node_id.contains(id) {
+      return
+    }
+    seen_node_id[id] = true
+    node_definition_order.push(id)
+  }
   for edge in edges {
-    nodes[edge.source] = flow_node(edge.source)
-    nodes[edge.target] = flow_node(edge.target)
+    append_node(edge.source)
+    append_node(edge.target)
   }
   {
     diagram_kind: Flowchart,
     direction: LR,
     nodes,
+    node_definition_order,
     edges,
     subgraphs: [],
     class_defs: {},

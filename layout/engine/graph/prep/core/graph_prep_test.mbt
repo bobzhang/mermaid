@@ -30,6 +30,7 @@ fn test_graph(
     diagram_kind: Flowchart,
     direction: TD,
     nodes,
+    node_definition_order: node_ids.copy(),
     edges: graph_edges,
     subgraphs,
     class_defs: {},
@@ -115,7 +116,7 @@ test "prepare graph inputs resolves nested and empty subgraph redirects" {
 }
 
 ///|
-test "prepare graph inputs prioritizes edge encounter order for nodes" {
+test "prepare graph inputs prefers parser definition order when available" {
   let graph = test_graph(
     ["A", "B", "C", "D", "E"],
     [("C", "E"), ("B", "D"), ("B", "C")],
@@ -123,6 +124,6 @@ test "prepare graph inputs prioritizes edge encounter order for nodes" {
   )
   let prep_state = prepare_graph_inputs(graph, false)
   assert_eq(prep_state.nodes_in_order.map(node => node.id), [
-    "C", "E", "B", "D", "A",
+    "A", "B", "C", "D", "E",
   ])
 }

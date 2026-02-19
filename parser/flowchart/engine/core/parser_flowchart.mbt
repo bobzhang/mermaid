@@ -1388,6 +1388,7 @@ pub fn parse_flowchart(
   lines : Array[String],
 ) -> MermaidGraph raise MermaidError {
   let nodes : Map[String, MermaidNode] = {}
+  let node_definition_order : Array[String] = []
   let edges : Array[MermaidEdge] = []
   let subgraphs : Array[MermaidSubgraph] = []
   let subgraph_stack : Array[MermaidSubgraph] = []
@@ -1452,6 +1453,7 @@ pub fn parse_flowchart(
       }
       if nodes.contains(node_id) {
         known_node_ids[node_id] = true
+        node_definition_order.push(node_id)
         newly_defined_node_ids.push(node_id)
       }
     }
@@ -1462,6 +1464,7 @@ pub fn parse_flowchart(
     diagram_kind: Flowchart,
     direction,
     nodes,
+    node_definition_order,
     edges,
     subgraphs,
     class_defs,

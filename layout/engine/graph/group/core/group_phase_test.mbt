@@ -7,6 +7,7 @@ fn test_graph(
     diagram_kind: Flowchart,
     direction: TD,
     nodes,
+    node_definition_order: [],
     edges: [],
     subgraphs,
     class_defs: {},

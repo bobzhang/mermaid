@@ -16,6 +16,7 @@ fn test_graph(
     diagram_kind: Flowchart,
     direction,
     nodes,
+    node_definition_order: [],
     edges: [],
     subgraphs,
     class_defs,

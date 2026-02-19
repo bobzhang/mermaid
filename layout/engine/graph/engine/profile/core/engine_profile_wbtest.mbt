@@ -33,6 +33,7 @@ fn flow_graph() -> @model.MermaidGraph {
     diagram_kind: Flowchart,
     direction: LR,
     nodes,
+    node_definition_order: [],
     edges: [flow_edge("A", "B")],
     subgraphs: [],
     class_defs,

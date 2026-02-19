@@ -358,6 +358,7 @@ pub fn parse_sequence_diagram(lines : Array[String]) -> MermaidGraph {
     diagram_kind: Sequence,
     direction: LR,
     nodes,
+    node_definition_order: [],
     edges,
     subgraphs: [],
     class_defs: {},

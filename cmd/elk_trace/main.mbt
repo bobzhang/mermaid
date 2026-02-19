@@ -112,6 +112,7 @@ fn build_graph(kernel : ElkTraceKernel) -> @model.MermaidGraph {
     diagram_kind: Flowchart,
     direction: kernel.direction,
     nodes: node_map,
+    node_definition_order: kernel.nodes.copy(),
     edges,
     subgraphs: [],
     class_defs,

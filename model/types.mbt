@@ -152,6 +152,7 @@ pub(all) struct MermaidGraph {
   diagram_kind : DiagramKind
   direction : Direction
   nodes : Map[String, MermaidNode]
+  node_definition_order : Array[String]
   edges : Array[MermaidEdge]
   subgraphs : Array[MermaidSubgraph]
   class_defs : Map[String, Map[String, String]]

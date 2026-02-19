@@ -385,6 +385,7 @@ pub fn parse_state_diagram(lines : Array[String]) -> MermaidGraph {
     diagram_kind: State,
     direction,
     nodes,
+    node_definition_order: [],
     edges,
     subgraphs,
     class_defs: {},

@@ -30,6 +30,7 @@ fn test_graph(
     diagram_kind: Flowchart,
     direction,
     nodes,
+    node_definition_order: nodes_in_order.map(node => node.id),
     edges,
     subgraphs: [],
     class_defs: {},

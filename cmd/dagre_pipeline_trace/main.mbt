@@ -129,6 +129,7 @@ fn flow_graph(
     diagram_kind: Flowchart,
     direction,
     nodes,
+    node_definition_order: node_ids.copy(),
     edges: graph_edges,
     subgraphs: [],
     class_defs,
