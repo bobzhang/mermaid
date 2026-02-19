@@ -59,17 +59,6 @@ fn collect_dagre_nesting_rank_prep_state(
   base_edge_specs : Array[DagreRankEdgeSpec],
   subgraphs : Array[MermaidSubgraph],
 ) -> DagreNestingRankPrepState {
-  if subgraphs.length() == 0 {
-    return {
-      expanded_nodes: nodes_in_order.copy(),
-      edge_specs: base_edge_specs.copy(),
-      node_rank_factor: 1,
-      root_id: None,
-      bounds_by_subgraph_id: {},
-      node_in_subgraph: {},
-    }
-  }
-
   let used_node_ids : Map[String, Bool] = {}
   for node in nodes_in_order {
     used_node_ids[node.id] = true

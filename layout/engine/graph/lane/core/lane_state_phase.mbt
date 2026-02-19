@@ -140,17 +140,16 @@ fn collect_non_state_flow_rank_candidate(
     prefer_definition_back_edges, compact_cycle_ranks_toward_sinks, use_greedy_feedback_arc_set,
     preserve_reversed_back_edge_constraints, prefer_dagre_network_simplex,
   )
-  let raw_rank_result = if prefer_dagre_network_simplex &&
-    subgraphs.length() > 0 &&
-    !rank_compact_fanin {
+  let raw_rank_result = if prefer_dagre_network_simplex && !rank_compact_fanin {
     let acyclic_phase_state = collect_non_state_flow_acyclic_phase_state(
       nodes_in_order, edges, prefer_definition_back_edges, use_greedy_feedback_arc_set,
     )
-    let base_edge_specs = collect_dagre_rank_edge_specs(
+    let dagre_rank_edge_specs = collect_dagre_rank_edge_specs(
       edges,
       acyclic_phase_state.relaxed_edge_indices,
       acyclic_phase_state.reversed_back_edge_indices,
     )
+    let base_edge_specs = scale_rank_edge_spec_minlen(dagre_rank_edge_specs, 2)
     let (nested_rank_by_id, nested_max_rank, nested_ok) = collect_dagre_nesting_rank_result(
       nodes_in_order, base_edge_specs, subgraphs,
     )
@@ -162,13 +161,7 @@ fn collect_non_state_flow_rank_candidate(
   } else {
     fallback_rank_result
   }
-  let (rank_by_id, max_rank) = if prefer_dagre_network_simplex &&
-    subgraphs.length() > 0 &&
-    horizontal {
-    densify_rank_assignment(nodes_in_order, raw_rank_result.0)
-  } else {
-    raw_rank_result
-  }
+  let (rank_by_id, max_rank) = raw_rank_result
   let lane_by_id = collect_non_state_flow_lanes(
     nodes_in_order, rank_by_id, max_rank, edges, preserve_dummy_lane_channels, enable_feedback_back_edge_ordering,
     preserve_fanout_order_ties, prefer_dagre_order_parity,
@@ -278,6 +271,27 @@ fn select_default_use_greedy_feedback_arc_set(
 }
 
 ///|
+fn scale_rank_edge_spec_minlen(
+  edge_specs : Array[DagreRankEdgeSpec],
+  minlen_factor : Int,
+) -> Array[DagreRankEdgeSpec] {
+  if minlen_factor <= 1 {
+    return edge_specs.copy()
+  }
+  let scaled_specs : Array[DagreRankEdgeSpec] = []
+  for edge_spec in edge_specs {
+    scaled_specs.push({
+      source_id: edge_spec.source_id,
+      target_id: edge_spec.target_id,
+      minlen: edge_spec.minlen.max(0) * minlen_factor,
+      weight: edge_spec.weight,
+      nesting_edge: edge_spec.nesting_edge,
+    })
+  }
+  scaled_specs
+}
+
+///|
 fn should_allow_feedback_strategy_selection(
   graph : MermaidGraph,
   cycle_aware_layout : Bool,
@@ -292,19 +306,6 @@ fn should_allow_feedback_strategy_selection(
   cycle_aware_layout &&
   graph.edges.length() >= 40 &&
   (graph.subgraphs.length() > 0 || !horizontal)
-}
-
-///|
-fn should_compare_horizontal_dagre_ordering_candidates(
-  prefer_dagre_network_simplex : Bool,
-  horizontal : Bool,
-  cycle_aware_layout : Bool,
-  edge_count : Int,
-) -> Bool {
-  prefer_dagre_network_simplex &&
-  horizontal &&
-  cycle_aware_layout &&
-  edge_count >= 30
 }
 
 ///|
@@ -324,41 +325,13 @@ fn select_primary_non_state_flow_rank_candidate(
   allow_feedback_strategy_selection : Bool,
   prefer_dagre_network_simplex : Bool,
 ) -> NonStateFlowRankCandidate {
-  let default_prefer_dagre_order_parity = prefer_dagre_network_simplex &&
-    !horizontal
-  if !should_compare_horizontal_dagre_ordering_candidates(
-      prefer_dagre_network_simplex,
-      horizontal,
-      cycle_aware_layout,
-      edges.length(),
-    ) {
-    return select_non_state_flow_rank_candidate(
-      nodes_in_order, edges, subgraphs, horizontal, rank_compact_fanin, cycle_aware_layout,
-      promote_backward_dotted_edges, prefer_definition_back_edges, preserve_dummy_lane_channels,
-      base_enable_feedback_back_edge_ordering, preserve_fanout_order_ties, default_use_greedy_feedback_arc_set,
-      allow_feedback_strategy_selection, prefer_dagre_network_simplex, default_prefer_dagre_order_parity,
-    )
-  }
-
-  // Horizontal dagre parity: compare parity-vs-legacy ordering directly.
-  let legacy_order_candidate = select_non_state_flow_rank_candidate(
+  let prefer_dagre_order_parity = prefer_dagre_network_simplex
+  select_non_state_flow_rank_candidate(
     nodes_in_order, edges, subgraphs, horizontal, rank_compact_fanin, cycle_aware_layout,
     promote_backward_dotted_edges, prefer_definition_back_edges, preserve_dummy_lane_channels,
     base_enable_feedback_back_edge_ordering, preserve_fanout_order_ties, default_use_greedy_feedback_arc_set,
-    allow_feedback_strategy_selection, prefer_dagre_network_simplex, false,
+    allow_feedback_strategy_selection, prefer_dagre_network_simplex, prefer_dagre_order_parity,
   )
-  let parity_order_candidate = select_non_state_flow_rank_candidate(
-    nodes_in_order, edges, subgraphs, horizontal, rank_compact_fanin, cycle_aware_layout,
-    promote_backward_dotted_edges, prefer_definition_back_edges, preserve_dummy_lane_channels,
-    base_enable_feedback_back_edge_ordering, preserve_fanout_order_ties, default_use_greedy_feedback_arc_set,
-    allow_feedback_strategy_selection, prefer_dagre_network_simplex, true,
-  )
-  if non_state_flow_rank_candidate_score(parity_order_candidate) <
-    non_state_flow_rank_candidate_score(legacy_order_candidate) {
-    parity_order_candidate
-  } else {
-    legacy_order_candidate
-  }
 }
 
 ///|
@@ -438,9 +411,12 @@ pub fn compute_legacy_lane_state(
       !class_or_er_graph &&
       !cycle_aware_layout &&
       graph_has_definition_backward_dotted_edge(nodes_in_order, graph.edges)
-    let preserve_dummy_lane_channels = !state_graph &&
-      !class_or_er_graph &&
-      (graph.subgraphs.length() > 0 || graph.edges.length() >= 30)
+    let preserve_dummy_lane_channels = prefer_dagre_network_simplex ||
+      (
+        !state_graph &&
+        !class_or_er_graph &&
+        (graph.subgraphs.length() > 0 || graph.edges.length() >= 30)
+      )
     let enable_cycle_rank_compaction = !state_graph &&
       !class_or_er_graph &&
       horizontal &&
@@ -470,7 +446,7 @@ pub fn compute_legacy_lane_state(
     let allow_feedback_strategy_selection = should_allow_feedback_strategy_selection(
       graph, cycle_aware_layout, horizontal, state_graph, class_or_er_graph, prefer_dagre_network_simplex,
     )
-    let prefer_dagre_order_parity = prefer_dagre_network_simplex && !horizontal
+    let prefer_dagre_order_parity = prefer_dagre_network_simplex
     let preserve_fanout_order_ties = !class_or_er_graph
     let selected_rank_candidate = select_primary_non_state_flow_rank_candidate(
       nodes_in_order,
@@ -648,7 +624,9 @@ pub fn compute_legacy_lane_state(
       (!has_edge_labels || allow_labeled_cycle_optional_refinement)
     let optional_labeled_cycle_lane_refinement = non_state_optional_lane_refinement &&
       allow_labeled_cycle_optional_refinement
-    let use_horizontal_lane_refinement = if state_graph {
+    let use_horizontal_lane_refinement = if prefer_dagre_network_simplex {
+      false
+    } else if state_graph {
       horizontal && !compact_fanin
     } else {
       compact_non_state_refined_spacing || non_state_optional_lane_refinement

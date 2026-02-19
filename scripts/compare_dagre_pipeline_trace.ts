@@ -17,6 +17,7 @@ type Direction = 'TD' | 'TB' | 'LR' | 'BT' | 'RL'
 type KernelTrace = {
   caseName: string
   direction: Direction
+  nodeOrder: string[]
   edges: Array<[string, string]>
   nodeSizes: Map<string, { width: number; height: number }>
   ranks: Map<string, number>
@@ -115,6 +116,10 @@ function normalizeLayers(layersByRank: Map<number, string[]>): string[][] {
   return layers
 }
 
+function densifyNonEmptyLayers(layers: string[][]): string[][] {
+  return layers.filter(layer => layer.length > 0)
+}
+
 function parseLocalTrace(stdout: string): Record<string, KernelTrace> {
   const byCase: Record<string, KernelTrace> = {}
   let current: KernelTrace | null = null
@@ -137,6 +142,7 @@ function parseLocalTrace(stdout: string): Record<string, KernelTrace> {
       current = {
         caseName,
         direction: 'LR',
+        nodeOrder: [],
         edges: [],
         nodeSizes: new Map<string, { width: number; height: number }>(),
         ranks: new Map<string, number>(),
@@ -161,6 +167,12 @@ function parseLocalTrace(stdout: string): Record<string, KernelTrace> {
       const target = parts[2]
       if (!source || !target) fail(`invalid EDGE line: ${line}`)
       current.edges.push([source, target])
+      continue
+    }
+    if (kind === 'NODE_ORDER') {
+      const nodeId = parts[1]
+      if (!nodeId) fail(`invalid NODE_ORDER line: ${line}`)
+      current.nodeOrder.push(nodeId)
       continue
     }
     if (kind === 'NODE_SIZE') {
@@ -223,6 +235,15 @@ function compressRankIndex(rawRanks: Iterable<number>): Map<number, number> {
   return byRawRank
 }
 
+function normalizeRankMap(ranks: Map<string, number>): Map<string, number> {
+  const indexByRawRank = compressRankIndex(ranks.values())
+  const normalized = new Map<string, number>()
+  for (const [nodeId, rawRank] of ranks.entries()) {
+    normalized.set(nodeId, indexByRawRank.get(rawRank) ?? 0)
+  }
+  return normalized
+}
+
 function upstreamTrace(local: KernelTrace): KernelTrace {
   const Graph = dagre.graphlib.Graph
   const g = new Graph({ directed: true, multigraph: true, compound: true })
@@ -234,7 +255,15 @@ function upstreamTrace(local: KernelTrace): KernelTrace {
     marginx: 40,
     marginy: 40,
   })
+  const addedNodes = new Set<string>()
+  for (const id of local.nodeOrder) {
+    const size = local.nodeSizes.get(id)
+    if (!size) continue
+    g.setNode(id, { width: size.width, height: size.height })
+    addedNodes.add(id)
+  }
   for (const [id, size] of local.nodeSizes.entries()) {
+    if (addedNodes.has(id)) continue
     g.setNode(id, { width: size.width, height: size.height })
   }
   local.edges.forEach(([source, target], index) => {
@@ -306,21 +335,25 @@ function compareCase(
   local: KernelTrace,
   upstream: KernelTrace,
 ): ComparisonResult {
-  const nodeIds = [...local.ranks.keys()].sort()
+  const normalizedLocalRanks = normalizeRankMap(local.ranks)
+  const normalizedUpstreamRanks = normalizeRankMap(upstream.ranks)
+  const nodeIds = [...normalizedLocalRanks.keys()].sort()
   let rankMismatchCount = 0
   for (const nodeId of nodeIds) {
-    const localRank = local.ranks.get(nodeId)
-    const upstreamRank = upstream.ranks.get(nodeId)
+    const localRank = normalizedLocalRanks.get(nodeId)
+    const upstreamRank = normalizedUpstreamRanks.get(nodeId)
     if (localRank !== upstreamRank) {
       rankMismatchCount += 1
     }
   }
 
-  const maxLayerCount = Math.max(local.layers.length, upstream.layers.length)
+  const normalizedLocalLayers = densifyNonEmptyLayers(local.layers)
+  const normalizedUpstreamLayers = densifyNonEmptyLayers(upstream.layers)
+  const maxLayerCount = Math.max(normalizedLocalLayers.length, normalizedUpstreamLayers.length)
   let layerMismatchCount = 0
   for (let rank = 0; rank < maxLayerCount; rank += 1) {
-    const localLayer = local.layers[rank] ?? []
-    const upstreamLayer = upstream.layers[rank] ?? []
+    const localLayer = normalizedLocalLayers[rank] ?? []
+    const upstreamLayer = normalizedUpstreamLayers[rank] ?? []
     if (JSON.stringify(localLayer) !== JSON.stringify(upstreamLayer)) {
       layerMismatchCount += 1
     }
@@ -426,14 +459,18 @@ function main(): void {
       `position_rmse=${metrics.positionRmse.toFixed(4)} max_abs_dx=${metrics.positionMaxAbsDx.toFixed(4)} max_abs_dy=${metrics.positionMaxAbsDy.toFixed(4)} max_abs_error=${metrics.positionMaxAbsError.toFixed(4)}`,
     )
     if (hasMismatch) {
-      const maxLayerCount = Math.max(local.layers.length, upstream.layers.length)
-      for (let rank = 0; rank < maxLayerCount; rank += 1) {
-        const localLayer = local.layers[rank] ?? []
-        const upstreamLayer = upstream.layers[rank] ?? []
-        if (JSON.stringify(localLayer) !== JSON.stringify(upstreamLayer)) {
-          console.log(
-            `layer[${rank}] local=[${localLayer.join(',')}] upstream=[${upstreamLayer.join(',')}]`,
-          )
+      if (metrics.layerMismatchCount !== 0) {
+        const localLayers = densifyNonEmptyLayers(local.layers)
+        const upstreamLayers = densifyNonEmptyLayers(upstream.layers)
+        const maxLayerCount = Math.max(localLayers.length, upstreamLayers.length)
+        for (let rank = 0; rank < maxLayerCount; rank += 1) {
+          const localLayer = localLayers[rank] ?? []
+          const upstreamLayer = upstreamLayers[rank] ?? []
+          if (JSON.stringify(localLayer) !== JSON.stringify(upstreamLayer)) {
+            console.log(
+              `layer[${rank}] local=[${localLayer.join(',')}] upstream=[${upstreamLayer.join(',')}]`,
+            )
+          }
         }
       }
       const topErrors = collectNodePositionErrors(local, upstream).slice(0, 5)

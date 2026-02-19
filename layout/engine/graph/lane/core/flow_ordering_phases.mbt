@@ -1438,15 +1438,6 @@ fn collect_non_state_flow_lanes_internal(
     }
   }
 
-  let dagre_parity_order_index_by_rank_node : Map[Int, Map[String, Int]] = {}
-  for rank in 0..<=max_rank {
-    let order_index_by_node : Map[String, Int] = {}
-    for i, node_id in rank_nodes[rank] {
-      order_index_by_node[node_id] = i
-    }
-    dagre_parity_order_index_by_rank_node[rank] = order_index_by_node
-  }
-
   let adjacent_edge_indices_by_upper_rank : Map[Int, Array[Int]] = {}
   let incoming_adjacent_neighbor_ids_by_rank_node : Map[
     Int,
@@ -1896,7 +1887,6 @@ fn collect_non_state_flow_lanes_internal(
       Int,
       Map[String, Array[String]],
     ],
-    order_index_by_rank_node : Map[Int, Map[String, Int]],
     pass_barycenters_by_rank : Map[Int, Map[String, String]]?,
   ) -> Unit {
     let mut rank = start_rank
@@ -1912,7 +1902,6 @@ fn collect_non_state_flow_lanes_internal(
         neighbor_order[node_id] = i
       }
       let current = rank_nodes[rank]
-      let order_index_by_node = order_index_by_rank_node.get(rank)
       let neighbor_ids_by_node = if incoming_from_neighbor {
         incoming_adjacent_neighbor_ids_by_rank_node.get(rank)
       } else {
@@ -1950,18 +1939,16 @@ fn collect_non_state_flow_lanes_internal(
           sortable_ids.push(node_id)
           sortable_num_by_id[node_id] = sum
           sortable_den_by_id[node_id] = count
-          let order_index = match order_index_by_node {
-            Some(index_by_node) => option_int_or(index_by_node.get(node_id), i)
-            None => i
-          }
-          sortable_index_by_id[node_id] = order_index
+          sortable_index_by_id[node_id] = option_int_or(
+            lane_node_insert_order_by_id.get(node_id),
+            i,
+          )
         } else {
           unsortable_ids.push(node_id)
-          let order_index = match order_index_by_node {
-            Some(index_by_node) => option_int_or(index_by_node.get(node_id), i)
-            None => i
-          }
-          unsortable_index_by_id[node_id] = order_index
+          unsortable_index_by_id[node_id] = option_int_or(
+            lane_node_insert_order_by_id.get(node_id),
+            i,
+          )
         }
       }
 
@@ -2153,7 +2140,6 @@ fn collect_non_state_flow_lanes_internal(
             bias_right,
             incoming_adjacent_neighbor_ids_by_rank_node,
             outgoing_adjacent_neighbor_ids_by_rank_node,
-            dagre_parity_order_index_by_rank_node,
             Some(pass_barycenters_by_rank),
           )
         } else {
@@ -2166,7 +2152,6 @@ fn collect_non_state_flow_lanes_internal(
             bias_right,
             incoming_adjacent_neighbor_ids_by_rank_node,
             outgoing_adjacent_neighbor_ids_by_rank_node,
-            dagre_parity_order_index_by_rank_node,
             Some(pass_barycenters_by_rank),
           )
         }

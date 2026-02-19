@@ -288,6 +288,9 @@ fn dump_case_trace(case_name : String) -> Bool {
       }
 
       let sorted_node_ids = sorted_graph_node_ids(graph)
+      for node in setup_state.nodes_in_order {
+        println("NODE_ORDER\t\{node.id}")
+      }
       for node_id in sorted_node_ids {
         match placement_state.positioned_by_id.get(node_id) {
           Some(node) =>

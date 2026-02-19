@@ -110,6 +110,6 @@ test "legacy setup enables dagre simplex only when dagre-parity is selected" {
       dagre_setup.lane_state.flow_rank_by_node_id.get("C"),
       -1,
     ),
-    1,
+    2,
   )
 }

@@ -1,24 +1,20 @@
 /**
- * Compare local lane ordering against upstream dagre ordering after full dagre
- * preprocess (acyclic/nesting/normalize/addBorderSegments) and order phase.
+ * Compare local rank assignment against upstream dagre rank assignment after
+ * dagre preprocess rank normalization steps.
  *
  * Usage:
- *   bun run scripts/compare_dagre_order_after_preprocess.ts
- *   bun run scripts/compare_dagre_order_after_preprocess.ts --case case1
- *   bun run scripts/compare_dagre_order_after_preprocess.ts --case case2
- *   bun run scripts/compare_dagre_order_after_preprocess.ts --case case3
+ *   bun run scripts/compare_dagre_rank_after_preprocess.ts
+ *   bun run scripts/compare_dagre_rank_after_preprocess.ts --case case1
+ *   bun run scripts/compare_dagre_rank_after_preprocess.ts --case case2
+ *   bun run scripts/compare_dagre_rank_after_preprocess.ts --case case3
  */
 
 import { spawnSync } from 'node:child_process'
 
 const dagre = require('../.repos/dagre')
 const acyclic = require('../.repos/dagre/lib/acyclic')
-const normalize = require('../.repos/dagre/lib/normalize')
 const rank = require('../.repos/dagre/lib/rank')
 const nestingGraph = require('../.repos/dagre/lib/nesting-graph')
-const addBorderSegments = require('../.repos/dagre/lib/add-border-segments')
-const order = require('../.repos/dagre/lib/order')
-const parentDummyChains = require('../.repos/dagre/lib/parent-dummy-chains')
 const util = require('../.repos/dagre/lib/util')
 
 const Graph = dagre.graphlib.Graph
@@ -31,7 +27,7 @@ type KernelTrace = {
   nodeOrder: string[]
   edges: Array<[string, string]>
   nodeSizes: Map<string, { width: number; height: number }>
-  layers: string[][]
+  ranks: Map<string, number>
 }
 
 function fail(message: string): never {
@@ -82,34 +78,9 @@ function parseIntStrict(raw: string): number {
   return value
 }
 
-function parseNodeList(raw: string): string[] {
-  if (raw.trim() === '') return []
-  return raw.split(',')
-}
-
-function normalizeLayers(layersByRank: Map<number, string[]>): string[][] {
-  if (layersByRank.size === 0) return []
-  const maxRank = Math.max(...layersByRank.keys())
-  const layers: string[][] = []
-  for (let rank = 0; rank <= maxRank; rank += 1) {
-    layers.push([...(layersByRank.get(rank) ?? [])])
-  }
-  return layers
-}
-
-function densifyNonEmptyLayers(layers: string[][]): string[][] {
-  return layers.filter(layer => layer.length > 0)
-}
-
 function parseLocalTrace(stdout: string): Record<string, KernelTrace> {
   const byCase: Record<string, KernelTrace> = {}
   let current: KernelTrace | null = null
-  const layersByRank = new Map<number, string[]>()
-
-  const flush = (): void => {
-    if (!current) return
-    current.layers = normalizeLayers(layersByRank)
-  }
 
   for (const rawLine of stdout.split(/\r?\n/)) {
     const line = rawLine.trim()
@@ -118,7 +89,6 @@ function parseLocalTrace(stdout: string): Record<string, KernelTrace> {
     const kind = parts[0]
 
     if (kind === 'CASE') {
-      flush()
       const caseName = parts[1]
       if (!caseName) fail(`invalid CASE line: ${line}`)
       current = {
@@ -127,10 +97,9 @@ function parseLocalTrace(stdout: string): Record<string, KernelTrace> {
         nodeOrder: [],
         edges: [],
         nodeSizes: new Map<string, { width: number; height: number }>(),
-        layers: [],
+        ranks: new Map<string, number>(),
       }
       byCase[caseName] = current
-      layersByRank.clear()
       continue
     }
 
@@ -172,16 +141,15 @@ function parseLocalTrace(stdout: string): Record<string, KernelTrace> {
       continue
     }
 
-    if (kind === 'LAYER') {
-      const rank = parts[1]
-      const nodes = parts[2] ?? ''
-      if (!rank) fail(`invalid LAYER line: ${line}`)
-      layersByRank.set(parseIntStrict(rank), parseNodeList(nodes))
+    if (kind === 'RANK') {
+      const nodeId = parts[1]
+      const rank = parts[2]
+      if (!nodeId || !rank) fail(`invalid RANK line: ${line}`)
+      current.ranks.set(nodeId, parseIntStrict(rank))
       continue
     }
   }
 
-  flush()
   return byCase
 }
 
@@ -239,7 +207,6 @@ function buildLayoutGraph(inputGraph: any): any {
   graphAttrs.forEach(key => {
     if (graph[key] !== undefined) graphAttrsObj[key] = graph[key]
   })
-
   g.setGraph({ ...graphDefaults, ...graphAttrsObj })
 
   inputGraph.nodes().forEach((v: string) => {
@@ -308,19 +275,6 @@ function injectEdgeLabelProxies(g: any): void {
   })
 }
 
-function assignRankMinMax(g: any): void {
-  let maxRank = 0
-  g.nodes().forEach((v: string) => {
-    const node = g.node(v)
-    if (node.borderTop) {
-      node.minRank = g.node(node.borderTop).rank
-      node.maxRank = g.node(node.borderBottom).rank
-      maxRank = Math.max(maxRank, node.maxRank)
-    }
-  })
-  g.graph().maxRank = maxRank
-}
-
 function removeEdgeLabelProxies(g: any): void {
   g.nodes().forEach((v: string) => {
     const node = g.node(v)
@@ -331,7 +285,7 @@ function removeEdgeLabelProxies(g: any): void {
   })
 }
 
-function upstreamLayersAfterOrderPreprocess(local: KernelTrace): string[][] {
+function upstreamRanksAfterRankPreprocess(local: KernelTrace): Map<string, number> {
   const input = new Graph({ directed: true, multigraph: true, compound: true })
   input.setGraph({
     rankdir: local.direction,
@@ -367,38 +321,14 @@ function upstreamLayersAfterOrderPreprocess(local: KernelTrace): string[][] {
   util.removeEmptyRanks(g)
   nestingGraph.cleanup(g)
   util.normalizeRanks(g)
-  assignRankMinMax(g)
   removeEdgeLabelProxies(g)
-  normalize.run(g)
-  parentDummyChains(g)
-  addBorderSegments(g)
-  order(g)
 
-  const originalIds = new Set(local.nodeSizes.keys())
-  const layers = (util.buildLayerMatrix(g) as string[][]).map(layer =>
-    layer.filter(id => originalIds.has(id)),
-  )
-  return densifyNonEmptyLayers(layers)
-}
-
-function stable(value: unknown): string {
-  return JSON.stringify(value)
-}
-
-function compareLayers(localLayers: string[][], upstreamLayers: string[][]): string[] {
-  const errors: string[] = []
-  if (localLayers.length !== upstreamLayers.length) {
-    errors.push(`layer count mismatch local=${localLayers.length} upstream=${upstreamLayers.length}`)
+  const ranks = new Map<string, number>()
+  for (const nodeId of input.nodes()) {
+    const node = g.node(nodeId) as { rank?: number }
+    ranks.set(nodeId, Number.isFinite(node.rank) ? Number(node.rank) : 0)
   }
-  const maxLayers = Math.max(localLayers.length, upstreamLayers.length)
-  for (let i = 0; i < maxLayers; i += 1) {
-    const local = localLayers[i] ?? []
-    const upstream = upstreamLayers[i] ?? []
-    if (stable(local) !== stable(upstream)) {
-      errors.push(`layer[${i}] local=[${local.join(',')}] upstream=[${upstream.join(',')}]`)
-    }
-  }
-  return errors
+  return ranks
 }
 
 function main(): void {
@@ -421,17 +351,26 @@ function main(): void {
   let mismatchCount = 0
   for (const caseName of caseNames) {
     const local = localByCase[caseName]!
-    const localLayers = densifyNonEmptyLayers(local.layers)
-    const upstreamLayers = upstreamLayersAfterOrderPreprocess(local)
-    const errors = compareLayers(localLayers, upstreamLayers)
-    if (errors.length === 0) {
+    const upstreamRanks = upstreamRanksAfterRankPreprocess(local)
+
+    const nodeIds = [...local.nodeSizes.keys()].sort((a, b) => a.localeCompare(b))
+    const mismatches: string[] = []
+    nodeIds.forEach(nodeId => {
+      const localRank = local.ranks.get(nodeId) ?? 0
+      const upstreamRank = upstreamRanks.get(nodeId) ?? 0
+      if (localRank !== upstreamRank) {
+        mismatches.push(`${nodeId}: local=${localRank} upstream=${upstreamRank}`)
+      }
+    })
+
+    if (mismatches.length === 0) {
       console.log(`PASS ${caseName}`)
       continue
     }
 
     mismatchCount += 1
     console.log(`FAIL ${caseName}`)
-    errors.forEach(err => console.log(`  - ${err}`))
+    mismatches.forEach(item => console.log(`  - ${item}`))
   }
 
   if (mismatchCount > 0) {

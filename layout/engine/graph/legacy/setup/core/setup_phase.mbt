@@ -33,7 +33,7 @@ pub fn build_legacy_layout_setup(
     options.node_spacing,
     130,
   )
-  let layer_spacing = @layout_engine_graph_internal_core.option_int_or(
+  let base_layer_spacing = @layout_engine_graph_internal_core.option_int_or(
     options.layer_spacing,
     90,
   )
@@ -81,6 +81,11 @@ pub fn build_legacy_layout_setup(
   let selected_engine : LayoutEngine? = options.layout_engine
   let dagre_parity_mode = selected_engine is Some(DagreParity)
   let prefer_dagre_network_simplex = dagre_parity_mode
+  let layer_spacing = if dagre_parity_mode {
+    (base_layer_spacing / 2).max(1)
+  } else {
+    base_layer_spacing
+  }
   let lane_state = @layout_engine_graph_lane_core.compute_legacy_lane_state(
     graph, nodes_in_order, state_graph, class_or_er_graph, horizontal, compact_fanin,
     enhanced_horizontal_state_flow, flat_state_graph, prefer_dagre_network_simplex,
