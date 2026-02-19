@@ -264,8 +264,11 @@ fn finalize_elk_layered_positioned_graph(
   max_bottom : Int,
 ) -> PositionedGraph {
   let positioned_index_by_id = positioned_index_by_node_id(positioned_nodes)
+  // Keep ELK layered major-axis placement stable through finalize.
+  // Flow-subgraph gap shifting is a legacy dagre compaction step that can
+  // rewrite node major coordinates after rank placement.
   let positioned_groups = @layout_engine_graph_group_core.build_legacy_positioned_groups(
-    graph, padding, horizontal, reverse, false, false, node_spacing, layer_spacing,
+    graph, padding, horizontal, reverse, false, true, node_spacing, layer_spacing,
     positioned_nodes, positioned_by_id, positioned_index_by_id,
   )
   let positioned_edges = @layout_engine_graph_routing_core.route_legacy_positioned_edges(

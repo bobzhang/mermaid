@@ -575,3 +575,65 @@ test "elk layered major spacing expands when edge labels are long" {
   let labeled_major_distance = wb_abs(labeled_b.x - labeled_a.x)
   assert_true(labeled_major_distance > unlabeled_major_distance)
 }
+
+///|
+fn positioned_coord_by_node_id(
+  nodes : Array[@model.PositionedNode],
+) -> Map[String, (Int, Int)] {
+  let coord_by_node_id : Map[String, (Int, Int)] = {}
+  for node in nodes {
+    coord_by_node_id[node.id] = (node.x, node.y)
+  }
+  coord_by_node_id
+}
+
+///|
+test "elk layered finalize phase preserves placement coordinates for subgraph-heavy flow" {
+  let graph = @parser_header_core.parse_mermaid(stress_012_source())
+  let request : GraphLayoutBackendRequest = {
+    graph,
+    options: RenderOptions::default(),
+    use_subgraph_redirects: true,
+    compact_fanin: false,
+  }
+  let setup_state = run_elk_layered_setup_phase(request)
+  let rank_phase_state = run_elk_layered_rank_phase(setup_state)
+  let node_size_state = build_elk_layered_node_size_state(
+    setup_state.nodes_in_order,
+  )
+  let max_rank_size = compute_max_rank_size(
+    rank_phase_state.rank_node_ids_by_rank,
+    rank_phase_state.rank_seed_state.max_rank,
+  )
+  let spacing_state = run_elk_layered_spacing_phase(
+    setup_state.options,
+    setup_state.horizontal,
+    max_rank_size,
+    node_size_state,
+  )
+  let placement_state = run_elk_layered_node_placement_phase(
+    setup_state, rank_phase_state, node_size_state, spacing_state,
+  )
+  let before_finalize = positioned_coord_by_node_id(
+    placement_state.positioned_nodes,
+  )
+  let finalized = run_elk_layered_finalize_phase(
+    setup_state,
+    spacing_state,
+    placement_state,
+    {
+      enable_target_boundary_ports: true,
+      preserve_assigned_endpoint_ports: false,
+    },
+  )
+  assert_eq(finalized.nodes.length(), before_finalize.length())
+  for node in finalized.nodes {
+    match before_finalize.get(node.id) {
+      Some((x, y)) => {
+        assert_eq(node.x, x)
+        assert_eq(node.y, y)
+      }
+      None => fail("missing pre-finalize coord for node \{node.id}")
+    }
+  }
+}
