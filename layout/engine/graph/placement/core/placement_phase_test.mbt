@@ -155,3 +155,61 @@ test "placement dagre parity horizontal axis uses rank width plus ranksep spacin
   assert_eq(positioned_by_id["M"].x - positioned_by_id["A"].x, 209)
   assert_eq(positioned_by_id["X"].x - positioned_by_id["M"].x, 209)
 }
+
+///|
+test "placement dagre parity minor axis compacts sparse dummy lanes" {
+  let nodes = [
+    test_node("A"),
+    test_node("B"),
+    test_node("C"),
+    test_node("D"),
+    test_node("E"),
+    test_node("F"),
+  ]
+  let graph = test_graph(LR, nodes, [
+    test_edge("A", "D"),
+    test_edge("B", "C"),
+    test_edge("A", "E"),
+    test_edge("B", "F"),
+    test_edge("C", "F"),
+    test_edge("D", "E"),
+    test_edge("A", "F"),
+    test_edge("B", "E"),
+  ])
+  let setup_state = @layout_engine_graph_legacy_setup_core.build_legacy_layout_setup(
+    graph,
+    { ..@model.RenderOptions::default(), layout_engine: Some(DagreParity) },
+    true,
+    false,
+  )
+  let placement_state = run_legacy_placement_phase(
+    graph, setup_state, true, false,
+  )
+  let positioned_by_id = placement_state.positioned_by_id
+  let ys = [
+    positioned_by_id["A"].y,
+    positioned_by_id["B"].y,
+    positioned_by_id["C"].y,
+    positioned_by_id["D"].y,
+    positioned_by_id["E"].y,
+    positioned_by_id["F"].y,
+  ]
+  let mut min_y = ys[0]
+  let mut max_y = ys[0]
+  for y in ys {
+    min_y = min_y.min(y)
+    max_y = max_y.max(y)
+  }
+  // Legacy parity lane indexes keep dummy channels, so the coordinate phase
+  // must compact them to avoid stretched output.
+  assert_true(max_y - min_y <= setup_state.node_spacing * 3 + 10)
+  let dy = {
+    let raw = positioned_by_id["D"].y - positioned_by_id["E"].y
+    if raw < 0 {
+      -raw
+    } else {
+      raw
+    }
+  }
+  assert_true(dy <= setup_state.node_spacing / 2)
+}

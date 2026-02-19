@@ -10,6 +10,7 @@ pub(all) struct LegacyLaneState {
   refined_horizontal_non_state_labeled_cycle_flow : Bool
   horizontal_cycle_non_state_flow : Bool
   flow_max_rank : Int
+  dagre_parity_rank_nodes : Array[Array[String]]
 }
 
 ///|
@@ -392,6 +393,7 @@ pub fn compute_legacy_lane_state(
   let mut refined_horizontal_non_state_labeled_cycle_flow = false
   let mut horizontal_cycle_non_state_flow = false
   let mut flow_max_rank = 0
+  let dagre_parity_rank_nodes : Array[Array[String]] = []
   if !state_graph || horizontal {
     let cycle_aware_layout = state_graph ||
       (!class_or_er_graph && graph_has_cycle(nodes_in_order, graph.edges))
@@ -702,6 +704,30 @@ pub fn compute_legacy_lane_state(
       enforce_unique_lanes_per_rank(
         nodes_in_order, flow_rank_by_node_id, flow_lane_by_node_id,
       )
+      let parity_rank_nodes_trace : Array[Array[Array[String]]] = []
+      let _ = collect_non_state_flow_lanes_internal(
+        nodes_in_order,
+        flow_rank_by_node_id,
+        flow_max_rank,
+        graph.edges,
+        preserve_dummy_lane_channels,
+        enable_feedback_back_edge_ordering,
+        preserve_fanout_order_ties,
+        prefer_dagre_order_parity,
+        Some(parity_rank_nodes_trace),
+        None,
+      )
+      if parity_rank_nodes_trace.length() > 0 {
+        let final_rank_nodes = parity_rank_nodes_trace[parity_rank_nodes_trace.length() -
+          1]
+        for rank_nodes in final_rank_nodes {
+          let copied_rank_nodes : Array[String] = []
+          for node_id in rank_nodes {
+            copied_rank_nodes.push(node_id)
+          }
+          dagre_parity_rank_nodes.push(copied_rank_nodes)
+        }
+      }
     }
     if !horizontal &&
       graph.subgraphs.length() > 0 &&
@@ -894,5 +920,6 @@ pub fn compute_legacy_lane_state(
     refined_horizontal_non_state_labeled_cycle_flow,
     horizontal_cycle_non_state_flow,
     flow_max_rank,
+    dagre_parity_rank_nodes,
   }
 }

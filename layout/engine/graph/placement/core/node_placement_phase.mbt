@@ -28,6 +28,7 @@ priv struct LegacyPlacementInput {
   flow_label_y_offset_by_rank : Map[Int, Int]
   state_lane_by_node_id : Map[String, Int]
   state_label_y_offset_by_node_id : Map[String, Int]
+  dagre_parity_rank_nodes : Array[Array[String]]
   padding : Int
   node_spacing : Int
   layer_spacing : Int
@@ -75,6 +76,7 @@ pub fn run_legacy_placement_phase(
     flow_label_y_offset_by_rank: lane_state.flow_label_y_offset_by_rank,
     state_lane_by_node_id: lane_state.state_lane_by_node_id,
     state_label_y_offset_by_node_id: lane_state.state_label_y_offset_by_node_id,
+    dagre_parity_rank_nodes: lane_state.dagre_parity_rank_nodes,
     padding,
     node_spacing,
     layer_spacing,
@@ -106,6 +108,7 @@ fn compute_legacy_node_placement_state(
   let flow_label_y_offset_by_rank = input.flow_label_y_offset_by_rank
   let state_lane_by_node_id = input.state_lane_by_node_id
   let state_label_y_offset_by_node_id = input.state_label_y_offset_by_node_id
+  let dagre_parity_rank_nodes = input.dagre_parity_rank_nodes
   let padding = input.padding
   let node_spacing = input.node_spacing
   let layer_spacing = input.layer_spacing
@@ -247,6 +250,14 @@ fn compute_legacy_node_placement_state(
   }
   let total_nodes = nodes_in_order.length()
   let state_lane_step = (node_spacing / 3).max(26)
+  let dagre_minor_offset_by_node_id = if horizontal && dagre_parity_mode {
+    collect_dagre_parity_minor_offsets(
+      graph, nodes_in_order, flow_rank_by_node_id, flow_max_rank, dagre_parity_rank_nodes,
+      node_spacing,
+    )
+  } else {
+    {}
+  }
   for i, node in nodes_in_order {
     let order_index = if reverse { total_nodes - 1 - i } else { i }
     let (width, height) = node_dimensions(node)
@@ -273,7 +284,12 @@ fn compute_legacy_node_placement_state(
     }
     let y = if horizontal {
       if dagre_parity_mode {
-        padding + 70 + flow_lane * layer_spacing
+        padding +
+        70 +
+        option_int_or(
+          dagre_minor_offset_by_node_id.get(node.id),
+          flow_lane * node_spacing,
+        )
       } else if enhanced_horizontal_state_flow {
         padding + 70 + flow_lane * layer_spacing / 4
       } else if state_graph && !compact_fanin {
