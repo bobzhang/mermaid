@@ -164,8 +164,15 @@ fn collect_non_state_flow_rank_candidate(
   }
   let (rank_by_id, max_rank) = raw_rank_result
   let lane_by_id = collect_non_state_flow_lanes(
-    nodes_in_order, rank_by_id, max_rank, edges, preserve_dummy_lane_channels, enable_feedback_back_edge_ordering,
-    preserve_fanout_order_ties, prefer_dagre_order_parity,
+    nodes_in_order,
+    rank_by_id,
+    max_rank,
+    edges,
+    preserve_dummy_lane_channels,
+    enable_feedback_back_edge_ordering,
+    preserve_fanout_order_ties,
+    prefer_dagre_order_parity,
+    subgraphs.length() > 0,
   )
   let lane_crossings = count_lane_space_edge_crossings(
     edges, rank_by_id, lane_by_id,
@@ -354,6 +361,7 @@ pub fn collect_dagre_parity_order_trace(
     false,
     false,
     true,
+    false,
     Some(rank_nodes_trace),
     Some(internal_sweep_step_trace),
   )
@@ -603,6 +611,7 @@ pub fn compute_legacy_lane_state(
         enable_feedback_back_edge_ordering,
         preserve_fanout_order_ties,
         prefer_dagre_order_parity,
+        graph.subgraphs.length() > 0,
       )
     }
     for node_id, lane in lane_by_id {
@@ -714,6 +723,7 @@ pub fn compute_legacy_lane_state(
         enable_feedback_back_edge_ordering,
         preserve_fanout_order_ties,
         prefer_dagre_order_parity,
+        graph.subgraphs.length() > 0,
         Some(parity_rank_nodes_trace),
         None,
       )

@@ -950,7 +950,7 @@ test "Layout lane collection accounts for long-span edges via virtual segments" 
   ]
 
   let lanes = collect_non_state_flow_lanes(
-    nodes, rank_by_id, 2, edges, false, false, true, false,
+    nodes, rank_by_id, 2, edges, false, false, true, false, false,
   )
   assert_true(
     option_int_or(lanes.get("Y"), 0) < option_int_or(lanes.get("X"), 0),
@@ -997,7 +997,7 @@ test "Layout lane collection uses long-span backward edges for ordering" {
   ]
 
   let lanes = collect_non_state_flow_lanes(
-    nodes, rank_by_id, 3, edges, false, false, true, false,
+    nodes, rank_by_id, 3, edges, false, false, true, false, false,
   )
   assert_true(
     option_int_or(lanes.get("F"), 0) < option_int_or(lanes.get("E"), 0),
@@ -1029,7 +1029,7 @@ test "Layout lane dagre parity ordering phase keeps corpus baseline" {
     flow_edge("B", "X"),
   ]
   let case1_lanes = collect_non_state_flow_lanes(
-    case1_nodes, case1_ranks, 2, case1_edges, false, false, false, true,
+    case1_nodes, case1_ranks, 2, case1_edges, false, false, false, true, false,
   )
   assert_eq(
     collect_rank_orders_from_lanes(case1_nodes, case1_ranks, case1_lanes, 2),
@@ -1063,7 +1063,7 @@ test "Layout lane dagre parity ordering phase keeps corpus baseline" {
     flow_edge("B", "E"),
   ]
   let case2_lanes = collect_non_state_flow_lanes(
-    case2_nodes, case2_ranks, 2, case2_edges, false, false, false, true,
+    case2_nodes, case2_ranks, 2, case2_edges, false, false, false, true, false,
   )
   assert_eq(
     collect_rank_orders_from_lanes(case2_nodes, case2_ranks, case2_lanes, 2),
@@ -1105,7 +1105,7 @@ test "Layout lane dagre parity ordering phase keeps corpus baseline" {
     flow_edge("F", "G"),
   ]
   let case3_lanes = collect_non_state_flow_lanes(
-    case3_nodes, case3_ranks, 3, case3_edges, false, false, false, true,
+    case3_nodes, case3_ranks, 3, case3_edges, false, false, false, true, false,
   )
   assert_eq(
     collect_rank_orders_from_lanes(case3_nodes, case3_ranks, case3_lanes, 3),
@@ -1148,6 +1148,7 @@ test "Layout lane dagre parity ordering phase keeps sweep trace baseline" {
     false,
     false,
     true,
+    false,
     Some(case1_trace),
     Some(case1_step_trace),
   )
@@ -1253,6 +1254,7 @@ test "Layout lane dagre parity ordering phase keeps sweep trace baseline" {
     false,
     false,
     true,
+    false,
     Some(trace),
     Some(step_trace),
   )
@@ -1436,6 +1438,7 @@ test "Layout lane dagre parity ordering phase keeps sweep trace baseline" {
     false,
     false,
     true,
+    false,
     Some(case3_trace),
     Some(case3_step_trace),
   )

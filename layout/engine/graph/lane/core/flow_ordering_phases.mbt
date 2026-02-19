@@ -1187,6 +1187,7 @@ fn collect_non_state_flow_lanes(
   enable_feedback_back_edge_ordering : Bool,
   preserve_fanout_order_ties : Bool,
   prefer_dagre_order_parity : Bool,
+  has_subgraphs : Bool,
 ) -> Map[String, Int] {
   collect_non_state_flow_lanes_internal(
     nodes_in_order,
@@ -1197,6 +1198,7 @@ fn collect_non_state_flow_lanes(
     enable_feedback_back_edge_ordering,
     preserve_fanout_order_ties,
     prefer_dagre_order_parity,
+    has_subgraphs,
     None,
     None,
   )
@@ -1212,6 +1214,7 @@ fn collect_non_state_flow_lanes_internal(
   enable_feedback_back_edge_ordering : Bool,
   preserve_fanout_order_ties : Bool,
   prefer_dagre_order_parity : Bool,
+  has_subgraphs : Bool,
   dagre_parity_rank_nodes_trace : Array[Array[Array[String]]]?,
   dagre_parity_sweep_step_trace : Array[DagreParitySweepStepTrace]?,
 ) -> Map[String, Int] {
@@ -1376,6 +1379,13 @@ fn collect_non_state_flow_lanes_internal(
         rank_backward_edge_count >= 18 &&
         rank_backward_multi_target_count >= 5 &&
         rank_backward_max_target_count >= 4
+      ) ||
+      (
+        has_subgraphs &&
+        edges.length() <= 40 &&
+        rank_backward_edge_count >= 5 &&
+        rank_backward_multi_target_count == 0 &&
+        rank_backward_max_target_count <= 1
       )
     )
   for item in backward_rank_edges {
