@@ -1282,6 +1282,7 @@ fn collect_non_state_flow_lanes_internal(
   let feedback_back_edge_ordering_min_span = 2
   let mut rank_backward_edge_count = 0
   let rank_backward_count_by_target : Map[String, Int] = {}
+  let backward_rank_edges : Array[(Int, MermaidEdge, Int, Int)] = []
   let node_order_by_id : Map[String, Int] = {}
   for order, node in nodes_in_order {
     node_order_by_id[node.id] = order
@@ -1339,39 +1340,65 @@ fn collect_non_state_flow_lanes_internal(
             0,
           )
           rank_backward_count_by_target[edge.target] = current_count + 1
-          if !prefer_dagre_order_parity &&
-            (
-              (
-                source_rank - target_rank >= dotted_back_edge_ordering_min_span &&
-                edge.style is Dotted
-              ) ||
-              (
-                include_non_dotted_feedback_back_edges &&
-                source_rank - target_rank >=
-                feedback_back_edge_ordering_min_span
-              )
-            ) {
-            // Feed long-span back edges into ordering as reversed constraints so
-            // cycle-heavy graphs can reduce crossings before routing.
-            append_lane_path(
-              "b_\{edge_index}",
-              edge.target,
-              target_rank,
-              edge.source,
-              source_rank,
-              rank_nodes,
-              lane_rank_by_id,
-              lane_edges,
-            )
-          }
+          backward_rank_edges.push((edge_index, edge, source_rank, target_rank))
         }
       _ => ()
     }
   }
   let mut rank_backward_multi_target_count = 0
+  let mut rank_backward_max_target_count = 0
   for _, target_count in rank_backward_count_by_target {
     if target_count >= 2 {
       rank_backward_multi_target_count += 1
+    }
+    if target_count > rank_backward_max_target_count {
+      rank_backward_max_target_count = target_count
+    }
+  }
+  let enable_parity_reverse_back_edges = prefer_dagre_order_parity &&
+    edges.length() >= 50 &&
+    edges.length() <= 70 &&
+    rank_backward_edge_count >= 12 &&
+    rank_backward_multi_target_count >= 4 &&
+    rank_backward_max_target_count <= 2
+  for item in backward_rank_edges {
+    let (edge_index, edge, source_rank, target_rank) = item
+    if prefer_dagre_order_parity {
+      if enable_parity_reverse_back_edges {
+        // Dagre runs ordering on an acyclic graph where backward edges are
+        // reversed before the order phase. Enable that signal for dense,
+        // distributed feedback meshes where parity currently diverges most.
+        append_lane_path(
+          "b_\{edge_index}",
+          edge.target,
+          target_rank,
+          edge.source,
+          source_rank,
+          rank_nodes,
+          lane_rank_by_id,
+          lane_edges,
+        )
+      }
+    } else if (
+        source_rank - target_rank >= dotted_back_edge_ordering_min_span &&
+        edge.style is Dotted
+      ) ||
+      (
+        include_non_dotted_feedback_back_edges &&
+        source_rank - target_rank >= feedback_back_edge_ordering_min_span
+      ) {
+      // Feed long-span back edges into ordering as reversed constraints so
+      // cycle-heavy graphs can reduce crossings before routing.
+      append_lane_path(
+        "b_\{edge_index}",
+        edge.target,
+        target_rank,
+        edge.source,
+        source_rank,
+        rank_nodes,
+        lane_rank_by_id,
+        lane_edges,
+      )
     }
   }
   let use_rank_local_insert_tie_index = prefer_dagre_order_parity &&
