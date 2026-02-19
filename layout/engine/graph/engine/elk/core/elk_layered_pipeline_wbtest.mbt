@@ -270,6 +270,60 @@ test "elk layered rank order strategy uses optimized seed order for large native
 }
 
 ///|
+test "elk layered optimized seed selector prefers lower crossing score" {
+  let optimized_seed_rank_node_ids_by_rank : Map[Int, Array[String]] = {
+    0: ["A", "B"],
+    1: ["C", "D"],
+  }
+  let optimized_reversed_seed_rank_node_ids_by_rank : Map[Int, Array[String]] = {
+    0: ["B", "A"],
+    1: ["C", "D"],
+  }
+  let order_index_by_node_id : Map[String, Int] = {
+    "A": 0,
+    "B": 1,
+    "C": 2,
+    "D": 3,
+  }
+  let (selected_rank_node_ids_by_rank, selected_crossing_score, selected_source) = select_optimized_seed_rank_order_candidate(
+    optimized_seed_rank_node_ids_by_rank, 9, optimized_reversed_seed_rank_node_ids_by_rank,
+    2, 1, order_index_by_node_id,
+  )
+  assert_eq(selected_source, "optimized-reversed-seed")
+  assert_eq(selected_crossing_score, 2)
+  assert_eq(
+    selected_rank_node_ids_by_rank, optimized_reversed_seed_rank_node_ids_by_rank,
+  )
+}
+
+///|
+test "elk layered optimized seed selector breaks crossing ties by model order" {
+  let optimized_seed_rank_node_ids_by_rank : Map[Int, Array[String]] = {
+    0: ["B", "A"],
+    1: ["C", "D"],
+  }
+  let optimized_reversed_seed_rank_node_ids_by_rank : Map[Int, Array[String]] = {
+    0: ["A", "B"],
+    1: ["C", "D"],
+  }
+  let order_index_by_node_id : Map[String, Int] = {
+    "A": 0,
+    "B": 1,
+    "C": 2,
+    "D": 3,
+  }
+  let (selected_rank_node_ids_by_rank, selected_crossing_score, selected_source) = select_optimized_seed_rank_order_candidate(
+    optimized_seed_rank_node_ids_by_rank, 4, optimized_reversed_seed_rank_node_ids_by_rank,
+    4, 1, order_index_by_node_id,
+  )
+  assert_eq(selected_source, "optimized-reversed-seed")
+  assert_eq(selected_crossing_score, 4)
+  assert_eq(
+    selected_rank_node_ids_by_rank, optimized_reversed_seed_rank_node_ids_by_rank,
+  )
+}
+
+///|
 test "elk layered rank phase resolves native strategies on small graphs" {
   let graph = wb_graph(["A", "B", "C"], [("A", "B"), ("B", "C")])
   let setup_state = run_elk_layered_setup_phase({

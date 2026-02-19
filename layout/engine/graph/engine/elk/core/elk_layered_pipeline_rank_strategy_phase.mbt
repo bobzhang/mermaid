@@ -195,6 +195,81 @@ fn build_minor_coord_by_strategy(
 }
 
 ///|
+fn rank_order_model_inversion_score(
+  rank_node_ids_by_rank : Map[Int, Array[String]],
+  max_rank : Int,
+  order_index_by_node_id : Map[String, Int],
+) -> Int {
+  let mut inversion_score = 0
+  for rank in 0..<=max_rank {
+    match rank_node_ids_by_rank.get(rank) {
+      Some(node_ids) =>
+        for left_index in 0..<node_ids.length() {
+          let left_node_id = node_ids[left_index]
+          let left_order_index = match
+            order_index_by_node_id.get(left_node_id) {
+            Some(value) => value
+            None => left_index
+          }
+          for right_index in (left_index + 1)..<node_ids.length() {
+            let right_node_id = node_ids[right_index]
+            let right_order_index = match
+              order_index_by_node_id.get(right_node_id) {
+              Some(value) => value
+              None => right_index
+            }
+            if right_order_index < left_order_index {
+              inversion_score += 1
+            }
+          }
+        }
+      None => ()
+    }
+  }
+  inversion_score
+}
+
+///|
+fn select_optimized_seed_rank_order_candidate(
+  optimized_seed_rank_node_ids_by_rank : Map[Int, Array[String]],
+  optimized_seed_crossing_score : Int,
+  optimized_reversed_seed_rank_node_ids_by_rank : Map[Int, Array[String]],
+  optimized_reversed_seed_crossing_score : Int,
+  max_rank : Int,
+  order_index_by_node_id : Map[String, Int],
+) -> (Map[Int, Array[String]], Int, String) {
+  if optimized_reversed_seed_crossing_score < optimized_seed_crossing_score {
+    (
+      optimized_reversed_seed_rank_node_ids_by_rank, optimized_reversed_seed_crossing_score,
+      "optimized-reversed-seed",
+    )
+  } else if optimized_reversed_seed_crossing_score >
+    optimized_seed_crossing_score {
+    (
+      optimized_seed_rank_node_ids_by_rank, optimized_seed_crossing_score, "optimized-seed",
+    )
+  } else {
+    let optimized_seed_model_inversion_score = rank_order_model_inversion_score(
+      optimized_seed_rank_node_ids_by_rank, max_rank, order_index_by_node_id,
+    )
+    let optimized_reversed_seed_model_inversion_score = rank_order_model_inversion_score(
+      optimized_reversed_seed_rank_node_ids_by_rank, max_rank, order_index_by_node_id,
+    )
+    if optimized_reversed_seed_model_inversion_score <
+      optimized_seed_model_inversion_score {
+      (
+        optimized_reversed_seed_rank_node_ids_by_rank, optimized_reversed_seed_crossing_score,
+        "optimized-reversed-seed",
+      )
+    } else {
+      (
+        optimized_seed_rank_node_ids_by_rank, optimized_seed_crossing_score, "optimized-seed",
+      )
+    }
+  }
+}
+
+///|
 fn build_rank_node_ids_by_rank_for_order_strategy_with_debug(
   strategy : ElkLayeredRankOrderStrategy,
   graph : MermaidGraph,
@@ -253,6 +328,14 @@ fn build_rank_node_ids_by_rank_for_order_strategy_with_debug(
   let optimized_reversed_seed_crossing_score = rank_order_crossing_score(
     optimized_reversed_seed_rank_node_ids_by_rank, max_rank, rank_by_node_id, successors_by_node_id,
   )
+  let (
+    optimized_seed_selected_rank_node_ids_by_rank,
+    optimized_seed_selected_crossing_score,
+    optimized_seed_selected_source,
+  ) = select_optimized_seed_rank_order_candidate(
+    optimized_base_rank_node_ids_by_rank, optimized_seed_crossing_score, optimized_reversed_seed_rank_node_ids_by_rank,
+    optimized_reversed_seed_crossing_score, max_rank, order_index_by_node_id,
+  )
   match strategy {
     SeedOrderOnly => {
       let selected_crossing_score = rank_order_crossing_score(
@@ -275,17 +358,17 @@ fn build_rank_node_ids_by_rank_for_order_strategy_with_debug(
     }
     OptimizedSeedOrder =>
       (
-        optimized_base_rank_node_ids_by_rank,
+        optimized_seed_selected_rank_node_ids_by_rank,
         {
           optimized_seed_rank_node_ids_by_rank: optimized_base_rank_node_ids_by_rank,
           optimized_seed_crossing_score,
           optimized_reversed_seed_rank_node_ids_by_rank,
           optimized_reversed_seed_crossing_score,
-          virtual_candidate_rank_node_ids_by_rank: optimized_base_rank_node_ids_by_rank,
-          virtual_candidate_crossing_score: optimized_seed_crossing_score,
-          selected_rank_node_ids_by_rank: optimized_base_rank_node_ids_by_rank,
-          selected_crossing_score: optimized_seed_crossing_score,
-          selected_source: "optimized-seed",
+          virtual_candidate_rank_node_ids_by_rank: optimized_seed_selected_rank_node_ids_by_rank,
+          virtual_candidate_crossing_score: optimized_seed_selected_crossing_score,
+          selected_rank_node_ids_by_rank: optimized_seed_selected_rank_node_ids_by_rank,
+          selected_crossing_score: optimized_seed_selected_crossing_score,
+          selected_source: optimized_seed_selected_source,
         },
       )
     OptimizedSeedWithVirtualCandidate => {
