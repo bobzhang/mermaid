@@ -169,6 +169,12 @@ fn run_elk_layered_node_placement_phase(
   let minor_step = spacing_state.minor_step
   let max_rank_minor_span = spacing_state.max_rank_minor_span
   let base_major_step = spacing_state.major_step
+  let subgraph_major_step_boost = if graph.subgraphs.length() == 0 {
+    0
+  } else {
+    (graph.subgraphs.length() * 20).min(120)
+  }
+  let major_step = base_major_step + subgraph_major_step_boost
   let width_by_node_id = node_size_state.width_by_node_id
   let height_by_node_id = node_size_state.height_by_node_id
   let minor_placement_strategy = select_elk_layered_minor_placement_strategy(
@@ -184,7 +190,7 @@ fn run_elk_layered_node_placement_phase(
     horizontal,
   )
   let major_center_by_rank = build_major_center_by_rank(
-    max_rank, reverse, padding, base_major_step, rank_pair_label_major_gap,
+    max_rank, reverse, padding, major_step, rank_pair_label_major_gap,
   )
   let (x_by_node_id, y_by_node_id) = build_axis_coords_by_node_id(
     rank_node_ids_by_rank, max_rank, major_center_by_rank, minor_coord_by_node_id,
