@@ -14,6 +14,7 @@
  *   bun run scripts/compare_layout_stress.ts --max-major-inversion-rate 0.55 --max-avg-major-inversion-rate 0.20
  *   bun run scripts/compare_layout_stress.ts --min-major-span-ratio 0.25 --min-minor-span-ratio 0.05 --min-avg-major-span-ratio 0.80 --min-avg-minor-span-ratio 0.20
  *   bun run scripts/compare_layout_stress.ts --local-timeout-ms 120000 --local-render-retries 2 --retry-backoff-ms 500
+ *   bun run scripts/compare_layout_stress.ts --official-cache-dir /tmp/mermaid-official-render-cache
  *   bun run scripts/compare_layout_stress.ts fixtures/layout_challenge_001_nested_portal_mesh.mmd --explain-logical-crossings
  *   bun run scripts/compare_layout_stress.ts fixtures/layout_stress_010_bipartite_crossfire.mmd --explain-rank-order
  *   bun run scripts/compare_layout_stress.ts fixtures/layout_stress_006_nested_bridge_loops.mmd --include-rank-layers --json /tmp/rank_layers.json
@@ -25,10 +26,11 @@
  *   bun run scripts/compare_layout_stress.ts --local-layout-engine elk-layered
  */
 
-import { mkdtempSync, readFileSync, readdirSync, writeFileSync } from 'node:fs'
+import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, writeFileSync } from 'node:fs'
 import { spawnSync } from 'node:child_process'
-import { join } from 'node:path'
+import { basename, join } from 'node:path'
 import { tmpdir } from 'node:os'
+import { createHash } from 'node:crypto'
 
 type Point = { x: number; y: number }
 type Bounds = { minX: number; maxX: number; minY: number; maxY: number }
@@ -104,6 +106,7 @@ type CliOptions = {
   profile?: string
   fixtures: string[]
   jsonPath?: string
+  officialCacheDir?: string
   localLayoutEngine?: 'legacy' | 'dagre-parity' | 'elk' | 'elk-layered'
   allowUnparsedEdgeLines: boolean
   useLocalEdgeDump: boolean
@@ -1720,8 +1723,22 @@ function renderOfficial(
   inputPath: string,
   outPath: string,
   npmCacheDir: string,
+  officialCacheDir: string,
   options: CliOptions,
 ): void {
+  mkdirSync(officialCacheDir, { recursive: true })
+  const source = readFileSync(inputPath, 'utf8')
+  const cacheHash = createHash('sha1')
+    .update('compare-layout-stress-official-v1')
+    .update('\0')
+    .update(source)
+    .digest('hex')
+  const cacheSafeName = basename(inputPath).replaceAll(/[^A-Za-z0-9._-]/g, '_')
+  const cachePath = join(officialCacheDir, `${cacheSafeName}.${cacheHash}.svg`)
+  if (existsSync(cachePath)) {
+    copyFileSync(cachePath, outPath)
+    return
+  }
   runOrThrow(
     'npx',
     ['-y', '@mermaid-js/mermaid-cli', '-i', inputPath, '-o', outPath, '-b', 'transparent'],
@@ -1731,6 +1748,7 @@ function renderOfficial(
       npm_config_cache: npmCacheDir,
     },
   )
+  copyFileSync(outPath, cachePath)
 }
 
 function localLayoutEngineArgs(options: CliOptions): string[] {
@@ -1793,13 +1811,14 @@ function compareFixture(
   path: string,
   tempRoot: string,
   npmCacheDir: string,
+  officialCacheDir: string,
   options: CliOptions,
 ): Metrics {
   const safe = path.replaceAll(/[^A-Za-z0-9._/-]/g, '_').replaceAll('/', '__')
   const officialPath = join(tempRoot, `${safe}.official.svg`)
   const localPath = join(tempRoot, `${safe}.local.svg`)
 
-  renderOfficial(path, officialPath, npmCacheDir, options)
+  renderOfficial(path, officialPath, npmCacheDir, officialCacheDir, options)
   renderLocal(path, localPath, options)
 
   const fixtureSource = readFileSync(path, 'utf8')
@@ -2093,6 +2112,7 @@ function parseCliOptions(args: string[]): CliOptions {
   let profile: string | undefined = undefined
   const fixtures: string[] = []
   let jsonPath: string | undefined = undefined
+  let officialCacheDir: string | undefined = undefined
   let localLayoutEngine:
     | 'legacy'
     | 'dagre-parity'
@@ -2143,6 +2163,14 @@ function parseCliOptions(args: string[]): CliOptions {
       const next = args[i + 1]
       if (!next) fail('missing path after --json')
       jsonPath = next
+      i += 1
+      continue
+    }
+    if (arg === '--official-cache-dir') {
+      const next = args[i + 1]
+      if (!next) fail('missing path after --official-cache-dir')
+      if (next.trim() === '') fail('invalid --official-cache-dir value, expected non-empty path')
+      officialCacheDir = next
       i += 1
       continue
     }
@@ -2504,6 +2532,7 @@ function parseCliOptions(args: string[]): CliOptions {
     profile,
     fixtures,
     jsonPath,
+    officialCacheDir,
     localLayoutEngine,
     allowUnparsedEdgeLines,
     useLocalEdgeDump,
@@ -2588,13 +2617,14 @@ function main(): void {
 
   const tempRoot = mkdtempSync(join(tmpdir(), 'mermaid-layout-stress-'))
   const npmCacheDir = join(tempRoot, '.npm-cache')
+  const officialCacheDir = options.officialCacheDir ?? join(tmpdir(), 'mermaid-official-render-cache')
   const compareOptions = {
     ...options,
     explainLogicalCrossings: includeLogicalExplanations,
     explainRankOrder: includeRankExplanations,
   }
   const results = targets.map(path =>
-    compareFixture(path, tempRoot, npmCacheDir, compareOptions),
+    compareFixture(path, tempRoot, npmCacheDir, officialCacheDir, compareOptions),
   )
 
   for (const result of results) {
