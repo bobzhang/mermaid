@@ -33,6 +33,13 @@ type ComparisonResult = {
   positionMaxAbsError: number
 }
 
+type NodePositionError = {
+  nodeId: string
+  dx: number
+  dy: number
+  absError: number
+}
+
 function fail(message: string): never {
   throw new Error(message)
 }
@@ -359,6 +366,29 @@ function compareCase(
   }
 }
 
+function collectNodePositionErrors(
+  local: KernelTrace,
+  upstream: KernelTrace,
+): NodePositionError[] {
+  const nodeIds = [...local.ranks.keys()].sort()
+  const localMinX = minCoord(local.positions, 'x')
+  const localMinY = minCoord(local.positions, 'y')
+  const upstreamMinX = minCoord(upstream.positions, 'x')
+  const upstreamMinY = minCoord(upstream.positions, 'y')
+
+  const errors: NodePositionError[] = []
+  for (const nodeId of nodeIds) {
+    const localPos = local.positions.get(nodeId)
+    const upstreamPos = upstream.positions.get(nodeId)
+    if (!localPos || !upstreamPos) continue
+    const dx = (localPos.x - localMinX) - (upstreamPos.x - upstreamMinX)
+    const dy = (localPos.y - localMinY) - (upstreamPos.y - upstreamMinY)
+    const absError = Math.sqrt(dx * dx + dy * dy)
+    errors.push({ nodeId, dx, dy, absError })
+  }
+  return errors.sort((a, b) => b.absError - a.absError)
+}
+
 function main(): void {
   const caseArg = parseCaseArg(process.argv.slice(2)).toLowerCase()
   const localStdout = runOrThrow('moon', [
@@ -395,6 +425,25 @@ function main(): void {
     console.log(
       `position_rmse=${metrics.positionRmse.toFixed(4)} max_abs_dx=${metrics.positionMaxAbsDx.toFixed(4)} max_abs_dy=${metrics.positionMaxAbsDy.toFixed(4)} max_abs_error=${metrics.positionMaxAbsError.toFixed(4)}`,
     )
+    if (hasMismatch) {
+      const maxLayerCount = Math.max(local.layers.length, upstream.layers.length)
+      for (let rank = 0; rank < maxLayerCount; rank += 1) {
+        const localLayer = local.layers[rank] ?? []
+        const upstreamLayer = upstream.layers[rank] ?? []
+        if (JSON.stringify(localLayer) !== JSON.stringify(upstreamLayer)) {
+          console.log(
+            `layer[${rank}] local=[${localLayer.join(',')}] upstream=[${upstreamLayer.join(',')}]`,
+          )
+        }
+      }
+      const topErrors = collectNodePositionErrors(local, upstream).slice(0, 5)
+      for (const err of topErrors) {
+        if (err.absError === 0) continue
+        console.log(
+          `node_error ${err.nodeId} dx=${err.dx.toFixed(2)} dy=${err.dy.toFixed(2)} abs=${err.absError.toFixed(2)}`,
+        )
+      }
+    }
   }
 
   if (mismatchCaseCount > 0) {
