@@ -1405,6 +1405,8 @@ fn collect_non_state_flow_lanes_internal(
     edges.length() >= 40 &&
     rank_backward_edge_count >= 8 &&
     rank_backward_multi_target_count >= 2
+  let use_rank_local_insert_tie_index = prefer_dagre_order_parity &&
+    rank_backward_multi_target_count <= 1
   let use_current_order_real_tie_index = prefer_dagre_order_parity &&
     edges.length() >= 50 &&
     rank_backward_edge_count >= 8 &&
@@ -1982,6 +1984,25 @@ fn collect_non_state_flow_lanes_internal(
       } else {
         outgoing_adjacent_neighbor_ids_by_rank_node.get(rank)
       }
+      let rank_insert_sorted_node_ids : Array[String] = []
+      for node_id in current {
+        rank_insert_sorted_node_ids.push(node_id)
+      }
+      rank_insert_sorted_node_ids.sort_by((left_id, right_id) => {
+        let left_insert_index = option_int_or(
+          lane_node_insert_order_by_id.get(left_id),
+          0,
+        )
+        let right_insert_index = option_int_or(
+          lane_node_insert_order_by_id.get(right_id),
+          0,
+        )
+        left_insert_index.compare(right_insert_index)
+      })
+      let rank_local_insert_index_by_id : Map[String, Int] = {}
+      for local_index, node_id in rank_insert_sorted_node_ids {
+        rank_local_insert_index_by_id[node_id] = local_index
+      }
       let sortable_ids : Array[String] = []
       let sortable_num_by_id : Map[String, Int] = {}
       let sortable_den_by_id : Map[String, Int] = {}
@@ -2016,6 +2037,8 @@ fn collect_non_state_flow_lanes_internal(
           let sortable_tie_index = if real_node_ids.contains(node_id) {
             if use_current_order_real_tie_index {
               i
+            } else if use_rank_local_insert_tie_index {
+              option_int_or(rank_local_insert_index_by_id.get(node_id), i)
             } else {
               option_int_or(lane_node_insert_order_by_id.get(node_id), i)
             }
@@ -2028,6 +2051,8 @@ fn collect_non_state_flow_lanes_internal(
           let unsortable_tie_index = if real_node_ids.contains(node_id) {
             if use_current_order_real_tie_index {
               i
+            } else if use_rank_local_insert_tie_index {
+              option_int_or(rank_local_insert_index_by_id.get(node_id), i)
             } else {
               option_int_or(lane_node_insert_order_by_id.get(node_id), i)
             }
