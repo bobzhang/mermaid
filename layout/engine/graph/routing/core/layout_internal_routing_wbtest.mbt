@@ -816,3 +816,56 @@ test "Layout boundary offsets keep reciprocal and fanout anchors separated on fl
     !wb_point_equal(check_build_source_anchor, check_fix_source_anchor),
   )
 }
+
+///|
+test "Layout boundary offsets preserve reciprocal target separation on large graphs" {
+  let edges : Array[MermaidEdge] = [
+    flow_edge("Start", "Check"),
+    flow_edge("Check", "Fix"),
+    flow_edge("Fix", "Check"),
+  ]
+  for i in 0..<24 {
+    edges.push(flow_edge("N\{i}", "N\{i + 1}"))
+  }
+  let graph = flow_graph_with_edges(edges)
+  assert_true(graph.edges.length() > 20)
+
+  let positioned_by_id : Map[String, PositionedNode] = {
+    "Start": positioned_box("Start", 80, 100),
+    "Check": positioned_box("Check", 200, 100),
+    "Fix": positioned_box("Fix", 380, 140),
+  }
+  let node_horizontal_by_id : Map[String, Bool] = {
+    "Start": true,
+    "Check": true,
+    "Fix": true,
+  }
+  for i in 0..<=24 {
+    let node_id = "N\{i}"
+    positioned_by_id[node_id] = positioned_box(
+      node_id,
+      40 + i * 18,
+      260 + i % 3 * 30,
+    )
+    node_horizontal_by_id[node_id] = true
+  }
+
+  let (contexts, _) = collect_edge_layout_contexts(
+    graph,
+    true,
+    false,
+    {},
+    {},
+    positioned_by_id,
+    node_horizontal_by_id,
+  )
+  assign_edge_boundary_offsets_to_contexts(graph, false, false, false, contexts)
+
+  let start_check = find_context(contexts, "Start", "Check")
+  let fix_check = find_context(contexts, "Fix", "Check")
+  let start_check_target_anchor = context_target_anchor(start_check)
+  let fix_check_target_anchor = context_target_anchor(fix_check)
+  assert_true(
+    !wb_point_equal(start_check_target_anchor, fix_check_target_anchor),
+  )
+}

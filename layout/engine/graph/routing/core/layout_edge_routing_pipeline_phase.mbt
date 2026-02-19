@@ -85,7 +85,7 @@ fn collect_edge_layout_contexts(
 
 ///|
 fn assign_edge_boundary_offsets_to_contexts(
-  graph : MermaidGraph,
+  _graph : MermaidGraph,
   state_graph : Bool,
   class_or_er_graph : Bool,
   enable_target_boundary_ports : Bool,
@@ -189,8 +189,7 @@ fn assign_edge_boundary_offsets_to_contexts(
     }
 
     for _, peer_minor_assignments in assignments_by_peer_minor {
-      if graph.edges.length() > 20 ||
-        peer_minor_assignments.length() <= 1 ||
+      if peer_minor_assignments.length() <= 1 ||
         peer_minor_assignments.length() > 4 {
         continue
       }
@@ -240,8 +239,7 @@ fn assign_edge_boundary_offsets_to_contexts(
         // When a source endpoint shares a peer-minor bucket with a reciprocal
         // target endpoint, defer source offset assignment to the source cohort
         // pass so fanout ordering is decided consistently across all sources.
-        let defer_source_assignment_to_cohort = graph.edges.length() <= 20 &&
-          assignment.source_endpoint &&
+        let defer_source_assignment_to_cohort = assignment.source_endpoint &&
           peer_has_target_endpoint &&
           source_endpoint_count >= 2
         if defer_source_assignment_to_cohort {
@@ -302,8 +300,7 @@ fn assign_edge_boundary_offsets_to_contexts(
       }
     }
 
-    if graph.edges.length() <= 20 &&
-      assignments.length() <= 4 &&
+    if assignments.length() <= 4 &&
       boundary_side_is_horizontal(assignments[0].side) {
       let source_cohort_assignments : Array[BoundaryEndpointAssignment] = []
       for assignment in assignments {
@@ -324,7 +321,6 @@ fn assign_edge_boundary_offsets_to_contexts(
       edge_layout_contexts,
     )
     if !class_or_er_graph &&
-      graph.edges.length() <= 30 &&
       assignments.length() <= 6 &&
       has_mixed_peer_minor &&
       source_endpoint_count > 0 &&
@@ -358,11 +354,7 @@ fn assign_edge_boundary_offsets_to_contexts(
         0,
       ),
       target_boundary_offset_minor: if enable_target_boundary_ports ||
-        (
-          !state_graph &&
-          graph.edges.length() <= 20 &&
-          resolved_target_offset != 0
-        ) {
+        (!state_graph && resolved_target_offset != 0) {
         resolved_target_offset
       } else {
         0
