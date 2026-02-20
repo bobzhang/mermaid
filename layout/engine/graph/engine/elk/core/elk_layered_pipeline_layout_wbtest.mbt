@@ -159,6 +159,56 @@ test "elk layered crossing strategy wrapper matches explicit default strategy" {
 }
 
 ///|
+test "elk layered sweep-kernel wrapper matches explicit default kernel" {
+  let seed_rank_node_ids_by_rank : Map[Int, Array[String]] = {
+    0: ["A", "B"],
+    1: ["C", "D"],
+    2: ["E", "F"],
+  }
+  let predecessors_by_node_id : Map[String, Array[String]] = {
+    "A": [],
+    "B": [],
+    "C": ["A"],
+    "D": ["B"],
+    "E": ["D"],
+    "F": ["C"],
+  }
+  let successors_by_node_id : Map[String, Array[String]] = {
+    "A": ["C"],
+    "B": ["D"],
+    "C": ["F"],
+    "D": ["E"],
+    "E": [],
+    "F": [],
+  }
+  let order_index_by_node_id : Map[String, Int] = {
+    "A": 0,
+    "B": 1,
+    "C": 2,
+    "D": 3,
+    "E": 4,
+    "F": 5,
+  }
+  let via_wrapper = clone_rank_node_ids_by_rank(seed_rank_node_ids_by_rank, 2)
+  let via_explicit = clone_rank_node_ids_by_rank(seed_rank_node_ids_by_rank, 2)
+  optimize_rank_order_with_sweep_passes(
+    via_wrapper, 2, predecessors_by_node_id, successors_by_node_id, order_index_by_node_id,
+    false, 3,
+  )
+  optimize_rank_order_with_sweep_passes_and_kernel(
+    via_explicit,
+    2,
+    predecessors_by_node_id,
+    successors_by_node_id,
+    order_index_by_node_id,
+    false,
+    3,
+    NeighborMeanBidirectional,
+  )
+  assert_eq(via_wrapper, via_explicit)
+}
+
+///|
 test "elk layered rank assignment keeps forward dependencies ordered" {
   let graph = wb_graph(["A", "B", "C", "D", "E"], [
     ("A", "C"),

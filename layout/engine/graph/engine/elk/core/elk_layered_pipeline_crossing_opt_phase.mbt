@@ -36,6 +36,16 @@ priv enum ElkLayeredCrossingOptimizerStrategy {
 }
 
 ///|
+priv enum ElkLayeredCrossingSweepKernel {
+  NeighborMeanBidirectional
+}
+
+///|
+fn default_crossing_sweep_kernel() -> ElkLayeredCrossingSweepKernel {
+  NeighborMeanBidirectional
+}
+
+///|
 priv struct ElkLayeredCrossingOptimizationConfig {
   preserve_order_node_threshold : Int
   preserve_order_edge_threshold : Int
@@ -725,7 +735,7 @@ fn optimize_rank_node_ids_by_crossing_phase_with_strategy(
           preserve_current_order_on_tie,
         )
       } else {
-        optimize_rank_order_with_sweep_passes(
+        optimize_rank_order_with_sweep_passes_and_kernel(
           optimized_rank_node_ids_by_rank,
           input.max_rank,
           input.predecessors_by_node_id,
@@ -733,6 +743,7 @@ fn optimize_rank_node_ids_by_crossing_phase_with_strategy(
           input.order_index_by_node_id,
           preserve_current_order_on_tie,
           config.sweep_pass_count,
+          default_crossing_sweep_kernel(),
         )
       }
       if config.swap_refine_node_limit == 40 &&
@@ -858,63 +869,91 @@ fn optimize_rank_order_with_sweep_passes(
   preserve_current_order_on_tie : Bool,
   sweep_pass_count : Int,
 ) -> Unit {
-  if max_rank <= 0 {
-    return
-  }
-  let mut pass = 0
-  while pass < sweep_pass_count {
-    sweep_rank_order_once(
-      rank_node_ids_by_rank, max_rank, predecessors_by_node_id, successors_by_node_id,
-      order_index_by_node_id, preserve_current_order_on_tie,
-    )
-    pass += 1
-  }
+  optimize_rank_order_with_sweep_passes_and_kernel(
+    rank_node_ids_by_rank,
+    max_rank,
+    predecessors_by_node_id,
+    successors_by_node_id,
+    order_index_by_node_id,
+    preserve_current_order_on_tie,
+    sweep_pass_count,
+    default_crossing_sweep_kernel(),
+  )
 }
 
 ///|
-fn sweep_rank_order_once(
+fn optimize_rank_order_with_sweep_passes_and_kernel(
   rank_node_ids_by_rank : Map[Int, Array[String]],
   max_rank : Int,
   predecessors_by_node_id : Map[String, Array[String]],
   successors_by_node_id : Map[String, Array[String]],
   order_index_by_node_id : Map[String, Int],
   preserve_current_order_on_tie : Bool,
+  sweep_pass_count : Int,
+  sweep_kernel : ElkLayeredCrossingSweepKernel,
 ) -> Unit {
   if max_rank <= 0 {
     return
   }
-  for rank in 1..<=max_rank {
-    // Keep the layer-sweep state coherent: each rank update should observe
-    // already-updated neighbor order from earlier ranks in the same pass.
-    let forward_positions = rank_position_by_node_id(
-      rank_node_ids_by_rank, max_rank,
+  let mut pass = 0
+  while pass < sweep_pass_count {
+    sweep_rank_order_once_with_kernel(
+      rank_node_ids_by_rank, max_rank, predecessors_by_node_id, successors_by_node_id,
+      order_index_by_node_id, preserve_current_order_on_tie, sweep_kernel,
     )
-    match rank_node_ids_by_rank.get(rank) {
-      Some(node_ids) =>
-        sort_rank_nodes_by_neighbors(
-          node_ids, predecessors_by_node_id, forward_positions, order_index_by_node_id,
-          preserve_current_order_on_tie,
-        )
-      None => ()
-    }
+    pass += 1
   }
+}
 
-  let mut rank = max_rank - 1
-  while true {
-    let backward_positions = rank_position_by_node_id(
-      rank_node_ids_by_rank, max_rank,
-    )
-    match rank_node_ids_by_rank.get(rank) {
-      Some(node_ids) =>
-        sort_rank_nodes_by_neighbors(
-          node_ids, successors_by_node_id, backward_positions, order_index_by_node_id,
-          preserve_current_order_on_tie,
+///|
+fn sweep_rank_order_once_with_kernel(
+  rank_node_ids_by_rank : Map[Int, Array[String]],
+  max_rank : Int,
+  predecessors_by_node_id : Map[String, Array[String]],
+  successors_by_node_id : Map[String, Array[String]],
+  order_index_by_node_id : Map[String, Int],
+  preserve_current_order_on_tie : Bool,
+  sweep_kernel : ElkLayeredCrossingSweepKernel,
+) -> Unit {
+  if max_rank <= 0 {
+    return
+  }
+  match sweep_kernel {
+    NeighborMeanBidirectional => {
+      for rank in 1..<=max_rank {
+        // Keep the layer-sweep state coherent: each rank update should observe
+        // already-updated neighbor order from earlier ranks in the same pass.
+        let forward_positions = rank_position_by_node_id(
+          rank_node_ids_by_rank, max_rank,
         )
-      None => ()
+        match rank_node_ids_by_rank.get(rank) {
+          Some(node_ids) =>
+            sort_rank_nodes_by_neighbors(
+              node_ids, predecessors_by_node_id, forward_positions, order_index_by_node_id,
+              preserve_current_order_on_tie,
+            )
+          None => ()
+        }
+      }
+
+      let mut rank = max_rank - 1
+      while true {
+        let backward_positions = rank_position_by_node_id(
+          rank_node_ids_by_rank, max_rank,
+        )
+        match rank_node_ids_by_rank.get(rank) {
+          Some(node_ids) =>
+            sort_rank_nodes_by_neighbors(
+              node_ids, successors_by_node_id, backward_positions, order_index_by_node_id,
+              preserve_current_order_on_tie,
+            )
+          None => ()
+        }
+        if rank == 0 {
+          break
+        }
+        rank = rank - 1
+      }
     }
-    if rank == 0 {
-      break
-    }
-    rank = rank - 1
   }
 }
