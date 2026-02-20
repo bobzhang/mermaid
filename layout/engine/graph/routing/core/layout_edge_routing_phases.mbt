@@ -2298,16 +2298,18 @@ fn reciprocal_target_dogleg_candidate(
   points : Array[Point],
   offset : Int,
 ) -> Array[Point]? {
-  if points.length() < 3 || offset <= 0 {
+  if points.length() < 3 || offset == 0 {
     return None
   }
+  let detour_magnitude = int_abs(offset)
   let count = points.length()
   let anchor = points[count - 1]
   let approach = points[count - 2]
   let pivot = points[count - 3]
   if approach.x == anchor.x && approach.y != anchor.y {
-    let direction = if pivot.x >= anchor.x { 1 } else { -1 }
-    let detour_x = anchor.x + direction * offset
+    let base_direction = if pivot.x >= anchor.x { 1 } else { -1 }
+    let direction = if offset > 0 { base_direction } else { -base_direction }
+    let detour_x = anchor.x + direction * detour_magnitude
     let candidate : Array[Point] = []
     for i in 0..<(count - 2) {
       candidate.push(points[i])
@@ -2318,8 +2320,9 @@ fn reciprocal_target_dogleg_candidate(
     return Some(candidate)
   }
   if approach.y == anchor.y && approach.x != anchor.x {
-    let direction = if pivot.y >= anchor.y { 1 } else { -1 }
-    let detour_y = anchor.y + direction * offset
+    let base_direction = if pivot.y >= anchor.y { 1 } else { -1 }
+    let direction = if offset > 0 { base_direction } else { -base_direction }
+    let detour_y = anchor.y + direction * detour_magnitude
     let candidate : Array[Point] = []
     for i in 0..<(count - 2) {
       candidate.push(points[i])
@@ -2763,7 +2766,9 @@ fn maybe_optimize_reciprocal_target_dogleg(
       }
     }
   }
-  let candidate_offsets = [12, 24, 36, 48, 72, 96, 128]
+  let candidate_offsets = [
+    -12, 12, -24, 24, -36, 36, -48, 48, -72, 72, -96, 96, -128, 128,
+  ]
   for offset in candidate_offsets {
     match reciprocal_target_dogleg_candidate(seed_points, offset) {
       Some(raw_candidate) => {
@@ -2782,7 +2787,12 @@ fn maybe_optimize_reciprocal_target_dogleg(
           routed_edge_segments,
         )
         let candidate_score = evaluate_labeled_route_score(
-          context, candidate, 0, positioned_nodes, routed_edge_segments, routed_label_boxes,
+          context,
+          candidate,
+          int_abs(offset),
+          positioned_nodes,
+          routed_edge_segments,
+          routed_label_boxes,
         )
         let candidate_better = label_route_score_is_better(
           candidate_score, best_score,

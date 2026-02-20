@@ -12,6 +12,15 @@ fn flow_edge(source : String, target : String) -> MermaidEdge {
 }
 
 ///|
+fn flow_labeled_edge(
+  source : String,
+  target : String,
+  label : String,
+) -> MermaidEdge {
+  { ..flow_edge(source, target), label: Some(label) }
+}
+
+///|
 fn flow_node(id : String) -> @model.MermaidNode {
   { id, label: id, shape: Rectangle }
 }
@@ -96,6 +105,20 @@ fn find_context(
     }
   }
   contexts[0]
+}
+
+///|
+fn find_positioned_edge_points(
+  edges : Array[PositionedEdge],
+  source_id : String,
+  target_id : String,
+) -> Array[Point] {
+  for edge in edges {
+    if edge.source == source_id && edge.target == target_id {
+      return edge.points
+    }
+  }
+  []
 }
 
 ///|
@@ -868,4 +891,113 @@ test "Layout boundary offsets preserve reciprocal target separation on large gra
   assert_true(
     !wb_point_equal(start_check_target_anchor, fix_check_target_anchor),
   )
+}
+
+///|
+test "Layout routing avoids reciprocal anchor pierce in labeled flow loop" {
+  let edges : Array[MermaidEdge] = [
+    flow_edge("Start", "Check"),
+    flow_labeled_edge("Check", "Build", "yes"),
+    flow_labeled_edge("Check", "Fix", "no"),
+    flow_edge("Fix", "Check"),
+    flow_edge("Build", "Ship"),
+  ]
+  let graph = {
+    ..flow_graph_with_edges(edges),
+    nodes: {
+      "Start": { id: "Start", label: "Start", shape: Stadium },
+      "Check": { id: "Check", label: "Valid input?", shape: Diamond },
+      "Build": { id: "Build", label: "Build artifact", shape: Rectangle },
+      "Fix": { id: "Fix", label: "Fix source", shape: Rectangle },
+      "Ship": { id: "Ship", label: "Ship", shape: Stadium },
+    },
+  }
+
+  let positioned_nodes : Array[PositionedNode] = [
+    {
+      id: "Start",
+      label: "Start",
+      shape: Stadium,
+      x: 381,
+      y: 110,
+      width: 100,
+      height: 54,
+      inline_style: None,
+    },
+    {
+      id: "Check",
+      label: "Valid input?",
+      shape: Diamond,
+      x: 640,
+      y: 110,
+      width: 156,
+      height: 54,
+      inline_style: None,
+    },
+    {
+      id: "Build",
+      label: "Build artifact",
+      shape: Rectangle,
+      x: 935,
+      y: 110,
+      width: 172,
+      height: 54,
+      inline_style: None,
+    },
+    {
+      id: "Fix",
+      label: "Fix source",
+      shape: Rectangle,
+      x: 130,
+      y: 110,
+      width: 140,
+      height: 54,
+      inline_style: None,
+    },
+    {
+      id: "Ship",
+      label: "Ship",
+      shape: Stadium,
+      x: 1399,
+      y: 110,
+      width: 92,
+      height: 54,
+      inline_style: None,
+    },
+  ]
+  let positioned_by_id : Map[String, PositionedNode] = {}
+  let node_horizontal_by_id : Map[String, Bool] = {}
+  for node in positioned_nodes {
+    positioned_by_id[node.id] = node
+    node_horizontal_by_id[node.id] = true
+  }
+
+  let routed = route_legacy_positioned_edges(
+    graph,
+    false,
+    false,
+    true,
+    84,
+    84,
+    false,
+    {},
+    {},
+    positioned_nodes,
+    positioned_by_id,
+    node_horizontal_by_id,
+    true,
+    false,
+    false,
+  )
+
+  let polylines : Array[Array[Point]] = []
+  for edge in routed {
+    polylines.push(edge.points)
+  }
+  assert_eq(count_polyline_crossings(polylines), 0)
+
+  let check_fix_points = find_positioned_edge_points(routed, "Check", "Fix")
+  let fix_check_points = find_positioned_edge_points(routed, "Fix", "Check")
+  assert_true(check_fix_points.length() >= 4)
+  assert_true(fix_check_points.length() >= 2)
 }

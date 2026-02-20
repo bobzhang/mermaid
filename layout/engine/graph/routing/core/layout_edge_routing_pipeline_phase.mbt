@@ -409,6 +409,116 @@ fn materialize_positioned_edges_from_points(
 }
 
 ///|
+fn routed_context_indices(
+  edge_layout_contexts : Array[EdgeLayoutContext],
+  points_by_context_index : Map[Int, Array[Point]],
+) -> Array[Int] {
+  let context_indices : Array[Int] = []
+  for context_index, _ in edge_layout_contexts {
+    if points_by_context_index.contains(context_index) {
+      context_indices.push(context_index)
+    }
+  }
+  context_indices
+}
+
+///|
+fn reversed_context_indices(context_indices : Array[Int]) -> Array[Int] {
+  let reversed : Array[Int] = []
+  for i in 0..<context_indices.length() {
+    reversed.push(context_indices[context_indices.length() - 1 - i])
+  }
+  reversed
+}
+
+///|
+fn optimize_reciprocal_target_doglegs_pass(
+  context_indices : Array[Int],
+  edge_layout_contexts : Array[EdgeLayoutContext],
+  points_by_context_index : Map[Int, Array[Point]],
+  positioned_nodes : Array[PositionedNode],
+) -> Bool {
+  let routed_edge_segments : Array[RoutedEdgeSegment] = []
+  let routed_label_boxes : Array[RoutedLabelBox] = []
+  let mut changed = false
+  for context_index in context_indices {
+    let context = edge_layout_contexts[context_index]
+    match points_by_context_index.get(context_index) {
+      Some(current_points) => {
+        let relaxed_context = {
+          edge: context.edge,
+          resolved_source_id: context.resolved_source_id,
+          resolved_target_id: context.resolved_target_id,
+          source: context.source,
+          target: context.target,
+          edge_horizontal: context.edge_horizontal,
+          compact_endpoint_port_priority: context.compact_endpoint_port_priority,
+          source_boundary_cohort_size: context.source_boundary_cohort_size.max(
+            2,
+          ),
+          source_boundary_offset_minor: if context.source_boundary_offset_minor !=
+            0 {
+            context.source_boundary_offset_minor
+          } else {
+            1
+          },
+          target_boundary_offset_minor: context.target_boundary_offset_minor,
+        }
+        let optimized_points = maybe_optimize_reciprocal_target_dogleg(
+          relaxed_context, current_points, positioned_nodes, routed_edge_segments,
+          routed_label_boxes,
+        )
+        let mut points_for_state = current_points
+        if points_signature(optimized_points) !=
+          points_signature(current_points) {
+          points_by_context_index[context_index] = optimized_points
+          points_for_state = optimized_points
+          changed = true
+        }
+        append_routed_segments_for_points(
+          routed_edge_segments,
+          context.resolved_source_id,
+          context.resolved_target_id,
+          points_for_state,
+        )
+        append_routed_label_box_for_context(
+          routed_label_boxes, context, points_for_state,
+        )
+      }
+      None => ()
+    }
+  }
+  changed
+}
+
+///|
+fn optimize_reciprocal_target_doglegs(
+  edge_layout_contexts : Array[EdgeLayoutContext],
+  points_by_context_index : Map[Int, Array[Point]],
+  positioned_nodes : Array[PositionedNode],
+) -> Unit {
+  let context_indices = routed_context_indices(
+    edge_layout_contexts, points_by_context_index,
+  )
+  if context_indices.length() <= 1 {
+    return
+  }
+  let reverse_context_indices = reversed_context_indices(context_indices)
+
+  let changed_forward = optimize_reciprocal_target_doglegs_pass(
+    context_indices, edge_layout_contexts, points_by_context_index, positioned_nodes,
+  )
+  let changed_reverse = optimize_reciprocal_target_doglegs_pass(
+    reverse_context_indices, edge_layout_contexts, points_by_context_index, positioned_nodes,
+  )
+  if changed_forward || changed_reverse {
+    let _ = optimize_reciprocal_target_doglegs_pass(
+      context_indices, edge_layout_contexts, points_by_context_index, positioned_nodes,
+    )
+  }
+}
+
+///|
 /// Routes all graph edges using the legacy/dagre-parity routing pipeline.
 pub fn route_legacy_positioned_edges(
   graph : MermaidGraph,
@@ -881,6 +991,11 @@ pub fn route_legacy_positioned_edges(
         routed_label_boxes, context, optimized_points,
       )
     }
+  }
+  if enable_target_boundary_ports && !state_graph {
+    optimize_reciprocal_target_doglegs(
+      edge_layout_contexts, points_by_context_index, positioned_nodes,
+    )
   }
   materialize_positioned_edges_from_points(
     edge_layout_contexts, points_by_context_index, state_graph,
