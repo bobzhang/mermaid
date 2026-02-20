@@ -742,7 +742,7 @@ test "elk layered relaxed major compaction gate tracks long-span density" {
   }
   assert_eq(
     use_relaxed_major_compaction(
-      3, low_span_rank_by_node_id, low_span_successors,
+      3, low_span_rank_by_node_id, low_span_successors, false,
     ),
     false,
   )
@@ -763,9 +763,48 @@ test "elk layered relaxed major compaction gate tracks long-span density" {
   }
   assert_eq(
     use_relaxed_major_compaction(
-      5, high_span_rank_by_node_id, high_span_successors,
+      5, high_span_rank_by_node_id, high_span_successors, false,
     ),
     true,
+  )
+
+  let dense_no_long_span_rank_by_node_id : Map[String, Int] = {
+    "A": 0,
+    "B": 0,
+    "C": 1,
+    "D": 1,
+    "E": 2,
+    "F": 2,
+    "G": 3,
+    "H": 3,
+    "I": 4,
+    "J": 4,
+    "K": 5,
+    "L": 5,
+  }
+  let dense_no_long_span_successors : Map[String, Array[String]] = {
+    "A": ["C", "D"],
+    "B": ["C", "D"],
+    "C": ["E", "F"],
+    "D": ["E", "F"],
+    "E": ["G", "H"],
+    "F": ["G", "H"],
+    "G": ["I", "J"],
+    "H": ["I", "J"],
+    "I": ["K", "L"],
+    "J": ["K", "L"],
+  }
+  assert_eq(
+    use_relaxed_major_compaction(
+      5, dense_no_long_span_rank_by_node_id, dense_no_long_span_successors, false,
+    ),
+    true,
+  )
+  assert_eq(
+    use_relaxed_major_compaction(
+      5, dense_no_long_span_rank_by_node_id, dense_no_long_span_successors, true,
+    ),
+    false,
   )
 }
 

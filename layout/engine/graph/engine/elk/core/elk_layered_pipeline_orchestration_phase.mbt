@@ -201,6 +201,13 @@ fn run_elk_layered_node_placement_phase(
     graph, use_subgraph_redirects, subgraph_entry_by_id, subgraph_exit_by_id, rank_by_node_id,
     horizontal,
   )
+  let mut has_labeled_edges = false
+  for edge in graph.edges {
+    if edge.label is Some(_) {
+      has_labeled_edges = true
+      break
+    }
+  }
   let rank_major_extent_by_rank = build_rank_major_extent_by_rank(
     rank_node_ids_by_rank, max_rank, width_by_node_id, height_by_node_id, horizontal,
   )
@@ -210,7 +217,7 @@ fn run_elk_layered_node_placement_phase(
   let major_coord_by_node_id = build_major_coord_by_strategy(
     major_placement_strategy, rank_node_ids_by_rank, max_rank, reverse, rank_by_node_id,
     predecessors_by_node_id, successors_by_node_id, major_center_by_rank, minor_coord_by_node_id,
-    major_gap, horizontal, width_by_node_id, height_by_node_id,
+    major_gap, has_labeled_edges, horizontal, width_by_node_id, height_by_node_id,
   )
   let (x_by_node_id, y_by_node_id) = build_axis_coords_by_node_id(
     rank_node_ids_by_rank, max_rank, major_coord_by_node_id, minor_coord_by_node_id,

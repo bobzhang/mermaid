@@ -1090,6 +1090,7 @@ fn build_major_coord_by_strategy(
   major_center_by_rank : Map[Int, Int],
   minor_coord_by_node_id : Map[String, Int],
   base_major_gap : Int,
+  has_labeled_edges : Bool,
   horizontal : Bool,
   width_by_node_id : Map[String, Int],
   height_by_node_id : Map[String, Int],
@@ -1098,7 +1099,7 @@ fn build_major_coord_by_strategy(
     rank_node_ids_by_rank, max_rank, major_center_by_rank,
   )
   let use_relaxed_compaction = use_relaxed_major_compaction(
-    max_rank, rank_by_node_id, successors_by_node_id,
+    max_rank, rank_by_node_id, successors_by_node_id, has_labeled_edges,
   )
   match strategy {
     RankCentered => baseline_major_coord_by_node_id
@@ -1120,6 +1121,7 @@ fn use_relaxed_major_compaction(
   max_rank : Int,
   rank_by_node_id : Map[String, Int],
   successors_by_node_id : Map[String, Array[String]],
+  has_labeled_edges : Bool,
 ) -> Bool {
   let mut edge_count = 0
   let mut long_span_edge_count = 0
@@ -1141,9 +1143,15 @@ fn use_relaxed_major_compaction(
       }
     }
   }
-  edge_count >= 12 &&
-  max_rank >= 5 &&
-  long_span_edge_count > 0 &&
+  if edge_count < 12 || max_rank < 5 {
+    return false
+  }
+  if has_labeled_edges {
+    return false
+  }
+  if long_span_edge_count == 0 {
+    return true
+  }
   long_span_edge_count * 100 >= edge_count * 30
 }
 

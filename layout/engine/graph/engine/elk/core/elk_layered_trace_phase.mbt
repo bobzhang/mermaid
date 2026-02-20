@@ -212,6 +212,13 @@ pub fn collect_elk_layered_rank_trace(
   let placement_state = run_elk_layered_node_placement_phase(
     setup_state, rank_phase_state, node_size_state, spacing_state,
   )
+  let mut has_labeled_edges = false
+  for edge in setup_state.graph.edges {
+    if edge.label is Some(_) {
+      has_labeled_edges = true
+      break
+    }
+  }
   let selected_major_strategy = select_elk_layered_major_placement_strategy(
     rank_phase_state.rank_seed_strategy,
   )
@@ -220,6 +227,7 @@ pub fn collect_elk_layered_rank_trace(
       rank_seed_state.max_rank,
       rank_seed_state.rank_by_node_id,
       rank_seed_state.successors_by_node_id,
+      has_labeled_edges,
     ) {
     RankCentered
   } else {
