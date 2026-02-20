@@ -17,6 +17,64 @@ fn rank_position_by_node_id(
 }
 
 ///|
+priv struct ElkLayeredCrossingPhaseInput {
+  rank_node_ids_by_rank : Map[Int, Array[String]]
+  max_rank : Int
+  predecessors_by_node_id : Map[String, Array[String]]
+  successors_by_node_id : Map[String, Array[String]]
+  order_index_by_node_id : Map[String, Int]
+  rank_by_node_id : Map[String, Int]
+  node_count : Int
+  edge_count : Int
+  // Reserved for future port-aware crossing objective alignment.
+  port_order_slots_by_node_id : Map[String, Array[Int]]
+}
+
+///|
+fn build_default_port_order_slots_by_node_id(
+  rank_node_ids_by_rank : Map[Int, Array[String]],
+  max_rank : Int,
+) -> Map[String, Array[Int]] {
+  let port_order_slots_by_node_id : Map[String, Array[Int]] = {}
+  for rank in 0..<=max_rank {
+    match rank_node_ids_by_rank.get(rank) {
+      Some(node_ids) =>
+        for node_id in node_ids {
+          port_order_slots_by_node_id[node_id] = []
+        }
+      None => ()
+    }
+  }
+  port_order_slots_by_node_id
+}
+
+///|
+fn build_crossing_phase_input(
+  rank_node_ids_by_rank : Map[Int, Array[String]],
+  max_rank : Int,
+  predecessors_by_node_id : Map[String, Array[String]],
+  successors_by_node_id : Map[String, Array[String]],
+  order_index_by_node_id : Map[String, Int],
+  rank_by_node_id : Map[String, Int],
+  node_count : Int,
+  edge_count : Int,
+) -> ElkLayeredCrossingPhaseInput {
+  {
+    rank_node_ids_by_rank,
+    max_rank,
+    predecessors_by_node_id,
+    successors_by_node_id,
+    order_index_by_node_id,
+    rank_by_node_id,
+    node_count,
+    edge_count,
+    port_order_slots_by_node_id: build_default_port_order_slots_by_node_id(
+      rank_node_ids_by_rank, max_rank,
+    ),
+  }
+}
+
+///|
 priv struct NodeNeighborOrderKey {
   has_center : Bool
   mean_scaled : Int
@@ -500,6 +558,44 @@ fn maybe_refine_rank_order_by_rank_permutations(
 }
 
 ///|
+fn optimize_rank_node_ids_by_crossing_phase(
+  input : ElkLayeredCrossingPhaseInput,
+) -> Map[Int, Array[String]] {
+  let _ = input.port_order_slots_by_node_id
+  let optimized_rank_node_ids_by_rank = clone_rank_node_ids_by_rank(
+    input.rank_node_ids_by_rank,
+    input.max_rank,
+  )
+  let preserve_current_order_on_tie = input.node_count > 16 ||
+    input.edge_count > 30
+  optimize_rank_order(
+    optimized_rank_node_ids_by_rank,
+    input.max_rank,
+    input.predecessors_by_node_id,
+    input.successors_by_node_id,
+    input.order_index_by_node_id,
+    preserve_current_order_on_tie,
+  )
+  maybe_refine_rank_order_by_swaps(
+    optimized_rank_node_ids_by_rank,
+    input.max_rank,
+    input.rank_by_node_id,
+    input.successors_by_node_id,
+    input.node_count,
+    input.edge_count,
+  )
+  maybe_refine_rank_order_by_rank_permutations(
+    optimized_rank_node_ids_by_rank,
+    input.max_rank,
+    input.rank_by_node_id,
+    input.successors_by_node_id,
+    input.node_count,
+    input.edge_count,
+  )
+  optimized_rank_node_ids_by_rank
+}
+
+///|
 fn build_optimized_rank_node_ids_by_rank(
   base_rank_node_ids_by_rank : Map[Int, Array[String]],
   max_rank : Int,
@@ -510,23 +606,12 @@ fn build_optimized_rank_node_ids_by_rank(
   node_count : Int,
   edge_count : Int,
 ) -> Map[Int, Array[String]] {
-  let optimized_rank_node_ids_by_rank = clone_rank_node_ids_by_rank(
-    base_rank_node_ids_by_rank, max_rank,
+  optimize_rank_node_ids_by_crossing_phase(
+    build_crossing_phase_input(
+      base_rank_node_ids_by_rank, max_rank, predecessors_by_node_id, successors_by_node_id,
+      order_index_by_node_id, rank_by_node_id, node_count, edge_count,
+    ),
   )
-  let preserve_current_order_on_tie = node_count > 16 || edge_count > 30
-  optimize_rank_order(
-    optimized_rank_node_ids_by_rank, max_rank, predecessors_by_node_id, successors_by_node_id,
-    order_index_by_node_id, preserve_current_order_on_tie,
-  )
-  maybe_refine_rank_order_by_swaps(
-    optimized_rank_node_ids_by_rank, max_rank, rank_by_node_id, successors_by_node_id,
-    node_count, edge_count,
-  )
-  maybe_refine_rank_order_by_rank_permutations(
-    optimized_rank_node_ids_by_rank, max_rank, rank_by_node_id, successors_by_node_id,
-    node_count, edge_count,
-  )
-  optimized_rank_node_ids_by_rank
 }
 
 ///|

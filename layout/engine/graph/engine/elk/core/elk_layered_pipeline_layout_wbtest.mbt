@@ -56,6 +56,34 @@ fn wb_rank_crossings_between(
 }
 
 ///|
+test "elk layered crossing phase input enumerates rank nodes for port-order slots" {
+  let rank_node_ids_by_rank : Map[Int, Array[String]] = {
+    0: ["A", "B"],
+    1: ["C"],
+  }
+  let input = build_crossing_phase_input(
+    rank_node_ids_by_rank,
+    1,
+    { "A": [], "B": [], "C": ["A", "B"] },
+    { "A": ["C"], "B": ["C"], "C": [] },
+    { "A": 0, "B": 1, "C": 2 },
+    { "A": 0, "B": 0, "C": 1 },
+    3,
+    2,
+  )
+  assert_true(input.port_order_slots_by_node_id.contains("A"))
+  assert_true(input.port_order_slots_by_node_id.contains("B"))
+  assert_true(input.port_order_slots_by_node_id.contains("C"))
+  assert_eq(
+    match input.port_order_slots_by_node_id.get("A") {
+      Some(slots) => slots
+      None => [1]
+    },
+    [],
+  )
+}
+
+///|
 test "elk layered rank assignment keeps forward dependencies ordered" {
   let graph = wb_graph(["A", "B", "C", "D", "E"], [
     ("A", "C"),
