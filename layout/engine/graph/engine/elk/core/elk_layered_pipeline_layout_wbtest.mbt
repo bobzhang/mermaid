@@ -97,6 +97,54 @@ test "elk layered crossing optimization config keeps baseline thresholds" {
 }
 
 ///|
+test "elk layered crossing preserve-order tie threshold is strict greater-than" {
+  let config = default_crossing_optimization_config()
+  assert_true(
+    !crossing_preserve_current_order_on_tie(
+      config.preserve_order_node_threshold,
+      config.preserve_order_edge_threshold,
+      config,
+    ),
+  )
+  assert_true(
+    crossing_preserve_current_order_on_tie(
+      config.preserve_order_node_threshold + 1,
+      config.preserve_order_edge_threshold,
+      config,
+    ),
+  )
+  assert_true(
+    crossing_preserve_current_order_on_tie(
+      config.preserve_order_node_threshold,
+      config.preserve_order_edge_threshold + 1,
+      config,
+    ),
+  )
+}
+
+///|
+test "elk layered crossing sweep input builder derives tie policy from phase input" {
+  let config = default_crossing_optimization_config()
+  let input = build_crossing_phase_input(
+    { 0: ["A", "B"], 1: ["C", "D"] },
+    1,
+    { "A": [], "B": [], "C": ["B"], "D": ["A"] },
+    { "A": ["D"], "B": ["C"], "C": [], "D": [] },
+    { "A": 0, "B": 1, "C": 2, "D": 3 },
+    { "A": 0, "B": 0, "C": 1, "D": 1 },
+    17,
+    2,
+  )
+  let sweep_input = build_crossing_sweep_input_from_phase_input(
+    input.rank_node_ids_by_rank,
+    input,
+    config,
+  )
+  assert_eq(sweep_input.max_rank, 1)
+  assert_true(sweep_input.preserve_current_order_on_tie)
+}
+
+///|
 test "elk layered crossing objective evaluator matches direct counters" {
   let rank_node_ids_by_rank : Map[Int, Array[String]] = {
     0: ["A", "B"],

@@ -178,6 +178,36 @@ fn build_crossing_sweep_input(
 }
 
 ///|
+fn crossing_preserve_current_order_on_tie(
+  node_count : Int,
+  edge_count : Int,
+  config : ElkLayeredCrossingOptimizationConfig,
+) -> Bool {
+  node_count > config.preserve_order_node_threshold ||
+  edge_count > config.preserve_order_edge_threshold
+}
+
+///|
+fn build_crossing_sweep_input_from_phase_input(
+  rank_node_ids_by_rank : Map[Int, Array[String]],
+  input : ElkLayeredCrossingPhaseInput,
+  config : ElkLayeredCrossingOptimizationConfig,
+) -> ElkLayeredCrossingSweepInput {
+  build_crossing_sweep_input(
+    rank_node_ids_by_rank,
+    input.max_rank,
+    input.predecessors_by_node_id,
+    input.successors_by_node_id,
+    input.order_index_by_node_id,
+    crossing_preserve_current_order_on_tie(
+      input.node_count,
+      input.edge_count,
+      config,
+    ),
+  )
+}
+
+///|
 priv struct ElkLayeredCrossingRefinementInput {
   rank_node_ids_by_rank : Map[Int, Array[String]]
   max_rank : Int
@@ -204,6 +234,21 @@ fn build_crossing_refinement_input(
     node_count,
     edge_count,
   }
+}
+
+///|
+fn build_crossing_refinement_input_from_phase_input(
+  rank_node_ids_by_rank : Map[Int, Array[String]],
+  input : ElkLayeredCrossingPhaseInput,
+) -> ElkLayeredCrossingRefinementInput {
+  build_crossing_refinement_input(
+    rank_node_ids_by_rank,
+    input.max_rank,
+    input.rank_by_node_id,
+    input.successors_by_node_id,
+    input.node_count,
+    input.edge_count,
+  )
 }
 
 ///|
@@ -840,27 +885,22 @@ fn optimize_rank_node_ids_by_crossing_phase_with_plan(
         input.rank_node_ids_by_rank,
         input.max_rank,
       )
-      let preserve_current_order_on_tie = input.node_count >
-        config.preserve_order_node_threshold ||
-        input.edge_count > config.preserve_order_edge_threshold
+      let sweep_input = build_crossing_sweep_input_from_phase_input(
+        optimized_rank_node_ids_by_rank, input, config,
+      )
       optimize_rank_order_with_sweep_passes_and_kernel(
-        optimized_rank_node_ids_by_rank,
-        input.max_rank,
-        input.predecessors_by_node_id,
-        input.successors_by_node_id,
-        input.order_index_by_node_id,
-        preserve_current_order_on_tie,
+        sweep_input.rank_node_ids_by_rank,
+        sweep_input.max_rank,
+        sweep_input.predecessors_by_node_id,
+        sweep_input.successors_by_node_id,
+        sweep_input.order_index_by_node_id,
+        sweep_input.preserve_current_order_on_tie,
         config.sweep_pass_count,
         plan.sweep_kernel,
       )
       apply_crossing_local_refinement_kernels(
-        build_crossing_refinement_input(
-          optimized_rank_node_ids_by_rank,
-          input.max_rank,
-          input.rank_by_node_id,
-          input.successors_by_node_id,
-          input.node_count,
-          input.edge_count,
+        build_crossing_refinement_input_from_phase_input(
+          optimized_rank_node_ids_by_rank, input,
         ),
         config,
         plan.local_refinement_kernels,
