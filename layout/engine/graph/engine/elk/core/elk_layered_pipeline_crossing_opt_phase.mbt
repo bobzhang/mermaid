@@ -36,6 +36,32 @@ priv enum ElkLayeredCrossingOptimizerStrategy {
 }
 
 ///|
+priv struct ElkLayeredCrossingOptimizationConfig {
+  preserve_order_node_threshold : Int
+  preserve_order_edge_threshold : Int
+  sweep_pass_count : Int
+  swap_refine_node_limit : Int
+  swap_refine_edge_limit : Int
+  permutation_refine_node_limit : Int
+  permutation_refine_edge_limit : Int
+  permutation_rank_size_limit : Int
+}
+
+///|
+fn default_crossing_optimization_config() -> ElkLayeredCrossingOptimizationConfig {
+  {
+    preserve_order_node_threshold: 16,
+    preserve_order_edge_threshold: 30,
+    sweep_pass_count: 4,
+    swap_refine_node_limit: 40,
+    swap_refine_edge_limit: 120,
+    permutation_refine_node_limit: 28,
+    permutation_refine_edge_limit: 80,
+    permutation_rank_size_limit: 6,
+  }
+}
+
+///|
 fn build_default_port_order_slots_by_node_id(
   rank_node_ids_by_rank : Map[Int, Array[String]],
   max_rank : Int,
@@ -452,7 +478,24 @@ fn maybe_refine_rank_order_by_swaps(
   node_count : Int,
   edge_count : Int,
 ) -> Unit {
-  if node_count > 40 || edge_count > 120 {
+  maybe_refine_rank_order_by_swaps_with_limits(
+    rank_node_ids_by_rank, max_rank, rank_by_node_id, successors_by_node_id, node_count,
+    edge_count, 40, 120,
+  )
+}
+
+///|
+fn maybe_refine_rank_order_by_swaps_with_limits(
+  rank_node_ids_by_rank : Map[Int, Array[String]],
+  max_rank : Int,
+  rank_by_node_id : Map[String, Int],
+  successors_by_node_id : Map[String, Array[String]],
+  node_count : Int,
+  edge_count : Int,
+  node_limit : Int,
+  edge_limit : Int,
+) -> Unit {
+  if node_count > node_limit || edge_count > edge_limit {
     return
   }
   let context : ElkLayeredCrossingObjectiveContext = {
@@ -561,7 +604,25 @@ fn maybe_refine_rank_order_by_rank_permutations(
   node_count : Int,
   edge_count : Int,
 ) -> Unit {
-  if node_count > 28 || edge_count > 80 {
+  maybe_refine_rank_order_by_rank_permutations_with_limits(
+    rank_node_ids_by_rank, max_rank, rank_by_node_id, successors_by_node_id, node_count,
+    edge_count, 28, 80, 6,
+  )
+}
+
+///|
+fn maybe_refine_rank_order_by_rank_permutations_with_limits(
+  rank_node_ids_by_rank : Map[Int, Array[String]],
+  max_rank : Int,
+  rank_by_node_id : Map[String, Int],
+  successors_by_node_id : Map[String, Array[String]],
+  node_count : Int,
+  edge_count : Int,
+  node_limit : Int,
+  edge_limit : Int,
+  rank_size_limit : Int,
+) -> Unit {
+  if node_count > node_limit || edge_count > edge_limit {
     return
   }
 
@@ -583,7 +644,7 @@ fn maybe_refine_rank_order_by_rank_permutations(
     for rank in 0..<=max_rank {
       match rank_node_ids_by_rank.get(rank) {
         Some(node_ids) => {
-          if node_ids.length() <= 1 || node_ids.length() > 6 {
+          if node_ids.length() <= 1 || node_ids.length() > rank_size_limit {
             continue
           }
           let original_order = node_ids.copy()
@@ -644,38 +705,82 @@ fn optimize_rank_node_ids_by_crossing_phase_with_strategy(
   strategy : ElkLayeredCrossingOptimizerStrategy,
 ) -> Map[Int, Array[String]] {
   let _ = input.port_order_slots_by_node_id
+  let config = default_crossing_optimization_config()
   match strategy {
     LayerSweepWithLocalRefinement => {
       let optimized_rank_node_ids_by_rank = clone_rank_node_ids_by_rank(
         input.rank_node_ids_by_rank,
         input.max_rank,
       )
-      let preserve_current_order_on_tie = input.node_count > 16 ||
-        input.edge_count > 30
-      optimize_rank_order(
-        optimized_rank_node_ids_by_rank,
-        input.max_rank,
-        input.predecessors_by_node_id,
-        input.successors_by_node_id,
-        input.order_index_by_node_id,
-        preserve_current_order_on_tie,
-      )
-      maybe_refine_rank_order_by_swaps(
-        optimized_rank_node_ids_by_rank,
-        input.max_rank,
-        input.rank_by_node_id,
-        input.successors_by_node_id,
-        input.node_count,
-        input.edge_count,
-      )
-      maybe_refine_rank_order_by_rank_permutations(
-        optimized_rank_node_ids_by_rank,
-        input.max_rank,
-        input.rank_by_node_id,
-        input.successors_by_node_id,
-        input.node_count,
-        input.edge_count,
-      )
+      let preserve_current_order_on_tie = input.node_count >
+        config.preserve_order_node_threshold ||
+        input.edge_count > config.preserve_order_edge_threshold
+      if config.sweep_pass_count == 4 {
+        optimize_rank_order(
+          optimized_rank_node_ids_by_rank,
+          input.max_rank,
+          input.predecessors_by_node_id,
+          input.successors_by_node_id,
+          input.order_index_by_node_id,
+          preserve_current_order_on_tie,
+        )
+      } else {
+        optimize_rank_order_with_sweep_passes(
+          optimized_rank_node_ids_by_rank,
+          input.max_rank,
+          input.predecessors_by_node_id,
+          input.successors_by_node_id,
+          input.order_index_by_node_id,
+          preserve_current_order_on_tie,
+          config.sweep_pass_count,
+        )
+      }
+      if config.swap_refine_node_limit == 40 &&
+        config.swap_refine_edge_limit == 120 {
+        maybe_refine_rank_order_by_swaps(
+          optimized_rank_node_ids_by_rank,
+          input.max_rank,
+          input.rank_by_node_id,
+          input.successors_by_node_id,
+          input.node_count,
+          input.edge_count,
+        )
+      } else {
+        maybe_refine_rank_order_by_swaps_with_limits(
+          optimized_rank_node_ids_by_rank,
+          input.max_rank,
+          input.rank_by_node_id,
+          input.successors_by_node_id,
+          input.node_count,
+          input.edge_count,
+          config.swap_refine_node_limit,
+          config.swap_refine_edge_limit,
+        )
+      }
+      if config.permutation_refine_node_limit == 28 &&
+        config.permutation_refine_edge_limit == 80 &&
+        config.permutation_rank_size_limit == 6 {
+        maybe_refine_rank_order_by_rank_permutations(
+          optimized_rank_node_ids_by_rank,
+          input.max_rank,
+          input.rank_by_node_id,
+          input.successors_by_node_id,
+          input.node_count,
+          input.edge_count,
+        )
+      } else {
+        maybe_refine_rank_order_by_rank_permutations_with_limits(
+          optimized_rank_node_ids_by_rank,
+          input.max_rank,
+          input.rank_by_node_id,
+          input.successors_by_node_id,
+          input.node_count,
+          input.edge_count,
+          config.permutation_refine_node_limit,
+          config.permutation_refine_edge_limit,
+          config.permutation_rank_size_limit,
+        )
+      }
       optimized_rank_node_ids_by_rank
     }
   }
@@ -737,11 +842,27 @@ fn optimize_rank_order(
   order_index_by_node_id : Map[String, Int],
   preserve_current_order_on_tie : Bool,
 ) -> Unit {
+  optimize_rank_order_with_sweep_passes(
+    rank_node_ids_by_rank, max_rank, predecessors_by_node_id, successors_by_node_id,
+    order_index_by_node_id, preserve_current_order_on_tie, 4,
+  )
+}
+
+///|
+fn optimize_rank_order_with_sweep_passes(
+  rank_node_ids_by_rank : Map[Int, Array[String]],
+  max_rank : Int,
+  predecessors_by_node_id : Map[String, Array[String]],
+  successors_by_node_id : Map[String, Array[String]],
+  order_index_by_node_id : Map[String, Int],
+  preserve_current_order_on_tie : Bool,
+  sweep_pass_count : Int,
+) -> Unit {
   if max_rank <= 0 {
     return
   }
   let mut pass = 0
-  while pass < 4 {
+  while pass < sweep_pass_count {
     sweep_rank_order_once(
       rank_node_ids_by_rank, max_rank, predecessors_by_node_id, successors_by_node_id,
       order_index_by_node_id, preserve_current_order_on_tie,

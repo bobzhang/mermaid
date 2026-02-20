@@ -84,6 +84,19 @@ test "elk layered crossing phase input enumerates rank nodes for port-order slot
 }
 
 ///|
+test "elk layered crossing optimization config keeps baseline thresholds" {
+  let config = default_crossing_optimization_config()
+  assert_eq(config.preserve_order_node_threshold, 16)
+  assert_eq(config.preserve_order_edge_threshold, 30)
+  assert_eq(config.sweep_pass_count, 4)
+  assert_eq(config.swap_refine_node_limit, 40)
+  assert_eq(config.swap_refine_edge_limit, 120)
+  assert_eq(config.permutation_refine_node_limit, 28)
+  assert_eq(config.permutation_refine_edge_limit, 80)
+  assert_eq(config.permutation_rank_size_limit, 6)
+}
+
+///|
 test "elk layered crossing objective evaluator matches direct counters" {
   let rank_node_ids_by_rank : Map[Int, Array[String]] = {
     0: ["A", "B"],
