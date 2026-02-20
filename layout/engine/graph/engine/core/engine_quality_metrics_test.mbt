@@ -245,6 +245,15 @@ test "quality metrics are stable and backend-comparable on stress graph" {
   assert_true(elk_layered_area > 0)
 
   assert_true(dagre_crossings <= legacy_crossings + 2)
-  assert_true(elk_crossings <= dagre_crossings + 2)
-  assert_true(elk_layered_crossings <= dagre_crossings + 4)
+  assert_true(elk_crossings <= legacy_crossings + 2)
+  assert_true(elk_layered_crossings <= legacy_crossings + 2)
+  assert_true((elk_crossings - elk_layered_crossings).abs() <= 2)
+
+  assert_true(dagre_length <= legacy_length * 2)
+  assert_true(elk_length <= legacy_length * 2)
+  assert_true(elk_layered_length <= legacy_length * 2)
+
+  assert_true(dagre_area <= legacy_area * 2)
+  assert_true(elk_area <= legacy_area * 2)
+  assert_true(elk_layered_area <= legacy_area * 2)
 }
