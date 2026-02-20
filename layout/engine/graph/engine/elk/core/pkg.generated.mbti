@@ -37,6 +37,9 @@ pub(all) struct ElkLayeredRankTrace {
   rank_order_selected_crossings : Int
   rank_order_selected_source : String
   rank_layers : Array[Array[String]]
+  placement_major_strategy : String
+  placement_major_coord_by_node_id : Map[String, Int]
+  placement_minor_coord_by_node_id : Map[String, Int]
 }
 
 // Type aliases

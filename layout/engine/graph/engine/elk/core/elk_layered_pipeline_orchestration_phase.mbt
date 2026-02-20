@@ -178,6 +178,9 @@ fn run_elk_layered_node_placement_phase(
   let major_gap = (major_step - 70).max(8)
   let width_by_node_id = node_size_state.width_by_node_id
   let height_by_node_id = node_size_state.height_by_node_id
+  let major_placement_strategy = select_elk_layered_major_placement_strategy(
+    rank_seed_strategy,
+  )
   let minor_placement_strategy = select_elk_layered_minor_placement_strategy(
     rank_seed_strategy,
   )
@@ -196,8 +199,13 @@ fn run_elk_layered_node_placement_phase(
   let major_center_by_rank = build_major_center_by_rank(
     max_rank, rank_major_extent_by_rank, reverse, padding, major_gap, rank_pair_label_major_gap,
   )
+  let major_coord_by_node_id = build_major_coord_by_strategy(
+    major_placement_strategy, rank_node_ids_by_rank, max_rank, reverse, rank_by_node_id,
+    predecessors_by_node_id, successors_by_node_id, major_center_by_rank, minor_coord_by_node_id,
+    major_gap, horizontal, width_by_node_id, height_by_node_id,
+  )
   let (x_by_node_id, y_by_node_id) = build_axis_coords_by_node_id(
-    rank_node_ids_by_rank, max_rank, major_center_by_rank, minor_coord_by_node_id,
+    rank_node_ids_by_rank, max_rank, major_coord_by_node_id, minor_coord_by_node_id,
     padding, horizontal,
   )
   let (positioned_nodes, positioned_by_id) = build_positioned_nodes_from_axis_coords(

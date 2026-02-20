@@ -156,6 +156,23 @@ priv enum ElkLayeredMinorPlacementStrategy {
 }
 
 ///|
+priv enum ElkLayeredMajorPlacementStrategy {
+  RankCentered
+  RelaxedCompaction
+}
+
+///|
+fn select_elk_layered_major_placement_strategy(
+  rank_seed_strategy : ElkLayeredRankSeedStrategy,
+) -> ElkLayeredMajorPlacementStrategy {
+  if rank_seed_strategy is LegacyLaneSeed {
+    RankCentered
+  } else {
+    RelaxedCompaction
+  }
+}
+
+///|
 fn select_elk_layered_minor_placement_strategy(
   rank_seed_strategy : ElkLayeredRankSeedStrategy,
 ) -> ElkLayeredMinorPlacementStrategy {

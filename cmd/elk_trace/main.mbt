@@ -386,6 +386,21 @@ fn dump_graph_trace(graph : @model.MermaidGraph) -> Bool {
       )
       dump_rank_layers("ORDER_LAYER_SELECTED", trace.rank_order_selected_layers)
       dump_rank_layers("RANK_LAYER", trace.rank_layers)
+      println("PLACEMENT_MAJOR_STRATEGY\t\{trace.placement_major_strategy}")
+      for node_id in sorted_string_keys(trace.placement_major_coord_by_node_id) {
+        match trace.placement_major_coord_by_node_id.get(node_id) {
+          Some(major_coord) =>
+            println("PLACEMENT_MAJOR\t\{node_id}\t\{major_coord}")
+          None => ()
+        }
+      }
+      for node_id in sorted_string_keys(trace.placement_minor_coord_by_node_id) {
+        match trace.placement_minor_coord_by_node_id.get(node_id) {
+          Some(minor_coord) =>
+            println("PLACEMENT_MINOR\t\{node_id}\t\{minor_coord}")
+          None => ()
+        }
+      }
       true
     }
     None => {

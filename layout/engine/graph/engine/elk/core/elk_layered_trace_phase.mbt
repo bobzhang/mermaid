@@ -28,6 +28,9 @@ pub(all) struct ElkLayeredRankTrace {
   rank_order_selected_crossings : Int
   rank_order_selected_source : String
   rank_layers : Array[Array[String]]
+  placement_major_strategy : String
+  placement_major_coord_by_node_id : Map[String, Int]
+  placement_minor_coord_by_node_id : Map[String, Int]
 }
 
 ///|
@@ -105,6 +108,16 @@ fn rank_order_strategy_tag(
 }
 
 ///|
+fn major_placement_strategy_tag(
+  major_placement_strategy : ElkLayeredMajorPlacementStrategy,
+) -> String {
+  match major_placement_strategy {
+    RankCentered => "rank-centered"
+    RelaxedCompaction => "relaxed-compaction"
+  }
+}
+
+///|
 fn collect_sorted_virtual_node_ids(
   virtual_by_node_id : Map[String, Bool],
 ) -> Array[String] {
@@ -116,6 +129,25 @@ fn collect_sorted_virtual_node_ids(
   }
   virtual_node_ids.sort()
   virtual_node_ids
+}
+
+///|
+fn placement_axis_coord_maps(
+  positioned_nodes : Array[PositionedNode],
+  horizontal : Bool,
+) -> (Map[String, Int], Map[String, Int]) {
+  let major_coord_by_node_id : Map[String, Int] = {}
+  let minor_coord_by_node_id : Map[String, Int] = {}
+  for node in positioned_nodes {
+    if horizontal {
+      major_coord_by_node_id[node.id] = node.x
+      minor_coord_by_node_id[node.id] = node.y
+    } else {
+      major_coord_by_node_id[node.id] = node.y
+      minor_coord_by_node_id[node.id] = node.x
+    }
+  }
+  (major_coord_by_node_id, minor_coord_by_node_id)
 }
 
 ///|
@@ -156,6 +188,39 @@ pub fn collect_elk_layered_rank_trace(
   let rank_phase_state = run_elk_layered_rank_phase(setup_state)
   let rank_seed_state = rank_phase_state.rank_seed_state
   let rank_order_debug_state = rank_phase_state.rank_order_debug_state
+  let node_size_state = build_elk_layered_node_size_state(
+    setup_state.nodes_in_order,
+  )
+  let max_rank_size = compute_max_rank_size(
+    rank_phase_state.rank_node_ids_by_rank,
+    rank_seed_state.max_rank,
+  )
+  let spacing_state = run_elk_layered_spacing_phase(
+    setup_state.options,
+    setup_state.horizontal,
+    max_rank_size,
+    node_size_state,
+  )
+  let placement_state = run_elk_layered_node_placement_phase(
+    setup_state, rank_phase_state, node_size_state, spacing_state,
+  )
+  let selected_major_strategy = select_elk_layered_major_placement_strategy(
+    rank_phase_state.rank_seed_strategy,
+  )
+  let placement_major_strategy = if selected_major_strategy is RelaxedCompaction &&
+    !use_relaxed_major_compaction(
+      rank_seed_state.max_rank,
+      rank_seed_state.rank_by_node_id,
+      rank_seed_state.successors_by_node_id,
+    ) {
+    RankCentered
+  } else {
+    selected_major_strategy
+  }
+  let (placement_major_coord_by_node_id, placement_minor_coord_by_node_id) = placement_axis_coord_maps(
+    placement_state.positioned_nodes,
+    setup_state.horizontal,
+  )
   let selected_virtual_ordering_state = build_virtual_ordering_state(
     rank_order_debug_state.selected_rank_node_ids_by_rank,
     rank_seed_state.rank_by_node_id,
@@ -251,5 +316,10 @@ pub fn collect_elk_layered_rank_trace(
       rank_phase_state.rank_node_ids_by_rank,
       rank_seed_state.max_rank,
     ),
+    placement_major_strategy: major_placement_strategy_tag(
+      placement_major_strategy,
+    ),
+    placement_major_coord_by_node_id,
+    placement_minor_coord_by_node_id,
   })
 }

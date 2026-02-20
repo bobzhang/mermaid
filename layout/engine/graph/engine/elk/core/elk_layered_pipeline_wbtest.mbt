@@ -607,10 +607,67 @@ test "elk layered minor placement strategy uses lane seeded mode for legacy seed
 }
 
 ///|
+test "elk layered major placement strategy keeps rank-centered mode for legacy seed path" {
+  assert_true(
+    select_elk_layered_major_placement_strategy(LegacyLaneSeed) is RankCentered,
+  )
+}
+
+///|
+test "elk layered major placement strategy enables relaxed mode for native seed path" {
+  assert_true(
+    select_elk_layered_major_placement_strategy(NativeFeedback)
+    is RelaxedCompaction,
+  )
+}
+
+///|
 test "elk layered minor placement strategy uses relaxed mode for native path" {
   assert_true(
     select_elk_layered_minor_placement_strategy(NativeFeedback)
     is RelaxedNeighbor,
+  )
+}
+
+///|
+test "elk layered relaxed major compaction gate tracks long-span density" {
+  let low_span_rank_by_node_id : Map[String, Int] = {
+    "A": 0,
+    "B": 1,
+    "C": 2,
+    "D": 3,
+  }
+  let low_span_successors : Map[String, Array[String]] = {
+    "A": ["B", "C"],
+    "B": ["D"],
+    "C": ["D"],
+  }
+  assert_eq(
+    use_relaxed_major_compaction(
+      3, low_span_rank_by_node_id, low_span_successors,
+    ),
+    false,
+  )
+
+  let high_span_rank_by_node_id : Map[String, Int] = {
+    "A": 0,
+    "B": 1,
+    "C": 2,
+    "D": 3,
+    "E": 4,
+    "F": 5,
+  }
+  let high_span_successors : Map[String, Array[String]] = {
+    "A": ["B", "C", "D", "E", "F"],
+    "B": ["C", "D", "E", "F"],
+    "C": ["D", "E", "F"],
+    "D": ["E", "F"],
+  }
+  assert_eq(
+    use_relaxed_major_compaction(
+      5, high_span_rank_by_node_id, high_span_successors,
+    ),
+    true,
   )
 }
 
@@ -636,10 +693,11 @@ test "elk layered major center builder respects reverse display order" {
 ///|
 test "elk layered axis coordinate builder maps major/minor by orientation" {
   let rank_node_ids_by_rank : Map[Int, Array[String]] = { 0: ["A"], 1: ["B"] }
-  let major_center_by_rank : Map[Int, Int] = { 0: 120, 1: 240 }
+  let major_coord_by_node_id : Map[String, Int] = { "A": 120, "B": 240 }
   let minor_coord_by_node_id : Map[String, Int] = { "A": 40, "B": 60 }
   let (horizontal_x, horizontal_y) = build_axis_coords_by_node_id(
-    rank_node_ids_by_rank, 1, major_center_by_rank, minor_coord_by_node_id, 0, true,
+    rank_node_ids_by_rank, 1, major_coord_by_node_id, minor_coord_by_node_id, 0,
+    true,
   )
   assert_eq(option_int_or(horizontal_x.get("A"), -1), 120)
   assert_eq(option_int_or(horizontal_y.get("A"), -1), 40)
@@ -647,7 +705,8 @@ test "elk layered axis coordinate builder maps major/minor by orientation" {
   assert_eq(option_int_or(horizontal_y.get("B"), -1), 60)
 
   let (vertical_x, vertical_y) = build_axis_coords_by_node_id(
-    rank_node_ids_by_rank, 1, major_center_by_rank, minor_coord_by_node_id, 0, false,
+    rank_node_ids_by_rank, 1, major_coord_by_node_id, minor_coord_by_node_id, 0,
+    false,
   )
   assert_eq(option_int_or(vertical_x.get("A"), -1), 40)
   assert_eq(option_int_or(vertical_y.get("A"), -1), 120)
