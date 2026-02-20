@@ -38,6 +38,13 @@ type PhaseWaterfallReport = {
     mismatchedSlots: number
     comparableSlots: number
   }
+  crossingRankOrder: {
+    orderMismatched: number
+    orderComparable: number
+    compositionMismatched: number
+    compositionComparable: number
+    avgDisplacement: number
+  }
   placementMajor: {
     totalLayerMismatch: number
     avgInversionRate: number
@@ -54,6 +61,7 @@ type PhaseWaterfallReport = {
     | 'cycle-orientation'
     | 'sort-by-input-model'
     | 'sort-by-input-ports'
+    | 'crossing-rank-order'
     | 'placement-major'
 }
 
@@ -216,6 +224,57 @@ function parseSortByInputPorts(): { mismatchedSlots: number; comparableSlots: nu
   return { mismatchedSlots, comparableSlots }
 }
 
+function parseCrossingRankOrder(): {
+  orderMismatched: number
+  orderComparable: number
+  compositionMismatched: number
+  compositionComparable: number
+  avgDisplacement: number
+} {
+  const stdout = runOrThrow('bun', [
+    'run',
+    'scripts/compare_elk_crossing_rank_order.ts',
+    ...STRESS_FIXTURES,
+  ])
+  const lines = stdout
+    .split('\n')
+    .map(line => line.trim())
+    .filter(line => line !== '')
+  const orderLine = lines.find(line => line.startsWith('total_order_mismatch='))
+  if (!orderLine) fail('missing crossing-rank order summary line')
+  const [orderMismatched, orderComparable] = parseCounter(
+    orderLine,
+    /^total_order_mismatch=(\d+)\/(\d+)$/,
+    'crossing-rank order',
+  )
+  const compositionLine = lines.find(line =>
+    line.startsWith('total_composition_mismatch='),
+  )
+  if (!compositionLine) fail('missing crossing-rank composition summary line')
+  const [compositionMismatched, compositionComparable] = parseCounter(
+    compositionLine,
+    /^total_composition_mismatch=(\d+)\/(\d+)$/,
+    'crossing-rank composition',
+  )
+  const displacementLine = lines.find(line => line.startsWith('avg_displacement='))
+  if (!displacementLine) fail('missing crossing-rank avg displacement summary line')
+  const displacementMatch = /^avg_displacement=([0-9.]+)$/.exec(displacementLine)
+  if (!displacementMatch) {
+    fail(`invalid crossing-rank avg displacement summary: ${displacementLine}`)
+  }
+  const avgDisplacement = Number.parseFloat(displacementMatch[1]!)
+  if (!Number.isFinite(avgDisplacement)) {
+    fail(`invalid crossing-rank avg displacement value: ${displacementLine}`)
+  }
+  return {
+    orderMismatched,
+    orderComparable,
+    compositionMismatched,
+    compositionComparable,
+    avgDisplacement,
+  }
+}
+
 function parsePlacementMajor(): { totalLayerMismatch: number; avgInversionRate: number } {
   const stdout = runOrThrow('bun', [
     'run',
@@ -282,6 +341,7 @@ function firstDivergentPhase(report: Omit<PhaseWaterfallReport, 'firstDivergentP
   | 'cycle-orientation'
   | 'sort-by-input-model'
   | 'sort-by-input-ports'
+  | 'crossing-rank-order'
   | 'placement-major' {
   if (report.cycleOrientation.mismatched > 0) return 'cycle-orientation'
   if (
@@ -291,6 +351,13 @@ function firstDivergentPhase(report: Omit<PhaseWaterfallReport, 'firstDivergentP
     return 'sort-by-input-model'
   }
   if (report.sortByInputPorts.mismatchedSlots > 0) return 'sort-by-input-ports'
+  if (
+    report.crossingRankOrder.orderMismatched > 0 ||
+    report.crossingRankOrder.compositionMismatched > 0 ||
+    report.crossingRankOrder.avgDisplacement > 0
+  ) {
+    return 'crossing-rank-order'
+  }
   if (
     report.placementMajor.totalLayerMismatch > 0 ||
     report.placementMajor.avgInversionRate > 0
@@ -306,6 +373,7 @@ function main(): void {
   const cycleOrientation = parseCycleOrientation()
   const sortByInputModel = parseSortByInputModel()
   const sortByInputPorts = parseSortByInputPorts()
+  const crossingRankOrder = parseCrossingRankOrder()
   const placementMajor = parsePlacementMajor()
   const endToEnd = parseEndToEnd()
 
@@ -314,6 +382,7 @@ function main(): void {
     cycleOrientation,
     sortByInputModel,
     sortByInputPorts,
+    crossingRankOrder,
     placementMajor,
     endToEnd,
   }
@@ -334,6 +403,15 @@ function main(): void {
   )
   console.log(
     `sort_by_input_ports_mismatch_slots=${report.sortByInputPorts.mismatchedSlots}/${report.sortByInputPorts.comparableSlots}`,
+  )
+  console.log(
+    `crossing_rank_order_mismatch=${report.crossingRankOrder.orderMismatched}/${report.crossingRankOrder.orderComparable}`,
+  )
+  console.log(
+    `crossing_rank_composition_mismatch=${report.crossingRankOrder.compositionMismatched}/${report.crossingRankOrder.compositionComparable}`,
+  )
+  console.log(
+    `crossing_rank_avg_displacement=${report.crossingRankOrder.avgDisplacement.toFixed(4)}`,
   )
   console.log(
     `placement_major_layer_mismatch=${report.placementMajor.totalLayerMismatch}`,
