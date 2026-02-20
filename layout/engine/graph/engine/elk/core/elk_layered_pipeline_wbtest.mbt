@@ -617,15 +617,16 @@ test "elk layered minor placement strategy uses relaxed mode for native path" {
 ///|
 test "elk layered major center builder respects reverse display order" {
   let rank_pair_label_major_gap : Map[String, Int] = {}
+  let rank_major_extent_by_rank : Map[Int, Int] = { 0: 100, 1: 100, 2: 100 }
   let forward_centers = build_major_center_by_rank(
-    2, false, 40, 100, rank_pair_label_major_gap,
+    2, rank_major_extent_by_rank, false, 40, 0, rank_pair_label_major_gap,
   )
   assert_eq(option_int_or(forward_centers.get(0), -1), 110)
   assert_eq(option_int_or(forward_centers.get(1), -1), 210)
   assert_eq(option_int_or(forward_centers.get(2), -1), 310)
 
   let reverse_centers = build_major_center_by_rank(
-    2, true, 40, 100, rank_pair_label_major_gap,
+    2, rank_major_extent_by_rank, true, 40, 0, rank_pair_label_major_gap,
   )
   assert_eq(option_int_or(reverse_centers.get(2), -1), 110)
   assert_eq(option_int_or(reverse_centers.get(1), -1), 210)

@@ -103,33 +103,69 @@ fn build_rank_pair_label_major_gap(
 fn rank_pair_major_step(
   left_rank : Int,
   right_rank : Int,
-  base_major_step : Int,
+  base_major_gap : Int,
   rank_pair_label_major_gap : Map[String, Int],
 ) -> Int {
   let label_clearance = option_int_or(
     rank_pair_label_major_gap.get(rank_pair_key(left_rank, right_rank)),
     0,
   )
-  if label_clearance <= base_major_step {
-    base_major_step
+  if label_clearance <= base_major_gap {
+    base_major_gap
   } else {
     // Dampen label-driven expansion so long labels gain room without causing
     // large global stretching on small graphs.
-    let overflow = label_clearance - base_major_step
-    base_major_step + overflow * 2 / 3
+    let overflow = label_clearance - base_major_gap
+    base_major_gap + overflow * 2 / 3
   }
+}
+
+///|
+fn build_rank_major_extent_by_rank(
+  rank_node_ids_by_rank : Map[Int, Array[String]],
+  max_rank : Int,
+  width_by_node_id : Map[String, Int],
+  height_by_node_id : Map[String, Int],
+  horizontal : Bool,
+) -> Map[Int, Int] {
+  let rank_major_extent_by_rank : Map[Int, Int] = {}
+  for rank in 0..<=max_rank {
+    let mut extent = 70
+    match rank_node_ids_by_rank.get(rank) {
+      Some(node_ids) =>
+        for node_id in node_ids {
+          let node_extent = if horizontal {
+            option_int_or(width_by_node_id.get(node_id), 70)
+          } else {
+            option_int_or(height_by_node_id.get(node_id), 44)
+          }
+          if node_extent > extent {
+            extent = node_extent
+          }
+        }
+      None => ()
+    }
+    rank_major_extent_by_rank[rank] = extent
+  }
+  rank_major_extent_by_rank
 }
 
 ///|
 fn build_major_center_by_rank(
   max_rank : Int,
+  rank_major_extent_by_rank : Map[Int, Int],
   reverse : Bool,
   padding : Int,
-  base_major_step : Int,
+  base_major_gap : Int,
   rank_pair_label_major_gap : Map[String, Int],
 ) -> Map[Int, Int] {
   let major_center_by_rank : Map[Int, Int] = {}
-  let major_start = padding + 70
+  let first_rank = if reverse { max_rank } else { 0 }
+  let first_rank_extent = option_int_or(
+    rank_major_extent_by_rank.get(first_rank),
+    70,
+  )
+  let major_start = padding + first_rank_extent / 2 + 20
   let mut displayed_major_center = major_start
   for displayed_rank in 0..<=max_rank {
     let rank = if reverse { max_rank - displayed_rank } else { displayed_rank }
@@ -140,10 +176,15 @@ fn build_major_center_by_rank(
       } else {
         previous_displayed_rank
       }
-      let step = rank_pair_major_step(
-        previous_rank, rank, base_major_step, rank_pair_label_major_gap,
+      let previous_rank_extent = option_int_or(
+        rank_major_extent_by_rank.get(previous_rank),
+        70,
       )
-      displayed_major_center += step
+      let rank_extent = option_int_or(rank_major_extent_by_rank.get(rank), 70)
+      let gap = rank_pair_major_step(
+        previous_rank, rank, base_major_gap, rank_pair_label_major_gap,
+      )
+      displayed_major_center += previous_rank_extent / 2 + rank_extent / 2 + gap
     }
     major_center_by_rank[rank] = displayed_major_center
   }
