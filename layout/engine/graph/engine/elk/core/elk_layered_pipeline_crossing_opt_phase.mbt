@@ -550,10 +550,12 @@ fn optimize_rank_order(
   }
   let mut pass = 0
   while pass < 4 {
-    let forward_positions = rank_position_by_node_id(
-      rank_node_ids_by_rank, max_rank,
-    )
     for rank in 1..<=max_rank {
+      // Keep the layer-sweep state coherent: each rank update should observe
+      // already-updated neighbor order from earlier ranks in the same pass.
+      let forward_positions = rank_position_by_node_id(
+        rank_node_ids_by_rank, max_rank,
+      )
       match rank_node_ids_by_rank.get(rank) {
         Some(node_ids) =>
           sort_rank_nodes_by_neighbors(
@@ -563,11 +565,11 @@ fn optimize_rank_order(
       }
     }
 
-    let backward_positions = rank_position_by_node_id(
-      rank_node_ids_by_rank, max_rank,
-    )
     let mut rank = max_rank - 1
     while true {
+      let backward_positions = rank_position_by_node_id(
+        rank_node_ids_by_rank, max_rank,
+      )
       match rank_node_ids_by_rank.get(rank) {
         Some(node_ids) =>
           sort_rank_nodes_by_neighbors(

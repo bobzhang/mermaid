@@ -160,6 +160,67 @@ test "elk layered order optimization reduces crossing count on bipartite rank pa
 }
 
 ///|
+test "elk layered order optimization keeps multi-rank sweep neighbor state coherent" {
+  let graph = wb_graph(["A", "B", "C", "D", "E", "F"], [
+    ("A", "D"),
+    ("B", "C"),
+    ("C", "F"),
+    ("D", "E"),
+  ])
+  let prep_state = @layout_engine_graph_prep_core.prepare_graph_inputs(
+    graph, false,
+  )
+  let nodes_in_order = @layout_engine_graph_internal_core.reorder_nodes_for_flow_layout(
+    prep_state.nodes_in_order,
+    graph.edges,
+  )
+  let base_order_index_by_node_id = build_order_index_by_node_id(nodes_in_order)
+  let (
+    rank_by_node_id,
+    max_rank,
+    order_index_by_node_id,
+    successors_by_node_id,
+    predecessors_by_node_id,
+  ) = build_layered_rank_state(
+    graph,
+    false,
+    prep_state.subgraph_entry_by_id,
+    prep_state.subgraph_exit_by_id,
+    nodes_in_order,
+  )
+  let rank_node_ids_by_rank = build_rank_node_ids_by_lane(
+    nodes_in_order, rank_by_node_id, order_index_by_node_id, base_order_index_by_node_id,
+    max_rank,
+  )
+  let crossings_before = rank_order_crossing_score(
+    rank_node_ids_by_rank, max_rank, rank_by_node_id, successors_by_node_id,
+  )
+  optimize_rank_order(
+    rank_node_ids_by_rank, max_rank, predecessors_by_node_id, successors_by_node_id,
+    order_index_by_node_id,
+  )
+  let crossings_after = rank_order_crossing_score(
+    rank_node_ids_by_rank, max_rank, rank_by_node_id, successors_by_node_id,
+  )
+  assert_true(crossings_after < crossings_before)
+  assert_eq(crossings_after, 0)
+  assert_eq(
+    match rank_node_ids_by_rank.get(1) {
+      Some(node_ids) => node_ids
+      None => []
+    },
+    ["D", "C"],
+  )
+  assert_eq(
+    match rank_node_ids_by_rank.get(2) {
+      Some(node_ids) => node_ids
+      None => []
+    },
+    ["E", "F"],
+  )
+}
+
+///|
 test "elk layered crossing selector prefers lower-crossing rank order candidate" {
   let rank_by_node_id : Map[String, Int] = { "A": 0, "B": 0, "C": 1, "D": 1 }
   let successors_by_node_id : Map[String, Array[String]] = {
