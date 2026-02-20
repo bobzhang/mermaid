@@ -31,6 +31,11 @@ priv struct ElkLayeredCrossingPhaseInput {
 }
 
 ///|
+priv enum ElkLayeredCrossingOptimizerStrategy {
+  LayerSweepWithLocalRefinement
+}
+
+///|
 fn build_default_port_order_slots_by_node_id(
   rank_node_ids_by_rank : Map[Int, Array[String]],
   max_rank : Int,
@@ -627,38 +632,53 @@ fn maybe_refine_rank_order_by_rank_permutations(
 fn optimize_rank_node_ids_by_crossing_phase(
   input : ElkLayeredCrossingPhaseInput,
 ) -> Map[Int, Array[String]] {
+  optimize_rank_node_ids_by_crossing_phase_with_strategy(
+    input,
+    LayerSweepWithLocalRefinement,
+  )
+}
+
+///|
+fn optimize_rank_node_ids_by_crossing_phase_with_strategy(
+  input : ElkLayeredCrossingPhaseInput,
+  strategy : ElkLayeredCrossingOptimizerStrategy,
+) -> Map[Int, Array[String]] {
   let _ = input.port_order_slots_by_node_id
-  let optimized_rank_node_ids_by_rank = clone_rank_node_ids_by_rank(
-    input.rank_node_ids_by_rank,
-    input.max_rank,
-  )
-  let preserve_current_order_on_tie = input.node_count > 16 ||
-    input.edge_count > 30
-  optimize_rank_order(
-    optimized_rank_node_ids_by_rank,
-    input.max_rank,
-    input.predecessors_by_node_id,
-    input.successors_by_node_id,
-    input.order_index_by_node_id,
-    preserve_current_order_on_tie,
-  )
-  maybe_refine_rank_order_by_swaps(
-    optimized_rank_node_ids_by_rank,
-    input.max_rank,
-    input.rank_by_node_id,
-    input.successors_by_node_id,
-    input.node_count,
-    input.edge_count,
-  )
-  maybe_refine_rank_order_by_rank_permutations(
-    optimized_rank_node_ids_by_rank,
-    input.max_rank,
-    input.rank_by_node_id,
-    input.successors_by_node_id,
-    input.node_count,
-    input.edge_count,
-  )
-  optimized_rank_node_ids_by_rank
+  match strategy {
+    LayerSweepWithLocalRefinement => {
+      let optimized_rank_node_ids_by_rank = clone_rank_node_ids_by_rank(
+        input.rank_node_ids_by_rank,
+        input.max_rank,
+      )
+      let preserve_current_order_on_tie = input.node_count > 16 ||
+        input.edge_count > 30
+      optimize_rank_order(
+        optimized_rank_node_ids_by_rank,
+        input.max_rank,
+        input.predecessors_by_node_id,
+        input.successors_by_node_id,
+        input.order_index_by_node_id,
+        preserve_current_order_on_tie,
+      )
+      maybe_refine_rank_order_by_swaps(
+        optimized_rank_node_ids_by_rank,
+        input.max_rank,
+        input.rank_by_node_id,
+        input.successors_by_node_id,
+        input.node_count,
+        input.edge_count,
+      )
+      maybe_refine_rank_order_by_rank_permutations(
+        optimized_rank_node_ids_by_rank,
+        input.max_rank,
+        input.rank_by_node_id,
+        input.successors_by_node_id,
+        input.node_count,
+        input.edge_count,
+      )
+      optimized_rank_node_ids_by_rank
+    }
+  }
 }
 
 ///|

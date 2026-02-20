@@ -117,6 +117,35 @@ test "elk layered crossing objective evaluator matches direct counters" {
 }
 
 ///|
+test "elk layered crossing strategy wrapper matches explicit default strategy" {
+  let input = build_crossing_phase_input(
+    { 0: ["A", "B"], 1: ["C", "D"] },
+    1,
+    { "A": [], "B": [], "C": ["B"], "D": ["A"] },
+    { "A": ["D"], "B": ["C"], "C": [], "D": [] },
+    { "A": 0, "B": 1, "C": 2, "D": 3 },
+    { "A": 0, "B": 0, "C": 1, "D": 1 },
+    4,
+    2,
+  )
+  let via_default = optimize_rank_node_ids_by_crossing_phase(input)
+  let via_explicit = optimize_rank_node_ids_by_crossing_phase_with_strategy(
+    input,
+    LayerSweepWithLocalRefinement,
+  )
+  assert_eq(
+    match via_default.get(1) {
+      Some(node_ids) => node_ids
+      None => []
+    },
+    match via_explicit.get(1) {
+      Some(node_ids) => node_ids
+      None => []
+    },
+  )
+}
+
+///|
 test "elk layered rank assignment keeps forward dependencies ordered" {
   let graph = wb_graph(["A", "B", "C", "D", "E"], [
     ("A", "C"),
