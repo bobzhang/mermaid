@@ -16,6 +16,22 @@ type ElkCaseMetrics = {
   forceModelOrderCompositionMismatch: number
 }
 
+const STRESS_FIXTURES = [
+  'fixtures/layout_stress_001_dense_dag.mmd',
+  'fixtures/layout_stress_002_feedback_mesh.mmd',
+  'fixtures/layout_stress_003_subgraph_bridges.mmd',
+  'fixtures/layout_stress_004_fanin_fanout.mmd',
+  'fixtures/layout_stress_005_long_span_backjumps.mmd',
+  'fixtures/layout_stress_006_nested_bridge_loops.mmd',
+  'fixtures/layout_stress_007_dependency_weave.mmd',
+  'fixtures/layout_stress_008_hyper_weave_pipeline.mmd',
+  'fixtures/layout_stress_009_nested_ring_bridges.mmd',
+  'fixtures/layout_stress_010_bipartite_crossfire.mmd',
+  'fixtures/layout_stress_011_feedback_lattice.mmd',
+  'fixtures/layout_stress_012_interleaved_subgraph_feedback.mmd',
+  'fixtures/layout_stress_013_rl_dual_scc_weave.mmd',
+]
+
 function fail(message: string): never {
   throw new Error(message)
 }
@@ -195,25 +211,10 @@ function checkElkRankLayerGate(): void {
 }
 
 function checkElkCycleOrientationGate(): void {
-  const fixtures = [
-    'fixtures/layout_stress_001_dense_dag.mmd',
-    'fixtures/layout_stress_002_feedback_mesh.mmd',
-    'fixtures/layout_stress_003_subgraph_bridges.mmd',
-    'fixtures/layout_stress_004_fanin_fanout.mmd',
-    'fixtures/layout_stress_005_long_span_backjumps.mmd',
-    'fixtures/layout_stress_006_nested_bridge_loops.mmd',
-    'fixtures/layout_stress_007_dependency_weave.mmd',
-    'fixtures/layout_stress_008_hyper_weave_pipeline.mmd',
-    'fixtures/layout_stress_009_nested_ring_bridges.mmd',
-    'fixtures/layout_stress_010_bipartite_crossfire.mmd',
-    'fixtures/layout_stress_011_feedback_lattice.mmd',
-    'fixtures/layout_stress_012_interleaved_subgraph_feedback.mmd',
-    'fixtures/layout_stress_013_rl_dual_scc_weave.mmd',
-  ]
   const stdout = runOrThrow('bun', [
     'run',
     'scripts/compare_elk_cycle_orientation.ts',
-    ...fixtures,
+    ...STRESS_FIXTURES,
   ])
   const totalMismatchLine = stdout
     .split('\n')
@@ -243,25 +244,10 @@ function checkElkCycleOrientationGate(): void {
 }
 
 function checkElkSortByInputModelGate(): void {
-  const fixtures = [
-    'fixtures/layout_stress_001_dense_dag.mmd',
-    'fixtures/layout_stress_002_feedback_mesh.mmd',
-    'fixtures/layout_stress_003_subgraph_bridges.mmd',
-    'fixtures/layout_stress_004_fanin_fanout.mmd',
-    'fixtures/layout_stress_005_long_span_backjumps.mmd',
-    'fixtures/layout_stress_006_nested_bridge_loops.mmd',
-    'fixtures/layout_stress_007_dependency_weave.mmd',
-    'fixtures/layout_stress_008_hyper_weave_pipeline.mmd',
-    'fixtures/layout_stress_009_nested_ring_bridges.mmd',
-    'fixtures/layout_stress_010_bipartite_crossfire.mmd',
-    'fixtures/layout_stress_011_feedback_lattice.mmd',
-    'fixtures/layout_stress_012_interleaved_subgraph_feedback.mmd',
-    'fixtures/layout_stress_013_rl_dual_scc_weave.mmd',
-  ]
   const stdout = runOrThrow('bun', [
     'run',
     'scripts/compare_elk_sort_by_input_model.ts',
-    ...fixtures,
+    ...STRESS_FIXTURES,
   ])
   const lines = stdout
     .split('\n')
@@ -337,25 +323,10 @@ function checkElkSortByInputModelGate(): void {
 }
 
 function checkElkSortByInputPortOrderGate(): void {
-  const fixtures = [
-    'fixtures/layout_stress_001_dense_dag.mmd',
-    'fixtures/layout_stress_002_feedback_mesh.mmd',
-    'fixtures/layout_stress_003_subgraph_bridges.mmd',
-    'fixtures/layout_stress_004_fanin_fanout.mmd',
-    'fixtures/layout_stress_005_long_span_backjumps.mmd',
-    'fixtures/layout_stress_006_nested_bridge_loops.mmd',
-    'fixtures/layout_stress_007_dependency_weave.mmd',
-    'fixtures/layout_stress_008_hyper_weave_pipeline.mmd',
-    'fixtures/layout_stress_009_nested_ring_bridges.mmd',
-    'fixtures/layout_stress_010_bipartite_crossfire.mmd',
-    'fixtures/layout_stress_011_feedback_lattice.mmd',
-    'fixtures/layout_stress_012_interleaved_subgraph_feedback.mmd',
-    'fixtures/layout_stress_013_rl_dual_scc_weave.mmd',
-  ]
   const stdout = runOrThrow('bun', [
     'run',
     'scripts/compare_elk_sort_by_input_ports.ts',
-    ...fixtures,
+    ...STRESS_FIXTURES,
   ])
   const lines = stdout
     .split('\n')
@@ -397,25 +368,10 @@ function checkElkSortByInputPortOrderGate(): void {
 }
 
 function checkElkPlacementMajorGate(): void {
-  const fixtures = [
-    'fixtures/layout_stress_001_dense_dag.mmd',
-    'fixtures/layout_stress_002_feedback_mesh.mmd',
-    'fixtures/layout_stress_003_subgraph_bridges.mmd',
-    'fixtures/layout_stress_004_fanin_fanout.mmd',
-    'fixtures/layout_stress_005_long_span_backjumps.mmd',
-    'fixtures/layout_stress_006_nested_bridge_loops.mmd',
-    'fixtures/layout_stress_007_dependency_weave.mmd',
-    'fixtures/layout_stress_008_hyper_weave_pipeline.mmd',
-    'fixtures/layout_stress_009_nested_ring_bridges.mmd',
-    'fixtures/layout_stress_010_bipartite_crossfire.mmd',
-    'fixtures/layout_stress_011_feedback_lattice.mmd',
-    'fixtures/layout_stress_012_interleaved_subgraph_feedback.mmd',
-    'fixtures/layout_stress_013_rl_dual_scc_weave.mmd',
-  ]
   const stdout = runOrThrow('bun', [
     'run',
     'scripts/compare_elk_placement_major.ts',
-    ...fixtures,
+    ...STRESS_FIXTURES,
   ])
   const lines = stdout
     .split('\n')
@@ -479,6 +435,113 @@ function checkElkPlacementMajorGate(): void {
   }
 }
 
+function checkElkCrossingRankOrderGate(): void {
+  const stdout = runOrThrow('bun', [
+    'run',
+    'scripts/compare_elk_crossing_rank_order.ts',
+    ...STRESS_FIXTURES,
+  ])
+  const lines = stdout
+    .split('\n')
+    .map(line => line.trim())
+    .filter(line => line !== '')
+
+  const orderMismatchLine = lines.find(line =>
+    line.startsWith('total_order_mismatch='),
+  )
+  if (!orderMismatchLine) {
+    fail('elk crossing-rank gate missing total_order_mismatch summary line')
+  }
+  const orderMismatchMatch =
+    /^total_order_mismatch=(\d+)\/(\d+)$/.exec(orderMismatchLine)
+  if (!orderMismatchMatch) {
+    fail(
+      `elk crossing-rank gate invalid order summary format: ${orderMismatchLine}`,
+    )
+  }
+  const orderMismatch = Number.parseInt(orderMismatchMatch[1]!, 10)
+  const orderComparable = Number.parseInt(orderMismatchMatch[2]!, 10)
+  if (!Number.isFinite(orderMismatch) || !Number.isFinite(orderComparable)) {
+    fail(`elk crossing-rank gate invalid order counters: ${orderMismatchLine}`)
+  }
+  if (orderComparable <= 0) {
+    fail(
+      `elk crossing-rank gate invalid order denominator: ${orderMismatchLine}`,
+    )
+  }
+
+  const compositionMismatchLine = lines.find(line =>
+    line.startsWith('total_composition_mismatch='),
+  )
+  if (!compositionMismatchLine) {
+    fail(
+      'elk crossing-rank gate missing total_composition_mismatch summary line',
+    )
+  }
+  const compositionMismatchMatch =
+    /^total_composition_mismatch=(\d+)\/(\d+)$/.exec(compositionMismatchLine)
+  if (!compositionMismatchMatch) {
+    fail(
+      `elk crossing-rank gate invalid composition summary format: ${compositionMismatchLine}`,
+    )
+  }
+  const compositionMismatch = Number.parseInt(compositionMismatchMatch[1]!, 10)
+  const compositionComparable = Number.parseInt(compositionMismatchMatch[2]!, 10)
+  if (
+    !Number.isFinite(compositionMismatch) ||
+    !Number.isFinite(compositionComparable)
+  ) {
+    fail(
+      `elk crossing-rank gate invalid composition counters: ${compositionMismatchLine}`,
+    )
+  }
+  if (compositionComparable <= 0) {
+    fail(
+      `elk crossing-rank gate invalid composition denominator: ${compositionMismatchLine}`,
+    )
+  }
+
+  const avgDisplacementLine = lines.find(line =>
+    line.startsWith('avg_displacement='),
+  )
+  if (!avgDisplacementLine) {
+    fail('elk crossing-rank gate missing avg_displacement summary line')
+  }
+  const avgDisplacementMatch = /^avg_displacement=([0-9.]+)$/.exec(
+    avgDisplacementLine,
+  )
+  if (!avgDisplacementMatch) {
+    fail(
+      `elk crossing-rank gate invalid displacement summary format: ${avgDisplacementLine}`,
+    )
+  }
+  const avgDisplacement = Number.parseFloat(avgDisplacementMatch[1]!)
+  if (!Number.isFinite(avgDisplacement)) {
+    fail(
+      `elk crossing-rank gate invalid avg_displacement value: ${avgDisplacementLine}`,
+    )
+  }
+
+  const maxAllowedOrderMismatch = 48
+  const maxAllowedCompositionMismatch = 0
+  const maxAllowedAvgDisplacement = 0
+  if (orderMismatch > maxAllowedOrderMismatch) {
+    fail(
+      `elk crossing-rank gate expected order mismatches <= ${maxAllowedOrderMismatch}, got ${orderMismatch}/${orderComparable}`,
+    )
+  }
+  if (compositionMismatch > maxAllowedCompositionMismatch) {
+    fail(
+      `elk crossing-rank gate expected composition mismatches <= ${maxAllowedCompositionMismatch}, got ${compositionMismatch}/${compositionComparable}`,
+    )
+  }
+  if (avgDisplacement > maxAllowedAvgDisplacement) {
+    fail(
+      `elk crossing-rank gate expected avg_displacement <= ${maxAllowedAvgDisplacement.toFixed(4)}, got ${avgDisplacement.toFixed(4)}`,
+    )
+  }
+}
+
 function main(): void {
   checkDagreTraceGate()
   checkElkRankLayerGate()
@@ -486,6 +549,7 @@ function main(): void {
   checkElkSortByInputModelGate()
   checkElkSortByInputPortOrderGate()
   checkElkPlacementMajorGate()
+  checkElkCrossingRankOrderGate()
   console.log('Phase parity gates passed.')
 }
 
