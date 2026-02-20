@@ -183,9 +183,19 @@ fn run_elk_layered_node_placement_phase(
     rank_seed_strategy,
   )
   let minor_coord_by_node_id = build_minor_coord_by_strategy(
-    minor_placement_strategy, rank_node_ids_by_rank, max_rank, lane_by_node_id, padding,
-    minor_step, max_rank_minor_span, predecessors_by_node_id, successors_by_node_id,
-    horizontal, width_by_node_id, height_by_node_id,
+    minor_placement_strategy,
+    rank_node_ids_by_rank,
+    max_rank,
+    lane_by_node_id,
+    node_size_state.compact_small_graph,
+    padding,
+    minor_step,
+    max_rank_minor_span,
+    predecessors_by_node_id,
+    successors_by_node_id,
+    horizontal,
+    width_by_node_id,
+    height_by_node_id,
   )
   let rank_pair_label_major_gap = build_rank_pair_label_major_gap(
     graph, use_subgraph_redirects, subgraph_entry_by_id, subgraph_exit_by_id, rank_by_node_id,

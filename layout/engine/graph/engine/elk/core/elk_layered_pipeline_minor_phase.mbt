@@ -250,6 +250,7 @@ fn align_rank_minor_coords(
 fn build_minor_coord_by_node_id(
   rank_node_ids_by_rank : Map[Int, Array[String]],
   max_rank : Int,
+  compact_small_graph : Bool,
   padding : Int,
   minor_step : Int,
   max_rank_minor_span : Int,
@@ -298,6 +299,59 @@ fn build_minor_coord_by_node_id(
       }
     }
     pass += 1
+  }
+
+  if compact_small_graph {
+    let mut singleton_only = true
+    let mut has_populated_rank = false
+    let mut min_populated_rank = 0
+    let mut max_populated_rank = 0
+    for rank in 0..<=max_rank {
+      match rank_node_ids_by_rank.get(rank) {
+        Some(node_ids) => {
+          if node_ids.length() == 0 {
+            continue
+          }
+          if !has_populated_rank {
+            has_populated_rank = true
+            min_populated_rank = rank
+            max_populated_rank = rank
+          } else {
+            min_populated_rank = min_populated_rank.min(rank)
+            max_populated_rank = max_populated_rank.max(rank)
+          }
+          if node_ids.length() != 1 {
+            singleton_only = false
+            break
+          }
+        }
+        None => ()
+      }
+    }
+    if singleton_only &&
+      has_populated_rank &&
+      max_populated_rank > min_populated_rank {
+      let rank_span = max_populated_rank - min_populated_rank
+      let stair_amplitude = (minor_step / 8).max(4).min(8)
+      for rank in min_populated_rank..<=max_populated_rank {
+        match rank_node_ids_by_rank.get(rank) {
+          Some(node_ids) =>
+            if node_ids.length() == 1 {
+              let node_id = node_ids[0]
+              let stair_offset = (rank - min_populated_rank) *
+                (stair_amplitude * 2) /
+                rank_span -
+                stair_amplitude
+              minor_coord_by_node_id[node_id] = option_int_or(
+                  minor_coord_by_node_id.get(node_id),
+                  padding + 70,
+                ) +
+                stair_offset
+            }
+          None => ()
+        }
+      }
+    }
   }
 
   let mut has_minor = false

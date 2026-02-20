@@ -189,6 +189,7 @@ fn build_minor_coord_by_strategy(
   rank_node_ids_by_rank : Map[Int, Array[String]],
   max_rank : Int,
   lane_by_node_id : Map[String, Int],
+  compact_small_graph : Bool,
   padding : Int,
   minor_step : Int,
   max_rank_minor_span : Int,
@@ -205,9 +206,9 @@ fn build_minor_coord_by_strategy(
       )
     RelaxedNeighbor =>
       build_minor_coord_by_node_id(
-        rank_node_ids_by_rank, max_rank, padding, minor_step, max_rank_minor_span,
-        predecessors_by_node_id, successors_by_node_id, horizontal, width_by_node_id,
-        height_by_node_id,
+        rank_node_ids_by_rank, max_rank, compact_small_graph, padding, minor_step,
+        max_rank_minor_span, predecessors_by_node_id, successors_by_node_id, horizontal,
+        width_by_node_id, height_by_node_id,
       )
   }
 }
