@@ -57,6 +57,7 @@ type WeightedGapBreakdown = {
 
 type Metrics = {
   fixture: string
+  hasSubgraphs: boolean
   fixtureEdges: number
   comparableLogicalEdges: number
   officialNodes: number
@@ -101,6 +102,14 @@ type Metrics = {
   logicalCrossingOfficialOnlyTopEdges?: Array<{ edge: string; count: number }>
   majorRankOrderMismatchSample?: string[]
   majorRankCompositionMismatchSample?: string[]
+}
+
+type BucketSummary = {
+  fixtures: number
+  avgWeightedGapIndex: number
+  avgMajorRankExactMatchRate: number
+  totalMajorRankCompositionMismatches: number
+  avgLogicalCrossingMultiplier: number
 }
 
 type OfficialFlowchartRenderer = 'dagre' | 'elk'
@@ -294,6 +303,15 @@ function normalizeLabel(label: string): string {
     return trimmed.slice(1, -1)
   }
   return trimmed
+}
+
+function hasSubgraphBlocks(source: string): boolean {
+  for (const rawLine of source.split(/\r?\n/)) {
+    const line = rawLine.trim()
+    if (line === '' || line.startsWith('%')) continue
+    if (/^subgraph\b/i.test(line)) return true
+  }
+  return false
 }
 
 function findMatchingGEnd(svg: string, gStartIndex: number): number {
@@ -1981,6 +1999,7 @@ function compareFixture(
   renderLocal(path, localPath, options)
 
   const fixtureSource = readFileSync(path, 'utf8')
+  const hasSubgraphs = hasSubgraphBlocks(fixtureSource)
   const parsedFixtureEdges = parseFixtureEdges(fixtureSource)
   if (!options.allowUnparsedEdgeLines && parsedFixtureEdges.unparsedEdgeLines.length > 0) {
     const sample = parsedFixtureEdges.unparsedEdgeLines.slice(0, 6)
@@ -2074,6 +2093,7 @@ function compareFixture(
     })
     return {
       fixture: path,
+      hasSubgraphs,
       fixtureEdges: fixtureEdges.length,
       comparableLogicalEdges,
       officialNodes: officialNodes.size,
@@ -2193,6 +2213,7 @@ function compareFixture(
 
   return {
     fixture: path,
+    hasSubgraphs,
     fixtureEdges: fixtureEdges.length,
     comparableLogicalEdges,
     officialNodes: officialNodes.size,
@@ -2261,6 +2282,38 @@ function compareFixture(
 function round(value: number): string {
   if (!Number.isFinite(value)) return 'NaN'
   return value.toFixed(4)
+}
+
+function bucketSummary(rows: Metrics[]): BucketSummary {
+  if (rows.length === 0) {
+    return {
+      fixtures: 0,
+      avgWeightedGapIndex: Number.NaN,
+      avgMajorRankExactMatchRate: Number.NaN,
+      totalMajorRankCompositionMismatches: 0,
+      avgLogicalCrossingMultiplier: Number.NaN,
+    }
+  }
+  const avgWeightedGapIndex =
+    rows.reduce((acc, row) => acc + (Number.isFinite(row.weightedGapIndex) ? row.weightedGapIndex : 1), 0) /
+    rows.length
+  const avgMajorRankExactMatchRate =
+    rows.reduce((acc, row) => acc + (Number.isFinite(row.majorRankExactMatchRate) ? row.majorRankExactMatchRate : 0), 0) /
+    rows.length
+  const totalMajorRankCompositionMismatches = rows.reduce(
+    (acc, row) => acc + row.majorRankCompositionMismatchCount,
+    0,
+  )
+  const avgLogicalCrossingMultiplier =
+    rows.reduce((acc, row) => acc + (Number.isFinite(row.logicalCrossingMultiplier) ? row.logicalCrossingMultiplier : 0), 0) /
+    rows.length
+  return {
+    fixtures: rows.length,
+    avgWeightedGapIndex,
+    avgMajorRankExactMatchRate,
+    totalMajorRankCompositionMismatches,
+    avgLogicalCrossingMultiplier,
+  }
 }
 
 function discoverDefaultFixtures(): string[] {
@@ -2895,6 +2948,8 @@ function main(): void {
     .sort((left, right) => right.weightedGapIndex - left.weightedGapIndex)
     .slice(0, 5)
     .map(result => `${result.fixture}:${round(result.weightedGapIndex)}`)
+  const withSubgraphsSummary = bucketSummary(results.filter(result => result.hasSubgraphs))
+  const withoutSubgraphsSummary = bucketSummary(results.filter(result => !result.hasSubgraphs))
 
   console.log('\n=== summary ===')
   console.log(`profile=${options.profile ?? 'custom'}`)
@@ -2918,6 +2973,12 @@ function main(): void {
   console.log(`avg_weighted_gap_index=${round(avgWeightedGapIndex)} max_weighted_gap_index=${round(maxWeightedGapIndex)}`)
   console.log(`avg_span_area_ratio=${round(avgSpanAreaRatio)}`)
   console.log(`avg_major_span_ratio=${round(avgMajorSpanRatio)} avg_minor_span_ratio=${round(avgMinorSpanRatio)}`)
+  console.log(
+    `subgraph_bucket fixtures=${withSubgraphsSummary.fixtures} avg_weighted_gap_index=${round(withSubgraphsSummary.avgWeightedGapIndex)} avg_major_rank_exact_match_rate=${round(withSubgraphsSummary.avgMajorRankExactMatchRate)} total_major_rank_composition_mismatches=${withSubgraphsSummary.totalMajorRankCompositionMismatches} avg_logical_crossing_multiplier=${round(withSubgraphsSummary.avgLogicalCrossingMultiplier)}`,
+  )
+  console.log(
+    `flat_bucket fixtures=${withoutSubgraphsSummary.fixtures} avg_weighted_gap_index=${round(withoutSubgraphsSummary.avgWeightedGapIndex)} avg_major_rank_exact_match_rate=${round(withoutSubgraphsSummary.avgMajorRankExactMatchRate)} total_major_rank_composition_mismatches=${withoutSubgraphsSummary.totalMajorRankCompositionMismatches} avg_logical_crossing_multiplier=${round(withoutSubgraphsSummary.avgLogicalCrossingMultiplier)}`,
+  )
   console.log(`top_weighted_gap_fixtures=${topWeightedGapFixtures.join(', ')}`)
   console.log(`rendered_svgs_dir=${tempRoot}`)
 
@@ -2979,6 +3040,8 @@ function main(): void {
         avgSpanAreaRatio,
         avgWeightedGapIndex,
         maxWeightedGapIndex,
+        withSubgraphs: withSubgraphsSummary,
+        withoutSubgraphs: withoutSubgraphsSummary,
         topWeightedGapFixtures,
       },
       results,
