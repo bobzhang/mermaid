@@ -17,6 +17,83 @@ fn collect_rank_trace_for_graph(
 }
 
 ///|
+fn stress_006_nested_bridge_loops_source() -> String {
+  (
+    #|graph TB
+    #|SRC[SRC]
+    #|SNK[SNK]
+    #|
+    #|subgraph LEFT_CLUSTER
+    #|L0[L0]
+    #|L1[L1]
+    #|L2[L2]
+    #|subgraph LEFT_INNER
+    #|LI1[LI1]
+    #|LI2[LI2]
+    #|LI3[LI3]
+    #|end
+    #|L3[L3]
+    #|L4[L4]
+    #|end
+    #|
+    #|subgraph RIGHT_CLUSTER
+    #|R0[R0]
+    #|R1[R1]
+    #|R2[R2]
+    #|subgraph RIGHT_INNER
+    #|RI1[RI1]
+    #|RI2[RI2]
+    #|RI3[RI3]
+    #|end
+    #|R3[R3]
+    #|R4[R4]
+    #|end
+    #|
+    #|SRC --> L0
+    #|SRC --> R0
+    #|
+    #|L0 --> L1
+    #|L1 --> L2
+    #|L2 --> L3
+    #|L3 --> L4
+    #|L4 --> SNK
+    #|
+    #|R0 --> R1
+    #|R1 --> R2
+    #|R2 --> R3
+    #|R3 --> R4
+    #|R4 --> SNK
+    #|
+    #|L1 --> LI1
+    #|LI1 --> LI2
+    #|LI2 --> LI3
+    #|LI3 --> L3
+    #|
+    #|R1 --> RI1
+    #|RI1 --> RI2
+    #|RI2 --> RI3
+    #|RI3 --> R3
+    #|
+    #|LI1 --> RI2
+    #|LI2 --> R2
+    #|L2 --> RI1
+    #|L3 --> R1
+    #|
+    #|RI1 --> LI3
+    #|R2 --> LI2
+    #|RI3 --> L1
+    #|R3 --> L2
+    #|
+    #|L4 --> RI3
+    #|R4 --> LI3
+    #|SNK --> LI1
+    #|
+  )
+  .trim_end()
+  .to_string()
+}
+
+///|
 test "elk layered rank trace keeps fanout kernel baseline" {
   let graph = wb_graph(["A", "B", "C", "D", "E", "F"], [
     ("A", "B"),
@@ -165,5 +242,25 @@ test "elk layered rank trace keeps long span kernel baseline" {
     ["N6"],
     ["N3"],
     ["N4"],
+  ])
+}
+
+///|
+test "elk layered rank trace matches upstream sort-by-input layers on stress_006 fixture" {
+  let graph = @parser_header_core.parse_mermaid(
+    stress_006_nested_bridge_loops_source(),
+  )
+  let trace = collect_rank_trace_for_graph(graph)
+  assert_eq(trace.rank_seed_strategy, "native-feedback")
+  assert_eq(trace.rank_seed_layers, [
+    ["SRC"],
+    ["L0", "R0"],
+    ["L1", "L4", "R1", "R4"],
+    ["SNK", "R2", "RI3"],
+    ["LI1", "R3"],
+    ["L2", "LI2"],
+    ["RI1"],
+    ["LI3", "RI2"],
+    ["L3"],
   ])
 }

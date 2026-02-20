@@ -305,11 +305,179 @@ fn apply_elk_network_simplex_balance(
 }
 
 ///|
+fn build_tight_incoming_shift_closure(
+  seed_node_id : String,
+  node_ids : Array[String],
+  incoming_edges_by_node_id : Map[String, Array[(String, String)]],
+  rank_by_node_id : Map[String, Int],
+) -> Array[String] {
+  if !rank_by_node_id.contains(seed_node_id) {
+    return []
+  }
+  let in_shift_set_by_node_id : Map[String, Bool] = {}
+  in_shift_set_by_node_id[seed_node_id] = true
+  let queue : Array[String] = [seed_node_id]
+  while queue.length() > 0 {
+    let node_id = queue[0]
+    let _ = queue.remove(0)
+    let node_rank = option_int_or(rank_by_node_id.get(node_id), 0)
+    if node_rank <= 0 {
+      return []
+    }
+    match incoming_edges_by_node_id.get(node_id) {
+      Some(incoming_edges) =>
+        for edge in incoming_edges {
+          let (source_id, _target_id) = edge
+          let source_rank = option_int_or(rank_by_node_id.get(source_id), 0)
+          if node_rank - source_rank != 1 ||
+            option_bool_or(in_shift_set_by_node_id.get(source_id), false) {
+            continue
+          }
+          in_shift_set_by_node_id[source_id] = true
+          queue.push(source_id)
+        }
+      None => ()
+    }
+  }
+  let shift_node_ids : Array[String] = []
+  for node_id in node_ids {
+    if option_bool_or(in_shift_set_by_node_id.get(node_id), false) {
+      shift_node_ids.push(node_id)
+    }
+  }
+  shift_node_ids
+}
+
+///|
+fn rank_shift_delta(
+  shift_node_ids : Array[String],
+  oriented_edges : Array[(String, String)],
+) -> Int {
+  let in_shift_set_by_node_id : Map[String, Bool] = {}
+  for node_id in shift_node_ids {
+    in_shift_set_by_node_id[node_id] = true
+  }
+  let mut delta = 0
+  for edge in oriented_edges {
+    let (source_id, target_id) = edge
+    let source_in_shift_set = option_bool_or(
+      in_shift_set_by_node_id.get(source_id),
+      false,
+    )
+    let target_in_shift_set = option_bool_or(
+      in_shift_set_by_node_id.get(target_id),
+      false,
+    )
+    if !source_in_shift_set && target_in_shift_set {
+      delta += 1
+    } else if source_in_shift_set && !target_in_shift_set {
+      delta -= 1
+    }
+  }
+  delta
+}
+
+///|
+fn rank_sum_for_node_ids(
+  node_ids : Array[String],
+  rank_by_node_id : Map[String, Int],
+) -> Int {
+  let mut rank_sum = 0
+  for node_id in node_ids {
+    rank_sum += option_int_or(rank_by_node_id.get(node_id), 0)
+  }
+  rank_sum
+}
+
+///|
+fn has_incoming_cross_boundary(
+  shift_node_ids : Array[String],
+  oriented_edges : Array[(String, String)],
+) -> Bool {
+  let in_shift_set_by_node_id : Map[String, Bool] = {}
+  for node_id in shift_node_ids {
+    in_shift_set_by_node_id[node_id] = true
+  }
+  for edge in oriented_edges {
+    let (source_id, target_id) = edge
+    if !option_bool_or(in_shift_set_by_node_id.get(source_id), false) &&
+      option_bool_or(in_shift_set_by_node_id.get(target_id), false) {
+      return true
+    }
+  }
+  false
+}
+
+///|
+fn apply_elk_vertical_rank_tie_refinement(
+  node_ids : Array[String],
+  oriented_edges : Array[(String, String)],
+  rank_by_node_id : Map[String, Int],
+  max_rank : Int,
+) -> (Map[String, Int], Int) {
+  let (incoming_edges_by_node_id, _outgoing_edges_by_node_id) = build_incident_oriented_edges_by_node_id(
+    node_ids, oriented_edges,
+  )
+  let max_iterations = node_ids.length() * 10
+  let mut iteration = 0
+  while iteration < max_iterations {
+    let mut best_delta = -2147483647
+    let mut best_rank_sum = -2147483647
+    let best_shift_node_ids : Array[String] = []
+    for seed_node_id in node_ids {
+      let shift_node_ids = build_tight_incoming_shift_closure(
+        seed_node_id, node_ids, incoming_edges_by_node_id, rank_by_node_id,
+      )
+      if shift_node_ids.length() == 0 {
+        continue
+      }
+      let delta = rank_shift_delta(shift_node_ids, oriented_edges)
+      if delta < 0 {
+        continue
+      }
+      let rank_sum = rank_sum_for_node_ids(shift_node_ids, rank_by_node_id)
+      if delta > best_delta || (delta == best_delta && rank_sum > best_rank_sum) {
+        best_delta = delta
+        best_rank_sum = rank_sum
+        best_shift_node_ids.clear()
+        for node_id in shift_node_ids {
+          best_shift_node_ids.push(node_id)
+        }
+      }
+    }
+    if best_shift_node_ids.length() == 0 {
+      break
+    }
+    if best_delta == 0 &&
+      (
+        !has_incoming_cross_boundary(best_shift_node_ids, oriented_edges) ||
+        best_rank_sum <= 0
+      ) {
+      break
+    }
+    for node_id in best_shift_node_ids {
+      let rank = option_int_or(rank_by_node_id.get(node_id), 0)
+      if rank > 0 {
+        rank_by_node_id[node_id] = rank - 1
+      }
+    }
+    iteration += 1
+  }
+  let recomputed_max_rank = recompute_max_rank(rank_by_node_id)
+  if recomputed_max_rank > max_rank {
+    (rank_by_node_id, recomputed_max_rank)
+  } else {
+    (rank_by_node_id, max_rank.max(recomputed_max_rank))
+  }
+}
+
+///|
 fn build_native_feedback_rank_by_node_id(
   node_ids : Array[String],
   nodes_in_order : Array[MermaidNode],
   oriented_edges : Array[(String, String)],
   order_index_by_node_id : Map[String, Int],
+  horizontal : Bool,
 ) -> (Map[String, Int], Int) {
   let (simplex_rank_by_node_id, simplex_max_rank, simplex_ok) = @layout_engine_graph_lane_core.collect_dagre_network_simplex_ranks_from_directed_edges(
     nodes_in_order, oriented_edges,
@@ -323,8 +491,14 @@ fn build_native_feedback_rank_by_node_id(
       }
     }
     if all_nodes_present {
-      return apply_elk_network_simplex_balance(
+      let (balanced_rank_by_node_id, balanced_max_rank) = apply_elk_network_simplex_balance(
         node_ids, oriented_edges, simplex_rank_by_node_id, simplex_max_rank,
+      )
+      if horizontal {
+        return (balanced_rank_by_node_id, balanced_max_rank)
+      }
+      return apply_elk_vertical_rank_tie_refinement(
+        node_ids, oriented_edges, balanced_rank_by_node_id, balanced_max_rank,
       )
     }
   }
@@ -362,7 +536,13 @@ fn build_layered_rank_state(
   let acyclic_edges = feedback_orientation_state.oriented_edges
 
   let (rank_by_node_id, max_rank) = build_native_feedback_rank_by_node_id(
-    node_ids, nodes_in_order, acyclic_edges, order_index_by_node_id,
+    node_ids,
+    nodes_in_order,
+    acyclic_edges,
+    order_index_by_node_id,
+    @layout_engine_graph_internal_core.layout_direction_is_horizontal(
+      graph.direction,
+    ),
   )
   let (successors_by_node_id, predecessors_by_node_id) = build_rank_neighbors_from_oriented_edges(
     node_ids, acyclic_edges, rank_by_node_id, order_index_by_node_id,
