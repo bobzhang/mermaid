@@ -143,9 +143,10 @@ test "elk layered node-size phase captures dimensions and maxima" {
     wb_node("A"),
     wb_node("LONG_LABEL_NODE"),
   ]
+  let compact_short_labels = nodes_in_order.length() <= 8
   let node_size_state = build_elk_layered_node_size_state(nodes_in_order)
   for node in nodes_in_order {
-    let (width, height) = node_dimensions(node)
+    let (width, height) = node_dimensions(node, compact_short_labels)
     assert_eq(
       option_int_or(node_size_state.width_by_node_id.get(node.id), -1),
       width,
@@ -161,9 +162,22 @@ test "elk layered node-size phase captures dimensions and maxima" {
 
 ///|
 test "elk layered node dimensions keep flowchart box baseline" {
-  assert_eq(node_dimensions(wb_node("L0")), (76, 54))
-  assert_eq(node_dimensions(wb_node("SRC")), (84, 54))
-  assert_eq(node_dimensions(wb_node("A\nB")), (76, 78))
+  assert_eq(node_dimensions(wb_node("L0"), true), (70, 54))
+  assert_eq(node_dimensions(wb_node("SRC"), true), (70, 54))
+  assert_eq(node_dimensions(wb_node("A\nB"), true), (70, 78))
+}
+
+///|
+test "elk layered node dimensions scale adaptive padding for medium labels" {
+  assert_eq(node_dimensions(wb_node("1234567"), true), (116, 54))
+  assert_eq(node_dimensions(wb_node("1234567890"), true), (140, 54))
+  assert_eq(node_dimensions(wb_node("12345678901"), true), (148, 54))
+}
+
+///|
+test "elk layered node dimensions keep legacy widths for large graphs" {
+  assert_eq(node_dimensions(wb_node("Build"), false), (100, 54))
+  assert_eq(node_dimensions(wb_node("SRC"), false), (84, 54))
 }
 
 ///|

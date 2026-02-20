@@ -1,5 +1,10 @@
 ///|
-fn node_dimensions(node : MermaidNode) -> (Int, Int) {
+
+///|
+fn node_dimensions(
+  node : MermaidNode,
+  compact_short_labels : Bool,
+) -> (Int, Int) {
   let label_lines = node.label
     .split("\n")
     .map(part => part.to_string())
@@ -34,9 +39,12 @@ fn node_dimensions(node : MermaidNode) -> (Int, Int) {
       (width, height)
     }
     _ => {
-      let min_width = 76
-      // Keep ELK default node boxes close to Mermaid's rendered flowchart nodes.
-      let width = min_width.max(longest_line * 8 + 60)
+      // ELK's node label boxes are close to Mermaid defaults for long labels,
+      // but short labels need less horizontal padding to avoid stretched ranks.
+      let short_label = compact_short_labels && longest_line <= 5
+      let min_width = if short_label { 70 } else { 76 }
+      let adaptive_padding = if short_label { 24 } else { 60 }
+      let width = min_width.max(longest_line * 8 + adaptive_padding)
       let height = (30 + label_lines.length() * 24).max(54)
       (width, height)
     }
@@ -172,10 +180,11 @@ fn build_elk_layered_node_size_state(
 ) -> ElkLayeredNodeSizeState {
   let width_by_node_id : Map[String, Int] = {}
   let height_by_node_id : Map[String, Int] = {}
+  let compact_short_labels = nodes_in_order.length() <= 8
   let mut global_max_width = 0
   let mut global_max_height = 0
   for node in nodes_in_order {
-    let (width, height) = node_dimensions(node)
+    let (width, height) = node_dimensions(node, compact_short_labels)
     width_by_node_id[node.id] = width
     height_by_node_id[node.id] = height
     global_max_width = global_max_width.max(width)
