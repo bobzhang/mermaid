@@ -128,10 +128,9 @@ fn run_elk_layered_setup_phase(
   )
   let subgraph_entry_by_id = prep_state.subgraph_entry_by_id
   let subgraph_exit_by_id = prep_state.subgraph_exit_by_id
-  let nodes_in_order = @layout_engine_graph_internal_core.reorder_nodes_for_flow_layout(
-    prep_state.nodes_in_order,
-    graph.edges,
-  )
+  // ELK layered uses model/input order as the baseline ordering signal.
+  // Keep parser/prep order here instead of dagre-oriented flow reordering.
+  let nodes_in_order = prep_state.nodes_in_order
   let horizontal = @layout_engine_graph_internal_core.layout_direction_is_horizontal(
     graph.direction,
   )
