@@ -884,6 +884,7 @@ fn collapse_major_coord_to_rank_edgeward_anchor(
   let collapsed = clone_major_coord_by_node_id(major_coord_by_node_id)
   let increasing_by_rank = !reverse
   let max_allowed_spread = 23
+  let forced_rank_collapse_spread = 120
   for rank in 0..<=max_rank {
     match rank_node_ids_by_rank.get(rank) {
       Some(node_ids) => {
@@ -975,13 +976,21 @@ fn collapse_major_coord_to_rank_edgeward_anchor(
           mode_count + 1 >= node_ids.length() &&
           max_mode_delta >= 50 &&
           max_mode_delta <= 90
-        if has_anchor && collapse_singleton_outlier {
-          for node_id in node_ids {
-            collapsed[node_id] = mode_major
-          }
-        } else if has_anchor && spread <= max_allowed_spread {
-          for node_id in node_ids {
-            collapsed[node_id] = rank_anchor
+        if has_anchor {
+          let force_rank_collapse = spread >= forced_rank_collapse_spread
+          if collapse_singleton_outlier || force_rank_collapse {
+            let rank_major = if collapse_singleton_outlier {
+              mode_major
+            } else {
+              rank_anchor
+            }
+            for node_id in node_ids {
+              collapsed[node_id] = rank_major
+            }
+          } else if spread <= max_allowed_spread {
+            for node_id in node_ids {
+              collapsed[node_id] = rank_anchor
+            }
           }
         }
       }

@@ -912,6 +912,20 @@ test "elk layered rank edgeward collapse keeps wide rank with three nodes untouc
 }
 
 ///|
+test "elk layered rank edgeward collapse snaps very wide split rank" {
+  let rank_node_ids_by_rank : Map[Int, Array[String]] = { 0: ["A", "B"] }
+  let baseline_major_coord_by_node_id : Map[String, Int] = {
+    "A": 100,
+    "B": 260,
+  }
+  let collapsed = collapse_major_coord_to_rank_edgeward_anchor(
+    rank_node_ids_by_rank, 0, false, baseline_major_coord_by_node_id, baseline_major_coord_by_node_id,
+  )
+  assert_eq(option_int_or(collapsed.get("A"), -1), 260)
+  assert_eq(option_int_or(collapsed.get("B"), -1), 260)
+}
+
+///|
 test "elk layered major center builder respects reverse display order" {
   let rank_pair_label_major_gap : Map[String, Int] = {}
   let rank_major_extent_by_rank : Map[Int, Int] = { 0: 100, 1: 100, 2: 100 }
