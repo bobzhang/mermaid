@@ -446,6 +446,26 @@ function checkElkCrossingRankOrderGate(): void {
     .map(line => line.trim())
     .filter(line => line !== '')
 
+  const fixtureOrderMismatchByFixture = new Map<string, number>()
+  let currentFixture: string | null = null
+  for (const line of lines) {
+    const fixtureHeaderMatch = /^===\s+(.+)\s+===$/.exec(line)
+    if (fixtureHeaderMatch) {
+      currentFixture = fixtureHeaderMatch[1]!
+      continue
+    }
+    if (!currentFixture) continue
+    const orderMatch =
+      /^order_mismatch_layers=(\d+)\s+composition_mismatch_layers=(\d+)$/.exec(
+        line,
+      )
+    if (!orderMatch) continue
+    fixtureOrderMismatchByFixture.set(
+      currentFixture,
+      Number.parseInt(orderMatch[1]!, 10),
+    )
+  }
+
   const orderMismatchLine = lines.find(line =>
     line.startsWith('total_order_mismatch='),
   )
@@ -569,6 +589,21 @@ function checkElkCrossingRankOrderGate(): void {
   const maxAllowedAvgDisplacement = 0
   const minAllowedAvgExactOrderMatchRate = 0.62
   const maxAllowedAvgOrderDisplacement = 0.535
+  const maxAllowedOrderMismatchByFixture: Record<string, number> = {
+    'fixtures/layout_stress_001_dense_dag.mmd': 1,
+    'fixtures/layout_stress_002_feedback_mesh.mmd': 1,
+    'fixtures/layout_stress_003_subgraph_bridges.mmd': 4,
+    'fixtures/layout_stress_004_fanin_fanout.mmd': 4,
+    'fixtures/layout_stress_005_long_span_backjumps.mmd': 2,
+    'fixtures/layout_stress_006_nested_bridge_loops.mmd': 5,
+    'fixtures/layout_stress_007_dependency_weave.mmd': 4,
+    'fixtures/layout_stress_008_hyper_weave_pipeline.mmd': 2,
+    'fixtures/layout_stress_009_nested_ring_bridges.mmd': 5,
+    'fixtures/layout_stress_010_bipartite_crossfire.mmd': 3,
+    'fixtures/layout_stress_011_feedback_lattice.mmd': 1,
+    'fixtures/layout_stress_012_interleaved_subgraph_feedback.mmd': 3,
+    'fixtures/layout_stress_013_rl_dual_scc_weave.mmd': 6,
+  }
   if (orderMismatch > maxAllowedOrderMismatch) {
     fail(
       `elk crossing-rank gate expected order mismatches <= ${maxAllowedOrderMismatch}, got ${orderMismatch}/${orderComparable}`,
@@ -593,6 +628,21 @@ function checkElkCrossingRankOrderGate(): void {
     fail(
       `elk crossing-rank gate expected avg_order_displacement <= ${maxAllowedAvgOrderDisplacement.toFixed(4)}, got ${avgOrderDisplacement.toFixed(4)}`,
     )
+  }
+  for (const fixture of STRESS_FIXTURES) {
+    const expected = maxAllowedOrderMismatchByFixture[fixture]
+    if (expected === undefined) {
+      fail(`elk crossing-rank gate missing fixture threshold for ${fixture}`)
+    }
+    const actual = fixtureOrderMismatchByFixture.get(fixture)
+    if (actual === undefined) {
+      fail(`elk crossing-rank gate missing fixture report for ${fixture}`)
+    }
+    if (actual > expected) {
+      fail(
+        `elk crossing-rank gate fixture=${fixture} expected order_mismatch_layers <= ${expected}, got ${actual}`,
+      )
+    }
   }
 }
 
