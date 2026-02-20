@@ -40,6 +40,9 @@ type CaseMetrics = {
   compositionMismatchLayers: number
   exactMatchRate: number
   avgDisplacement: number
+  sameRankSharedNodes: number
+  exactOrderMatchRate: number
+  avgOrderDisplacement: number
 }
 
 type CaseResult = {
@@ -311,11 +314,24 @@ function layeringToRankMap(layers: Layering): Map<string, number> {
   return rankByNodeId
 }
 
+function layeringToRankPosMap(
+  layers: Layering,
+): Map<string, { rank: number; pos: number }> {
+  const rankPosByNodeId = new Map<string, { rank: number; pos: number }>()
+  layers.forEach((layer, rank) => {
+    layer.forEach((nodeId, pos) => rankPosByNodeId.set(nodeId, { rank, pos }))
+  })
+  return rankPosByNodeId
+}
+
 function compareLayers(localLayers: Layering, upstreamLayers: Layering): {
   orderMismatchLayers: number
   compositionMismatchLayers: number
   exactMatchRate: number
   avgDisplacement: number
+  sameRankSharedNodes: number
+  exactOrderMatchRate: number
+  avgOrderDisplacement: number
 } {
   const maxLayerCount = Math.max(localLayers.length, upstreamLayers.length)
   let orderMismatchLayers = 0
@@ -335,15 +351,27 @@ function compareLayers(localLayers: Layering, upstreamLayers: Layering): {
 
   const localRankByNodeId = layeringToRankMap(localLayers)
   const upstreamRankByNodeId = layeringToRankMap(upstreamLayers)
+  const localRankPosByNodeId = layeringToRankPosMap(localLayers)
+  const upstreamRankPosByNodeId = layeringToRankPosMap(upstreamLayers)
   let shared = 0
   let exact = 0
   let displacement = 0
+  let sameRankShared = 0
+  let exactOrder = 0
+  let orderDisplacement = 0
   for (const [nodeId, upstreamRank] of upstreamRankByNodeId.entries()) {
     const localRank = localRankByNodeId.get(nodeId)
     if (localRank === undefined) continue
     shared += 1
     if (localRank === upstreamRank) exact += 1
     displacement += Math.abs(localRank - upstreamRank)
+    if (localRank !== upstreamRank) continue
+    const localPos = localRankPosByNodeId.get(nodeId)?.pos
+    const upstreamPos = upstreamRankPosByNodeId.get(nodeId)?.pos
+    if (localPos === undefined || upstreamPos === undefined) continue
+    sameRankShared += 1
+    if (localPos === upstreamPos) exactOrder += 1
+    orderDisplacement += Math.abs(localPos - upstreamPos)
   }
 
   return {
@@ -351,6 +379,10 @@ function compareLayers(localLayers: Layering, upstreamLayers: Layering): {
     compositionMismatchLayers,
     exactMatchRate: shared === 0 ? 0 : exact / shared,
     avgDisplacement: shared === 0 ? 0 : displacement / shared,
+    sameRankSharedNodes: sameRankShared,
+    exactOrderMatchRate: sameRankShared === 0 ? 0 : exactOrder / sameRankShared,
+    avgOrderDisplacement:
+      sameRankShared === 0 ? 0 : orderDisplacement / sameRankShared,
   }
 }
 
@@ -402,6 +434,9 @@ function compareFixture(fixturePath: string): CaseResult {
       compositionMismatchLayers: parity.compositionMismatchLayers,
       exactMatchRate: parity.exactMatchRate,
       avgDisplacement: parity.avgDisplacement,
+      sameRankSharedNodes: parity.sameRankSharedNodes,
+      exactOrderMatchRate: parity.exactOrderMatchRate,
+      avgOrderDisplacement: parity.avgOrderDisplacement,
     },
     inputEdges: local.inputEdges,
     localRankLayers: local.rankLayers,
@@ -572,6 +607,8 @@ function main(): void {
   let totalLayerSlots = 0
   let exactRateSum = 0
   let displacementSum = 0
+  let exactOrderRateSum = 0
+  let orderDisplacementSum = 0
 
   for (const row of rows) {
     const layerSlots = Math.max(row.localLayers, row.upstreamLayers)
@@ -580,6 +617,8 @@ function main(): void {
     totalLayerSlots += layerSlots
     exactRateSum += row.exactMatchRate
     displacementSum += row.avgDisplacement
+    exactOrderRateSum += row.exactOrderMatchRate
+    orderDisplacementSum += row.avgOrderDisplacement
 
     console.log(`\n=== ${row.fixture} ===`)
     console.log(
@@ -591,10 +630,17 @@ function main(): void {
     console.log(
       `exact_match_rate=${round(row.exactMatchRate)} avg_displacement=${round(row.avgDisplacement)}`,
     )
+    console.log(
+      `same_rank_shared_nodes=${row.sameRankSharedNodes} exact_order_match_rate=${round(row.exactOrderMatchRate)} avg_order_displacement=${round(row.avgOrderDisplacement)}`,
+    )
   }
 
   const avgExactRate = rows.length === 0 ? 0 : exactRateSum / rows.length
   const avgDisplacement = rows.length === 0 ? 0 : displacementSum / rows.length
+  const avgExactOrderRate =
+    rows.length === 0 ? 0 : exactOrderRateSum / rows.length
+  const avgOrderDisplacement =
+    rows.length === 0 ? 0 : orderDisplacementSum / rows.length
 
   console.log('\n=== summary ===')
   console.log(`fixtures=${rows.length}`)
@@ -602,6 +648,8 @@ function main(): void {
   console.log(`total_composition_mismatch=${totalCompositionMismatch}/${totalLayerSlots}`)
   console.log(`avg_exact_match_rate=${round(avgExactRate)}`)
   console.log(`avg_displacement=${round(avgDisplacement)}`)
+  console.log(`avg_exact_order_match_rate=${round(avgExactOrderRate)}`)
+  console.log(`avg_order_displacement=${round(avgOrderDisplacement)}`)
 
   if (options.details) {
     const ranked = results

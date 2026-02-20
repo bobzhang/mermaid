@@ -521,10 +521,54 @@ function checkElkCrossingRankOrderGate(): void {
       `elk crossing-rank gate invalid avg_displacement value: ${avgDisplacementLine}`,
     )
   }
+  const avgExactOrderMatchRateLine = lines.find(line =>
+    line.startsWith('avg_exact_order_match_rate='),
+  )
+  if (!avgExactOrderMatchRateLine) {
+    fail(
+      'elk crossing-rank gate missing avg_exact_order_match_rate summary line',
+    )
+  }
+  const avgExactOrderMatchRateMatch = /^avg_exact_order_match_rate=([0-9.]+)$/.exec(
+    avgExactOrderMatchRateLine,
+  )
+  if (!avgExactOrderMatchRateMatch) {
+    fail(
+      `elk crossing-rank gate invalid exact-order summary format: ${avgExactOrderMatchRateLine}`,
+    )
+  }
+  const avgExactOrderMatchRate = Number.parseFloat(avgExactOrderMatchRateMatch[1]!)
+  if (!Number.isFinite(avgExactOrderMatchRate)) {
+    fail(
+      `elk crossing-rank gate invalid avg_exact_order_match_rate value: ${avgExactOrderMatchRateLine}`,
+    )
+  }
+  const avgOrderDisplacementLine = lines.find(line =>
+    line.startsWith('avg_order_displacement='),
+  )
+  if (!avgOrderDisplacementLine) {
+    fail('elk crossing-rank gate missing avg_order_displacement summary line')
+  }
+  const avgOrderDisplacementMatch = /^avg_order_displacement=([0-9.]+)$/.exec(
+    avgOrderDisplacementLine,
+  )
+  if (!avgOrderDisplacementMatch) {
+    fail(
+      `elk crossing-rank gate invalid order-displacement summary format: ${avgOrderDisplacementLine}`,
+    )
+  }
+  const avgOrderDisplacement = Number.parseFloat(avgOrderDisplacementMatch[1]!)
+  if (!Number.isFinite(avgOrderDisplacement)) {
+    fail(
+      `elk crossing-rank gate invalid avg_order_displacement value: ${avgOrderDisplacementLine}`,
+    )
+  }
 
   const maxAllowedOrderMismatch = 41
   const maxAllowedCompositionMismatch = 0
   const maxAllowedAvgDisplacement = 0
+  const minAllowedAvgExactOrderMatchRate = 0.62
+  const maxAllowedAvgOrderDisplacement = 0.54
   if (orderMismatch > maxAllowedOrderMismatch) {
     fail(
       `elk crossing-rank gate expected order mismatches <= ${maxAllowedOrderMismatch}, got ${orderMismatch}/${orderComparable}`,
@@ -538,6 +582,16 @@ function checkElkCrossingRankOrderGate(): void {
   if (avgDisplacement > maxAllowedAvgDisplacement) {
     fail(
       `elk crossing-rank gate expected avg_displacement <= ${maxAllowedAvgDisplacement.toFixed(4)}, got ${avgDisplacement.toFixed(4)}`,
+    )
+  }
+  if (avgExactOrderMatchRate < minAllowedAvgExactOrderMatchRate) {
+    fail(
+      `elk crossing-rank gate expected avg_exact_order_match_rate >= ${minAllowedAvgExactOrderMatchRate.toFixed(4)}, got ${avgExactOrderMatchRate.toFixed(4)}`,
+    )
+  }
+  if (avgOrderDisplacement > maxAllowedAvgOrderDisplacement) {
+    fail(
+      `elk crossing-rank gate expected avg_order_displacement <= ${maxAllowedAvgOrderDisplacement.toFixed(4)}, got ${avgOrderDisplacement.toFixed(4)}`,
     )
   }
 }

@@ -44,6 +44,8 @@ type PhaseWaterfallReport = {
     compositionMismatched: number
     compositionComparable: number
     avgDisplacement: number
+    avgExactOrderMatchRate: number
+    avgOrderDisplacement: number
   }
   placementMajor: {
     totalLayerMismatch: number
@@ -230,6 +232,8 @@ function parseCrossingRankOrder(): {
   compositionMismatched: number
   compositionComparable: number
   avgDisplacement: number
+  avgExactOrderMatchRate: number
+  avgOrderDisplacement: number
 } {
   const stdout = runOrThrow('bun', [
     'run',
@@ -266,12 +270,54 @@ function parseCrossingRankOrder(): {
   if (!Number.isFinite(avgDisplacement)) {
     fail(`invalid crossing-rank avg displacement value: ${displacementLine}`)
   }
+  const exactOrderMatchLine = lines.find(line =>
+    line.startsWith('avg_exact_order_match_rate='),
+  )
+  if (!exactOrderMatchLine) {
+    fail('missing crossing-rank avg exact-order-match-rate summary line')
+  }
+  const exactOrderMatch = /^avg_exact_order_match_rate=([0-9.]+)$/.exec(
+    exactOrderMatchLine,
+  )
+  if (!exactOrderMatch) {
+    fail(
+      `invalid crossing-rank avg exact-order-match-rate summary: ${exactOrderMatchLine}`,
+    )
+  }
+  const avgExactOrderMatchRate = Number.parseFloat(exactOrderMatch[1]!)
+  if (!Number.isFinite(avgExactOrderMatchRate)) {
+    fail(
+      `invalid crossing-rank avg exact-order-match-rate value: ${exactOrderMatchLine}`,
+    )
+  }
+  const orderDisplacementLine = lines.find(line =>
+    line.startsWith('avg_order_displacement='),
+  )
+  if (!orderDisplacementLine) {
+    fail('missing crossing-rank avg order displacement summary line')
+  }
+  const orderDisplacementMatch = /^avg_order_displacement=([0-9.]+)$/.exec(
+    orderDisplacementLine,
+  )
+  if (!orderDisplacementMatch) {
+    fail(
+      `invalid crossing-rank avg order displacement summary: ${orderDisplacementLine}`,
+    )
+  }
+  const avgOrderDisplacement = Number.parseFloat(orderDisplacementMatch[1]!)
+  if (!Number.isFinite(avgOrderDisplacement)) {
+    fail(
+      `invalid crossing-rank avg order displacement value: ${orderDisplacementLine}`,
+    )
+  }
   return {
     orderMismatched,
     orderComparable,
     compositionMismatched,
     compositionComparable,
     avgDisplacement,
+    avgExactOrderMatchRate,
+    avgOrderDisplacement,
   }
 }
 
@@ -412,6 +458,12 @@ function main(): void {
   )
   console.log(
     `crossing_rank_avg_displacement=${report.crossingRankOrder.avgDisplacement.toFixed(4)}`,
+  )
+  console.log(
+    `crossing_rank_avg_exact_order_match_rate=${report.crossingRankOrder.avgExactOrderMatchRate.toFixed(4)}`,
+  )
+  console.log(
+    `crossing_rank_avg_order_displacement=${report.crossingRankOrder.avgOrderDisplacement.toFixed(4)}`,
   )
   console.log(
     `placement_major_layer_mismatch=${report.placementMajor.totalLayerMismatch}`,
