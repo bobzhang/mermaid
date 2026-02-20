@@ -21,6 +21,7 @@ type LocalTrace = {
   inputNodeIds: string[]
   rankLayers: Layering
   orientedEdges: Set<string>
+  modelOrderOrientedEdges: Set<string>
 }
 
 type UpstreamOrientation = {
@@ -32,14 +33,22 @@ type CaseMetrics = {
   direction: Direction
   edgeCountFixture: number
   edgeCountLocalTrace: number
+  edgeCountLocalModelOrderTrace: number
   edgeCountUpstream: number
   comparable: number
   matched: number
   mismatched: number
   missing: number
   matchRate: number
+  modelOrderComparable: number
+  modelOrderMatched: number
+  modelOrderMismatched: number
+  modelOrderMissing: number
+  modelOrderMatchRate: number
   mismatchEdges: string[]
   missingEdges: string[]
+  modelOrderMismatchEdges: string[]
+  modelOrderMissingEdges: string[]
 }
 
 function fail(message: string): never {
@@ -301,6 +310,7 @@ function parseLocalTrace(source: string): LocalTrace {
   ])
   const rankLayersByRank = new Map<number, string[]>()
   const orientedEdges = new Set<string>()
+  const modelOrderOrientedEdges = new Set<string>()
   const inputNodeIdsByIndex = new Map<number, string>()
   for (const rawLine of stdout.split(/\r?\n/)) {
     const line = rawLine.trim()
@@ -331,6 +341,14 @@ function parseLocalTrace(source: string): LocalTrace {
       }
       continue
     }
+    if (parts[0] === 'FEEDBACK_EDGE_MODEL_ORDER') {
+      const sourceId = parts[1] ?? ''
+      const targetId = parts[2] ?? ''
+      if (sourceId !== '' && targetId !== '') {
+        modelOrderOrientedEdges.add(`${sourceId}->${targetId}`)
+      }
+      continue
+    }
   }
   if (rankLayersByRank.size === 0) {
     fail('local trace missing SEED_LAYER output')
@@ -343,7 +361,16 @@ function parseLocalTrace(source: string): LocalTrace {
   const inputNodeIds = [...inputNodeIdsByIndex.entries()]
     .sort((left, right) => left[0] - right[0])
     .map(([, nodeId]) => nodeId)
-  return { inputNodeIds, rankLayers, orientedEdges }
+  const fallbackModelOrderEdges =
+    modelOrderOrientedEdges.size > 0
+      ? modelOrderOrientedEdges
+      : new Set([...orientedEdges])
+  return {
+    inputNodeIds,
+    rankLayers,
+    orientedEdges,
+    modelOrderOrientedEdges: fallbackModelOrderEdges,
+  }
 }
 
 function collectNodeIds(localTrace: LocalTrace, parsedEdges: ParsedFixtureEdges): string[] {
@@ -520,19 +547,32 @@ function compareFixture(fixturePath: string): CaseMetrics {
     localTrace.orientedEdges,
     upstream.orientedEdges,
   )
+  const modelOrderOrientation = orientationParity(
+    parsedEdges.edges,
+    localTrace.modelOrderOrientedEdges,
+    upstream.orientedEdges,
+  )
   return {
     fixture: fixturePath,
     direction,
     edgeCountFixture: parsedEdges.edges.length,
     edgeCountLocalTrace: localTrace.orientedEdges.size,
+    edgeCountLocalModelOrderTrace: localTrace.modelOrderOrientedEdges.size,
     edgeCountUpstream: upstream.orientedEdges.size,
     comparable: orientation.comparable,
     matched: orientation.matched,
     mismatched: orientation.mismatched,
     missing: orientation.missing,
     matchRate: orientation.matchRate,
+    modelOrderComparable: modelOrderOrientation.comparable,
+    modelOrderMatched: modelOrderOrientation.matched,
+    modelOrderMismatched: modelOrderOrientation.mismatched,
+    modelOrderMissing: modelOrderOrientation.missing,
+    modelOrderMatchRate: modelOrderOrientation.matchRate,
     mismatchEdges: orientation.mismatchEdges,
     missingEdges: orientation.missingEdges,
+    modelOrderMismatchEdges: modelOrderOrientation.mismatchEdges,
+    modelOrderMissingEdges: modelOrderOrientation.missingEdges,
   }
 }
 
@@ -547,10 +587,13 @@ function main(): void {
   for (const metrics of results) {
     console.log(`\n=== ${metrics.fixture} ===`)
     console.log(
-      `direction=${metrics.direction} edges fixture/local/upstream=${metrics.edgeCountFixture}/${metrics.edgeCountLocalTrace}/${metrics.edgeCountUpstream}`,
+      `direction=${metrics.direction} edges fixture/local/local_model_order/upstream=${metrics.edgeCountFixture}/${metrics.edgeCountLocalTrace}/${metrics.edgeCountLocalModelOrderTrace}/${metrics.edgeCountUpstream}`,
     )
     console.log(
       `orientation comparable=${metrics.comparable} matched=${metrics.matched} mismatch=${metrics.mismatched} missing=${metrics.missing} match_rate=${metrics.matchRate.toFixed(4)}`,
+    )
+    console.log(
+      `model_order_orientation comparable=${metrics.modelOrderComparable} matched=${metrics.modelOrderMatched} mismatch=${metrics.modelOrderMismatched} missing=${metrics.modelOrderMissing} match_rate=${metrics.modelOrderMatchRate.toFixed(4)}`,
     )
     if (metrics.mismatchEdges.length > 0) {
       console.log(
@@ -560,16 +603,44 @@ function main(): void {
     if (metrics.missingEdges.length > 0) {
       console.log(`missing_edges=${metrics.missingEdges.slice(0, 12).join(',')}`)
     }
+    if (metrics.modelOrderMismatchEdges.length > 0) {
+      console.log(
+        `model_order_mismatch_edges=${metrics.modelOrderMismatchEdges
+          .slice(0, 12)
+          .join(',')}`,
+      )
+    }
+    if (metrics.modelOrderMissingEdges.length > 0) {
+      console.log(
+        `model_order_missing_edges=${metrics.modelOrderMissingEdges
+          .slice(0, 12)
+          .join(',')}`,
+      )
+    }
   }
 
   const avgMatchRate =
     results.reduce((sum, row) => sum + row.matchRate, 0) / results.length
+  const avgModelOrderMatchRate =
+    results.reduce((sum, row) => sum + row.modelOrderMatchRate, 0) / results.length
   const totalComparable = results.reduce((sum, row) => sum + row.comparable, 0)
   const totalMismatched = results.reduce((sum, row) => sum + row.mismatched, 0)
+  const totalModelOrderComparable = results.reduce(
+    (sum, row) => sum + row.modelOrderComparable,
+    0,
+  )
+  const totalModelOrderMismatched = results.reduce(
+    (sum, row) => sum + row.modelOrderMismatched,
+    0,
+  )
   console.log('\n=== summary ===')
   console.log(`fixtures=${results.length}`)
   console.log(`avg_match_rate=${avgMatchRate.toFixed(4)}`)
+  console.log(`avg_model_order_match_rate=${avgModelOrderMatchRate.toFixed(4)}`)
   console.log(`total_mismatch=${totalMismatched}/${totalComparable}`)
+  console.log(
+    `total_model_order_mismatch=${totalModelOrderMismatched}/${totalModelOrderComparable}`,
+  )
 }
 
 main()
