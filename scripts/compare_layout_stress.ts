@@ -1110,6 +1110,16 @@ function majorAxisForDirection(direction: string): Axis {
   }
 }
 
+function forwardSignForDirection(direction: string): 1 | -1 {
+  switch (direction) {
+    case 'RL':
+    case 'BT':
+      return -1
+    default:
+      return 1
+  }
+}
+
 function boundsOf(points: Point[]): Bounds {
   if (points.length === 0) return { minX: 0, maxX: 0, minY: 0, maxY: 0 }
   let minX = points[0]!.x
@@ -1230,6 +1240,7 @@ function buildOrientationAwareMajorRankLayers(
   labels: string[],
   positions: Map<string, Point>,
   majorAxis: Axis,
+  forwardSign: 1 | -1,
   fixtureEdges: FixtureEdge[],
 ): string[][] {
   if (labels.length === 0) return []
@@ -1262,8 +1273,8 @@ function buildOrientationAwareMajorRankLayers(
     if (!sourcePoint || !targetPoint) {
       continue
     }
-    const sourceMajor = majorCoord(sourcePoint, majorAxis)
-    const targetMajor = majorCoord(targetPoint, majorAxis)
+    const sourceMajor = majorCoord(sourcePoint, majorAxis) * forwardSign
+    const targetMajor = majorCoord(targetPoint, majorAxis) * forwardSign
     if (sourceMajor < targetMajor - majorTieEpsilon) {
       pushOrientedEdge(edge.source, edge.target)
       continue
@@ -1374,6 +1385,7 @@ function computeMajorRankDiagnostics(
   officialNodes: Map<string, Point>,
   localNodes: Map<string, Point>,
   majorAxis: Axis,
+  forwardSign: 1 | -1,
   fixtureEdges: FixtureEdge[],
   includeSamples: boolean,
   includeLayerDetails: boolean,
@@ -1404,12 +1416,14 @@ function computeMajorRankDiagnostics(
     sharedLabels,
     officialNodes,
     majorAxis,
+    forwardSign,
     fixtureEdges,
   )
   const localLayers = buildOrientationAwareMajorRankLayers(
     sharedLabels,
     localNodes,
     majorAxis,
+    forwardSign,
     fixtureEdges,
   )
   const officialRankByLabel = buildRankIndexByLabel(officialLayers)
@@ -1986,6 +2000,7 @@ function compareFixture(
   const fixtureEdges = parsedFixtureEdges.edges
   const graphDirection = parseGraphDirection(fixtureSource)
   const majorAxis = majorAxisForDirection(graphDirection)
+  const forwardSign = forwardSignForDirection(graphDirection)
 
   const officialSvg = readFileSync(officialPath, 'utf8')
   const localSvg = readFileSync(localPath, 'utf8')
@@ -2011,6 +2026,7 @@ function compareFixture(
     officialNodes,
     localNodes,
     majorAxis,
+    forwardSign,
     fixtureEdges,
     options.explainRankOrder,
     options.includeRankLayers,
