@@ -9,6 +9,7 @@
  * Usage:
  *   bun run scripts/compare_elk_crossing_rank_order.ts fixtures/layout_stress_001_dense_dag.mmd
  *   bun run scripts/compare_elk_crossing_rank_order.ts fixtures/layout_stress_001_dense_dag.mmd fixtures/layout_stress_013_rl_dual_scc_weave.mmd
+ *   bun run scripts/compare_elk_crossing_rank_order.ts --details --limit 3 fixtures/layout_stress_013_rl_dual_scc_weave.mmd
  */
 
 import { readFileSync } from 'node:fs'
@@ -39,6 +40,25 @@ type CaseMetrics = {
   compositionMismatchLayers: number
   exactMatchRate: number
   avgDisplacement: number
+}
+
+type CaseResult = {
+  metrics: CaseMetrics
+  inputEdges: Edge[]
+  localRankLayers: Layering
+  upstreamRankLayers: Layering
+}
+
+type CliOptions = {
+  fixtures: string[]
+  details: boolean
+  detailLimit: number
+}
+
+type NeighborSummary = {
+  count: number
+  median: number
+  mean: number
 }
 
 function fail(message: string): never {
@@ -334,20 +354,14 @@ function compareLayers(localLayers: Layering, upstreamLayers: Layering): {
   }
 }
 
-function compareFixture(fixturePath: string): CaseMetrics {
-  const source = readFileSync(fixturePath, 'utf8')
-  const direction = parseGraphDirection(source)
-  const local = parseLocalTrace(source)
-  const upstream = runUpstreamPlacement(local.inputNodeIds, local.inputEdges, direction)
-  const upstreamLayers = buildLayersByMajor(
-    local.inputNodeIds,
-    upstream.majorByNodeId,
-    upstream.minorByNodeId,
-  )
-  const directParity = compareLayers(local.rankLayers, upstreamLayers)
+function selectCloserUpstreamLayering(
+  localLayers: Layering,
+  upstreamLayers: Layering,
+): { selectedLayers: Layering; parity: ReturnType<typeof compareLayers> } {
+  const directParity = compareLayers(localLayers, upstreamLayers)
   const reversedUpstreamLayers = upstreamLayers.slice().reverse()
-  const reversedParity = compareLayers(local.rankLayers, reversedUpstreamLayers)
-  const parity =
+  const reversedParity = compareLayers(localLayers, reversedUpstreamLayers)
+  const useReversed =
     reversedParity.compositionMismatchLayers < directParity.compositionMismatchLayers ||
     (
       reversedParity.compositionMismatchLayers === directParity.compositionMismatchLayers &&
@@ -358,17 +372,40 @@ function compareFixture(fixturePath: string): CaseMetrics {
       reversedParity.orderMismatchLayers === directParity.orderMismatchLayers &&
       reversedParity.avgDisplacement < directParity.avgDisplacement
     )
-      ? reversedParity
-      : directParity
   return {
-    fixture: fixturePath,
-    localLayers: local.rankLayers.length,
-    upstreamLayers: upstreamLayers.length,
-    sharedNodes: local.inputNodeIds.length,
-    orderMismatchLayers: parity.orderMismatchLayers,
-    compositionMismatchLayers: parity.compositionMismatchLayers,
-    exactMatchRate: parity.exactMatchRate,
-    avgDisplacement: parity.avgDisplacement,
+    selectedLayers: useReversed ? reversedUpstreamLayers : upstreamLayers,
+    parity: useReversed ? reversedParity : directParity,
+  }
+}
+
+function compareFixture(fixturePath: string): CaseResult {
+  const source = readFileSync(fixturePath, 'utf8')
+  const direction = parseGraphDirection(source)
+  const local = parseLocalTrace(source)
+  const upstream = runUpstreamPlacement(local.inputNodeIds, local.inputEdges, direction)
+  const upstreamLayers = buildLayersByMajor(
+    local.inputNodeIds,
+    upstream.majorByNodeId,
+    upstream.minorByNodeId,
+  )
+  const { selectedLayers, parity } = selectCloserUpstreamLayering(
+    local.rankLayers,
+    upstreamLayers,
+  )
+  return {
+    metrics: {
+      fixture: fixturePath,
+      localLayers: local.rankLayers.length,
+      upstreamLayers: selectedLayers.length,
+      sharedNodes: local.inputNodeIds.length,
+      orderMismatchLayers: parity.orderMismatchLayers,
+      compositionMismatchLayers: parity.compositionMismatchLayers,
+      exactMatchRate: parity.exactMatchRate,
+      avgDisplacement: parity.avgDisplacement,
+    },
+    inputEdges: local.inputEdges,
+    localRankLayers: local.rankLayers,
+    upstreamRankLayers: selectedLayers,
   }
 }
 
@@ -376,15 +413,160 @@ function round(value: number): string {
   return Number.isFinite(value) ? value.toFixed(4) : 'NaN'
 }
 
-function main(): void {
-  const fixtures = process.argv.slice(2)
+function parseCliOptions(args: string[]): CliOptions {
+  let details = false
+  let detailLimit = Number.MAX_SAFE_INTEGER
+  const fixtures: string[] = []
+  for (let i = 0; i < args.length; i += 1) {
+    const arg = args[i]!
+    if (arg === '--details') {
+      details = true
+      continue
+    }
+    if (arg === '--limit') {
+      const next = args[i + 1]
+      if (!next) fail('missing value after --limit')
+      const parsed = Number.parseInt(next, 10)
+      if (!Number.isFinite(parsed) || parsed <= 0) {
+        fail(`invalid --limit value: ${next}`)
+      }
+      detailLimit = parsed
+      i += 1
+      continue
+    }
+    if (arg.startsWith('--limit=')) {
+      const raw = arg.slice('--limit='.length)
+      const parsed = Number.parseInt(raw, 10)
+      if (!Number.isFinite(parsed) || parsed <= 0) {
+        fail(`invalid --limit value: ${raw}`)
+      }
+      detailLimit = parsed
+      continue
+    }
+    if (arg.startsWith('--')) {
+      fail(`unknown argument: ${arg}`)
+    }
+    fixtures.push(arg)
+  }
   if (fixtures.length === 0) {
     fail(
-      'usage: bun run scripts/compare_elk_crossing_rank_order.ts <fixture.mmd> [more...]',
+      'usage: bun run scripts/compare_elk_crossing_rank_order.ts [--details] [--limit N] <fixture.mmd> [more...]',
     )
   }
+  return { fixtures, details, detailLimit }
+}
 
-  const rows = fixtures.map(compareFixture)
+function rankPositionByNodeId(layers: Layering): Map<string, { rank: number; pos: number }> {
+  const map = new Map<string, { rank: number; pos: number }>()
+  for (let rank = 0; rank < layers.length; rank += 1) {
+    const layer = layers[rank] ?? []
+    for (let pos = 0; pos < layer.length; pos += 1) {
+      map.set(layer[pos]!, { rank, pos })
+    }
+  }
+  return map
+}
+
+function summarizePositions(positions: number[]): NeighborSummary | undefined {
+  if (positions.length === 0) return undefined
+  const sorted = positions.slice().sort((a, b) => a - b)
+  const count = sorted.length
+  const sum = sorted.reduce((acc, value) => acc + value, 0)
+  const median =
+    count % 2 === 1
+      ? sorted[(count / 2) | 0]!
+      : (sorted[count / 2 - 1]! + sorted[count / 2]!) / 2
+  return { count, median, mean: sum / count }
+}
+
+function collectNeighborSummary(
+  nodeId: string,
+  rank: number,
+  edges: Edge[],
+  rankPosByNodeId: Map<string, { rank: number; pos: number }>,
+): { prev?: NeighborSummary; next?: NeighborSummary } {
+  const prevPositions: number[] = []
+  const nextPositions: number[] = []
+  for (const edge of edges) {
+    if (edge.target === nodeId) {
+      const sourceInfo = rankPosByNodeId.get(edge.source)
+      if (sourceInfo && sourceInfo.rank < rank) {
+        prevPositions.push(sourceInfo.pos)
+      }
+    }
+    if (edge.source === nodeId) {
+      const targetInfo = rankPosByNodeId.get(edge.target)
+      if (targetInfo && targetInfo.rank > rank) {
+        nextPositions.push(targetInfo.pos)
+      }
+    }
+  }
+  return {
+    prev: summarizePositions(prevPositions),
+    next: summarizePositions(nextPositions),
+  }
+}
+
+function formatNeighborSummary(value: NeighborSummary | undefined): string {
+  if (!value) return 'none'
+  return `count=${value.count}, median=${round(value.median)}, mean=${round(value.mean)}`
+}
+
+function mismatchedRanks(localLayers: Layering, upstreamLayers: Layering): number[] {
+  const ranks: number[] = []
+  const maxLayerCount = Math.max(localLayers.length, upstreamLayers.length)
+  for (let rank = 0; rank < maxLayerCount; rank += 1) {
+    const local = localLayers[rank] ?? []
+    const upstream = upstreamLayers[rank] ?? []
+    if (JSON.stringify(local) !== JSON.stringify(upstream)) {
+      ranks.push(rank)
+    }
+  }
+  return ranks
+}
+
+function printCaseDetails(result: CaseResult): void {
+  const metric = result.metrics
+  const mismatchRanks = mismatchedRanks(
+    result.localRankLayers,
+    result.upstreamRankLayers,
+  )
+  if (mismatchRanks.length === 0) return
+  const rankPosByNodeId = rankPositionByNodeId(result.localRankLayers)
+  console.log(`\n--- details ${metric.fixture} ---`)
+  for (const rank of mismatchRanks) {
+    const localLayer = result.localRankLayers[rank] ?? []
+    const upstreamLayer = result.upstreamRankLayers[rank] ?? []
+    const nodes: string[] = []
+    for (const nodeId of localLayer) {
+      nodes.push(nodeId)
+    }
+    for (const nodeId of upstreamLayer) {
+      if (!nodes.includes(nodeId)) {
+        nodes.push(nodeId)
+      }
+    }
+    console.log(`rank=${rank}`)
+    console.log(`  local   = [${localLayer.join(', ')}]`)
+    console.log(`  upstream= [${upstreamLayer.join(', ')}]`)
+    for (const nodeId of nodes) {
+      const summary = collectNeighborSummary(
+        nodeId,
+        rank,
+        result.inputEdges,
+        rankPosByNodeId,
+      )
+      console.log(
+        `  node=${nodeId} prev{${formatNeighborSummary(summary.prev)}} next{${formatNeighborSummary(summary.next)}}`,
+      )
+    }
+  }
+}
+
+function main(): void {
+  const options = parseCliOptions(process.argv.slice(2))
+  const results = options.fixtures.map(compareFixture)
+  const rows = results.map(result => result.metrics)
   let totalOrderMismatch = 0
   let totalCompositionMismatch = 0
   let totalLayerSlots = 0
@@ -420,6 +602,27 @@ function main(): void {
   console.log(`total_composition_mismatch=${totalCompositionMismatch}/${totalLayerSlots}`)
   console.log(`avg_exact_match_rate=${round(avgExactRate)}`)
   console.log(`avg_displacement=${round(avgDisplacement)}`)
+
+  if (options.details) {
+    const ranked = results
+      .filter(result => result.metrics.orderMismatchLayers > 0)
+      .sort((left, right) => {
+        if (left.metrics.orderMismatchLayers !== right.metrics.orderMismatchLayers) {
+          return right.metrics.orderMismatchLayers - left.metrics.orderMismatchLayers
+        }
+        return left.metrics.fixture.localeCompare(right.metrics.fixture)
+      })
+      .slice(0, options.detailLimit)
+    if (ranked.length === 0) {
+      console.log('\n=== details ===')
+      console.log('no order mismatch layers')
+      return
+    }
+    console.log('\n=== details ===')
+    for (const result of ranked) {
+      printCaseDetails(result)
+    }
+  }
 }
 
 main()
