@@ -12,6 +12,7 @@ pub fn layout_graph_elk_backend(@bobzhang/beautiful_mermaid/layout/engine/graph/
 pub(all) struct ElkLayeredRankTrace {
   rank_input_node_ids_in_order : Array[String]
   rank_input_resolved_edges : Array[(String, String)]
+  rank_feedback_oriented_edges : Array[(String, String)]
   rank_seed_strategy : String
   rank_seed_rank_by_node_id : Map[String, Int]
   rank_seed_order_index_by_node_id : Map[String, Int]

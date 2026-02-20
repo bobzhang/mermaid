@@ -312,6 +312,10 @@ fn dump_graph_trace(graph : @model.MermaidGraph) -> Bool {
         let (source_id, target_id) = edge
         println("INPUT_EDGE\t\{source_id}\t\{target_id}")
       }
+      for edge in trace.rank_feedback_oriented_edges {
+        let (source_id, target_id) = edge
+        println("FEEDBACK_EDGE\t\{source_id}\t\{target_id}")
+      }
       println("ORDER_STRATEGY\t\{trace.rank_order_strategy}")
       println("ORDER_SELECTED_SOURCE\t\{trace.rank_order_selected_source}")
       println(

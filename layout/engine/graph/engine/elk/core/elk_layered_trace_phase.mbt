@@ -3,6 +3,7 @@
 pub(all) struct ElkLayeredRankTrace {
   rank_input_node_ids_in_order : Array[String]
   rank_input_resolved_edges : Array[(String, String)]
+  rank_feedback_oriented_edges : Array[(String, String)]
   rank_seed_strategy : String
   rank_seed_rank_by_node_id : Map[String, Int]
   rank_seed_order_index_by_node_id : Map[String, Int]
@@ -100,6 +101,11 @@ pub fn collect_elk_layered_rank_trace(
     setup_state.subgraph_exit_by_id,
     setup_state.node_ids_in_order,
   )
+  let feedback_orientation_state = compute_feedback_order_orientation_state(
+    setup_state.node_ids_in_order,
+    rank_input_resolved_edges,
+    setup_state.base_order_index_by_node_id,
+  )
   let rank_phase_state = run_elk_layered_rank_phase(setup_state)
   let rank_seed_state = rank_phase_state.rank_seed_state
   let rank_order_debug_state = rank_phase_state.rank_order_debug_state
@@ -113,6 +119,7 @@ pub fn collect_elk_layered_rank_trace(
   Some({
     rank_input_node_ids_in_order: setup_state.node_ids_in_order.copy(),
     rank_input_resolved_edges,
+    rank_feedback_oriented_edges: feedback_orientation_state.oriented_edges.copy(),
     rank_seed_strategy: rank_seed_strategy_tag(
       rank_phase_state.rank_seed_strategy,
     ),
