@@ -17,11 +17,23 @@ fn rank_position_by_node_id(
 }
 
 ///|
+priv struct NodeNeighborOrderKey {
+  has_center : Bool
+  median_scaled : Int
+  mean_scaled : Int
+}
+
+///|
+fn empty_neighbor_order_key() -> NodeNeighborOrderKey {
+  { has_center: false, median_scaled: 0, mean_scaled: 0 }
+}
+
+///|
 fn node_neighbor_order_key(
   node_id : String,
   neighbor_by_node_id : Map[String, Array[String]],
   rank_position_by_node_id : Map[String, Int],
-) -> (Bool, Int, Int) {
+) -> NodeNeighborOrderKey {
   let positions : Array[Int] = []
   let mut sum = 0
   match neighbor_by_node_id.get(node_id) {
@@ -38,7 +50,7 @@ fn node_neighbor_order_key(
     None => ()
   }
   if positions.length() == 0 {
-    (false, 0, 0)
+    empty_neighbor_order_key()
   } else {
     positions.sort()
     let count = positions.length()
@@ -48,7 +60,7 @@ fn node_neighbor_order_key(
       (positions[count / 2 - 1] + positions[count / 2]) * 500
     }
     let mean_scaled = sum * 1000 / count
-    (true, median_scaled, mean_scaled)
+    { has_center: true, median_scaled, mean_scaled }
   }
 }
 
@@ -60,13 +72,27 @@ fn sort_rank_nodes_by_neighbors(
   order_index_by_node_id : Map[String, Int],
   preserve_current_order_on_tie : Bool,
 ) -> Unit {
+  let neighbor_key_by_node_id : Map[String, NodeNeighborOrderKey] = {}
+  for node_id in node_ids {
+    neighbor_key_by_node_id[node_id] = node_neighbor_order_key(
+      node_id, neighbor_by_node_id, rank_position_by_node_id,
+    )
+  }
   node_ids.sort_by((left, right) => {
-    let (left_has_center, left_median, left_mean) = node_neighbor_order_key(
-      left, neighbor_by_node_id, rank_position_by_node_id,
-    )
-    let (right_has_center, right_median, right_mean) = node_neighbor_order_key(
-      right, neighbor_by_node_id, rank_position_by_node_id,
-    )
+    let left_key = match neighbor_key_by_node_id.get(left) {
+      Some(value) => value
+      None => empty_neighbor_order_key()
+    }
+    let right_key = match neighbor_key_by_node_id.get(right) {
+      Some(value) => value
+      None => empty_neighbor_order_key()
+    }
+    let left_has_center = left_key.has_center
+    let left_median = left_key.median_scaled
+    let left_mean = left_key.mean_scaled
+    let right_has_center = right_key.has_center
+    let right_median = right_key.median_scaled
+    let right_mean = right_key.mean_scaled
     if left_has_center && right_has_center && left_median != right_median {
       return left_median.compare(right_median)
     }
