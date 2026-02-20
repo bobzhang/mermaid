@@ -323,6 +323,34 @@ test "elk layered crossing selector prefers lower-crossing rank order candidate"
 }
 
 ///|
+test "elk layered crossing selector keeps alternate on layered-crossing ties" {
+  let rank_by_node_id : Map[String, Int] = { "A": 0, "B": 0, "C": 1, "D": 1 }
+  let successors_by_node_id : Map[String, Array[String]] = {
+    "A": ["C"],
+    "B": [],
+    "C": [],
+    "D": [],
+  }
+  let base_rank_node_ids_by_rank : Map[Int, Array[String]] = {
+    0: ["A", "B"],
+    1: ["C", "D"],
+  }
+  let alternate_rank_node_ids_by_rank : Map[Int, Array[String]] = {
+    0: ["A", "B"],
+    1: ["D", "C"],
+  }
+  let selected_rank_node_ids_by_rank = select_lower_crossing_rank_order(
+    base_rank_node_ids_by_rank, alternate_rank_node_ids_by_rank, 1, rank_by_node_id,
+    successors_by_node_id,
+  )
+  let selected_rank_one = match selected_rank_node_ids_by_rank.get(1) {
+    Some(node_ids) => node_ids
+    None => []
+  }
+  assert_eq(selected_rank_one, ["D", "C"])
+}
+
+///|
 test "elk layered long-span rank-order candidates stay score-tied" {
   let graph = wb_graph(["N0", "N1", "N2", "N3", "N4", "N5", "N6"], [
     ("N0", "N1"),
