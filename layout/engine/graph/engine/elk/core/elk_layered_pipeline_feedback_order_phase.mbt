@@ -5,6 +5,12 @@ priv struct FeedbackGreedyOrientationState {
 }
 
 ///|
+priv struct FeedbackIncidentEdge {
+  endpoint_id : String
+  endpoint_is_target : Bool
+}
+
+///|
 fn sort_ready_nodes_by_order(
   ready_node_ids : Array[String],
   order_index_by_node_id : Map[String, Int],
@@ -84,43 +90,26 @@ fn choose_feedback_break_node_by_outflow(
   prefer_forward_order_on_tie : Bool,
   random_state : UInt64,
 ) -> (String?, UInt64) {
-  let mut max_outflow = 0
-  let mut has_candidate = false
+  let mut max_outflow = -2147483648
   let mut break_candidates : Array[String] = []
-  let node_order_index_by_node_id = build_order_index_by_id(node_ids_in_order)
-  let mut min_candidate_indegree = 0
-  let mut max_candidate_indegree = 0
-  let mut has_indegree_range = false
   for node_id in node_ids_in_order {
     if option_int_or(mark_by_node_id.get(node_id), 0) != 0 {
       continue
     }
     let outflow = option_int_or(outdegree_by_node_id.get(node_id), 0) -
       option_int_or(indegree_by_node_id.get(node_id), 0)
-    if !has_candidate || outflow > max_outflow {
+    if outflow > max_outflow {
       break_candidates = [node_id]
       max_outflow = outflow
-      has_candidate = true
-      let indegree = option_int_or(indegree_by_node_id.get(node_id), 0)
-      min_candidate_indegree = indegree
-      max_candidate_indegree = indegree
-      has_indegree_range = true
     } else if outflow == max_outflow {
       break_candidates.push(node_id)
-      let indegree = option_int_or(indegree_by_node_id.get(node_id), 0)
-      if !has_indegree_range || indegree < min_candidate_indegree {
-        min_candidate_indegree = indegree
-      }
-      if !has_indegree_range || indegree > max_candidate_indegree {
-        max_candidate_indegree = indegree
-      }
-      has_indegree_range = true
     }
   }
   if break_candidates.length() == 0 {
     return (None, random_state)
   }
-  if use_indegree_tie_sort && max_candidate_indegree != min_candidate_indegree {
+  if use_indegree_tie_sort {
+    let node_order_index_by_node_id = build_order_index_by_id(node_ids_in_order)
     break_candidates.sort_by((left, right) => {
       let left_indegree = option_int_or(indegree_by_node_id.get(left), 0)
       let right_indegree = option_int_or(indegree_by_node_id.get(right), 0)
@@ -148,18 +137,21 @@ fn build_feedback_greedy_neighbors(
   Array[(String, String)],
   Map[String, Array[String]],
   Map[String, Array[String]],
+  Map[String, Array[FeedbackIncidentEdge]],
   Map[String, Int],
   Map[String, Int],
 ) {
   let visible_node_id_set : Map[String, Bool] = {}
   let successors_by_node_id : Map[String, Array[String]] = {}
   let predecessors_by_node_id : Map[String, Array[String]] = {}
+  let incident_edges_by_node_id : Map[String, Array[FeedbackIncidentEdge]] = {}
   let indegree_by_node_id : Map[String, Int] = {}
   let outdegree_by_node_id : Map[String, Int] = {}
   for node_id in node_ids {
     visible_node_id_set[node_id] = true
     successors_by_node_id[node_id] = []
     predecessors_by_node_id[node_id] = []
+    incident_edges_by_node_id[node_id] = []
     indegree_by_node_id[node_id] = 0
     outdegree_by_node_id[node_id] = 0
   }
@@ -193,11 +185,24 @@ fn build_feedback_greedy_neighbors(
       Some(predecessors) => predecessors.push(source_id)
       None => ()
     }
+    match incident_edges_by_node_id.get(source_id) {
+      Some(incident_edges) =>
+        incident_edges.push({ endpoint_id: target_id, endpoint_is_target: true })
+      None => ()
+    }
+    match incident_edges_by_node_id.get(target_id) {
+      Some(incident_edges) =>
+        incident_edges.push({
+          endpoint_id: source_id,
+          endpoint_is_target: false,
+        })
+      None => ()
+    }
   }
 
   (
-    normalized_edges, successors_by_node_id, predecessors_by_node_id, indegree_by_node_id,
-    outdegree_by_node_id,
+    normalized_edges, successors_by_node_id, predecessors_by_node_id, incident_edges_by_node_id,
+    indegree_by_node_id, outdegree_by_node_id,
   )
 }
 
@@ -207,48 +212,78 @@ fn update_feedback_greedy_neighbors_after_mark(
   mark_by_node_id : Map[String, Int],
   indegree_by_node_id : Map[String, Int],
   outdegree_by_node_id : Map[String, Int],
-  successors_by_node_id : Map[String, Array[String]],
-  predecessors_by_node_id : Map[String, Array[String]],
+  incident_edges_by_node_id : Map[String, Array[FeedbackIncidentEdge]],
   sources : Array[String],
   sinks : Array[String],
 ) -> Unit {
-  match successors_by_node_id.get(node_id) {
-    Some(successors) =>
-      for successor_id in successors {
-        if option_int_or(mark_by_node_id.get(successor_id), 0) != 0 {
+  match incident_edges_by_node_id.get(node_id) {
+    Some(incident_edges) =>
+      for incident_edge in incident_edges {
+        let endpoint_id = incident_edge.endpoint_id
+        if option_int_or(mark_by_node_id.get(endpoint_id), 0) != 0 {
           continue
         }
-        indegree_by_node_id[successor_id] = option_int_or(
-            indegree_by_node_id.get(successor_id),
-            0,
-          ) -
-          1
-        if option_int_or(indegree_by_node_id.get(successor_id), 0) <= 0 &&
-          option_int_or(outdegree_by_node_id.get(successor_id), 0) > 0 {
-          sources.push(successor_id)
+        if incident_edge.endpoint_is_target {
+          indegree_by_node_id[endpoint_id] = option_int_or(
+              indegree_by_node_id.get(endpoint_id),
+              0,
+            ) -
+            1
+          if option_int_or(indegree_by_node_id.get(endpoint_id), 0) <= 0 &&
+            option_int_or(outdegree_by_node_id.get(endpoint_id), 0) > 0 {
+            sources.push(endpoint_id)
+          }
+        } else {
+          outdegree_by_node_id[endpoint_id] = option_int_or(
+              outdegree_by_node_id.get(endpoint_id),
+              0,
+            ) -
+            1
+          if option_int_or(outdegree_by_node_id.get(endpoint_id), 0) <= 0 &&
+            option_int_or(indegree_by_node_id.get(endpoint_id), 0) > 0 {
+            sinks.push(endpoint_id)
+          }
         }
       }
     None => ()
+  }
+}
+
+///|
+fn build_feedback_node_ids_in_dfs_order(
+  node_ids_in_order : Array[String],
+  predecessors_by_node_id : Map[String, Array[String]],
+  successors_by_node_id : Map[String, Array[String]],
+) -> Array[String] {
+  let visited_by_node_id : Map[String, Bool] = {}
+  let reordered_node_ids : Array[String] = []
+
+  fn dfs_visit(node_id : String) -> Unit {
+    if option_bool_or(visited_by_node_id.get(node_id), false) {
+      return
+    }
+    visited_by_node_id[node_id] = true
+    reordered_node_ids.push(node_id)
+    match predecessors_by_node_id.get(node_id) {
+      Some(predecessors) =>
+        for predecessor_id in predecessors {
+          dfs_visit(predecessor_id)
+        }
+      None => ()
+    }
+    match successors_by_node_id.get(node_id) {
+      Some(successors) =>
+        for successor_id in successors {
+          dfs_visit(successor_id)
+        }
+      None => ()
+    }
   }
 
-  match predecessors_by_node_id.get(node_id) {
-    Some(predecessors) =>
-      for predecessor_id in predecessors {
-        if option_int_or(mark_by_node_id.get(predecessor_id), 0) != 0 {
-          continue
-        }
-        outdegree_by_node_id[predecessor_id] = option_int_or(
-            outdegree_by_node_id.get(predecessor_id),
-            0,
-          ) -
-          1
-        if option_int_or(outdegree_by_node_id.get(predecessor_id), 0) <= 0 &&
-          option_int_or(indegree_by_node_id.get(predecessor_id), 0) > 0 {
-          sinks.push(predecessor_id)
-        }
-      }
-    None => ()
+  for node_id in node_ids_in_order {
+    dfs_visit(node_id)
   }
+  reordered_node_ids
 }
 
 ///|
@@ -296,6 +331,7 @@ fn compute_feedback_order_orientation_state(
     normalized_edges,
     successors_by_node_id,
     predecessors_by_node_id,
+    incident_edges_by_node_id,
     indegree_by_node_id,
     outdegree_by_node_id,
   ) = build_feedback_greedy_neighbors(node_ids, resolved_edges)
@@ -304,11 +340,18 @@ fn compute_feedback_order_orientation_state(
   node_ids_in_order.sort_by((left, right) => {
     compare_node_ids_by_order(left, right, base_order_index_by_node_id)
   })
+  let dfs_node_ids_in_order = if node_ids_in_order.length() <= 16 {
+    build_feedback_node_ids_in_dfs_order(
+      node_ids_in_order, predecessors_by_node_id, successors_by_node_id,
+    )
+  } else {
+    node_ids_in_order
+  }
 
   let mark_by_node_id : Map[String, Int] = {}
   let sinks : Array[String] = []
   let sources : Array[String] = []
-  for node_id in node_ids_in_order {
+  for node_id in dfs_node_ids_in_order {
     mark_by_node_id[node_id] = 0
     let indegree = option_int_or(indegree_by_node_id.get(node_id), 0)
     let outdegree = option_int_or(outdegree_by_node_id.get(node_id), 0)
@@ -328,8 +371,8 @@ fn compute_feedback_order_orientation_state(
       mark_by_node_id[sink_id] = next_right
       next_right -= 1
       update_feedback_greedy_neighbors_after_mark(
-        sink_id, mark_by_node_id, indegree_by_node_id, outdegree_by_node_id, successors_by_node_id,
-        predecessors_by_node_id, sources, sinks,
+        sink_id, mark_by_node_id, indegree_by_node_id, outdegree_by_node_id, incident_edges_by_node_id,
+        sources, sinks,
       )
       unprocessed_count -= 1
     }
@@ -338,8 +381,8 @@ fn compute_feedback_order_orientation_state(
       mark_by_node_id[source_id] = next_left
       next_left += 1
       update_feedback_greedy_neighbors_after_mark(
-        source_id, mark_by_node_id, indegree_by_node_id, outdegree_by_node_id, successors_by_node_id,
-        predecessors_by_node_id, sources, sinks,
+        source_id, mark_by_node_id, indegree_by_node_id, outdegree_by_node_id, incident_edges_by_node_id,
+        sources, sinks,
       )
       unprocessed_count -= 1
     }
@@ -349,7 +392,7 @@ fn compute_feedback_order_orientation_state(
     }
 
     let (break_node_id, next_state) = choose_feedback_break_node_by_outflow(
-      node_ids_in_order, mark_by_node_id, indegree_by_node_id, outdegree_by_node_id,
+      dfs_node_ids_in_order, mark_by_node_id, indegree_by_node_id, outdegree_by_node_id,
       use_indegree_tie_sort, prefer_forward_order_on_tie, random_state,
     )
     random_state = next_state
@@ -358,8 +401,8 @@ fn compute_feedback_order_orientation_state(
         mark_by_node_id[node_id] = next_left
         next_left += 1
         update_feedback_greedy_neighbors_after_mark(
-          node_id, mark_by_node_id, indegree_by_node_id, outdegree_by_node_id, successors_by_node_id,
-          predecessors_by_node_id, sources, sinks,
+          node_id, mark_by_node_id, indegree_by_node_id, outdegree_by_node_id, incident_edges_by_node_id,
+          sources, sinks,
         )
         unprocessed_count -= 1
       }
@@ -368,7 +411,7 @@ fn compute_feedback_order_orientation_state(
   }
 
   if unprocessed_count > 0 {
-    for node_id in node_ids_in_order {
+    for node_id in dfs_node_ids_in_order {
       if option_int_or(mark_by_node_id.get(node_id), 0) != 0 {
         continue
       }
@@ -378,9 +421,9 @@ fn compute_feedback_order_orientation_state(
     }
   }
 
-  shift_negative_marks_to_positive_order(node_ids_in_order, mark_by_node_id)
+  shift_negative_marks_to_positive_order(dfs_node_ids_in_order, mark_by_node_id)
 
-  let ordered_node_ids = node_ids_in_order.copy()
+  let ordered_node_ids = dfs_node_ids_in_order.copy()
   ordered_node_ids.sort_by((left, right) => {
     let left_mark = option_int_or(mark_by_node_id.get(left), 0)
     let right_mark = option_int_or(mark_by_node_id.get(right), 0)

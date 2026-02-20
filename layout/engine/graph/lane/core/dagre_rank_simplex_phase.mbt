@@ -1317,6 +1317,6 @@ pub fn collect_dagre_network_simplex_ranks_from_directed_edges(
     })
   }
   collect_dagre_network_simplex_ranks_from_rank_edge_specs(
-    nodes_in_order, edge_specs, true,
+    nodes_in_order, edge_specs, false,
   )
 }
