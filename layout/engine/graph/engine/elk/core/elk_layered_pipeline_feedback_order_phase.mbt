@@ -281,6 +281,47 @@ fn build_oriented_edges_from_feedback_marks(
 }
 
 ///|
+fn reorder_feedback_oriented_edges_by_model_order(
+  oriented_edges : Array[(String, String)],
+  order_index_by_node_id : Map[String, Int],
+) -> Array[(String, String)] {
+  let sorted_oriented_edges = oriented_edges.copy()
+  sorted_oriented_edges.sort_by((left, right) => {
+    let (left_source_id, left_target_id) = left
+    let (right_source_id, right_target_id) = right
+    let left_source_order = option_int_or(
+      order_index_by_node_id.get(left_source_id),
+      2147483647,
+    )
+    let right_source_order = option_int_or(
+      order_index_by_node_id.get(right_source_id),
+      2147483647,
+    )
+    if left_source_order != right_source_order {
+      return left_source_order.compare(right_source_order)
+    }
+    let left_target_order = option_int_or(
+      order_index_by_node_id.get(left_target_id),
+      2147483647,
+    )
+    let right_target_order = option_int_or(
+      order_index_by_node_id.get(right_target_id),
+      2147483647,
+    )
+    if left_target_order != right_target_order {
+      return left_target_order.compare(right_target_order)
+    }
+    let source_id_cmp = left_source_id.compare(right_source_id)
+    if source_id_cmp != 0 {
+      source_id_cmp
+    } else {
+      left_target_id.compare(right_target_id)
+    }
+  })
+  sorted_oriented_edges
+}
+
+///|
 fn compute_feedback_order_orientation_state(
   node_ids : Array[String],
   resolved_edges : Array[(String, String)],
@@ -387,5 +428,10 @@ fn compute_feedback_order_orientation_state(
   let oriented_edges = build_oriented_edges_from_feedback_marks(
     normalized_edges, mark_by_node_id,
   )
-  { order_index_by_node_id, oriented_edges }
+  {
+    order_index_by_node_id,
+    oriented_edges: reorder_feedback_oriented_edges_by_model_order(
+      oriented_edges, order_index_by_node_id,
+    ),
+  }
 }

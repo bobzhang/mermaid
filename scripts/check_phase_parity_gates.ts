@@ -336,11 +336,72 @@ function checkElkSortByInputModelGate(): void {
   }
 }
 
+function checkElkSortByInputPortOrderGate(): void {
+  const fixtures = [
+    'fixtures/layout_stress_001_dense_dag.mmd',
+    'fixtures/layout_stress_002_feedback_mesh.mmd',
+    'fixtures/layout_stress_003_subgraph_bridges.mmd',
+    'fixtures/layout_stress_004_fanin_fanout.mmd',
+    'fixtures/layout_stress_005_long_span_backjumps.mmd',
+    'fixtures/layout_stress_006_nested_bridge_loops.mmd',
+    'fixtures/layout_stress_007_dependency_weave.mmd',
+    'fixtures/layout_stress_008_hyper_weave_pipeline.mmd',
+    'fixtures/layout_stress_009_nested_ring_bridges.mmd',
+    'fixtures/layout_stress_010_bipartite_crossfire.mmd',
+    'fixtures/layout_stress_011_feedback_lattice.mmd',
+    'fixtures/layout_stress_012_interleaved_subgraph_feedback.mmd',
+    'fixtures/layout_stress_013_rl_dual_scc_weave.mmd',
+  ]
+  const stdout = runOrThrow('bun', [
+    'run',
+    'scripts/compare_elk_sort_by_input_ports.ts',
+    ...fixtures,
+  ])
+  const lines = stdout
+    .split('\n')
+    .map(line => line.trim())
+    .filter(line => line !== '')
+  const summaryLine = lines.find(line =>
+    line.startsWith('total_port_order_mismatch_slots='),
+  )
+  if (!summaryLine) {
+    fail(
+      'elk sort-by-input port-order gate missing total_port_order_mismatch_slots summary line',
+    )
+  }
+  const summaryMatch =
+    /^total_port_order_mismatch_slots=(\d+)\/(\d+)$/.exec(summaryLine)
+  if (!summaryMatch) {
+    fail(
+      `elk sort-by-input port-order gate invalid summary format: ${summaryLine}`,
+    )
+  }
+  const mismatched = Number.parseInt(summaryMatch[1]!, 10)
+  const comparable = Number.parseInt(summaryMatch[2]!, 10)
+  if (!Number.isFinite(mismatched) || !Number.isFinite(comparable)) {
+    fail(
+      `elk sort-by-input port-order gate invalid counters: ${summaryLine}`,
+    )
+  }
+  if (comparable <= 0) {
+    fail(
+      `elk sort-by-input port-order gate invalid denominator: ${summaryLine}`,
+    )
+  }
+  const maxAllowedMismatchSlots = 401
+  if (mismatched > maxAllowedMismatchSlots) {
+    fail(
+      `elk sort-by-input port-order gate expected mismatches <= ${maxAllowedMismatchSlots}, got ${mismatched}/${comparable}`,
+    )
+  }
+}
+
 function main(): void {
   checkDagreTraceGate()
   checkElkRankLayerGate()
   checkElkCycleOrientationGate()
   checkElkSortByInputModelGate()
+  checkElkSortByInputPortOrderGate()
   console.log('Phase parity gates passed.')
 }
 
