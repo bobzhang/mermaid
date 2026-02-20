@@ -172,6 +172,7 @@ priv struct ElkLayeredNodeSizeState {
   height_by_node_id : Map[String, Int]
   global_max_width : Int
   global_max_height : Int
+  compact_small_graph : Bool
 }
 
 ///|
@@ -180,17 +181,23 @@ fn build_elk_layered_node_size_state(
 ) -> ElkLayeredNodeSizeState {
   let width_by_node_id : Map[String, Int] = {}
   let height_by_node_id : Map[String, Int] = {}
-  let compact_short_labels = nodes_in_order.length() <= 8
+  let compact_small_graph = nodes_in_order.length() <= 8
   let mut global_max_width = 0
   let mut global_max_height = 0
   for node in nodes_in_order {
-    let (width, height) = node_dimensions(node, compact_short_labels)
+    let (width, height) = node_dimensions(node, compact_small_graph)
     width_by_node_id[node.id] = width
     height_by_node_id[node.id] = height
     global_max_width = global_max_width.max(width)
     global_max_height = global_max_height.max(height)
   }
-  { width_by_node_id, height_by_node_id, global_max_width, global_max_height }
+  {
+    width_by_node_id,
+    height_by_node_id,
+    global_max_width,
+    global_max_height,
+    compact_small_graph,
+  }
 }
 
 ///|
@@ -225,17 +232,20 @@ fn run_elk_layered_spacing_phase(
   max_rank_size : Int,
   node_size_state : ElkLayeredNodeSizeState,
 ) -> ElkLayeredSpacingState {
+  let compact_small_graph = node_size_state.compact_small_graph
   let padding = @layout_engine_graph_internal_core.option_int_or(
     options.padding,
     40,
   )
+  let default_node_spacing = if compact_small_graph { 72 } else { 130 }
+  let default_layer_spacing = if compact_small_graph { 64 } else { 90 }
   let node_spacing = @layout_engine_graph_internal_core.option_int_or(
     options.node_spacing,
-    130,
+    default_node_spacing,
   )
   let layer_spacing = @layout_engine_graph_internal_core.option_int_or(
     options.layer_spacing,
-    90,
+    default_layer_spacing,
   )
   let major_gap_seed = if horizontal { node_spacing } else { layer_spacing }
   let minor_gap = if horizontal { layer_spacing } else { node_spacing }
@@ -244,8 +254,9 @@ fn run_elk_layered_spacing_phase(
   } else {
     node_size_state.global_max_height
   }
+  let major_gap_floor = if compact_small_graph { 12 } else { 20 }
   let major_gap = (major_gap_seed.max(
-    global_major_size + (major_gap_seed / 5).max(20),
+    global_major_size + (major_gap_seed / 5).max(major_gap_floor),
   ) -
   70).max(8)
   let min_minor_step = if horizontal {

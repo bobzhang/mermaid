@@ -188,6 +188,7 @@ test "elk layered spacing phase resolves orientation-aware major/minor steps" {
     height_by_node_id: {},
     global_max_width: 140,
     global_max_height: 60,
+    compact_small_graph: false,
   }
   let node_spacing = @layout_engine_graph_internal_core.option_int_or(
     options.node_spacing,
@@ -231,6 +232,35 @@ test "elk layered spacing phase resolves orientation-aware major/minor steps" {
   assert_eq(vertical_spacing.major_gap, expected_vertical_major)
   assert_eq(vertical_spacing.minor_step, expected_vertical_minor)
   assert_eq(vertical_spacing.max_rank_minor_span, expected_vertical_minor)
+}
+
+///|
+test "elk layered spacing phase compacts defaults for small graphs" {
+  let options = RenderOptions::default()
+  let node_size_state : ElkLayeredNodeSizeState = {
+    width_by_node_id: {},
+    height_by_node_id: {},
+    global_max_width: 70,
+    global_max_height: 54,
+    compact_small_graph: true,
+  }
+  let horizontal_spacing = run_elk_layered_spacing_phase(
+    options, true, 2, node_size_state,
+  )
+  assert_eq(horizontal_spacing.node_spacing, 72)
+  assert_eq(horizontal_spacing.layer_spacing, 64)
+  assert_eq(horizontal_spacing.major_gap, 14)
+  assert_eq(horizontal_spacing.minor_step, 66)
+  assert_eq(horizontal_spacing.max_rank_minor_span, 66)
+
+  let vertical_spacing = run_elk_layered_spacing_phase(
+    options, false, 2, node_size_state,
+  )
+  assert_eq(vertical_spacing.node_spacing, 72)
+  assert_eq(vertical_spacing.layer_spacing, 64)
+  assert_eq(vertical_spacing.major_gap, 8)
+  assert_eq(vertical_spacing.minor_step, 82)
+  assert_eq(vertical_spacing.max_rank_minor_span, 82)
 }
 
 ///|
