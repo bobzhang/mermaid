@@ -160,6 +160,13 @@ test "elk layered node-size phase captures dimensions and maxima" {
 }
 
 ///|
+test "elk layered node dimensions keep flowchart box baseline" {
+  assert_eq(node_dimensions(wb_node("L0")), (76, 54))
+  assert_eq(node_dimensions(wb_node("SRC")), (84, 54))
+  assert_eq(node_dimensions(wb_node("A\nB")), (76, 78))
+}
+
+///|
 test "elk layered spacing phase resolves orientation-aware major/minor steps" {
   let options = RenderOptions::default()
   let node_size_state : ElkLayeredNodeSizeState = {
