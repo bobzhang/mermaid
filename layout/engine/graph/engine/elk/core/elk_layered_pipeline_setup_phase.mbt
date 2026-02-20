@@ -42,8 +42,14 @@ fn node_dimensions(
       // ELK's node label boxes are close to Mermaid defaults for long labels,
       // but short labels need less horizontal padding to avoid stretched ranks.
       let short_label = compact_short_labels && longest_line <= 5
-      let min_width = if short_label { 70 } else { 76 }
-      let adaptive_padding = if short_label { 24 } else { 60 }
+      let min_width = if short_label { 64 } else { 76 }
+      let adaptive_padding = if short_label {
+        20
+      } else if compact_short_labels {
+        44
+      } else {
+        60
+      }
       let width = min_width.max(longest_line * 8 + adaptive_padding)
       let height = (30 + label_lines.length() * 24).max(54)
       (width, height)
