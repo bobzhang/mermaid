@@ -874,130 +874,191 @@ fn average_major_coord_by_node_id(
 }
 
 ///|
-fn collapse_major_coord_to_rank_edgeward_anchor(
-  rank_node_ids_by_rank : Map[Int, Array[String]],
-  max_rank : Int,
-  reverse : Bool,
+fn rank_major_anchor(
+  node_ids : Array[String],
   major_coord_by_node_id : Map[String, Int],
   baseline_major_coord_by_node_id : Map[String, Int],
-) -> Map[String, Int] {
-  let collapsed = clone_major_coord_by_node_id(major_coord_by_node_id)
-  let increasing_by_rank = !reverse
-  let max_allowed_spread = 23
-  let forced_rank_collapse_spread = 120
+) -> Int {
+  if node_ids.length() == 0 {
+    return 0
+  }
+  let majors : Array[Int] = []
+  for node_id in node_ids {
+    let baseline_major = option_int_or(
+      baseline_major_coord_by_node_id.get(node_id),
+      0,
+    )
+    majors.push(
+      option_int_or(major_coord_by_node_id.get(node_id), baseline_major),
+    )
+  }
+  majors.sort()
+  let middle = majors.length() / 2
+  if majors.length() % 2 == 0 {
+    (majors[middle - 1] + majors[middle]) / 2
+  } else {
+    majors[middle]
+  }
+}
+
+///|
+fn build_rank_major_coord_by_rank(
+  rank_node_ids_by_rank : Map[Int, Array[String]],
+  max_rank : Int,
+  major_coord_by_node_id : Map[String, Int],
+  baseline_major_coord_by_node_id : Map[String, Int],
+) -> Map[Int, Int] {
+  let rank_major_coord_by_rank : Map[Int, Int] = {}
   for rank in 0..<=max_rank {
     match rank_node_ids_by_rank.get(rank) {
-      Some(node_ids) => {
-        if node_ids.length() == 0 {
-          continue
-        }
-        let mut has_anchor = false
-        let mut rank_anchor = 0
-        let mut min_major = 0
-        let mut max_major = 0
-        let major_count_by_coord : Map[Int, Int] = {}
-        for node_id in node_ids {
-          let baseline_major = option_int_or(
-            baseline_major_coord_by_node_id.get(node_id),
-            0,
+      Some(node_ids) =>
+        if node_ids.length() > 0 {
+          rank_major_coord_by_rank[rank] = rank_major_anchor(
+            node_ids, major_coord_by_node_id, baseline_major_coord_by_node_id,
           )
-          let major = option_int_or(
-            major_coord_by_node_id.get(node_id),
-            baseline_major,
-          )
-          if !has_anchor {
-            has_anchor = true
-            rank_anchor = major
-            min_major = major
-            max_major = major
-          } else if increasing_by_rank {
-            if major > rank_anchor {
-              rank_anchor = major
-            }
-            if major < min_major {
-              min_major = major
-            }
-            if major > max_major {
-              max_major = major
-            }
-          } else if major < rank_anchor {
-            rank_anchor = major
-            if major < min_major {
-              min_major = major
-            }
-            if major > max_major {
-              max_major = major
-            }
-          } else {
-            if major < min_major {
-              min_major = major
-            }
-            if major > max_major {
-              max_major = major
-            }
-          }
-          major_count_by_coord[major] = option_int_or(
-              major_count_by_coord.get(major),
-              0,
-            ) +
-            1
         }
-        let mut mode_major = rank_anchor
-        let mut mode_count = 0
-        for major_coord, count in major_count_by_coord {
-          if count > mode_count ||
-            (count == mode_count && major_coord > mode_major) {
-            mode_major = major_coord
-            mode_count = count
-          }
-        }
-        let spread = max_major - min_major
-        let mut max_mode_delta = 0
-        for node_id in node_ids {
-          let baseline_major = option_int_or(
-            baseline_major_coord_by_node_id.get(node_id),
-            0,
-          )
-          let major = option_int_or(
-            major_coord_by_node_id.get(node_id),
-            baseline_major,
-          )
-          let mode_delta = if major >= mode_major {
-            major - mode_major
-          } else {
-            mode_major - major
-          }
-          if mode_delta > max_mode_delta {
-            max_mode_delta = mode_delta
-          }
-        }
-        let collapse_singleton_outlier = mode_count >= 2 &&
-          node_ids.length() >= 4 &&
-          mode_count + 1 >= node_ids.length() &&
-          max_mode_delta >= 50 &&
-          max_mode_delta <= 90
-        if has_anchor {
-          let force_rank_collapse = spread >= forced_rank_collapse_spread
-          if collapse_singleton_outlier || force_rank_collapse {
-            let rank_major = if collapse_singleton_outlier {
-              mode_major
-            } else {
-              rank_anchor
-            }
-            for node_id in node_ids {
-              collapsed[node_id] = rank_major
-            }
-          } else if spread <= max_allowed_spread {
-            for node_id in node_ids {
-              collapsed[node_id] = rank_anchor
-            }
-          }
-        }
-      }
       None => ()
     }
   }
-  collapsed
+  rank_major_coord_by_rank
+}
+
+///|
+fn enforce_rank_major_edge_constraints(
+  rank_major_coord_by_rank : Map[Int, Int],
+  rank_by_node_id : Map[String, Int],
+  successors_by_node_id : Map[String, Array[String]],
+  baseline_major_coord_by_node_id : Map[String, Int],
+  base_major_gap : Int,
+  horizontal : Bool,
+  width_by_node_id : Map[String, Int],
+  height_by_node_id : Map[String, Int],
+) -> Unit {
+  let mut pass = 0
+  while pass < 4 {
+    for source_id, target_ids in successors_by_node_id {
+      let source_rank = option_int_or(rank_by_node_id.get(source_id), 0)
+      let source_major = option_int_or(
+        rank_major_coord_by_rank.get(source_rank),
+        option_int_or(baseline_major_coord_by_node_id.get(source_id), 0),
+      )
+      for target_id in target_ids {
+        let target_rank = option_int_or(
+          rank_by_node_id.get(target_id),
+          source_rank,
+        )
+        if target_rank == source_rank {
+          continue
+        }
+        let sign = major_direction_sign(
+          source_id, target_id, baseline_major_coord_by_node_id,
+        )
+        let edge_step = major_edge_min_step(
+          source_id, target_id, rank_by_node_id, baseline_major_coord_by_node_id,
+          base_major_gap, horizontal, width_by_node_id, height_by_node_id,
+        )
+        let target_major = option_int_or(
+          rank_major_coord_by_rank.get(target_rank),
+          option_int_or(
+            baseline_major_coord_by_node_id.get(target_id),
+            source_major,
+          ),
+        )
+        if sign > 0 {
+          let min_target = source_major + edge_step
+          if target_major < min_target {
+            rank_major_coord_by_rank[target_rank] = min_target
+          }
+        } else {
+          let max_target = source_major - edge_step
+          if target_major > max_target {
+            rank_major_coord_by_rank[target_rank] = max_target
+          }
+        }
+      }
+    }
+    pass += 1
+  }
+}
+
+///|
+fn normalize_rank_major_coord_by_rank(
+  rank_node_ids_by_rank : Map[Int, Array[String]],
+  max_rank : Int,
+  rank_major_coord_by_rank : Map[Int, Int],
+  baseline_major_coord_by_node_id : Map[String, Int],
+) -> Unit {
+  let mut has_rank = false
+  let mut min_rank_major = 0
+  let mut min_baseline_major = 0
+  for rank in 0..<=max_rank {
+    match rank_node_ids_by_rank.get(rank) {
+      Some(node_ids) =>
+        if node_ids.length() > 0 {
+          let baseline_major = option_int_or(
+            baseline_major_coord_by_node_id.get(node_ids[0]),
+            0,
+          )
+          let rank_major = option_int_or(
+            rank_major_coord_by_rank.get(rank),
+            baseline_major,
+          )
+          if !has_rank {
+            has_rank = true
+            min_rank_major = rank_major
+            min_baseline_major = baseline_major
+          } else {
+            if rank_major < min_rank_major {
+              min_rank_major = rank_major
+            }
+            if baseline_major < min_baseline_major {
+              min_baseline_major = baseline_major
+            }
+          }
+        }
+      None => ()
+    }
+  }
+  if has_rank && min_rank_major < min_baseline_major {
+    let normalize_offset = min_baseline_major - min_rank_major
+    for rank in 0..<=max_rank {
+      match rank_major_coord_by_rank.get(rank) {
+        Some(rank_major) =>
+          rank_major_coord_by_rank[rank] = rank_major + normalize_offset
+        None => ()
+      }
+    }
+  }
+}
+
+///|
+fn expand_rank_major_coord_to_nodes(
+  rank_node_ids_by_rank : Map[Int, Array[String]],
+  max_rank : Int,
+  rank_major_coord_by_rank : Map[Int, Int],
+  baseline_major_coord_by_node_id : Map[String, Int],
+) -> Map[String, Int] {
+  let major_coord_by_node_id : Map[String, Int] = {}
+  for rank in 0..<=max_rank {
+    match rank_node_ids_by_rank.get(rank) {
+      Some(node_ids) =>
+        if node_ids.length() > 0 {
+          let baseline_major = option_int_or(
+            baseline_major_coord_by_node_id.get(node_ids[0]),
+            0,
+          )
+          let rank_major = option_int_or(
+            rank_major_coord_by_rank.get(rank),
+            baseline_major,
+          )
+          for node_id in node_ids {
+            major_coord_by_node_id[node_id] = rank_major
+          }
+        }
+      None => ()
+    }
+  }
+  major_coord_by_node_id
 }
 
 ///|
@@ -1064,18 +1125,22 @@ fn relax_major_coord_by_node_id(
   } else {
     forward_candidate
   }
-  let rank_collapsed_major_coord_by_node_id = collapse_major_coord_to_rank_edgeward_anchor(
+  let rank_major_coord_by_rank = build_rank_major_coord_by_rank(
     rank_node_ids_by_rank,
     max_rank,
-    reverse,
     selected_candidate.major_coord_by_node_id,
     baseline_major_coord_by_node_id,
   )
-  enforce_major_edge_constraints(
-    rank_collapsed_major_coord_by_node_id, baseline_major_coord_by_node_id, rank_by_node_id,
-    successors_by_node_id, base_major_gap, horizontal, width_by_node_id, height_by_node_id,
+  enforce_rank_major_edge_constraints(
+    rank_major_coord_by_rank, rank_by_node_id, successors_by_node_id, baseline_major_coord_by_node_id,
+    base_major_gap, horizontal, width_by_node_id, height_by_node_id,
   )
-  rank_collapsed_major_coord_by_node_id
+  normalize_rank_major_coord_by_rank(
+    rank_node_ids_by_rank, max_rank, rank_major_coord_by_rank, baseline_major_coord_by_node_id,
+  )
+  expand_rank_major_coord_to_nodes(
+    rank_node_ids_by_rank, max_rank, rank_major_coord_by_rank, baseline_major_coord_by_node_id,
+  )
 }
 
 ///|

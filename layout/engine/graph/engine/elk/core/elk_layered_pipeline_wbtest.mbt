@@ -900,70 +900,142 @@ test "elk layered major sweep candidates remain edge-feasible" {
 }
 
 ///|
-test "elk layered rank edgeward collapse snaps moderate singleton outlier" {
+test "elk layered rank major anchor uses median major in rank" {
+  let node_ids : Array[String] = ["A", "B", "C", "D"]
+  let major_coord_by_node_id : Map[String, Int] = {
+    "A": 100,
+    "B": 160,
+    "C": 220,
+    "D": 500,
+  }
+  let baseline_major_coord_by_node_id : Map[String, Int] = {}
+  assert_eq(
+    rank_major_anchor(
+      node_ids, major_coord_by_node_id, baseline_major_coord_by_node_id,
+    ),
+    190,
+  )
+}
+
+///|
+test "elk layered rank major map collapses each rank to one anchor" {
   let rank_node_ids_by_rank : Map[Int, Array[String]] = {
-    0: ["A", "B", "C", "D"],
+    0: ["A", "B"],
+    1: ["C", "D"],
+  }
+  let major_coord_by_node_id : Map[String, Int] = {
+    "A": 100,
+    "B": 180,
+    "C": 250,
+    "D": 260,
+  }
+  let baseline_major_coord_by_node_id : Map[String, Int] = {}
+  let rank_major_coord_by_rank = build_rank_major_coord_by_rank(
+    rank_node_ids_by_rank, 1, major_coord_by_node_id, baseline_major_coord_by_node_id,
+  )
+  assert_eq(option_int_or(rank_major_coord_by_rank.get(0), -1), 140)
+  assert_eq(option_int_or(rank_major_coord_by_rank.get(1), -1), 255)
+}
+
+///|
+test "elk layered rank major edge constraints enforce rank-level spacing" {
+  let rank_major_coord_by_rank : Map[Int, Int] = { 0: 100, 1: 130 }
+  let rank_by_node_id : Map[String, Int] = { "A": 0, "B": 1, "C": 1 }
+  let successors_by_node_id : Map[String, Array[String]] = {
+    "A": ["B"],
+    "B": ["C"],
   }
   let baseline_major_coord_by_node_id : Map[String, Int] = {
     "A": 100,
-    "B": 152,
-    "C": 152,
-    "D": 152,
+    "B": 220,
+    "C": 220,
   }
-  let collapsed = collapse_major_coord_to_rank_edgeward_anchor(
-    rank_node_ids_by_rank, 0, false, baseline_major_coord_by_node_id, baseline_major_coord_by_node_id,
+  let width_by_node_id : Map[String, Int] = {}
+  let height_by_node_id : Map[String, Int] = {}
+  enforce_rank_major_edge_constraints(
+    rank_major_coord_by_rank, rank_by_node_id, successors_by_node_id, baseline_major_coord_by_node_id,
+    20, true, width_by_node_id, height_by_node_id,
   )
-  assert_eq(option_int_or(collapsed.get("A"), -1), 152)
-  assert_eq(option_int_or(collapsed.get("B"), -1), 152)
-  assert_eq(option_int_or(collapsed.get("C"), -1), 152)
-  assert_eq(option_int_or(collapsed.get("D"), -1), 152)
+  assert_eq(option_int_or(rank_major_coord_by_rank.get(1), -1), 220)
 }
 
 ///|
-test "elk layered rank edgeward collapse keeps low-delta singleton jitter untouched" {
+test "elk layered rank major expansion keeps rank-coherent node majors" {
   let rank_node_ids_by_rank : Map[Int, Array[String]] = {
-    0: ["A", "B", "C", "D"],
+    0: ["A", "B"],
+    1: ["C"],
   }
-  let baseline_major_coord_by_node_id : Map[String, Int] = {
-    "A": 110,
-    "B": 152,
-    "C": 152,
-    "D": 152,
-  }
-  let collapsed = collapse_major_coord_to_rank_edgeward_anchor(
-    rank_node_ids_by_rank, 0, false, baseline_major_coord_by_node_id, baseline_major_coord_by_node_id,
-  )
-  assert_eq(option_int_or(collapsed.get("A"), -1), 110)
-}
-
-///|
-test "elk layered rank edgeward collapse keeps wide rank with three nodes untouched" {
-  let rank_node_ids_by_rank : Map[Int, Array[String]] = { 0: ["A", "B", "C"] }
-  let baseline_major_coord_by_node_id : Map[String, Int] = {
-    "A": 80,
-    "B": 150,
-    "C": 150,
-  }
-  let collapsed = collapse_major_coord_to_rank_edgeward_anchor(
-    rank_node_ids_by_rank, 0, false, baseline_major_coord_by_node_id, baseline_major_coord_by_node_id,
-  )
-  assert_eq(option_int_or(collapsed.get("A"), -1), 80)
-  assert_eq(option_int_or(collapsed.get("B"), -1), 150)
-  assert_eq(option_int_or(collapsed.get("C"), -1), 150)
-}
-
-///|
-test "elk layered rank edgeward collapse snaps very wide split rank" {
-  let rank_node_ids_by_rank : Map[Int, Array[String]] = { 0: ["A", "B"] }
   let baseline_major_coord_by_node_id : Map[String, Int] = {
     "A": 100,
-    "B": 260,
+    "B": 100,
+    "C": 220,
   }
-  let collapsed = collapse_major_coord_to_rank_edgeward_anchor(
-    rank_node_ids_by_rank, 0, false, baseline_major_coord_by_node_id, baseline_major_coord_by_node_id,
+  let rank_major_coord_by_rank : Map[Int, Int] = { 0: 140, 1: 250 }
+  let major_coord_by_node_id = expand_rank_major_coord_to_nodes(
+    rank_node_ids_by_rank, 1, rank_major_coord_by_rank, baseline_major_coord_by_node_id,
   )
-  assert_eq(option_int_or(collapsed.get("A"), -1), 260)
-  assert_eq(option_int_or(collapsed.get("B"), -1), 260)
+  assert_eq(option_int_or(major_coord_by_node_id.get("A"), -1), 140)
+  assert_eq(option_int_or(major_coord_by_node_id.get("B"), -1), 140)
+  assert_eq(option_int_or(major_coord_by_node_id.get("C"), -1), 250)
+}
+
+///|
+test "elk layered relaxed major output keeps each rank on one major axis" {
+  let rank_node_ids_by_rank : Map[Int, Array[String]] = {
+    0: ["A", "B"],
+    1: ["C", "D"],
+    2: ["E"],
+  }
+  let rank_by_node_id : Map[String, Int] = {
+    "A": 0,
+    "B": 0,
+    "C": 1,
+    "D": 1,
+    "E": 2,
+  }
+  let predecessors_by_node_id : Map[String, Array[String]] = {
+    "A": [],
+    "B": [],
+    "C": ["A"],
+    "D": ["B"],
+    "E": ["C", "D"],
+  }
+  let successors_by_node_id : Map[String, Array[String]] = {
+    "A": ["C"],
+    "B": ["D"],
+    "C": ["E"],
+    "D": ["E"],
+    "E": [],
+  }
+  let baseline_major_coord_by_node_id : Map[String, Int] = {
+    "A": 100,
+    "B": 100,
+    "C": 220,
+    "D": 220,
+    "E": 340,
+  }
+  let minor_coord_by_node_id : Map[String, Int] = {
+    "A": 100,
+    "B": 140,
+    "C": 100,
+    "D": 140,
+    "E": 120,
+  }
+  let width_by_node_id : Map[String, Int] = {}
+  let height_by_node_id : Map[String, Int] = {}
+  let major_coord_by_node_id = relax_major_coord_by_node_id(
+    rank_node_ids_by_rank, 2, false, rank_by_node_id, predecessors_by_node_id, successors_by_node_id,
+    baseline_major_coord_by_node_id, minor_coord_by_node_id, 20, true, width_by_node_id,
+    height_by_node_id,
+  )
+  assert_eq(
+    option_int_or(major_coord_by_node_id.get("A"), -1),
+    option_int_or(major_coord_by_node_id.get("B"), -2),
+  )
+  assert_eq(
+    option_int_or(major_coord_by_node_id.get("C"), -1),
+    option_int_or(major_coord_by_node_id.get("D"), -2),
+  )
 }
 
 ///|

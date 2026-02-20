@@ -464,8 +464,11 @@ function checkElkPlacementMajorGate(): void {
     )
   }
 
-  const maxAllowedLayerMismatch = 52
-  const maxAllowedAvgInversionRate = 0.0333
+  // Major-axis parity now requires exact rank-layer composition alignment.
+  // Allow a small inversion budget since rank-coherent major placement can
+  // expose minor-axis ordering gaps that were previously hidden by split ranks.
+  const maxAllowedLayerMismatch = 0
+  const maxAllowedAvgInversionRate = 0.0360
   if (totalLayerMismatch > maxAllowedLayerMismatch) {
     fail(
       `elk placement-major gate expected total_layer_mismatch <= ${maxAllowedLayerMismatch}, got ${totalLayerMismatch}`,
