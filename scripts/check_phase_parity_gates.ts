@@ -522,7 +522,7 @@ function checkElkCrossingRankOrderGate(): void {
     )
   }
 
-  const maxAllowedOrderMismatch = 48
+  const maxAllowedOrderMismatch = 43
   const maxAllowedCompositionMismatch = 0
   const maxAllowedAvgDisplacement = 0
   if (orderMismatch > maxAllowedOrderMismatch) {
