@@ -18,6 +18,7 @@ type ParsedFixtureEdges = { edges: FixtureEdge[]; unparsedEdgeLines: string[] }
 type Layering = string[][]
 
 type LocalTrace = {
+  inputNodeIds: string[]
   rankLayers: Layering
   orientedEdges: Set<string>
 }
@@ -300,10 +301,19 @@ function parseLocalTrace(source: string): LocalTrace {
   ])
   const rankLayersByRank = new Map<number, string[]>()
   const orientedEdges = new Set<string>()
+  const inputNodeIdsByIndex = new Map<number, string>()
   for (const rawLine of stdout.split(/\r?\n/)) {
     const line = rawLine.trim()
     if (line === '') continue
     const parts = line.split('\t')
+    if (parts[0] === 'INPUT_NODE') {
+      const index = Number.parseInt(parts[1] ?? '', 10)
+      const nodeId = parts[2] ?? ''
+      if (Number.isFinite(index) && nodeId !== '') {
+        inputNodeIdsByIndex.set(index, nodeId)
+      }
+      continue
+    }
     if (parts[0] === 'SEED_LAYER') {
       const rank = Number.parseInt(parts[1] ?? '', 10)
       if (!Number.isFinite(rank)) {
@@ -330,7 +340,10 @@ function parseLocalTrace(source: string): LocalTrace {
   for (let rank = 0; rank <= maxRank; rank += 1) {
     rankLayers.push(rankLayersByRank.get(rank) ?? [])
   }
-  return { rankLayers, orientedEdges }
+  const inputNodeIds = [...inputNodeIdsByIndex.entries()]
+    .sort((left, right) => left[0] - right[0])
+    .map(([, nodeId]) => nodeId)
+  return { inputNodeIds, rankLayers, orientedEdges }
 }
 
 function collectNodeIds(localTrace: LocalTrace, parsedEdges: ParsedFixtureEdges): string[] {
@@ -341,8 +354,12 @@ function collectNodeIds(localTrace: LocalTrace, parsedEdges: ParsedFixtureEdges)
     seen.add(id)
     nodeIds.push(id)
   }
-  for (const layer of localTrace.rankLayers) {
-    for (const nodeId of layer) push(nodeId)
+  if (localTrace.inputNodeIds.length > 0) {
+    for (const nodeId of localTrace.inputNodeIds) push(nodeId)
+  } else {
+    for (const layer of localTrace.rankLayers) {
+      for (const nodeId of layer) push(nodeId)
+    }
   }
   for (const edge of parsedEdges.edges) {
     push(edge.source)

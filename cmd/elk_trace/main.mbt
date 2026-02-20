@@ -305,6 +305,13 @@ fn dump_graph_trace(graph : @model.MermaidGraph) -> Bool {
     @layout_engine_graph_engine_elk_core.collect_elk_layered_rank_trace(request) {
     Some(trace) => {
       println("SEED\t\{trace.rank_seed_strategy}")
+      for i, node_id in trace.rank_input_node_ids_in_order {
+        println("INPUT_NODE\t\{i}\t\{node_id}")
+      }
+      for edge in sorted_oriented_edges(trace.rank_input_resolved_edges) {
+        let (source_id, target_id) = edge
+        println("INPUT_EDGE\t\{source_id}\t\{target_id}")
+      }
       println("ORDER_STRATEGY\t\{trace.rank_order_strategy}")
       println("ORDER_SELECTED_SOURCE\t\{trace.rank_order_selected_source}")
       println(

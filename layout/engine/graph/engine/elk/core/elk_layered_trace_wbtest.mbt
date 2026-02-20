@@ -28,6 +28,16 @@ test "elk layered rank trace keeps fanout kernel baseline" {
     ("E", "F"),
   ])
   let trace = collect_rank_trace_for_graph(graph)
+  assert_eq(trace.rank_input_node_ids_in_order, ["A", "B", "C", "D", "E", "F"])
+  assert_eq(trace.rank_input_resolved_edges, [
+    ("A", "B"),
+    ("A", "C"),
+    ("A", "D"),
+    ("B", "E"),
+    ("C", "E"),
+    ("D", "F"),
+    ("E", "F"),
+  ])
   assert_eq(trace.rank_seed_strategy, "native-feedback")
   assert_eq(trace.rank_order_strategy, "optimized-seed-with-virtual-candidate")
   assert_eq(trace.rank_order_selected_source, "virtual")
