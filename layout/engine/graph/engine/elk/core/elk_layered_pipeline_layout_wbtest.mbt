@@ -159,7 +159,46 @@ test "elk layered crossing strategy wrapper matches explicit default strategy" {
 }
 
 ///|
-test "elk layered sweep-kernel wrapper matches explicit default kernel" {
+test "elk layered crossing plan wrapper matches strategy wrapper" {
+  let input = build_crossing_phase_input(
+    { 0: ["A", "B"], 1: ["C", "D"] },
+    1,
+    { "A": [], "B": [], "C": ["B"], "D": ["A"] },
+    { "A": ["D"], "B": ["C"], "C": [], "D": [] },
+    { "A": 0, "B": 1, "C": 2, "D": 3 },
+    { "A": 0, "B": 0, "C": 1, "D": 1 },
+    4,
+    2,
+  )
+  let via_strategy = optimize_rank_node_ids_by_crossing_phase_with_strategy(
+    input,
+    LayerSweepWithLocalRefinement,
+  )
+  let via_plan = optimize_rank_node_ids_by_crossing_phase_with_plan(
+    input,
+    default_crossing_execution_plan(LayerSweepWithLocalRefinement),
+  )
+  assert_eq(
+    match via_strategy.get(1) {
+      Some(node_ids) => node_ids
+      None => []
+    },
+    match via_plan.get(1) {
+      Some(node_ids) => node_ids
+      None => []
+    },
+  )
+}
+
+///|
+test "elk layered crossing execution plan keeps default kernels ordered" {
+  let plan = default_crossing_execution_plan(LayerSweepWithLocalRefinement)
+  assert_true(plan.sweep_kernel is NeighborMeanBidirectional)
+  assert_true(plan.local_refinement_kernels is [AdjacentSwap, RankPermutation])
+}
+
+///|
+test "elk layered default sweep kernel matches explicit kernel" {
   let seed_rank_node_ids_by_rank : Map[Int, Array[String]] = {
     0: ["A", "B"],
     1: ["C", "D"],
@@ -191,9 +230,15 @@ test "elk layered sweep-kernel wrapper matches explicit default kernel" {
   }
   let via_wrapper = clone_rank_node_ids_by_rank(seed_rank_node_ids_by_rank, 2)
   let via_explicit = clone_rank_node_ids_by_rank(seed_rank_node_ids_by_rank, 2)
-  optimize_rank_order_with_sweep_passes(
-    via_wrapper, 2, predecessors_by_node_id, successors_by_node_id, order_index_by_node_id,
-    false, 3,
+  optimize_rank_order_with_sweep_passes_and_kernel(
+    via_wrapper,
+    2,
+    predecessors_by_node_id,
+    successors_by_node_id,
+    order_index_by_node_id,
+    false,
+    3,
+    default_crossing_sweep_kernel(),
   )
   optimize_rank_order_with_sweep_passes_and_kernel(
     via_explicit,
@@ -290,11 +335,12 @@ test "elk layered local refinement wrapper matches explicit kernel sequence" {
   let config = default_crossing_optimization_config()
   let via_wrapper = clone_rank_node_ids_by_rank(seed_rank_node_ids_by_rank, 2)
   let via_explicit = clone_rank_node_ids_by_rank(seed_rank_node_ids_by_rank, 2)
-  apply_crossing_local_refinement(
+  apply_crossing_local_refinement_kernels(
     build_crossing_refinement_input(
       via_wrapper, 2, rank_by_node_id, successors_by_node_id, 6, 4,
     ),
     config,
+    default_crossing_local_refinement_kernels(),
   )
   apply_crossing_local_refinement_with_kernel(
     build_crossing_refinement_input(
@@ -399,9 +445,15 @@ test "elk layered order optimization reduces crossing count on bipartite rank pa
     },
     successors_by_node_id,
   )
-  optimize_rank_order(
-    rank_node_ids_by_rank, max_rank, predecessors_by_node_id, successors_by_node_id,
-    order_index_by_node_id, false,
+  optimize_rank_order_with_sweep_passes_and_kernel(
+    rank_node_ids_by_rank,
+    max_rank,
+    predecessors_by_node_id,
+    successors_by_node_id,
+    order_index_by_node_id,
+    false,
+    4,
+    NeighborMeanBidirectional,
   )
   let crossings_after = wb_rank_crossings_between(
     match rank_node_ids_by_rank.get(0) {
@@ -453,9 +505,15 @@ test "elk layered order optimization keeps multi-rank sweep neighbor state coher
   let crossings_before = rank_order_crossing_score(
     rank_node_ids_by_rank, max_rank, rank_by_node_id, successors_by_node_id,
   )
-  optimize_rank_order(
-    rank_node_ids_by_rank, max_rank, predecessors_by_node_id, successors_by_node_id,
-    order_index_by_node_id, false,
+  optimize_rank_order_with_sweep_passes_and_kernel(
+    rank_node_ids_by_rank,
+    max_rank,
+    predecessors_by_node_id,
+    successors_by_node_id,
+    order_index_by_node_id,
+    false,
+    4,
+    NeighborMeanBidirectional,
   )
   let crossings_after = rank_order_crossing_score(
     rank_node_ids_by_rank, max_rank, rank_by_node_id, successors_by_node_id,
