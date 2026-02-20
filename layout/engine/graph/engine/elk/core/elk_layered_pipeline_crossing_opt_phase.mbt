@@ -19,13 +19,12 @@ fn rank_position_by_node_id(
 ///|
 priv struct NodeNeighborOrderKey {
   has_center : Bool
-  median_scaled : Int
   mean_scaled : Int
 }
 
 ///|
 fn empty_neighbor_order_key() -> NodeNeighborOrderKey {
-  { has_center: false, median_scaled: 0, mean_scaled: 0 }
+  { has_center: false, mean_scaled: 0 }
 }
 
 ///|
@@ -34,14 +33,14 @@ fn node_neighbor_order_key(
   neighbor_by_node_id : Map[String, Array[String]],
   rank_position_by_node_id : Map[String, Int],
 ) -> NodeNeighborOrderKey {
-  let positions : Array[Int] = []
+  let mut count = 0
   let mut sum = 0
   match neighbor_by_node_id.get(node_id) {
     Some(neighbors) =>
       for neighbor_id in neighbors {
         match rank_position_by_node_id.get(neighbor_id) {
           Some(position) => {
-            positions.push(position)
+            count += 1
             sum += position
           }
           None => ()
@@ -49,18 +48,11 @@ fn node_neighbor_order_key(
       }
     None => ()
   }
-  if positions.length() == 0 {
+  if count == 0 {
     empty_neighbor_order_key()
   } else {
-    positions.sort()
-    let count = positions.length()
-    let median_scaled = if count % 2 == 1 {
-      positions[count / 2] * 1000
-    } else {
-      (positions[count / 2 - 1] + positions[count / 2]) * 500
-    }
     let mean_scaled = sum * 1000 / count
-    { has_center: true, median_scaled, mean_scaled }
+    { has_center: true, mean_scaled }
   }
 }
 
@@ -88,14 +80,9 @@ fn sort_rank_nodes_by_neighbors(
       None => empty_neighbor_order_key()
     }
     let left_has_center = left_key.has_center
-    let left_median = left_key.median_scaled
     let left_mean = left_key.mean_scaled
     let right_has_center = right_key.has_center
-    let right_median = right_key.median_scaled
     let right_mean = right_key.mean_scaled
-    if left_has_center && right_has_center && left_median != right_median {
-      return left_median.compare(right_median)
-    }
     if left_has_center && right_has_center && left_mean != right_mean {
       return left_mean.compare(right_mean)
     }
