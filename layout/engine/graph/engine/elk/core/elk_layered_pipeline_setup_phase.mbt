@@ -261,10 +261,14 @@ fn run_elk_layered_spacing_phase(
     node_size_state.global_max_height
   }
   let major_gap_floor = if compact_small_graph { 12 } else { 20 }
-  let major_gap = (major_gap_seed.max(
-    global_major_size + (major_gap_seed / 5).max(major_gap_floor),
-  ) -
-  70).max(8)
+  let major_gap = if compact_small_graph {
+    (major_gap_seed - 56).max(8)
+  } else {
+    (major_gap_seed.max(
+      global_major_size + (major_gap_seed / 5).max(major_gap_floor),
+    ) -
+    70).max(8)
+  }
   let min_minor_step = if horizontal {
     node_size_state.global_max_height + 12
   } else {

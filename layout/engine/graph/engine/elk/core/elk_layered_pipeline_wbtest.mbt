@@ -249,7 +249,7 @@ test "elk layered spacing phase compacts defaults for small graphs" {
   )
   assert_eq(horizontal_spacing.node_spacing, 72)
   assert_eq(horizontal_spacing.layer_spacing, 64)
-  assert_eq(horizontal_spacing.major_gap, 14)
+  assert_eq(horizontal_spacing.major_gap, 16)
   assert_eq(horizontal_spacing.minor_step, 66)
   assert_eq(horizontal_spacing.max_rank_minor_span, 66)
 
