@@ -168,14 +168,12 @@ fn run_elk_layered_node_placement_phase(
   let padding = spacing_state.padding
   let minor_step = spacing_state.minor_step
   let max_rank_minor_span = spacing_state.max_rank_minor_span
-  let base_major_step = spacing_state.major_step
-  let subgraph_major_step_boost = if graph.subgraphs.length() == 0 {
+  let subgraph_major_gap_boost = if graph.subgraphs.length() == 0 {
     0
   } else {
     (graph.subgraphs.length() * 20).min(120)
   }
-  let major_step = base_major_step + subgraph_major_step_boost
-  let major_gap = (major_step - 70).max(8)
+  let major_gap = (spacing_state.major_gap + subgraph_major_gap_boost).max(8)
   let width_by_node_id = node_size_state.width_by_node_id
   let height_by_node_id = node_size_state.height_by_node_id
   let major_placement_strategy = select_elk_layered_major_placement_strategy(

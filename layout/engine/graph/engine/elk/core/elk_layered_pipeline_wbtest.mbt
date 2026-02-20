@@ -191,14 +191,15 @@ test "elk layered spacing phase resolves orientation-aware major/minor steps" {
   let horizontal_spacing = run_elk_layered_spacing_phase(
     options, true, 3, node_size_state,
   )
-  let expected_horizontal_major = node_spacing.max(
+  let expected_horizontal_major = (node_spacing.max(
     140 + (node_spacing / 5).max(20),
-  )
+  ) -
+  70).max(8)
   let expected_horizontal_minor = layer_spacing.max(60 + 12)
   assert_eq(horizontal_spacing.padding, padding)
   assert_eq(horizontal_spacing.node_spacing, node_spacing)
   assert_eq(horizontal_spacing.layer_spacing, layer_spacing)
-  assert_eq(horizontal_spacing.major_step, expected_horizontal_major)
+  assert_eq(horizontal_spacing.major_gap, expected_horizontal_major)
   assert_eq(horizontal_spacing.minor_step, expected_horizontal_minor)
   assert_eq(
     horizontal_spacing.max_rank_minor_span,
@@ -208,11 +209,12 @@ test "elk layered spacing phase resolves orientation-aware major/minor steps" {
   let vertical_spacing = run_elk_layered_spacing_phase(
     options, false, 2, node_size_state,
   )
-  let expected_vertical_major = layer_spacing.max(
+  let expected_vertical_major = (layer_spacing.max(
     60 + (layer_spacing / 5).max(20),
-  )
+  ) -
+  70).max(8)
   let expected_vertical_minor = node_spacing.max(140 + 12)
-  assert_eq(vertical_spacing.major_step, expected_vertical_major)
+  assert_eq(vertical_spacing.major_gap, expected_vertical_major)
   assert_eq(vertical_spacing.minor_step, expected_vertical_minor)
   assert_eq(vertical_spacing.max_rank_minor_span, expected_vertical_minor)
 }

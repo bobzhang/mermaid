@@ -204,7 +204,7 @@ priv struct ElkLayeredSpacingState {
   padding : Int
   node_spacing : Int
   layer_spacing : Int
-  major_step : Int
+  major_gap : Int
   minor_step : Int
   max_rank_minor_span : Int
 }
@@ -228,14 +228,17 @@ fn run_elk_layered_spacing_phase(
     options.layer_spacing,
     90,
   )
-  let major_gap = if horizontal { node_spacing } else { layer_spacing }
+  let major_gap_seed = if horizontal { node_spacing } else { layer_spacing }
   let minor_gap = if horizontal { layer_spacing } else { node_spacing }
   let global_major_size = if horizontal {
     node_size_state.global_max_width
   } else {
     node_size_state.global_max_height
   }
-  let major_step = major_gap.max(global_major_size + (major_gap / 5).max(20))
+  let major_gap = (major_gap_seed.max(
+    global_major_size + (major_gap_seed / 5).max(20),
+  ) -
+  70).max(8)
   let min_minor_step = if horizontal {
     node_size_state.global_max_height + 12
   } else {
@@ -247,7 +250,7 @@ fn run_elk_layered_spacing_phase(
     padding,
     node_spacing,
     layer_spacing,
-    major_step,
+    major_gap,
     minor_step,
     max_rank_minor_span,
   }

@@ -34,6 +34,7 @@ import { tmpdir } from 'node:os'
 import { createHash } from 'node:crypto'
 
 type Point = { x: number; y: number }
+type Size = { width: number; height: number }
 type Bounds = { minX: number; maxX: number; minY: number; maxY: number }
 type FixtureEdge = { source: string; target: string }
 type ParsedFixtureEdges = { edges: FixtureEdge[]; unparsedEdgeLines: string[] }
@@ -90,9 +91,15 @@ type Metrics = {
   spanXRatio: number
   spanYRatio: number
   spanAreaRatio: number
+  sharedNodeSizes: number
+  avgNodeWidthRatio: number
+  avgNodeHeightRatio: number
+  avgNodeAreaRatio: number
+  maxNodeAreaRatioDrift: number
   weightedGapIndex: number
   weightedGapBreakdown: WeightedGapBreakdown
   status: 'ok' | 'mismatch'
+  nodeSizeRatioDriftSample?: string[]
   logicalCrossingPairShared?: number
   logicalCrossingPairLocalOnly?: number
   logicalCrossingPairOfficialOnly?: number
@@ -370,6 +377,248 @@ function parseLocalNodePositions(svg: string): Map<string, Point> {
     nodes.set(label, { x, y })
   }
   return nodes
+}
+
+function parseSvgNumberAttr(tag: string, name: string): number | null {
+  const match = tag.match(new RegExp(`\\b${name}="([^"]+)"`))
+  if (!match) return null
+  const value = Number.parseFloat(match[1]!.trim())
+  return Number.isFinite(value) ? value : null
+}
+
+function mergeBounds(base: Bounds | null, next: Bounds | null): Bounds | null {
+  if (!next) return base
+  if (!base) return next
+  return {
+    minX: Math.min(base.minX, next.minX),
+    maxX: Math.max(base.maxX, next.maxX),
+    minY: Math.min(base.minY, next.minY),
+    maxY: Math.max(base.maxY, next.maxY),
+  }
+}
+
+function boundsFromShapeMarkup(markup: string): Bounds | null {
+  let bounds: Bounds | null = null
+
+  const rectRe = /<rect\b[^>]*>/g
+  for (const match of markup.matchAll(rectRe)) {
+    const tag = match[0]!
+    const x = parseSvgNumberAttr(tag, 'x')
+    const y = parseSvgNumberAttr(tag, 'y')
+    const width = parseSvgNumberAttr(tag, 'width')
+    const height = parseSvgNumberAttr(tag, 'height')
+    if (x === null || y === null || width === null || height === null || width <= 0 || height <= 0) {
+      continue
+    }
+    bounds = mergeBounds(bounds, {
+      minX: x,
+      maxX: x + width,
+      minY: y,
+      maxY: y + height,
+    })
+  }
+
+  const polygonRe = /<polygon\b[^>]*points="([^"]+)"[^>]*>/g
+  for (const match of markup.matchAll(polygonRe)) {
+    const points = parsePointPairs(match[1]!)
+    if (points.length === 0) continue
+    bounds = mergeBounds(bounds, boundsOf(points))
+  }
+
+  const pathRe = /<path\b[^>]*d="([^"]+)"[^>]*>/g
+  for (const match of markup.matchAll(pathRe)) {
+    const points = parsePathPoints(match[1]!)
+    if (points.length === 0) continue
+    bounds = mergeBounds(bounds, boundsOf(points))
+  }
+
+  return bounds
+}
+
+function sizeFromBounds(bounds: Bounds | null): Size | null {
+  if (!bounds) return null
+  const width = bounds.maxX - bounds.minX
+  const height = bounds.maxY - bounds.minY
+  if (!Number.isFinite(width) || !Number.isFinite(height) || width <= 0 || height <= 0) {
+    return null
+  }
+  return { width, height }
+}
+
+function parseOfficialNodeSizes(svg: string): Map<string, Size> {
+  const sizes = new Map<string, Size>()
+  let searchIndex = 0
+  while (true) {
+    const gIndex = svg.indexOf('<g class="node ', searchIndex)
+    if (gIndex === -1) break
+    const gEnd = findMatchingGEnd(svg, gIndex)
+    if (gEnd === -1) break
+    const chunk = svg.slice(gIndex, gEnd)
+    const labelMatch = chunk.match(/class="nodeLabel"><p>([\s\S]*?)<\/p>/)
+    if (!labelMatch) {
+      searchIndex = gEnd
+      continue
+    }
+    const label = normalizeLabel(decodeHtml(labelMatch[1]!.trim()))
+    if (label === '') {
+      searchIndex = gEnd
+      continue
+    }
+
+    const outerPathGroupMatch = chunk.match(/<g class="[^"]*outer-path[^"]*"[\s\S]*?<\/g>/)
+    let size = sizeFromBounds(boundsFromShapeMarkup(outerPathGroupMatch?.[0] ?? chunk))
+    if (!size) {
+      const fallbackMatch = chunk.match(/<foreignObject\b[^>]*width="([^"]+)"[^>]*height="([^"]+)"/)
+      if (fallbackMatch) {
+        const width = Number.parseFloat(fallbackMatch[1]!.trim())
+        const height = Number.parseFloat(fallbackMatch[2]!.trim())
+        if (Number.isFinite(width) && Number.isFinite(height) && width > 0 && height > 0) {
+          size = { width, height }
+        }
+      }
+    }
+    if (size) {
+      sizes.set(label, size)
+    }
+    searchIndex = gEnd
+  }
+  return sizes
+}
+
+type ShapeBox = {
+  cx: number
+  cy: number
+  width: number
+  height: number
+}
+
+function parseLocalShapeBoxes(svg: string): ShapeBox[] {
+  const boxes: ShapeBox[] = []
+  const rectRe = /<rect\b[^>]*class="[^"]*\bnode-shape\b[^"]*"[^>]*>/g
+  for (const match of svg.matchAll(rectRe)) {
+    const tag = match[0]!
+    const x = parseSvgNumberAttr(tag, 'x')
+    const y = parseSvgNumberAttr(tag, 'y')
+    const width = parseSvgNumberAttr(tag, 'width')
+    const height = parseSvgNumberAttr(tag, 'height')
+    if (x === null || y === null || width === null || height === null || width <= 0 || height <= 0) {
+      continue
+    }
+    boxes.push({
+      cx: x + width / 2,
+      cy: y + height / 2,
+      width,
+      height,
+    })
+  }
+
+  const polygonRe = /<polygon\b[^>]*class="[^"]*\bnode-shape\b[^"]*"[^>]*points="([^"]+)"[^>]*>/g
+  for (const match of svg.matchAll(polygonRe)) {
+    const bounds = boundsOf(parsePointPairs(match[1]!))
+    const size = sizeFromBounds(bounds)
+    if (!size) continue
+    boxes.push({
+      cx: (bounds.minX + bounds.maxX) / 2,
+      cy: (bounds.minY + bounds.maxY) / 2,
+      width: size.width,
+      height: size.height,
+    })
+  }
+
+  const pathRe = /<path\b[^>]*class="[^"]*\bnode-shape\b[^"]*"[^>]*d="([^"]+)"[^>]*>/g
+  for (const match of svg.matchAll(pathRe)) {
+    const points = parsePathPoints(match[1]!)
+    if (points.length === 0) continue
+    const bounds = boundsOf(points)
+    const size = sizeFromBounds(bounds)
+    if (!size) continue
+    boxes.push({
+      cx: (bounds.minX + bounds.maxX) / 2,
+      cy: (bounds.minY + bounds.maxY) / 2,
+      width: size.width,
+      height: size.height,
+    })
+  }
+
+  return boxes
+}
+
+function parseLocalNodeSizes(svg: string, localNodes: Map<string, Point>): Map<string, Size> {
+  const sizes = new Map<string, Size>()
+  const boxes = parseLocalShapeBoxes(svg)
+  const unused = boxes.map((box, index) => ({ ...box, index }))
+  for (const [label, point] of localNodes) {
+    let bestUnusedIndex = -1
+    let bestDistance = Number.POSITIVE_INFINITY
+    for (let i = 0; i < unused.length; i += 1) {
+      const box = unused[i]!
+      const distance = Math.hypot(point.x - box.cx, point.y - box.cy)
+      if (distance < bestDistance) {
+        bestDistance = distance
+        bestUnusedIndex = i
+      }
+    }
+    if (bestUnusedIndex === -1) continue
+    const best = unused[bestUnusedIndex]!
+    const threshold = Math.max(8, Math.max(best.width, best.height) * 0.6 + 12)
+    if (bestDistance > threshold) continue
+    sizes.set(label, { width: best.width, height: best.height })
+    unused.splice(bestUnusedIndex, 1)
+  }
+  return sizes
+}
+
+type NodeSizeDiagnostics = {
+  sharedCount: number
+  avgWidthRatio: number
+  avgHeightRatio: number
+  avgAreaRatio: number
+  maxAreaRatioDrift: number
+  driftSample: string[]
+}
+
+function computeNodeSizeDiagnostics(
+  sharedLabels: string[],
+  officialNodeSizes: Map<string, Size>,
+  localNodeSizes: Map<string, Size>,
+): NodeSizeDiagnostics {
+  let sharedCount = 0
+  let widthRatioSum = 0
+  let heightRatioSum = 0
+  let areaRatioSum = 0
+  let maxAreaRatioDrift = 0
+  const driftRows: Array<{ label: string; widthRatio: number; heightRatio: number; areaRatio: number; areaDrift: number }> = []
+  for (const label of sharedLabels) {
+    const official = officialNodeSizes.get(label)
+    const local = localNodeSizes.get(label)
+    if (!official || !local) continue
+    if (official.width <= 0 || official.height <= 0 || local.width <= 0 || local.height <= 0) {
+      continue
+    }
+    const widthRatio = local.width / official.width
+    const heightRatio = local.height / official.height
+    const areaRatio = widthRatio * heightRatio
+    const areaDrift = Math.abs(areaRatio - 1)
+    sharedCount += 1
+    widthRatioSum += widthRatio
+    heightRatioSum += heightRatio
+    areaRatioSum += areaRatio
+    maxAreaRatioDrift = Math.max(maxAreaRatioDrift, areaDrift)
+    driftRows.push({ label, widthRatio, heightRatio, areaRatio, areaDrift })
+  }
+  driftRows.sort((left, right) => right.areaDrift - left.areaDrift)
+  const driftSample = driftRows.slice(0, 5).map(
+    row =>
+      `${row.label}:w=${round(row.widthRatio)} h=${round(row.heightRatio)} area=${round(row.areaRatio)}`,
+  )
+  return {
+    sharedCount,
+    avgWidthRatio: sharedCount === 0 ? Number.NaN : widthRatioSum / sharedCount,
+    avgHeightRatio: sharedCount === 0 ? Number.NaN : heightRatioSum / sharedCount,
+    avgAreaRatio: sharedCount === 0 ? Number.NaN : areaRatioSum / sharedCount,
+    maxAreaRatioDrift: sharedCount === 0 ? Number.NaN : maxAreaRatioDrift,
+    driftSample,
+  }
 }
 
 function parseLocalEdges(svg: string): Point[][] {
@@ -2025,6 +2274,8 @@ function compareFixture(
   const localSvg = readFileSync(localPath, 'utf8')
   const officialNodes = parseOfficialNodePositions(officialSvg)
   const localNodes = parseLocalNodePositions(localSvg)
+  const officialNodeSizes = parseOfficialNodeSizes(officialSvg)
+  const localNodeSizes = parseLocalNodeSizes(localSvg, localNodes)
   const officialEdges = parseOfficialEdges(officialSvg)
   const localEdgesFromSvg = parseLocalEdges(localSvg)
   let localEdges = localEdgesFromSvg
@@ -2040,6 +2291,11 @@ function compareFixture(
   }
 
   const sharedLabels = [...officialNodes.keys()].filter(label => localNodes.has(label)).sort()
+  const nodeSizeDiagnostics = computeNodeSizeDiagnostics(
+    sharedLabels,
+    officialNodeSizes,
+    localNodeSizes,
+  )
   const rankDiagnostics = computeMajorRankDiagnostics(
     sharedLabels,
     officialNodes,
@@ -2130,9 +2386,15 @@ function compareFixture(
       spanXRatio: Number.NaN,
       spanYRatio: Number.NaN,
       spanAreaRatio: Number.NaN,
+      sharedNodeSizes: nodeSizeDiagnostics.sharedCount,
+      avgNodeWidthRatio: nodeSizeDiagnostics.avgWidthRatio,
+      avgNodeHeightRatio: nodeSizeDiagnostics.avgHeightRatio,
+      avgNodeAreaRatio: nodeSizeDiagnostics.avgAreaRatio,
+      maxNodeAreaRatioDrift: nodeSizeDiagnostics.maxAreaRatioDrift,
       weightedGapIndex: weightedGap.weightedGapIndex,
       weightedGapBreakdown: weightedGap.weightedGapBreakdown,
       status: structuralOk ? 'ok' : 'mismatch',
+      nodeSizeRatioDriftSample: nodeSizeDiagnostics.driftSample,
       ...(options.explainLogicalCrossings
         ? {
             logicalCrossingPairShared: sharedPairs.length,
@@ -2250,9 +2512,15 @@ function compareFixture(
     spanXRatio,
     spanYRatio,
     spanAreaRatio,
+    sharedNodeSizes: nodeSizeDiagnostics.sharedCount,
+    avgNodeWidthRatio: nodeSizeDiagnostics.avgWidthRatio,
+    avgNodeHeightRatio: nodeSizeDiagnostics.avgHeightRatio,
+    avgNodeAreaRatio: nodeSizeDiagnostics.avgAreaRatio,
+    maxNodeAreaRatioDrift: nodeSizeDiagnostics.maxAreaRatioDrift,
     weightedGapIndex: weightedGap.weightedGapIndex,
     weightedGapBreakdown: weightedGap.weightedGapBreakdown,
     status: structuralOk ? 'ok' : 'mismatch',
+    nodeSizeRatioDriftSample: nodeSizeDiagnostics.driftSample,
     ...(options.explainLogicalCrossings
       ? {
           logicalCrossingPairShared: sharedPairs.length,
@@ -2878,6 +3146,9 @@ function main(): void {
       `spanRatio x=${round(result.spanXRatio)} y=${round(result.spanYRatio)} area=${round(result.spanAreaRatio)} major=${round(result.majorSpanRatio)} minor=${round(result.minorSpanRatio)}`,
     )
     console.log(
+      `nodeSizeRatio shared=${result.sharedNodeSizes} width=${round(result.avgNodeWidthRatio)} height=${round(result.avgNodeHeightRatio)} area=${round(result.avgNodeAreaRatio)} maxAreaDrift=${round(result.maxNodeAreaRatioDrift)}`,
+    )
+    console.log(
       `weightedGapIndex=${round(result.weightedGapIndex)} components logical=${round(result.weightedGapBreakdown.logicalCrossings)} polyline=${round(result.weightedGapBreakdown.polylineCrossings)} rank=${round(result.weightedGapBreakdown.rankExactMismatch)} disp=${round(result.weightedGapBreakdown.rankDisplacement)} majorInv=${round(result.weightedGapBreakdown.majorInversion)} majorSpan=${round(result.weightedGapBreakdown.majorSpanDistortion)} minorSpan=${round(result.weightedGapBreakdown.minorSpanDistortion)}`,
     )
     console.log(
@@ -2926,6 +3197,19 @@ function main(): void {
   const avgSpanAreaRatio =
     results.reduce((acc, row) => acc + (Number.isFinite(row.spanAreaRatio) ? row.spanAreaRatio : 0), 0) /
     Math.max(results.length, 1)
+  const avgNodeWidthRatio =
+    results.reduce((acc, row) => acc + (Number.isFinite(row.avgNodeWidthRatio) ? row.avgNodeWidthRatio : 0), 0) /
+    Math.max(results.length, 1)
+  const avgNodeHeightRatio =
+    results.reduce((acc, row) => acc + (Number.isFinite(row.avgNodeHeightRatio) ? row.avgNodeHeightRatio : 0), 0) /
+    Math.max(results.length, 1)
+  const avgNodeAreaRatio =
+    results.reduce((acc, row) => acc + (Number.isFinite(row.avgNodeAreaRatio) ? row.avgNodeAreaRatio : 0), 0) /
+    Math.max(results.length, 1)
+  const avgMaxNodeAreaRatioDrift =
+    results.reduce((acc, row) => acc + (Number.isFinite(row.maxNodeAreaRatioDrift) ? row.maxNodeAreaRatioDrift : 0), 0) /
+    Math.max(results.length, 1)
+  const totalSharedNodeSizes = results.reduce((acc, row) => acc + row.sharedNodeSizes, 0)
   const avgWeightedGapIndex =
     results.reduce((acc, row) => acc + (Number.isFinite(row.weightedGapIndex) ? row.weightedGapIndex : 1), 0) /
     Math.max(results.length, 1)
@@ -2973,6 +3257,9 @@ function main(): void {
   console.log(`avg_weighted_gap_index=${round(avgWeightedGapIndex)} max_weighted_gap_index=${round(maxWeightedGapIndex)}`)
   console.log(`avg_span_area_ratio=${round(avgSpanAreaRatio)}`)
   console.log(`avg_major_span_ratio=${round(avgMajorSpanRatio)} avg_minor_span_ratio=${round(avgMinorSpanRatio)}`)
+  console.log(
+    `avg_node_size_ratio width=${round(avgNodeWidthRatio)} height=${round(avgNodeHeightRatio)} area=${round(avgNodeAreaRatio)} avg_max_node_area_ratio_drift=${round(avgMaxNodeAreaRatioDrift)} total_shared_node_sizes=${totalSharedNodeSizes}`,
+  )
   console.log(
     `subgraph_bucket fixtures=${withSubgraphsSummary.fixtures} avg_weighted_gap_index=${round(withSubgraphsSummary.avgWeightedGapIndex)} avg_major_rank_exact_match_rate=${round(withSubgraphsSummary.avgMajorRankExactMatchRate)} total_major_rank_composition_mismatches=${withSubgraphsSummary.totalMajorRankCompositionMismatches} avg_logical_crossing_multiplier=${round(withSubgraphsSummary.avgLogicalCrossingMultiplier)}`,
   )
@@ -3038,6 +3325,11 @@ function main(): void {
         avgPolylineCrossingMultiplier: avgPolylineMultiplier,
         avgLogicalCrossingMultiplier: avgLogicalMultiplier,
         avgSpanAreaRatio,
+        avgNodeWidthRatio,
+        avgNodeHeightRatio,
+        avgNodeAreaRatio,
+        avgMaxNodeAreaRatioDrift,
+        totalSharedNodeSizes,
         avgWeightedGapIndex,
         maxWeightedGapIndex,
         withSubgraphs: withSubgraphsSummary,
