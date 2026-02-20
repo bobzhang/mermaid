@@ -67,6 +67,7 @@ fn build_native_feedback_rank_seed_state(
   subgraph_exit_by_id : Map[String, String],
   nodes_in_order : Array[MermaidNode],
 ) -> ElkLayeredRankSeedState {
+  let base_order_index_by_node_id = build_order_index_by_node_id(nodes_in_order)
   let (
     rank_by_node_id,
     max_rank,
@@ -79,7 +80,7 @@ fn build_native_feedback_rank_seed_state(
   {
     rank_by_node_id,
     max_rank,
-    lane_by_node_id: order_index_by_node_id,
+    lane_by_node_id: base_order_index_by_node_id,
     order_index_by_node_id,
     successors_by_node_id,
     predecessors_by_node_id,
