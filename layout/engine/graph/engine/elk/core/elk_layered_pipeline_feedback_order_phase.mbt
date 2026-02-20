@@ -262,19 +262,32 @@ fn shift_negative_marks_to_positive_order(
 }
 
 ///|
+priv struct FeedbackOrientedEdge {
+  source_id : String
+  target_id : String
+  model_order : Int
+  reversed : Bool
+}
+
+///|
 fn build_oriented_edges_from_feedback_marks(
   normalized_edges : Array[(String, String)],
   mark_by_node_id : Map[String, Int],
-) -> Array[(String, String)] {
-  let oriented_edges : Array[(String, String)] = []
-  for edge in normalized_edges {
+) -> Array[FeedbackOrientedEdge] {
+  let oriented_edges : Array[FeedbackOrientedEdge] = []
+  for model_order, edge in normalized_edges {
     let (source_id, target_id) = edge
     let source_mark = option_int_or(mark_by_node_id.get(source_id), 0)
     let target_mark = option_int_or(mark_by_node_id.get(target_id), 0)
     if source_mark > target_mark {
-      oriented_edges.push((target_id, source_id))
+      oriented_edges.push({
+        source_id: target_id,
+        target_id: source_id,
+        model_order,
+        reversed: true,
+      })
     } else {
-      oriented_edges.push((source_id, target_id))
+      oriented_edges.push({ source_id, target_id, model_order, reversed: false })
     }
   }
   oriented_edges
@@ -282,42 +295,68 @@ fn build_oriented_edges_from_feedback_marks(
 
 ///|
 fn reorder_feedback_oriented_edges_by_model_order(
-  oriented_edges : Array[(String, String)],
+  oriented_edges : Array[FeedbackOrientedEdge],
   order_index_by_node_id : Map[String, Int],
 ) -> Array[(String, String)] {
-  let sorted_oriented_edges = oriented_edges.copy()
-  sorted_oriented_edges.sort_by((left, right) => {
-    let (left_source_id, left_target_id) = left
-    let (right_source_id, right_target_id) = right
-    let left_source_order = option_int_or(
-      order_index_by_node_id.get(left_source_id),
-      2147483647,
-    )
-    let right_source_order = option_int_or(
-      order_index_by_node_id.get(right_source_id),
-      2147483647,
-    )
-    if left_source_order != right_source_order {
-      return left_source_order.compare(right_source_order)
+  let edge_entries_by_source_id : Map[String, Array[FeedbackOrientedEdge]] = {}
+  let source_ids : Array[String] = []
+  let target_model_order_by_pair : Map[String, Int] = {}
+  for edge in oriented_edges {
+    let source_id = edge.source_id
+    if !edge_entries_by_source_id.contains(source_id) {
+      edge_entries_by_source_id[source_id] = []
+      source_ids.push(source_id)
     }
-    let left_target_order = option_int_or(
-      order_index_by_node_id.get(left_target_id),
-      2147483647,
-    )
-    let right_target_order = option_int_or(
-      order_index_by_node_id.get(right_target_id),
-      2147483647,
-    )
-    if left_target_order != right_target_order {
-      return left_target_order.compare(right_target_order)
+    match edge_entries_by_source_id.get(source_id) {
+      Some(entries) => entries.push(edge)
+      None => ()
     }
-    let source_id_cmp = left_source_id.compare(right_source_id)
-    if source_id_cmp != 0 {
-      source_id_cmp
-    } else {
-      left_target_id.compare(right_target_id)
+    if !edge.reversed {
+      let pair_key = "\{source_id}\t\{edge.target_id}"
+      let previous_model_order = option_int_or(
+        target_model_order_by_pair.get(pair_key),
+        2147483647,
+      )
+      if edge.model_order < previous_model_order {
+        target_model_order_by_pair[pair_key] = edge.model_order
+      }
     }
+  }
+  source_ids.sort_by((left, right) => {
+    compare_node_ids_by_order(left, right, order_index_by_node_id)
   })
+
+  let sorted_oriented_edges : Array[(String, String)] = []
+  for source_id in source_ids {
+    match edge_entries_by_source_id.get(source_id) {
+      Some(entries) => {
+        let sorted_entries = entries.copy()
+        sorted_entries.sort_by((left, right) => {
+          let left_pair_key = "\{left.source_id}\t\{left.target_id}"
+          let right_pair_key = "\{right.source_id}\t\{right.target_id}"
+          let left_target_model_order = option_int_or(
+            target_model_order_by_pair.get(left_pair_key),
+            left.model_order,
+          )
+          let right_target_model_order = option_int_or(
+            target_model_order_by_pair.get(right_pair_key),
+            right.model_order,
+          )
+          if left_target_model_order != right_target_model_order {
+            return left_target_model_order.compare(right_target_model_order)
+          }
+          if left.model_order != right.model_order {
+            return left.model_order.compare(right.model_order)
+          }
+          left.target_id.compare(right.target_id)
+        })
+        for edge in sorted_entries {
+          sorted_oriented_edges.push((edge.source_id, edge.target_id))
+        }
+      }
+      None => ()
+    }
+  }
   sorted_oriented_edges
 }
 

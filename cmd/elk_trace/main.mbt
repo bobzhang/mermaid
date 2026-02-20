@@ -328,6 +328,28 @@ fn dump_graph_trace(graph : @model.MermaidGraph) -> Bool {
         "ORDER_SCORE\tvirtual-candidate\t\{trace.rank_order_virtual_candidate_crossings}",
       )
       println("ORDER_SCORE\tselected\t\{trace.rank_order_selected_crossings}")
+      for node_id in trace.rank_seed_virtual_node_ids {
+        println("SEED_VIRTUAL_NODE\t\{node_id}")
+      }
+      for edge in sorted_oriented_edges(trace.rank_seed_virtual_edges) {
+        let (source_id, target_id) = edge
+        println("SEED_VIRTUAL_EDGE\t\{source_id}\t\{target_id}")
+      }
+      for port in trace.rank_seed_virtual_ports {
+        let (source_id, slot, target_id) = port
+        println("SEED_VIRTUAL_PORT\t\{source_id}\t\{slot}\t\{target_id}")
+      }
+      for node_id in trace.rank_order_selected_virtual_node_ids {
+        println("VIRTUAL_NODE\t\{node_id}")
+      }
+      for edge in sorted_oriented_edges(trace.rank_order_selected_virtual_edges) {
+        let (source_id, target_id) = edge
+        println("VIRTUAL_EDGE\t\{source_id}\t\{target_id}")
+      }
+      for port in trace.rank_order_selected_virtual_ports {
+        let (source_id, slot, target_id) = port
+        println("VIRTUAL_PORT\t\{source_id}\t\{slot}\t\{target_id}")
+      }
       for node_id in sorted_string_keys(trace.rank_seed_rank_by_node_id) {
         match trace.rank_seed_rank_by_node_id.get(node_id) {
           Some(rank) => println("SEED_RANK\t\{node_id}\t\{rank}")
@@ -345,6 +367,7 @@ fn dump_graph_trace(graph : @model.MermaidGraph) -> Bool {
         println("SEED_EDGE\t\{source_id}\t\{target_id}")
       }
       dump_rank_layers("SEED_LAYER", trace.rank_seed_layers)
+      dump_rank_layers("SEED_LAYER_VIRTUAL", trace.rank_seed_virtual_layers)
       dump_rank_layers(
         "ORDER_LAYER_OPTIMIZED_SEED",
         trace.rank_order_optimized_seed_layers,
@@ -356,6 +379,10 @@ fn dump_graph_trace(graph : @model.MermaidGraph) -> Bool {
       dump_rank_layers(
         "ORDER_LAYER_VIRTUAL_CANDIDATE",
         trace.rank_order_virtual_candidate_layers,
+      )
+      dump_rank_layers(
+        "ORDER_LAYER_SELECTED_VIRTUAL",
+        trace.rank_order_selected_virtual_layers,
       )
       dump_rank_layers("ORDER_LAYER_SELECTED", trace.rank_order_selected_layers)
       dump_rank_layers("RANK_LAYER", trace.rank_layers)

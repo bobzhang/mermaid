@@ -9,6 +9,10 @@ pub(all) struct ElkLayeredRankTrace {
   rank_seed_order_index_by_node_id : Map[String, Int]
   rank_seed_oriented_edges : Array[(String, String)]
   rank_seed_layers : Array[Array[String]]
+  rank_seed_virtual_node_ids : Array[String]
+  rank_seed_virtual_edges : Array[(String, String)]
+  rank_seed_virtual_ports : Array[(String, Int, String)]
+  rank_seed_virtual_layers : Array[Array[String]]
   rank_order_strategy : String
   rank_order_optimized_seed_layers : Array[Array[String]]
   rank_order_optimized_seed_crossings : Int
@@ -16,6 +20,10 @@ pub(all) struct ElkLayeredRankTrace {
   rank_order_optimized_reversed_seed_crossings : Int
   rank_order_virtual_candidate_layers : Array[Array[String]]
   rank_order_virtual_candidate_crossings : Int
+  rank_order_selected_virtual_node_ids : Array[String]
+  rank_order_selected_virtual_edges : Array[(String, String)]
+  rank_order_selected_virtual_ports : Array[(String, Int, String)]
+  rank_order_selected_virtual_layers : Array[Array[String]]
   rank_order_selected_layers : Array[Array[String]]
   rank_order_selected_crossings : Int
   rank_order_selected_source : String
@@ -51,6 +59,31 @@ fn oriented_edges_from_successors(
 }
 
 ///|
+fn ordered_ports_from_rank_layers(
+  rank_node_ids_by_rank : Map[Int, Array[String]],
+  max_rank : Int,
+  successors_by_node_id : Map[String, Array[String]],
+) -> Array[(String, Int, String)] {
+  let ordered_ports : Array[(String, Int, String)] = []
+  for rank in 0..<=max_rank {
+    match rank_node_ids_by_rank.get(rank) {
+      Some(node_ids) =>
+        for source_id in node_ids {
+          match successors_by_node_id.get(source_id) {
+            Some(target_ids) =>
+              for slot, target_id in target_ids {
+                ordered_ports.push((source_id, slot, target_id))
+              }
+            None => ()
+          }
+        }
+      None => ()
+    }
+  }
+  ordered_ports
+}
+
+///|
 fn rank_seed_strategy_tag(
   rank_seed_strategy : ElkLayeredRankSeedStrategy,
 ) -> String {
@@ -69,6 +102,20 @@ fn rank_order_strategy_tag(
     OptimizedSeedOrder => "optimized-seed-order"
     OptimizedSeedWithVirtualCandidate => "optimized-seed-with-virtual-candidate"
   }
+}
+
+///|
+fn collect_sorted_virtual_node_ids(
+  virtual_by_node_id : Map[String, Bool],
+) -> Array[String] {
+  let virtual_node_ids : Array[String] = []
+  for node_id, is_virtual in virtual_by_node_id {
+    if is_virtual {
+      virtual_node_ids.push(node_id)
+    }
+  }
+  virtual_node_ids.sort()
+  virtual_node_ids
 }
 
 ///|
@@ -109,12 +156,26 @@ pub fn collect_elk_layered_rank_trace(
   let rank_phase_state = run_elk_layered_rank_phase(setup_state)
   let rank_seed_state = rank_phase_state.rank_seed_state
   let rank_order_debug_state = rank_phase_state.rank_order_debug_state
+  let selected_virtual_ordering_state = build_virtual_ordering_state(
+    rank_order_debug_state.selected_rank_node_ids_by_rank,
+    rank_seed_state.rank_by_node_id,
+    rank_seed_state.max_rank,
+    rank_seed_state.order_index_by_node_id,
+    rank_seed_state.successors_by_node_id,
+  )
   let rank_seed_layers_by_rank = build_rank_node_ids_by_lane(
     setup_state.nodes_in_order,
     rank_seed_state.rank_by_node_id,
     rank_seed_state.lane_by_node_id,
     setup_state.base_order_index_by_node_id,
     rank_seed_state.max_rank,
+  )
+  let seed_virtual_ordering_state = build_virtual_ordering_state(
+    rank_seed_layers_by_rank,
+    rank_seed_state.rank_by_node_id,
+    rank_seed_state.max_rank,
+    rank_seed_state.order_index_by_node_id,
+    rank_seed_state.successors_by_node_id,
   )
   Some({
     rank_input_node_ids_in_order: setup_state.node_ids_in_order.copy(),
@@ -130,6 +191,21 @@ pub fn collect_elk_layered_rank_trace(
     ),
     rank_seed_layers: rank_layers_from_rank_map(
       rank_seed_layers_by_rank,
+      rank_seed_state.max_rank,
+    ),
+    rank_seed_virtual_node_ids: collect_sorted_virtual_node_ids(
+      seed_virtual_ordering_state.virtual_by_node_id,
+    ),
+    rank_seed_virtual_edges: oriented_edges_from_successors(
+      seed_virtual_ordering_state.successors_by_node_id,
+    ),
+    rank_seed_virtual_ports: ordered_ports_from_rank_layers(
+      seed_virtual_ordering_state.rank_node_ids_by_rank,
+      rank_seed_state.max_rank,
+      seed_virtual_ordering_state.successors_by_node_id,
+    ),
+    rank_seed_virtual_layers: rank_layers_from_rank_map(
+      seed_virtual_ordering_state.rank_node_ids_by_rank,
       rank_seed_state.max_rank,
     ),
     rank_order_strategy: rank_order_strategy_tag(
@@ -150,6 +226,21 @@ pub fn collect_elk_layered_rank_trace(
       rank_seed_state.max_rank,
     ),
     rank_order_virtual_candidate_crossings: rank_order_debug_state.virtual_candidate_crossing_score,
+    rank_order_selected_virtual_node_ids: collect_sorted_virtual_node_ids(
+      selected_virtual_ordering_state.virtual_by_node_id,
+    ),
+    rank_order_selected_virtual_edges: oriented_edges_from_successors(
+      selected_virtual_ordering_state.successors_by_node_id,
+    ),
+    rank_order_selected_virtual_ports: ordered_ports_from_rank_layers(
+      selected_virtual_ordering_state.rank_node_ids_by_rank,
+      rank_seed_state.max_rank,
+      selected_virtual_ordering_state.successors_by_node_id,
+    ),
+    rank_order_selected_virtual_layers: rank_layers_from_rank_map(
+      selected_virtual_ordering_state.rank_node_ids_by_rank,
+      rank_seed_state.max_rank,
+    ),
     rank_order_selected_layers: rank_layers_from_rank_map(
       rank_order_debug_state.selected_rank_node_ids_by_rank,
       rank_seed_state.max_rank,

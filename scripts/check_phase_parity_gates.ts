@@ -388,7 +388,7 @@ function checkElkSortByInputPortOrderGate(): void {
       `elk sort-by-input port-order gate invalid denominator: ${summaryLine}`,
     )
   }
-  const maxAllowedMismatchSlots = 401
+  const maxAllowedMismatchSlots = 0
   if (mismatched > maxAllowedMismatchSlots) {
     fail(
       `elk sort-by-input port-order gate expected mismatches <= ${maxAllowedMismatchSlots}, got ${mismatched}/${comparable}`,

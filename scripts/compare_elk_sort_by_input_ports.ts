@@ -16,7 +16,8 @@ type PortOrderBySource = Map<string, string[]>
 type LocalTrace = {
   inputNodeIds: string[]
   inputEdges: Edge[]
-  feedbackEdges: Edge[]
+  virtualNodeIds: Set<string>
+  virtualPortsBySource: PortOrderBySource
 }
 
 type CaseMetrics = {
@@ -24,6 +25,7 @@ type CaseMetrics = {
   sourceCount: number
   mismatchSlots: number
   comparableSlots: number
+  mismatchDetails: string[]
 }
 
 function fail(message: string): never {
@@ -86,6 +88,10 @@ function parseLocalTrace(source: string): LocalTrace {
   const inputNodeIdsByIndex = new Map<number, string>()
   const inputEdges: Edge[] = []
   const feedbackEdges: Edge[] = []
+  const seedVirtualNodeIds = new Set<string>()
+  const selectedVirtualNodeIds = new Set<string>()
+  const seedVirtualTargetBySourceBySlot = new Map<string, Map<number, string>>()
+  const selectedVirtualTargetBySourceBySlot = new Map<string, Map<number, string>>()
 
   for (const rawLine of stdout.split(/\r?\n/)) {
     const line = rawLine.trim()
@@ -115,6 +121,44 @@ function parseLocalTrace(source: string): LocalTrace {
       }
       continue
     }
+    if (parts[0] === 'SEED_VIRTUAL_NODE') {
+      const nodeId = parts[1] ?? ''
+      if (nodeId !== '') {
+        seedVirtualNodeIds.add(nodeId)
+      }
+      continue
+    }
+    if (parts[0] === 'VIRTUAL_NODE') {
+      const nodeId = parts[1] ?? ''
+      if (nodeId !== '') {
+        selectedVirtualNodeIds.add(nodeId)
+      }
+      continue
+    }
+    if (parts[0] === 'SEED_VIRTUAL_PORT') {
+      const sourceId = parts[1] ?? ''
+      const slot = Number.parseInt(parts[2] ?? '', 10)
+      const targetId = parts[3] ?? ''
+      if (sourceId === '' || targetId === '' || !Number.isFinite(slot)) {
+        fail(`invalid SEED_VIRTUAL_PORT line: ${line}`)
+      }
+      const bySlot = seedVirtualTargetBySourceBySlot.get(sourceId) ?? new Map<number, string>()
+      bySlot.set(slot, targetId)
+      seedVirtualTargetBySourceBySlot.set(sourceId, bySlot)
+      continue
+    }
+    if (parts[0] === 'VIRTUAL_PORT') {
+      const sourceId = parts[1] ?? ''
+      const slot = Number.parseInt(parts[2] ?? '', 10)
+      const targetId = parts[3] ?? ''
+      if (sourceId === '' || targetId === '' || !Number.isFinite(slot)) {
+        fail(`invalid VIRTUAL_PORT line: ${line}`)
+      }
+      const bySlot = selectedVirtualTargetBySourceBySlot.get(sourceId) ?? new Map<number, string>()
+      bySlot.set(slot, targetId)
+      selectedVirtualTargetBySourceBySlot.set(sourceId, bySlot)
+      continue
+    }
   }
 
   if (inputNodeIdsByIndex.size === 0) {
@@ -127,8 +171,35 @@ function parseLocalTrace(source: string): LocalTrace {
   const inputNodeIds = [...inputNodeIdsByIndex.entries()]
     .sort((left, right) => left[0] - right[0])
     .map(([, nodeId]) => nodeId)
-
-  return { inputNodeIds, inputEdges, feedbackEdges }
+  const selectedSeedVirtualPorts =
+    seedVirtualTargetBySourceBySlot.size > 0
+      ? seedVirtualTargetBySourceBySlot
+      : selectedVirtualTargetBySourceBySlot
+  const virtualNodeIds =
+    seedVirtualNodeIds.size > 0 ? seedVirtualNodeIds : selectedVirtualNodeIds
+  const virtualPortsBySource = new Map<string, string[]>()
+  for (const [sourceId, targetBySlot] of selectedSeedVirtualPorts.entries()) {
+    const slots = [...targetBySlot.keys()].sort((left, right) => left - right)
+    const targets: string[] = []
+    for (const slot of slots) {
+      const targetId = targetBySlot.get(slot)
+      if (typeof targetId === 'string') {
+        targets.push(targetId)
+      }
+    }
+    virtualPortsBySource.set(sourceId, targets)
+  }
+  if (virtualPortsBySource.size === 0) {
+    for (const edge of feedbackEdges) {
+      const targets = virtualPortsBySource.get(edge.source) ?? []
+      targets.push(edge.target)
+      virtualPortsBySource.set(edge.source, targets)
+    }
+  }
+  if (virtualPortsBySource.size === 0) {
+    fail('local trace missing SEED_VIRTUAL_PORT/VIRTUAL_PORT output')
+  }
+  return { inputNodeIds, inputEdges, virtualNodeIds, virtualPortsBySource }
 }
 
 function parseJsonRecord(raw: string): Record<string, string[]> {
@@ -219,8 +290,7 @@ function runUpstreamSortByInputPorts(
     '      const edgeMatch = token.match(edgePattern);',
     "      if (!edgeMatch || edgeMatch[1] !== '>>') continue;",
     '      const rawTarget = edgeMatch[2];',
-    "      if (!rawTarget.startsWith('n_g.')) continue;",
-    "      const targetId = rawTarget.slice('n_g.'.length);",
+    "      const targetId = rawTarget.startsWith('n_g.') ? rawTarget.slice('n_g.'.length) : '__virtual__';",
     '      const list = bySource.get(sourceId) ?? [];',
     '      list.push(targetId);',
     '      bySource.set(sourceId, list);',
@@ -250,12 +320,24 @@ function runUpstreamSortByInputPorts(
   return portsBySource
 }
 
-function groupLocalFeedbackPorts(feedbackEdges: Edge[]): PortOrderBySource {
+function groupLocalPorts(localTrace: LocalTrace): PortOrderBySource {
   const portsBySource = new Map<string, string[]>()
-  for (const edge of feedbackEdges) {
-    const targets = portsBySource.get(edge.source) ?? []
-    targets.push(edge.target)
-    portsBySource.set(edge.source, targets)
+  const realNodeIds = new Set(localTrace.inputNodeIds)
+  for (const sourceId of localTrace.inputNodeIds) {
+    const rawTargets = localTrace.virtualPortsBySource.get(sourceId) ?? []
+    const targets: string[] = []
+    for (const targetId of rawTargets) {
+      if (localTrace.virtualNodeIds.has(targetId)) {
+        targets.push('__virtual__')
+      } else if (realNodeIds.has(targetId)) {
+        targets.push(targetId)
+      } else {
+        targets.push('__virtual__')
+      }
+    }
+    if (targets.length > 0) {
+      portsBySource.set(sourceId, targets)
+    }
   }
   return portsBySource
 }
@@ -266,6 +348,7 @@ function comparePortsBySource(
 ): {
   mismatchSlots: number
   comparableSlots: number
+  mismatchDetails: string[]
 } {
   const sourceIds = new Set<string>([
     ...localPortsBySource.keys(),
@@ -273,31 +356,39 @@ function comparePortsBySource(
   ])
   let mismatchSlots = 0
   let comparableSlots = 0
+  const mismatchDetails: string[] = []
   for (const sourceId of sourceIds) {
     const localTargets = localPortsBySource.get(sourceId) ?? []
     const upstreamTargets = upstreamPortsBySource.get(sourceId) ?? []
     const slotCount = Math.max(localTargets.length, upstreamTargets.length)
     comparableSlots += slotCount
+    let sourceMismatch = false
     for (let i = 0; i < slotCount; i += 1) {
       if ((localTargets[i] ?? '') !== (upstreamTargets[i] ?? '')) {
         mismatchSlots += 1
+        sourceMismatch = true
       }
     }
+    if (sourceMismatch) {
+      mismatchDetails.push(
+        `${sourceId}: local=[${localTargets.join(',')}] upstream=[${upstreamTargets.join(',')}]`,
+      )
+    }
   }
-  return { mismatchSlots, comparableSlots }
+  return { mismatchSlots, comparableSlots, mismatchDetails }
 }
 
 function compareFixture(fixturePath: string): CaseMetrics {
   const source = readFileSync(fixturePath, 'utf8')
   const direction = parseGraphDirection(source)
   const localTrace = parseLocalTrace(source)
-  const localPortsBySource = groupLocalFeedbackPorts(localTrace.feedbackEdges)
+  const localPortsBySource = groupLocalPorts(localTrace)
   const upstreamPortsBySource = runUpstreamSortByInputPorts(
     localTrace.inputNodeIds,
     localTrace.inputEdges,
     direction,
   )
-  const { mismatchSlots, comparableSlots } = comparePortsBySource(
+  const { mismatchSlots, comparableSlots, mismatchDetails } = comparePortsBySource(
     localPortsBySource,
     upstreamPortsBySource,
   )
@@ -309,6 +400,7 @@ function compareFixture(fixturePath: string): CaseMetrics {
     ]).size,
     mismatchSlots,
     comparableSlots,
+    mismatchDetails,
   }
 }
 
@@ -332,6 +424,11 @@ function main(): void {
     console.log(
       `port_order_mismatch_slots=${item.mismatchSlots}/${item.comparableSlots}`,
     )
+    if (item.mismatchDetails.length > 0) {
+      for (const detail of item.mismatchDetails) {
+        console.log(`mismatch_source ${detail}`)
+      }
+    }
   }
 
   console.log('\n=== summary ===')
