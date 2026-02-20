@@ -11,6 +11,12 @@ priv struct FeedbackIncidentEdge {
 }
 
 ///|
+priv enum FeedbackBreakTieStrategy {
+  SeededRandom
+  ModelOrderFirst
+}
+
+///|
 fn sort_ready_nodes_by_order(
   ready_node_ids : Array[String],
   order_index_by_node_id : Map[String, Int],
@@ -71,6 +77,7 @@ fn choose_feedback_break_node_by_outflow(
   mark_by_node_id : Map[String, Int],
   indegree_by_node_id : Map[String, Int],
   outdegree_by_node_id : Map[String, Int],
+  tie_strategy : FeedbackBreakTieStrategy,
   random_state : UInt64,
 ) -> (String?, UInt64) {
   let mut max_outflow = -2147483648
@@ -91,11 +98,16 @@ fn choose_feedback_break_node_by_outflow(
   if break_candidates.length() == 0 {
     return (None, random_state)
   }
-  let (next_state, selected_index) = java_random_next_int(
-    random_state,
-    break_candidates.length(),
-  )
-  (Some(break_candidates[selected_index]), next_state)
+  match tie_strategy {
+    SeededRandom => {
+      let (next_state, selected_index) = java_random_next_int(
+        random_state,
+        break_candidates.length(),
+      )
+      (Some(break_candidates[selected_index]), next_state)
+    }
+    ModelOrderFirst => (Some(break_candidates[0]), random_state)
+  }
 }
 
 ///|
@@ -365,6 +377,7 @@ fn compute_feedback_order_orientation_state(
   node_ids : Array[String],
   resolved_edges : Array[(String, String)],
   base_order_index_by_node_id : Map[String, Int],
+  tie_strategy : FeedbackBreakTieStrategy,
 ) -> FeedbackGreedyOrientationState {
   let (
     normalized_edges,
@@ -432,7 +445,7 @@ fn compute_feedback_order_orientation_state(
 
     let (break_node_id, next_state) = choose_feedback_break_node_by_outflow(
       traversal_node_ids_in_order, mark_by_node_id, indegree_by_node_id, outdegree_by_node_id,
-      random_state,
+      tie_strategy, random_state,
     )
     random_state = next_state
     match break_node_id {

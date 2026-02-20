@@ -118,6 +118,10 @@ test "elk layered rank trace keeps fanout kernel baseline" {
   assert_eq(trace.rank_seed_strategy, "native-feedback")
   assert_eq(trace.rank_order_strategy, "optimized-seed-with-virtual-candidate")
   assert_eq(trace.rank_order_selected_source, "virtual")
+  assert_eq(
+    trace.rank_feedback_oriented_edges_model_order,
+    trace.rank_feedback_oriented_edges,
+  )
   assert_eq(trace.rank_seed_layers, [["A"], ["B", "C"], ["D", "E"], ["F"]])
   assert_eq(
     trace.rank_order_optimized_reversed_seed_layers,
@@ -159,6 +163,10 @@ test "elk layered rank trace keeps feedback mesh kernel baseline" {
   assert_eq(trace.rank_seed_strategy, "native-feedback")
   assert_eq(trace.rank_order_strategy, "optimized-seed-with-virtual-candidate")
   assert_eq(trace.rank_order_selected_source, "virtual")
+  assert_true(
+    trace.rank_feedback_oriented_edges_model_order !=
+    trace.rank_feedback_oriented_edges,
+  )
   assert_eq(trace.rank_seed_layers, [["S"], ["A", "B"], ["C"], ["D"], ["T"]])
   assert_eq(
     trace.rank_order_optimized_reversed_seed_layers,
