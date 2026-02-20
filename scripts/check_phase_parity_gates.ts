@@ -1,5 +1,5 @@
 /**
- * Phase-level parity gates for dagre order traces and elk rank layers.
+ * Phase-level parity gates for dagre order traces and elk rank layers/cycle orientation.
  *
  * Usage:
  *   bun run scripts/check_phase_parity_gates.ts
@@ -194,9 +194,58 @@ function checkElkRankLayerGate(): void {
   }
 }
 
+function checkElkCycleOrientationGate(): void {
+  const fixtures = [
+    'fixtures/layout_stress_001_dense_dag.mmd',
+    'fixtures/layout_stress_002_feedback_mesh.mmd',
+    'fixtures/layout_stress_003_subgraph_bridges.mmd',
+    'fixtures/layout_stress_004_fanin_fanout.mmd',
+    'fixtures/layout_stress_005_long_span_backjumps.mmd',
+    'fixtures/layout_stress_006_nested_bridge_loops.mmd',
+    'fixtures/layout_stress_007_dependency_weave.mmd',
+    'fixtures/layout_stress_008_hyper_weave_pipeline.mmd',
+    'fixtures/layout_stress_009_nested_ring_bridges.mmd',
+    'fixtures/layout_stress_010_bipartite_crossfire.mmd',
+    'fixtures/layout_stress_011_feedback_lattice.mmd',
+    'fixtures/layout_stress_012_interleaved_subgraph_feedback.mmd',
+    'fixtures/layout_stress_013_rl_dual_scc_weave.mmd',
+  ]
+  const stdout = runOrThrow('bun', [
+    'run',
+    'scripts/compare_elk_cycle_orientation.ts',
+    ...fixtures,
+  ])
+  const totalMismatchLine = stdout
+    .split('\n')
+    .map(line => line.trim())
+    .find(line => line.startsWith('total_mismatch='))
+  if (!totalMismatchLine) {
+    fail('elk cycle-orientation gate missing total_mismatch summary line')
+  }
+  const match = /^total_mismatch=(\d+)\/(\d+)$/.exec(totalMismatchLine)
+  if (!match) {
+    fail(
+      `elk cycle-orientation gate invalid summary format: ${totalMismatchLine}`,
+    )
+  }
+  const mismatched = Number.parseInt(match[1]!, 10)
+  const comparable = Number.parseInt(match[2]!, 10)
+  if (!Number.isFinite(mismatched) || !Number.isFinite(comparable)) {
+    fail(
+      `elk cycle-orientation gate invalid mismatch counters: ${totalMismatchLine}`,
+    )
+  }
+  if (mismatched !== 0) {
+    fail(
+      `elk cycle-orientation gate expected 0 mismatches, got ${mismatched}/${comparable}`,
+    )
+  }
+}
+
 function main(): void {
   checkDagreTraceGate()
   checkElkRankLayerGate()
+  checkElkCycleOrientationGate()
   console.log('Phase parity gates passed.')
 }
 
