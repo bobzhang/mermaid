@@ -291,25 +291,22 @@ test "elk layered local refinement wrapper matches explicit kernel sequence" {
   let via_wrapper = clone_rank_node_ids_by_rank(seed_rank_node_ids_by_rank, 2)
   let via_explicit = clone_rank_node_ids_by_rank(seed_rank_node_ids_by_rank, 2)
   apply_crossing_local_refinement(
-    via_wrapper, 2, rank_by_node_id, successors_by_node_id, 6, 4, config,
+    build_crossing_refinement_input(
+      via_wrapper, 2, rank_by_node_id, successors_by_node_id, 6, 4,
+    ),
+    config,
   )
   apply_crossing_local_refinement_with_kernel(
-    via_explicit,
-    2,
-    rank_by_node_id,
-    successors_by_node_id,
-    6,
-    4,
+    build_crossing_refinement_input(
+      via_explicit, 2, rank_by_node_id, successors_by_node_id, 6, 4,
+    ),
     config,
     AdjacentSwap,
   )
   apply_crossing_local_refinement_with_kernel(
-    via_explicit,
-    2,
-    rank_by_node_id,
-    successors_by_node_id,
-    6,
-    4,
+    build_crossing_refinement_input(
+      via_explicit, 2, rank_by_node_id, successors_by_node_id, 6, 4,
+    ),
     config,
     RankPermutation,
   )
