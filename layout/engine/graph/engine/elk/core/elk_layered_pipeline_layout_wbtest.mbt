@@ -143,7 +143,7 @@ test "elk layered order optimization reduces crossing count on bipartite rank pa
   )
   optimize_rank_order(
     rank_node_ids_by_rank, max_rank, predecessors_by_node_id, successors_by_node_id,
-    order_index_by_node_id,
+    order_index_by_node_id, false,
   )
   let crossings_after = wb_rank_crossings_between(
     match rank_node_ids_by_rank.get(0) {
@@ -197,7 +197,7 @@ test "elk layered order optimization keeps multi-rank sweep neighbor state coher
   )
   optimize_rank_order(
     rank_node_ids_by_rank, max_rank, predecessors_by_node_id, successors_by_node_id,
-    order_index_by_node_id,
+    order_index_by_node_id, false,
   )
   let crossings_after = rank_order_crossing_score(
     rank_node_ids_by_rank, max_rank, rank_by_node_id, successors_by_node_id,
@@ -218,6 +218,19 @@ test "elk layered order optimization keeps multi-rank sweep neighbor state coher
     },
     ["E", "F"],
   )
+}
+
+///|
+test "elk layered neighbor sort keeps current rank order on full ties" {
+  let node_ids = ["B", "A"]
+  let neighbor_by_node_id : Map[String, Array[String]] = {}
+  let rank_position_by_node_id : Map[String, Int] = { "B": 0, "A": 1 }
+  let order_index_by_node_id : Map[String, Int] = { "A": 0, "B": 1 }
+  sort_rank_nodes_by_neighbors(
+    node_ids, neighbor_by_node_id, rank_position_by_node_id, order_index_by_node_id,
+    true,
+  )
+  assert_eq(node_ids, ["B", "A"])
 }
 
 ///|

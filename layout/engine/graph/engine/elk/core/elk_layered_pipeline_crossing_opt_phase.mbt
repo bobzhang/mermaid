@@ -58,6 +58,7 @@ fn sort_rank_nodes_by_neighbors(
   neighbor_by_node_id : Map[String, Array[String]],
   rank_position_by_node_id : Map[String, Int],
   order_index_by_node_id : Map[String, Int],
+  preserve_current_order_on_tie : Bool,
 ) -> Unit {
   node_ids.sort_by((left, right) => {
     let (left_has_center, left_median, left_mean) = node_neighbor_order_key(
@@ -78,6 +79,16 @@ fn sort_rank_nodes_by_neighbors(
       } else {
         1
       }
+    } else if preserve_current_order_on_tie {
+      option_int_or(
+        rank_position_by_node_id.get(left),
+        option_int_or(order_index_by_node_id.get(left), 0),
+      ).compare(
+        option_int_or(
+          rank_position_by_node_id.get(right),
+          option_int_or(order_index_by_node_id.get(right), 0),
+        ),
+      )
     } else {
       option_int_or(order_index_by_node_id.get(left), 0).compare(
         option_int_or(order_index_by_node_id.get(right), 0),
@@ -489,9 +500,10 @@ fn build_optimized_rank_node_ids_by_rank(
   let optimized_rank_node_ids_by_rank = clone_rank_node_ids_by_rank(
     base_rank_node_ids_by_rank, max_rank,
   )
+  let preserve_current_order_on_tie = node_count > 16 || edge_count > 30
   optimize_rank_order(
     optimized_rank_node_ids_by_rank, max_rank, predecessors_by_node_id, successors_by_node_id,
-    order_index_by_node_id,
+    order_index_by_node_id, preserve_current_order_on_tie,
   )
   maybe_refine_rank_order_by_swaps(
     optimized_rank_node_ids_by_rank, max_rank, rank_by_node_id, successors_by_node_id,
@@ -544,6 +556,7 @@ fn optimize_rank_order(
   predecessors_by_node_id : Map[String, Array[String]],
   successors_by_node_id : Map[String, Array[String]],
   order_index_by_node_id : Map[String, Int],
+  preserve_current_order_on_tie : Bool,
 ) -> Unit {
   if max_rank <= 0 {
     return
@@ -560,6 +573,7 @@ fn optimize_rank_order(
         Some(node_ids) =>
           sort_rank_nodes_by_neighbors(
             node_ids, predecessors_by_node_id, forward_positions, order_index_by_node_id,
+            preserve_current_order_on_tie,
           )
         None => ()
       }
@@ -574,6 +588,7 @@ fn optimize_rank_order(
         Some(node_ids) =>
           sort_rank_nodes_by_neighbors(
             node_ids, successors_by_node_id, backward_positions, order_index_by_node_id,
+            preserve_current_order_on_tie,
           )
         None => ()
       }
