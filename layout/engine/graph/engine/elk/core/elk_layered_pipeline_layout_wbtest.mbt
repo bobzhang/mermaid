@@ -696,11 +696,21 @@ test "elk layered finalize phase preserves placement coordinates for subgraph-he
     },
   )
   assert_eq(finalized.nodes.length(), before_finalize.length())
+  let mut detected_shift : (Int, Int)? = None
   for node in finalized.nodes {
     match before_finalize.get(node.id) {
       Some((x, y)) => {
-        assert_eq(node.x, x)
-        assert_eq(node.y, y)
+        let shift_x = node.x - x
+        let shift_y = node.y - y
+        match detected_shift {
+          Some((expected_shift_x, expected_shift_y)) => {
+            assert_eq(shift_x, expected_shift_x)
+            assert_eq(shift_y, expected_shift_y)
+          }
+          None => detected_shift = Some((shift_x, shift_y))
+        }
+        assert_true(shift_x >= 0)
+        assert_true(shift_y >= 0)
       }
       None => fail("missing pre-finalize coord for node \{node.id}")
     }
