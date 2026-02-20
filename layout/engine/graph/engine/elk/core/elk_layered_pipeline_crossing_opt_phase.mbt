@@ -571,21 +571,6 @@ fn select_rank_order_candidate_by_policy(
 }
 
 ///|
-fn maybe_refine_rank_order_by_swaps(
-  rank_node_ids_by_rank : Map[Int, Array[String]],
-  max_rank : Int,
-  rank_by_node_id : Map[String, Int],
-  successors_by_node_id : Map[String, Array[String]],
-  node_count : Int,
-  edge_count : Int,
-) -> Unit {
-  maybe_refine_rank_order_by_swaps_with_limits(
-    rank_node_ids_by_rank, max_rank, rank_by_node_id, successors_by_node_id, node_count,
-    edge_count, 40, 120,
-  )
-}
-
-///|
 fn maybe_refine_rank_order_by_swaps_with_limits(
   rank_node_ids_by_rank : Map[Int, Array[String]],
   max_rank : Int,
@@ -697,21 +682,6 @@ fn for_each_rank_permutation(
 }
 
 ///|
-fn maybe_refine_rank_order_by_rank_permutations(
-  rank_node_ids_by_rank : Map[Int, Array[String]],
-  max_rank : Int,
-  rank_by_node_id : Map[String, Int],
-  successors_by_node_id : Map[String, Array[String]],
-  node_count : Int,
-  edge_count : Int,
-) -> Unit {
-  maybe_refine_rank_order_by_rank_permutations_with_limits(
-    rank_node_ids_by_rank, max_rank, rank_by_node_id, successors_by_node_id, node_count,
-    edge_count, 28, 80, 6,
-  )
-}
-
-///|
 fn maybe_refine_rank_order_by_rank_permutations_with_limits(
   rank_node_ids_by_rank : Map[Int, Array[String]],
   max_rank : Int,
@@ -798,53 +768,28 @@ fn apply_crossing_local_refinement_with_kernel(
 ) -> Unit {
   match kernel {
     AdjacentSwap =>
-      if config.swap_refine_node_limit == 40 &&
-        config.swap_refine_edge_limit == 120 {
-        maybe_refine_rank_order_by_swaps(
-          refinement_input.rank_node_ids_by_rank,
-          refinement_input.max_rank,
-          refinement_input.rank_by_node_id,
-          refinement_input.successors_by_node_id,
-          refinement_input.node_count,
-          refinement_input.edge_count,
-        )
-      } else {
-        maybe_refine_rank_order_by_swaps_with_limits(
-          refinement_input.rank_node_ids_by_rank,
-          refinement_input.max_rank,
-          refinement_input.rank_by_node_id,
-          refinement_input.successors_by_node_id,
-          refinement_input.node_count,
-          refinement_input.edge_count,
-          config.swap_refine_node_limit,
-          config.swap_refine_edge_limit,
-        )
-      }
+      maybe_refine_rank_order_by_swaps_with_limits(
+        refinement_input.rank_node_ids_by_rank,
+        refinement_input.max_rank,
+        refinement_input.rank_by_node_id,
+        refinement_input.successors_by_node_id,
+        refinement_input.node_count,
+        refinement_input.edge_count,
+        config.swap_refine_node_limit,
+        config.swap_refine_edge_limit,
+      )
     RankPermutation =>
-      if config.permutation_refine_node_limit == 28 &&
-        config.permutation_refine_edge_limit == 80 &&
-        config.permutation_rank_size_limit == 6 {
-        maybe_refine_rank_order_by_rank_permutations(
-          refinement_input.rank_node_ids_by_rank,
-          refinement_input.max_rank,
-          refinement_input.rank_by_node_id,
-          refinement_input.successors_by_node_id,
-          refinement_input.node_count,
-          refinement_input.edge_count,
-        )
-      } else {
-        maybe_refine_rank_order_by_rank_permutations_with_limits(
-          refinement_input.rank_node_ids_by_rank,
-          refinement_input.max_rank,
-          refinement_input.rank_by_node_id,
-          refinement_input.successors_by_node_id,
-          refinement_input.node_count,
-          refinement_input.edge_count,
-          config.permutation_refine_node_limit,
-          config.permutation_refine_edge_limit,
-          config.permutation_rank_size_limit,
-        )
-      }
+      maybe_refine_rank_order_by_rank_permutations_with_limits(
+        refinement_input.rank_node_ids_by_rank,
+        refinement_input.max_rank,
+        refinement_input.rank_by_node_id,
+        refinement_input.successors_by_node_id,
+        refinement_input.node_count,
+        refinement_input.edge_count,
+        config.permutation_refine_node_limit,
+        config.permutation_refine_edge_limit,
+        config.permutation_rank_size_limit,
+      )
   }
 }
 
