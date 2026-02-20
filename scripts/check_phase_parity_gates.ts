@@ -1,5 +1,5 @@
 /**
- * Phase-level parity gates for dagre order traces and elk rank layers/cycle orientation.
+ * Phase-level parity gates for dagre order traces and elk layered pipeline traces.
  *
  * Usage:
  *   bun run scripts/check_phase_parity_gates.ts
@@ -396,12 +396,95 @@ function checkElkSortByInputPortOrderGate(): void {
   }
 }
 
+function checkElkPlacementMajorGate(): void {
+  const fixtures = [
+    'fixtures/layout_stress_001_dense_dag.mmd',
+    'fixtures/layout_stress_002_feedback_mesh.mmd',
+    'fixtures/layout_stress_003_subgraph_bridges.mmd',
+    'fixtures/layout_stress_004_fanin_fanout.mmd',
+    'fixtures/layout_stress_005_long_span_backjumps.mmd',
+    'fixtures/layout_stress_006_nested_bridge_loops.mmd',
+    'fixtures/layout_stress_007_dependency_weave.mmd',
+    'fixtures/layout_stress_008_hyper_weave_pipeline.mmd',
+    'fixtures/layout_stress_009_nested_ring_bridges.mmd',
+    'fixtures/layout_stress_010_bipartite_crossfire.mmd',
+    'fixtures/layout_stress_011_feedback_lattice.mmd',
+    'fixtures/layout_stress_012_interleaved_subgraph_feedback.mmd',
+    'fixtures/layout_stress_013_rl_dual_scc_weave.mmd',
+  ]
+  const stdout = runOrThrow('bun', [
+    'run',
+    'scripts/compare_elk_placement_major.ts',
+    ...fixtures,
+  ])
+  const lines = stdout
+    .split('\n')
+    .map(line => line.trim())
+    .filter(line => line !== '')
+
+  const layerMismatchLine = lines.find(line =>
+    line.startsWith('total_layer_mismatch='),
+  )
+  if (!layerMismatchLine) {
+    fail(
+      'elk placement-major gate missing total_layer_mismatch summary line',
+    )
+  }
+  const mismatchMatch = /^total_layer_mismatch=(\d+)$/.exec(layerMismatchLine)
+  if (!mismatchMatch) {
+    fail(
+      `elk placement-major gate invalid mismatch summary format: ${layerMismatchLine}`,
+    )
+  }
+  const totalLayerMismatch = Number.parseInt(mismatchMatch[1]!, 10)
+  if (!Number.isFinite(totalLayerMismatch)) {
+    fail(
+      `elk placement-major gate invalid mismatch counter: ${layerMismatchLine}`,
+    )
+  }
+
+  const avgInversionLine = lines.find(line =>
+    line.startsWith('avg_inversion_rate='),
+  )
+  if (!avgInversionLine) {
+    fail(
+      'elk placement-major gate missing avg_inversion_rate summary line',
+    )
+  }
+  const inversionMatch = /^avg_inversion_rate=([0-9.]+)$/.exec(avgInversionLine)
+  if (!inversionMatch) {
+    fail(
+      `elk placement-major gate invalid inversion summary format: ${avgInversionLine}`,
+    )
+  }
+  const avgInversionRate = Number.parseFloat(inversionMatch[1]!)
+  if (!Number.isFinite(avgInversionRate)) {
+    fail(
+      `elk placement-major gate invalid inversion value: ${avgInversionLine}`,
+    )
+  }
+
+  const maxAllowedLayerMismatch = 52
+  const maxAllowedAvgInversionRate = 0.0333
+  if (totalLayerMismatch > maxAllowedLayerMismatch) {
+    fail(
+      `elk placement-major gate expected total_layer_mismatch <= ${maxAllowedLayerMismatch}, got ${totalLayerMismatch}`,
+    )
+  }
+  if (avgInversionRate > maxAllowedAvgInversionRate) {
+    fail(
+      `elk placement-major gate expected avg_inversion_rate <= ${maxAllowedAvgInversionRate.toFixed(4)}, got ${avgInversionRate.toFixed(4)}`,
+    )
+  }
+}
+
 function main(): void {
   checkDagreTraceGate()
   checkElkRankLayerGate()
   checkElkCycleOrientationGate()
   checkElkSortByInputModelGate()
   checkElkSortByInputPortOrderGate()
+  checkElkPlacementMajorGate()
   console.log('Phase parity gates passed.')
 }
 

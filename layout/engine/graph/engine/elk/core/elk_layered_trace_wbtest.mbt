@@ -134,6 +134,13 @@ test "elk layered rank trace keeps fanout kernel baseline" {
     ["F"],
   ])
   assert_eq(trace.rank_layers, [["A"], ["C", "B"], ["E", "D"], ["F"]])
+  assert_eq(trace.placement_major_strategy, "rank-centered")
+  assert_eq(trace.placement_major_coord_by_node_id.length(), 6)
+  assert_eq(trace.placement_minor_coord_by_node_id.length(), 6)
+  assert_true(
+    option_int_or(trace.placement_major_coord_by_node_id.get("A"), 0) <
+    option_int_or(trace.placement_major_coord_by_node_id.get("F"), 0),
+  )
 }
 
 ///|
@@ -243,6 +250,9 @@ test "elk layered rank trace keeps long span kernel baseline" {
     ["N3"],
     ["N4"],
   ])
+  assert_eq(trace.placement_major_strategy, "rank-centered")
+  assert_eq(trace.placement_major_coord_by_node_id.length(), 7)
+  assert_eq(trace.placement_minor_coord_by_node_id.length(), 7)
 }
 
 ///|
@@ -263,4 +273,7 @@ test "elk layered rank trace matches upstream sort-by-input layers on stress_006
     ["LI3", "RI2"],
     ["L3"],
   ])
+  assert_eq(trace.placement_major_strategy, "relaxed-compaction")
+  assert_eq(trace.placement_major_coord_by_node_id.length(), 18)
+  assert_eq(trace.placement_minor_coord_by_node_id.length(), 18)
 }
