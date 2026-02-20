@@ -41,6 +41,12 @@ priv enum ElkLayeredCrossingSweepKernel {
 }
 
 ///|
+priv enum ElkLayeredCrossingLocalRefinementKernel {
+  AdjacentSwap
+  RankPermutation
+}
+
+///|
 fn default_crossing_sweep_kernel() -> ElkLayeredCrossingSweepKernel {
   NeighborMeanBidirectional
 }
@@ -700,6 +706,93 @@ fn maybe_refine_rank_order_by_rank_permutations_with_limits(
 }
 
 ///|
+fn apply_crossing_local_refinement_with_kernel(
+  rank_node_ids_by_rank : Map[Int, Array[String]],
+  max_rank : Int,
+  rank_by_node_id : Map[String, Int],
+  successors_by_node_id : Map[String, Array[String]],
+  node_count : Int,
+  edge_count : Int,
+  config : ElkLayeredCrossingOptimizationConfig,
+  kernel : ElkLayeredCrossingLocalRefinementKernel,
+) -> Unit {
+  match kernel {
+    AdjacentSwap =>
+      if config.swap_refine_node_limit == 40 &&
+        config.swap_refine_edge_limit == 120 {
+        maybe_refine_rank_order_by_swaps(
+          rank_node_ids_by_rank, max_rank, rank_by_node_id, successors_by_node_id,
+          node_count, edge_count,
+        )
+      } else {
+        maybe_refine_rank_order_by_swaps_with_limits(
+          rank_node_ids_by_rank,
+          max_rank,
+          rank_by_node_id,
+          successors_by_node_id,
+          node_count,
+          edge_count,
+          config.swap_refine_node_limit,
+          config.swap_refine_edge_limit,
+        )
+      }
+    RankPermutation =>
+      if config.permutation_refine_node_limit == 28 &&
+        config.permutation_refine_edge_limit == 80 &&
+        config.permutation_rank_size_limit == 6 {
+        maybe_refine_rank_order_by_rank_permutations(
+          rank_node_ids_by_rank, max_rank, rank_by_node_id, successors_by_node_id,
+          node_count, edge_count,
+        )
+      } else {
+        maybe_refine_rank_order_by_rank_permutations_with_limits(
+          rank_node_ids_by_rank,
+          max_rank,
+          rank_by_node_id,
+          successors_by_node_id,
+          node_count,
+          edge_count,
+          config.permutation_refine_node_limit,
+          config.permutation_refine_edge_limit,
+          config.permutation_rank_size_limit,
+        )
+      }
+  }
+}
+
+///|
+fn apply_crossing_local_refinement(
+  rank_node_ids_by_rank : Map[Int, Array[String]],
+  max_rank : Int,
+  rank_by_node_id : Map[String, Int],
+  successors_by_node_id : Map[String, Array[String]],
+  node_count : Int,
+  edge_count : Int,
+  config : ElkLayeredCrossingOptimizationConfig,
+) -> Unit {
+  apply_crossing_local_refinement_with_kernel(
+    rank_node_ids_by_rank,
+    max_rank,
+    rank_by_node_id,
+    successors_by_node_id,
+    node_count,
+    edge_count,
+    config,
+    AdjacentSwap,
+  )
+  apply_crossing_local_refinement_with_kernel(
+    rank_node_ids_by_rank,
+    max_rank,
+    rank_by_node_id,
+    successors_by_node_id,
+    node_count,
+    edge_count,
+    config,
+    RankPermutation,
+  )
+}
+
+///|
 fn optimize_rank_node_ids_by_crossing_phase(
   input : ElkLayeredCrossingPhaseInput,
 ) -> Map[Int, Array[String]] {
@@ -746,52 +839,15 @@ fn optimize_rank_node_ids_by_crossing_phase_with_strategy(
           default_crossing_sweep_kernel(),
         )
       }
-      if config.swap_refine_node_limit == 40 &&
-        config.swap_refine_edge_limit == 120 {
-        maybe_refine_rank_order_by_swaps(
-          optimized_rank_node_ids_by_rank,
-          input.max_rank,
-          input.rank_by_node_id,
-          input.successors_by_node_id,
-          input.node_count,
-          input.edge_count,
-        )
-      } else {
-        maybe_refine_rank_order_by_swaps_with_limits(
-          optimized_rank_node_ids_by_rank,
-          input.max_rank,
-          input.rank_by_node_id,
-          input.successors_by_node_id,
-          input.node_count,
-          input.edge_count,
-          config.swap_refine_node_limit,
-          config.swap_refine_edge_limit,
-        )
-      }
-      if config.permutation_refine_node_limit == 28 &&
-        config.permutation_refine_edge_limit == 80 &&
-        config.permutation_rank_size_limit == 6 {
-        maybe_refine_rank_order_by_rank_permutations(
-          optimized_rank_node_ids_by_rank,
-          input.max_rank,
-          input.rank_by_node_id,
-          input.successors_by_node_id,
-          input.node_count,
-          input.edge_count,
-        )
-      } else {
-        maybe_refine_rank_order_by_rank_permutations_with_limits(
-          optimized_rank_node_ids_by_rank,
-          input.max_rank,
-          input.rank_by_node_id,
-          input.successors_by_node_id,
-          input.node_count,
-          input.edge_count,
-          config.permutation_refine_node_limit,
-          config.permutation_refine_edge_limit,
-          config.permutation_rank_size_limit,
-        )
-      }
+      apply_crossing_local_refinement(
+        optimized_rank_node_ids_by_rank,
+        input.max_rank,
+        input.rank_by_node_id,
+        input.successors_by_node_id,
+        input.node_count,
+        input.edge_count,
+        config,
+      )
       optimized_rank_node_ids_by_rank
     }
   }

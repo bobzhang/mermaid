@@ -209,6 +209,58 @@ test "elk layered sweep-kernel wrapper matches explicit default kernel" {
 }
 
 ///|
+test "elk layered local refinement wrapper matches explicit kernel sequence" {
+  let seed_rank_node_ids_by_rank : Map[Int, Array[String]] = {
+    0: ["A", "B"],
+    1: ["C", "D"],
+    2: ["E", "F"],
+  }
+  let rank_by_node_id : Map[String, Int] = {
+    "A": 0,
+    "B": 0,
+    "C": 1,
+    "D": 1,
+    "E": 2,
+    "F": 2,
+  }
+  let successors_by_node_id : Map[String, Array[String]] = {
+    "A": ["D", "E"],
+    "B": ["C", "F"],
+    "C": [],
+    "D": [],
+    "E": [],
+    "F": [],
+  }
+  let config = default_crossing_optimization_config()
+  let via_wrapper = clone_rank_node_ids_by_rank(seed_rank_node_ids_by_rank, 2)
+  let via_explicit = clone_rank_node_ids_by_rank(seed_rank_node_ids_by_rank, 2)
+  apply_crossing_local_refinement(
+    via_wrapper, 2, rank_by_node_id, successors_by_node_id, 6, 4, config,
+  )
+  apply_crossing_local_refinement_with_kernel(
+    via_explicit,
+    2,
+    rank_by_node_id,
+    successors_by_node_id,
+    6,
+    4,
+    config,
+    AdjacentSwap,
+  )
+  apply_crossing_local_refinement_with_kernel(
+    via_explicit,
+    2,
+    rank_by_node_id,
+    successors_by_node_id,
+    6,
+    4,
+    config,
+    RankPermutation,
+  )
+  assert_eq(via_wrapper, via_explicit)
+}
+
+///|
 test "elk layered rank assignment keeps forward dependencies ordered" {
   let graph = wb_graph(["A", "B", "C", "D", "E"], [
     ("A", "C"),
