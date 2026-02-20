@@ -1192,33 +1192,147 @@ function orderByMinorAxis(labels: string[], positions: Map<string, Point>, major
     })
 }
 
-function buildMajorRankLayers(
+function buildOrderIndexByMajorMinor(
   labels: string[],
   positions: Map<string, Point>,
   majorAxis: Axis,
+): Map<string, number> {
+  const ordered = labels
+    .slice()
+    .sort((left, right) => {
+      const leftPoint = positions.get(left)!
+      const rightPoint = positions.get(right)!
+      const majorDelta = majorCoord(leftPoint, majorAxis) - majorCoord(rightPoint, majorAxis)
+      if (majorDelta !== 0) return majorDelta
+      const minorDelta = minorCoord(leftPoint, majorAxis) - minorCoord(rightPoint, majorAxis)
+      if (minorDelta !== 0) return minorDelta
+      return left.localeCompare(right)
+    })
+  const indexByLabel = new Map<string, number>()
+  ordered.forEach((label, index) => indexByLabel.set(label, index))
+  return indexByLabel
+}
+
+function compareByOrderIndex(
+  left: string,
+  right: string,
+  orderIndexByLabel: Map<string, number>,
+): number {
+  const leftIndex = orderIndexByLabel.get(left) ?? 0
+  const rightIndex = orderIndexByLabel.get(right) ?? 0
+  if (leftIndex !== rightIndex) {
+    return leftIndex - rightIndex
+  }
+  return left.localeCompare(right)
+}
+
+function buildOrientationAwareMajorRankLayers(
+  labels: string[],
+  positions: Map<string, Point>,
+  majorAxis: Axis,
+  fixtureEdges: FixtureEdge[],
 ): string[][] {
   if (labels.length === 0) return []
-  const entries = labels
-    .map(label => ({ label, major: majorCoord(positions.get(label)!, majorAxis) }))
-    .sort((left, right) => {
-      if (left.major !== right.major) return left.major - right.major
-      return left.label.localeCompare(right.label)
-    })
-
-  const layers: string[][] = []
-  const epsilon = 0.5
-  let anchor = entries[0]!.major
-  let currentLayer: string[] = []
-  for (const entry of entries) {
-    if (Math.abs(entry.major - anchor) > epsilon && currentLayer.length > 0) {
-      layers.push(currentLayer)
-      currentLayer = []
-      anchor = entry.major
-    }
-    currentLayer.push(entry.label)
+  const labelSet = new Set(labels)
+  const orderIndexByLabel = buildOrderIndexByMajorMinor(labels, positions, majorAxis)
+  const successorsByLabel = new Map<string, string[]>()
+  const indegreeByLabel = new Map<string, number>()
+  for (const label of labels) {
+    successorsByLabel.set(label, [])
+    indegreeByLabel.set(label, 0)
   }
-  if (currentLayer.length > 0) {
-    layers.push(currentLayer)
+  const seenOrientedEdges = new Set<string>()
+  const majorTieEpsilon = 1e-6
+
+  const pushOrientedEdge = (source: string, target: string): void => {
+    if (source === target) return
+    const key = `${source}\t${target}`
+    if (seenOrientedEdges.has(key)) return
+    seenOrientedEdges.add(key)
+    successorsByLabel.get(source)!.push(target)
+    indegreeByLabel.set(target, (indegreeByLabel.get(target) ?? 0) + 1)
+  }
+
+  for (const edge of fixtureEdges) {
+    if (!labelSet.has(edge.source) || !labelSet.has(edge.target)) {
+      continue
+    }
+    const sourcePoint = positions.get(edge.source)
+    const targetPoint = positions.get(edge.target)
+    if (!sourcePoint || !targetPoint) {
+      continue
+    }
+    const sourceMajor = majorCoord(sourcePoint, majorAxis)
+    const targetMajor = majorCoord(targetPoint, majorAxis)
+    if (sourceMajor < targetMajor - majorTieEpsilon) {
+      pushOrientedEdge(edge.source, edge.target)
+      continue
+    }
+    if (sourceMajor > targetMajor + majorTieEpsilon) {
+      pushOrientedEdge(edge.target, edge.source)
+      continue
+    }
+    if (compareByOrderIndex(edge.source, edge.target, orderIndexByLabel) <= 0) {
+      pushOrientedEdge(edge.source, edge.target)
+    } else {
+      pushOrientedEdge(edge.target, edge.source)
+    }
+  }
+
+  const rankByLabel = new Map<string, number>()
+  for (const label of labels) {
+    rankByLabel.set(label, 0)
+  }
+  const ready = labels
+    .filter(label => (indegreeByLabel.get(label) ?? 0) === 0)
+    .sort((left, right) => compareByOrderIndex(left, right, orderIndexByLabel))
+
+  let processed = 0
+  while (ready.length > 0) {
+    const label = ready.shift()!
+    processed += 1
+    const rank = rankByLabel.get(label) ?? 0
+    const successors = successorsByLabel.get(label) ?? []
+    for (const successor of successors) {
+      const nextRank = rank + 1
+      if (nextRank > (rankByLabel.get(successor) ?? 0)) {
+        rankByLabel.set(successor, nextRank)
+      }
+      const nextInDegree = (indegreeByLabel.get(successor) ?? 0) - 1
+      indegreeByLabel.set(successor, nextInDegree)
+      if (nextInDegree === 0) {
+        ready.push(successor)
+      }
+    }
+    ready.sort((left, right) => compareByOrderIndex(left, right, orderIndexByLabel))
+  }
+
+  // Guard against pathological cycles in inferred orientation.
+  if (processed < labels.length) {
+    const unresolved = labels
+      .filter(label => (indegreeByLabel.get(label) ?? 0) > 0)
+      .sort((left, right) => compareByOrderIndex(left, right, orderIndexByLabel))
+    let maxRank = 0
+    for (const rank of rankByLabel.values()) {
+      if (rank > maxRank) maxRank = rank
+    }
+    for (const label of unresolved) {
+      maxRank += 1
+      rankByLabel.set(label, maxRank)
+    }
+  }
+
+  let maxRank = 0
+  for (const rank of rankByLabel.values()) {
+    if (rank > maxRank) maxRank = rank
+  }
+  const layers = Array.from({ length: maxRank + 1 }, () => [] as string[])
+  for (const label of labels) {
+    const rank = rankByLabel.get(label) ?? 0
+    layers[rank]!.push(label)
+  }
+  for (let rank = 0; rank < layers.length; rank += 1) {
+    layers[rank] = orderByMinorAxis(layers[rank]!, positions, majorAxis)
   }
   return layers
 }
@@ -1260,6 +1374,7 @@ function computeMajorRankDiagnostics(
   officialNodes: Map<string, Point>,
   localNodes: Map<string, Point>,
   majorAxis: Axis,
+  fixtureEdges: FixtureEdge[],
   includeSamples: boolean,
   includeLayerDetails: boolean,
 ): MajorRankDiagnostics {
@@ -1285,8 +1400,18 @@ function computeMajorRankDiagnostics(
     }
   }
 
-  const officialLayers = buildMajorRankLayers(sharedLabels, officialNodes, majorAxis)
-  const localLayers = buildMajorRankLayers(sharedLabels, localNodes, majorAxis)
+  const officialLayers = buildOrientationAwareMajorRankLayers(
+    sharedLabels,
+    officialNodes,
+    majorAxis,
+    fixtureEdges,
+  )
+  const localLayers = buildOrientationAwareMajorRankLayers(
+    sharedLabels,
+    localNodes,
+    majorAxis,
+    fixtureEdges,
+  )
   const officialRankByLabel = buildRankIndexByLabel(officialLayers)
   const localRankByLabel = buildRankIndexByLabel(localLayers)
   const officialMinorIndexByLabel = new Map<string, number>()
@@ -1886,6 +2011,7 @@ function compareFixture(
     officialNodes,
     localNodes,
     majorAxis,
+    fixtureEdges,
     options.explainRankOrder,
     options.includeRankLayers,
   )
