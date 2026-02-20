@@ -34,9 +34,10 @@ fn node_dimensions(node : MermaidNode) -> (Int, Int) {
       (width, height)
     }
     _ => {
-      let min_width = 70
-      let width = min_width.max(longest_line * 8 + 24)
-      let height = (24 + label_lines.length() * 14).max(44)
+      let min_width = 76
+      // Keep ELK default node boxes close to Mermaid's rendered flowchart nodes.
+      let width = min_width.max(longest_line * 8 + 60)
+      let height = (30 + label_lines.length() * 24).max(54)
       (width, height)
     }
   }
