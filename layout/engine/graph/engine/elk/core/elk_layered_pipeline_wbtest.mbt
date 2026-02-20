@@ -164,6 +164,7 @@ test "elk layered node-size phase captures dimensions and maxima" {
 test "elk layered node dimensions keep flowchart box baseline" {
   assert_eq(node_dimensions(wb_node("L0"), true), (64, 54))
   assert_eq(node_dimensions(wb_node("SRC"), true), (64, 54))
+  assert_eq(node_dimensions(wb_node("W1"), true), (70, 54))
   assert_eq(node_dimensions(wb_node("A\nB"), true), (64, 78))
 }
 
@@ -177,6 +178,7 @@ test "elk layered node dimensions scale adaptive padding for medium labels" {
 ///|
 test "elk layered node dimensions keep legacy widths for large graphs" {
   assert_eq(node_dimensions(wb_node("Build"), false), (100, 54))
+  assert_eq(node_dimensions(wb_node("W1"), false), (82, 54))
   assert_eq(node_dimensions(wb_node("SRC"), false), (84, 54))
 }
 

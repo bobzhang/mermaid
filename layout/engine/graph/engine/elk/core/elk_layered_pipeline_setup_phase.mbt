@@ -1,6 +1,21 @@
 ///|
 
 ///|
+fn short_label_wide_glyph_bonus(label_lines : Array[String]) -> Int {
+  let mut max_bonus = 0
+  for line in label_lines {
+    let has_wide_glyph = line.contains("W") ||
+      line.contains("M") ||
+      line.contains("w") ||
+      line.contains("m")
+    if has_wide_glyph && max_bonus < 6 {
+      max_bonus = 6
+    }
+  }
+  max_bonus
+}
+
+///|
 fn node_dimensions(
   node : MermaidNode,
   compact_short_labels : Bool,
@@ -42,7 +57,16 @@ fn node_dimensions(
       // ELK's node label boxes are close to Mermaid defaults for long labels,
       // but short labels need less horizontal padding to avoid stretched ranks.
       let short_label = compact_short_labels && longest_line <= 5
-      let min_width = if short_label { 64 } else { 76 }
+      let wide_glyph_bonus = if longest_line <= 5 {
+        short_label_wide_glyph_bonus(label_lines)
+      } else {
+        0
+      }
+      let min_width = if short_label {
+        64 + wide_glyph_bonus
+      } else {
+        76 + wide_glyph_bonus
+      }
       let adaptive_padding = if short_label {
         20
       } else if compact_short_labels {
@@ -50,7 +74,9 @@ fn node_dimensions(
       } else {
         60
       }
-      let width = min_width.max(longest_line * 8 + adaptive_padding)
+      let width = min_width.max(
+        longest_line * 8 + adaptive_padding + wide_glyph_bonus,
+      )
       let height = (30 + label_lines.length() * 24).max(54)
       (width, height)
     }
