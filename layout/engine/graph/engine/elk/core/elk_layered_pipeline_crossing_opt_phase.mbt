@@ -122,6 +122,35 @@ fn build_crossing_phase_input(
 }
 
 ///|
+priv struct ElkLayeredCrossingSweepInput {
+  rank_node_ids_by_rank : Map[Int, Array[String]]
+  max_rank : Int
+  predecessors_by_node_id : Map[String, Array[String]]
+  successors_by_node_id : Map[String, Array[String]]
+  order_index_by_node_id : Map[String, Int]
+  preserve_current_order_on_tie : Bool
+}
+
+///|
+fn build_crossing_sweep_input(
+  rank_node_ids_by_rank : Map[Int, Array[String]],
+  max_rank : Int,
+  predecessors_by_node_id : Map[String, Array[String]],
+  successors_by_node_id : Map[String, Array[String]],
+  order_index_by_node_id : Map[String, Int],
+  preserve_current_order_on_tie : Bool,
+) -> ElkLayeredCrossingSweepInput {
+  {
+    rank_node_ids_by_rank,
+    max_rank,
+    predecessors_by_node_id,
+    successors_by_node_id,
+    order_index_by_node_id,
+    preserve_current_order_on_tie,
+  }
+}
+
+///|
 priv struct NodeNeighborOrderKey {
   has_center : Bool
   mean_scaled : Int
@@ -948,60 +977,76 @@ fn optimize_rank_order_with_sweep_passes_and_kernel(
   sweep_pass_count : Int,
   sweep_kernel : ElkLayeredCrossingSweepKernel,
 ) -> Unit {
-  if max_rank <= 0 {
+  optimize_rank_order_with_sweep_passes_from_input(
+    build_crossing_sweep_input(
+      rank_node_ids_by_rank, max_rank, predecessors_by_node_id, successors_by_node_id,
+      order_index_by_node_id, preserve_current_order_on_tie,
+    ),
+    sweep_pass_count,
+    sweep_kernel,
+  )
+}
+
+///|
+fn optimize_rank_order_with_sweep_passes_from_input(
+  sweep_input : ElkLayeredCrossingSweepInput,
+  sweep_pass_count : Int,
+  sweep_kernel : ElkLayeredCrossingSweepKernel,
+) -> Unit {
+  if sweep_input.max_rank <= 0 {
     return
   }
   let mut pass = 0
   while pass < sweep_pass_count {
-    sweep_rank_order_once_with_kernel(
-      rank_node_ids_by_rank, max_rank, predecessors_by_node_id, successors_by_node_id,
-      order_index_by_node_id, preserve_current_order_on_tie, sweep_kernel,
-    )
+    sweep_rank_order_once_from_input_with_kernel(sweep_input, sweep_kernel)
     pass += 1
   }
 }
 
 ///|
-fn sweep_rank_order_once_with_kernel(
-  rank_node_ids_by_rank : Map[Int, Array[String]],
-  max_rank : Int,
-  predecessors_by_node_id : Map[String, Array[String]],
-  successors_by_node_id : Map[String, Array[String]],
-  order_index_by_node_id : Map[String, Int],
-  preserve_current_order_on_tie : Bool,
+fn sweep_rank_order_once_from_input_with_kernel(
+  sweep_input : ElkLayeredCrossingSweepInput,
   sweep_kernel : ElkLayeredCrossingSweepKernel,
 ) -> Unit {
-  if max_rank <= 0 {
+  if sweep_input.max_rank <= 0 {
     return
   }
   match sweep_kernel {
     NeighborMeanBidirectional => {
-      for rank in 1..<=max_rank {
+      for rank in 1..<=sweep_input.max_rank {
         // Keep the layer-sweep state coherent: each rank update should observe
         // already-updated neighbor order from earlier ranks in the same pass.
         let forward_positions = rank_position_by_node_id(
-          rank_node_ids_by_rank, max_rank,
+          sweep_input.rank_node_ids_by_rank,
+          sweep_input.max_rank,
         )
-        match rank_node_ids_by_rank.get(rank) {
+        match sweep_input.rank_node_ids_by_rank.get(rank) {
           Some(node_ids) =>
             sort_rank_nodes_by_neighbors(
-              node_ids, predecessors_by_node_id, forward_positions, order_index_by_node_id,
-              preserve_current_order_on_tie,
+              node_ids,
+              sweep_input.predecessors_by_node_id,
+              forward_positions,
+              sweep_input.order_index_by_node_id,
+              sweep_input.preserve_current_order_on_tie,
             )
           None => ()
         }
       }
 
-      let mut rank = max_rank - 1
+      let mut rank = sweep_input.max_rank - 1
       while true {
         let backward_positions = rank_position_by_node_id(
-          rank_node_ids_by_rank, max_rank,
+          sweep_input.rank_node_ids_by_rank,
+          sweep_input.max_rank,
         )
-        match rank_node_ids_by_rank.get(rank) {
+        match sweep_input.rank_node_ids_by_rank.get(rank) {
           Some(node_ids) =>
             sort_rank_nodes_by_neighbors(
-              node_ids, successors_by_node_id, backward_positions, order_index_by_node_id,
-              preserve_current_order_on_tie,
+              node_ids,
+              sweep_input.successors_by_node_id,
+              backward_positions,
+              sweep_input.order_index_by_node_id,
+              sweep_input.preserve_current_order_on_tie,
             )
           None => ()
         }
