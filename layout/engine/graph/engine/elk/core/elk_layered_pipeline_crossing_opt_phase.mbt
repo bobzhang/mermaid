@@ -376,6 +376,40 @@ fn global_crossing_count(
 }
 
 ///|
+priv struct ElkLayeredCrossingObjectiveContext {
+  max_rank : Int
+  rank_by_node_id : Map[String, Int]
+  successors_by_node_id : Map[String, Array[String]]
+}
+
+///|
+priv struct ElkLayeredCrossingObjective {
+  layered_crossings : Int
+  global_crossings : Int
+}
+
+///|
+fn evaluate_crossing_objective(
+  rank_node_ids_by_rank : Map[Int, Array[String]],
+  context : ElkLayeredCrossingObjectiveContext,
+) -> ElkLayeredCrossingObjective {
+  {
+    layered_crossings: layered_crossing_count(
+      rank_node_ids_by_rank,
+      context.max_rank,
+      context.rank_by_node_id,
+      context.successors_by_node_id,
+    ),
+    global_crossings: global_crossing_count(
+      rank_node_ids_by_rank,
+      context.max_rank,
+      context.rank_by_node_id,
+      context.successors_by_node_id,
+    ),
+  }
+}
+
+///|
 fn maybe_refine_rank_order_by_swaps(
   rank_node_ids_by_rank : Map[Int, Array[String]],
   max_rank : Int,
@@ -387,14 +421,15 @@ fn maybe_refine_rank_order_by_swaps(
   if node_count > 40 || edge_count > 120 {
     return
   }
-  let best_layered_crossings = layered_crossing_count(
-    rank_node_ids_by_rank, max_rank, rank_by_node_id, successors_by_node_id,
+  let context : ElkLayeredCrossingObjectiveContext = {
+    max_rank,
+    rank_by_node_id,
+    successors_by_node_id,
+  }
+  let mut best_objective = evaluate_crossing_objective(
+    rank_node_ids_by_rank, context,
   )
-  let max_allowed_layered_crossings = best_layered_crossings
-  let mut best_global_crossings = global_crossing_count(
-    rank_node_ids_by_rank, max_rank, rank_by_node_id, successors_by_node_id,
-  )
-  let mut best_crossings = best_layered_crossings
+  let max_allowed_layered_crossings = best_objective.layered_crossings
   let mut pass = 0
   // Keep local swap refinement shallow: additional passes tend to overfit
   // rank order with marginal crossing gains and larger upstream parity drift.
@@ -412,25 +447,25 @@ fn maybe_refine_rank_order_by_swaps(
             let right = node_ids[i + 1]
             node_ids[i] = right
             node_ids[i + 1] = left
-            let swapped_crossings = layered_crossing_count(
-              rank_node_ids_by_rank, max_rank, rank_by_node_id, successors_by_node_id,
+            let swapped_objective = evaluate_crossing_objective(
+              rank_node_ids_by_rank, context,
             )
-            if swapped_crossings > max_allowed_layered_crossings {
+            if swapped_objective.layered_crossings >
+              max_allowed_layered_crossings {
               node_ids[i] = left
               node_ids[i + 1] = right
               i = i + 1
               continue
             }
-            let swapped_global_crossings = global_crossing_count(
-              rank_node_ids_by_rank, max_rank, rank_by_node_id, successors_by_node_id,
-            )
-            if swapped_global_crossings < best_global_crossings ||
+            if swapped_objective.global_crossings <
+              best_objective.global_crossings ||
               (
-                swapped_global_crossings == best_global_crossings &&
-                swapped_crossings < best_crossings
+                swapped_objective.global_crossings ==
+                best_objective.global_crossings &&
+                swapped_objective.layered_crossings <
+                best_objective.layered_crossings
               ) {
-              best_global_crossings = swapped_global_crossings
-              best_crossings = swapped_crossings
+              best_objective = swapped_objective
               improved = true
             } else {
               node_ids[i] = left
@@ -496,14 +531,16 @@ fn maybe_refine_rank_order_by_rank_permutations(
     return
   }
 
-  let initial_layered_crossings = layered_crossing_count(
-    rank_node_ids_by_rank, max_rank, rank_by_node_id, successors_by_node_id,
+  let context : ElkLayeredCrossingObjectiveContext = {
+    max_rank,
+    rank_by_node_id,
+    successors_by_node_id,
+  }
+  let initial_objective = evaluate_crossing_objective(
+    rank_node_ids_by_rank, context,
   )
-  let max_allowed_layered_crossings = initial_layered_crossings
-  let mut best_layered_crossings = initial_layered_crossings
-  let mut best_global_crossings = global_crossing_count(
-    rank_node_ids_by_rank, max_rank, rank_by_node_id, successors_by_node_id,
-  )
+  let max_allowed_layered_crossings = initial_objective.layered_crossings
+  let mut best_objective = initial_objective
 
   let mut pass = 0
   // Mirror the shallow refinement bound used by adjacent-swap search.
@@ -522,22 +559,22 @@ fn maybe_refine_rank_order_by_rank_permutations(
             for node_id in candidate_order {
               node_ids.push(node_id)
             }
-            let candidate_layered_crossings = layered_crossing_count(
-              rank_node_ids_by_rank, max_rank, rank_by_node_id, successors_by_node_id,
+            let candidate_objective = evaluate_crossing_objective(
+              rank_node_ids_by_rank, context,
             )
-            if candidate_layered_crossings > max_allowed_layered_crossings {
+            if candidate_objective.layered_crossings >
+              max_allowed_layered_crossings {
               return
             }
-            let candidate_global_crossings = global_crossing_count(
-              rank_node_ids_by_rank, max_rank, rank_by_node_id, successors_by_node_id,
-            )
-            if candidate_global_crossings < best_global_crossings ||
+            if candidate_objective.global_crossings <
+              best_objective.global_crossings ||
               (
-                candidate_global_crossings == best_global_crossings &&
-                candidate_layered_crossings < best_layered_crossings
+                candidate_objective.global_crossings ==
+                best_objective.global_crossings &&
+                candidate_objective.layered_crossings <
+                best_objective.layered_crossings
               ) {
-              best_layered_crossings = candidate_layered_crossings
-              best_global_crossings = candidate_global_crossings
+              best_objective = candidate_objective
               best_order = candidate_order
               improved = true
             }

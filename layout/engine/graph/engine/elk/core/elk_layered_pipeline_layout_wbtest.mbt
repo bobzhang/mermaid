@@ -84,6 +84,39 @@ test "elk layered crossing phase input enumerates rank nodes for port-order slot
 }
 
 ///|
+test "elk layered crossing objective evaluator matches direct counters" {
+  let rank_node_ids_by_rank : Map[Int, Array[String]] = {
+    0: ["A", "B"],
+    1: ["C", "D"],
+  }
+  let rank_by_node_id : Map[String, Int] = { "A": 0, "B": 0, "C": 1, "D": 1 }
+  let successors_by_node_id : Map[String, Array[String]] = {
+    "A": ["D"],
+    "B": ["C"],
+    "C": [],
+    "D": [],
+  }
+  let context : ElkLayeredCrossingObjectiveContext = {
+    max_rank: 1,
+    rank_by_node_id,
+    successors_by_node_id,
+  }
+  let objective = evaluate_crossing_objective(rank_node_ids_by_rank, context)
+  assert_eq(
+    objective.layered_crossings,
+    layered_crossing_count(
+      rank_node_ids_by_rank, 1, rank_by_node_id, successors_by_node_id,
+    ),
+  )
+  assert_eq(
+    objective.global_crossings,
+    global_crossing_count(
+      rank_node_ids_by_rank, 1, rank_by_node_id, successors_by_node_id,
+    ),
+  )
+}
+
+///|
 test "elk layered rank assignment keeps forward dependencies ordered" {
   let graph = wb_graph(["A", "B", "C", "D", "E"], [
     ("A", "C"),
