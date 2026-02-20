@@ -894,6 +894,7 @@ fn collapse_major_coord_to_rank_edgeward_anchor(
         let mut rank_anchor = 0
         let mut min_major = 0
         let mut max_major = 0
+        let major_count_by_coord : Map[Int, Int] = {}
         for node_id in node_ids {
           let baseline_major = option_int_or(
             baseline_major_coord_by_node_id.get(node_id),
@@ -934,8 +935,51 @@ fn collapse_major_coord_to_rank_edgeward_anchor(
               max_major = major
             }
           }
+          major_count_by_coord[major] = option_int_or(
+              major_count_by_coord.get(major),
+              0,
+            ) +
+            1
         }
-        if has_anchor && max_major - min_major <= max_allowed_spread {
+        let mut mode_major = rank_anchor
+        let mut mode_count = 0
+        for major_coord, count in major_count_by_coord {
+          if count > mode_count ||
+            (count == mode_count && major_coord > mode_major) {
+            mode_major = major_coord
+            mode_count = count
+          }
+        }
+        let spread = max_major - min_major
+        let mut max_mode_delta = 0
+        for node_id in node_ids {
+          let baseline_major = option_int_or(
+            baseline_major_coord_by_node_id.get(node_id),
+            0,
+          )
+          let major = option_int_or(
+            major_coord_by_node_id.get(node_id),
+            baseline_major,
+          )
+          let mode_delta = if major >= mode_major {
+            major - mode_major
+          } else {
+            mode_major - major
+          }
+          if mode_delta > max_mode_delta {
+            max_mode_delta = mode_delta
+          }
+        }
+        let collapse_singleton_outlier = mode_count >= 2 &&
+          node_ids.length() >= 4 &&
+          mode_count + 1 >= node_ids.length() &&
+          max_mode_delta >= 50 &&
+          max_mode_delta <= 90
+        if has_anchor && collapse_singleton_outlier {
+          for node_id in node_ids {
+            collapsed[node_id] = mode_major
+          }
+        } else if has_anchor && spread <= max_allowed_spread {
           for node_id in node_ids {
             collapsed[node_id] = rank_anchor
           }

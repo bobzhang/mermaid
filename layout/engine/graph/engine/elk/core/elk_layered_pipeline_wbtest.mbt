@@ -813,6 +813,59 @@ test "elk layered major sweep candidates remain edge-feasible" {
 }
 
 ///|
+test "elk layered rank edgeward collapse snaps moderate singleton outlier" {
+  let rank_node_ids_by_rank : Map[Int, Array[String]] = {
+    0: ["A", "B", "C", "D"],
+  }
+  let baseline_major_coord_by_node_id : Map[String, Int] = {
+    "A": 100,
+    "B": 152,
+    "C": 152,
+    "D": 152,
+  }
+  let collapsed = collapse_major_coord_to_rank_edgeward_anchor(
+    rank_node_ids_by_rank, 0, false, baseline_major_coord_by_node_id, baseline_major_coord_by_node_id,
+  )
+  assert_eq(option_int_or(collapsed.get("A"), -1), 152)
+  assert_eq(option_int_or(collapsed.get("B"), -1), 152)
+  assert_eq(option_int_or(collapsed.get("C"), -1), 152)
+  assert_eq(option_int_or(collapsed.get("D"), -1), 152)
+}
+
+///|
+test "elk layered rank edgeward collapse keeps low-delta singleton jitter untouched" {
+  let rank_node_ids_by_rank : Map[Int, Array[String]] = {
+    0: ["A", "B", "C", "D"],
+  }
+  let baseline_major_coord_by_node_id : Map[String, Int] = {
+    "A": 110,
+    "B": 152,
+    "C": 152,
+    "D": 152,
+  }
+  let collapsed = collapse_major_coord_to_rank_edgeward_anchor(
+    rank_node_ids_by_rank, 0, false, baseline_major_coord_by_node_id, baseline_major_coord_by_node_id,
+  )
+  assert_eq(option_int_or(collapsed.get("A"), -1), 110)
+}
+
+///|
+test "elk layered rank edgeward collapse keeps wide rank with three nodes untouched" {
+  let rank_node_ids_by_rank : Map[Int, Array[String]] = { 0: ["A", "B", "C"] }
+  let baseline_major_coord_by_node_id : Map[String, Int] = {
+    "A": 80,
+    "B": 150,
+    "C": 150,
+  }
+  let collapsed = collapse_major_coord_to_rank_edgeward_anchor(
+    rank_node_ids_by_rank, 0, false, baseline_major_coord_by_node_id, baseline_major_coord_by_node_id,
+  )
+  assert_eq(option_int_or(collapsed.get("A"), -1), 80)
+  assert_eq(option_int_or(collapsed.get("B"), -1), 150)
+  assert_eq(option_int_or(collapsed.get("C"), -1), 150)
+}
+
+///|
 test "elk layered major center builder respects reverse display order" {
   let rank_pair_label_major_gap : Map[String, Int] = {}
   let rank_major_extent_by_rank : Map[Int, Int] = { 0: 100, 1: 100, 2: 100 }
