@@ -374,12 +374,272 @@ fn enforce_major_edge_constraints(
 }
 
 ///|
-fn relax_major_coord_by_node_id(
+priv struct MajorRelaxCandidate {
+  name : String
+  major_coord_by_node_id : Map[String, Int]
+  violation_score : Int
+  span : Int
+  baseline_delta_sum : Int
+  objective : Int
+}
+
+///|
+fn clone_major_coord_by_node_id(
+  major_coord_by_node_id : Map[String, Int],
+) -> Map[String, Int] {
+  let cloned : Map[String, Int] = {}
+  for node_id, major_coord in major_coord_by_node_id {
+    cloned[node_id] = major_coord
+  }
+  cloned
+}
+
+///|
+fn sorted_node_ids_from_coord_map(
+  major_coord_by_node_id : Map[String, Int],
+) -> Array[String] {
+  let node_ids : Array[String] = []
+  for node_id, _ in major_coord_by_node_id {
+    node_ids.push(node_id)
+  }
+  node_ids.sort()
+  node_ids
+}
+
+///|
+fn major_coord_span(
+  node_ids : Array[String],
+  major_coord_by_node_id : Map[String, Int],
+) -> Int {
+  let mut has_major = false
+  let mut min_major = 0
+  let mut max_major = 0
+  for node_id in node_ids {
+    let major_coord = option_int_or(major_coord_by_node_id.get(node_id), 0)
+    if !has_major {
+      has_major = true
+      min_major = major_coord
+      max_major = major_coord
+    } else {
+      if major_coord < min_major {
+        min_major = major_coord
+      }
+      if major_coord > max_major {
+        max_major = major_coord
+      }
+    }
+  }
+  if has_major {
+    max_major - min_major
+  } else {
+    0
+  }
+}
+
+///|
+fn major_baseline_delta_sum(
+  node_ids : Array[String],
+  major_coord_by_node_id : Map[String, Int],
+  baseline_major_coord_by_node_id : Map[String, Int],
+) -> Int {
+  let mut delta_sum = 0
+  for node_id in node_ids {
+    let baseline_major = option_int_or(
+      baseline_major_coord_by_node_id.get(node_id),
+      0,
+    )
+    let major_coord = option_int_or(
+      major_coord_by_node_id.get(node_id),
+      baseline_major,
+    )
+    delta_sum += if major_coord >= baseline_major {
+      major_coord - baseline_major
+    } else {
+      baseline_major - major_coord
+    }
+  }
+  delta_sum
+}
+
+///|
+fn major_constraint_violation_score(
+  major_coord_by_node_id : Map[String, Int],
+  baseline_major_coord_by_node_id : Map[String, Int],
+  rank_by_node_id : Map[String, Int],
+  successors_by_node_id : Map[String, Array[String]],
+  base_major_gap : Int,
+  horizontal : Bool,
+  width_by_node_id : Map[String, Int],
+  height_by_node_id : Map[String, Int],
+) -> Int {
+  let mut violation_score = 0
+  for source_id, target_ids in successors_by_node_id {
+    let source_major = option_int_or(
+      major_coord_by_node_id.get(source_id),
+      option_int_or(baseline_major_coord_by_node_id.get(source_id), 0),
+    )
+    for target_id in target_ids {
+      let sign = major_direction_sign(
+        source_id, target_id, baseline_major_coord_by_node_id,
+      )
+      let edge_step = major_edge_min_step(
+        source_id, target_id, rank_by_node_id, baseline_major_coord_by_node_id, base_major_gap,
+        horizontal, width_by_node_id, height_by_node_id,
+      )
+      let target_major = option_int_or(
+        major_coord_by_node_id.get(target_id),
+        option_int_or(
+          baseline_major_coord_by_node_id.get(target_id),
+          source_major,
+        ),
+      )
+      let signed_delta = (target_major - source_major) * sign
+      if signed_delta < edge_step {
+        violation_score += edge_step - signed_delta
+      }
+    }
+  }
+  violation_score
+}
+
+///|
+fn build_major_relax_candidate(
+  name : String,
+  major_coord_by_node_id : Map[String, Int],
+  node_ids : Array[String],
+  baseline_major_coord_by_node_id : Map[String, Int],
+  rank_by_node_id : Map[String, Int],
+  successors_by_node_id : Map[String, Array[String]],
+  base_major_gap : Int,
+  horizontal : Bool,
+  width_by_node_id : Map[String, Int],
+  height_by_node_id : Map[String, Int],
+) -> MajorRelaxCandidate {
+  let violation_score = major_constraint_violation_score(
+    major_coord_by_node_id, baseline_major_coord_by_node_id, rank_by_node_id, successors_by_node_id,
+    base_major_gap, horizontal, width_by_node_id, height_by_node_id,
+  )
+  let span = major_coord_span(node_ids, major_coord_by_node_id)
+  let baseline_delta_sum = major_baseline_delta_sum(
+    node_ids, major_coord_by_node_id, baseline_major_coord_by_node_id,
+  )
+  // Prioritize edge-constraint correctness before compaction and drift.
+  let objective = violation_score * 10000 + span * 10 + baseline_delta_sum
+  {
+    name,
+    major_coord_by_node_id,
+    violation_score,
+    span,
+    baseline_delta_sum,
+    objective,
+  }
+}
+
+///|
+fn better_major_relax_candidate(
+  left : MajorRelaxCandidate,
+  right : MajorRelaxCandidate,
+) -> MajorRelaxCandidate {
+  if left.objective < right.objective {
+    left
+  } else if left.objective > right.objective {
+    right
+  } else if left.violation_score < right.violation_score {
+    left
+  } else if left.violation_score > right.violation_score {
+    right
+  } else if left.span < right.span {
+    left
+  } else if left.span > right.span {
+    right
+  } else if left.baseline_delta_sum < right.baseline_delta_sum {
+    left
+  } else if left.baseline_delta_sum > right.baseline_delta_sum {
+    right
+  } else if left.name.compare(right.name) <= 0 {
+    left
+  } else {
+    right
+  }
+}
+
+///|
+fn relax_major_forward_sweep(
   rank_node_ids_by_rank : Map[Int, Array[String]],
   max_rank : Int,
   reverse : Bool,
+  major_coord_by_node_id : Map[String, Int],
   rank_by_node_id : Map[String, Int],
   predecessors_by_node_id : Map[String, Array[String]],
+  baseline_major_coord_by_node_id : Map[String, Int],
+  minor_coord_by_node_id : Map[String, Int],
+  base_major_gap : Int,
+  horizontal : Bool,
+  width_by_node_id : Map[String, Int],
+  height_by_node_id : Map[String, Int],
+) -> Unit {
+  for displayed_rank in 0..<=max_rank {
+    let rank = if reverse { max_rank - displayed_rank } else { displayed_rank }
+    match rank_node_ids_by_rank.get(rank) {
+      Some(node_ids_in_rank) =>
+        for node_id in node_ids_in_rank {
+          let baseline_major = option_int_or(
+            baseline_major_coord_by_node_id.get(node_id),
+            0,
+          )
+          let mut has_candidate = false
+          let mut candidate_major = baseline_major
+          match predecessors_by_node_id.get(node_id) {
+            Some(predecessor_ids) => {
+              let sorted_predecessors = sorted_neighbor_ids_by_minor(
+                predecessor_ids, minor_coord_by_node_id, baseline_major_coord_by_node_id,
+              )
+              if sorted_predecessors.length() > 0 {
+                let predecessor_id = sorted_predecessors[sorted_predecessors.length() /
+                  2]
+                let predecessor_major = option_int_or(
+                  major_coord_by_node_id.get(predecessor_id),
+                  option_int_or(
+                    baseline_major_coord_by_node_id.get(predecessor_id),
+                    baseline_major,
+                  ),
+                )
+                let sign = major_direction_sign(
+                  predecessor_id, node_id, baseline_major_coord_by_node_id,
+                )
+                let edge_step = major_edge_min_step(
+                  predecessor_id, node_id, rank_by_node_id, baseline_major_coord_by_node_id,
+                  base_major_gap, horizontal, width_by_node_id, height_by_node_id,
+                )
+                candidate_major = predecessor_major + sign * edge_step
+                has_candidate = true
+              }
+            }
+            None => ()
+          }
+          if has_candidate {
+            let current_major = option_int_or(
+              major_coord_by_node_id.get(node_id),
+              baseline_major,
+            )
+            major_coord_by_node_id[node_id] = (
+                baseline_major * 2 + current_major + candidate_major * 2
+              ) /
+              5
+          }
+        }
+      None => ()
+    }
+  }
+}
+
+///|
+fn relax_major_backward_sweep(
+  rank_node_ids_by_rank : Map[Int, Array[String]],
+  max_rank : Int,
+  reverse : Bool,
+  major_coord_by_node_id : Map[String, Int],
+  rank_by_node_id : Map[String, Int],
   successors_by_node_id : Map[String, Array[String]],
   baseline_major_coord_by_node_id : Map[String, Int],
   minor_coord_by_node_id : Map[String, Int],
@@ -387,150 +647,90 @@ fn relax_major_coord_by_node_id(
   horizontal : Bool,
   width_by_node_id : Map[String, Int],
   height_by_node_id : Map[String, Int],
-) -> Map[String, Int] {
-  let major_coord_by_node_id : Map[String, Int] = {}
-  let node_ids : Array[String] = []
-  let mut min_baseline_major = 0
-  let mut has_baseline_major = false
-  for node_id, baseline_major in baseline_major_coord_by_node_id {
-    node_ids.push(node_id)
-    major_coord_by_node_id[node_id] = baseline_major
-    if !has_baseline_major {
-      has_baseline_major = true
-      min_baseline_major = baseline_major
-    } else if baseline_major < min_baseline_major {
-      min_baseline_major = baseline_major
+) -> Unit {
+  for displayed_rank in 0..<=max_rank {
+    let rank = if reverse { displayed_rank } else { max_rank - displayed_rank }
+    match rank_node_ids_by_rank.get(rank) {
+      Some(node_ids_in_rank) =>
+        for node_id in node_ids_in_rank {
+          let baseline_major = option_int_or(
+            baseline_major_coord_by_node_id.get(node_id),
+            0,
+          )
+          let mut has_candidate = false
+          let mut candidate_major = baseline_major
+          match successors_by_node_id.get(node_id) {
+            Some(successor_ids) => {
+              let sorted_successors = sorted_neighbor_ids_by_minor(
+                successor_ids, minor_coord_by_node_id, baseline_major_coord_by_node_id,
+              )
+              if sorted_successors.length() > 0 {
+                let successor_id = sorted_successors[sorted_successors.length() /
+                  2]
+                let successor_major = option_int_or(
+                  major_coord_by_node_id.get(successor_id),
+                  option_int_or(
+                    baseline_major_coord_by_node_id.get(successor_id),
+                    baseline_major,
+                  ),
+                )
+                let sign = major_direction_sign(
+                  node_id, successor_id, baseline_major_coord_by_node_id,
+                )
+                let edge_step = major_edge_min_step(
+                  node_id, successor_id, rank_by_node_id, baseline_major_coord_by_node_id,
+                  base_major_gap, horizontal, width_by_node_id, height_by_node_id,
+                )
+                candidate_major = successor_major - sign * edge_step
+                has_candidate = true
+              }
+            }
+            None => ()
+          }
+          if has_candidate {
+            let current_major = option_int_or(
+              major_coord_by_node_id.get(node_id),
+              baseline_major,
+            )
+            major_coord_by_node_id[node_id] = (
+                baseline_major * 2 + current_major + candidate_major * 2
+              ) /
+              5
+          }
+        }
+      None => ()
     }
   }
+}
 
-  let mut pass = 0
-  while pass < 6 {
-    for displayed_rank in 0..<=max_rank {
-      let rank = if reverse {
-        max_rank - displayed_rank
-      } else {
-        displayed_rank
-      }
-      match rank_node_ids_by_rank.get(rank) {
-        Some(node_ids_in_rank) =>
-          for node_id in node_ids_in_rank {
-            let baseline_major = option_int_or(
-              baseline_major_coord_by_node_id.get(node_id),
-              0,
-            )
-            let mut has_candidate = false
-            let mut candidate_major = baseline_major
-            match predecessors_by_node_id.get(node_id) {
-              Some(predecessor_ids) => {
-                let sorted_predecessors = sorted_neighbor_ids_by_minor(
-                  predecessor_ids, minor_coord_by_node_id, baseline_major_coord_by_node_id,
-                )
-                if sorted_predecessors.length() > 0 {
-                  let predecessor_id = sorted_predecessors[sorted_predecessors.length() /
-                    2]
-                  let predecessor_major = option_int_or(
-                    major_coord_by_node_id.get(predecessor_id),
-                    option_int_or(
-                      baseline_major_coord_by_node_id.get(predecessor_id),
-                      baseline_major,
-                    ),
-                  )
-                  let sign = major_direction_sign(
-                    predecessor_id, node_id, baseline_major_coord_by_node_id,
-                  )
-                  let edge_step = major_edge_min_step(
-                    predecessor_id, node_id, rank_by_node_id, baseline_major_coord_by_node_id,
-                    base_major_gap, horizontal, width_by_node_id, height_by_node_id,
-                  )
-                  candidate_major = predecessor_major + sign * edge_step
-                  has_candidate = true
-                }
-              }
-              None => ()
-            }
-            if has_candidate {
-              let current_major = option_int_or(
-                major_coord_by_node_id.get(node_id),
-                baseline_major,
-              )
-              major_coord_by_node_id[node_id] = (
-                  baseline_major * 2 + current_major + candidate_major * 2
-                ) /
-                5
-            }
-          }
-        None => ()
-      }
-    }
+///|
+fn finalize_major_coord_by_node_id(
+  major_coord_by_node_id : Map[String, Int],
+  baseline_major_coord_by_node_id : Map[String, Int],
+  rank_by_node_id : Map[String, Int],
+  successors_by_node_id : Map[String, Array[String]],
+  base_major_gap : Int,
+  horizontal : Bool,
+  width_by_node_id : Map[String, Int],
+  height_by_node_id : Map[String, Int],
+) -> Map[String, Int] {
+  let node_ids = sorted_node_ids_from_coord_map(baseline_major_coord_by_node_id)
+  if node_ids.length() == 0 {
+    return major_coord_by_node_id
+  }
 
-    enforce_major_edge_constraints(
-      major_coord_by_node_id, baseline_major_coord_by_node_id, rank_by_node_id, successors_by_node_id,
-      base_major_gap, horizontal, width_by_node_id, height_by_node_id,
+  let mut min_baseline_major = option_int_or(
+    baseline_major_coord_by_node_id.get(node_ids[0]),
+    0,
+  )
+  for node_id in node_ids {
+    let baseline_major = option_int_or(
+      baseline_major_coord_by_node_id.get(node_id),
+      min_baseline_major,
     )
-
-    for displayed_rank in 0..<=max_rank {
-      let rank = if reverse {
-        displayed_rank
-      } else {
-        max_rank - displayed_rank
-      }
-      match rank_node_ids_by_rank.get(rank) {
-        Some(node_ids_in_rank) =>
-          for node_id in node_ids_in_rank {
-            let baseline_major = option_int_or(
-              baseline_major_coord_by_node_id.get(node_id),
-              0,
-            )
-            let mut has_candidate = false
-            let mut candidate_major = baseline_major
-            match successors_by_node_id.get(node_id) {
-              Some(successor_ids) => {
-                let sorted_successors = sorted_neighbor_ids_by_minor(
-                  successor_ids, minor_coord_by_node_id, baseline_major_coord_by_node_id,
-                )
-                if sorted_successors.length() > 0 {
-                  let successor_id = sorted_successors[sorted_successors.length() /
-                    2]
-                  let successor_major = option_int_or(
-                    major_coord_by_node_id.get(successor_id),
-                    option_int_or(
-                      baseline_major_coord_by_node_id.get(successor_id),
-                      baseline_major,
-                    ),
-                  )
-                  let sign = major_direction_sign(
-                    node_id, successor_id, baseline_major_coord_by_node_id,
-                  )
-                  let edge_step = major_edge_min_step(
-                    node_id, successor_id, rank_by_node_id, baseline_major_coord_by_node_id,
-                    base_major_gap, horizontal, width_by_node_id, height_by_node_id,
-                  )
-                  candidate_major = successor_major - sign * edge_step
-                  has_candidate = true
-                }
-              }
-              None => ()
-            }
-            if has_candidate {
-              let current_major = option_int_or(
-                major_coord_by_node_id.get(node_id),
-                baseline_major,
-              )
-              major_coord_by_node_id[node_id] = (
-                  baseline_major * 2 + current_major + candidate_major * 2
-                ) /
-                5
-            }
-          }
-        None => ()
-      }
+    if baseline_major < min_baseline_major {
+      min_baseline_major = baseline_major
     }
-
-    enforce_major_edge_constraints(
-      major_coord_by_node_id, baseline_major_coord_by_node_id, rank_by_node_id, successors_by_node_id,
-      base_major_gap, horizontal, width_by_node_id, height_by_node_id,
-    )
-    pass += 1
   }
 
   let major_clamp_span = (base_major_gap * 2).max(90)
@@ -576,8 +776,168 @@ fn relax_major_coord_by_node_id(
     major_coord_by_node_id, baseline_major_coord_by_node_id, rank_by_node_id, successors_by_node_id,
     base_major_gap, horizontal, width_by_node_id, height_by_node_id,
   )
-
   major_coord_by_node_id
+}
+
+///|
+fn relax_major_coord_with_sweep_order(
+  rank_node_ids_by_rank : Map[Int, Array[String]],
+  max_rank : Int,
+  reverse : Bool,
+  rank_by_node_id : Map[String, Int],
+  predecessors_by_node_id : Map[String, Array[String]],
+  successors_by_node_id : Map[String, Array[String]],
+  baseline_major_coord_by_node_id : Map[String, Int],
+  minor_coord_by_node_id : Map[String, Int],
+  base_major_gap : Int,
+  horizontal : Bool,
+  width_by_node_id : Map[String, Int],
+  height_by_node_id : Map[String, Int],
+  forward_first : Bool,
+) -> Map[String, Int] {
+  let major_coord_by_node_id = clone_major_coord_by_node_id(
+    baseline_major_coord_by_node_id,
+  )
+  let mut pass = 0
+  while pass < 6 {
+    if forward_first {
+      relax_major_forward_sweep(
+        rank_node_ids_by_rank, max_rank, reverse, major_coord_by_node_id, rank_by_node_id,
+        predecessors_by_node_id, baseline_major_coord_by_node_id, minor_coord_by_node_id,
+        base_major_gap, horizontal, width_by_node_id, height_by_node_id,
+      )
+      enforce_major_edge_constraints(
+        major_coord_by_node_id, baseline_major_coord_by_node_id, rank_by_node_id,
+        successors_by_node_id, base_major_gap, horizontal, width_by_node_id, height_by_node_id,
+      )
+      relax_major_backward_sweep(
+        rank_node_ids_by_rank, max_rank, reverse, major_coord_by_node_id, rank_by_node_id,
+        successors_by_node_id, baseline_major_coord_by_node_id, minor_coord_by_node_id,
+        base_major_gap, horizontal, width_by_node_id, height_by_node_id,
+      )
+      enforce_major_edge_constraints(
+        major_coord_by_node_id, baseline_major_coord_by_node_id, rank_by_node_id,
+        successors_by_node_id, base_major_gap, horizontal, width_by_node_id, height_by_node_id,
+      )
+    } else {
+      relax_major_backward_sweep(
+        rank_node_ids_by_rank, max_rank, reverse, major_coord_by_node_id, rank_by_node_id,
+        successors_by_node_id, baseline_major_coord_by_node_id, minor_coord_by_node_id,
+        base_major_gap, horizontal, width_by_node_id, height_by_node_id,
+      )
+      enforce_major_edge_constraints(
+        major_coord_by_node_id, baseline_major_coord_by_node_id, rank_by_node_id,
+        successors_by_node_id, base_major_gap, horizontal, width_by_node_id, height_by_node_id,
+      )
+      relax_major_forward_sweep(
+        rank_node_ids_by_rank, max_rank, reverse, major_coord_by_node_id, rank_by_node_id,
+        predecessors_by_node_id, baseline_major_coord_by_node_id, minor_coord_by_node_id,
+        base_major_gap, horizontal, width_by_node_id, height_by_node_id,
+      )
+      enforce_major_edge_constraints(
+        major_coord_by_node_id, baseline_major_coord_by_node_id, rank_by_node_id,
+        successors_by_node_id, base_major_gap, horizontal, width_by_node_id, height_by_node_id,
+      )
+    }
+    pass += 1
+  }
+  finalize_major_coord_by_node_id(
+    major_coord_by_node_id, baseline_major_coord_by_node_id, rank_by_node_id, successors_by_node_id,
+    base_major_gap, horizontal, width_by_node_id, height_by_node_id,
+  )
+}
+
+///|
+fn average_major_coord_by_node_id(
+  node_ids : Array[String],
+  left_major_coord_by_node_id : Map[String, Int],
+  right_major_coord_by_node_id : Map[String, Int],
+  baseline_major_coord_by_node_id : Map[String, Int],
+) -> Map[String, Int] {
+  let averaged : Map[String, Int] = {}
+  for node_id in node_ids {
+    let baseline_major = option_int_or(
+      baseline_major_coord_by_node_id.get(node_id),
+      0,
+    )
+    let left_major = option_int_or(
+      left_major_coord_by_node_id.get(node_id),
+      baseline_major,
+    )
+    let right_major = option_int_or(
+      right_major_coord_by_node_id.get(node_id),
+      baseline_major,
+    )
+    averaged[node_id] = (left_major + right_major) / 2
+  }
+  averaged
+}
+
+///|
+fn relax_major_coord_by_node_id(
+  rank_node_ids_by_rank : Map[Int, Array[String]],
+  max_rank : Int,
+  reverse : Bool,
+  rank_by_node_id : Map[String, Int],
+  predecessors_by_node_id : Map[String, Array[String]],
+  successors_by_node_id : Map[String, Array[String]],
+  baseline_major_coord_by_node_id : Map[String, Int],
+  minor_coord_by_node_id : Map[String, Int],
+  base_major_gap : Int,
+  horizontal : Bool,
+  width_by_node_id : Map[String, Int],
+  height_by_node_id : Map[String, Int],
+) -> Map[String, Int] {
+  let node_ids = sorted_node_ids_from_coord_map(baseline_major_coord_by_node_id)
+  if node_ids.length() == 0 {
+    return baseline_major_coord_by_node_id
+  }
+
+  let forward_major_coord_by_node_id = relax_major_coord_with_sweep_order(
+    rank_node_ids_by_rank, max_rank, reverse, rank_by_node_id, predecessors_by_node_id,
+    successors_by_node_id, baseline_major_coord_by_node_id, minor_coord_by_node_id,
+    base_major_gap, horizontal, width_by_node_id, height_by_node_id, true,
+  )
+  let backward_major_coord_by_node_id = relax_major_coord_with_sweep_order(
+    rank_node_ids_by_rank, max_rank, reverse, rank_by_node_id, predecessors_by_node_id,
+    successors_by_node_id, baseline_major_coord_by_node_id, minor_coord_by_node_id,
+    base_major_gap, horizontal, width_by_node_id, height_by_node_id, false,
+  )
+  let balanced_major_seed = average_major_coord_by_node_id(
+    node_ids, forward_major_coord_by_node_id, backward_major_coord_by_node_id, baseline_major_coord_by_node_id,
+  )
+  let balanced_major_coord_by_node_id = finalize_major_coord_by_node_id(
+    balanced_major_seed, baseline_major_coord_by_node_id, rank_by_node_id, successors_by_node_id,
+    base_major_gap, horizontal, width_by_node_id, height_by_node_id,
+  )
+
+  let forward_candidate = build_major_relax_candidate(
+    "forward-first", forward_major_coord_by_node_id, node_ids, baseline_major_coord_by_node_id,
+    rank_by_node_id, successors_by_node_id, base_major_gap, horizontal, width_by_node_id,
+    height_by_node_id,
+  )
+  let backward_candidate = build_major_relax_candidate(
+    "backward-first", backward_major_coord_by_node_id, node_ids, baseline_major_coord_by_node_id,
+    rank_by_node_id, successors_by_node_id, base_major_gap, horizontal, width_by_node_id,
+    height_by_node_id,
+  )
+  let balanced_candidate = build_major_relax_candidate(
+    "balanced", balanced_major_coord_by_node_id, node_ids, baseline_major_coord_by_node_id,
+    rank_by_node_id, successors_by_node_id, base_major_gap, horizontal, width_by_node_id,
+    height_by_node_id,
+  )
+  // Keep forward-first as the stable baseline; only swap if baseline violates
+  // edge constraints and an alternate candidate clearly improves feasibility.
+  let alternate_candidate = better_major_relax_candidate(
+    backward_candidate, balanced_candidate,
+  )
+  let selected_candidate = if forward_candidate.violation_score > 0 &&
+    alternate_candidate.violation_score < forward_candidate.violation_score {
+    alternate_candidate
+  } else {
+    forward_candidate
+  }
+  selected_candidate.major_coord_by_node_id
 }
 
 ///|

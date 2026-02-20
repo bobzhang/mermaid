@@ -672,6 +672,97 @@ test "elk layered relaxed major compaction gate tracks long-span density" {
 }
 
 ///|
+test "elk layered major candidate selector prefers lower objective" {
+  let node_ids : Array[String] = ["A", "B"]
+  let baseline_major_coord_by_node_id : Map[String, Int] = {
+    "A": 100,
+    "B": 200,
+  }
+  let rank_by_node_id : Map[String, Int] = { "A": 0, "B": 1 }
+  let successors_by_node_id : Map[String, Array[String]] = { "A": ["B"] }
+  let width_by_node_id : Map[String, Int] = {}
+  let height_by_node_id : Map[String, Int] = {}
+
+  let feasible_major_coord_by_node_id : Map[String, Int] = {
+    "A": 100,
+    "B": 220,
+  }
+  let violating_major_coord_by_node_id : Map[String, Int] = {
+    "A": 100,
+    "B": 150,
+  }
+
+  let feasible_candidate = build_major_relax_candidate(
+    "feasible", feasible_major_coord_by_node_id, node_ids, baseline_major_coord_by_node_id,
+    rank_by_node_id, successors_by_node_id, 20, true, width_by_node_id, height_by_node_id,
+  )
+  let violating_candidate = build_major_relax_candidate(
+    "violating", violating_major_coord_by_node_id, node_ids, baseline_major_coord_by_node_id,
+    rank_by_node_id, successors_by_node_id, 20, true, width_by_node_id, height_by_node_id,
+  )
+
+  let selected = better_major_relax_candidate(
+    feasible_candidate, violating_candidate,
+  )
+  assert_eq(selected.name, "feasible")
+  assert_true(selected.violation_score <= violating_candidate.violation_score)
+}
+
+///|
+test "elk layered major sweep candidates remain edge-feasible" {
+  let rank_node_ids_by_rank : Map[Int, Array[String]] = {
+    0: ["A"],
+    1: ["B"],
+    2: ["C"],
+  }
+  let rank_by_node_id : Map[String, Int] = { "A": 0, "B": 1, "C": 2 }
+  let predecessors_by_node_id : Map[String, Array[String]] = {
+    "A": [],
+    "B": ["A"],
+    "C": ["A", "B"],
+  }
+  let successors_by_node_id : Map[String, Array[String]] = {
+    "A": ["B", "C"],
+    "B": ["C"],
+    "C": [],
+  }
+  let baseline_major_coord_by_node_id : Map[String, Int] = {
+    "A": 100,
+    "B": 220,
+    "C": 340,
+  }
+  let minor_coord_by_node_id : Map[String, Int] = {
+    "A": 100,
+    "B": 140,
+    "C": 180,
+  }
+  let width_by_node_id : Map[String, Int] = {}
+  let height_by_node_id : Map[String, Int] = {}
+
+  let forward_major_coord_by_node_id = relax_major_coord_with_sweep_order(
+    rank_node_ids_by_rank, 2, false, rank_by_node_id, predecessors_by_node_id, successors_by_node_id,
+    baseline_major_coord_by_node_id, minor_coord_by_node_id, 20, true, width_by_node_id,
+    height_by_node_id, true,
+  )
+  let backward_major_coord_by_node_id = relax_major_coord_with_sweep_order(
+    rank_node_ids_by_rank, 2, false, rank_by_node_id, predecessors_by_node_id, successors_by_node_id,
+    baseline_major_coord_by_node_id, minor_coord_by_node_id, 20, true, width_by_node_id,
+    height_by_node_id, false,
+  )
+
+  let forward_violation = major_constraint_violation_score(
+    forward_major_coord_by_node_id, baseline_major_coord_by_node_id, rank_by_node_id,
+    successors_by_node_id, 20, true, width_by_node_id, height_by_node_id,
+  )
+  let backward_violation = major_constraint_violation_score(
+    backward_major_coord_by_node_id, baseline_major_coord_by_node_id, rank_by_node_id,
+    successors_by_node_id, 20, true, width_by_node_id, height_by_node_id,
+  )
+  assert_eq(forward_violation, 0)
+  assert_eq(backward_violation, 0)
+}
+
+///|
 test "elk layered major center builder respects reverse display order" {
   let rank_pair_label_major_gap : Map[String, Int] = {}
   let rank_major_extent_by_rank : Map[Int, Int] = { 0: 100, 1: 100, 2: 100 }
