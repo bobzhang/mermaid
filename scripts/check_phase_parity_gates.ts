@@ -422,7 +422,7 @@ function checkElkPlacementMajorGate(): void {
 
   // Major-axis parity requires exact rank-layer composition alignment.
   const maxAllowedLayerMismatch = 0
-  const maxAllowedAvgInversionRate = 0.0333
+  const maxAllowedAvgInversionRate = 0.0315
   if (totalLayerMismatch > maxAllowedLayerMismatch) {
     fail(
       `elk placement-major gate expected total_layer_mismatch <= ${maxAllowedLayerMismatch}, got ${totalLayerMismatch}`,
