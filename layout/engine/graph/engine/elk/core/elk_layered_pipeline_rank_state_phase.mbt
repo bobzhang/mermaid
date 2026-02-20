@@ -25,6 +25,73 @@ fn compare_node_ids_by_order(
 }
 
 ///|
+fn edge_pair_key(source_id : String, target_id : String) -> String {
+  "\{source_id}\t\{target_id}"
+}
+
+///|
+fn build_edge_min_len_by_resolved_pair(
+  graph : MermaidGraph,
+  use_subgraph_redirects : Bool,
+  subgraph_entry_by_id : Map[String, String],
+  subgraph_exit_by_id : Map[String, String],
+  node_ids : Array[String],
+) -> Map[String, Int] {
+  let visible_node_ids : Map[String, Bool] = {}
+  for node_id in node_ids {
+    visible_node_ids[node_id] = true
+  }
+  let edge_min_len_by_pair : Map[String, Int] = {}
+  for edge in graph.edges {
+    let source_id = resolve_edge_endpoint_id(
+      edge.source,
+      use_subgraph_redirects,
+      subgraph_exit_by_id,
+    )
+    let target_id = resolve_edge_endpoint_id(
+      edge.target,
+      use_subgraph_redirects,
+      subgraph_entry_by_id,
+    )
+    if source_id == target_id {
+      continue
+    }
+    if !visible_node_ids.contains(source_id) ||
+      !visible_node_ids.contains(target_id) {
+      continue
+    }
+    let edge_min_len = match edge.label {
+      Some(_) => 2
+      None => 1
+    }
+    let pair = edge_pair_key(source_id, target_id)
+    if edge_min_len > option_int_or(edge_min_len_by_pair.get(pair), 1) {
+      edge_min_len_by_pair[pair] = edge_min_len
+    } else if !edge_min_len_by_pair.contains(pair) {
+      edge_min_len_by_pair[pair] = edge_min_len
+    }
+  }
+  edge_min_len_by_pair
+}
+
+///|
+fn oriented_edge_min_len(
+  source_id : String,
+  target_id : String,
+  edge_min_len_by_pair : Map[String, Int],
+) -> Int {
+  let direct = option_int_or(
+    edge_min_len_by_pair.get(edge_pair_key(source_id, target_id)),
+    1,
+  )
+  let reverse = option_int_or(
+    edge_min_len_by_pair.get(edge_pair_key(target_id, source_id)),
+    1,
+  )
+  direct.max(reverse)
+}
+
+///|
 fn collect_visible_resolved_edges(
   graph : MermaidGraph,
   use_subgraph_redirects : Bool,
@@ -104,6 +171,7 @@ fn build_longest_path_rank_by_node_id_from_oriented_edges(
   node_ids : Array[String],
   oriented_edges : Array[(String, String)],
   order_index_by_node_id : Map[String, Int],
+  edge_min_len_by_pair : Map[String, Int],
 ) -> (Map[String, Int], Int) {
   let rank_by_node_id : Map[String, Int] = {}
   let indegree_by_node_id : Map[String, Int] = {}
@@ -141,7 +209,8 @@ fn build_longest_path_rank_by_node_id_from_oriented_edges(
     match successors_by_node_id.get(node_id) {
       Some(successors) =>
         for successor_id in successors {
-          let next_rank = node_rank + 1
+          let next_rank = node_rank +
+            oriented_edge_min_len(node_id, successor_id, edge_min_len_by_pair)
           if next_rank > option_int_or(rank_by_node_id.get(successor_id), 0) {
             rank_by_node_id[successor_id] = next_rank
           }
@@ -477,10 +546,22 @@ fn build_native_feedback_rank_by_node_id(
   nodes_in_order : Array[MermaidNode],
   oriented_edges : Array[(String, String)],
   order_index_by_node_id : Map[String, Int],
+  edge_min_len_by_pair : Map[String, Int],
   horizontal : Bool,
 ) -> (Map[String, Int], Int) {
-  let (simplex_rank_by_node_id, simplex_max_rank, simplex_ok) = @layout_engine_graph_lane_core.collect_dagre_network_simplex_ranks_from_directed_edges(
-    nodes_in_order, oriented_edges,
+  let directed_edge_specs : Array[(String, String, Int)] = []
+  for edge in oriented_edges {
+    let (source_id, target_id) = edge
+    directed_edge_specs.push(
+      (
+        source_id,
+        target_id,
+        oriented_edge_min_len(source_id, target_id, edge_min_len_by_pair),
+      ),
+    )
+  }
+  let (simplex_rank_by_node_id, simplex_max_rank, simplex_ok) = @layout_engine_graph_lane_core.collect_dagre_network_simplex_ranks_from_directed_edge_specs(
+    nodes_in_order, directed_edge_specs,
   )
   if simplex_ok {
     let mut all_nodes_present = true
@@ -503,7 +584,7 @@ fn build_native_feedback_rank_by_node_id(
     }
   }
   build_longest_path_rank_by_node_id_from_oriented_edges(
-    node_ids, oriented_edges, order_index_by_node_id,
+    node_ids, oriented_edges, order_index_by_node_id, edge_min_len_by_pair,
   )
 }
 
@@ -529,6 +610,9 @@ fn build_layered_rank_state(
   let resolved_edges = collect_visible_resolved_edges(
     graph, use_subgraph_redirects, subgraph_entry_by_id, subgraph_exit_by_id, node_ids,
   )
+  let edge_min_len_by_pair = build_edge_min_len_by_resolved_pair(
+    graph, use_subgraph_redirects, subgraph_entry_by_id, subgraph_exit_by_id, node_ids,
+  )
   let feedback_orientation_state = compute_feedback_order_orientation_state(
     node_ids, resolved_edges, base_order_index_by_node_id,
   )
@@ -540,6 +624,7 @@ fn build_layered_rank_state(
     nodes_in_order,
     acyclic_edges,
     order_index_by_node_id,
+    edge_min_len_by_pair,
     @layout_engine_graph_internal_core.layout_direction_is_horizontal(
       graph.direction,
     ),

@@ -1297,26 +1297,43 @@ fn collect_dagre_network_simplex_ranks_from_rank_edge_specs(
 }
 
 ///|
-/// Compute dagre network simplex ranks from a pre-oriented edge list.
-pub fn collect_dagre_network_simplex_ranks_from_directed_edges(
+/// Compute dagre network simplex ranks from a pre-oriented edge list with
+/// per-edge minlen constraints.
+pub fn collect_dagre_network_simplex_ranks_from_directed_edge_specs(
   nodes_in_order : Array[MermaidNode],
-  directed_edges : Array[(String, String)],
+  directed_edge_specs : Array[(String, String, Int)],
 ) -> (Map[String, Int], Int, Bool) {
   let edge_specs : Array[DagreRankEdgeSpec] = []
-  for edge in directed_edges {
-    let (source_id, target_id) = edge
+  for edge_spec in directed_edge_specs {
+    let (source_id, target_id, minlen) = edge_spec
     if source_id == target_id {
       continue
     }
     edge_specs.push({
       source_id,
       target_id,
-      minlen: 1,
+      minlen: minlen.max(1),
       weight: 1,
       nesting_edge: false,
     })
   }
   collect_dagre_network_simplex_ranks_from_rank_edge_specs(
     nodes_in_order, edge_specs, false,
+  )
+}
+
+///|
+/// Compute dagre network simplex ranks from a pre-oriented edge list.
+pub fn collect_dagre_network_simplex_ranks_from_directed_edges(
+  nodes_in_order : Array[MermaidNode],
+  directed_edges : Array[(String, String)],
+) -> (Map[String, Int], Int, Bool) {
+  let directed_edge_specs : Array[(String, String, Int)] = []
+  for edge in directed_edges {
+    let (source_id, target_id) = edge
+    directed_edge_specs.push((source_id, target_id, 1))
+  }
+  collect_dagre_network_simplex_ranks_from_directed_edge_specs(
+    nodes_in_order, directed_edge_specs,
   )
 }

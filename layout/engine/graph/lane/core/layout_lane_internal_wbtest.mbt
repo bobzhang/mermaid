@@ -2446,6 +2446,31 @@ test "Layout simplex prep adds zero-cost connectors across weak components" {
 }
 
 ///|
+test "Layout simplex directed edge specs honor per-edge minlen" {
+  let nodes : Array[MermaidNode] = [
+    { id: "A", label: "A", shape: Rectangle },
+    { id: "B", label: "B", shape: Rectangle },
+    { id: "C", label: "C", shape: Rectangle },
+  ]
+  let directed_edge_specs : Array[(String, String, Int)] = [
+    ("A", "B", 2),
+    ("B", "C", 1),
+  ]
+
+  let (rank_by_id, max_rank, ok) = collect_dagre_network_simplex_ranks_from_directed_edge_specs(
+    nodes, directed_edge_specs,
+  )
+  assert_true(ok)
+  let rank_a = option_int_or(rank_by_id.get("A"), -1)
+  let rank_b = option_int_or(rank_by_id.get("B"), -1)
+  let rank_c = option_int_or(rank_by_id.get("C"), -1)
+  assert_true(rank_a >= 0 && rank_b >= 0 && rank_c >= 0)
+  assert_true(rank_b - rank_a >= 2)
+  assert_true(rank_c - rank_b >= 1)
+  assert_true(max_rank >= rank_c)
+}
+
+///|
 fn find_rank_edge_spec(
   edge_specs : Array[DagreRankEdgeSpec],
   source_id : String,
