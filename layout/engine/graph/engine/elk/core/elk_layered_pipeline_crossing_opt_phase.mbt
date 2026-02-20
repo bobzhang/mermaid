@@ -308,7 +308,7 @@ fn maybe_refine_rank_order_by_swaps(
   let best_layered_crossings = layered_crossing_count(
     rank_node_ids_by_rank, max_rank, rank_by_node_id, successors_by_node_id,
   )
-  let max_allowed_layered_crossings = best_layered_crossings + 8
+  let max_allowed_layered_crossings = best_layered_crossings
   let mut best_global_crossings = global_crossing_count(
     rank_node_ids_by_rank, max_rank, rank_by_node_id, successors_by_node_id,
   )
@@ -415,7 +415,7 @@ fn maybe_refine_rank_order_by_rank_permutations(
   let initial_layered_crossings = layered_crossing_count(
     rank_node_ids_by_rank, max_rank, rank_by_node_id, successors_by_node_id,
   )
-  let max_allowed_layered_crossings = initial_layered_crossings + 8
+  let max_allowed_layered_crossings = initial_layered_crossings
   let mut best_layered_crossings = initial_layered_crossings
   let mut best_global_crossings = global_crossing_count(
     rank_node_ids_by_rank, max_rank, rank_by_node_id, successors_by_node_id,
