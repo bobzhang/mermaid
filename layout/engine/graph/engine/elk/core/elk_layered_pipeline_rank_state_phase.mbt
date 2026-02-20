@@ -169,6 +169,142 @@ fn build_longest_path_rank_by_node_id_from_oriented_edges(
 }
 
 ///|
+fn build_incident_oriented_edges_by_node_id(
+  node_ids : Array[String],
+  oriented_edges : Array[(String, String)],
+) -> (
+  Map[String, Array[(String, String)]],
+  Map[String, Array[(String, String)]],
+) {
+  let incoming_edges_by_node_id : Map[String, Array[(String, String)]] = {}
+  let outgoing_edges_by_node_id : Map[String, Array[(String, String)]] = {}
+  for node_id in node_ids {
+    incoming_edges_by_node_id[node_id] = []
+    outgoing_edges_by_node_id[node_id] = []
+  }
+  for edge in oriented_edges {
+    let (source_id, target_id) = edge
+    if source_id == target_id {
+      continue
+    }
+    if !incoming_edges_by_node_id.contains(source_id) ||
+      !incoming_edges_by_node_id.contains(target_id) {
+      continue
+    }
+    match outgoing_edges_by_node_id.get(source_id) {
+      Some(edges) => edges.push(edge)
+      None => ()
+    }
+    match incoming_edges_by_node_id.get(target_id) {
+      Some(edges) => edges.push(edge)
+      None => ()
+    }
+  }
+  (incoming_edges_by_node_id, outgoing_edges_by_node_id)
+}
+
+///|
+fn recompute_max_rank(rank_by_node_id : Map[String, Int]) -> Int {
+  let mut max_rank = 0
+  for _, rank in rank_by_node_id {
+    if rank > max_rank {
+      max_rank = rank
+    }
+  }
+  max_rank
+}
+
+///|
+fn apply_elk_network_simplex_balance(
+  node_ids : Array[String],
+  oriented_edges : Array[(String, String)],
+  rank_by_node_id : Map[String, Int],
+  max_rank : Int,
+) -> (Map[String, Int], Int) {
+  let (incoming_edges_by_node_id, outgoing_edges_by_node_id) = build_incident_oriented_edges_by_node_id(
+    node_ids, oriented_edges,
+  )
+  let layer_fill_count : Array[Int] = []
+  for _ in 0..<=max_rank {
+    layer_fill_count.push(0)
+  }
+  for node_id in node_ids {
+    let layer = option_int_or(rank_by_node_id.get(node_id), 0)
+    if layer >= 0 && layer < layer_fill_count.length() {
+      layer_fill_count[layer] = layer_fill_count[layer] + 1
+    }
+  }
+
+  for node_id in node_ids {
+    let incoming_edges = match incoming_edges_by_node_id.get(node_id) {
+      Some(edges) => edges
+      None => []
+    }
+    let outgoing_edges = match outgoing_edges_by_node_id.get(node_id) {
+      Some(edges) => edges
+      None => []
+    }
+    if incoming_edges.length() != outgoing_edges.length() {
+      continue
+    }
+    let current_layer = option_int_or(rank_by_node_id.get(node_id), 0)
+    if current_layer < 0 || current_layer >= layer_fill_count.length() {
+      continue
+    }
+
+    let mut min_incoming_span = 2147483647
+    for edge in incoming_edges {
+      let (source_id, target_id) = edge
+      let source_layer = option_int_or(rank_by_node_id.get(source_id), 0)
+      let target_layer = option_int_or(rank_by_node_id.get(target_id), 0)
+      let span = target_layer - source_layer
+      if span < min_incoming_span {
+        min_incoming_span = span
+      }
+    }
+    if min_incoming_span == 2147483647 {
+      min_incoming_span = -1
+    }
+
+    let mut min_outgoing_span = 2147483647
+    for edge in outgoing_edges {
+      let (source_id, target_id) = edge
+      let source_layer = option_int_or(rank_by_node_id.get(source_id), 0)
+      let target_layer = option_int_or(rank_by_node_id.get(target_id), 0)
+      let span = target_layer - source_layer
+      if span < min_outgoing_span {
+        min_outgoing_span = span
+      }
+    }
+    if min_outgoing_span == 2147483647 {
+      min_outgoing_span = -1
+    }
+
+    let mut next_layer = current_layer
+    let scan_start = current_layer - min_incoming_span + 1
+    let scan_end = current_layer + min_outgoing_span
+    if scan_start < scan_end {
+      for candidate_layer in scan_start..<scan_end {
+        if candidate_layer < 0 || candidate_layer >= layer_fill_count.length() {
+          continue
+        }
+        if layer_fill_count[candidate_layer] < layer_fill_count[next_layer] {
+          next_layer = candidate_layer
+        }
+      }
+    }
+
+    if layer_fill_count[next_layer] < layer_fill_count[current_layer] {
+      layer_fill_count[current_layer] = layer_fill_count[current_layer] - 1
+      layer_fill_count[next_layer] = layer_fill_count[next_layer] + 1
+      rank_by_node_id[node_id] = next_layer
+    }
+  }
+
+  (rank_by_node_id, recompute_max_rank(rank_by_node_id))
+}
+
+///|
 fn build_native_feedback_rank_by_node_id(
   node_ids : Array[String],
   nodes_in_order : Array[MermaidNode],
@@ -187,7 +323,9 @@ fn build_native_feedback_rank_by_node_id(
       }
     }
     if all_nodes_present {
-      return (simplex_rank_by_node_id, simplex_max_rank)
+      return apply_elk_network_simplex_balance(
+        node_ids, oriented_edges, simplex_rank_by_node_id, simplex_max_rank,
+      )
     }
   }
   build_longest_path_rank_by_node_id_from_oriented_edges(

@@ -310,6 +310,46 @@ test "elk layered rank state breaks feedback cycles into forward-ranked edges" {
 }
 
 ///|
+test "elk layered network-simplex balance re-centers equal-degree node in feasible span" {
+  let node_ids = ["A", "B", "C", "D", "E"]
+  let oriented_edges = [("A", "C"), ("B", "C"), ("C", "D"), ("C", "E")]
+  let rank_by_node_id : Map[String, Int] = {
+    "A": 0,
+    "B": 0,
+    "C": 3,
+    "D": 4,
+    "E": 5,
+  }
+  let (balanced_rank_by_node_id, balanced_max_rank) = apply_elk_network_simplex_balance(
+    node_ids, oriented_edges, rank_by_node_id, 5,
+  )
+  assert_eq(option_int_or(balanced_rank_by_node_id.get("C"), -1), 1)
+  assert_eq(option_int_or(balanced_rank_by_node_id.get("A"), -1), 0)
+  assert_eq(option_int_or(balanced_rank_by_node_id.get("B"), -1), 0)
+  assert_eq(option_int_or(balanced_rank_by_node_id.get("D"), -1), 4)
+  assert_eq(option_int_or(balanced_rank_by_node_id.get("E"), -1), 5)
+  assert_eq(balanced_max_rank, 5)
+  for edge in oriented_edges {
+    let (source_id, target_id) = edge
+    let source_rank = option_int_or(balanced_rank_by_node_id.get(source_id), -1)
+    let target_rank = option_int_or(balanced_rank_by_node_id.get(target_id), -1)
+    assert_true(source_rank < target_rank)
+  }
+}
+
+///|
+test "elk layered network-simplex balance keeps unequal-degree node fixed" {
+  let node_ids = ["S", "X", "Y", "T"]
+  let oriented_edges = [("S", "X"), ("X", "Y"), ("X", "T")]
+  let rank_by_node_id : Map[String, Int] = { "S": 0, "X": 2, "Y": 3, "T": 4 }
+  let (balanced_rank_by_node_id, balanced_max_rank) = apply_elk_network_simplex_balance(
+    node_ids, oriented_edges, rank_by_node_id, 4,
+  )
+  assert_eq(option_int_or(balanced_rank_by_node_id.get("X"), -1), 2)
+  assert_eq(balanced_max_rank, 4)
+}
+
+///|
 test "elk layered virtual ordering normalizes long-span edges into adjacent ranks" {
   let graph = wb_graph(["A", "B", "C"], [("A", "B"), ("B", "C"), ("A", "C")])
   let prep_state = @layout_engine_graph_prep_core.prepare_graph_inputs(

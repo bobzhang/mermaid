@@ -242,10 +242,105 @@ function checkElkCycleOrientationGate(): void {
   }
 }
 
+function checkElkSortByInputModelGate(): void {
+  const fixtures = [
+    'fixtures/layout_stress_001_dense_dag.mmd',
+    'fixtures/layout_stress_002_feedback_mesh.mmd',
+    'fixtures/layout_stress_003_subgraph_bridges.mmd',
+    'fixtures/layout_stress_004_fanin_fanout.mmd',
+    'fixtures/layout_stress_005_long_span_backjumps.mmd',
+    'fixtures/layout_stress_006_nested_bridge_loops.mmd',
+    'fixtures/layout_stress_007_dependency_weave.mmd',
+    'fixtures/layout_stress_008_hyper_weave_pipeline.mmd',
+    'fixtures/layout_stress_009_nested_ring_bridges.mmd',
+    'fixtures/layout_stress_010_bipartite_crossfire.mmd',
+    'fixtures/layout_stress_011_feedback_lattice.mmd',
+    'fixtures/layout_stress_012_interleaved_subgraph_feedback.mmd',
+    'fixtures/layout_stress_013_rl_dual_scc_weave.mmd',
+  ]
+  const stdout = runOrThrow('bun', [
+    'run',
+    'scripts/compare_elk_sort_by_input_model.ts',
+    ...fixtures,
+  ])
+  const lines = stdout
+    .split('\n')
+    .map(line => line.trim())
+    .filter(line => line !== '')
+
+  const orderLine = lines.find(line => line.startsWith('total_order_mismatch='))
+  if (!orderLine) {
+    fail('elk sort-by-input-model gate missing total_order_mismatch summary line')
+  }
+  const orderMatch = /^total_order_mismatch=(\d+)\/(\d+)$/.exec(orderLine)
+  if (!orderMatch) {
+    fail(
+      `elk sort-by-input-model gate invalid order summary format: ${orderLine}`,
+    )
+  }
+  const orderMismatched = Number.parseInt(orderMatch[1]!, 10)
+  const orderComparable = Number.parseInt(orderMatch[2]!, 10)
+  if (!Number.isFinite(orderMismatched) || !Number.isFinite(orderComparable)) {
+    fail(
+      `elk sort-by-input-model gate invalid order mismatch counters: ${orderLine}`,
+    )
+  }
+  if (orderComparable <= 0) {
+    fail(
+      `elk sort-by-input-model gate invalid order denominator: ${orderLine}`,
+    )
+  }
+
+  const compositionLine = lines.find(line =>
+    line.startsWith('total_composition_mismatch='),
+  )
+  if (!compositionLine) {
+    fail(
+      'elk sort-by-input-model gate missing total_composition_mismatch summary line',
+    )
+  }
+  const compositionMatch =
+    /^total_composition_mismatch=(\d+)\/(\d+)$/.exec(compositionLine)
+  if (!compositionMatch) {
+    fail(
+      `elk sort-by-input-model gate invalid composition summary format: ${compositionLine}`,
+    )
+  }
+  const compositionMismatched = Number.parseInt(compositionMatch[1]!, 10)
+  const compositionComparable = Number.parseInt(compositionMatch[2]!, 10)
+  if (
+    !Number.isFinite(compositionMismatched) ||
+    !Number.isFinite(compositionComparable)
+  ) {
+    fail(
+      `elk sort-by-input-model gate invalid composition mismatch counters: ${compositionLine}`,
+    )
+  }
+  if (compositionComparable <= 0) {
+    fail(
+      `elk sort-by-input-model gate invalid composition denominator: ${compositionLine}`,
+    )
+  }
+
+  const maxAllowedOrderMismatch = 5
+  const maxAllowedCompositionMismatch = 5
+  if (orderMismatched > maxAllowedOrderMismatch) {
+    fail(
+      `elk sort-by-input-model gate expected order mismatches <= ${maxAllowedOrderMismatch}, got ${orderMismatched}/${orderComparable}`,
+    )
+  }
+  if (compositionMismatched > maxAllowedCompositionMismatch) {
+    fail(
+      `elk sort-by-input-model gate expected composition mismatches <= ${maxAllowedCompositionMismatch}, got ${compositionMismatched}/${compositionComparable}`,
+    )
+  }
+}
+
 function main(): void {
   checkDagreTraceGate()
   checkElkRankLayerGate()
   checkElkCycleOrientationGate()
+  checkElkSortByInputModelGate()
   console.log('Phase parity gates passed.')
 }
 
