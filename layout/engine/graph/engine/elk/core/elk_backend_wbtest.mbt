@@ -485,18 +485,12 @@ fn backend_result_equal(
 }
 
 ///|
-test "elk setup phase derives structure-aware spacing and preserves explicit spacing" {
+test "elk setup phase preserves caller spacing options" {
   let graph = fanout_graph()
   let defaults = @model.RenderOptions::default()
   let tuned = derive_elk_render_options(graph, defaults)
-  assert_true(
-    @layout_engine_graph_internal_core.option_int_or(tuned.node_spacing, 0) >
-    @layout_engine_graph_internal_core.option_int_or(defaults.node_spacing, 130),
-  )
-  assert_true(
-    @layout_engine_graph_internal_core.option_int_or(tuned.layer_spacing, 0) >
-    @layout_engine_graph_internal_core.option_int_or(defaults.layer_spacing, 90),
-  )
+  assert_eq(tuned.node_spacing, defaults.node_spacing)
+  assert_eq(tuned.layer_spacing, defaults.layer_spacing)
 
   let explicit_options : @model.RenderOptions = {
     bg: None,
@@ -519,7 +513,7 @@ test "elk setup phase derives structure-aware spacing and preserves explicit spa
 }
 
 ///|
-test "elk setup phase keeps state-graph spacing unset for state-specific placement rules" {
+test "elk setup phase keeps state-graph spacing unchanged" {
   let tuned = derive_elk_render_options(
     simple_state_graph(),
     @model.RenderOptions::default(),
