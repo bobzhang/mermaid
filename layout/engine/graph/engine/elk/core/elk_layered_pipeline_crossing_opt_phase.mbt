@@ -314,7 +314,9 @@ fn maybe_refine_rank_order_by_swaps(
   )
   let mut best_crossings = best_layered_crossings
   let mut pass = 0
-  while pass < 3 {
+  // Keep local swap refinement shallow: additional passes tend to overfit
+  // rank order with marginal crossing gains and larger upstream parity drift.
+  while pass < 1 {
     let mut improved = false
     for rank in 0..<=max_rank {
       match rank_node_ids_by_rank.get(rank) {
@@ -422,7 +424,8 @@ fn maybe_refine_rank_order_by_rank_permutations(
   )
 
   let mut pass = 0
-  while pass < 2 {
+  // Mirror the shallow refinement bound used by adjacent-swap search.
+  while pass < 1 {
     let mut improved = false
     for rank in 0..<=max_rank {
       match rank_node_ids_by_rank.get(rank) {
