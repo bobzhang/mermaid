@@ -322,8 +322,8 @@ function checkElkSortByInputModelGate(): void {
     )
   }
 
-  const maxAllowedOrderMismatch = 5
-  const maxAllowedCompositionMismatch = 5
+  const maxAllowedOrderMismatch = 0
+  const maxAllowedCompositionMismatch = 0
   if (orderMismatched > maxAllowedOrderMismatch) {
     fail(
       `elk sort-by-input-model gate expected order mismatches <= ${maxAllowedOrderMismatch}, got ${orderMismatched}/${orderComparable}`,
