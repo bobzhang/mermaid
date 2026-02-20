@@ -43,30 +43,42 @@ fn rank_pair_minor_gap(
 }
 
 ///|
-fn node_neighbor_minor_center(
+fn node_neighbor_minor_coords(
   node_id : String,
   neighbor_by_node_id : Map[String, Array[String]],
   minor_coord_by_node_id : Map[String, Int],
-) -> (Bool, Int) {
-  let mut sum = 0
-  let mut count = 0
+) -> Array[Int] {
+  let coords : Array[Int] = []
   match neighbor_by_node_id.get(node_id) {
     Some(neighbors) =>
       for neighbor_id in neighbors {
         match minor_coord_by_node_id.get(neighbor_id) {
-          Some(minor_coord) => {
-            sum += minor_coord
-            count += 1
-          }
+          Some(minor_coord) => coords.push(minor_coord)
           None => ()
         }
       }
     None => ()
   }
-  if count == 0 {
+  coords
+}
+
+///|
+fn node_neighbor_minor_center(
+  node_id : String,
+  neighbor_by_node_id : Map[String, Array[String]],
+  minor_coord_by_node_id : Map[String, Int],
+) -> (Bool, Int) {
+  let coords = node_neighbor_minor_coords(
+    node_id, neighbor_by_node_id, minor_coord_by_node_id,
+  )
+  if coords.length() == 0 {
     (false, 0)
   } else {
-    (true, sum / count)
+    let mut sum = 0
+    for coord in coords {
+      sum += coord
+    }
+    (true, sum / coords.length())
   }
 }
 

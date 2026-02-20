@@ -630,6 +630,56 @@ test "elk layered minor placement strategy uses relaxed mode for native path" {
 }
 
 ///|
+test "elk layered neighbor minor center averages odd neighbor counts" {
+  let neighbor_by_node_id : Map[String, Array[String]] = {
+    "A": ["B", "C", "D"],
+  }
+  let minor_coord_by_node_id : Map[String, Int] = {
+    "B": 120,
+    "C": 460,
+    "D": 140,
+  }
+  let (has_center, center) = node_neighbor_minor_center(
+    "A", neighbor_by_node_id, minor_coord_by_node_id,
+  )
+  assert_eq(has_center, true)
+  assert_eq(center, 240)
+}
+
+///|
+test "elk layered neighbor minor center uses midpoint for even neighbor counts" {
+  let neighbor_by_node_id : Map[String, Array[String]] = { "A": ["B", "C"] }
+  let minor_coord_by_node_id : Map[String, Int] = { "B": 120, "C": 460 }
+  let (has_center, center) = node_neighbor_minor_center(
+    "A", neighbor_by_node_id, minor_coord_by_node_id,
+  )
+  assert_eq(has_center, true)
+  assert_eq(center, 290)
+}
+
+///|
+test "elk layered neighbor minor center ignores missing coordinates" {
+  let neighbor_by_node_id : Map[String, Array[String]] = { "A": ["B", "C"] }
+  let minor_coord_by_node_id : Map[String, Int] = { "C": 260 }
+  let (has_center, center) = node_neighbor_minor_center(
+    "A", neighbor_by_node_id, minor_coord_by_node_id,
+  )
+  assert_eq(has_center, true)
+  assert_eq(center, 260)
+}
+
+///|
+test "elk layered neighbor minor center reports absent when no mapped neighbors" {
+  let neighbor_by_node_id : Map[String, Array[String]] = { "A": ["B", "C"] }
+  let minor_coord_by_node_id : Map[String, Int] = {}
+  let (has_center, center) = node_neighbor_minor_center(
+    "A", neighbor_by_node_id, minor_coord_by_node_id,
+  )
+  assert_eq(has_center, false)
+  assert_eq(center, 0)
+}
+
+///|
 test "elk layered relaxed major compaction gate tracks long-span density" {
   let low_span_rank_by_node_id : Map[String, Int] = {
     "A": 0,

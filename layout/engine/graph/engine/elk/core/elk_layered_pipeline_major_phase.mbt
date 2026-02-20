@@ -874,6 +874,80 @@ fn average_major_coord_by_node_id(
 }
 
 ///|
+fn collapse_major_coord_to_rank_edgeward_anchor(
+  rank_node_ids_by_rank : Map[Int, Array[String]],
+  max_rank : Int,
+  reverse : Bool,
+  major_coord_by_node_id : Map[String, Int],
+  baseline_major_coord_by_node_id : Map[String, Int],
+) -> Map[String, Int] {
+  let collapsed = clone_major_coord_by_node_id(major_coord_by_node_id)
+  let increasing_by_rank = !reverse
+  let max_allowed_spread = 23
+  for rank in 0..<=max_rank {
+    match rank_node_ids_by_rank.get(rank) {
+      Some(node_ids) => {
+        if node_ids.length() == 0 {
+          continue
+        }
+        let mut has_anchor = false
+        let mut rank_anchor = 0
+        let mut min_major = 0
+        let mut max_major = 0
+        for node_id in node_ids {
+          let baseline_major = option_int_or(
+            baseline_major_coord_by_node_id.get(node_id),
+            0,
+          )
+          let major = option_int_or(
+            major_coord_by_node_id.get(node_id),
+            baseline_major,
+          )
+          if !has_anchor {
+            has_anchor = true
+            rank_anchor = major
+            min_major = major
+            max_major = major
+          } else if increasing_by_rank {
+            if major > rank_anchor {
+              rank_anchor = major
+            }
+            if major < min_major {
+              min_major = major
+            }
+            if major > max_major {
+              max_major = major
+            }
+          } else if major < rank_anchor {
+            rank_anchor = major
+            if major < min_major {
+              min_major = major
+            }
+            if major > max_major {
+              max_major = major
+            }
+          } else {
+            if major < min_major {
+              min_major = major
+            }
+            if major > max_major {
+              max_major = major
+            }
+          }
+        }
+        if has_anchor && max_major - min_major <= max_allowed_spread {
+          for node_id in node_ids {
+            collapsed[node_id] = rank_anchor
+          }
+        }
+      }
+      None => ()
+    }
+  }
+  collapsed
+}
+
+///|
 fn relax_major_coord_by_node_id(
   rank_node_ids_by_rank : Map[Int, Array[String]],
   max_rank : Int,
@@ -937,7 +1011,18 @@ fn relax_major_coord_by_node_id(
   } else {
     forward_candidate
   }
-  selected_candidate.major_coord_by_node_id
+  let rank_collapsed_major_coord_by_node_id = collapse_major_coord_to_rank_edgeward_anchor(
+    rank_node_ids_by_rank,
+    max_rank,
+    reverse,
+    selected_candidate.major_coord_by_node_id,
+    baseline_major_coord_by_node_id,
+  )
+  enforce_major_edge_constraints(
+    rank_collapsed_major_coord_by_node_id, baseline_major_coord_by_node_id, rank_by_node_id,
+    successors_by_node_id, base_major_gap, horizontal, width_by_node_id, height_by_node_id,
+  )
+  rank_collapsed_major_coord_by_node_id
 }
 
 ///|
