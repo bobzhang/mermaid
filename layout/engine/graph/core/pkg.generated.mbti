@@ -10,8 +10,6 @@ pub fn layout_graph(@model.MermaidGraph, @model.RenderOptions) -> @model.Positio
 
 pub fn layout_graph_for_ascii(@model.MermaidGraph, @model.RenderOptions) -> @model.PositionedGraph
 
-pub fn layout_graph_with_trace(@model.MermaidGraph, @model.RenderOptions) -> (@model.PositionedGraph, Array[@bobzhang/beautiful_mermaid/layout/engine/graph/phase_contract/core.PhaseTrace])
-
 // Errors
 
 // Types and methods
