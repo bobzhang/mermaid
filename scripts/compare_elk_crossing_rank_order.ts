@@ -10,6 +10,7 @@
  *   bun run scripts/compare_elk_crossing_rank_order.ts fixtures/layout_stress_001_dense_dag.mmd
  *   bun run scripts/compare_elk_crossing_rank_order.ts fixtures/layout_stress_001_dense_dag.mmd fixtures/layout_stress_013_rl_dual_scc_weave.mmd
  *   bun run scripts/compare_elk_crossing_rank_order.ts --trial-count 5 fixtures/layout_stress_001_dense_dag.mmd
+ *   bun run scripts/compare_elk_crossing_rank_order.ts --sweep-kernel edge-slot --trial-count 5 fixtures/layout_stress_001_dense_dag.mmd
  *   bun run scripts/compare_elk_crossing_rank_order.ts --details --limit 3 fixtures/layout_stress_013_rl_dual_scc_weave.mmd
  */
 
@@ -59,6 +60,7 @@ type CliOptions = {
   detailLimit: number
   trialCount?: number
   sweepPassCount?: number
+  sweepKernel?: 'default' | 'neighbor-mean' | 'edge-slot'
 }
 
 type NeighborSummary = {
@@ -134,6 +136,9 @@ function parseLocalTrace(source: string, options: CliOptions): LocalTrace {
   }
   if (options.sweepPassCount !== undefined) {
     args.push('--sweep-pass-count', String(options.sweepPassCount))
+  }
+  if (options.sweepKernel !== undefined) {
+    args.push('--sweep-kernel', options.sweepKernel)
   }
   const stdout = runOrThrow('moon', args)
   const inputNodeIdsByIndex = new Map<number, string>()
@@ -471,6 +476,7 @@ function parseCliOptions(args: string[]): CliOptions {
   let detailLimit = Number.MAX_SAFE_INTEGER
   let trialCount: number | undefined
   let sweepPassCount: number | undefined
+  let sweepKernel: 'default' | 'neighbor-mean' | 'edge-slot' | undefined
   const fixtures: string[] = []
   for (let i = 0; i < args.length; i += 1) {
     const arg = args[i]!
@@ -522,6 +528,37 @@ function parseCliOptions(args: string[]): CliOptions {
       sweepPassCount = parsePositiveIntOption(raw, '--sweep-pass-count')
       continue
     }
+    if (arg === '--sweep-kernel') {
+      const next = args[i + 1]
+      if (!next) fail('missing value after --sweep-kernel')
+      const normalized = next.trim().toLowerCase()
+      if (
+        normalized !== 'default' &&
+        normalized !== 'neighbor-mean' &&
+        normalized !== 'edge-slot'
+      ) {
+        fail(
+          "invalid --sweep-kernel value, expected 'default', 'neighbor-mean', or 'edge-slot'",
+        )
+      }
+      sweepKernel = normalized
+      i += 1
+      continue
+    }
+    if (arg.startsWith('--sweep-kernel=')) {
+      const normalized = arg.slice('--sweep-kernel='.length).trim().toLowerCase()
+      if (
+        normalized !== 'default' &&
+        normalized !== 'neighbor-mean' &&
+        normalized !== 'edge-slot'
+      ) {
+        fail(
+          "invalid --sweep-kernel value, expected 'default', 'neighbor-mean', or 'edge-slot'",
+        )
+      }
+      sweepKernel = normalized
+      continue
+    }
     if (arg.startsWith('--')) {
       fail(`unknown argument: ${arg}`)
     }
@@ -529,10 +566,17 @@ function parseCliOptions(args: string[]): CliOptions {
   }
   if (fixtures.length === 0) {
     fail(
-      'usage: bun run scripts/compare_elk_crossing_rank_order.ts [--details] [--limit N] [--trial-count N] [--sweep-pass-count N] <fixture.mmd> [more...]',
+      'usage: bun run scripts/compare_elk_crossing_rank_order.ts [--details] [--limit N] [--trial-count N] [--sweep-pass-count N] [--sweep-kernel default|neighbor-mean|edge-slot] <fixture.mmd> [more...]',
     )
   }
-  return { fixtures, details, detailLimit, trialCount, sweepPassCount }
+  return {
+    fixtures,
+    details,
+    detailLimit,
+    trialCount,
+    sweepPassCount,
+    sweepKernel,
+  }
 }
 
 function rankPositionByNodeId(layers: Layering): Map<string, { rank: number; pos: number }> {

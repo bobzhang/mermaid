@@ -25,7 +25,7 @@
  *   bun run scripts/compare_layout_stress.ts --local-layout-engine dagre-parity
  *   bun run scripts/compare_layout_stress.ts --local-layout-engine elk
  *   bun run scripts/compare_layout_stress.ts --local-layout-engine elk-layered
- *   bun run scripts/compare_layout_stress.ts --local-layout-engine elk --elk-trial-count 5 --elk-sweep-pass-count 6
+ *   bun run scripts/compare_layout_stress.ts --local-layout-engine elk --elk-trial-count 5 --elk-sweep-pass-count 6 --elk-sweep-kernel edge-slot
  */
 
 import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, writeFileSync } from 'node:fs'
@@ -131,6 +131,7 @@ type CliOptions = {
   localLayoutEngine?: 'legacy' | 'dagre-parity' | 'elk' | 'elk-layered'
   elkTrialCount?: number
   elkSweepPassCount?: number
+  elkSweepKernel?: 'default' | 'neighbor-mean' | 'edge-slot'
   allowUnparsedEdgeLines: boolean
   useLocalEdgeDump: boolean
   maxLogicalCrossingMultiplier?: number
@@ -2186,11 +2187,18 @@ function localLayoutEngineArgs(options: CliOptions): string[] {
 }
 
 function hasElkCrossingOverrides(options: CliOptions): boolean {
-  return options.elkTrialCount !== undefined || options.elkSweepPassCount !== undefined
+  return (
+    options.elkTrialCount !== undefined ||
+    options.elkSweepPassCount !== undefined ||
+    options.elkSweepKernel !== undefined
+  )
 }
 
 function localElkCrossingOverrideArgs(options: CliOptions): string[] {
   const args: string[] = []
+  if (options.elkSweepKernel !== undefined) {
+    args.push('--sweep-kernel', options.elkSweepKernel)
+  }
   if (options.elkTrialCount !== undefined) {
     args.push('--trial-count', String(options.elkTrialCount))
   }
@@ -2650,6 +2658,7 @@ function parseCliOptions(args: string[]): CliOptions {
     | undefined = undefined
   let elkTrialCount: number | undefined = undefined
   let elkSweepPassCount: number | undefined = undefined
+  let elkSweepKernel: 'default' | 'neighbor-mean' | 'edge-slot' | undefined = undefined
   let allowUnparsedEdgeLines = false
   let useLocalEdgeDump = false
   let maxLogicalCrossingMultiplier: number | undefined = undefined
@@ -2791,6 +2800,33 @@ function parseCliOptions(args: string[]): CliOptions {
         fail('invalid --elk-sweep-pass-count value, expected positive integer')
       }
       elkSweepPassCount = parsed
+      continue
+    }
+    if (arg === '--elk-sweep-kernel') {
+      const next = args[i + 1]
+      if (!next) fail('missing value after --elk-sweep-kernel')
+      const normalized = next.trim().toLowerCase()
+      if (
+        normalized !== 'default' &&
+        normalized !== 'neighbor-mean' &&
+        normalized !== 'edge-slot'
+      ) {
+        fail("invalid --elk-sweep-kernel value, expected 'default', 'neighbor-mean', or 'edge-slot'")
+      }
+      elkSweepKernel = normalized
+      i += 1
+      continue
+    }
+    if (arg.startsWith('--elk-sweep-kernel=')) {
+      const normalized = arg.slice('--elk-sweep-kernel='.length).trim().toLowerCase()
+      if (
+        normalized !== 'default' &&
+        normalized !== 'neighbor-mean' &&
+        normalized !== 'edge-slot'
+      ) {
+        fail("invalid --elk-sweep-kernel value, expected 'default', 'neighbor-mean', or 'edge-slot'")
+      }
+      elkSweepKernel = normalized
       continue
     }
     if (arg === '--allow-unparsed-edge-lines') {
@@ -3118,7 +3154,10 @@ function parseCliOptions(args: string[]): CliOptions {
       maxAvgWeightedGapIndex ?? selectedProfile.maxAvgWeightedGapIndex
   }
 
-  const hasElkOverrides = elkTrialCount !== undefined || elkSweepPassCount !== undefined
+  const hasElkOverrides =
+    elkTrialCount !== undefined ||
+    elkSweepPassCount !== undefined ||
+    elkSweepKernel !== undefined
   if (
     hasElkOverrides &&
     (localLayoutEngine === undefined ||
@@ -3139,6 +3178,7 @@ function parseCliOptions(args: string[]): CliOptions {
     localLayoutEngine,
     elkTrialCount,
     elkSweepPassCount,
+    elkSweepKernel,
     allowUnparsedEdgeLines,
     useLocalEdgeDump,
     maxLogicalCrossingMultiplier,

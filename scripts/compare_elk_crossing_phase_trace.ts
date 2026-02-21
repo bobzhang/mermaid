@@ -11,6 +11,7 @@
  *   bun run scripts/compare_elk_crossing_phase_trace.ts fixtures/layout_stress_006_nested_bridge_loops.mmd
  *   bun run scripts/compare_elk_crossing_phase_trace.ts fixtures/layout_stress_001_dense_dag.mmd fixtures/layout_stress_013_rl_dual_scc_weave.mmd
  *   bun run scripts/compare_elk_crossing_phase_trace.ts --trial-count 5 fixtures/layout_stress_006_nested_bridge_loops.mmd
+ *   bun run scripts/compare_elk_crossing_phase_trace.ts --sweep-kernel edge-slot --trial-count 5 fixtures/layout_stress_006_nested_bridge_loops.mmd
  */
 
 import { readFileSync } from 'node:fs'
@@ -56,6 +57,7 @@ type CliOptions = {
   fixtures: string[]
   trialCount?: number
   sweepPassCount?: number
+  sweepKernel?: 'default' | 'neighbor-mean' | 'edge-slot'
 }
 
 function fail(message: string): never {
@@ -149,6 +151,9 @@ function parseLocalTrace(source: string, options: CliOptions): LocalTrace {
   }
   if (options.sweepPassCount !== undefined) {
     args.push('--sweep-pass-count', String(options.sweepPassCount))
+  }
+  if (options.sweepKernel !== undefined) {
+    args.push('--sweep-kernel', options.sweepKernel)
   }
   const stdout = runOrThrow('moon', args)
   const lines = stdout
@@ -504,6 +509,7 @@ function parseCliOptions(args: string[]): CliOptions {
   const fixtures: string[] = []
   let trialCount: number | undefined
   let sweepPassCount: number | undefined
+  let sweepKernel: 'default' | 'neighbor-mean' | 'edge-slot' | undefined
   for (let i = 0; i < args.length; i += 1) {
     const arg = args[i]!
     if (arg === '--trial-count') {
@@ -530,6 +536,37 @@ function parseCliOptions(args: string[]): CliOptions {
       sweepPassCount = parsePositiveIntOption(raw, '--sweep-pass-count')
       continue
     }
+    if (arg === '--sweep-kernel') {
+      const next = args[i + 1]
+      if (!next) fail('missing value after --sweep-kernel')
+      const normalized = next.trim().toLowerCase()
+      if (
+        normalized !== 'default' &&
+        normalized !== 'neighbor-mean' &&
+        normalized !== 'edge-slot'
+      ) {
+        fail(
+          "invalid --sweep-kernel value, expected 'default', 'neighbor-mean', or 'edge-slot'",
+        )
+      }
+      sweepKernel = normalized
+      i += 1
+      continue
+    }
+    if (arg.startsWith('--sweep-kernel=')) {
+      const normalized = arg.slice('--sweep-kernel='.length).trim().toLowerCase()
+      if (
+        normalized !== 'default' &&
+        normalized !== 'neighbor-mean' &&
+        normalized !== 'edge-slot'
+      ) {
+        fail(
+          "invalid --sweep-kernel value, expected 'default', 'neighbor-mean', or 'edge-slot'",
+        )
+      }
+      sweepKernel = normalized
+      continue
+    }
     if (arg.startsWith('--')) {
       fail(`unknown argument: ${arg}`)
     }
@@ -537,10 +574,10 @@ function parseCliOptions(args: string[]): CliOptions {
   }
   if (fixtures.length === 0) {
     fail(
-      'usage: bun run scripts/compare_elk_crossing_phase_trace.ts [--trial-count N] [--sweep-pass-count N] <fixture.mmd> [more...]',
+      'usage: bun run scripts/compare_elk_crossing_phase_trace.ts [--trial-count N] [--sweep-pass-count N] [--sweep-kernel default|neighbor-mean|edge-slot] <fixture.mmd> [more...]',
     )
   }
-  return { fixtures, trialCount, sweepPassCount }
+  return { fixtures, trialCount, sweepPassCount, sweepKernel }
 }
 
 function main(): void {

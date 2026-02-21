@@ -12,6 +12,7 @@
  *   bun run scripts/report_elk_phase_waterfall.ts
  *   bun run scripts/report_elk_phase_waterfall.ts --json /tmp/elk_phase_waterfall.json
  *   bun run scripts/report_elk_phase_waterfall.ts --trial-count 5 --sweep-pass-count 6
+ *   bun run scripts/report_elk_phase_waterfall.ts --sweep-kernel edge-slot --trial-count 5 --sweep-pass-count 6
  */
 
 import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs'
@@ -23,6 +24,7 @@ type CliOptions = {
   jsonPath?: string
   trialCount?: number
   sweepPassCount?: number
+  sweepKernel?: 'default' | 'neighbor-mean' | 'edge-slot'
 }
 
 type PhaseWaterfallReport = {
@@ -137,6 +139,7 @@ function parseCliOptions(args: string[]): CliOptions {
   let jsonPath: string | undefined
   let trialCount: number | undefined
   let sweepPassCount: number | undefined
+  let sweepKernel: 'default' | 'neighbor-mean' | 'edge-slot' | undefined
   for (let i = 0; i < args.length; i += 1) {
     const arg = args[i]!
     if (arg === '--json') {
@@ -192,9 +195,36 @@ function parseCliOptions(args: string[]): CliOptions {
       sweepPassCount = parsed
       continue
     }
+    if (arg === '--sweep-kernel') {
+      const next = args[i + 1]
+      if (!next) fail('missing value after --sweep-kernel')
+      const normalized = next.trim().toLowerCase()
+      if (
+        normalized !== 'default' &&
+        normalized !== 'neighbor-mean' &&
+        normalized !== 'edge-slot'
+      ) {
+        fail("invalid --sweep-kernel value, expected 'default', 'neighbor-mean', or 'edge-slot'")
+      }
+      sweepKernel = normalized
+      i += 1
+      continue
+    }
+    if (arg.startsWith('--sweep-kernel=')) {
+      const normalized = arg.slice('--sweep-kernel='.length).trim().toLowerCase()
+      if (
+        normalized !== 'default' &&
+        normalized !== 'neighbor-mean' &&
+        normalized !== 'edge-slot'
+      ) {
+        fail("invalid --sweep-kernel value, expected 'default', 'neighbor-mean', or 'edge-slot'")
+      }
+      sweepKernel = normalized
+      continue
+    }
     fail(`unknown argument: ${arg}`)
   }
-  return { jsonPath, trialCount, sweepPassCount }
+  return { jsonPath, trialCount, sweepPassCount, sweepKernel }
 }
 
 function parseCounter(line: string, pattern: RegExp, label: string): [number, number] {
@@ -305,6 +335,9 @@ function parseCrossingRankOrder(options: CliOptions): {
   if (options.sweepPassCount !== undefined) {
     args.push('--sweep-pass-count', String(options.sweepPassCount))
   }
+  if (options.sweepKernel !== undefined) {
+    args.push('--sweep-kernel', options.sweepKernel)
+  }
   const stdout = runOrThrow('bun', args)
   const lines = stdout
     .split('\n')
@@ -411,6 +444,9 @@ function parseCrossingPhaseTrace(options: CliOptions): {
   }
   if (options.sweepPassCount !== undefined) {
     args.push('--sweep-pass-count', String(options.sweepPassCount))
+  }
+  if (options.sweepKernel !== undefined) {
+    args.push('--sweep-kernel', options.sweepKernel)
   }
   const stdout = runOrThrow('bun', args)
   const lines = stdout
@@ -613,6 +649,9 @@ function parseEndToEnd(options: CliOptions): {
   }
   if (options.sweepPassCount !== undefined) {
     args.push('--elk-sweep-pass-count', String(options.sweepPassCount))
+  }
+  if (options.sweepKernel !== undefined) {
+    args.push('--elk-sweep-kernel', options.sweepKernel)
   }
   runOrThrow('bun', args)
   const payload = JSON.parse(readFileSync(jsonPath, 'utf8')) as StressPayload
