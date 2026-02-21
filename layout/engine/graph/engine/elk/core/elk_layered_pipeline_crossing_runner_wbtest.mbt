@@ -12,7 +12,9 @@ test "elk layered crossing execution trace matches phase result maps" {
   )
   let plan = default_crossing_execution_plan(LayerSweepWithLocalRefinement)
   let phase_result = run_crossing_phase_with_plan(input, plan)
-  let execution_state = execute_crossing_phase_with_plan_with_trace(input, plan)
+  let execution_state = execute_crossing_phase_with_plan_with_trial_trace(
+      input, plan,
+    ).execution_state
   assert_eq(
     match phase_result.post_sweep_rank_node_ids_by_rank.get(1) {
       Some(node_ids) => node_ids
@@ -105,7 +107,9 @@ test "elk layered crossing phase result reports consistent objectives" {
   )
   let plan = default_crossing_execution_plan(LayerSweepWithLocalRefinement)
   let result = run_crossing_phase_with_plan(input, plan)
-  let execution_state = execute_crossing_phase_with_plan_with_trace(input, plan)
+  let execution_state = execute_crossing_phase_with_plan_with_trial_trace(
+      input, plan,
+    ).execution_state
   assert_eq(
     match result.optimized_rank_node_ids_by_rank.get(1) {
       Some(node_ids) => node_ids
@@ -144,6 +148,17 @@ test "elk layered crossing phase result reports consistent objectives" {
   assert_true(
     result.post_sweep_objective.layered_crossings >=
     result.optimized_objective.layered_crossings,
+  )
+  assert_true(result.selected_trial_index >= 0)
+  assert_eq(
+    result.trial_summaries.length(),
+    default_crossing_optimization_config().trial_count,
+  )
+  assert_true(
+    match result.trial_summaries.get(result.selected_trial_index) {
+      Some(_) => true
+      None => false
+    },
   )
 }
 

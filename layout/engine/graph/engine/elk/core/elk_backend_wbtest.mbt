@@ -665,6 +665,12 @@ test "elk backend rank phase trace includes crossing-plan metadata" {
     },
     default_crossing_optimization_config().trial_count,
   )
+  assert_true(
+    match rank_trace.metrics.get("rank_order_selected_trial_index") {
+      Some(value) => value >= 0
+      None => false
+    },
+  )
   assert_eq(
     match rank_trace.labels.get("rank_order_sweep_kernel") {
       Some(value) => value
@@ -770,6 +776,22 @@ test "elk layered backend plan injection keeps default parity and exposes non-de
     },
     match
       edge_slot_backend.phase_traces[1].metrics.get("rank_order_trial_count") {
+      Some(value) => value
+      None => -1
+    },
+  )
+  assert_eq(
+    match
+      default_backend.phase_traces[1].metrics.get(
+        "rank_order_selected_trial_index",
+      ) {
+      Some(value) => value
+      None => -1
+    },
+    match
+      edge_slot_backend.phase_traces[1].metrics.get(
+        "rank_order_selected_trial_index",
+      ) {
       Some(value) => value
       None => -1
     },

@@ -19,6 +19,19 @@ priv struct ElkLayeredRankTrace {
   rank_order_sweep_pass_count : Int
   rank_order_trial_count : Int
   rank_order_trial_model_order_inversion_influence : Double
+  rank_order_selected_trial_index : Int
+  rank_order_optimized_seed_selected_trial_index : Int
+  rank_order_optimized_reversed_seed_selected_trial_index : Int
+  rank_order_virtual_candidate_selected_trial_index : Int
+  rank_order_optimized_seed_trial_summaries : Array[
+    ElkLayeredCrossingTrialSummary,
+  ]
+  rank_order_optimized_reversed_seed_trial_summaries : Array[
+    ElkLayeredCrossingTrialSummary,
+  ]
+  rank_order_virtual_candidate_trial_summaries : Array[
+    ElkLayeredCrossingTrialSummary,
+  ]
   rank_order_optimized_seed_post_sweep_layers : Array[Array[String]]
   rank_order_optimized_seed_post_sweep_crossings : Int
   rank_order_optimized_seed_layers : Array[Array[String]]
@@ -479,6 +492,13 @@ fn collect_elk_layered_rank_trace_with_crossing_execution_plan(
     rank_order_sweep_pass_count: rank_order_debug_state.crossing_sweep_pass_count,
     rank_order_trial_count: rank_order_debug_state.crossing_trial_count,
     rank_order_trial_model_order_inversion_influence: rank_order_debug_state.crossing_trial_model_order_inversion_influence,
+    rank_order_selected_trial_index: rank_order_debug_state.selected_trial_index,
+    rank_order_optimized_seed_selected_trial_index: rank_order_debug_state.optimized_seed_selected_trial_index,
+    rank_order_optimized_reversed_seed_selected_trial_index: rank_order_debug_state.optimized_reversed_seed_selected_trial_index,
+    rank_order_virtual_candidate_selected_trial_index: rank_order_debug_state.virtual_candidate_selected_trial_index,
+    rank_order_optimized_seed_trial_summaries: rank_order_debug_state.optimized_seed_trial_summaries,
+    rank_order_optimized_reversed_seed_trial_summaries: rank_order_debug_state.optimized_reversed_seed_trial_summaries,
+    rank_order_virtual_candidate_trial_summaries: rank_order_debug_state.virtual_candidate_trial_summaries,
     rank_order_optimized_seed_post_sweep_layers: rank_layers_from_rank_map(
       rank_order_debug_state.optimized_seed_post_sweep_rank_node_ids_by_rank,
       rank_seed_state.max_rank,
@@ -597,6 +617,19 @@ fn append_sorted_map_lines(
 }
 
 ///|
+fn append_trial_summary_lines(
+  lines : Array[String],
+  source : String,
+  trial_summaries : Array[ElkLayeredCrossingTrialSummary],
+) -> Unit {
+  for summary in trial_summaries {
+    lines.push(
+      "ORDER_TRIAL\t\{source}\t\{summary.trial_index}\t\{summary.seed_kind}\t\{summary.initial_sweep_direction}\t\{summary.post_sweep_objective.layered_crossings}\t\{summary.post_sweep_objective.global_crossings}\t\{summary.optimized_objective.layered_crossings}\t\{summary.optimized_objective.global_crossings}\t\{summary.model_order_inversion_score}",
+    )
+  }
+}
+
+///|
 /// Renders a deterministic line-oriented dump for an ELK layered rank trace.
 fn elk_layered_rank_trace_lines(trace : ElkLayeredRankTrace) -> Array[String] {
   let lines : Array[String] = []
@@ -623,7 +656,34 @@ fn elk_layered_rank_trace_lines(trace : ElkLayeredRankTrace) -> Array[String] {
   lines.push(
     "ORDER_TRIAL_MODEL_ORDER_INVERSION_INFLUENCE\t\{trace.rank_order_trial_model_order_inversion_influence}",
   )
+  lines.push(
+    "ORDER_SELECTED_TRIAL_INDEX\t\{trace.rank_order_selected_trial_index}",
+  )
   lines.push("ORDER_SELECTED_SOURCE\t\{trace.rank_order_selected_source}")
+  lines.push(
+    "ORDER_TRIAL_SELECTED\toptimized-seed\t\{trace.rank_order_optimized_seed_selected_trial_index}",
+  )
+  lines.push(
+    "ORDER_TRIAL_SELECTED\toptimized-reversed-seed\t\{trace.rank_order_optimized_reversed_seed_selected_trial_index}",
+  )
+  lines.push(
+    "ORDER_TRIAL_SELECTED\tvirtual-candidate\t\{trace.rank_order_virtual_candidate_selected_trial_index}",
+  )
+  append_trial_summary_lines(
+    lines,
+    "optimized-seed",
+    trace.rank_order_optimized_seed_trial_summaries,
+  )
+  append_trial_summary_lines(
+    lines,
+    "optimized-reversed-seed",
+    trace.rank_order_optimized_reversed_seed_trial_summaries,
+  )
+  append_trial_summary_lines(
+    lines,
+    "virtual-candidate",
+    trace.rank_order_virtual_candidate_trial_summaries,
+  )
   lines.push(
     "ORDER_SCORE_SWEEP\toptimized-seed\t\{trace.rank_order_optimized_seed_post_sweep_crossings}",
   )
@@ -854,6 +914,9 @@ pub fn collect_elk_layered_rank_trace_kernel_comparison_lines_with_crossing_exec
       )
       lines.push(
         "ORDER_TRIAL_MODEL_ORDER_INVERSION_INFLUENCE\t\{left.rank_order_trial_model_order_inversion_influence}\t\{right.rank_order_trial_model_order_inversion_influence}",
+      )
+      lines.push(
+        "ORDER_SELECTED_TRIAL_INDEX\t\{left.rank_order_selected_trial_index}\t\{right.rank_order_selected_trial_index}",
       )
       lines.push(
         "ORDER_SELECTED_CROSSINGS\t\{left.rank_order_selected_crossings}\t\{right.rank_order_selected_crossings}",

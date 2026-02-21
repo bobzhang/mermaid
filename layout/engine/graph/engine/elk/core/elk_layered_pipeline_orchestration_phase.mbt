@@ -401,6 +401,7 @@ fn rank_phase_trace(
   metrics["rank_order_virtual_crossings"] = rank_order_debug_state.virtual_candidate_crossing_score
   metrics["rank_order_sweep_pass_count"] = rank_order_debug_state.crossing_sweep_pass_count
   metrics["rank_order_trial_count"] = rank_order_debug_state.crossing_trial_count
+  metrics["rank_order_selected_trial_index"] = rank_order_debug_state.selected_trial_index
   metrics["legacy_seed_mode"] = bool_flag(
     rank_phase_state.rank_seed_strategy is LegacyLaneSeed,
   )

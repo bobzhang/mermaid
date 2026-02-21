@@ -6,12 +6,31 @@ priv struct ElkLayeredCrossingPhaseResult {
   optimized_rank_node_ids_by_rank : Map[Int, Array[String]]
   post_sweep_objective : ElkLayeredCrossingObjective
   optimized_objective : ElkLayeredCrossingObjective
+  selected_trial_index : Int
+  trial_summaries : Array[ElkLayeredCrossingTrialSummary]
 }
 
 ///|
 priv struct ElkLayeredCrossingExecutionState {
   post_sweep_rank_node_ids_by_rank : Map[Int, Array[String]]
   post_refinement_rank_node_ids_by_rank : Map[Int, Array[String]]
+}
+
+///|
+priv struct ElkLayeredCrossingTrialSummary {
+  trial_index : Int
+  seed_kind : String
+  initial_sweep_direction : String
+  post_sweep_objective : ElkLayeredCrossingObjective
+  optimized_objective : ElkLayeredCrossingObjective
+  model_order_inversion_score : Int
+}
+
+///|
+priv struct ElkLayeredCrossingExecutionTrace {
+  execution_state : ElkLayeredCrossingExecutionState
+  selected_trial_index : Int
+  trial_summaries : Array[ElkLayeredCrossingTrialSummary]
 }
 
 ///|
@@ -46,6 +65,24 @@ fn crossing_trial_uses_initial_order_seed(trial_index : Int) -> Bool {
   // - trial 1: initial input order + backward sweep
   // - later trials: randomized first-layer seed.
   trial_index < 2
+}
+
+///|
+fn crossing_trial_seed_kind_tag(trial_index : Int) -> String {
+  if crossing_trial_uses_initial_order_seed(trial_index) {
+    "initial-order"
+  } else {
+    "randomized-start-rank"
+  }
+}
+
+///|
+fn crossing_sweep_direction_tag(initial_forward_sweep : Bool) -> String {
+  if initial_forward_sweep {
+    "forward"
+  } else {
+    "backward"
+  }
 }
 
 ///|
@@ -206,7 +243,10 @@ fn run_crossing_phase_with_plan(
   let objective_context = build_crossing_objective_context_from_phase_input(
     input,
   )
-  let execution_state = execute_crossing_phase_with_plan_with_trace(input, plan)
+  let execution_trace = execute_crossing_phase_with_plan_with_trial_trace(
+    input, plan,
+  )
+  let execution_state = execution_trace.execution_state
   let post_sweep_objective = evaluate_crossing_objective(
     execution_state.post_sweep_rank_node_ids_by_rank,
     objective_context,
@@ -220,14 +260,16 @@ fn run_crossing_phase_with_plan(
     optimized_rank_node_ids_by_rank: execution_state.post_refinement_rank_node_ids_by_rank,
     post_sweep_objective,
     optimized_objective,
+    selected_trial_index: execution_trace.selected_trial_index,
+    trial_summaries: execution_trace.trial_summaries,
   }
 }
 
 ///|
-fn execute_crossing_phase_with_plan_with_trace(
+fn execute_crossing_phase_with_plan_with_trial_trace(
   input : ElkLayeredCrossingPhaseInput,
   plan : ElkLayeredCrossingExecutionPlan,
-) -> ElkLayeredCrossingExecutionState {
+) -> ElkLayeredCrossingExecutionTrace {
   let config = plan.config
   let objective_context = build_crossing_objective_context_from_phase_input(
     input,
@@ -235,8 +277,13 @@ fn execute_crossing_phase_with_plan_with_trace(
   match plan.strategy {
     LayerSweepWithLocalRefinement => {
       let trial_count = normalized_crossing_trial_count(config.trial_count)
+      let trial_summaries : Array[ElkLayeredCrossingTrialSummary] = []
       let mut best_execution_state : ElkLayeredCrossingExecutionState? = None
+      let mut selected_trial_index = 0
       for trial_index in 0..<trial_count {
+        let initial_forward_sweep = crossing_trial_initial_forward_sweep(
+          trial_index,
+        )
         let trial_execution_state = execute_crossing_phase_once_with_plan_and_seed(
           input,
           plan,
@@ -246,22 +293,49 @@ fn execute_crossing_phase_with_plan_with_trace(
             trial_index,
             config.trial_random_seed,
           ),
-          crossing_trial_initial_forward_sweep(trial_index),
+          initial_forward_sweep,
         )
+        let post_sweep_objective = evaluate_crossing_objective(
+          trial_execution_state.post_sweep_rank_node_ids_by_rank,
+          objective_context,
+        )
+        let optimized_objective = evaluate_crossing_objective(
+          trial_execution_state.post_refinement_rank_node_ids_by_rank,
+          objective_context,
+        )
+        trial_summaries.push({
+          trial_index,
+          seed_kind: crossing_trial_seed_kind_tag(trial_index),
+          initial_sweep_direction: crossing_sweep_direction_tag(
+            initial_forward_sweep,
+          ),
+          post_sweep_objective,
+          optimized_objective,
+          model_order_inversion_score: rank_order_model_inversion_score(
+            trial_execution_state.post_refinement_rank_node_ids_by_rank,
+            input.max_rank,
+            input.order_index_by_node_id,
+          ),
+        })
         match best_execution_state {
           Some(incumbent) =>
             if crossing_execution_state_is_better(
                 trial_execution_state, incumbent, objective_context, input, config,
               ) {
               best_execution_state = Some(trial_execution_state)
+              selected_trial_index = trial_index
             }
-          None => best_execution_state = Some(trial_execution_state)
+          None => {
+            best_execution_state = Some(trial_execution_state)
+            selected_trial_index = trial_index
+          }
         }
       }
       match best_execution_state {
-        Some(state) => state
-        None =>
-          execute_crossing_phase_once_with_plan_and_seed(
+        Some(state) =>
+          { execution_state: state, selected_trial_index, trial_summaries }
+        None => {
+          let fallback_execution_state = execute_crossing_phase_once_with_plan_and_seed(
             input,
             plan,
             build_crossing_trial_seed_rank_node_ids_by_rank(
@@ -272,6 +346,30 @@ fn execute_crossing_phase_with_plan_with_trace(
             ),
             true,
           )
+          let fallback_trace : ElkLayeredCrossingTrialSummary = {
+            trial_index: 0,
+            seed_kind: crossing_trial_seed_kind_tag(0),
+            initial_sweep_direction: crossing_sweep_direction_tag(true),
+            post_sweep_objective: evaluate_crossing_objective(
+              fallback_execution_state.post_sweep_rank_node_ids_by_rank,
+              objective_context,
+            ),
+            optimized_objective: evaluate_crossing_objective(
+              fallback_execution_state.post_refinement_rank_node_ids_by_rank,
+              objective_context,
+            ),
+            model_order_inversion_score: rank_order_model_inversion_score(
+              fallback_execution_state.post_refinement_rank_node_ids_by_rank,
+              input.max_rank,
+              input.order_index_by_node_id,
+            ),
+          }
+          {
+            execution_state: fallback_execution_state,
+            selected_trial_index: 0,
+            trial_summaries: [fallback_trace],
+          }
+        }
       }
     }
   }

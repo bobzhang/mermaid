@@ -46,6 +46,24 @@ test "elk layered rank trace keeps fanout kernel baseline" {
     trace.rank_order_trial_count,
     default_crossing_optimization_config().trial_count,
   )
+  assert_true(trace.rank_order_selected_trial_index >= 0)
+  assert_true(trace.rank_order_optimized_seed_selected_trial_index >= 0)
+  assert_true(
+    trace.rank_order_optimized_reversed_seed_selected_trial_index >= 0,
+  )
+  assert_true(trace.rank_order_virtual_candidate_selected_trial_index >= 0)
+  assert_eq(
+    trace.rank_order_optimized_seed_trial_summaries.length(),
+    default_crossing_optimization_config().trial_count,
+  )
+  assert_eq(
+    trace.rank_order_optimized_reversed_seed_trial_summaries.length(),
+    default_crossing_optimization_config().trial_count,
+  )
+  assert_eq(
+    trace.rank_order_virtual_candidate_trial_summaries.length(),
+    default_crossing_optimization_config().trial_count,
+  )
   assert_eq(trace.rank_order_trial_model_order_inversion_influence, 0.0)
   assert_eq(trace.rank_order_selected_source, "virtual")
   assert_true(
@@ -307,12 +325,22 @@ test "elk layered rank trace line formatter keeps sorted deterministic sections"
     ),
   )
   let mut has_model_order_inversion_influence = false
+  let mut has_order_trial_selected = false
+  let mut has_order_trial_rows = false
   for line in lines {
     if line is [.. "ORDER_TRIAL_MODEL_ORDER_INVERSION_INFLUENCE\t", ..] {
       has_model_order_inversion_influence = true
     }
+    if line is [.. "ORDER_TRIAL_SELECTED\t", ..] {
+      has_order_trial_selected = true
+    }
+    if line is [.. "ORDER_TRIAL\t", ..] {
+      has_order_trial_rows = true
+    }
   }
   assert_true(has_model_order_inversion_influence)
+  assert_true(has_order_trial_selected)
+  assert_true(has_order_trial_rows)
 }
 
 ///|
@@ -431,6 +459,13 @@ test "elk layered rank trace crossing overrides are reflected in trace lines" {
   }
   assert_true(lines.contains("ORDER_TRIAL_COUNT\t3"))
   assert_true(lines.contains("ORDER_SWEEP_PASSES\t6"))
+  let mut has_selected_trial_index = false
+  for line in lines {
+    if line is [.. "ORDER_SELECTED_TRIAL_INDEX\t", ..] {
+      has_selected_trial_index = true
+    }
+  }
+  assert_true(has_selected_trial_index)
   assert_true(
     lines.contains("ORDER_TRIAL_MODEL_ORDER_INVERSION_INFLUENCE\t0.25"),
   )
@@ -462,6 +497,7 @@ test "elk layered rank trace kernel comparison lines expose deterministic diff k
   let mut has_selected_layer_mismatch = false
   let mut has_rank_layer_mismatch = false
   let mut has_model_order_inversion_influence = false
+  let mut has_selected_trial_index = false
   for line in lines {
     if line is [.. "ORDER_SELECTED_CROSSINGS\t", ..] {
       has_selected_crossings = true
@@ -475,9 +511,13 @@ test "elk layered rank trace kernel comparison lines expose deterministic diff k
     if line is [.. "ORDER_TRIAL_MODEL_ORDER_INVERSION_INFLUENCE\t", ..] {
       has_model_order_inversion_influence = true
     }
+    if line is [.. "ORDER_SELECTED_TRIAL_INDEX\t", ..] {
+      has_selected_trial_index = true
+    }
   }
   assert_true(has_selected_crossings)
   assert_true(has_selected_layer_mismatch)
   assert_true(has_rank_layer_mismatch)
   assert_true(has_model_order_inversion_influence)
+  assert_true(has_selected_trial_index)
 }
