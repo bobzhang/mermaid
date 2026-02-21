@@ -16,6 +16,34 @@ priv enum ElkLayeredCrossingLocalRefinementKernel {
 }
 
 ///|
+priv enum ElkLayeredCrossingTrialContinuationPolicy {
+  ContinueWhilePassChanges
+  ContinueWhileObjectiveImproves
+}
+
+///|
+fn default_crossing_trial_continuation_policy() -> ElkLayeredCrossingTrialContinuationPolicy {
+  available_crossing_trial_continuation_policies()[0]
+}
+
+///|
+fn available_crossing_trial_continuation_policies() -> Array[
+  ElkLayeredCrossingTrialContinuationPolicy,
+] {
+  [ContinueWhilePassChanges, ContinueWhileObjectiveImproves]
+}
+
+///|
+fn crossing_trial_continuation_policy_tag(
+  trial_continuation_policy : ElkLayeredCrossingTrialContinuationPolicy,
+) -> String {
+  match trial_continuation_policy {
+    ContinueWhilePassChanges => "while-pass-changes"
+    ContinueWhileObjectiveImproves => "while-objective-improves"
+  }
+}
+
+///|
 fn default_crossing_sweep_kernel() -> ElkLayeredCrossingSweepKernel {
   available_crossing_sweep_kernels()[0]
 }
@@ -42,6 +70,7 @@ priv struct ElkLayeredCrossingOptimizationConfig {
   sweep_pass_count : Int
   trial_count : Int
   trial_random_seed : Int
+  trial_continuation_policy : ElkLayeredCrossingTrialContinuationPolicy
   trial_model_order_inversion_influence : Double
   swap_refine_node_limit : Int
   swap_refine_edge_limit : Int
@@ -58,6 +87,7 @@ fn default_crossing_optimization_config() -> ElkLayeredCrossingOptimizationConfi
     sweep_pass_count: 4,
     trial_count: 1,
     trial_random_seed: 1,
+    trial_continuation_policy: default_crossing_trial_continuation_policy(),
     trial_model_order_inversion_influence: 0.0,
     swap_refine_node_limit: 40,
     swap_refine_edge_limit: 120,

@@ -13,6 +13,7 @@
  *   bun run scripts/report_elk_phase_waterfall.ts --json /tmp/elk_phase_waterfall.json
  *   bun run scripts/report_elk_phase_waterfall.ts --trial-count 5 --sweep-pass-count 6
  *   bun run scripts/report_elk_phase_waterfall.ts --sweep-kernel edge-slot --trial-count 5 --sweep-pass-count 6
+ *   bun run scripts/report_elk_phase_waterfall.ts --trial-continuation-policy objective-improves --trial-count 5 --sweep-pass-count 6
  *   bun run scripts/report_elk_phase_waterfall.ts --model-order-inversion-influence 0.25 --trial-count 5 --sweep-pass-count 6
  */
 
@@ -26,6 +27,7 @@ type CliOptions = {
   trialCount?: number
   sweepPassCount?: number
   sweepKernel?: 'default' | 'neighbor-mean' | 'edge-slot'
+  trialContinuationPolicy?: 'default' | 'pass-changes' | 'objective-improves'
   modelOrderInversionInfluence?: number
 }
 
@@ -142,6 +144,11 @@ function parseCliOptions(args: string[]): CliOptions {
   let trialCount: number | undefined
   let sweepPassCount: number | undefined
   let sweepKernel: 'default' | 'neighbor-mean' | 'edge-slot' | undefined
+  let trialContinuationPolicy:
+    | 'default'
+    | 'pass-changes'
+    | 'objective-improves'
+    | undefined
   let modelOrderInversionInfluence: number | undefined
   for (let i = 0; i < args.length; i += 1) {
     const arg = args[i]!
@@ -225,6 +232,40 @@ function parseCliOptions(args: string[]): CliOptions {
       sweepKernel = normalized
       continue
     }
+    if (arg === '--trial-continuation-policy') {
+      const next = args[i + 1]
+      if (!next) fail('missing value after --trial-continuation-policy')
+      const normalized = next.trim().toLowerCase()
+      if (
+        normalized !== 'default' &&
+        normalized !== 'pass-changes' &&
+        normalized !== 'objective-improves'
+      ) {
+        fail(
+          "invalid --trial-continuation-policy value, expected 'default', 'pass-changes', or 'objective-improves'",
+        )
+      }
+      trialContinuationPolicy = normalized
+      i += 1
+      continue
+    }
+    if (arg.startsWith('--trial-continuation-policy=')) {
+      const normalized = arg
+        .slice('--trial-continuation-policy='.length)
+        .trim()
+        .toLowerCase()
+      if (
+        normalized !== 'default' &&
+        normalized !== 'pass-changes' &&
+        normalized !== 'objective-improves'
+      ) {
+        fail(
+          "invalid --trial-continuation-policy value, expected 'default', 'pass-changes', or 'objective-improves'",
+        )
+      }
+      trialContinuationPolicy = normalized
+      continue
+    }
     if (arg === '--model-order-inversion-influence') {
       const next = args[i + 1]
       if (!next) fail('missing value after --model-order-inversion-influence')
@@ -256,6 +297,7 @@ function parseCliOptions(args: string[]): CliOptions {
     trialCount,
     sweepPassCount,
     sweepKernel,
+    trialContinuationPolicy,
     modelOrderInversionInfluence,
   }
 }
@@ -370,6 +412,9 @@ function parseCrossingRankOrder(options: CliOptions): {
   }
   if (options.sweepKernel !== undefined) {
     args.push('--sweep-kernel', options.sweepKernel)
+  }
+  if (options.trialContinuationPolicy !== undefined) {
+    args.push('--trial-continuation-policy', options.trialContinuationPolicy)
   }
   if (options.modelOrderInversionInfluence !== undefined) {
     args.push(
@@ -486,6 +531,9 @@ function parseCrossingPhaseTrace(options: CliOptions): {
   }
   if (options.sweepKernel !== undefined) {
     args.push('--sweep-kernel', options.sweepKernel)
+  }
+  if (options.trialContinuationPolicy !== undefined) {
+    args.push('--trial-continuation-policy', options.trialContinuationPolicy)
   }
   if (options.modelOrderInversionInfluence !== undefined) {
     args.push(
@@ -697,6 +745,12 @@ function parseEndToEnd(options: CliOptions): {
   }
   if (options.sweepKernel !== undefined) {
     args.push('--elk-sweep-kernel', options.sweepKernel)
+  }
+  if (options.trialContinuationPolicy !== undefined) {
+    args.push(
+      '--elk-trial-continuation-policy',
+      options.trialContinuationPolicy,
+    )
   }
   if (options.modelOrderInversionInfluence !== undefined) {
     args.push(

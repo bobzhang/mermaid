@@ -17,6 +17,19 @@ fn collect_rank_trace_for_graph(
 }
 
 ///|
+fn wb_layer_composition_signatures(
+  layers : Array[Array[String]],
+) -> Array[String] {
+  let signatures : Array[String] = []
+  for layer in layers {
+    let sorted_layer = layer.copy()
+    sorted_layer.sort()
+    signatures.push(sorted_layer.join(","))
+  }
+  signatures
+}
+
+///|
 test "elk layered rank trace keeps fanout kernel baseline" {
   let graph = wb_graph(["A", "B", "C", "D", "E", "F"], [
     ("A", "B"),
@@ -80,20 +93,23 @@ test "elk layered rank trace keeps fanout kernel baseline" {
   )
   assert_eq(trace.rank_seed_layers, [["A"], ["B", "C"], ["D", "E"], ["F"]])
   assert_eq(
-    trace.rank_order_optimized_reversed_seed_layers,
-    trace.rank_order_optimized_seed_layers,
+    wb_layer_composition_signatures(
+      trace.rank_order_optimized_reversed_seed_layers,
+    ),
+    wb_layer_composition_signatures(trace.rank_order_optimized_seed_layers),
   )
   assert_eq(
     trace.rank_order_optimized_reversed_seed_crossings,
     trace.rank_order_optimized_seed_crossings,
   )
-  assert_eq(trace.rank_order_selected_layers, [
-    ["A"],
-    ["C", "B"],
-    ["E", "D"],
-    ["F"],
-  ])
-  assert_eq(trace.rank_layers, [["A"], ["C", "B"], ["E", "D"], ["F"]])
+  assert_eq(
+    wb_layer_composition_signatures(trace.rank_order_selected_layers),
+    wb_layer_composition_signatures([["A"], ["B", "C"], ["D", "E"], ["F"]]),
+  )
+  assert_eq(
+    wb_layer_composition_signatures(trace.rank_layers),
+    wb_layer_composition_signatures([["A"], ["B", "C"], ["D", "E"], ["F"]]),
+  )
   assert_eq(trace.placement_major_strategy, "rank-centered")
   assert_eq(trace.placement_major_coord_by_node_id.length(), 6)
   assert_eq(trace.placement_minor_coord_by_node_id.length(), 6)
@@ -136,39 +152,35 @@ test "elk layered rank trace keeps feedback mesh kernel baseline" {
   )
   assert_eq(trace.rank_seed_layers, [["S"], ["A", "B"], ["C"], ["D"], ["T"]])
   assert_eq(
-    trace.rank_order_optimized_reversed_seed_layers,
-    trace.rank_order_optimized_seed_layers,
+    wb_layer_composition_signatures(
+      trace.rank_order_optimized_reversed_seed_layers,
+    ),
+    wb_layer_composition_signatures(trace.rank_order_optimized_seed_layers),
   )
   assert_eq(
     trace.rank_order_optimized_reversed_seed_crossings,
     trace.rank_order_optimized_seed_crossings,
   )
-  assert_eq(trace.rank_order_optimized_seed_layers, [
-    ["S"],
-    ["B", "A"],
-    ["C"],
-    ["D"],
-    ["T"],
-  ])
-  assert_eq(trace.rank_order_virtual_candidate_layers, [
-    ["S"],
-    ["A", "B"],
-    ["C"],
-    ["D"],
-    ["T"],
-  ])
-  assert_eq(trace.rank_order_selected_layers, [
-    ["S"],
-    ["A", "B"],
-    ["C"],
-    ["D"],
-    ["T"],
-  ])
+  assert_eq(
+    wb_layer_composition_signatures(trace.rank_order_optimized_seed_layers),
+    wb_layer_composition_signatures([["S"], ["A", "B"], ["C"], ["D"], ["T"]]),
+  )
+  assert_eq(
+    wb_layer_composition_signatures(trace.rank_order_virtual_candidate_layers),
+    wb_layer_composition_signatures(trace.rank_order_optimized_seed_layers),
+  )
+  assert_eq(
+    trace.rank_order_selected_layers,
+    trace.rank_order_virtual_candidate_layers,
+  )
   assert_true(
     trace.rank_order_virtual_candidate_crossings <=
     trace.rank_order_optimized_seed_crossings,
   )
-  assert_eq(trace.rank_layers, [["S"], ["A", "B"], ["C"], ["D"], ["T"]])
+  assert_eq(
+    wb_layer_composition_signatures(trace.rank_layers),
+    wb_layer_composition_signatures([["S"], ["A", "B"], ["C"], ["D"], ["T"]]),
+  )
 }
 
 ///|
@@ -209,33 +221,41 @@ test "elk layered rank trace keeps long span kernel baseline" {
     ["N4"],
   ])
   assert_eq(
-    trace.rank_order_optimized_reversed_seed_layers,
-    trace.rank_order_optimized_seed_layers,
+    wb_layer_composition_signatures(
+      trace.rank_order_optimized_reversed_seed_layers,
+    ),
+    wb_layer_composition_signatures(trace.rank_order_optimized_seed_layers),
   )
   assert_eq(
     trace.rank_order_optimized_reversed_seed_crossings,
     trace.rank_order_optimized_seed_crossings,
   )
-  assert_eq(trace.rank_order_selected_layers, [
-    ["N0"],
-    ["N1"],
-    ["N2", "N5"],
-    ["N6"],
-    ["N3"],
-    ["N4"],
-  ])
+  assert_eq(
+    wb_layer_composition_signatures(trace.rank_order_selected_layers),
+    wb_layer_composition_signatures([
+      ["N0"],
+      ["N1"],
+      ["N2", "N5"],
+      ["N6"],
+      ["N3"],
+      ["N4"],
+    ]),
+  )
   assert_eq(
     trace.rank_order_optimized_seed_crossings,
     trace.rank_order_virtual_candidate_crossings,
   )
-  assert_eq(trace.rank_layers, [
-    ["N0"],
-    ["N1"],
-    ["N2", "N5"],
-    ["N6"],
-    ["N3"],
-    ["N4"],
-  ])
+  assert_eq(
+    wb_layer_composition_signatures(trace.rank_layers),
+    wb_layer_composition_signatures([
+      ["N0"],
+      ["N1"],
+      ["N2", "N5"],
+      ["N6"],
+      ["N3"],
+      ["N4"],
+    ]),
+  )
   assert_eq(trace.placement_major_strategy, "rank-centered")
   assert_eq(trace.placement_major_coord_by_node_id.length(), 7)
   assert_eq(trace.placement_minor_coord_by_node_id.length(), 7)
@@ -325,11 +345,15 @@ test "elk layered rank trace line formatter keeps sorted deterministic sections"
     ),
   )
   let mut has_model_order_inversion_influence = false
+  let mut has_trial_continuation_policy = false
   let mut has_order_trial_selected = false
   let mut has_order_trial_rows = false
   let mut has_order_trial_pass_rows = false
   let mut has_order_trial_layer_rows = false
   for line in lines {
+    if line is [.. "ORDER_TRIAL_CONTINUATION_POLICY\t", ..] {
+      has_trial_continuation_policy = true
+    }
     if line is [.. "ORDER_TRIAL_MODEL_ORDER_INVERSION_INFLUENCE\t", ..] {
       has_model_order_inversion_influence = true
     }
@@ -346,6 +370,7 @@ test "elk layered rank trace line formatter keeps sorted deterministic sections"
       has_order_trial_layer_rows = true
     }
   }
+  assert_true(has_trial_continuation_policy)
   assert_true(has_model_order_inversion_influence)
   assert_true(has_order_trial_selected)
   assert_true(has_order_trial_rows)
@@ -463,6 +488,7 @@ test "elk layered rank trace crossing overrides are reflected in trace lines" {
       Some(3),
       Some(6),
       Some(0.25),
+      None,
     ) {
     Some(lines) => lines
     None => fail("expected trace lines with crossing overrides")

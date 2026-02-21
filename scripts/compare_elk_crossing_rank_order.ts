@@ -11,6 +11,7 @@
  *   bun run scripts/compare_elk_crossing_rank_order.ts fixtures/layout_stress_001_dense_dag.mmd fixtures/layout_stress_013_rl_dual_scc_weave.mmd
  *   bun run scripts/compare_elk_crossing_rank_order.ts --trial-count 5 fixtures/layout_stress_001_dense_dag.mmd
  *   bun run scripts/compare_elk_crossing_rank_order.ts --sweep-kernel edge-slot --trial-count 5 fixtures/layout_stress_001_dense_dag.mmd
+ *   bun run scripts/compare_elk_crossing_rank_order.ts --trial-continuation-policy objective-improves fixtures/layout_stress_001_dense_dag.mmd
  *   bun run scripts/compare_elk_crossing_rank_order.ts --model-order-inversion-influence 0.25 fixtures/layout_stress_001_dense_dag.mmd
  *   bun run scripts/compare_elk_crossing_rank_order.ts --details --limit 3 fixtures/layout_stress_013_rl_dual_scc_weave.mmd
  */
@@ -62,6 +63,7 @@ type CliOptions = {
   trialCount?: number
   sweepPassCount?: number
   sweepKernel?: 'default' | 'neighbor-mean' | 'edge-slot'
+  trialContinuationPolicy?: 'default' | 'pass-changes' | 'objective-improves'
   modelOrderInversionInfluence?: number
 }
 
@@ -141,6 +143,9 @@ function parseLocalTrace(source: string, options: CliOptions): LocalTrace {
   }
   if (options.sweepKernel !== undefined) {
     args.push('--sweep-kernel', options.sweepKernel)
+  }
+  if (options.trialContinuationPolicy !== undefined) {
+    args.push('--trial-continuation-policy', options.trialContinuationPolicy)
   }
   if (options.modelOrderInversionInfluence !== undefined) {
     args.push(
@@ -485,6 +490,11 @@ function parseCliOptions(args: string[]): CliOptions {
   let trialCount: number | undefined
   let sweepPassCount: number | undefined
   let sweepKernel: 'default' | 'neighbor-mean' | 'edge-slot' | undefined
+  let trialContinuationPolicy:
+    | 'default'
+    | 'pass-changes'
+    | 'objective-improves'
+    | undefined
   let modelOrderInversionInfluence: number | undefined
   const fixtures: string[] = []
   for (let i = 0; i < args.length; i += 1) {
@@ -554,6 +564,23 @@ function parseCliOptions(args: string[]): CliOptions {
       i += 1
       continue
     }
+    if (arg === '--trial-continuation-policy') {
+      const next = args[i + 1]
+      if (!next) fail('missing value after --trial-continuation-policy')
+      const normalized = next.trim().toLowerCase()
+      if (
+        normalized !== 'default' &&
+        normalized !== 'pass-changes' &&
+        normalized !== 'objective-improves'
+      ) {
+        fail(
+          "invalid --trial-continuation-policy value, expected 'default', 'pass-changes', or 'objective-improves'",
+        )
+      }
+      trialContinuationPolicy = normalized
+      i += 1
+      continue
+    }
     if (arg.startsWith('--sweep-kernel=')) {
       const normalized = arg.slice('--sweep-kernel='.length).trim().toLowerCase()
       if (
@@ -566,6 +593,23 @@ function parseCliOptions(args: string[]): CliOptions {
         )
       }
       sweepKernel = normalized
+      continue
+    }
+    if (arg.startsWith('--trial-continuation-policy=')) {
+      const normalized = arg
+        .slice('--trial-continuation-policy='.length)
+        .trim()
+        .toLowerCase()
+      if (
+        normalized !== 'default' &&
+        normalized !== 'pass-changes' &&
+        normalized !== 'objective-improves'
+      ) {
+        fail(
+          "invalid --trial-continuation-policy value, expected 'default', 'pass-changes', or 'objective-improves'",
+        )
+      }
+      trialContinuationPolicy = normalized
       continue
     }
     if (arg === '--model-order-inversion-influence') {
@@ -599,7 +643,7 @@ function parseCliOptions(args: string[]): CliOptions {
   }
   if (fixtures.length === 0) {
     fail(
-      'usage: bun run scripts/compare_elk_crossing_rank_order.ts [--details] [--limit N] [--trial-count N] [--sweep-pass-count N] [--sweep-kernel default|neighbor-mean|edge-slot] [--model-order-inversion-influence N] <fixture.mmd> [more...]',
+      'usage: bun run scripts/compare_elk_crossing_rank_order.ts [--details] [--limit N] [--trial-count N] [--sweep-pass-count N] [--sweep-kernel default|neighbor-mean|edge-slot] [--trial-continuation-policy default|pass-changes|objective-improves] [--model-order-inversion-influence N] <fixture.mmd> [more...]',
     )
   }
   return {
@@ -609,6 +653,7 @@ function parseCliOptions(args: string[]): CliOptions {
     trialCount,
     sweepPassCount,
     sweepKernel,
+    trialContinuationPolicy,
     modelOrderInversionInfluence,
   }
 }
