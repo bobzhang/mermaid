@@ -62,12 +62,13 @@ fn build_crossing_sweep_input_from_phase_input(
 ///|
 priv struct NodeNeighborOrderKey {
   has_center : Bool
-  mean_scaled : Int
+  neighbor_position_sum : Int
+  neighbor_position_count : Int
 }
 
 ///|
 fn empty_neighbor_order_key() -> NodeNeighborOrderKey {
-  { has_center: false, mean_scaled: 0 }
+  { has_center: false, neighbor_position_sum: 0, neighbor_position_count: 0 }
 }
 
 ///|
@@ -94,8 +95,32 @@ fn node_neighbor_order_key(
   if count == 0 {
     empty_neighbor_order_key()
   } else {
-    let mean_scaled = sum * 1000 / count
-    { has_center: true, mean_scaled }
+    {
+      has_center: true,
+      neighbor_position_sum: sum,
+      neighbor_position_count: count,
+    }
+  }
+}
+
+///|
+fn compare_neighbor_order_key(
+  left : NodeNeighborOrderKey,
+  right : NodeNeighborOrderKey,
+) -> Int {
+  if left.has_center && right.has_center {
+    let left_scaled = left.neighbor_position_sum * right.neighbor_position_count
+    let right_scaled = right.neighbor_position_sum *
+      left.neighbor_position_count
+    left_scaled.compare(right_scaled)
+  } else if left.has_center != right.has_center {
+    if left.has_center {
+      -1
+    } else {
+      1
+    }
+  } else {
+    0
   }
 }
 
@@ -122,19 +147,9 @@ fn sort_rank_nodes_by_neighbors(
       Some(value) => value
       None => empty_neighbor_order_key()
     }
-    let left_has_center = left_key.has_center
-    let left_mean = left_key.mean_scaled
-    let right_has_center = right_key.has_center
-    let right_mean = right_key.mean_scaled
-    if left_has_center && right_has_center && left_mean != right_mean {
-      return left_mean.compare(right_mean)
-    }
-    if left_has_center != right_has_center {
-      if left_has_center {
-        -1
-      } else {
-        1
-      }
+    let neighbor_order_compare = compare_neighbor_order_key(left_key, right_key)
+    if neighbor_order_compare != 0 {
+      neighbor_order_compare
     } else if preserve_current_order_on_tie {
       option_int_or(
         rank_position_by_node_id.get(left),
