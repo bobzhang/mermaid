@@ -47,6 +47,20 @@ type PhaseWaterfallReport = {
     avgExactOrderMatchRate: number
     avgOrderDisplacement: number
   }
+  crossingPhaseTrace: {
+    postSweepOrderMismatched: number
+    postSweepOrderComparable: number
+    finalOrderMismatched: number
+    finalOrderComparable: number
+    postSweepCompositionMismatched: number
+    postSweepCompositionComparable: number
+    finalCompositionMismatched: number
+    finalCompositionComparable: number
+    postSweepAvgExactOrderMatchRate: number
+    finalAvgExactOrderMatchRate: number
+    postSweepAvgOrderDisplacement: number
+    finalAvgOrderDisplacement: number
+  }
   placementMajor: {
     totalLayerMismatch: number
     avgInversionRate: number
@@ -321,6 +335,171 @@ function parseCrossingRankOrder(): {
   }
 }
 
+function parseCrossingPhaseTrace(): {
+  postSweepOrderMismatched: number
+  postSweepOrderComparable: number
+  finalOrderMismatched: number
+  finalOrderComparable: number
+  postSweepCompositionMismatched: number
+  postSweepCompositionComparable: number
+  finalCompositionMismatched: number
+  finalCompositionComparable: number
+  postSweepAvgExactOrderMatchRate: number
+  finalAvgExactOrderMatchRate: number
+  postSweepAvgOrderDisplacement: number
+  finalAvgOrderDisplacement: number
+} {
+  const stdout = runOrThrow('bun', [
+    'run',
+    'scripts/compare_elk_crossing_phase_trace.ts',
+    ...STRESS_FIXTURES,
+  ])
+  const lines = stdout
+    .split('\n')
+    .map(line => line.trim())
+    .filter(line => line !== '')
+  const postSweepOrderLine = lines.find(line =>
+    line.startsWith('post_sweep_total_order_mismatch='),
+  )
+  if (!postSweepOrderLine) {
+    fail('missing crossing phase trace post-sweep order summary line')
+  }
+  const [postSweepOrderMismatched, postSweepOrderComparable] = parseCounter(
+    postSweepOrderLine,
+    /^post_sweep_total_order_mismatch=(\d+)\/(\d+)$/,
+    'crossing phase trace post-sweep order',
+  )
+  const finalOrderLine = lines.find(line =>
+    line.startsWith('final_total_order_mismatch='),
+  )
+  if (!finalOrderLine) fail('missing crossing phase trace final order summary line')
+  const [finalOrderMismatched, finalOrderComparable] = parseCounter(
+    finalOrderLine,
+    /^final_total_order_mismatch=(\d+)\/(\d+)$/,
+    'crossing phase trace final order',
+  )
+  const postSweepCompositionLine = lines.find(line =>
+    line.startsWith('post_sweep_total_composition_mismatch='),
+  )
+  if (!postSweepCompositionLine) {
+    fail('missing crossing phase trace post-sweep composition summary line')
+  }
+  const [postSweepCompositionMismatched, postSweepCompositionComparable] = parseCounter(
+    postSweepCompositionLine,
+    /^post_sweep_total_composition_mismatch=(\d+)\/(\d+)$/,
+    'crossing phase trace post-sweep composition',
+  )
+  const finalCompositionLine = lines.find(line =>
+    line.startsWith('final_total_composition_mismatch='),
+  )
+  if (!finalCompositionLine) {
+    fail('missing crossing phase trace final composition summary line')
+  }
+  const [finalCompositionMismatched, finalCompositionComparable] = parseCounter(
+    finalCompositionLine,
+    /^final_total_composition_mismatch=(\d+)\/(\d+)$/,
+    'crossing phase trace final composition',
+  )
+  const postSweepExactOrderLine = lines.find(line =>
+    line.startsWith('post_sweep_avg_exact_order_match_rate='),
+  )
+  if (!postSweepExactOrderLine) {
+    fail('missing crossing phase trace post-sweep exact-order rate summary line')
+  }
+  const postSweepExactOrderMatch = /^post_sweep_avg_exact_order_match_rate=([0-9.]+)$/.exec(
+    postSweepExactOrderLine,
+  )
+  if (!postSweepExactOrderMatch) {
+    fail(
+      `invalid crossing phase trace post-sweep exact-order rate summary: ${postSweepExactOrderLine}`,
+    )
+  }
+  const postSweepAvgExactOrderMatchRate = Number.parseFloat(
+    postSweepExactOrderMatch[1]!,
+  )
+  if (!Number.isFinite(postSweepAvgExactOrderMatchRate)) {
+    fail(
+      `invalid crossing phase trace post-sweep exact-order rate value: ${postSweepExactOrderLine}`,
+    )
+  }
+  const finalExactOrderLine = lines.find(line =>
+    line.startsWith('final_avg_exact_order_match_rate='),
+  )
+  if (!finalExactOrderLine) {
+    fail('missing crossing phase trace final exact-order rate summary line')
+  }
+  const finalExactOrderMatch = /^final_avg_exact_order_match_rate=([0-9.]+)$/.exec(
+    finalExactOrderLine,
+  )
+  if (!finalExactOrderMatch) {
+    fail(
+      `invalid crossing phase trace final exact-order rate summary: ${finalExactOrderLine}`,
+    )
+  }
+  const finalAvgExactOrderMatchRate = Number.parseFloat(finalExactOrderMatch[1]!)
+  if (!Number.isFinite(finalAvgExactOrderMatchRate)) {
+    fail(
+      `invalid crossing phase trace final exact-order rate value: ${finalExactOrderLine}`,
+    )
+  }
+  const postSweepOrderDisplacementLine = lines.find(line =>
+    line.startsWith('post_sweep_avg_order_displacement='),
+  )
+  if (!postSweepOrderDisplacementLine) {
+    fail('missing crossing phase trace post-sweep order displacement summary line')
+  }
+  const postSweepOrderDisplacementMatch = /^post_sweep_avg_order_displacement=([0-9.]+)$/.exec(
+    postSweepOrderDisplacementLine,
+  )
+  if (!postSweepOrderDisplacementMatch) {
+    fail(
+      `invalid crossing phase trace post-sweep order displacement summary: ${postSweepOrderDisplacementLine}`,
+    )
+  }
+  const postSweepAvgOrderDisplacement = Number.parseFloat(
+    postSweepOrderDisplacementMatch[1]!,
+  )
+  if (!Number.isFinite(postSweepAvgOrderDisplacement)) {
+    fail(
+      `invalid crossing phase trace post-sweep order displacement value: ${postSweepOrderDisplacementLine}`,
+    )
+  }
+  const finalOrderDisplacementLine = lines.find(line =>
+    line.startsWith('final_avg_order_displacement='),
+  )
+  if (!finalOrderDisplacementLine) {
+    fail('missing crossing phase trace final order displacement summary line')
+  }
+  const finalOrderDisplacementMatch = /^final_avg_order_displacement=([0-9.]+)$/.exec(
+    finalOrderDisplacementLine,
+  )
+  if (!finalOrderDisplacementMatch) {
+    fail(
+      `invalid crossing phase trace final order displacement summary: ${finalOrderDisplacementLine}`,
+    )
+  }
+  const finalAvgOrderDisplacement = Number.parseFloat(finalOrderDisplacementMatch[1]!)
+  if (!Number.isFinite(finalAvgOrderDisplacement)) {
+    fail(
+      `invalid crossing phase trace final order displacement value: ${finalOrderDisplacementLine}`,
+    )
+  }
+  return {
+    postSweepOrderMismatched,
+    postSweepOrderComparable,
+    finalOrderMismatched,
+    finalOrderComparable,
+    postSweepCompositionMismatched,
+    postSweepCompositionComparable,
+    finalCompositionMismatched,
+    finalCompositionComparable,
+    postSweepAvgExactOrderMatchRate,
+    finalAvgExactOrderMatchRate,
+    postSweepAvgOrderDisplacement,
+    finalAvgOrderDisplacement,
+  }
+}
+
 function parsePlacementMajor(): { totalLayerMismatch: number; avgInversionRate: number } {
   const stdout = runOrThrow('bun', [
     'run',
@@ -420,6 +599,7 @@ function main(): void {
   const sortByInputModel = parseSortByInputModel()
   const sortByInputPorts = parseSortByInputPorts()
   const crossingRankOrder = parseCrossingRankOrder()
+  const crossingPhaseTrace = parseCrossingPhaseTrace()
   const placementMajor = parsePlacementMajor()
   const endToEnd = parseEndToEnd()
 
@@ -429,6 +609,7 @@ function main(): void {
     sortByInputModel,
     sortByInputPorts,
     crossingRankOrder,
+    crossingPhaseTrace,
     placementMajor,
     endToEnd,
   }
@@ -464,6 +645,30 @@ function main(): void {
   )
   console.log(
     `crossing_rank_avg_order_displacement=${report.crossingRankOrder.avgOrderDisplacement.toFixed(4)}`,
+  )
+  console.log(
+    `crossing_phase_post_sweep_order_mismatch=${report.crossingPhaseTrace.postSweepOrderMismatched}/${report.crossingPhaseTrace.postSweepOrderComparable}`,
+  )
+  console.log(
+    `crossing_phase_final_order_mismatch=${report.crossingPhaseTrace.finalOrderMismatched}/${report.crossingPhaseTrace.finalOrderComparable}`,
+  )
+  console.log(
+    `crossing_phase_post_sweep_composition_mismatch=${report.crossingPhaseTrace.postSweepCompositionMismatched}/${report.crossingPhaseTrace.postSweepCompositionComparable}`,
+  )
+  console.log(
+    `crossing_phase_final_composition_mismatch=${report.crossingPhaseTrace.finalCompositionMismatched}/${report.crossingPhaseTrace.finalCompositionComparable}`,
+  )
+  console.log(
+    `crossing_phase_post_sweep_avg_exact_order_match_rate=${report.crossingPhaseTrace.postSweepAvgExactOrderMatchRate.toFixed(4)}`,
+  )
+  console.log(
+    `crossing_phase_final_avg_exact_order_match_rate=${report.crossingPhaseTrace.finalAvgExactOrderMatchRate.toFixed(4)}`,
+  )
+  console.log(
+    `crossing_phase_post_sweep_avg_order_displacement=${report.crossingPhaseTrace.postSweepAvgOrderDisplacement.toFixed(4)}`,
+  )
+  console.log(
+    `crossing_phase_final_avg_order_displacement=${report.crossingPhaseTrace.finalAvgOrderDisplacement.toFixed(4)}`,
   )
   console.log(
     `placement_major_layer_mismatch=${report.placementMajor.totalLayerMismatch}`,

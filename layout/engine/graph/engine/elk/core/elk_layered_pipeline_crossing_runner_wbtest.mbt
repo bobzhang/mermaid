@@ -93,6 +93,10 @@ test "elk layered crossing phase result reports consistent objectives" {
     result.optimized_rank_node_ids_by_rank,
     context,
   )
+  let post_sweep_objective = evaluate_crossing_objective(
+    result.post_sweep_rank_node_ids_by_rank,
+    context,
+  )
   assert_eq(
     result.base_objective.layered_crossings,
     base_objective.layered_crossings,
@@ -108,6 +112,18 @@ test "elk layered crossing phase result reports consistent objectives" {
   assert_eq(
     result.optimized_objective.global_crossings,
     optimized_objective.global_crossings,
+  )
+  assert_eq(
+    result.post_sweep_objective.layered_crossings,
+    post_sweep_objective.layered_crossings,
+  )
+  assert_eq(
+    result.post_sweep_objective.global_crossings,
+    post_sweep_objective.global_crossings,
+  )
+  assert_true(
+    result.post_sweep_objective.layered_crossings >=
+    result.optimized_objective.layered_crossings,
   )
 }
 

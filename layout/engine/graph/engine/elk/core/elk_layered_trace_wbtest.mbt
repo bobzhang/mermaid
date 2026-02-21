@@ -41,6 +41,14 @@ test "elk layered rank trace keeps fanout kernel baseline" {
   assert_eq(trace.rank_seed_strategy, "native-feedback")
   assert_eq(trace.rank_order_strategy, "optimized-seed-with-virtual-candidate")
   assert_eq(trace.rank_order_selected_source, "virtual")
+  assert_true(
+    trace.rank_order_optimized_seed_post_sweep_crossings >=
+    trace.rank_order_optimized_seed_crossings,
+  )
+  assert_eq(
+    trace.rank_order_optimized_seed_post_sweep_layers.length(),
+    trace.rank_order_optimized_seed_layers.length(),
+  )
   assert_eq(
     trace.rank_feedback_oriented_edges_model_order,
     trace.rank_feedback_oriented_edges,
@@ -86,6 +94,10 @@ test "elk layered rank trace keeps feedback mesh kernel baseline" {
   assert_eq(trace.rank_seed_strategy, "native-feedback")
   assert_eq(trace.rank_order_strategy, "optimized-seed-with-virtual-candidate")
   assert_eq(trace.rank_order_selected_source, "virtual")
+  assert_true(
+    trace.rank_order_optimized_seed_post_sweep_crossings >=
+    trace.rank_order_optimized_seed_crossings,
+  )
   assert_true(
     trace.rank_feedback_oriented_edges_model_order !=
     trace.rank_feedback_oriented_edges,
@@ -145,6 +157,10 @@ test "elk layered rank trace keeps long span kernel baseline" {
   assert_eq(trace.rank_seed_strategy, "native-feedback")
   assert_eq(trace.rank_order_strategy, "optimized-seed-with-virtual-candidate")
   assert_eq(trace.rank_order_selected_source, "virtual")
+  assert_true(
+    trace.rank_order_optimized_seed_post_sweep_crossings >=
+    trace.rank_order_optimized_seed_crossings,
+  )
   assert_eq(trace.rank_seed_layers, [
     ["N0"],
     ["N1"],
@@ -226,9 +242,17 @@ test "elk layered rank trace line formatter keeps sorted deterministic sections"
       _ => false
     },
   )
+  let sweep_score_lines : Array[String] = []
+  let sweep_layer_lines : Array[String] = []
   let seed_edge_lines : Array[String] = []
   let placement_major_lines : Array[String] = []
   for line in lines {
+    if line is [.. "ORDER_SCORE_SWEEP\t", ..] {
+      sweep_score_lines.push(line)
+    }
+    if line is [.. "ORDER_LAYER_OPTIMIZED_SEED_POST_SWEEP\t", ..] {
+      sweep_layer_lines.push(line)
+    }
     if line is [.. "SEED_EDGE\t", ..] {
       seed_edge_lines.push(line)
     }
@@ -252,4 +276,6 @@ test "elk layered rank trace line formatter keeps sorted deterministic sections"
       [] => false
     },
   )
+  assert_true(sweep_score_lines.length() >= 3)
+  assert_true(sweep_layer_lines.length() >= 1)
 }

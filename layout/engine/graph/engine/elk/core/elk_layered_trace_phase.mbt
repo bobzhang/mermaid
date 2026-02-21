@@ -15,10 +15,16 @@ priv struct ElkLayeredRankTrace {
   rank_seed_virtual_ports : Array[(String, Int, String)]
   rank_seed_virtual_layers : Array[Array[String]]
   rank_order_strategy : String
+  rank_order_optimized_seed_post_sweep_layers : Array[Array[String]]
+  rank_order_optimized_seed_post_sweep_crossings : Int
   rank_order_optimized_seed_layers : Array[Array[String]]
   rank_order_optimized_seed_crossings : Int
+  rank_order_optimized_reversed_seed_post_sweep_layers : Array[Array[String]]
+  rank_order_optimized_reversed_seed_post_sweep_crossings : Int
   rank_order_optimized_reversed_seed_layers : Array[Array[String]]
   rank_order_optimized_reversed_seed_crossings : Int
+  rank_order_virtual_candidate_post_sweep_layers : Array[Array[String]]
+  rank_order_virtual_candidate_post_sweep_crossings : Int
   rank_order_virtual_candidate_layers : Array[Array[String]]
   rank_order_virtual_candidate_crossings : Int
   rank_order_selected_virtual_node_ids : Array[String]
@@ -293,16 +299,31 @@ fn collect_elk_layered_rank_trace(
     rank_order_strategy: rank_order_strategy_tag(
       rank_phase_state.rank_order_strategy,
     ),
+    rank_order_optimized_seed_post_sweep_layers: rank_layers_from_rank_map(
+      rank_order_debug_state.optimized_seed_post_sweep_rank_node_ids_by_rank,
+      rank_seed_state.max_rank,
+    ),
+    rank_order_optimized_seed_post_sweep_crossings: rank_order_debug_state.optimized_seed_post_sweep_crossing_score,
     rank_order_optimized_seed_layers: rank_layers_from_rank_map(
       rank_order_debug_state.optimized_seed_rank_node_ids_by_rank,
       rank_seed_state.max_rank,
     ),
     rank_order_optimized_seed_crossings: rank_order_debug_state.optimized_seed_crossing_score,
+    rank_order_optimized_reversed_seed_post_sweep_layers: rank_layers_from_rank_map(
+      rank_order_debug_state.optimized_reversed_seed_post_sweep_rank_node_ids_by_rank,
+      rank_seed_state.max_rank,
+    ),
+    rank_order_optimized_reversed_seed_post_sweep_crossings: rank_order_debug_state.optimized_reversed_seed_post_sweep_crossing_score,
     rank_order_optimized_reversed_seed_layers: rank_layers_from_rank_map(
       rank_order_debug_state.optimized_reversed_seed_rank_node_ids_by_rank,
       rank_seed_state.max_rank,
     ),
     rank_order_optimized_reversed_seed_crossings: rank_order_debug_state.optimized_reversed_seed_crossing_score,
+    rank_order_virtual_candidate_post_sweep_layers: rank_layers_from_rank_map(
+      rank_order_debug_state.virtual_candidate_post_sweep_rank_node_ids_by_rank,
+      rank_seed_state.max_rank,
+    ),
+    rank_order_virtual_candidate_post_sweep_crossings: rank_order_debug_state.virtual_candidate_post_sweep_crossing_score,
     rank_order_virtual_candidate_layers: rank_layers_from_rank_map(
       rank_order_debug_state.virtual_candidate_rank_node_ids_by_rank,
       rank_seed_state.max_rank,
@@ -418,10 +439,19 @@ fn elk_layered_rank_trace_lines(trace : ElkLayeredRankTrace) -> Array[String] {
   lines.push("ORDER_STRATEGY\t\{trace.rank_order_strategy}")
   lines.push("ORDER_SELECTED_SOURCE\t\{trace.rank_order_selected_source}")
   lines.push(
+    "ORDER_SCORE_SWEEP\toptimized-seed\t\{trace.rank_order_optimized_seed_post_sweep_crossings}",
+  )
+  lines.push(
     "ORDER_SCORE\toptimized-seed\t\{trace.rank_order_optimized_seed_crossings}",
   )
   lines.push(
+    "ORDER_SCORE_SWEEP\toptimized-reversed-seed\t\{trace.rank_order_optimized_reversed_seed_post_sweep_crossings}",
+  )
+  lines.push(
     "ORDER_SCORE\toptimized-reversed-seed\t\{trace.rank_order_optimized_reversed_seed_crossings}",
+  )
+  lines.push(
+    "ORDER_SCORE_SWEEP\tvirtual-candidate\t\{trace.rank_order_virtual_candidate_post_sweep_crossings}",
   )
   lines.push(
     "ORDER_SCORE\tvirtual-candidate\t\{trace.rank_order_virtual_candidate_crossings}",
@@ -467,13 +497,28 @@ fn elk_layered_rank_trace_lines(trace : ElkLayeredRankTrace) -> Array[String] {
   )
   append_rank_layer_lines(
     lines,
+    "ORDER_LAYER_OPTIMIZED_SEED_POST_SWEEP",
+    trace.rank_order_optimized_seed_post_sweep_layers,
+  )
+  append_rank_layer_lines(
+    lines,
     "ORDER_LAYER_OPTIMIZED_SEED",
     trace.rank_order_optimized_seed_layers,
   )
   append_rank_layer_lines(
     lines,
+    "ORDER_LAYER_OPTIMIZED_REVERSED_SEED_POST_SWEEP",
+    trace.rank_order_optimized_reversed_seed_post_sweep_layers,
+  )
+  append_rank_layer_lines(
+    lines,
     "ORDER_LAYER_OPTIMIZED_REVERSED_SEED",
     trace.rank_order_optimized_reversed_seed_layers,
+  )
+  append_rank_layer_lines(
+    lines,
+    "ORDER_LAYER_VIRTUAL_CANDIDATE_POST_SWEEP",
+    trace.rank_order_virtual_candidate_post_sweep_layers,
   )
   append_rank_layer_lines(
     lines,

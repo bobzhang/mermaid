@@ -124,10 +124,19 @@ priv enum ElkLayeredRankOrderStrategy {
 
 ///|
 priv struct ElkLayeredRankOrderDebugState {
+  optimized_seed_post_sweep_rank_node_ids_by_rank : Map[Int, Array[String]]
+  optimized_seed_post_sweep_crossing_score : Int
   optimized_seed_rank_node_ids_by_rank : Map[Int, Array[String]]
   optimized_seed_crossing_score : Int
+  optimized_reversed_seed_post_sweep_rank_node_ids_by_rank : Map[
+    Int,
+    Array[String],
+  ]
+  optimized_reversed_seed_post_sweep_crossing_score : Int
   optimized_reversed_seed_rank_node_ids_by_rank : Map[Int, Array[String]]
   optimized_reversed_seed_crossing_score : Int
+  virtual_candidate_post_sweep_rank_node_ids_by_rank : Map[Int, Array[String]]
+  virtual_candidate_post_sweep_crossing_score : Int
   virtual_candidate_rank_node_ids_by_rank : Map[Int, Array[String]]
   virtual_candidate_crossing_score : Int
   selected_rank_node_ids_by_rank : Map[Int, Array[String]]
@@ -299,7 +308,7 @@ fn build_rank_node_ids_by_rank_for_order_strategy_with_debug(
   successors_by_node_id : Map[String, Array[String]],
   predecessors_by_node_id : Map[String, Array[String]],
 ) -> (Map[Int, Array[String]], ElkLayeredRankOrderDebugState) {
-  let optimized_base_rank_node_ids_by_rank = build_optimized_rank_node_ids_by_rank(
+  let optimized_base_crossing_result = build_optimized_rank_node_ids_by_rank_with_trace(
     base_rank_node_ids_by_rank,
     max_rank,
     predecessors_by_node_id,
@@ -309,9 +318,10 @@ fn build_rank_node_ids_by_rank_for_order_strategy_with_debug(
     rank_by_node_id.length(),
     graph.edges.length(),
   )
-  let optimized_seed_crossing_score = rank_order_crossing_score(
-    optimized_base_rank_node_ids_by_rank, max_rank, rank_by_node_id, successors_by_node_id,
-  )
+  let optimized_seed_post_sweep_rank_node_ids_by_rank = optimized_base_crossing_result.post_sweep_rank_node_ids_by_rank
+  let optimized_base_rank_node_ids_by_rank = optimized_base_crossing_result.optimized_rank_node_ids_by_rank
+  let optimized_seed_post_sweep_crossing_score = optimized_base_crossing_result.post_sweep_objective.layered_crossings
+  let optimized_seed_crossing_score = optimized_base_crossing_result.optimized_objective.layered_crossings
   let reversed_base_rank_node_ids_by_rank = clone_rank_node_ids_by_rank(
     base_rank_node_ids_by_rank, max_rank,
   )
@@ -334,7 +344,7 @@ fn build_rank_node_ids_by_rank_for_order_strategy_with_debug(
       None => ()
     }
   }
-  let optimized_reversed_seed_rank_node_ids_by_rank = build_optimized_rank_node_ids_by_rank(
+  let optimized_reversed_crossing_result = build_optimized_rank_node_ids_by_rank_with_trace(
     reversed_base_rank_node_ids_by_rank,
     max_rank,
     predecessors_by_node_id,
@@ -344,9 +354,10 @@ fn build_rank_node_ids_by_rank_for_order_strategy_with_debug(
     rank_by_node_id.length(),
     graph.edges.length(),
   )
-  let optimized_reversed_seed_crossing_score = rank_order_crossing_score(
-    optimized_reversed_seed_rank_node_ids_by_rank, max_rank, rank_by_node_id, successors_by_node_id,
-  )
+  let optimized_reversed_seed_post_sweep_rank_node_ids_by_rank = optimized_reversed_crossing_result.post_sweep_rank_node_ids_by_rank
+  let optimized_reversed_seed_rank_node_ids_by_rank = optimized_reversed_crossing_result.optimized_rank_node_ids_by_rank
+  let optimized_reversed_seed_post_sweep_crossing_score = optimized_reversed_crossing_result.post_sweep_objective.layered_crossings
+  let optimized_reversed_seed_crossing_score = optimized_reversed_crossing_result.optimized_objective.layered_crossings
   let (
     optimized_seed_selected_rank_node_ids_by_rank,
     optimized_seed_selected_crossing_score,
@@ -355,6 +366,18 @@ fn build_rank_node_ids_by_rank_for_order_strategy_with_debug(
     optimized_base_rank_node_ids_by_rank, optimized_seed_crossing_score, optimized_reversed_seed_rank_node_ids_by_rank,
     optimized_reversed_seed_crossing_score, max_rank, order_index_by_node_id,
   )
+  let optimized_seed_selected_post_sweep_rank_node_ids_by_rank = if optimized_seed_selected_source ==
+    "optimized-reversed-seed" {
+    optimized_reversed_seed_post_sweep_rank_node_ids_by_rank
+  } else {
+    optimized_seed_post_sweep_rank_node_ids_by_rank
+  }
+  let optimized_seed_selected_post_sweep_crossing_score = if optimized_seed_selected_source ==
+    "optimized-reversed-seed" {
+    optimized_reversed_seed_post_sweep_crossing_score
+  } else {
+    optimized_seed_post_sweep_crossing_score
+  }
   match strategy {
     SeedOrderOnly => {
       let selected_crossing_score = rank_order_crossing_score(
@@ -363,10 +386,16 @@ fn build_rank_node_ids_by_rank_for_order_strategy_with_debug(
       (
         base_rank_node_ids_by_rank,
         {
+          optimized_seed_post_sweep_rank_node_ids_by_rank,
+          optimized_seed_post_sweep_crossing_score,
           optimized_seed_rank_node_ids_by_rank: optimized_base_rank_node_ids_by_rank,
           optimized_seed_crossing_score,
+          optimized_reversed_seed_post_sweep_rank_node_ids_by_rank,
+          optimized_reversed_seed_post_sweep_crossing_score,
           optimized_reversed_seed_rank_node_ids_by_rank,
           optimized_reversed_seed_crossing_score,
+          virtual_candidate_post_sweep_rank_node_ids_by_rank: optimized_seed_post_sweep_rank_node_ids_by_rank,
+          virtual_candidate_post_sweep_crossing_score: optimized_seed_post_sweep_crossing_score,
           virtual_candidate_rank_node_ids_by_rank: optimized_base_rank_node_ids_by_rank,
           virtual_candidate_crossing_score: optimized_seed_crossing_score,
           selected_rank_node_ids_by_rank: base_rank_node_ids_by_rank,
@@ -379,10 +408,16 @@ fn build_rank_node_ids_by_rank_for_order_strategy_with_debug(
       (
         optimized_seed_selected_rank_node_ids_by_rank,
         {
+          optimized_seed_post_sweep_rank_node_ids_by_rank,
+          optimized_seed_post_sweep_crossing_score,
           optimized_seed_rank_node_ids_by_rank: optimized_base_rank_node_ids_by_rank,
           optimized_seed_crossing_score,
+          optimized_reversed_seed_post_sweep_rank_node_ids_by_rank,
+          optimized_reversed_seed_post_sweep_crossing_score,
           optimized_reversed_seed_rank_node_ids_by_rank,
           optimized_reversed_seed_crossing_score,
+          virtual_candidate_post_sweep_rank_node_ids_by_rank: optimized_seed_selected_post_sweep_rank_node_ids_by_rank,
+          virtual_candidate_post_sweep_crossing_score: optimized_seed_selected_post_sweep_crossing_score,
           virtual_candidate_rank_node_ids_by_rank: optimized_seed_selected_rank_node_ids_by_rank,
           virtual_candidate_crossing_score: optimized_seed_selected_crossing_score,
           selected_rank_node_ids_by_rank: optimized_seed_selected_rank_node_ids_by_rank,
@@ -395,7 +430,7 @@ fn build_rank_node_ids_by_rank_for_order_strategy_with_debug(
         base_rank_node_ids_by_rank, rank_by_node_id, max_rank, order_index_by_node_id,
         successors_by_node_id,
       )
-      let optimized_virtual_rank_node_ids_by_rank = build_optimized_rank_node_ids_by_rank(
+      let optimized_virtual_crossing_result = build_optimized_rank_node_ids_by_rank_with_trace(
         virtual_ordering_state.rank_node_ids_by_rank,
         max_rank,
         virtual_ordering_state.predecessors_by_node_id,
@@ -405,10 +440,21 @@ fn build_rank_node_ids_by_rank_for_order_strategy_with_debug(
         virtual_ordering_state.rank_by_node_id.length(),
         graph.edges.length(),
       )
+      let optimized_virtual_post_sweep_rank_node_ids_by_rank = optimized_virtual_crossing_result.post_sweep_rank_node_ids_by_rank
+      let optimized_virtual_rank_node_ids_by_rank = optimized_virtual_crossing_result.optimized_rank_node_ids_by_rank
       let real_virtual_rank_node_ids_by_rank = filter_real_rank_node_ids_by_rank(
         optimized_virtual_rank_node_ids_by_rank,
         max_rank,
         virtual_ordering_state.virtual_by_node_id,
+      )
+      let real_virtual_post_sweep_rank_node_ids_by_rank = filter_real_rank_node_ids_by_rank(
+        optimized_virtual_post_sweep_rank_node_ids_by_rank,
+        max_rank,
+        virtual_ordering_state.virtual_by_node_id,
+      )
+      let virtual_candidate_post_sweep_crossing_score = rank_order_crossing_score(
+        real_virtual_post_sweep_rank_node_ids_by_rank, max_rank, rank_by_node_id,
+        successors_by_node_id,
       )
       let virtual_candidate_crossing_score = rank_order_crossing_score(
         real_virtual_rank_node_ids_by_rank, max_rank, rank_by_node_id, successors_by_node_id,
@@ -422,10 +468,16 @@ fn build_rank_node_ids_by_rank_for_order_strategy_with_debug(
       (
         selected_rank_node_ids_by_rank,
         {
+          optimized_seed_post_sweep_rank_node_ids_by_rank,
+          optimized_seed_post_sweep_crossing_score,
           optimized_seed_rank_node_ids_by_rank: optimized_base_rank_node_ids_by_rank,
           optimized_seed_crossing_score,
+          optimized_reversed_seed_post_sweep_rank_node_ids_by_rank,
+          optimized_reversed_seed_post_sweep_crossing_score,
           optimized_reversed_seed_rank_node_ids_by_rank,
           optimized_reversed_seed_crossing_score,
+          virtual_candidate_post_sweep_rank_node_ids_by_rank: real_virtual_post_sweep_rank_node_ids_by_rank,
+          virtual_candidate_post_sweep_crossing_score,
           virtual_candidate_rank_node_ids_by_rank: real_virtual_rank_node_ids_by_rank,
           virtual_candidate_crossing_score,
           selected_rank_node_ids_by_rank,
