@@ -157,11 +157,11 @@ fn default_crossing_optimization_config() -> ElkLayeredCrossingOptimizationConfi
     neighbor_mean_barycenter_perturbation_amount: 0.07,
     trial_continuation_policy: default_crossing_trial_continuation_policy(),
     trial_model_order_inversion_influence: 0.0,
-    swap_refine_node_limit: 40,
-    swap_refine_edge_limit: 120,
-    permutation_refine_node_limit: 28,
-    permutation_refine_edge_limit: 80,
-    permutation_rank_size_limit: 6,
+    swap_refine_node_limit: 200,
+    swap_refine_edge_limit: 1000,
+    permutation_refine_node_limit: 200,
+    permutation_refine_edge_limit: 1000,
+    permutation_rank_size_limit: 8,
   }
 }
 

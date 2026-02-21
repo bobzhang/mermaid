@@ -84,11 +84,11 @@ test "elk layered crossing optimization config keeps baseline thresholds" {
   assert_true(
     config.trial_continuation_policy is ContinueWhileObjectiveImproves,
   )
-  assert_eq(config.swap_refine_node_limit, 40)
-  assert_eq(config.swap_refine_edge_limit, 120)
-  assert_eq(config.permutation_refine_node_limit, 28)
-  assert_eq(config.permutation_refine_edge_limit, 80)
-  assert_eq(config.permutation_rank_size_limit, 6)
+  assert_eq(config.swap_refine_node_limit, 200)
+  assert_eq(config.swap_refine_edge_limit, 1000)
+  assert_eq(config.permutation_refine_node_limit, 200)
+  assert_eq(config.permutation_refine_edge_limit, 1000)
+  assert_eq(config.permutation_rank_size_limit, 8)
 }
 
 ///|
