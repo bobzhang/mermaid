@@ -531,6 +531,35 @@ test "elk layered neighbor sort keeps current rank order on full ties" {
 }
 
 ///|
+test "elk layered neighbor sort propagates in-layer edges through recursive barycenters" {
+  let node_ids = ["A", "C", "B"]
+  let neighbor_by_node_id : Map[String, Array[String]] = {
+    "A": ["B"],
+    "B": ["X"],
+    "C": ["Y"],
+  }
+  let rank_position_by_node_id : Map[String, Int] = {
+    "A": 0,
+    "C": 1,
+    "B": 2,
+    "X": 0,
+    "Y": 1,
+  }
+  let order_index_by_node_id : Map[String, Int] = { "A": 0, "C": 1, "B": 2 }
+  let _ = sort_rank_nodes_by_neighbors(
+    node_ids,
+    neighbor_by_node_id,
+    rank_position_by_node_id,
+    order_index_by_node_id,
+    true,
+    false,
+    build_crossing_neighbor_mean_random_state_by_seed(1),
+    0.07,
+  )
+  assert_eq(node_ids, ["A", "B", "C"])
+}
+
+///|
 test "elk layered neighbor-mean perturbation uses deterministic java-random sequence" {
   let state_one = build_crossing_neighbor_mean_random_state_by_seed(9)
   let state_two = build_crossing_neighbor_mean_random_state_by_seed(9)

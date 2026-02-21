@@ -1,19 +1,30 @@
 ///|
 priv struct NodeNeighborOrderKey {
   has_center : Bool
-  neighbor_position_sum : Int
+  neighbor_position_sum : Double
   neighbor_position_count : Int
-  barycenter_perturbation : Double
 }
 
 ///|
 fn empty_neighbor_order_key() -> NodeNeighborOrderKey {
-  {
-    has_center: false,
-    neighbor_position_sum: 0,
-    neighbor_position_count: 0,
-    barycenter_perturbation: 0.0,
-  }
+  { has_center: false, neighbor_position_sum: 0.0, neighbor_position_count: 0 }
+}
+
+///|
+priv struct NodeNeighborBarycenterState {
+  visited : Bool
+  neighbor_position_sum : Double
+  neighbor_position_count : Int
+}
+
+///|
+fn empty_neighbor_barycenter_state() -> NodeNeighborBarycenterState {
+  { visited: false, neighbor_position_sum: 0.0, neighbor_position_count: 0 }
+}
+
+///|
+fn empty_visited_neighbor_barycenter_state() -> NodeNeighborBarycenterState {
+  { visited: true, neighbor_position_sum: 0.0, neighbor_position_count: 0 }
 }
 
 ///|
@@ -43,13 +54,86 @@ fn compare_neighbor_order_center(
   left : NodeNeighborOrderKey,
   right : NodeNeighborOrderKey,
 ) -> Int {
-  (left.neighbor_position_sum.to_double() /
-  left.neighbor_position_count.to_double() +
-  left.barycenter_perturbation).compare(
-    right.neighbor_position_sum.to_double() /
-    right.neighbor_position_count.to_double() +
-    right.barycenter_perturbation,
+  (left.neighbor_position_sum / left.neighbor_position_count.to_double()).compare(
+    right.neighbor_position_sum / right.neighbor_position_count.to_double(),
   )
+}
+
+///|
+fn node_neighbor_order_key_from_barycenter_state(
+  barycenter_state : NodeNeighborBarycenterState,
+) -> NodeNeighborOrderKey {
+  if barycenter_state.neighbor_position_count == 0 {
+    empty_neighbor_order_key()
+  } else {
+    {
+      has_center: true,
+      neighbor_position_sum: barycenter_state.neighbor_position_sum,
+      neighbor_position_count: barycenter_state.neighbor_position_count,
+    }
+  }
+}
+
+///|
+fn calculate_node_neighbor_barycenter_state(
+  node_id : String,
+  neighbor_by_node_id : Map[String, Array[String]],
+  rank_position_by_node_id : Map[String, Int],
+  free_node_id_set : Map[String, Bool],
+  barycenter_state_by_node_id : Map[String, NodeNeighborBarycenterState],
+  barycenter_perturbation_by_node_id : Map[String, Double],
+) -> NodeNeighborBarycenterState {
+  let state = match barycenter_state_by_node_id.get(node_id) {
+    Some(value) => value
+    None => empty_neighbor_barycenter_state()
+  }
+  if state.visited {
+    return state
+  }
+  barycenter_state_by_node_id[node_id] = empty_visited_neighbor_barycenter_state()
+  let mut count = 0
+  let mut sum = 0.0
+  match neighbor_by_node_id.get(node_id) {
+    Some(neighbors) =>
+      for neighbor_id in neighbors {
+        let in_free_layer = match free_node_id_set.get(neighbor_id) {
+          Some(value) => value
+          None => false
+        }
+        if in_free_layer {
+          if neighbor_id != node_id {
+            let neighbor_state = calculate_node_neighbor_barycenter_state(
+              neighbor_id, neighbor_by_node_id, rank_position_by_node_id, free_node_id_set,
+              barycenter_state_by_node_id, barycenter_perturbation_by_node_id,
+            )
+            count += neighbor_state.neighbor_position_count
+            sum += neighbor_state.neighbor_position_sum
+          }
+        } else {
+          match rank_position_by_node_id.get(neighbor_id) {
+            Some(position) => {
+              count += 1
+              sum += position.to_double()
+            }
+            None => ()
+          }
+        }
+      }
+    None => ()
+  }
+  if count > 0 {
+    sum += match barycenter_perturbation_by_node_id.get(node_id) {
+      Some(value) => value
+      None => 0.0
+    }
+  }
+  let resolved_state : NodeNeighborBarycenterState = {
+    visited: true,
+    neighbor_position_sum: sum,
+    neighbor_position_count: count,
+  }
+  barycenter_state_by_node_id[node_id] = resolved_state
+  resolved_state
 }
 
 ///|
@@ -57,33 +141,16 @@ fn node_neighbor_order_key(
   node_id : String,
   neighbor_by_node_id : Map[String, Array[String]],
   rank_position_by_node_id : Map[String, Int],
-  barycenter_perturbation : Double,
+  free_node_id_set : Map[String, Bool],
+  barycenter_state_by_node_id : Map[String, NodeNeighborBarycenterState],
+  barycenter_perturbation_by_node_id : Map[String, Double],
 ) -> NodeNeighborOrderKey {
-  let mut count = 0
-  let mut sum = 0
-  match neighbor_by_node_id.get(node_id) {
-    Some(neighbors) =>
-      for neighbor_id in neighbors {
-        match rank_position_by_node_id.get(neighbor_id) {
-          Some(position) => {
-            count += 1
-            sum += position
-          }
-          None => ()
-        }
-      }
-    None => ()
-  }
-  if count == 0 {
-    empty_neighbor_order_key()
-  } else {
-    {
-      has_center: true,
-      neighbor_position_sum: sum,
-      neighbor_position_count: count,
-      barycenter_perturbation,
-    }
-  }
+  node_neighbor_order_key_from_barycenter_state(
+    calculate_node_neighbor_barycenter_state(
+      node_id, neighbor_by_node_id, rank_position_by_node_id, free_node_id_set, barycenter_state_by_node_id,
+      barycenter_perturbation_by_node_id,
+    ),
+  )
 }
 
 ///|
@@ -186,17 +253,23 @@ fn sort_rank_nodes_by_neighbors(
   neighbor_mean_barycenter_perturbation_amount : Double,
 ) -> Bool {
   let original_node_ids = node_ids.copy()
-  let neighbor_key_by_node_id : Map[String, NodeNeighborOrderKey] = {}
+  let free_node_id_set = build_node_id_set(node_ids)
+  let barycenter_perturbation_by_node_id : Map[String, Double] = {}
   for node_id in node_ids {
-    let perturbation = if neighbor_mean_barycenter_perturbation {
+    barycenter_perturbation_by_node_id[node_id] = if neighbor_mean_barycenter_perturbation {
       next_crossing_neighbor_mean_barycenter_perturbation(
         random_state_by_key, neighbor_mean_barycenter_perturbation_amount,
       )
     } else {
       0.0
     }
+  }
+  let barycenter_state_by_node_id : Map[String, NodeNeighborBarycenterState] = {}
+  let neighbor_key_by_node_id : Map[String, NodeNeighborOrderKey] = {}
+  for node_id in node_ids {
     neighbor_key_by_node_id[node_id] = node_neighbor_order_key(
-      node_id, neighbor_by_node_id, rank_position_by_node_id, perturbation,
+      node_id, neighbor_by_node_id, rank_position_by_node_id, free_node_id_set, barycenter_state_by_node_id,
+      barycenter_perturbation_by_node_id,
     )
   }
   node_ids.sort_by((left, right) => {
