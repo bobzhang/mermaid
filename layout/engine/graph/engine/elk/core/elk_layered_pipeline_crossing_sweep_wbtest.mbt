@@ -482,6 +482,75 @@ test "elk layered long-span rank-order candidates stay score-tied" {
 }
 
 ///|
+fn stress_005_source() -> String {
+  (
+    #|graph LR
+    #|S[S]
+    #|T[T]
+    #|A1[A1]
+    #|A2[A2]
+    #|A3[A3]
+    #|B1[B1]
+    #|B2[B2]
+    #|B3[B3]
+    #|C1[C1]
+    #|C2[C2]
+    #|C3[C3]
+    #|D1[D1]
+    #|D2[D2]
+    #|D3[D3]
+    #|E1[E1]
+    #|E2[E2]
+    #|E3[E3]
+    #|
+    #|S --> A1
+    #|S --> A2
+    #|S --> A3
+    #|
+    #|A1 --> B1
+    #|A2 --> B2
+    #|A3 --> B3
+    #|
+    #|B1 --> C1
+    #|B2 --> C2
+    #|B3 --> C3
+    #|
+    #|C1 --> D1
+    #|C2 --> D2
+    #|C3 --> D3
+    #|
+    #|D1 --> E1
+    #|D2 --> E2
+    #|D3 --> E3
+    #|
+    #|E1 --> T
+    #|E2 --> T
+    #|E3 --> T
+    #|
+    #|A1 --> D2
+    #|A2 --> D3
+    #|A3 --> D1
+    #|B1 --> E2
+    #|B2 --> E3
+    #|B3 --> E1
+    #|A1 --> E3
+    #|A3 --> E2
+    #|S --> C2
+    #|S --> D3
+    #|
+    #|E3 --> B1
+    #|E2 --> B3
+    #|D3 --> A2
+    #|C3 --> A1
+    #|D1 --> C2
+    #|T --> C1
+    #|
+  )
+  .trim_end()
+  .to_string()
+}
+
+///|
 test "elk layered crossing optimizer reduces global crossings on long-span backjump fixture" {
   let graph = @parser_header_core.parse_mermaid(stress_005_source())
   let setup_state = run_elk_layered_setup_phase({
