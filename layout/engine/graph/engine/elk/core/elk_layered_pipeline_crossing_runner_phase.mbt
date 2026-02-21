@@ -26,6 +26,107 @@ fn build_crossing_objective_context_from_phase_input(
 }
 
 ///|
+fn normalized_crossing_trial_count(trial_count : Int) -> Int {
+  if trial_count <= 0 {
+    1
+  } else {
+    trial_count
+  }
+}
+
+///|
+fn build_crossing_trial_seed_rank_node_ids_by_rank(
+  input_rank_node_ids_by_rank : Map[Int, Array[String]],
+  max_rank : Int,
+  trial_index : Int,
+  trial_random_seed : Int,
+) -> Map[Int, Array[String]] {
+  let _ = trial_index
+  let _ = trial_random_seed
+  clone_rank_node_ids_by_rank(input_rank_node_ids_by_rank, max_rank)
+}
+
+///|
+fn crossing_execution_state_is_better(
+  candidate : ElkLayeredCrossingExecutionState,
+  incumbent : ElkLayeredCrossingExecutionState,
+  objective_context : ElkLayeredCrossingObjectiveContext,
+  input : ElkLayeredCrossingPhaseInput,
+) -> Bool {
+  let candidate_objective = evaluate_crossing_objective(
+    candidate.post_refinement_rank_node_ids_by_rank,
+    objective_context,
+  )
+  let incumbent_objective = evaluate_crossing_objective(
+    incumbent.post_refinement_rank_node_ids_by_rank,
+    objective_context,
+  )
+  if candidate_objective.layered_crossings < incumbent_objective.layered_crossings {
+    return true
+  }
+  if candidate_objective.layered_crossings > incumbent_objective.layered_crossings {
+    return false
+  }
+  if candidate_objective.global_crossings < incumbent_objective.global_crossings {
+    return true
+  }
+  if candidate_objective.global_crossings > incumbent_objective.global_crossings {
+    return false
+  }
+  rank_order_model_inversion_score(
+    candidate.post_refinement_rank_node_ids_by_rank,
+    input.max_rank,
+    input.order_index_by_node_id,
+  ) < rank_order_model_inversion_score(
+    incumbent.post_refinement_rank_node_ids_by_rank,
+    input.max_rank,
+    input.order_index_by_node_id,
+  )
+}
+
+///|
+fn execute_crossing_phase_once_with_plan_and_seed(
+  input : ElkLayeredCrossingPhaseInput,
+  plan : ElkLayeredCrossingExecutionPlan,
+  seed_rank_node_ids_by_rank : Map[Int, Array[String]],
+) -> ElkLayeredCrossingExecutionState {
+  let _ = input.port_order_slots_by_node_id
+  let config = plan.config
+  let optimized_rank_node_ids_by_rank = seed_rank_node_ids_by_rank
+  let sweep_input = build_crossing_sweep_input_from_phase_input(
+    optimized_rank_node_ids_by_rank,
+    input,
+    config,
+  )
+  optimize_rank_order_with_sweep_passes_and_kernel(
+    sweep_input.rank_node_ids_by_rank,
+    sweep_input.max_rank,
+    sweep_input.predecessors_by_node_id,
+    sweep_input.successors_by_node_id,
+    sweep_input.order_index_by_node_id,
+    sweep_input.preserve_current_order_on_tie,
+    config.sweep_pass_count,
+    plan.sweep_kernel,
+  )
+  let post_sweep_rank_node_ids_by_rank = clone_rank_node_ids_by_rank(
+    optimized_rank_node_ids_by_rank,
+    input.max_rank,
+  )
+  apply_crossing_local_refinement_kernels(
+    build_crossing_refinement_input_from_phase_input(
+      optimized_rank_node_ids_by_rank,
+      input,
+    ),
+    config,
+    plan.local_refinement_kernels,
+  )
+  {
+    post_sweep_rank_node_ids_by_rank,
+    post_refinement_rank_node_ids_by_rank: optimized_rank_node_ids_by_rank,
+  }
+}
+
+///|
 fn run_crossing_phase_with_plan(
   input : ElkLayeredCrossingPhaseInput,
   plan : ElkLayeredCrossingExecutionPlan,
@@ -55,41 +156,51 @@ fn execute_crossing_phase_with_plan_with_trace(
   input : ElkLayeredCrossingPhaseInput,
   plan : ElkLayeredCrossingExecutionPlan,
 ) -> ElkLayeredCrossingExecutionState {
-  let _ = input.port_order_slots_by_node_id
   let config = plan.config
+  let objective_context = build_crossing_objective_context_from_phase_input(
+    input,
+  )
   match plan.strategy {
     LayerSweepWithLocalRefinement => {
-      let optimized_rank_node_ids_by_rank = clone_rank_node_ids_by_rank(
-        input.rank_node_ids_by_rank,
-        input.max_rank,
-      )
-      let sweep_input = build_crossing_sweep_input_from_phase_input(
-        optimized_rank_node_ids_by_rank, input, config,
-      )
-      optimize_rank_order_with_sweep_passes_and_kernel(
-        sweep_input.rank_node_ids_by_rank,
-        sweep_input.max_rank,
-        sweep_input.predecessors_by_node_id,
-        sweep_input.successors_by_node_id,
-        sweep_input.order_index_by_node_id,
-        sweep_input.preserve_current_order_on_tie,
-        config.sweep_pass_count,
-        plan.sweep_kernel,
-      )
-      let post_sweep_rank_node_ids_by_rank = clone_rank_node_ids_by_rank(
-        optimized_rank_node_ids_by_rank,
-        input.max_rank,
-      )
-      apply_crossing_local_refinement_kernels(
-        build_crossing_refinement_input_from_phase_input(
-          optimized_rank_node_ids_by_rank, input,
-        ),
-        config,
-        plan.local_refinement_kernels,
-      )
-      {
-        post_sweep_rank_node_ids_by_rank,
-        post_refinement_rank_node_ids_by_rank: optimized_rank_node_ids_by_rank,
+      let trial_count = normalized_crossing_trial_count(config.trial_count)
+      let mut best_execution_state : ElkLayeredCrossingExecutionState? = None
+      for trial_index in 0..<trial_count {
+        let trial_execution_state = execute_crossing_phase_once_with_plan_and_seed(
+          input,
+          plan,
+          build_crossing_trial_seed_rank_node_ids_by_rank(
+            input.rank_node_ids_by_rank,
+            input.max_rank,
+            trial_index,
+            config.trial_random_seed,
+          ),
+        )
+        match best_execution_state {
+          Some(incumbent) =>
+            if crossing_execution_state_is_better(
+                trial_execution_state,
+                incumbent,
+                objective_context,
+                input,
+              ) {
+              best_execution_state = Some(trial_execution_state)
+            }
+          None => best_execution_state = Some(trial_execution_state)
+        }
+      }
+      match best_execution_state {
+        Some(state) => state
+        None =>
+          execute_crossing_phase_once_with_plan_and_seed(
+            input,
+            plan,
+            build_crossing_trial_seed_rank_node_ids_by_rank(
+              input.rank_node_ids_by_rank,
+              input.max_rank,
+              0,
+              config.trial_random_seed,
+            ),
+          )
       }
     }
   }

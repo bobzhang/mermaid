@@ -145,4 +145,67 @@ test "elk layered crossing execution plan keeps default kernels ordered" {
   let plan = default_crossing_execution_plan(LayerSweepWithLocalRefinement)
   assert_true(plan.sweep_kernel is NeighborMeanBidirectional)
   assert_true(plan.local_refinement_kernels is [AdjacentSwap, RankPermutation])
+  assert_eq(plan.config.trial_count, 1)
+  assert_eq(plan.config.trial_random_seed, 1)
+}
+
+///|
+test "elk layered crossing trial count normalization keeps at least one trial" {
+  assert_eq(normalized_crossing_trial_count(-3), 1)
+  assert_eq(normalized_crossing_trial_count(0), 1)
+  assert_eq(normalized_crossing_trial_count(2), 2)
+}
+
+///|
+test "elk layered crossing multi-trial framework preserves single-trial output by default seed builder" {
+  let input = build_crossing_phase_input(
+    { 0: ["A", "B"], 1: ["C", "D"] },
+    1,
+    { "A": [], "B": [], "C": ["B"], "D": ["A"] },
+    { "A": ["D"], "B": ["C"], "C": [], "D": [] },
+    { "A": 0, "B": 1, "C": 2, "D": 3 },
+    { "A": 0, "B": 0, "C": 1, "D": 1 },
+    4,
+    2,
+  )
+  let single_plan = default_crossing_execution_plan(
+    LayerSweepWithLocalRefinement,
+  )
+  let single_result = run_crossing_phase_with_plan(input, single_plan)
+  let multi_plan : ElkLayeredCrossingExecutionPlan = {
+    strategy: LayerSweepWithLocalRefinement,
+    config: {
+      preserve_order_node_threshold: single_plan.config.preserve_order_node_threshold,
+      preserve_order_edge_threshold: single_plan.config.preserve_order_edge_threshold,
+      sweep_pass_count: single_plan.config.sweep_pass_count,
+      trial_count: 3,
+      trial_random_seed: single_plan.config.trial_random_seed,
+      swap_refine_node_limit: single_plan.config.swap_refine_node_limit,
+      swap_refine_edge_limit: single_plan.config.swap_refine_edge_limit,
+      permutation_refine_node_limit: single_plan.config.permutation_refine_node_limit,
+      permutation_refine_edge_limit: single_plan.config.permutation_refine_edge_limit,
+      permutation_rank_size_limit: single_plan.config.permutation_rank_size_limit,
+    },
+    sweep_kernel: single_plan.sweep_kernel,
+    local_refinement_kernels: single_plan.local_refinement_kernels,
+  }
+  let multi_result = run_crossing_phase_with_plan(input, multi_plan)
+  assert_eq(
+    match single_result.optimized_rank_node_ids_by_rank.get(1) {
+      Some(node_ids) => node_ids
+      None => []
+    },
+    match multi_result.optimized_rank_node_ids_by_rank.get(1) {
+      Some(node_ids) => node_ids
+      None => []
+    },
+  )
+  assert_eq(
+    single_result.optimized_objective.layered_crossings,
+    multi_result.optimized_objective.layered_crossings,
+  )
+  assert_eq(
+    single_result.optimized_objective.global_crossings,
+    multi_result.optimized_objective.global_crossings,
+  )
 }

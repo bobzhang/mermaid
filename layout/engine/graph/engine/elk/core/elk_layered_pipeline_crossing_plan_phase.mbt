@@ -24,6 +24,8 @@ priv struct ElkLayeredCrossingOptimizationConfig {
   preserve_order_node_threshold : Int
   preserve_order_edge_threshold : Int
   sweep_pass_count : Int
+  trial_count : Int
+  trial_random_seed : Int
   swap_refine_node_limit : Int
   swap_refine_edge_limit : Int
   permutation_refine_node_limit : Int
@@ -37,6 +39,8 @@ fn default_crossing_optimization_config() -> ElkLayeredCrossingOptimizationConfi
     preserve_order_node_threshold: 16,
     preserve_order_edge_threshold: 30,
     sweep_pass_count: 4,
+    trial_count: 1,
+    trial_random_seed: 1,
     swap_refine_node_limit: 40,
     swap_refine_edge_limit: 120,
     permutation_refine_node_limit: 28,
