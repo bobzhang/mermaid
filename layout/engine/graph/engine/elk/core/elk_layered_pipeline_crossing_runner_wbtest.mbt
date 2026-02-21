@@ -151,6 +151,14 @@ test "elk layered crossing execution plan keeps default kernels ordered" {
 }
 
 ///|
+test "elk layered crossing sweep kernel registry includes default and edge-slot variants" {
+  let kernels = available_crossing_sweep_kernels()
+  assert_true(
+    kernels is [NeighborMeanBidirectional, NeighborMeanEdgeSlotBidirectional],
+  )
+}
+
+///|
 test "elk layered crossing trial count normalization keeps at least one trial" {
   assert_eq(normalized_crossing_trial_count(-3), 1)
   assert_eq(normalized_crossing_trial_count(0), 1)

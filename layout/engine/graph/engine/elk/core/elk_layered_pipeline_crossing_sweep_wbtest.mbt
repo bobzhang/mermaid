@@ -141,6 +141,75 @@ test "elk layered default sweep kernel matches explicit kernel" {
 }
 
 ///|
+test "elk layered edge-slot sweep kernel is deterministic and preserves rank composition" {
+  let seed_rank_node_ids_by_rank : Map[Int, Array[String]] = {
+    0: ["A", "B"],
+    1: ["C", "D"],
+    2: ["E", "F"],
+  }
+  let predecessors_by_node_id : Map[String, Array[String]] = {
+    "A": [],
+    "B": [],
+    "C": ["A"],
+    "D": ["B"],
+    "E": ["D"],
+    "F": ["C"],
+  }
+  let successors_by_node_id : Map[String, Array[String]] = {
+    "A": ["C"],
+    "B": ["D"],
+    "C": ["F"],
+    "D": ["E"],
+    "E": [],
+    "F": [],
+  }
+  let order_index_by_node_id : Map[String, Int] = {
+    "A": 0,
+    "B": 1,
+    "C": 2,
+    "D": 3,
+    "E": 4,
+    "F": 5,
+  }
+  let run_one = clone_rank_node_ids_by_rank(seed_rank_node_ids_by_rank, 2)
+  let run_two = clone_rank_node_ids_by_rank(seed_rank_node_ids_by_rank, 2)
+  optimize_rank_order_with_sweep_passes_and_kernel(
+    run_one,
+    2,
+    predecessors_by_node_id,
+    successors_by_node_id,
+    order_index_by_node_id,
+    false,
+    3,
+    NeighborMeanEdgeSlotBidirectional,
+  )
+  optimize_rank_order_with_sweep_passes_and_kernel(
+    run_two,
+    2,
+    predecessors_by_node_id,
+    successors_by_node_id,
+    order_index_by_node_id,
+    false,
+    3,
+    NeighborMeanEdgeSlotBidirectional,
+  )
+  assert_eq(run_one, run_two)
+  for rank in 0..<=2 {
+    let baseline_nodes = match seed_rank_node_ids_by_rank.get(rank) {
+      Some(node_ids) => node_ids.copy()
+      None => []
+    }
+    let optimized_nodes = match run_one.get(rank) {
+      Some(node_ids) => node_ids.copy()
+      None => []
+    }
+    baseline_nodes.sort()
+    optimized_nodes.sort()
+    assert_eq(optimized_nodes, baseline_nodes)
+  }
+}
+
+///|
 test "elk layered sweep input entry matches explicit parameter entry" {
   let seed_rank_node_ids_by_rank : Map[Int, Array[String]] = {
     0: ["A", "B"],

@@ -6,6 +6,7 @@ priv enum ElkLayeredCrossingOptimizerStrategy {
 ///|
 priv enum ElkLayeredCrossingSweepKernel {
   NeighborMeanBidirectional
+  NeighborMeanEdgeSlotBidirectional
 }
 
 ///|
@@ -16,7 +17,12 @@ priv enum ElkLayeredCrossingLocalRefinementKernel {
 
 ///|
 fn default_crossing_sweep_kernel() -> ElkLayeredCrossingSweepKernel {
-  NeighborMeanBidirectional
+  available_crossing_sweep_kernels()[0]
+}
+
+///|
+fn available_crossing_sweep_kernels() -> Array[ElkLayeredCrossingSweepKernel] {
+  [NeighborMeanBidirectional, NeighborMeanEdgeSlotBidirectional]
 }
 
 ///|
