@@ -118,23 +118,13 @@ fn parse_layout_engine(raw : String) -> @model.LayoutEngine? {
 }
 
 ///|
-fn ascii_spacing_overridden(
-  padding_x : Int,
-  padding_y : Int,
-  box_border_padding : Int,
-) -> Bool {
-  padding_x != 5 || padding_y != 5 || box_border_padding != 1
-}
-
-///|
 fn ascii_spacing_requires_text_mode(
   render_text : Bool,
   padding_x : Int,
   padding_y : Int,
   box_border_padding : Int,
 ) -> Bool {
-  !render_text &&
-  ascii_spacing_overridden(padding_x, padding_y, box_border_padding)
+  !render_text && (padding_x != 5 || padding_y != 5 || box_border_padding != 1)
 }
 
 ///|
