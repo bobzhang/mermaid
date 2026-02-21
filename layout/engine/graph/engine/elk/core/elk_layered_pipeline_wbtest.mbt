@@ -401,7 +401,10 @@ test "elk layered rank phase resolves native strategies on small graphs" {
     use_subgraph_redirects: true,
     compact_fanin: false,
   })
-  let rank_phase_state = run_elk_layered_rank_phase(setup_state)
+  let rank_phase_state = run_elk_layered_rank_phase_with_crossing_execution_plan(
+    setup_state,
+    default_crossing_execution_plan(LayerSweepWithLocalRefinement),
+  )
   let rank_seed_strategy = rank_phase_state.rank_seed_strategy
   assert_true(rank_seed_strategy is NativeFeedback)
   assert_true(
@@ -436,7 +439,10 @@ test "elk layered rank phase keeps strategy and minor mode consistent on large g
     use_subgraph_redirects: true,
     compact_fanin: false,
   })
-  let rank_phase_state = run_elk_layered_rank_phase(setup_state)
+  let rank_phase_state = run_elk_layered_rank_phase_with_crossing_execution_plan(
+    setup_state,
+    default_crossing_execution_plan(LayerSweepWithLocalRefinement),
+  )
   let rank_seed_strategy = rank_phase_state.rank_seed_strategy
   match rank_seed_strategy {
     LegacyLaneSeed => {
@@ -485,7 +491,10 @@ test "elk layered large-graph placement uses native seed path" {
     compact_fanin: false,
   }
   let setup_state = run_elk_layered_setup_phase(request)
-  let rank_phase_state = run_elk_layered_rank_phase(setup_state)
+  let rank_phase_state = run_elk_layered_rank_phase_with_crossing_execution_plan(
+    setup_state,
+    default_crossing_execution_plan(LayerSweepWithLocalRefinement),
+  )
   assert_true(rank_phase_state.rank_seed_strategy is NativeFeedback)
   assert_true(
     select_elk_layered_minor_placement_strategy(
@@ -1221,7 +1230,10 @@ test "elk layered node-placement phase builds positioned nodes and bounds" {
     use_subgraph_redirects: true,
     compact_fanin: false,
   })
-  let rank_phase_state = run_elk_layered_rank_phase(setup_state)
+  let rank_phase_state = run_elk_layered_rank_phase_with_crossing_execution_plan(
+    setup_state,
+    default_crossing_execution_plan(LayerSweepWithLocalRefinement),
+  )
   let node_size_state = build_elk_layered_node_size_state(
     setup_state.nodes_in_order,
   )
@@ -1262,7 +1274,10 @@ test "elk layered finalize phase composes positioned graph from phase states" {
     use_subgraph_redirects: true,
     compact_fanin: false,
   })
-  let rank_phase_state = run_elk_layered_rank_phase(setup_state)
+  let rank_phase_state = run_elk_layered_rank_phase_with_crossing_execution_plan(
+    setup_state,
+    default_crossing_execution_plan(LayerSweepWithLocalRefinement),
+  )
   let node_size_state = build_elk_layered_node_size_state(
     setup_state.nodes_in_order,
   )

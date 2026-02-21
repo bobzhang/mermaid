@@ -673,3 +673,82 @@ test "elk backend rank phase trace includes crossing-plan metadata" {
     "neighbor-mean-bidirectional",
   )
 }
+
+///|
+test "elk layered backend plan injection keeps default parity and exposes non-default kernel trace" {
+  let graph = flow_graph()
+  let request : @layout_engine_graph_contract_core.GraphLayoutBackendRequest = {
+    graph,
+    options: @model.RenderOptions::default(),
+    use_subgraph_redirects: true,
+    compact_fanin: false,
+  }
+  let default_plan = default_crossing_execution_plan(
+    LayerSweepWithLocalRefinement,
+  )
+  let default_backend = run_elk_layered_flow_backend_with_crossing_execution_plan(
+    request,
+    {
+      enable_target_boundary_ports: true,
+      preserve_assigned_endpoint_ports: false,
+    },
+    default_plan,
+  )
+  let wrapped_backend = run_elk_layered_flow_backend(request, {
+    enable_target_boundary_ports: true,
+    preserve_assigned_endpoint_ports: false,
+  })
+  assert_true(backend_result_equal(default_backend, wrapped_backend))
+  let edge_slot_backend = run_elk_layered_flow_backend_with_crossing_execution_plan(
+    request,
+    {
+      enable_target_boundary_ports: true,
+      preserve_assigned_endpoint_ports: false,
+    },
+    { ..default_plan, sweep_kernel: NeighborMeanEdgeSlotBidirectional },
+  )
+  assert_eq(default_backend.phase_traces.length(), 4)
+  assert_eq(edge_slot_backend.phase_traces.length(), 4)
+  assert_eq(
+    match
+      default_backend.phase_traces[1].labels.get("rank_order_sweep_kernel") {
+      Some(value) => value
+      None => ""
+    },
+    "neighbor-mean-bidirectional",
+  )
+  assert_eq(
+    match
+      edge_slot_backend.phase_traces[1].labels.get("rank_order_sweep_kernel") {
+      Some(value) => value
+      None => ""
+    },
+    "neighbor-mean-edge-slot-bidirectional",
+  )
+  assert_eq(
+    match
+      default_backend.phase_traces[1].metrics.get("rank_order_sweep_pass_count") {
+      Some(value) => value
+      None => -1
+    },
+    match
+      edge_slot_backend.phase_traces[1].metrics.get(
+        "rank_order_sweep_pass_count",
+      ) {
+      Some(value) => value
+      None => -1
+    },
+  )
+  assert_eq(
+    match
+      default_backend.phase_traces[1].metrics.get("rank_order_trial_count") {
+      Some(value) => value
+      None => -1
+    },
+    match
+      edge_slot_backend.phase_traces[1].metrics.get("rank_order_trial_count") {
+      Some(value) => value
+      None => -1
+    },
+  )
+}

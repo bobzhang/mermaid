@@ -8,7 +8,10 @@ test "elk layered finalize phase preserves placement coordinates for subgraph-he
     compact_fanin: false,
   }
   let setup_state = run_elk_layered_setup_phase(request)
-  let rank_phase_state = run_elk_layered_rank_phase(setup_state)
+  let rank_phase_state = run_elk_layered_rank_phase_with_crossing_execution_plan(
+    setup_state,
+    default_crossing_execution_plan(LayerSweepWithLocalRefinement),
+  )
   let node_size_state = build_elk_layered_node_size_state(
     setup_state.nodes_in_order,
   )

@@ -8,16 +8,6 @@ priv struct ElkLayeredRankPhaseState {
 }
 
 ///|
-fn run_elk_layered_rank_phase(
-  setup_state : ElkLayeredSetupState,
-) -> ElkLayeredRankPhaseState {
-  run_elk_layered_rank_phase_with_crossing_execution_plan(
-    setup_state,
-    default_crossing_execution_plan(LayerSweepWithLocalRefinement),
-  )
-}
-
-///|
 fn run_elk_layered_rank_phase_with_crossing_execution_plan(
   setup_state : ElkLayeredSetupState,
   crossing_execution_plan : ElkLayeredCrossingExecutionPlan,
@@ -466,10 +456,38 @@ fn run_elk_layered_flow_backend(
   request : GraphLayoutBackendRequest,
   routing_policy : GraphBackendRoutingPolicy,
 ) -> GraphLayoutBackendResult {
+  run_elk_layered_flow_backend_with_crossing_execution_plan(
+    request,
+    routing_policy,
+    default_crossing_execution_plan(LayerSweepWithLocalRefinement),
+  )
+}
+
+///|
+/// Runs the ELK layered flow pipeline with an explicit crossing execution plan.
+fn run_elk_layered_flow_backend_with_crossing_execution_plan(
+  request : GraphLayoutBackendRequest,
+  routing_policy : GraphBackendRoutingPolicy,
+  crossing_execution_plan : ElkLayeredCrossingExecutionPlan,
+) -> GraphLayoutBackendResult {
   let setup_state = run_elk_layered_setup_phase(request)
+  let rank_phase_state = run_elk_layered_rank_phase_with_crossing_execution_plan(
+    setup_state, crossing_execution_plan,
+  )
+  run_elk_layered_flow_backend_with_setup_and_rank_phase(
+    request, routing_policy, setup_state, rank_phase_state,
+  )
+}
+
+///|
+fn run_elk_layered_flow_backend_with_setup_and_rank_phase(
+  request : GraphLayoutBackendRequest,
+  routing_policy : GraphBackendRoutingPolicy,
+  setup_state : ElkLayeredSetupState,
+  rank_phase_state : ElkLayeredRankPhaseState,
+) -> GraphLayoutBackendResult {
   let options = setup_state.options
   let nodes_in_order = setup_state.nodes_in_order
-  let rank_phase_state = run_elk_layered_rank_phase(setup_state)
   let rank_seed_state = rank_phase_state.rank_seed_state
   let max_rank = rank_seed_state.max_rank
   let rank_node_ids_by_rank = rank_phase_state.rank_node_ids_by_rank
