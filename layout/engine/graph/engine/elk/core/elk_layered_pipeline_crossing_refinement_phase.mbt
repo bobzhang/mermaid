@@ -92,12 +92,16 @@ fn maybe_refine_rank_order_by_swaps_with_limits(
               i = i + 1
               continue
             }
-            if swapped_objective.global_crossings <
-              best_objective.global_crossings ||
-              (
-                swapped_objective.global_crossings ==
-                best_objective.global_crossings &&
+            if (
                 swapped_objective.layered_crossings <
+                best_objective.layered_crossings &&
+                swapped_objective.global_crossings <=
+                best_objective.global_crossings
+              ) ||
+              (
+                swapped_objective.global_crossings <
+                best_objective.global_crossings &&
+                swapped_objective.layered_crossings <=
                 best_objective.layered_crossings
               ) {
               best_objective = swapped_objective
@@ -204,12 +208,16 @@ fn maybe_refine_rank_order_by_rank_permutations_with_limits(
               max_allowed_layered_crossings {
               return
             }
-            if candidate_objective.global_crossings <
-              best_objective.global_crossings ||
-              (
-                candidate_objective.global_crossings ==
-                best_objective.global_crossings &&
+            if (
                 candidate_objective.layered_crossings <
+                best_objective.layered_crossings &&
+                candidate_objective.global_crossings <=
+                best_objective.global_crossings
+              ) ||
+              (
+                candidate_objective.global_crossings <
+                best_objective.global_crossings &&
+                candidate_objective.layered_crossings <=
                 best_objective.layered_crossings
               ) {
               best_objective = candidate_objective
