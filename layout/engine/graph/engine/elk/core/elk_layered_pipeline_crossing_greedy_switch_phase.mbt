@@ -53,28 +53,44 @@ fn crossing_greedy_pair_crossings_if_left_before_right(
 fn crossing_greedy_should_swap_adjacent_pair(
   left_node_id : String,
   right_node_id : String,
-  fixed_neighbor_by_node_id : Map[String, Array[String]],
-  fixed_rank_position_by_node_id : Map[String, Int],
+  predecessor_by_node_id : Map[String, Array[String]],
+  successor_by_node_id : Map[String, Array[String]],
+  rank_position_by_node_id : Map[String, Int],
   free_node_id_set : Map[String, Bool],
   order_index_by_node_id : Map[String, Int],
   preserve_current_order_on_tie : Bool,
 ) -> Bool {
-  let left_positions = crossing_greedy_neighbor_positions(
-    left_node_id, fixed_neighbor_by_node_id, fixed_rank_position_by_node_id, free_node_id_set,
+  let predecessor_left_positions = crossing_greedy_neighbor_positions(
+    left_node_id, predecessor_by_node_id, rank_position_by_node_id, free_node_id_set,
   )
-  let right_positions = crossing_greedy_neighbor_positions(
-    right_node_id, fixed_neighbor_by_node_id, fixed_rank_position_by_node_id, free_node_id_set,
+  let predecessor_right_positions = crossing_greedy_neighbor_positions(
+    right_node_id, predecessor_by_node_id, rank_position_by_node_id, free_node_id_set,
   )
-  if left_positions.length() == 0 || right_positions.length() == 0 {
+  let successor_left_positions = crossing_greedy_neighbor_positions(
+    left_node_id, successor_by_node_id, rank_position_by_node_id, free_node_id_set,
+  )
+  let successor_right_positions = crossing_greedy_neighbor_positions(
+    right_node_id, successor_by_node_id, rank_position_by_node_id, free_node_id_set,
+  )
+  if predecessor_left_positions.length() == 0 &&
+    predecessor_right_positions.length() == 0 &&
+    successor_left_positions.length() == 0 &&
+    successor_right_positions.length() == 0 {
     return false
   }
 
   let current_crossings = crossing_greedy_pair_crossings_if_left_before_right(
-    left_positions, right_positions,
-  )
+      predecessor_left_positions, predecessor_right_positions,
+    ) +
+    crossing_greedy_pair_crossings_if_left_before_right(
+      successor_left_positions, successor_right_positions,
+    )
   let swapped_crossings = crossing_greedy_pair_crossings_if_left_before_right(
-    right_positions, left_positions,
-  )
+      predecessor_right_positions, predecessor_left_positions,
+    ) +
+    crossing_greedy_pair_crossings_if_left_before_right(
+      successor_right_positions, successor_left_positions,
+    )
   if swapped_crossings < current_crossings {
     return true
   }
@@ -91,8 +107,9 @@ fn crossing_greedy_should_swap_adjacent_pair(
 ///|
 fn apply_crossing_greedy_switch_rank_by_fixed_layer(
   node_ids : Array[String],
-  fixed_neighbor_by_node_id : Map[String, Array[String]],
-  fixed_rank_position_by_node_id : Map[String, Int],
+  predecessor_by_node_id : Map[String, Array[String]],
+  successor_by_node_id : Map[String, Array[String]],
+  rank_position_by_node_id : Map[String, Int],
   order_index_by_node_id : Map[String, Int],
   preserve_current_order_on_tie : Bool,
   pass_limit : Int,
@@ -110,8 +127,8 @@ fn apply_crossing_greedy_switch_rank_by_fixed_layer(
       let left_node_id = node_ids[index]
       let right_node_id = node_ids[index + 1]
       if crossing_greedy_should_swap_adjacent_pair(
-          left_node_id, right_node_id, fixed_neighbor_by_node_id, fixed_rank_position_by_node_id,
-          free_node_id_set, order_index_by_node_id, preserve_current_order_on_tie,
+          left_node_id, right_node_id, predecessor_by_node_id, successor_by_node_id,
+          rank_position_by_node_id, free_node_id_set, order_index_by_node_id, preserve_current_order_on_tie,
         ) {
         node_ids[index] = right_node_id
         node_ids[index + 1] = left_node_id

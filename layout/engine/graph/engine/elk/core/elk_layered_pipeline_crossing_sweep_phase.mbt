@@ -417,7 +417,8 @@ fn sort_rank_nodes_by_fixed_layer_port_ranks(
 ///|
 fn maybe_apply_crossing_greedy_switch_from_fixed_layer(
   free_node_ids : Array[String],
-  fixed_neighbor_by_node_id : Map[String, Array[String]],
+  predecessor_by_node_id : Map[String, Array[String]],
+  successor_by_node_id : Map[String, Array[String]],
   rank_node_ids_by_rank : Map[Int, Array[String]],
   max_rank : Int,
   order_index_by_node_id : Map[String, Int],
@@ -430,7 +431,8 @@ fn maybe_apply_crossing_greedy_switch_from_fixed_layer(
   }
   apply_crossing_greedy_switch_rank_by_fixed_layer(
     free_node_ids,
-    fixed_neighbor_by_node_id,
+    predecessor_by_node_id,
+    successor_by_node_id,
     rank_position_by_node_id(rank_node_ids_by_rank, max_rank),
     order_index_by_node_id,
     preserve_current_order_on_tie,
@@ -483,6 +485,7 @@ fn sweep_rank_order_once_from_input_with_kernel(
               if maybe_apply_crossing_greedy_switch_from_fixed_layer(
                   node_ids,
                   sweep_input.predecessors_by_node_id,
+                  sweep_input.successors_by_node_id,
                   sweep_input.rank_node_ids_by_rank,
                   sweep_input.max_rank,
                   sweep_input.order_index_by_node_id,
@@ -526,6 +529,7 @@ fn sweep_rank_order_once_from_input_with_kernel(
               }
               if maybe_apply_crossing_greedy_switch_from_fixed_layer(
                   node_ids,
+                  sweep_input.predecessors_by_node_id,
                   sweep_input.successors_by_node_id,
                   sweep_input.rank_node_ids_by_rank,
                   sweep_input.max_rank,
@@ -574,6 +578,7 @@ fn sweep_rank_order_once_from_input_with_kernel(
               if maybe_apply_crossing_greedy_switch_from_fixed_layer(
                   node_ids,
                   sweep_input.predecessors_by_node_id,
+                  sweep_input.successors_by_node_id,
                   sweep_input.rank_node_ids_by_rank,
                   sweep_input.max_rank,
                   sweep_input.order_index_by_node_id,
@@ -613,6 +618,7 @@ fn sweep_rank_order_once_from_input_with_kernel(
               }
               if maybe_apply_crossing_greedy_switch_from_fixed_layer(
                   node_ids,
+                  sweep_input.predecessors_by_node_id,
                   sweep_input.successors_by_node_id,
                   sweep_input.rank_node_ids_by_rank,
                   sweep_input.max_rank,
@@ -658,6 +664,7 @@ fn sweep_rank_order_once_from_input_with_kernel(
                   if maybe_apply_crossing_greedy_switch_from_fixed_layer(
                       free_node_ids,
                       sweep_input.predecessors_by_node_id,
+                      sweep_input.successors_by_node_id,
                       sweep_input.rank_node_ids_by_rank,
                       sweep_input.max_rank,
                       sweep_input.order_index_by_node_id,
@@ -704,6 +711,7 @@ fn sweep_rank_order_once_from_input_with_kernel(
                   }
                   if maybe_apply_crossing_greedy_switch_from_fixed_layer(
                       free_node_ids,
+                      sweep_input.predecessors_by_node_id,
                       sweep_input.successors_by_node_id,
                       sweep_input.rank_node_ids_by_rank,
                       sweep_input.max_rank,
@@ -762,6 +770,7 @@ fn sweep_rank_order_once_from_input_with_kernel(
                   if maybe_apply_crossing_greedy_switch_from_fixed_layer(
                       free_node_ids,
                       sweep_input.predecessors_by_node_id,
+                      sweep_input.successors_by_node_id,
                       sweep_input.rank_node_ids_by_rank,
                       sweep_input.max_rank,
                       sweep_input.order_index_by_node_id,
@@ -813,6 +822,7 @@ fn sweep_rank_order_once_from_input_with_kernel(
                   }
                   if maybe_apply_crossing_greedy_switch_from_fixed_layer(
                       free_node_ids,
+                      sweep_input.predecessors_by_node_id,
                       sweep_input.successors_by_node_id,
                       sweep_input.rank_node_ids_by_rank,
                       sweep_input.max_rank,
