@@ -128,6 +128,8 @@ priv struct ElkLayeredCrossingOptimizationConfig {
   preserve_order_node_threshold : Int
   preserve_order_edge_threshold : Int
   sweep_pass_count : Int
+  greedy_switch_enabled : Bool
+  greedy_switch_pass_limit : Int
   trial_count : Int
   trial_random_seed : Int
   neighbor_mean_barycenter_perturbation : Bool
@@ -147,6 +149,8 @@ fn default_crossing_optimization_config() -> ElkLayeredCrossingOptimizationConfi
     preserve_order_node_threshold: 16,
     preserve_order_edge_threshold: 30,
     sweep_pass_count: 4,
+    greedy_switch_enabled: false,
+    greedy_switch_pass_limit: 2,
     trial_count: 1,
     trial_random_seed: 1,
     neighbor_mean_barycenter_perturbation: false,

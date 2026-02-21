@@ -9,6 +9,8 @@ priv struct ElkLayeredCrossingSweepInput {
   in_layer_successors_by_node_id : Map[String, Array[String]]
   order_index_by_node_id : Map[String, Int]
   preserve_current_order_on_tie : Bool
+  greedy_switch_enabled : Bool
+  greedy_switch_pass_limit : Int
   neighbor_mean_barycenter_perturbation : Bool
   neighbor_mean_barycenter_perturbation_amount : Double
   neighbor_mean_random_state_by_key : Map[String, UInt64]
@@ -23,6 +25,8 @@ fn build_crossing_sweep_input(
   in_layer_successors_by_node_id : Map[String, Array[String]],
   order_index_by_node_id : Map[String, Int],
   preserve_current_order_on_tie : Bool,
+  greedy_switch_enabled : Bool,
+  greedy_switch_pass_limit : Int,
   neighbor_mean_barycenter_perturbation : Bool,
   neighbor_mean_barycenter_perturbation_amount : Double,
   neighbor_mean_random_state_by_key : Map[String, UInt64],
@@ -35,6 +39,8 @@ fn build_crossing_sweep_input(
     in_layer_successors_by_node_id,
     order_index_by_node_id,
     preserve_current_order_on_tie,
+    greedy_switch_enabled,
+    greedy_switch_pass_limit,
     neighbor_mean_barycenter_perturbation,
     neighbor_mean_barycenter_perturbation_amount,
     neighbor_mean_random_state_by_key,
@@ -84,6 +90,8 @@ fn build_crossing_sweep_input_from_phase_input(
       input.edge_count,
       config,
     ),
+    config.greedy_switch_enabled,
+    config.greedy_switch_pass_limit,
     config.neighbor_mean_barycenter_perturbation,
     config.neighbor_mean_barycenter_perturbation_amount,
     build_crossing_neighbor_mean_random_state_by_seed(random_seed),
@@ -407,6 +415,30 @@ fn sort_rank_nodes_by_fixed_layer_port_ranks(
 }
 
 ///|
+fn maybe_apply_crossing_greedy_switch_from_fixed_layer(
+  free_node_ids : Array[String],
+  fixed_neighbor_by_node_id : Map[String, Array[String]],
+  rank_node_ids_by_rank : Map[Int, Array[String]],
+  max_rank : Int,
+  order_index_by_node_id : Map[String, Int],
+  preserve_current_order_on_tie : Bool,
+  greedy_switch_enabled : Bool,
+  greedy_switch_pass_limit : Int,
+) -> Bool {
+  if !greedy_switch_enabled || greedy_switch_pass_limit <= 0 {
+    return false
+  }
+  apply_crossing_greedy_switch_rank_by_fixed_layer(
+    free_node_ids,
+    fixed_neighbor_by_node_id,
+    rank_position_by_node_id(rank_node_ids_by_rank, max_rank),
+    order_index_by_node_id,
+    preserve_current_order_on_tie,
+    greedy_switch_pass_limit,
+  )
+}
+
+///|
 fn sweep_rank_order_once_from_input_with_kernel(
   sweep_input : ElkLayeredCrossingSweepInput,
   sweep_kernel : ElkLayeredCrossingSweepKernel,
@@ -448,6 +480,18 @@ fn sweep_rank_order_once_from_input_with_kernel(
                 ) {
                 changed = true
               }
+              if maybe_apply_crossing_greedy_switch_from_fixed_layer(
+                  node_ids,
+                  sweep_input.predecessors_by_node_id,
+                  sweep_input.rank_node_ids_by_rank,
+                  sweep_input.max_rank,
+                  sweep_input.order_index_by_node_id,
+                  sweep_input.preserve_current_order_on_tie,
+                  sweep_input.greedy_switch_enabled,
+                  sweep_input.greedy_switch_pass_limit,
+                ) {
+                changed = true
+              }
             }
             None => ()
           }
@@ -477,6 +521,18 @@ fn sweep_rank_order_once_from_input_with_kernel(
               if apply_crossing_in_layer_successor_constraints(
                   node_ids,
                   sweep_input.in_layer_successors_by_node_id,
+                ) {
+                changed = true
+              }
+              if maybe_apply_crossing_greedy_switch_from_fixed_layer(
+                  node_ids,
+                  sweep_input.successors_by_node_id,
+                  sweep_input.rank_node_ids_by_rank,
+                  sweep_input.max_rank,
+                  sweep_input.order_index_by_node_id,
+                  sweep_input.preserve_current_order_on_tie,
+                  sweep_input.greedy_switch_enabled,
+                  sweep_input.greedy_switch_pass_limit,
                 ) {
                 changed = true
               }
@@ -515,6 +571,18 @@ fn sweep_rank_order_once_from_input_with_kernel(
                 ) {
                 changed = true
               }
+              if maybe_apply_crossing_greedy_switch_from_fixed_layer(
+                  node_ids,
+                  sweep_input.predecessors_by_node_id,
+                  sweep_input.rank_node_ids_by_rank,
+                  sweep_input.max_rank,
+                  sweep_input.order_index_by_node_id,
+                  sweep_input.preserve_current_order_on_tie,
+                  sweep_input.greedy_switch_enabled,
+                  sweep_input.greedy_switch_pass_limit,
+                ) {
+                changed = true
+              }
             }
             None => ()
           }
@@ -540,6 +608,18 @@ fn sweep_rank_order_once_from_input_with_kernel(
               if apply_crossing_in_layer_successor_constraints(
                   node_ids,
                   sweep_input.in_layer_successors_by_node_id,
+                ) {
+                changed = true
+              }
+              if maybe_apply_crossing_greedy_switch_from_fixed_layer(
+                  node_ids,
+                  sweep_input.successors_by_node_id,
+                  sweep_input.rank_node_ids_by_rank,
+                  sweep_input.max_rank,
+                  sweep_input.order_index_by_node_id,
+                  sweep_input.preserve_current_order_on_tie,
+                  sweep_input.greedy_switch_enabled,
+                  sweep_input.greedy_switch_pass_limit,
                 ) {
                 changed = true
               }
@@ -575,6 +655,18 @@ fn sweep_rank_order_once_from_input_with_kernel(
                     ) {
                     changed = true
                   }
+                  if maybe_apply_crossing_greedy_switch_from_fixed_layer(
+                      free_node_ids,
+                      sweep_input.predecessors_by_node_id,
+                      sweep_input.rank_node_ids_by_rank,
+                      sweep_input.max_rank,
+                      sweep_input.order_index_by_node_id,
+                      sweep_input.preserve_current_order_on_tie,
+                      sweep_input.greedy_switch_enabled,
+                      sweep_input.greedy_switch_pass_limit,
+                    ) {
+                    changed = true
+                  }
                   update_fixed_layer_connected_order_by_free_rank_positions(
                     fixed_node_ids,
                     free_node_ids,
@@ -607,6 +699,18 @@ fn sweep_rank_order_once_from_input_with_kernel(
                   if apply_crossing_in_layer_successor_constraints(
                       free_node_ids,
                       sweep_input.in_layer_successors_by_node_id,
+                    ) {
+                    changed = true
+                  }
+                  if maybe_apply_crossing_greedy_switch_from_fixed_layer(
+                      free_node_ids,
+                      sweep_input.successors_by_node_id,
+                      sweep_input.rank_node_ids_by_rank,
+                      sweep_input.max_rank,
+                      sweep_input.order_index_by_node_id,
+                      sweep_input.preserve_current_order_on_tie,
+                      sweep_input.greedy_switch_enabled,
+                      sweep_input.greedy_switch_pass_limit,
                     ) {
                     changed = true
                   }
@@ -655,6 +759,18 @@ fn sweep_rank_order_once_from_input_with_kernel(
                     ) {
                     changed = true
                   }
+                  if maybe_apply_crossing_greedy_switch_from_fixed_layer(
+                      free_node_ids,
+                      sweep_input.predecessors_by_node_id,
+                      sweep_input.rank_node_ids_by_rank,
+                      sweep_input.max_rank,
+                      sweep_input.order_index_by_node_id,
+                      sweep_input.preserve_current_order_on_tie,
+                      sweep_input.greedy_switch_enabled,
+                      sweep_input.greedy_switch_pass_limit,
+                    ) {
+                    changed = true
+                  }
                   update_fixed_layer_connected_order_by_free_rank_positions(
                     fixed_node_ids,
                     free_node_ids,
@@ -692,6 +808,18 @@ fn sweep_rank_order_once_from_input_with_kernel(
                   if apply_crossing_in_layer_successor_constraints(
                       free_node_ids,
                       sweep_input.in_layer_successors_by_node_id,
+                    ) {
+                    changed = true
+                  }
+                  if maybe_apply_crossing_greedy_switch_from_fixed_layer(
+                      free_node_ids,
+                      sweep_input.successors_by_node_id,
+                      sweep_input.rank_node_ids_by_rank,
+                      sweep_input.max_rank,
+                      sweep_input.order_index_by_node_id,
+                      sweep_input.preserve_current_order_on_tie,
+                      sweep_input.greedy_switch_enabled,
+                      sweep_input.greedy_switch_pass_limit,
                     ) {
                     changed = true
                   }
