@@ -196,17 +196,6 @@ test "elk layered major spacing expands when edge labels are long" {
 }
 
 ///|
-fn positioned_coord_by_node_id(
-  nodes : Array[@model.PositionedNode],
-) -> Map[String, (Int, Int)] {
-  let coord_by_node_id : Map[String, (Int, Int)] = {}
-  for node in nodes {
-    coord_by_node_id[node.id] = (node.x, node.y)
-  }
-  coord_by_node_id
-}
-
-///|
 test "elk layered finalize phase preserves placement coordinates for subgraph-heavy flow" {
   let graph = @parser_header_core.parse_mermaid(stress_012_source())
   let request : GraphLayoutBackendRequest = {
@@ -233,9 +222,10 @@ test "elk layered finalize phase preserves placement coordinates for subgraph-he
   let placement_state = run_elk_layered_node_placement_phase(
     setup_state, rank_phase_state, node_size_state, spacing_state,
   )
-  let before_finalize = positioned_coord_by_node_id(
-    placement_state.positioned_nodes,
-  )
+  let before_finalize : Map[String, (Int, Int)] = {}
+  for node in placement_state.positioned_nodes {
+    before_finalize[node.id] = (node.x, node.y)
+  }
   let finalized = run_elk_layered_finalize_phase(
     setup_state,
     spacing_state,
