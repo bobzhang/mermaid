@@ -227,6 +227,7 @@ fn execute_crossing_phase_once_with_plan_and_seed(
   initial_forward_sweep : Bool,
 ) -> ElkLayeredCrossingExecutionState {
   let _ = input.port_order_slots_by_node_id
+  let _ = input.ordering_edges
   let config = plan.config
   let objective_context = build_crossing_objective_context_from_phase_input(
     input,

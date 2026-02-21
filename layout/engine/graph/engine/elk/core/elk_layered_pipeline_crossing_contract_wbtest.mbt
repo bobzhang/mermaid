@@ -24,6 +24,22 @@ test "elk layered crossing phase input enumerates rank nodes for port-order slot
     },
     [],
   )
+  assert_eq(input.ordering_edges, [("A", "C"), ("B", "C")])
+}
+
+///|
+test "elk layered crossing phase input keeps duplicate edges in deterministic source order" {
+  let input = build_crossing_phase_input(
+    { 0: ["B", "A"], 1: ["C"] },
+    1,
+    { "A": [], "B": [], "C": ["A", "A", "B"] },
+    { "B": ["C"], "A": ["C", "C"], "C": [] },
+    { "A": 0, "B": 1, "C": 2 },
+    { "A": 0, "B": 0, "C": 1 },
+    3,
+    3,
+  )
+  assert_eq(input.ordering_edges, [("A", "C"), ("A", "C"), ("B", "C")])
 }
 
 ///|
