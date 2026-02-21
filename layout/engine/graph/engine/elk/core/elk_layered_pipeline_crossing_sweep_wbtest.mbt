@@ -127,7 +127,10 @@ fn wb_optimize_rank_order_with_sweep_passes_from_input_and_start_direction(
   let mut forward_sweep = initial_forward_sweep
   while pass < sweep_pass_count {
     let changed = sweep_rank_order_once_from_input_with_kernel(
-      sweep_input, sweep_kernel, forward_sweep,
+      sweep_input,
+      sweep_kernel,
+      forward_sweep,
+      pass == 0,
     )
     if !changed {
       break
@@ -526,6 +529,7 @@ test "elk layered neighbor sort keeps current rank order on full ties" {
     false,
     build_crossing_neighbor_mean_random_state_by_seed(1),
     0.07,
+    true,
   )
   assert_eq(node_ids, ["B", "A"])
 }
@@ -555,6 +559,31 @@ test "elk layered neighbor sort propagates in-layer edges through recursive bary
     false,
     build_crossing_neighbor_mean_random_state_by_seed(1),
     0.07,
+    true,
+  )
+  assert_eq(node_ids, ["A", "B", "C"])
+}
+
+///|
+test "elk layered neighbor sort fills unknown barycenters in pre-ordered mode" {
+  let node_ids = ["A", "B", "C"]
+  let neighbor_by_node_id : Map[String, Array[String]] = {
+    "A": ["X"],
+    "B": [],
+    "C": ["Y"],
+  }
+  let rank_position_by_node_id : Map[String, Int] = { "X": 0, "Y": 2 }
+  let order_index_by_node_id : Map[String, Int] = { "A": 0, "B": 1, "C": 2 }
+  let _ = sort_rank_nodes_by_neighbors(
+    node_ids,
+    neighbor_by_node_id,
+    rank_position_by_node_id,
+    order_index_by_node_id,
+    true,
+    false,
+    build_crossing_neighbor_mean_random_state_by_seed(1),
+    0.07,
+    true,
   )
   assert_eq(node_ids, ["A", "B", "C"])
 }
@@ -601,6 +630,7 @@ test "elk layered neighbor-mean perturbation keeps tie-break deterministic by se
     true,
     build_crossing_neighbor_mean_random_state_by_seed(1),
     0.07,
+    true,
   )
   let _ = sort_rank_nodes_by_neighbors(
     run_two,
@@ -611,6 +641,7 @@ test "elk layered neighbor-mean perturbation keeps tie-break deterministic by se
     true,
     build_crossing_neighbor_mean_random_state_by_seed(1),
     0.07,
+    true,
   )
   assert_eq(run_one, run_two)
 }

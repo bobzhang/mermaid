@@ -62,6 +62,7 @@ fn evaluate_crossing_objective_with_counter(
 fn apply_crossing_sweep_heuristic_once(
   sweep_input : ElkLayeredCrossingSweepInput,
   forward_sweep : Bool,
+  is_first_sweep : Bool,
   components : ElkLayeredCrossingComponentBundle,
 ) -> Bool {
   match components.port_distributor {
@@ -72,24 +73,28 @@ fn apply_crossing_sweep_heuristic_once(
             sweep_input,
             NeighborMeanBidirectional,
             forward_sweep,
+            is_first_sweep,
           )
         LayerSweepNeighborMedianHeuristic =>
           sweep_rank_order_once_from_input_with_kernel(
             sweep_input,
             NeighborMedianBidirectional,
             forward_sweep,
+            is_first_sweep,
           )
         LayerSweepEdgeSlotHeuristic =>
           sweep_rank_order_once_from_input_with_kernel(
             sweep_input,
             NeighborMeanEdgeSlotBidirectional,
             forward_sweep,
+            is_first_sweep,
           )
         LayerSweepPortRankHeuristic =>
           sweep_rank_order_once_from_input_with_kernel(
             sweep_input,
             NeighborMeanPortRankBidirectional,
             forward_sweep,
+            is_first_sweep,
           )
       }
   }

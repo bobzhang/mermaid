@@ -250,7 +250,10 @@ fn execute_crossing_phase_once_with_plan_and_seed(
   let mut forward_sweep = initial_forward_sweep
   while pass < config.sweep_pass_count {
     let changed = apply_crossing_sweep_heuristic_once(
-      sweep_input, forward_sweep, components,
+      sweep_input,
+      forward_sweep,
+      pass == 0,
+      components,
     )
     let pass_objective = evaluate_crossing_objective_with_counter(
       sweep_input.rank_node_ids_by_rank,

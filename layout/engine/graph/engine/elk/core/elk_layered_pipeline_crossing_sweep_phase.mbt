@@ -404,6 +404,7 @@ fn sweep_rank_order_once_from_input_with_kernel(
   sweep_input : ElkLayeredCrossingSweepInput,
   sweep_kernel : ElkLayeredCrossingSweepKernel,
   forward_sweep : Bool,
+  is_first_sweep : Bool,
 ) -> Bool {
   if sweep_input.max_rank <= 0 {
     return false
@@ -430,6 +431,7 @@ fn sweep_rank_order_once_from_input_with_kernel(
                   sweep_input.neighbor_mean_barycenter_perturbation,
                   sweep_input.neighbor_mean_random_state_by_key,
                   sweep_input.neighbor_mean_barycenter_perturbation_amount,
+                  !is_first_sweep,
                 ) {
                 changed = true
               }
@@ -454,6 +456,7 @@ fn sweep_rank_order_once_from_input_with_kernel(
                   sweep_input.neighbor_mean_barycenter_perturbation,
                   sweep_input.neighbor_mean_random_state_by_key,
                   sweep_input.neighbor_mean_barycenter_perturbation_amount,
+                  !is_first_sweep,
                 ) {
                 changed = true
               }

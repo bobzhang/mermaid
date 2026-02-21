@@ -31,13 +31,9 @@ fn empty_visited_neighbor_barycenter_state() -> NodeNeighborBarycenterState {
 let crossing_neighbor_random_state_key = "__crossing_neighbor_random_state"
 
 ///|
-fn next_crossing_neighbor_mean_barycenter_perturbation(
+fn next_crossing_neighbor_random_unit(
   random_state_by_key : Map[String, UInt64],
-  perturbation_amount : Double,
 ) -> Double {
-  if perturbation_amount <= 0.0 {
-    return 0.0
-  }
   let random_state = match
     random_state_by_key.get(crossing_neighbor_random_state_key) {
     Some(value) => value
@@ -45,7 +41,18 @@ fn next_crossing_neighbor_mean_barycenter_perturbation(
   }
   let (next_state, bits) = java_random_next_bits(random_state, 24)
   random_state_by_key[crossing_neighbor_random_state_key] = next_state
-  bits.to_double() / 16777216.0 * perturbation_amount -
+  bits.to_double() / 16777216.0
+}
+
+///|
+fn next_crossing_neighbor_mean_barycenter_perturbation(
+  random_state_by_key : Map[String, UInt64],
+  perturbation_amount : Double,
+) -> Double {
+  if perturbation_amount <= 0.0 {
+    return 0.0
+  }
+  next_crossing_neighbor_random_unit(random_state_by_key) * perturbation_amount -
   perturbation_amount / 2.0
 }
 
@@ -81,7 +88,9 @@ fn calculate_node_neighbor_barycenter_state(
   rank_position_by_node_id : Map[String, Int],
   free_node_id_set : Map[String, Bool],
   barycenter_state_by_node_id : Map[String, NodeNeighborBarycenterState],
-  barycenter_perturbation_by_node_id : Map[String, Double],
+  neighbor_mean_barycenter_perturbation : Bool,
+  random_state_by_key : Map[String, UInt64],
+  neighbor_mean_barycenter_perturbation_amount : Double,
 ) -> NodeNeighborBarycenterState {
   let state = match barycenter_state_by_node_id.get(node_id) {
     Some(value) => value
@@ -104,7 +113,8 @@ fn calculate_node_neighbor_barycenter_state(
           if neighbor_id != node_id {
             let neighbor_state = calculate_node_neighbor_barycenter_state(
               neighbor_id, neighbor_by_node_id, rank_position_by_node_id, free_node_id_set,
-              barycenter_state_by_node_id, barycenter_perturbation_by_node_id,
+              barycenter_state_by_node_id, neighbor_mean_barycenter_perturbation,
+              random_state_by_key, neighbor_mean_barycenter_perturbation_amount,
             )
             count += neighbor_state.neighbor_position_count
             sum += neighbor_state.neighbor_position_sum
@@ -122,9 +132,12 @@ fn calculate_node_neighbor_barycenter_state(
     None => ()
   }
   if count > 0 {
-    sum += match barycenter_perturbation_by_node_id.get(node_id) {
-      Some(value) => value
-      None => 0.0
+    sum += if neighbor_mean_barycenter_perturbation {
+      next_crossing_neighbor_mean_barycenter_perturbation(
+        random_state_by_key, neighbor_mean_barycenter_perturbation_amount,
+      )
+    } else {
+      0.0
     }
   }
   let resolved_state : NodeNeighborBarycenterState = {
@@ -143,12 +156,14 @@ fn node_neighbor_order_key(
   rank_position_by_node_id : Map[String, Int],
   free_node_id_set : Map[String, Bool],
   barycenter_state_by_node_id : Map[String, NodeNeighborBarycenterState],
-  barycenter_perturbation_by_node_id : Map[String, Double],
+  neighbor_mean_barycenter_perturbation : Bool,
+  random_state_by_key : Map[String, UInt64],
+  neighbor_mean_barycenter_perturbation_amount : Double,
 ) -> NodeNeighborOrderKey {
   node_neighbor_order_key_from_barycenter_state(
     calculate_node_neighbor_barycenter_state(
       node_id, neighbor_by_node_id, rank_position_by_node_id, free_node_id_set, barycenter_state_by_node_id,
-      barycenter_perturbation_by_node_id,
+      neighbor_mean_barycenter_perturbation, random_state_by_key, neighbor_mean_barycenter_perturbation_amount,
     ),
   )
 }
@@ -188,6 +203,90 @@ fn compare_neighbor_order_key(
     }
   } else {
     0
+  }
+}
+
+///|
+fn neighbor_order_center_value(key : NodeNeighborOrderKey) -> Double {
+  if key.has_center {
+    key.neighbor_position_sum / key.neighbor_position_count.to_double()
+  } else {
+    0.0
+  }
+}
+
+///|
+fn neighbor_order_key_with_center(center : Double) -> NodeNeighborOrderKey {
+  {
+    has_center: true,
+    neighbor_position_sum: center,
+    neighbor_position_count: 1,
+  }
+}
+
+///|
+fn fill_unknown_neighbor_order_keys(
+  node_ids : Array[String],
+  neighbor_key_by_node_id : Map[String, NodeNeighborOrderKey],
+  pre_ordered : Bool,
+  random_state_by_key : Map[String, UInt64],
+) -> Unit {
+  if pre_ordered {
+    let mut last_value = -1.0
+    for index, node_id in node_ids {
+      let key = match neighbor_key_by_node_id.get(node_id) {
+        Some(value) => value
+        None => empty_neighbor_order_key()
+      }
+      if key.has_center {
+        last_value = neighbor_order_center_value(key)
+      } else {
+        let mut next_value = last_value + 1.0
+        for next_index in (index + 1)..<node_ids.length() {
+          let next_node_id = node_ids[next_index]
+          let next_key = match neighbor_key_by_node_id.get(next_node_id) {
+            Some(value) => value
+            None => empty_neighbor_order_key()
+          }
+          if next_key.has_center {
+            next_value = neighbor_order_center_value(next_key)
+            break
+          }
+        }
+        let filled_value = (last_value + next_value) / 2.0
+        neighbor_key_by_node_id[node_id] = neighbor_order_key_with_center(
+          filled_value,
+        )
+        last_value = filled_value
+      }
+    }
+  } else {
+    let mut max_bary = 0.0
+    for node_id in node_ids {
+      let key = match neighbor_key_by_node_id.get(node_id) {
+        Some(value) => value
+        None => empty_neighbor_order_key()
+      }
+      if key.has_center {
+        let center = neighbor_order_center_value(key)
+        if center > max_bary {
+          max_bary = center
+        }
+      }
+    }
+    max_bary += 2.0
+    for node_id in node_ids {
+      let key = match neighbor_key_by_node_id.get(node_id) {
+        Some(value) => value
+        None => empty_neighbor_order_key()
+      }
+      if !key.has_center {
+        neighbor_key_by_node_id[node_id] = neighbor_order_key_with_center(
+          next_crossing_neighbor_random_unit(random_state_by_key) * max_bary -
+          1.0,
+        )
+      }
+    }
   }
 }
 
@@ -251,27 +350,21 @@ fn sort_rank_nodes_by_neighbors(
   neighbor_mean_barycenter_perturbation : Bool,
   random_state_by_key : Map[String, UInt64],
   neighbor_mean_barycenter_perturbation_amount : Double,
+  pre_ordered : Bool,
 ) -> Bool {
   let original_node_ids = node_ids.copy()
   let free_node_id_set = build_node_id_set(node_ids)
-  let barycenter_perturbation_by_node_id : Map[String, Double] = {}
-  for node_id in node_ids {
-    barycenter_perturbation_by_node_id[node_id] = if neighbor_mean_barycenter_perturbation {
-      next_crossing_neighbor_mean_barycenter_perturbation(
-        random_state_by_key, neighbor_mean_barycenter_perturbation_amount,
-      )
-    } else {
-      0.0
-    }
-  }
   let barycenter_state_by_node_id : Map[String, NodeNeighborBarycenterState] = {}
   let neighbor_key_by_node_id : Map[String, NodeNeighborOrderKey] = {}
   for node_id in node_ids {
     neighbor_key_by_node_id[node_id] = node_neighbor_order_key(
       node_id, neighbor_by_node_id, rank_position_by_node_id, free_node_id_set, barycenter_state_by_node_id,
-      barycenter_perturbation_by_node_id,
+      neighbor_mean_barycenter_perturbation, random_state_by_key, neighbor_mean_barycenter_perturbation_amount,
     )
   }
+  fill_unknown_neighbor_order_keys(
+    node_ids, neighbor_key_by_node_id, pre_ordered, random_state_by_key,
+  )
   node_ids.sort_by((left, right) => {
     let left_key = match neighbor_key_by_node_id.get(left) {
       Some(value) => value
