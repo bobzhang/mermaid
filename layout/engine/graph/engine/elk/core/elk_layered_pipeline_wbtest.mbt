@@ -340,9 +340,16 @@ test "elk layered optimized seed selector prefers lower crossing score" {
     "C": 2,
     "D": 3,
   }
+  let rank_by_node_id : Map[String, Int] = { "A": 0, "B": 0, "C": 1, "D": 1 }
+  let successors_by_node_id : Map[String, Array[String]] = {
+    "A": [],
+    "B": [],
+    "C": [],
+    "D": [],
+  }
   let (selected_rank_node_ids_by_rank, selected_crossing_score, selected_source) = select_optimized_seed_rank_order_candidate(
     optimized_seed_rank_node_ids_by_rank, 9, optimized_reversed_seed_rank_node_ids_by_rank,
-    2, 1, order_index_by_node_id,
+    2, 1, order_index_by_node_id, rank_by_node_id, successors_by_node_id,
   )
   assert_eq(selected_source, "optimized-reversed-seed")
   assert_eq(selected_crossing_score, 2)
@@ -367,9 +374,16 @@ test "elk layered optimized seed selector breaks crossing ties by model order" {
     "C": 2,
     "D": 3,
   }
+  let rank_by_node_id : Map[String, Int] = { "A": 0, "B": 0, "C": 1, "D": 1 }
+  let successors_by_node_id : Map[String, Array[String]] = {
+    "A": [],
+    "B": [],
+    "C": [],
+    "D": [],
+  }
   let (selected_rank_node_ids_by_rank, selected_crossing_score, selected_source) = select_optimized_seed_rank_order_candidate(
     optimized_seed_rank_node_ids_by_rank, 4, optimized_reversed_seed_rank_node_ids_by_rank,
-    4, 1, order_index_by_node_id,
+    4, 1, order_index_by_node_id, rank_by_node_id, successors_by_node_id,
   )
   assert_eq(selected_source, "optimized-reversed-seed")
   assert_eq(selected_crossing_score, 4)
