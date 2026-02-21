@@ -4,11 +4,18 @@ package "bobzhang/beautiful_mermaid/layout/engine/graph/engine/elk/core"
 // Values
 pub fn collect_elk_layered_rank_trace_lines(@bobzhang/beautiful_mermaid/layout/engine/graph/contract/core.GraphLayoutBackendRequest) -> Array[String]?
 
+pub fn collect_elk_layered_rank_trace_lines_with_sweep_kernel(@bobzhang/beautiful_mermaid/layout/engine/graph/contract/core.GraphLayoutBackendRequest, ElkLayeredRankTraceSweepKernel) -> Array[String]?
+
 pub fn layout_graph_elk_backend(@bobzhang/beautiful_mermaid/layout/engine/graph/contract/core.GraphLayoutBackendRequest) -> @bobzhang/beautiful_mermaid/layout/engine/graph/contract/core.GraphLayoutBackendResult
 
 // Errors
 
 // Types and methods
+pub(all) enum ElkLayeredRankTraceSweepKernel {
+  Default
+  NeighborMeanBidirectional
+  NeighborMeanEdgeSlotBidirectional
+}
 
 // Type aliases
 

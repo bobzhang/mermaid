@@ -349,3 +349,35 @@ test "elk layered rank trace can switch sweep kernel without changing seed phase
     edge_slot_trace.rank_order_trial_count,
   )
 }
+
+///|
+test "elk layered rank trace public kernel selector emits requested kernel tag" {
+  let graph = wb_graph(["A", "B", "C", "D"], [
+    ("A", "B"),
+    ("A", "C"),
+    ("B", "D"),
+    ("C", "D"),
+  ])
+  let request = trace_request_for_graph(graph)
+  let default_lines = match
+    collect_elk_layered_rank_trace_lines_with_sweep_kernel(request, Default) {
+    Some(lines) => lines
+    None => fail("expected default trace lines")
+  }
+  let edge_slot_lines = match
+    collect_elk_layered_rank_trace_lines_with_sweep_kernel(
+      request,
+      NeighborMeanEdgeSlotBidirectional,
+    ) {
+    Some(lines) => lines
+    None => fail("expected edge-slot trace lines")
+  }
+  assert_true(
+    default_lines.contains("ORDER_SWEEP_KERNEL\tneighbor-mean-bidirectional"),
+  )
+  assert_true(
+    edge_slot_lines.contains(
+      "ORDER_SWEEP_KERNEL\tneighbor-mean-edge-slot-bidirectional",
+    ),
+  )
+}

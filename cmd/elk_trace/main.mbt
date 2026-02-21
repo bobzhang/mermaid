@@ -18,10 +18,12 @@ fn print_usage() -> Unit {
     #|  moon run cmd/elk_trace -- --case feedback_mesh
     #|  moon run cmd/elk_trace -- --case long_span
     #|  moon run cmd/elk_trace -- --source "graph LR\nA --> B\nB --> C"
+    #|  moon run cmd/elk_trace -- --case fanout --sweep-kernel edge-slot
     #|  moon run cmd/elk_trace -- --case all
     #|Flags:
     #|  --case   fanout | feedback_mesh | long_span | all
     #|  --source Mermaid source text (use shell command substitution for fixture files)
+    #|  --sweep-kernel  default | neighbor-mean | edge-slot
     #|  --help   Show this help
     #|
   println(usage.trim_end().to_string())
@@ -46,6 +48,7 @@ priv struct ElkTraceCliArgs {
   show_help : Bool
   case_name : String?
   source : String?
+  sweep_kernel : @layout_engine_graph_engine_elk_core.ElkLayeredRankTraceSweepKernel
 }
 
 ///|
@@ -57,10 +60,23 @@ fn decode_source_arg(raw : String) -> String {
 }
 
 ///|
+fn decode_sweep_kernel_arg(
+  raw : String,
+) -> @layout_engine_graph_engine_elk_core.ElkLayeredRankTraceSweepKernel? {
+  match raw.trim().to_lower() {
+    "default" => Some(Default)
+    "neighbor-mean" => Some(NeighborMeanBidirectional)
+    "edge-slot" => Some(NeighborMeanEdgeSlotBidirectional)
+    _ => None
+  }
+}
+
+///|
 fn parse_cli_args(args : Array[String]) -> ElkTraceCliArgs? {
   let mut show_help = false
   let mut case_name : String? = None
   let mut source : String? = None
+  let mut sweep_kernel : @layout_engine_graph_engine_elk_core.ElkLayeredRankTraceSweepKernel = Default
 
   let mut i = 0
   while i < args.length() {
@@ -94,6 +110,17 @@ fn parse_cli_args(args : Array[String]) -> ElkTraceCliArgs? {
       i += 2
       continue
     }
+    if arg == "--sweep-kernel" {
+      if i + 1 >= args.length() {
+        return None
+      }
+      match decode_sweep_kernel_arg(args[i + 1]) {
+        Some(parsed_kernel) => sweep_kernel = parsed_kernel
+        None => return None
+      }
+      i += 2
+      continue
+    }
     if arg is [.. "--case=", .. raw_case] {
       let parsed_case_name = raw_case.trim().to_lower()
       if parsed_case_name == "" {
@@ -112,6 +139,14 @@ fn parse_cli_args(args : Array[String]) -> ElkTraceCliArgs? {
       i += 1
       continue
     }
+    if arg is [.. "--sweep-kernel=", .. raw_sweep_kernel] {
+      match decode_sweep_kernel_arg(raw_sweep_kernel.to_string()) {
+        Some(parsed_kernel) => sweep_kernel = parsed_kernel
+        None => return None
+      }
+      i += 1
+      continue
+    }
     return None
   }
 
@@ -127,7 +162,7 @@ fn parse_cli_args(args : Array[String]) -> ElkTraceCliArgs? {
       None => if source is Some(_) { None } else { Some("all") }
     }
   }
-  Some({ show_help, case_name: resolved_case_name, source })
+  Some({ show_help, case_name: resolved_case_name, source, sweep_kernel })
 }
 
 ///|
@@ -237,7 +272,10 @@ fn kernel_by_case_name(case_name : String) -> ElkTraceKernel? {
 }
 
 ///|
-fn dump_graph_trace(graph : @model.MermaidGraph) -> Bool {
+fn dump_graph_trace(
+  graph : @model.MermaidGraph,
+  sweep_kernel : @layout_engine_graph_engine_elk_core.ElkLayeredRankTraceSweepKernel,
+) -> Bool {
   let options = { ..@model.RenderOptions::default(), layout_engine: Some(Elk) }
   let request : @layout_engine_graph_contract_core.GraphLayoutBackendRequest = {
     graph,
@@ -246,8 +284,8 @@ fn dump_graph_trace(graph : @model.MermaidGraph) -> Bool {
     compact_fanin: false,
   }
   match
-    @layout_engine_graph_engine_elk_core.collect_elk_layered_rank_trace_lines(
-      request,
+    @layout_engine_graph_engine_elk_core.collect_elk_layered_rank_trace_lines_with_sweep_kernel(
+      request, sweep_kernel,
     ) {
     Some(lines) => {
       for line in lines {
@@ -263,20 +301,26 @@ fn dump_graph_trace(graph : @model.MermaidGraph) -> Bool {
 }
 
 ///|
-fn dump_case_trace(case_name : String) -> Bool {
+fn dump_case_trace(
+  case_name : String,
+  sweep_kernel : @layout_engine_graph_engine_elk_core.ElkLayeredRankTraceSweepKernel,
+) -> Bool {
   match kernel_by_case_name(case_name) {
-    Some(kernel) => dump_graph_trace(build_graph(kernel))
+    Some(kernel) => dump_graph_trace(build_graph(kernel), sweep_kernel)
     None => false
   }
 }
 
 ///|
-fn dump_source_trace(source : String) -> Bool {
+fn dump_source_trace(
+  source : String,
+  sweep_kernel : @layout_engine_graph_engine_elk_core.ElkLayeredRankTraceSweepKernel,
+) -> Bool {
   let graph_result : Result[@model.MermaidGraph, @model.MermaidError] = try? @parser_header_core.parse_mermaid(
     source,
   )
   match graph_result {
-    Ok(graph) => dump_graph_trace(graph)
+    Ok(graph) => dump_graph_trace(graph, sweep_kernel)
     Err(err) => {
       println("Error: failed to parse --source payload")
       println("\{err}")
@@ -293,16 +337,16 @@ fn run() -> Unit {
       if parsed_args.show_help {
         print_usage()
       } else if parsed_args.source is Some(source) {
-        if !dump_source_trace(source) {
+        if !dump_source_trace(source, parsed_args.sweep_kernel) {
           print_usage()
         }
       } else if parsed_args.case_name is Some(case_name) {
         if case_name == "all" {
           for case_name in ["fanout", "feedback_mesh", "long_span"] {
             println("CASE\t\{case_name}")
-            let _ = dump_case_trace(case_name)
+            let _ = dump_case_trace(case_name, parsed_args.sweep_kernel)
           }
-        } else if !dump_case_trace(case_name) {
+        } else if !dump_case_trace(case_name, parsed_args.sweep_kernel) {
           println("Error: unknown case '\{case_name}'")
           print_usage()
         }

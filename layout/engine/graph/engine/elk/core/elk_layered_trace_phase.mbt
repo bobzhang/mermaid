@@ -44,6 +44,25 @@ priv struct ElkLayeredRankTrace {
 }
 
 ///|
+/// Sweep-kernel selector used by ELK layered trace/debug collection.
+pub(all) enum ElkLayeredRankTraceSweepKernel {
+  Default
+  NeighborMeanBidirectional
+  NeighborMeanEdgeSlotBidirectional
+}
+
+///|
+fn crossing_sweep_kernel_for_rank_trace(
+  trace_sweep_kernel : ElkLayeredRankTraceSweepKernel,
+) -> ElkLayeredCrossingSweepKernel {
+  match trace_sweep_kernel {
+    Default => default_crossing_sweep_kernel()
+    NeighborMeanBidirectional => NeighborMeanBidirectional
+    NeighborMeanEdgeSlotBidirectional => NeighborMeanEdgeSlotBidirectional
+  }
+}
+
+///|
 fn rank_layers_from_rank_map(
   rank_node_ids_by_rank : Map[Int, Array[String]],
   max_rank : Int,
@@ -579,7 +598,29 @@ fn elk_layered_rank_trace_lines(trace : ElkLayeredRankTrace) -> Array[String] {
 pub fn collect_elk_layered_rank_trace_lines(
   request : GraphLayoutBackendRequest,
 ) -> Array[String]? {
-  match collect_elk_layered_rank_trace(request) {
+  collect_elk_layered_rank_trace_lines_with_sweep_kernel(request, Default)
+}
+
+///|
+/// Collects and formats ELK layered rank-phase trace lines with explicit crossing sweep kernel.
+pub fn collect_elk_layered_rank_trace_lines_with_sweep_kernel(
+  request : GraphLayoutBackendRequest,
+  trace_sweep_kernel : ElkLayeredRankTraceSweepKernel,
+) -> Array[String]? {
+  if trace_sweep_kernel is Default {
+    return match collect_elk_layered_rank_trace(request) {
+      Some(trace) => Some(elk_layered_rank_trace_lines(trace))
+      None => None
+    }
+  }
+  let default_plan = default_crossing_execution_plan(
+    LayerSweepWithLocalRefinement,
+  )
+  match
+    collect_elk_layered_rank_trace_with_crossing_execution_plan(request, {
+      ..default_plan,
+      sweep_kernel: crossing_sweep_kernel_for_rank_trace(trace_sweep_kernel),
+    }) {
     Some(trace) => Some(elk_layered_rank_trace_lines(trace))
     None => None
   }
