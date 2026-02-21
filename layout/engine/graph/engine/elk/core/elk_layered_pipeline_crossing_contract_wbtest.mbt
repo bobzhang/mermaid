@@ -51,7 +51,9 @@ test "elk layered crossing optimization config keeps baseline thresholds" {
   assert_eq(config.trial_count, 1)
   assert_true(!config.neighbor_mean_barycenter_perturbation)
   assert_eq(config.neighbor_mean_barycenter_perturbation_amount, 0.07)
-  assert_true(config.trial_continuation_policy is ContinueWhilePassChanges)
+  assert_true(
+    config.trial_continuation_policy is ContinueWhileObjectiveImproves,
+  )
   assert_eq(config.swap_refine_node_limit, 40)
   assert_eq(config.swap_refine_edge_limit, 120)
   assert_eq(config.permutation_refine_node_limit, 28)

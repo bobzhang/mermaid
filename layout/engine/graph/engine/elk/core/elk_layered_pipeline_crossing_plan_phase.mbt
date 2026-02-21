@@ -34,7 +34,7 @@ priv enum ElkLayeredCrossingTrialContinuationPolicy {
 
 ///|
 fn default_crossing_trial_continuation_policy() -> ElkLayeredCrossingTrialContinuationPolicy {
-  available_crossing_trial_continuation_policies()[0]
+  available_crossing_trial_continuation_policies()[1]
 }
 
 ///|
