@@ -9,14 +9,6 @@ fn main {
 }
 
 ///|
-fn option_int_or(value : Int?, fallback : Int) -> Int {
-  match value {
-    Some(v) => v
-    None => fallback
-  }
-}
-
-///|
 fn print_usage() -> Unit {
   let usage =
     #|Usage:
@@ -232,14 +224,14 @@ fn rank_layers(
     layers.push([])
   }
   for node in setup_state.nodes_in_order {
-    let rank = option_int_or(
-      setup_state.lane_state.flow_rank_by_node_id.get(node.id),
-      0,
-    )
-    let lane = option_int_or(
-      setup_state.lane_state.flow_lane_by_node_id.get(node.id),
-      0,
-    )
+    let rank = match setup_state.lane_state.flow_rank_by_node_id.get(node.id) {
+      Some(value) => value
+      None => 0
+    }
+    let lane = match setup_state.lane_state.flow_lane_by_node_id.get(node.id) {
+      Some(value) => value
+      None => 0
+    }
     if rank < 0 {
       continue
     }
@@ -319,9 +311,11 @@ fn dump_graph_trace(case_name : String, graph : @model.MermaidGraph) -> Unit {
     }
   }
   for node_id in sorted_node_ids {
-    println(
-      "RANK\t\{node_id}\t\{option_int_or(setup_state.lane_state.flow_rank_by_node_id.get(node_id), 0)}",
-    )
+    let rank = match setup_state.lane_state.flow_rank_by_node_id.get(node_id) {
+      Some(value) => value
+      None => 0
+    }
+    println("RANK\t\{node_id}\t\{rank}")
   }
   let layers = rank_layers(setup_state)
   for rank, layer in layers {
