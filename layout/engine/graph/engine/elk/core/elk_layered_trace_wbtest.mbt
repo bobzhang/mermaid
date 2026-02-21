@@ -346,6 +346,7 @@ test "elk layered rank trace line formatter keeps sorted deterministic sections"
   )
   let mut has_model_order_inversion_influence = false
   let mut has_trial_continuation_policy = false
+  let mut has_local_refinement_kernels = false
   let mut has_order_trial_selected = false
   let mut has_order_trial_rows = false
   let mut has_order_trial_pass_rows = false
@@ -356,6 +357,9 @@ test "elk layered rank trace line formatter keeps sorted deterministic sections"
     }
     if line is [.. "ORDER_TRIAL_MODEL_ORDER_INVERSION_INFLUENCE\t", ..] {
       has_model_order_inversion_influence = true
+    }
+    if line is [.. "ORDER_LOCAL_REFINEMENT_KERNELS\t", ..] {
+      has_local_refinement_kernels = true
     }
     if line is [.. "ORDER_TRIAL_SELECTED\t", ..] {
       has_order_trial_selected = true
@@ -371,6 +375,7 @@ test "elk layered rank trace line formatter keeps sorted deterministic sections"
     }
   }
   assert_true(has_trial_continuation_policy)
+  assert_true(has_local_refinement_kernels)
   assert_true(has_model_order_inversion_influence)
   assert_true(has_order_trial_selected)
   assert_true(has_order_trial_rows)
@@ -489,6 +494,7 @@ test "elk layered rank trace crossing overrides are reflected in trace lines" {
       Some(6),
       Some(0.25),
       None,
+      Some(NoLocalRefinement),
     ) {
     Some(lines) => lines
     None => fail("expected trace lines with crossing overrides")
@@ -505,6 +511,7 @@ test "elk layered rank trace crossing overrides are reflected in trace lines" {
   assert_true(
     lines.contains("ORDER_TRIAL_MODEL_ORDER_INVERSION_INFLUENCE\t0.25"),
   )
+  assert_true(lines.contains("ORDER_LOCAL_REFINEMENT_KERNELS\tnone"))
 }
 
 ///|
@@ -533,6 +540,7 @@ test "elk layered rank trace kernel comparison lines expose deterministic diff k
   let mut has_selected_layer_mismatch = false
   let mut has_rank_layer_mismatch = false
   let mut has_model_order_inversion_influence = false
+  let mut has_local_refinement_kernels = false
   let mut has_selected_trial_index = false
   for line in lines {
     if line is [.. "ORDER_SELECTED_CROSSINGS\t", ..] {
@@ -547,6 +555,9 @@ test "elk layered rank trace kernel comparison lines expose deterministic diff k
     if line is [.. "ORDER_TRIAL_MODEL_ORDER_INVERSION_INFLUENCE\t", ..] {
       has_model_order_inversion_influence = true
     }
+    if line is [.. "ORDER_LOCAL_REFINEMENT_KERNELS\t", ..] {
+      has_local_refinement_kernels = true
+    }
     if line is [.. "ORDER_SELECTED_TRIAL_INDEX\t", ..] {
       has_selected_trial_index = true
     }
@@ -555,5 +566,6 @@ test "elk layered rank trace kernel comparison lines expose deterministic diff k
   assert_true(has_selected_layer_mismatch)
   assert_true(has_rank_layer_mismatch)
   assert_true(has_model_order_inversion_influence)
+  assert_true(has_local_refinement_kernels)
   assert_true(has_selected_trial_index)
 }

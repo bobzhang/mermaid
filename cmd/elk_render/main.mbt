@@ -6,6 +6,7 @@ struct ElkRenderCliArgs {
   trial_count_override : Int?
   sweep_pass_count_override : Int?
   trial_continuation_policy_override : @layout_engine_graph_engine_elk_core.ElkLayeredRankTraceTrialContinuationPolicy?
+  local_refinement_profile_override : @layout_engine_graph_engine_elk_core.ElkLayeredRankTraceLocalRefinementProfile?
   trial_model_order_inversion_influence_override : Double?
   layout_engine : @model.LayoutEngine
 }
@@ -67,6 +68,30 @@ fn parse_trial_continuation_policy(
 }
 
 ///|
+fn parse_local_refinement_profile(
+  raw : String,
+) -> @layout_engine_graph_engine_elk_core.ElkLayeredRankTraceLocalRefinementProfile? {
+  let normalized = raw.trim().to_lower()
+  if normalized == "default" {
+    return Some(DefaultLocalRefinementProfile)
+  }
+  if normalized == "none" {
+    return Some(NoLocalRefinement)
+  }
+  if normalized == "adjacent-swap" || normalized == "adjacent_swap" {
+    return Some(AdjacentSwapOnly)
+  }
+  if normalized == "rank-permutation" || normalized == "rank_permutation" {
+    return Some(RankPermutationOnly)
+  }
+  if normalized == "adjacent-swap-then-rank-permutation" ||
+    normalized == "adjacent_swap_then_rank_permutation" {
+    return Some(AdjacentSwapThenRankPermutation)
+  }
+  None
+}
+
+///|
 fn parse_layout_engine(raw : String) -> @model.LayoutEngine? {
   let normalized = raw.trim().to_lower()
   if normalized == "elk" {
@@ -86,6 +111,7 @@ fn parse_cli_args(args : Array[String]) -> ElkRenderCliArgs? {
   let mut trial_count_override : Int? = None
   let mut sweep_pass_count_override : Int? = None
   let mut trial_continuation_policy_override : @layout_engine_graph_engine_elk_core.ElkLayeredRankTraceTrialContinuationPolicy? = None
+  let mut local_refinement_profile_override : @layout_engine_graph_engine_elk_core.ElkLayeredRankTraceLocalRefinementProfile? = None
   let mut trial_model_order_inversion_influence_override : Double? = None
   let mut layout_engine : @model.LayoutEngine = Elk
   let mut expect_source = false
@@ -93,6 +119,7 @@ fn parse_cli_args(args : Array[String]) -> ElkRenderCliArgs? {
   let mut expect_trial_count = false
   let mut expect_sweep_pass_count = false
   let mut expect_trial_continuation_policy = false
+  let mut expect_local_refinement_profile = false
   let mut expect_layout_engine = false
   let mut expect_model_order_inversion_influence = false
 
@@ -149,6 +176,17 @@ fn parse_cli_args(args : Array[String]) -> ElkRenderCliArgs? {
       expect_trial_continuation_policy = false
       continue
     }
+    if expect_local_refinement_profile {
+      if arg is [.. "--", ..] {
+        return None
+      }
+      match parse_local_refinement_profile(arg) {
+        Some(value) => local_refinement_profile_override = Some(value)
+        None => return None
+      }
+      expect_local_refinement_profile = false
+      continue
+    }
     if expect_layout_engine {
       if arg is [.. "--", ..] {
         return None
@@ -195,6 +233,10 @@ fn parse_cli_args(args : Array[String]) -> ElkRenderCliArgs? {
     }
     if arg == "--trial-continuation-policy" {
       expect_trial_continuation_policy = true
+      continue
+    }
+    if arg == "--local-refinement-profile" {
+      expect_local_refinement_profile = true
       continue
     }
     if arg == "--layout-engine" {
@@ -246,6 +288,15 @@ fn parse_cli_args(args : Array[String]) -> ElkRenderCliArgs? {
       }
       continue
     }
+    if arg
+      is [.. "--local-refinement-profile=", .. raw_local_refinement_profile] {
+      match
+        parse_local_refinement_profile(raw_local_refinement_profile.to_string()) {
+        Some(value) => local_refinement_profile_override = Some(value)
+        None => return None
+      }
+      continue
+    }
     if arg is [.. "--layout-engine=", .. raw_layout_engine] {
       match parse_layout_engine(raw_layout_engine.to_string()) {
         Some(value) => layout_engine = value
@@ -282,6 +333,7 @@ fn parse_cli_args(args : Array[String]) -> ElkRenderCliArgs? {
     expect_trial_count ||
     expect_sweep_pass_count ||
     expect_trial_continuation_policy ||
+    expect_local_refinement_profile ||
     expect_layout_engine ||
     expect_model_order_inversion_influence {
     return None
@@ -293,6 +345,7 @@ fn parse_cli_args(args : Array[String]) -> ElkRenderCliArgs? {
     trial_count_override,
     sweep_pass_count_override,
     trial_continuation_policy_override,
+    local_refinement_profile_override,
     trial_model_order_inversion_influence_override,
     layout_engine,
   })
@@ -312,6 +365,7 @@ fn usage_text() -> String {
     #|  --trial-count <int>      Positive crossing trial-count override
     #|  --sweep-pass-count <int> Positive crossing sweep-pass-count override
     #|  --trial-continuation-policy <name> default | pass-changes | objective-improves
+    #|  --local-refinement-profile <name> default | none | adjacent-swap | rank-permutation | adjacent-swap-then-rank-permutation
     #|  --model-order-inversion-influence <double> Non-negative trial tie-break influence
     #|  --layout-engine <name>   elk | elk-layered
     #|  --help                   Show this usage text
@@ -374,6 +428,7 @@ fn print_svg_with_overrides(args : ElkRenderCliArgs) -> Unit {
     args.sweep_pass_count_override,
     args.trial_continuation_policy_override,
     args.trial_model_order_inversion_influence_override,
+    args.local_refinement_profile_override,
   )
   println(
     @renderer_svg.render_svg(

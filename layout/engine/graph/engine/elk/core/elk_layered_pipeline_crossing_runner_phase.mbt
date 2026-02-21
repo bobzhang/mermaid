@@ -296,26 +296,23 @@ fn execute_crossing_phase_once_with_plan_and_seed(
     components,
   )
   let post_sweep_objective = evaluate_crossing_objective_with_counter(
-    post_sweep_rank_node_ids_by_rank,
-    objective_context,
-    components,
+    post_sweep_rank_node_ids_by_rank, objective_context, components,
   )
   let optimized_objective = evaluate_crossing_objective_with_counter(
-    optimized_rank_node_ids_by_rank,
-    objective_context,
-    components,
+    optimized_rank_node_ids_by_rank, objective_context, components,
   )
   let optimized_is_pareto_worse_than_post_sweep = (
-    optimized_objective.layered_crossings >
-    post_sweep_objective.layered_crossings &&
-    optimized_objective.global_crossings >=
-    post_sweep_objective.global_crossings
-  ) || (
-    optimized_objective.layered_crossings ==
-    post_sweep_objective.layered_crossings &&
-    optimized_objective.global_crossings >
-    post_sweep_objective.global_crossings
-  )
+      optimized_objective.layered_crossings >
+      post_sweep_objective.layered_crossings &&
+      optimized_objective.global_crossings >=
+      post_sweep_objective.global_crossings
+    ) ||
+    (
+      optimized_objective.layered_crossings ==
+      post_sweep_objective.layered_crossings &&
+      optimized_objective.global_crossings >
+      post_sweep_objective.global_crossings
+    )
   if optimized_is_pareto_worse_than_post_sweep {
     return {
       post_sweep_rank_node_ids_by_rank,

@@ -16,6 +16,15 @@ priv enum ElkLayeredCrossingLocalRefinementKernel {
 }
 
 ///|
+priv enum ElkLayeredCrossingLocalRefinementProfile {
+  DefaultLocalRefinementProfile
+  NoLocalRefinement
+  AdjacentSwapOnly
+  RankPermutationOnly
+  AdjacentSwapThenRankPermutation
+}
+
+///|
 priv enum ElkLayeredCrossingTrialContinuationPolicy {
   ContinueWhilePassChanges
   ContinueWhileObjectiveImproves
@@ -64,6 +73,48 @@ fn crossing_sweep_kernel_tag(
 }
 
 ///|
+fn default_crossing_local_refinement_profile() -> ElkLayeredCrossingLocalRefinementProfile {
+  available_crossing_local_refinement_profiles()[0]
+}
+
+///|
+fn available_crossing_local_refinement_profiles() -> Array[
+  ElkLayeredCrossingLocalRefinementProfile,
+] {
+  [
+    DefaultLocalRefinementProfile,
+    NoLocalRefinement,
+    AdjacentSwapOnly,
+    RankPermutationOnly,
+    AdjacentSwapThenRankPermutation,
+  ]
+}
+
+///|
+fn crossing_local_refinement_kernel_tag(
+  kernel : ElkLayeredCrossingLocalRefinementKernel,
+) -> String {
+  match kernel {
+    AdjacentSwap => "adjacent-swap"
+    RankPermutation => "rank-permutation"
+  }
+}
+
+///|
+fn crossing_local_refinement_kernels_tag(
+  kernels : Array[ElkLayeredCrossingLocalRefinementKernel],
+) -> String {
+  if kernels.length() == 0 {
+    return "none"
+  }
+  let tags : Array[String] = []
+  for kernel in kernels {
+    tags.push(crossing_local_refinement_kernel_tag(kernel))
+  }
+  tags.join(",")
+}
+
+///|
 priv struct ElkLayeredCrossingOptimizationConfig {
   preserve_order_node_threshold : Int
   preserve_order_edge_threshold : Int
@@ -109,7 +160,22 @@ priv struct ElkLayeredCrossingExecutionPlan {
 fn default_crossing_local_refinement_kernels() -> Array[
   ElkLayeredCrossingLocalRefinementKernel,
 ] {
-  [AdjacentSwap, RankPermutation]
+  crossing_local_refinement_kernels_for_profile(
+    default_crossing_local_refinement_profile(),
+  )
+}
+
+///|
+fn crossing_local_refinement_kernels_for_profile(
+  profile : ElkLayeredCrossingLocalRefinementProfile,
+) -> Array[ElkLayeredCrossingLocalRefinementKernel] {
+  match profile {
+    DefaultLocalRefinementProfile => [AdjacentSwap, RankPermutation]
+    NoLocalRefinement => []
+    AdjacentSwapOnly => [AdjacentSwap]
+    RankPermutationOnly => [RankPermutation]
+    AdjacentSwapThenRankPermutation => [AdjacentSwap, RankPermutation]
+  }
 }
 
 ///|

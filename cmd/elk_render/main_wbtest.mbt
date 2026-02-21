@@ -9,6 +9,7 @@ test "elk_render parse_cli_args accepts default positional source" {
         trial_count_override: None,
         sweep_pass_count_override: None,
         trial_continuation_policy_override: None,
+        local_refinement_profile_override: None,
         trial_model_order_inversion_influence_override: None,
         layout_engine: Elk,
       }
@@ -31,6 +32,7 @@ test "elk_render parse_cli_args accepts override flags" {
         trial_count_override: Some(5),
         sweep_pass_count_override: Some(6),
         trial_continuation_policy_override: None,
+        local_refinement_profile_override: None,
         trial_model_order_inversion_influence_override: None,
         layout_engine: ElkLayered,
       }
@@ -50,6 +52,7 @@ test "elk_render parse_cli_args preserves help mode" {
         trial_count_override: None,
         sweep_pass_count_override: None,
         trial_continuation_policy_override: None,
+        local_refinement_profile_override: None,
         trial_model_order_inversion_influence_override: None,
         layout_engine: Elk,
       }
@@ -97,6 +100,7 @@ test "elk_render parse_cli_args accepts model-order inversion influence override
         trial_count_override: None,
         sweep_pass_count_override: None,
         trial_continuation_policy_override: None,
+        local_refinement_profile_override: None,
         trial_model_order_inversion_influence_override: Some(0.25),
         layout_engine: Elk,
       }
@@ -118,10 +122,41 @@ test "elk_render parse_cli_args accepts trial continuation policy override" {
         trial_count_override: None,
         sweep_pass_count_override: None,
         trial_continuation_policy_override: Some(WhileObjectiveImproves),
+        local_refinement_profile_override: None,
         trial_model_order_inversion_influence_override: None,
         layout_engine: Elk,
       }
     ) else {
     fail("expected trial continuation policy override parse")
   }
+}
+
+///|
+test "elk_render parse_cli_args accepts local refinement profile override" {
+  guard parse_cli_args([
+      "--local-refinement-profile", "rank-permutation", "graph TD\\nA --> B",
+    ])
+    is Some(
+      {
+        show_help: false,
+        source: Some("graph TD\\nA --> B"),
+        sweep_kernel: Default,
+        trial_count_override: None,
+        sweep_pass_count_override: None,
+        trial_continuation_policy_override: None,
+        local_refinement_profile_override: Some(RankPermutationOnly),
+        trial_model_order_inversion_influence_override: None,
+        layout_engine: Elk,
+      }
+    ) else {
+    fail("expected local refinement profile override parse")
+  }
+}
+
+///|
+test "elk_render parse_cli_args rejects invalid local refinement profile values" {
+  assert_true(
+    parse_cli_args(["--local-refinement-profile=unknown", "graph TD\\nA --> B"])
+    is None,
+  )
 }

@@ -128,6 +128,9 @@ priv struct ElkLayeredRankOrderDebugState {
   crossing_sweep_pass_count : Int
   crossing_trial_count : Int
   crossing_trial_continuation_policy : ElkLayeredCrossingTrialContinuationPolicy
+  crossing_local_refinement_kernels : Array[
+    ElkLayeredCrossingLocalRefinementKernel,
+  ]
   crossing_trial_model_order_inversion_influence : Double
   optimized_seed_selected_trial_index : Int
   optimized_seed_trial_summaries : Array[ElkLayeredCrossingTrialSummary]
@@ -453,6 +456,7 @@ fn build_rank_node_ids_by_rank_for_order_strategy_with_debug(
             crossing_execution_plan.config.trial_count,
           ),
           crossing_trial_continuation_policy: crossing_execution_plan.config.trial_continuation_policy,
+          crossing_local_refinement_kernels: crossing_execution_plan.local_refinement_kernels,
           crossing_trial_model_order_inversion_influence: crossing_execution_plan.config.trial_model_order_inversion_influence,
           optimized_seed_selected_trial_index: optimized_base_crossing_result.selected_trial_index,
           optimized_seed_trial_summaries: optimized_base_crossing_result.trial_summaries,
@@ -489,6 +493,7 @@ fn build_rank_node_ids_by_rank_for_order_strategy_with_debug(
             crossing_execution_plan.config.trial_count,
           ),
           crossing_trial_continuation_policy: crossing_execution_plan.config.trial_continuation_policy,
+          crossing_local_refinement_kernels: crossing_execution_plan.local_refinement_kernels,
           crossing_trial_model_order_inversion_influence: crossing_execution_plan.config.trial_model_order_inversion_influence,
           optimized_seed_selected_trial_index: optimized_base_crossing_result.selected_trial_index,
           optimized_seed_trial_summaries: optimized_base_crossing_result.trial_summaries,
@@ -569,6 +574,7 @@ fn build_rank_node_ids_by_rank_for_order_strategy_with_debug(
             crossing_execution_plan.config.trial_count,
           ),
           crossing_trial_continuation_policy: crossing_execution_plan.config.trial_continuation_policy,
+          crossing_local_refinement_kernels: crossing_execution_plan.local_refinement_kernels,
           crossing_trial_model_order_inversion_influence: crossing_execution_plan.config.trial_model_order_inversion_influence,
           optimized_seed_selected_trial_index: optimized_base_crossing_result.selected_trial_index,
           optimized_seed_trial_summaries: optimized_base_crossing_result.trial_summaries,

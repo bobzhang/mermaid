@@ -11,14 +11,10 @@ fn wb_crossing_objective_not_pareto_worse(
   left : ElkLayeredCrossingObjective,
   right : ElkLayeredCrossingObjective,
 ) -> Bool {
-  !(
-    left.layered_crossings > right.layered_crossings &&
-    left.global_crossings >= right.global_crossings
-  ) &&
-  !(
-    left.layered_crossings == right.layered_crossings &&
-    left.global_crossings > right.global_crossings
-  )
+  !(left.layered_crossings > right.layered_crossings &&
+  left.global_crossings >= right.global_crossings) &&
+  !(left.layered_crossings == right.layered_crossings &&
+  left.global_crossings > right.global_crossings)
 }
 
 ///|

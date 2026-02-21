@@ -30,6 +30,7 @@ fn print_usage() -> Unit {
     #|  --trial-count  Positive crossing trial count override
     #|  --sweep-pass-count  Positive crossing sweep-pass override
     #|  --trial-continuation-policy  default | pass-changes | objective-improves
+    #|  --local-refinement-profile  default | none | adjacent-swap | rank-permutation | adjacent-swap-then-rank-permutation
     #|  --model-order-inversion-influence  Non-negative trial tie-break influence override
     #|  --compare-kernels  Print default-vs-edge-slot rank trace comparison summary
     #|  --help   Show this help
@@ -60,6 +61,7 @@ priv struct ElkTraceCliArgs {
   trial_count_override : Int?
   sweep_pass_count_override : Int?
   trial_continuation_policy_override : @layout_engine_graph_engine_elk_core.ElkLayeredRankTraceTrialContinuationPolicy?
+  local_refinement_profile_override : @layout_engine_graph_engine_elk_core.ElkLayeredRankTraceLocalRefinementProfile?
   trial_model_order_inversion_influence_override : Double?
   compare_kernels : Bool
 }
@@ -127,6 +129,21 @@ fn decode_trial_continuation_policy_arg(
 }
 
 ///|
+fn decode_local_refinement_profile_arg(
+  raw : String,
+) -> @layout_engine_graph_engine_elk_core.ElkLayeredRankTraceLocalRefinementProfile? {
+  match raw.trim().to_lower() {
+    "default" => Some(DefaultLocalRefinementProfile)
+    "none" => Some(NoLocalRefinement)
+    "adjacent-swap" => Some(AdjacentSwapOnly)
+    "rank-permutation" => Some(RankPermutationOnly)
+    "adjacent-swap-then-rank-permutation" =>
+      Some(AdjacentSwapThenRankPermutation)
+    _ => None
+  }
+}
+
+///|
 fn parse_cli_args(args : Array[String]) -> ElkTraceCliArgs? {
   let mut show_help = false
   let mut case_name : String? = None
@@ -135,6 +152,7 @@ fn parse_cli_args(args : Array[String]) -> ElkTraceCliArgs? {
   let mut trial_count_override : Int? = None
   let mut sweep_pass_count_override : Int? = None
   let mut trial_continuation_policy_override : @layout_engine_graph_engine_elk_core.ElkLayeredRankTraceTrialContinuationPolicy? = None
+  let mut local_refinement_profile_override : @layout_engine_graph_engine_elk_core.ElkLayeredRankTraceLocalRefinementProfile? = None
   let mut trial_model_order_inversion_influence_override : Double? = None
   let mut compare_kernels = false
 
@@ -231,6 +249,17 @@ fn parse_cli_args(args : Array[String]) -> ElkTraceCliArgs? {
       i += 2
       continue
     }
+    if arg == "--local-refinement-profile" {
+      if i + 1 >= args.length() {
+        return None
+      }
+      match decode_local_refinement_profile_arg(args[i + 1]) {
+        Some(value) => local_refinement_profile_override = Some(value)
+        None => return None
+      }
+      i += 2
+      continue
+    }
     if arg is [.. "--case=", .. raw_case] {
       let parsed_case_name = raw_case.trim().to_lower()
       if parsed_case_name == "" {
@@ -301,6 +330,18 @@ fn parse_cli_args(args : Array[String]) -> ElkTraceCliArgs? {
       i += 1
       continue
     }
+    if arg
+      is [.. "--local-refinement-profile=", .. raw_local_refinement_profile] {
+      match
+        decode_local_refinement_profile_arg(
+          raw_local_refinement_profile.to_string(),
+        ) {
+        Some(value) => local_refinement_profile_override = Some(value)
+        None => return None
+      }
+      i += 1
+      continue
+    }
     return None
   }
 
@@ -324,6 +365,7 @@ fn parse_cli_args(args : Array[String]) -> ElkTraceCliArgs? {
     trial_count_override,
     sweep_pass_count_override,
     trial_continuation_policy_override,
+    local_refinement_profile_override,
     trial_model_order_inversion_influence_override,
     compare_kernels,
   })
@@ -442,6 +484,7 @@ fn dump_graph_trace(
   trial_count_override : Int?,
   sweep_pass_count_override : Int?,
   trial_continuation_policy_override : @layout_engine_graph_engine_elk_core.ElkLayeredRankTraceTrialContinuationPolicy?,
+  local_refinement_profile_override : @layout_engine_graph_engine_elk_core.ElkLayeredRankTraceLocalRefinementProfile?,
   trial_model_order_inversion_influence_override : Double?,
 ) -> Bool {
   let options = { ..@model.RenderOptions::default(), layout_engine: Some(Elk) }
@@ -454,7 +497,7 @@ fn dump_graph_trace(
   match
     @layout_engine_graph_engine_elk_core.collect_elk_layered_rank_trace_lines_with_crossing_execution_overrides(
       request, sweep_kernel, trial_count_override, sweep_pass_count_override, trial_model_order_inversion_influence_override,
-      trial_continuation_policy_override,
+      trial_continuation_policy_override, local_refinement_profile_override,
     ) {
     Some(lines) => {
       for line in lines {
@@ -475,6 +518,7 @@ fn dump_graph_kernel_comparison(
   trial_count_override : Int?,
   sweep_pass_count_override : Int?,
   trial_continuation_policy_override : @layout_engine_graph_engine_elk_core.ElkLayeredRankTraceTrialContinuationPolicy?,
+  local_refinement_profile_override : @layout_engine_graph_engine_elk_core.ElkLayeredRankTraceLocalRefinementProfile?,
   trial_model_order_inversion_influence_override : Double?,
 ) -> Bool {
   let options = { ..@model.RenderOptions::default(), layout_engine: Some(Elk) }
@@ -493,6 +537,7 @@ fn dump_graph_kernel_comparison(
       sweep_pass_count_override,
       trial_model_order_inversion_influence_override,
       trial_continuation_policy_override,
+      local_refinement_profile_override,
     ) {
     Some(lines) => {
       for line in lines {
@@ -514,6 +559,7 @@ fn dump_case_trace(
   trial_count_override : Int?,
   sweep_pass_count_override : Int?,
   trial_continuation_policy_override : @layout_engine_graph_engine_elk_core.ElkLayeredRankTraceTrialContinuationPolicy?,
+  local_refinement_profile_override : @layout_engine_graph_engine_elk_core.ElkLayeredRankTraceLocalRefinementProfile?,
   trial_model_order_inversion_influence_override : Double?,
 ) -> Bool {
   match kernel_by_case_name(case_name) {
@@ -524,6 +570,7 @@ fn dump_case_trace(
         trial_count_override,
         sweep_pass_count_override,
         trial_continuation_policy_override,
+        local_refinement_profile_override,
         trial_model_order_inversion_influence_override,
       )
     None => false
@@ -536,6 +583,7 @@ fn dump_case_kernel_comparison(
   trial_count_override : Int?,
   sweep_pass_count_override : Int?,
   trial_continuation_policy_override : @layout_engine_graph_engine_elk_core.ElkLayeredRankTraceTrialContinuationPolicy?,
+  local_refinement_profile_override : @layout_engine_graph_engine_elk_core.ElkLayeredRankTraceLocalRefinementProfile?,
   trial_model_order_inversion_influence_override : Double?,
 ) -> Bool {
   match kernel_by_case_name(case_name) {
@@ -545,6 +593,7 @@ fn dump_case_kernel_comparison(
         trial_count_override,
         sweep_pass_count_override,
         trial_continuation_policy_override,
+        local_refinement_profile_override,
         trial_model_order_inversion_influence_override,
       )
     None => false
@@ -558,6 +607,7 @@ fn dump_source_trace(
   trial_count_override : Int?,
   sweep_pass_count_override : Int?,
   trial_continuation_policy_override : @layout_engine_graph_engine_elk_core.ElkLayeredRankTraceTrialContinuationPolicy?,
+  local_refinement_profile_override : @layout_engine_graph_engine_elk_core.ElkLayeredRankTraceLocalRefinementProfile?,
   trial_model_order_inversion_influence_override : Double?,
 ) -> Bool {
   let graph_result : Result[@model.MermaidGraph, @model.MermaidError] = try? @parser_header_core.parse_mermaid(
@@ -567,7 +617,7 @@ fn dump_source_trace(
     Ok(graph) =>
       dump_graph_trace(
         graph, sweep_kernel, trial_count_override, sweep_pass_count_override, trial_continuation_policy_override,
-        trial_model_order_inversion_influence_override,
+        local_refinement_profile_override, trial_model_order_inversion_influence_override,
       )
     Err(err) => {
       println("Error: failed to parse --source payload")
@@ -583,6 +633,7 @@ fn dump_source_kernel_comparison(
   trial_count_override : Int?,
   sweep_pass_count_override : Int?,
   trial_continuation_policy_override : @layout_engine_graph_engine_elk_core.ElkLayeredRankTraceTrialContinuationPolicy?,
+  local_refinement_profile_override : @layout_engine_graph_engine_elk_core.ElkLayeredRankTraceLocalRefinementProfile?,
   trial_model_order_inversion_influence_override : Double?,
 ) -> Bool {
   let graph_result : Result[@model.MermaidGraph, @model.MermaidError] = try? @parser_header_core.parse_mermaid(
@@ -592,7 +643,7 @@ fn dump_source_kernel_comparison(
     Ok(graph) =>
       dump_graph_kernel_comparison(
         graph, trial_count_override, sweep_pass_count_override, trial_continuation_policy_override,
-        trial_model_order_inversion_influence_override,
+        local_refinement_profile_override, trial_model_order_inversion_influence_override,
       )
     Err(err) => {
       println("Error: failed to parse --source payload")
@@ -616,6 +667,7 @@ fn run() -> Unit {
               parsed_args.trial_count_override,
               parsed_args.sweep_pass_count_override,
               parsed_args.trial_continuation_policy_override,
+              parsed_args.local_refinement_profile_override,
               parsed_args.trial_model_order_inversion_influence_override,
             ) {
             print_usage()
@@ -626,6 +678,7 @@ fn run() -> Unit {
             parsed_args.trial_count_override,
             parsed_args.sweep_pass_count_override,
             parsed_args.trial_continuation_policy_override,
+            parsed_args.local_refinement_profile_override,
             parsed_args.trial_model_order_inversion_influence_override,
           ) {
           print_usage()
@@ -640,6 +693,7 @@ fn run() -> Unit {
                 parsed_args.trial_count_override,
                 parsed_args.sweep_pass_count_override,
                 parsed_args.trial_continuation_policy_override,
+                parsed_args.local_refinement_profile_override,
                 parsed_args.trial_model_order_inversion_influence_override,
               )
             } else {
@@ -649,6 +703,7 @@ fn run() -> Unit {
                 parsed_args.trial_count_override,
                 parsed_args.sweep_pass_count_override,
                 parsed_args.trial_continuation_policy_override,
+                parsed_args.local_refinement_profile_override,
                 parsed_args.trial_model_order_inversion_influence_override,
               )
             }
@@ -659,6 +714,7 @@ fn run() -> Unit {
             parsed_args.trial_count_override,
             parsed_args.sweep_pass_count_override,
             parsed_args.trial_continuation_policy_override,
+            parsed_args.local_refinement_profile_override,
             parsed_args.trial_model_order_inversion_influence_override,
           ) {
           println("Error: unknown case '\{case_name}'")
@@ -670,6 +726,7 @@ fn run() -> Unit {
             parsed_args.trial_count_override,
             parsed_args.sweep_pass_count_override,
             parsed_args.trial_continuation_policy_override,
+            parsed_args.local_refinement_profile_override,
             parsed_args.trial_model_order_inversion_influence_override,
           ) {
           println("Error: unknown case '\{case_name}'")

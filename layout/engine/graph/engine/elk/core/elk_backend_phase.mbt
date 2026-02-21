@@ -20,17 +20,18 @@ pub fn layout_graph_elk_backend_with_crossing_overrides(
   sweep_pass_count_override : Int?,
   trial_continuation_policy_override : ElkLayeredRankTraceTrialContinuationPolicy?,
   trial_model_order_inversion_influence_override : Double?,
+  local_refinement_profile_override : ElkLayeredRankTraceLocalRefinementProfile?,
 ) -> GraphLayoutBackendResult {
   let has_overrides = has_rank_trace_crossing_overrides(
     trial_count_override, sweep_pass_count_override, trial_model_order_inversion_influence_override,
-    trial_continuation_policy_override,
+    trial_continuation_policy_override, local_refinement_profile_override,
   )
   if sweep_kernel is Default && !has_overrides {
     run_elk_backend(request)
   } else {
     run_elk_backend_with_crossing_overrides(
       request, sweep_kernel, trial_count_override, sweep_pass_count_override, trial_continuation_policy_override,
-      trial_model_order_inversion_influence_override,
+      trial_model_order_inversion_influence_override, local_refinement_profile_override,
     )
   }
 }
@@ -75,6 +76,7 @@ fn run_elk_backend_with_crossing_overrides(
   sweep_pass_count_override : Int?,
   trial_continuation_policy_override : ElkLayeredRankTraceTrialContinuationPolicy?,
   trial_model_order_inversion_influence_override : Double?,
+  local_refinement_profile_override : ElkLayeredRankTraceLocalRefinementProfile?,
 ) -> GraphLayoutBackendResult {
   let elk_policy : GraphBackendRoutingPolicy = {
     enable_target_boundary_ports: true,
@@ -102,7 +104,7 @@ fn run_elk_backend_with_crossing_overrides(
   }
   let crossing_execution_plan = crossing_execution_plan_for_rank_trace_kernel_with_overrides(
     sweep_kernel, trial_count_override, sweep_pass_count_override, trial_model_order_inversion_influence_override,
-    trial_continuation_policy_override,
+    trial_continuation_policy_override, local_refinement_profile_override,
   )
   run_elk_layered_flow_backend_with_crossing_execution_plan(
     tuned_request, elk_policy, crossing_execution_plan,
