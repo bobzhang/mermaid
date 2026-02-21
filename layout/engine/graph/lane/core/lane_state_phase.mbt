@@ -8,7 +8,6 @@ pub(all) struct LegacyLaneState {
   flow_label_y_offset_by_rank : Map[Int, Int]
   refined_horizontal_non_state_flow : Bool
   refined_horizontal_non_state_labeled_cycle_flow : Bool
-  horizontal_cycle_non_state_flow : Bool
   flow_max_rank : Int
   dagre_parity_rank_nodes : Array[Array[String]]
 }
@@ -364,7 +363,6 @@ pub fn compute_legacy_lane_state(
   let flow_label_y_offset_by_rank : Map[Int, Int] = {}
   let mut refined_horizontal_non_state_flow = false
   let mut refined_horizontal_non_state_labeled_cycle_flow = false
-  let mut horizontal_cycle_non_state_flow = false
   let mut flow_max_rank = 0
   let dagre_parity_rank_nodes : Array[Array[String]] = []
   if !state_graph || horizontal {
@@ -378,9 +376,6 @@ pub fn compute_legacy_lane_state(
       graph.subgraphs.length() > 0 &&
       graph.edges.length() >= 50
     let rank_compact_fanin = compact_fanin || adaptive_compact_fanin
-    horizontal_cycle_non_state_flow = !state_graph &&
-      horizontal &&
-      cycle_aware_layout
     let promote_backward_dotted_edges = horizontal &&
       !state_graph &&
       !class_or_er_graph &&
@@ -893,7 +888,6 @@ pub fn compute_legacy_lane_state(
     flow_label_y_offset_by_rank,
     refined_horizontal_non_state_flow,
     refined_horizontal_non_state_labeled_cycle_flow,
-    horizontal_cycle_non_state_flow,
     flow_max_rank,
     dagre_parity_rank_nodes,
   }
