@@ -9,6 +9,7 @@
  * Usage:
  *   bun run scripts/compare_elk_crossing_rank_order.ts fixtures/layout_stress_001_dense_dag.mmd
  *   bun run scripts/compare_elk_crossing_rank_order.ts fixtures/layout_stress_001_dense_dag.mmd fixtures/layout_stress_013_rl_dual_scc_weave.mmd
+ *   bun run scripts/compare_elk_crossing_rank_order.ts --trial-count 5 fixtures/layout_stress_001_dense_dag.mmd
  *   bun run scripts/compare_elk_crossing_rank_order.ts --details --limit 3 fixtures/layout_stress_013_rl_dual_scc_weave.mmd
  */
 
@@ -56,6 +57,8 @@ type CliOptions = {
   fixtures: string[]
   details: boolean
   detailLimit: number
+  trialCount?: number
+  sweepPassCount?: number
 }
 
 type NeighborSummary = {
@@ -116,8 +119,8 @@ function elkDirection(direction: Direction): 'RIGHT' | 'LEFT' | 'DOWN' | 'UP' {
   return 'RIGHT'
 }
 
-function parseLocalTrace(source: string): LocalTrace {
-  const stdout = runOrThrow('moon', [
+function parseLocalTrace(source: string, options: CliOptions): LocalTrace {
+  const args = [
     'run',
     'cmd/elk_trace',
     '--target',
@@ -125,7 +128,14 @@ function parseLocalTrace(source: string): LocalTrace {
     '--',
     '--source',
     source,
-  ])
+  ]
+  if (options.trialCount !== undefined) {
+    args.push('--trial-count', String(options.trialCount))
+  }
+  if (options.sweepPassCount !== undefined) {
+    args.push('--sweep-pass-count', String(options.sweepPassCount))
+  }
+  const stdout = runOrThrow('moon', args)
   const inputNodeIdsByIndex = new Map<number, string>()
   const inputEdges: Edge[] = []
   const rankLayersByRank = new Map<number, string[]>()
@@ -410,10 +420,10 @@ function selectCloserUpstreamLayering(
   }
 }
 
-function compareFixture(fixturePath: string): CaseResult {
+function compareFixture(fixturePath: string, options: CliOptions): CaseResult {
   const source = readFileSync(fixturePath, 'utf8')
   const direction = parseGraphDirection(source)
-  const local = parseLocalTrace(source)
+  const local = parseLocalTrace(source, options)
   const upstream = runUpstreamPlacement(local.inputNodeIds, local.inputEdges, direction)
   const upstreamLayers = buildLayersByMajor(
     local.inputNodeIds,
@@ -448,9 +458,19 @@ function round(value: number): string {
   return Number.isFinite(value) ? value.toFixed(4) : 'NaN'
 }
 
+function parsePositiveIntOption(raw: string, flag: string): number {
+  const parsed = Number.parseInt(raw, 10)
+  if (!Number.isFinite(parsed) || parsed <= 0) {
+    fail(`invalid ${flag} value: ${raw}`)
+  }
+  return parsed
+}
+
 function parseCliOptions(args: string[]): CliOptions {
   let details = false
   let detailLimit = Number.MAX_SAFE_INTEGER
+  let trialCount: number | undefined
+  let sweepPassCount: number | undefined
   const fixtures: string[] = []
   for (let i = 0; i < args.length; i += 1) {
     const arg = args[i]!
@@ -478,6 +498,30 @@ function parseCliOptions(args: string[]): CliOptions {
       detailLimit = parsed
       continue
     }
+    if (arg === '--trial-count') {
+      const next = args[i + 1]
+      if (!next) fail('missing value after --trial-count')
+      trialCount = parsePositiveIntOption(next, '--trial-count')
+      i += 1
+      continue
+    }
+    if (arg.startsWith('--trial-count=')) {
+      const raw = arg.slice('--trial-count='.length)
+      trialCount = parsePositiveIntOption(raw, '--trial-count')
+      continue
+    }
+    if (arg === '--sweep-pass-count') {
+      const next = args[i + 1]
+      if (!next) fail('missing value after --sweep-pass-count')
+      sweepPassCount = parsePositiveIntOption(next, '--sweep-pass-count')
+      i += 1
+      continue
+    }
+    if (arg.startsWith('--sweep-pass-count=')) {
+      const raw = arg.slice('--sweep-pass-count='.length)
+      sweepPassCount = parsePositiveIntOption(raw, '--sweep-pass-count')
+      continue
+    }
     if (arg.startsWith('--')) {
       fail(`unknown argument: ${arg}`)
     }
@@ -485,10 +529,10 @@ function parseCliOptions(args: string[]): CliOptions {
   }
   if (fixtures.length === 0) {
     fail(
-      'usage: bun run scripts/compare_elk_crossing_rank_order.ts [--details] [--limit N] <fixture.mmd> [more...]',
+      'usage: bun run scripts/compare_elk_crossing_rank_order.ts [--details] [--limit N] [--trial-count N] [--sweep-pass-count N] <fixture.mmd> [more...]',
     )
   }
-  return { fixtures, details, detailLimit }
+  return { fixtures, details, detailLimit, trialCount, sweepPassCount }
 }
 
 function rankPositionByNodeId(layers: Layering): Map<string, { rank: number; pos: number }> {
@@ -600,7 +644,7 @@ function printCaseDetails(result: CaseResult): void {
 
 function main(): void {
   const options = parseCliOptions(process.argv.slice(2))
-  const results = options.fixtures.map(compareFixture)
+  const results = options.fixtures.map(fixture => compareFixture(fixture, options))
   const rows = results.map(result => result.metrics)
   let totalOrderMismatch = 0
   let totalCompositionMismatch = 0

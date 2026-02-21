@@ -11,6 +11,7 @@
  * Usage:
  *   bun run scripts/report_elk_phase_waterfall.ts
  *   bun run scripts/report_elk_phase_waterfall.ts --json /tmp/elk_phase_waterfall.json
+ *   bun run scripts/report_elk_phase_waterfall.ts --trial-count 5 --sweep-pass-count 6
  */
 
 import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs'
@@ -20,6 +21,8 @@ import { tmpdir } from 'node:os'
 
 type CliOptions = {
   jsonPath?: string
+  trialCount?: number
+  sweepPassCount?: number
 }
 
 type PhaseWaterfallReport = {
@@ -132,6 +135,8 @@ function runOrThrow(cmd: string, args: string[]): string {
 
 function parseCliOptions(args: string[]): CliOptions {
   let jsonPath: string | undefined
+  let trialCount: number | undefined
+  let sweepPassCount: number | undefined
   for (let i = 0; i < args.length; i += 1) {
     const arg = args[i]!
     if (arg === '--json') {
@@ -147,9 +152,49 @@ function parseCliOptions(args: string[]): CliOptions {
       jsonPath = value
       continue
     }
+    if (arg === '--trial-count') {
+      const next = args[i + 1]
+      if (!next) fail('missing value after --trial-count')
+      const parsed = Number.parseInt(next, 10)
+      if (!Number.isFinite(parsed) || parsed <= 0) {
+        fail(`invalid --trial-count value: ${next}`)
+      }
+      trialCount = parsed
+      i += 1
+      continue
+    }
+    if (arg.startsWith('--trial-count=')) {
+      const value = arg.slice('--trial-count='.length)
+      const parsed = Number.parseInt(value, 10)
+      if (!Number.isFinite(parsed) || parsed <= 0) {
+        fail(`invalid --trial-count value: ${value}`)
+      }
+      trialCount = parsed
+      continue
+    }
+    if (arg === '--sweep-pass-count') {
+      const next = args[i + 1]
+      if (!next) fail('missing value after --sweep-pass-count')
+      const parsed = Number.parseInt(next, 10)
+      if (!Number.isFinite(parsed) || parsed <= 0) {
+        fail(`invalid --sweep-pass-count value: ${next}`)
+      }
+      sweepPassCount = parsed
+      i += 1
+      continue
+    }
+    if (arg.startsWith('--sweep-pass-count=')) {
+      const value = arg.slice('--sweep-pass-count='.length)
+      const parsed = Number.parseInt(value, 10)
+      if (!Number.isFinite(parsed) || parsed <= 0) {
+        fail(`invalid --sweep-pass-count value: ${value}`)
+      }
+      sweepPassCount = parsed
+      continue
+    }
     fail(`unknown argument: ${arg}`)
   }
-  return { jsonPath }
+  return { jsonPath, trialCount, sweepPassCount }
 }
 
 function parseCounter(line: string, pattern: RegExp, label: string): [number, number] {
@@ -240,7 +285,7 @@ function parseSortByInputPorts(): { mismatchedSlots: number; comparableSlots: nu
   return { mismatchedSlots, comparableSlots }
 }
 
-function parseCrossingRankOrder(): {
+function parseCrossingRankOrder(options: CliOptions): {
   orderMismatched: number
   orderComparable: number
   compositionMismatched: number
@@ -249,11 +294,18 @@ function parseCrossingRankOrder(): {
   avgExactOrderMatchRate: number
   avgOrderDisplacement: number
 } {
-  const stdout = runOrThrow('bun', [
+  const args = [
     'run',
     'scripts/compare_elk_crossing_rank_order.ts',
     ...STRESS_FIXTURES,
-  ])
+  ]
+  if (options.trialCount !== undefined) {
+    args.push('--trial-count', String(options.trialCount))
+  }
+  if (options.sweepPassCount !== undefined) {
+    args.push('--sweep-pass-count', String(options.sweepPassCount))
+  }
+  const stdout = runOrThrow('bun', args)
   const lines = stdout
     .split('\n')
     .map(line => line.trim())
@@ -335,7 +387,7 @@ function parseCrossingRankOrder(): {
   }
 }
 
-function parseCrossingPhaseTrace(): {
+function parseCrossingPhaseTrace(options: CliOptions): {
   postSweepOrderMismatched: number
   postSweepOrderComparable: number
   finalOrderMismatched: number
@@ -349,11 +401,18 @@ function parseCrossingPhaseTrace(): {
   postSweepAvgOrderDisplacement: number
   finalAvgOrderDisplacement: number
 } {
-  const stdout = runOrThrow('bun', [
+  const args = [
     'run',
     'scripts/compare_elk_crossing_phase_trace.ts',
     ...STRESS_FIXTURES,
-  ])
+  ]
+  if (options.trialCount !== undefined) {
+    args.push('--trial-count', String(options.trialCount))
+  }
+  if (options.sweepPassCount !== undefined) {
+    args.push('--sweep-pass-count', String(options.sweepPassCount))
+  }
+  const stdout = runOrThrow('bun', args)
   const lines = stdout
     .split('\n')
     .map(line => line.trim())
@@ -598,8 +657,8 @@ function main(): void {
   const cycleOrientation = parseCycleOrientation()
   const sortByInputModel = parseSortByInputModel()
   const sortByInputPorts = parseSortByInputPorts()
-  const crossingRankOrder = parseCrossingRankOrder()
-  const crossingPhaseTrace = parseCrossingPhaseTrace()
+  const crossingRankOrder = parseCrossingRankOrder(options)
+  const crossingPhaseTrace = parseCrossingPhaseTrace(options)
   const placementMajor = parsePlacementMajor()
   const endToEnd = parseEndToEnd()
 

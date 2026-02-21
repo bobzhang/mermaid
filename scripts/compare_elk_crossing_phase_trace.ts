@@ -10,6 +10,7 @@
  * Usage:
  *   bun run scripts/compare_elk_crossing_phase_trace.ts fixtures/layout_stress_006_nested_bridge_loops.mmd
  *   bun run scripts/compare_elk_crossing_phase_trace.ts fixtures/layout_stress_001_dense_dag.mmd fixtures/layout_stress_013_rl_dual_scc_weave.mmd
+ *   bun run scripts/compare_elk_crossing_phase_trace.ts --trial-count 5 fixtures/layout_stress_006_nested_bridge_loops.mmd
  */
 
 import { readFileSync } from 'node:fs'
@@ -49,6 +50,12 @@ type CaseMetrics = {
   selectedSource: string
   postSweep: LayerParity
   final: LayerParity
+}
+
+type CliOptions = {
+  fixtures: string[]
+  trialCount?: number
+  sweepPassCount?: number
 }
 
 function fail(message: string): never {
@@ -127,8 +134,8 @@ function layersFromRankMap(layersByRank: Map<number, string[]>): Layering {
   return layers
 }
 
-function parseLocalTrace(source: string): LocalTrace {
-  const stdout = runOrThrow('moon', [
+function parseLocalTrace(source: string, options: CliOptions): LocalTrace {
+  const args = [
     'run',
     'cmd/elk_trace',
     '--target',
@@ -136,7 +143,14 @@ function parseLocalTrace(source: string): LocalTrace {
     '--',
     '--source',
     source,
-  ])
+  ]
+  if (options.trialCount !== undefined) {
+    args.push('--trial-count', String(options.trialCount))
+  }
+  if (options.sweepPassCount !== undefined) {
+    args.push('--sweep-pass-count', String(options.sweepPassCount))
+  }
+  const stdout = runOrThrow('moon', args)
   const lines = stdout
     .split(/\r?\n/)
     .map(line => line.trim())
@@ -437,10 +451,10 @@ function selectCloserUpstreamLayering(
   }
 }
 
-function compareFixture(fixturePath: string): CaseMetrics {
+function compareFixture(fixturePath: string, options: CliOptions): CaseMetrics {
   const source = readFileSync(fixturePath, 'utf8')
   const direction = parseGraphDirection(source)
-  const local = parseLocalTrace(source)
+  const local = parseLocalTrace(source, options)
   const upstreamPostBarycenter = runUpstreamPlacement(
     local.inputNodeIds,
     local.inputEdges,
@@ -478,15 +492,60 @@ function round(value: number): string {
   return Number.isFinite(value) ? value.toFixed(4) : 'NaN'
 }
 
-function main(): void {
-  const fixtures = process.argv.slice(2)
+function parsePositiveIntOption(raw: string, flag: string): number {
+  const parsed = Number.parseInt(raw, 10)
+  if (!Number.isFinite(parsed) || parsed <= 0) {
+    fail(`invalid ${flag} value: ${raw}`)
+  }
+  return parsed
+}
+
+function parseCliOptions(args: string[]): CliOptions {
+  const fixtures: string[] = []
+  let trialCount: number | undefined
+  let sweepPassCount: number | undefined
+  for (let i = 0; i < args.length; i += 1) {
+    const arg = args[i]!
+    if (arg === '--trial-count') {
+      const next = args[i + 1]
+      if (!next) fail('missing value after --trial-count')
+      trialCount = parsePositiveIntOption(next, '--trial-count')
+      i += 1
+      continue
+    }
+    if (arg.startsWith('--trial-count=')) {
+      const raw = arg.slice('--trial-count='.length)
+      trialCount = parsePositiveIntOption(raw, '--trial-count')
+      continue
+    }
+    if (arg === '--sweep-pass-count') {
+      const next = args[i + 1]
+      if (!next) fail('missing value after --sweep-pass-count')
+      sweepPassCount = parsePositiveIntOption(next, '--sweep-pass-count')
+      i += 1
+      continue
+    }
+    if (arg.startsWith('--sweep-pass-count=')) {
+      const raw = arg.slice('--sweep-pass-count='.length)
+      sweepPassCount = parsePositiveIntOption(raw, '--sweep-pass-count')
+      continue
+    }
+    if (arg.startsWith('--')) {
+      fail(`unknown argument: ${arg}`)
+    }
+    fixtures.push(arg)
+  }
   if (fixtures.length === 0) {
     fail(
-      'usage: bun run scripts/compare_elk_crossing_phase_trace.ts <fixture.mmd> [more...]',
+      'usage: bun run scripts/compare_elk_crossing_phase_trace.ts [--trial-count N] [--sweep-pass-count N] <fixture.mmd> [more...]',
     )
   }
+  return { fixtures, trialCount, sweepPassCount }
+}
 
-  const rows = fixtures.map(compareFixture)
+function main(): void {
+  const options = parseCliOptions(process.argv.slice(2))
+  const rows = options.fixtures.map(fixture => compareFixture(fixture, options))
   let totalPostSweepOrderMismatch = 0
   let totalFinalOrderMismatch = 0
   let totalPostSweepCompositionMismatch = 0
