@@ -72,7 +72,7 @@ fn rank_layers_to_section(
     lines.push("r\{rank}: [\{joined}]")
   }
   let body = if lines.length() == 0 { "(none)" } else { lines.join("\n") }
-  "[\{title}]\n\{body}"
+  ["[\{title}]", body].join("\n")
 }
 
 ///|
@@ -222,28 +222,35 @@ async fn snapshot_rank_phase_parity(
     local_layers, normalized_official_layers,
   )
   let mismatch_section = if mismatch_lines.length() == 0 {
-    "[composition_mismatch]\n(none)"
+    ["[composition_mismatch]", "(none)"].join("\n")
   } else {
-    let joined = mismatch_lines.join("\n")
-    "[composition_mismatch]\n\{joined}"
+    ["[composition_mismatch]", mismatch_lines.join("\n")].join("\n")
   }
-  let summary_section = "[summary]\n" +
-    "shared_nodes=\{shared_node_count}\n" +
-    "exact_matches=\{exact_match_count}\n" +
-    "displacement_sum=\{displacement_sum}\n" +
-    "composition_mismatch_count=\{mismatch_lines.length()}"
+  let summary_section = [
+    "[summary]",
+    "shared_nodes=\{shared_node_count}",
+    "exact_matches=\{exact_match_count}",
+    "displacement_sum=\{displacement_sum}",
+    "composition_mismatch_count=\{mismatch_lines.length()}",
+  ].join("\n")
   let official_section = rank_layers_to_section(
     "official_layers", normalized_official_layers,
   )
   let local_section = rank_layers_to_section("local_layers", local_layers)
-  let snapshot = "[fixture]\n" +
-    "path=\{fixture_path}\n" +
-    "local_layer_count=\{local_layers.length()}\n" +
-    "official_layer_count=\{normalized_official_layers.length()}\n\n" +
-    "\{official_section}\n\n" +
-    "\{local_section}\n\n" +
-    "\{mismatch_section}\n\n" +
-    summary_section
+  let snapshot = [
+    "[fixture]",
+    "path=\{fixture_path}",
+    "local_layer_count=\{local_layers.length()}",
+    "official_layer_count=\{normalized_official_layers.length()}",
+    "",
+    official_section,
+    "",
+    local_section,
+    "",
+    mismatch_section,
+    "",
+    summary_section,
+  ].join("\n")
   it.write(snapshot)
   it.snapshot(filename=snapshot_filename)
 }
