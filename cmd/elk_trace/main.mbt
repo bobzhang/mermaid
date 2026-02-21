@@ -19,11 +19,13 @@ fn print_usage() -> Unit {
     #|  moon run cmd/elk_trace -- --case long_span
     #|  moon run cmd/elk_trace -- --source "graph LR\nA --> B\nB --> C"
     #|  moon run cmd/elk_trace -- --case fanout --sweep-kernel edge-slot
+    #|  moon run cmd/elk_trace -- --case fanout --compare-kernels
     #|  moon run cmd/elk_trace -- --case all
     #|Flags:
     #|  --case   fanout | feedback_mesh | long_span | all
     #|  --source Mermaid source text (use shell command substitution for fixture files)
     #|  --sweep-kernel  default | neighbor-mean | edge-slot
+    #|  --compare-kernels  Print default-vs-edge-slot rank trace comparison summary
     #|  --help   Show this help
     #|
   println(usage.trim_end().to_string())
@@ -49,6 +51,7 @@ priv struct ElkTraceCliArgs {
   case_name : String?
   source : String?
   sweep_kernel : @layout_engine_graph_engine_elk_core.ElkLayeredRankTraceSweepKernel
+  compare_kernels : Bool
 }
 
 ///|
@@ -77,6 +80,7 @@ fn parse_cli_args(args : Array[String]) -> ElkTraceCliArgs? {
   let mut case_name : String? = None
   let mut source : String? = None
   let mut sweep_kernel : @layout_engine_graph_engine_elk_core.ElkLayeredRankTraceSweepKernel = Default
+  let mut compare_kernels = false
 
   let mut i = 0
   while i < args.length() {
@@ -121,6 +125,11 @@ fn parse_cli_args(args : Array[String]) -> ElkTraceCliArgs? {
       i += 2
       continue
     }
+    if arg == "--compare-kernels" {
+      compare_kernels = true
+      i += 1
+      continue
+    }
     if arg is [.. "--case=", .. raw_case] {
       let parsed_case_name = raw_case.trim().to_lower()
       if parsed_case_name == "" {
@@ -162,7 +171,13 @@ fn parse_cli_args(args : Array[String]) -> ElkTraceCliArgs? {
       None => if source is Some(_) { None } else { Some("all") }
     }
   }
-  Some({ show_help, case_name: resolved_case_name, source, sweep_kernel })
+  Some({
+    show_help,
+    case_name: resolved_case_name,
+    source,
+    sweep_kernel,
+    compare_kernels,
+  })
 }
 
 ///|
@@ -301,12 +316,48 @@ fn dump_graph_trace(
 }
 
 ///|
+fn dump_graph_kernel_comparison(graph : @model.MermaidGraph) -> Bool {
+  let options = { ..@model.RenderOptions::default(), layout_engine: Some(Elk) }
+  let request : @layout_engine_graph_contract_core.GraphLayoutBackendRequest = {
+    graph,
+    options,
+    use_subgraph_redirects: true,
+    compact_fanin: false,
+  }
+  match
+    @layout_engine_graph_engine_elk_core.collect_elk_layered_rank_trace_kernel_comparison_lines(
+      request,
+      Default,
+      NeighborMeanEdgeSlotBidirectional,
+    ) {
+    Some(lines) => {
+      for line in lines {
+        println(line)
+      }
+      true
+    }
+    None => {
+      println("Error: graph does not support elk layered trace")
+      false
+    }
+  }
+}
+
+///|
 fn dump_case_trace(
   case_name : String,
   sweep_kernel : @layout_engine_graph_engine_elk_core.ElkLayeredRankTraceSweepKernel,
 ) -> Bool {
   match kernel_by_case_name(case_name) {
     Some(kernel) => dump_graph_trace(build_graph(kernel), sweep_kernel)
+    None => false
+  }
+}
+
+///|
+fn dump_case_kernel_comparison(case_name : String) -> Bool {
+  match kernel_by_case_name(case_name) {
+    Some(kernel) => dump_graph_kernel_comparison(build_graph(kernel))
     None => false
   }
 }
@@ -330,6 +381,21 @@ fn dump_source_trace(
 }
 
 ///|
+fn dump_source_kernel_comparison(source : String) -> Bool {
+  let graph_result : Result[@model.MermaidGraph, @model.MermaidError] = try? @parser_header_core.parse_mermaid(
+    source,
+  )
+  match graph_result {
+    Ok(graph) => dump_graph_kernel_comparison(graph)
+    Err(err) => {
+      println("Error: failed to parse --source payload")
+      println("\{err}")
+      false
+    }
+  }
+}
+
+///|
 fn run() -> Unit {
   let args = cli_args_without_program()
   match parse_cli_args(args) {
@@ -337,16 +403,29 @@ fn run() -> Unit {
       if parsed_args.show_help {
         print_usage()
       } else if parsed_args.source is Some(source) {
-        if !dump_source_trace(source, parsed_args.sweep_kernel) {
+        if parsed_args.compare_kernels {
+          if !dump_source_kernel_comparison(source) {
+            print_usage()
+          }
+        } else if !dump_source_trace(source, parsed_args.sweep_kernel) {
           print_usage()
         }
       } else if parsed_args.case_name is Some(case_name) {
         if case_name == "all" {
           for case_name in ["fanout", "feedback_mesh", "long_span"] {
             println("CASE\t\{case_name}")
-            let _ = dump_case_trace(case_name, parsed_args.sweep_kernel)
+            if parsed_args.compare_kernels {
+              let _ = dump_case_kernel_comparison(case_name)
+            } else {
+              let _ = dump_case_trace(case_name, parsed_args.sweep_kernel)
+            }
           }
-        } else if !dump_case_trace(case_name, parsed_args.sweep_kernel) {
+        } else if parsed_args.compare_kernels &&
+          !dump_case_kernel_comparison(case_name) {
+          println("Error: unknown case '\{case_name}'")
+          print_usage()
+        } else if !parsed_args.compare_kernels &&
+          !dump_case_trace(case_name, parsed_args.sweep_kernel) {
           println("Error: unknown case '\{case_name}'")
           print_usage()
         }

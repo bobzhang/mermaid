@@ -381,3 +381,44 @@ test "elk layered rank trace public kernel selector emits requested kernel tag" 
     ),
   )
 }
+
+///|
+test "elk layered rank trace kernel comparison lines expose deterministic diff keys" {
+  let graph = wb_graph(["A", "B", "C", "D"], [
+    ("A", "B"),
+    ("A", "C"),
+    ("B", "D"),
+    ("C", "D"),
+  ])
+  let request = trace_request_for_graph(graph)
+  let lines = match
+    collect_elk_layered_rank_trace_kernel_comparison_lines(
+      request,
+      Default,
+      NeighborMeanEdgeSlotBidirectional,
+    ) {
+    Some(lines) => lines
+    None => fail("expected kernel-comparison lines")
+  }
+  assert_true(lines.contains("KERNEL_LEFT\tneighbor-mean-bidirectional"))
+  assert_true(
+    lines.contains("KERNEL_RIGHT\tneighbor-mean-edge-slot-bidirectional"),
+  )
+  let mut has_selected_crossings = false
+  let mut has_selected_layer_mismatch = false
+  let mut has_rank_layer_mismatch = false
+  for line in lines {
+    if line is [.. "ORDER_SELECTED_CROSSINGS\t", ..] {
+      has_selected_crossings = true
+    }
+    if line is [.. "ORDER_SELECTED_LAYER_MISMATCH_COUNT\t", ..] {
+      has_selected_layer_mismatch = true
+    }
+    if line is [.. "RANK_LAYER_MISMATCH_COUNT\t", ..] {
+      has_rank_layer_mismatch = true
+    }
+  }
+  assert_true(has_selected_crossings)
+  assert_true(has_selected_layer_mismatch)
+  assert_true(has_rank_layer_mismatch)
+}

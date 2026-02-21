@@ -7,6 +7,7 @@ test "elk_trace parse_cli_args defaults to all case" {
         case_name: Some("all"),
         source: None,
         sweep_kernel: Default,
+        compare_kernels: false,
       }
     ) else {
     fail("expected default all-case args")
@@ -22,6 +23,7 @@ test "elk_trace parse_cli_args accepts case flag forms" {
         case_name: Some("fanout"),
         source: None,
         sweep_kernel: Default,
+        compare_kernels: false,
       }
     ) else {
     fail("expected --case fanout to parse")
@@ -33,6 +35,7 @@ test "elk_trace parse_cli_args accepts case flag forms" {
         case_name: Some("feedback_mesh"),
         source: None,
         sweep_kernel: Default,
+        compare_kernels: false,
       }
     ) else {
     fail("expected --case=feedback_mesh to parse")
@@ -54,6 +57,7 @@ test "elk_trace parse_cli_args accepts source payload" {
         case_name: None,
         source: Some(_),
         sweep_kernel: Default,
+        compare_kernels: false,
       }
     ) else {
     fail("expected --source payload to parse")
@@ -69,6 +73,7 @@ test "elk_trace parse_cli_args decodes escaped newlines in source payload" {
         case_name: None,
         source: Some("graph TD\nA --> B\nB --> C"),
         sweep_kernel: Default,
+        compare_kernels: false,
       }
     ) else {
     fail("expected escaped newline source payload to decode")
@@ -90,7 +95,13 @@ test "elk_trace parse_cli_args rejects conflicting source and case" {
 test "elk_trace parse_cli_args preserves help mode" {
   guard parse_cli_args(["--help"])
     is Some(
-      { show_help: true, case_name: None, source: None, sweep_kernel: Default }
+      {
+        show_help: true,
+        case_name: None,
+        source: None,
+        sweep_kernel: Default,
+        compare_kernels: false,
+      }
     ) else {
     fail("expected --help to parse")
   }
@@ -105,6 +116,7 @@ test "elk_trace parse_cli_args accepts sweep-kernel flag forms" {
         case_name: Some("all"),
         source: None,
         sweep_kernel: NeighborMeanEdgeSlotBidirectional,
+        compare_kernels: false,
       }
     ) else {
     fail("expected --sweep-kernel edge-slot to parse")
@@ -116,6 +128,7 @@ test "elk_trace parse_cli_args accepts sweep-kernel flag forms" {
         case_name: Some("all"),
         source: None,
         sweep_kernel: NeighborMeanBidirectional,
+        compare_kernels: false,
       }
     ) else {
     fail("expected --sweep-kernel=neighbor-mean to parse")
@@ -126,4 +139,20 @@ test "elk_trace parse_cli_args accepts sweep-kernel flag forms" {
 test "elk_trace parse_cli_args rejects invalid sweep-kernel values" {
   assert_true(parse_cli_args(["--sweep-kernel", "unknown"]) is None)
   assert_true(parse_cli_args(["--sweep-kernel=unknown"]) is None)
+}
+
+///|
+test "elk_trace parse_cli_args accepts compare-kernels flag" {
+  guard parse_cli_args(["--compare-kernels"])
+    is Some(
+      {
+        show_help: false,
+        case_name: Some("all"),
+        source: None,
+        sweep_kernel: Default,
+        compare_kernels: true,
+      }
+    ) else {
+    fail("expected --compare-kernels to parse")
+  }
 }

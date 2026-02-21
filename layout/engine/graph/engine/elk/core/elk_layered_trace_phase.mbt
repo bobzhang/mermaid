@@ -63,6 +63,59 @@ fn crossing_sweep_kernel_for_rank_trace(
 }
 
 ///|
+fn crossing_execution_plan_for_rank_trace_kernel(
+  trace_sweep_kernel : ElkLayeredRankTraceSweepKernel,
+) -> ElkLayeredCrossingExecutionPlan {
+  let default_plan = default_crossing_execution_plan(
+    LayerSweepWithLocalRefinement,
+  )
+  if trace_sweep_kernel is Default {
+    default_plan
+  } else {
+    {
+      ..default_plan,
+      sweep_kernel: crossing_sweep_kernel_for_rank_trace(trace_sweep_kernel),
+    }
+  }
+}
+
+///|
+fn collect_elk_layered_rank_trace_for_sweep_kernel(
+  request : GraphLayoutBackendRequest,
+  trace_sweep_kernel : ElkLayeredRankTraceSweepKernel,
+) -> ElkLayeredRankTrace? {
+  if trace_sweep_kernel is Default {
+    collect_elk_layered_rank_trace(request)
+  } else {
+    collect_elk_layered_rank_trace_with_crossing_execution_plan(
+      request,
+      crossing_execution_plan_for_rank_trace_kernel(trace_sweep_kernel),
+    )
+  }
+}
+
+///|
+fn trace_rank_layer_mismatch_count(
+  left_layers : Array[Array[String]],
+  right_layers : Array[Array[String]],
+) -> Int {
+  let rank_limit = if left_layers.length() < right_layers.length() {
+    left_layers.length()
+  } else {
+    right_layers.length()
+  }
+  let mut mismatch_count = 0
+  for rank in 0..<rank_limit {
+    if left_layers[rank] != right_layers[rank] {
+      mismatch_count += 1
+    }
+  }
+  mismatch_count +
+  (left_layers.length() - rank_limit) +
+  (right_layers.length() - rank_limit)
+}
+
+///|
 fn rank_layers_from_rank_map(
   rank_node_ids_by_rank : Map[Int, Array[String]],
   max_rank : Int,
@@ -607,21 +660,45 @@ pub fn collect_elk_layered_rank_trace_lines_with_sweep_kernel(
   request : GraphLayoutBackendRequest,
   trace_sweep_kernel : ElkLayeredRankTraceSweepKernel,
 ) -> Array[String]? {
-  if trace_sweep_kernel is Default {
-    return match collect_elk_layered_rank_trace(request) {
-      Some(trace) => Some(elk_layered_rank_trace_lines(trace))
-      None => None
-    }
-  }
-  let default_plan = default_crossing_execution_plan(
-    LayerSweepWithLocalRefinement,
-  )
   match
-    collect_elk_layered_rank_trace_with_crossing_execution_plan(request, {
-      ..default_plan,
-      sweep_kernel: crossing_sweep_kernel_for_rank_trace(trace_sweep_kernel),
-    }) {
+    collect_elk_layered_rank_trace_for_sweep_kernel(request, trace_sweep_kernel) {
     Some(trace) => Some(elk_layered_rank_trace_lines(trace))
     None => None
+  }
+}
+
+///|
+/// Collects a deterministic summary of intermediate rank-phase differences between two sweep kernels.
+pub fn collect_elk_layered_rank_trace_kernel_comparison_lines(
+  request : GraphLayoutBackendRequest,
+  left_kernel : ElkLayeredRankTraceSweepKernel,
+  right_kernel : ElkLayeredRankTraceSweepKernel,
+) -> Array[String]? {
+  let left_trace = collect_elk_layered_rank_trace_for_sweep_kernel(
+    request, left_kernel,
+  )
+  let right_trace = collect_elk_layered_rank_trace_for_sweep_kernel(
+    request, right_kernel,
+  )
+  match (left_trace, right_trace) {
+    (Some(left), Some(right)) => {
+      let lines : Array[String] = []
+      lines.push("KERNEL_LEFT\t\{left.rank_order_sweep_kernel}")
+      lines.push("KERNEL_RIGHT\t\{right.rank_order_sweep_kernel}")
+      lines.push(
+        "ORDER_SELECTED_SOURCE\t\{left.rank_order_selected_source}\t\{right.rank_order_selected_source}",
+      )
+      lines.push(
+        "ORDER_SELECTED_CROSSINGS\t\{left.rank_order_selected_crossings}\t\{right.rank_order_selected_crossings}",
+      )
+      lines.push(
+        "ORDER_SELECTED_LAYER_MISMATCH_COUNT\t\{trace_rank_layer_mismatch_count(left.rank_order_selected_layers, right.rank_order_selected_layers)}",
+      )
+      lines.push(
+        "RANK_LAYER_MISMATCH_COUNT\t\{trace_rank_layer_mismatch_count(left.rank_layers, right.rank_layers)}",
+      )
+      Some(lines)
+    }
+    _ => None
   }
 }
