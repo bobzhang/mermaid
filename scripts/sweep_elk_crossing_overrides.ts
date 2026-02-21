@@ -12,6 +12,7 @@
  *   bun run scripts/sweep_elk_crossing_overrides.ts
  *   bun run scripts/sweep_elk_crossing_overrides.ts --trial-counts 1,3,5 --sweep-pass-counts 4,6 --sweep-kernels default,edge-slot
  *   bun run scripts/sweep_elk_crossing_overrides.ts --model-order-inversion-influences none,0.25,0.5
+ *   bun run scripts/sweep_elk_crossing_overrides.ts --include-regressing --top 20
  *   bun run scripts/sweep_elk_crossing_overrides.ts --json /tmp/elk_crossing_sweep.json
  */
 
@@ -27,6 +28,8 @@ type SweepCliOptions = {
   sweepPassCounts: number[]
   sweepKernels: SweepKernel[]
   modelOrderInversionInfluences: Array<number | null>
+  includeRegressing: boolean
+  top?: number
   jsonPath?: string
 }
 
@@ -215,6 +218,8 @@ function parseCliOptions(args: string[]): SweepCliOptions {
   let sweepPassCounts = [4, 6]
   let sweepKernels: SweepKernel[] = ['default', 'neighbor-mean', 'edge-slot']
   let modelOrderInversionInfluences: Array<number | null> = [null]
+  let includeRegressing = false
+  let top: number | undefined
   let jsonPath: string | undefined
 
   for (let index = 0; index < args.length; index += 1) {
@@ -273,6 +278,22 @@ function parseCliOptions(args: string[]): SweepCliOptions {
       )
       continue
     }
+    if (arg === '--include-regressing') {
+      includeRegressing = true
+      continue
+    }
+    if (arg === '--top') {
+      const next = args[index + 1]
+      if (!next) fail('missing value after --top')
+      top = parsePositiveInt(next, '--top')
+      index += 1
+      continue
+    }
+    if (arg.startsWith('--top=')) {
+      const raw = arg.slice('--top='.length)
+      top = parsePositiveInt(raw, '--top')
+      continue
+    }
     if (arg === '--json') {
       const next = args[index + 1]
       if (!next) fail('missing path after --json')
@@ -294,6 +315,8 @@ function parseCliOptions(args: string[]): SweepCliOptions {
     sweepPassCounts,
     sweepKernels,
     modelOrderInversionInfluences,
+    includeRegressing,
+    top,
     jsonPath,
   }
 }
@@ -524,6 +547,7 @@ function main(): void {
   const nonRegressingCandidates = sortedCandidates(
     deltas.filter(candidate => candidate.nonRegressing),
   )
+  const sortedAllCandidates = sortedCandidates(deltas)
   const paretoNonRegressingCandidates = sortedCandidates(
     paretoFront(nonRegressingCandidates),
   )
@@ -540,13 +564,34 @@ function main(): void {
   console.log(
     `pareto_non_regressing_candidates=${paretoNonRegressingCandidates.length}`,
   )
+  const topCrossingParityCandidate = sortedAllCandidates
+    .filter(candidate => candidate.improvedCrossingParity)
+    .slice(0, 1)
+  if (topCrossingParityCandidate.length > 0) {
+    printCandidate('best_crossing_parity', topCrossingParityCandidate[0]!)
+  }
 
-  for (const candidate of nonRegressingCandidates) {
+  const nonRegressingToPrint = options.top
+    ? nonRegressingCandidates.slice(0, options.top)
+    : nonRegressingCandidates
+  for (const candidate of nonRegressingToPrint) {
     printCandidate('candidate', candidate)
+  }
+  if (options.includeRegressing) {
+    console.log('=== all candidates ===')
+    const allCandidatesToPrint = options.top
+      ? sortedAllCandidates.slice(0, options.top)
+      : sortedAllCandidates
+    for (const candidate of allCandidatesToPrint) {
+      printCandidate('candidate_all', candidate)
+    }
   }
   if (paretoNonRegressingCandidates.length > 0) {
     console.log('=== pareto non-regressing ===')
-    for (const candidate of paretoNonRegressingCandidates) {
+    const paretoToPrint = options.top
+      ? paretoNonRegressingCandidates.slice(0, options.top)
+      : paretoNonRegressingCandidates
+    for (const candidate of paretoToPrint) {
       printCandidate('pareto', candidate)
     }
   }
