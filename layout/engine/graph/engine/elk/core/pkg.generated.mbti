@@ -2,46 +2,13 @@
 package "bobzhang/beautiful_mermaid/layout/engine/graph/engine/elk/core"
 
 // Values
-pub fn collect_elk_layered_rank_trace(@bobzhang/beautiful_mermaid/layout/engine/graph/contract/core.GraphLayoutBackendRequest) -> ElkLayeredRankTrace?
+pub fn collect_elk_layered_rank_trace_lines(@bobzhang/beautiful_mermaid/layout/engine/graph/contract/core.GraphLayoutBackendRequest) -> Array[String]?
 
 pub fn layout_graph_elk_backend(@bobzhang/beautiful_mermaid/layout/engine/graph/contract/core.GraphLayoutBackendRequest) -> @bobzhang/beautiful_mermaid/layout/engine/graph/contract/core.GraphLayoutBackendResult
 
 // Errors
 
 // Types and methods
-pub(all) struct ElkLayeredRankTrace {
-  rank_input_node_ids_in_order : Array[String]
-  rank_input_resolved_edges : Array[(String, String)]
-  rank_feedback_oriented_edges : Array[(String, String)]
-  rank_feedback_oriented_edges_model_order : Array[(String, String)]
-  rank_seed_strategy : String
-  rank_seed_rank_by_node_id : Map[String, Int]
-  rank_seed_order_index_by_node_id : Map[String, Int]
-  rank_seed_oriented_edges : Array[(String, String)]
-  rank_seed_layers : Array[Array[String]]
-  rank_seed_virtual_node_ids : Array[String]
-  rank_seed_virtual_edges : Array[(String, String)]
-  rank_seed_virtual_ports : Array[(String, Int, String)]
-  rank_seed_virtual_layers : Array[Array[String]]
-  rank_order_strategy : String
-  rank_order_optimized_seed_layers : Array[Array[String]]
-  rank_order_optimized_seed_crossings : Int
-  rank_order_optimized_reversed_seed_layers : Array[Array[String]]
-  rank_order_optimized_reversed_seed_crossings : Int
-  rank_order_virtual_candidate_layers : Array[Array[String]]
-  rank_order_virtual_candidate_crossings : Int
-  rank_order_selected_virtual_node_ids : Array[String]
-  rank_order_selected_virtual_edges : Array[(String, String)]
-  rank_order_selected_virtual_ports : Array[(String, Int, String)]
-  rank_order_selected_virtual_layers : Array[Array[String]]
-  rank_order_selected_layers : Array[Array[String]]
-  rank_order_selected_crossings : Int
-  rank_order_selected_source : String
-  rank_layers : Array[Array[String]]
-  placement_major_strategy : String
-  placement_major_coord_by_node_id : Map[String, Int]
-  placement_minor_coord_by_node_id : Map[String, Int]
-}
 
 // Type aliases
 

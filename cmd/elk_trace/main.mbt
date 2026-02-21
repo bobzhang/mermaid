@@ -257,42 +257,6 @@ fn kernel_by_case_name(case_name : String) -> ElkTraceKernel? {
 }
 
 ///|
-fn dump_rank_layers(prefix : String, layers : Array[Array[String]]) -> Unit {
-  for rank, node_ids in layers {
-    let joined_node_ids = node_ids.join(",")
-    println("\{prefix}\t\{rank}\t\{joined_node_ids}")
-  }
-}
-
-///|
-fn sorted_string_keys(entries : Map[String, Int]) -> Array[String] {
-  let keys : Array[String] = []
-  for key, _ in entries {
-    keys.push(key)
-  }
-  keys.sort()
-  keys
-}
-
-///|
-fn sorted_oriented_edges(
-  edges : Array[(String, String)],
-) -> Array[(String, String)] {
-  let sorted = edges.copy()
-  sorted.sort_by((left, right) => {
-    let (left_source, left_target) = left
-    let (right_source, right_target) = right
-    let source_cmp = left_source.compare(right_source)
-    if source_cmp != 0 {
-      source_cmp
-    } else {
-      left_target.compare(right_target)
-    }
-  })
-  sorted
-}
-
-///|
 fn dump_graph_trace(graph : @model.MermaidGraph) -> Bool {
   let options = { ..@model.RenderOptions::default(), layout_engine: Some(Elk) }
   let request : @layout_engine_graph_contract_core.GraphLayoutBackendRequest = {
@@ -302,108 +266,12 @@ fn dump_graph_trace(graph : @model.MermaidGraph) -> Bool {
     compact_fanin: false,
   }
   match
-    @layout_engine_graph_engine_elk_core.collect_elk_layered_rank_trace(request) {
-    Some(trace) => {
-      println("SEED\t\{trace.rank_seed_strategy}")
-      for i, node_id in trace.rank_input_node_ids_in_order {
-        println("INPUT_NODE\t\{i}\t\{node_id}")
-      }
-      for edge in trace.rank_input_resolved_edges {
-        let (source_id, target_id) = edge
-        println("INPUT_EDGE\t\{source_id}\t\{target_id}")
-      }
-      for edge in trace.rank_feedback_oriented_edges {
-        let (source_id, target_id) = edge
-        println("FEEDBACK_EDGE\t\{source_id}\t\{target_id}")
-      }
-      for edge in trace.rank_feedback_oriented_edges_model_order {
-        let (source_id, target_id) = edge
-        println("FEEDBACK_EDGE_MODEL_ORDER\t\{source_id}\t\{target_id}")
-      }
-      println("ORDER_STRATEGY\t\{trace.rank_order_strategy}")
-      println("ORDER_SELECTED_SOURCE\t\{trace.rank_order_selected_source}")
-      println(
-        "ORDER_SCORE\toptimized-seed\t\{trace.rank_order_optimized_seed_crossings}",
-      )
-      println(
-        "ORDER_SCORE\toptimized-reversed-seed\t\{trace.rank_order_optimized_reversed_seed_crossings}",
-      )
-      println(
-        "ORDER_SCORE\tvirtual-candidate\t\{trace.rank_order_virtual_candidate_crossings}",
-      )
-      println("ORDER_SCORE\tselected\t\{trace.rank_order_selected_crossings}")
-      for node_id in trace.rank_seed_virtual_node_ids {
-        println("SEED_VIRTUAL_NODE\t\{node_id}")
-      }
-      for edge in sorted_oriented_edges(trace.rank_seed_virtual_edges) {
-        let (source_id, target_id) = edge
-        println("SEED_VIRTUAL_EDGE\t\{source_id}\t\{target_id}")
-      }
-      for port in trace.rank_seed_virtual_ports {
-        let (source_id, slot, target_id) = port
-        println("SEED_VIRTUAL_PORT\t\{source_id}\t\{slot}\t\{target_id}")
-      }
-      for node_id in trace.rank_order_selected_virtual_node_ids {
-        println("VIRTUAL_NODE\t\{node_id}")
-      }
-      for edge in sorted_oriented_edges(trace.rank_order_selected_virtual_edges) {
-        let (source_id, target_id) = edge
-        println("VIRTUAL_EDGE\t\{source_id}\t\{target_id}")
-      }
-      for port in trace.rank_order_selected_virtual_ports {
-        let (source_id, slot, target_id) = port
-        println("VIRTUAL_PORT\t\{source_id}\t\{slot}\t\{target_id}")
-      }
-      for node_id in sorted_string_keys(trace.rank_seed_rank_by_node_id) {
-        match trace.rank_seed_rank_by_node_id.get(node_id) {
-          Some(rank) => println("SEED_RANK\t\{node_id}\t\{rank}")
-          None => ()
-        }
-      }
-      for node_id in sorted_string_keys(trace.rank_seed_order_index_by_node_id) {
-        match trace.rank_seed_order_index_by_node_id.get(node_id) {
-          Some(order_index) => println("SEED_ORDER\t\{node_id}\t\{order_index}")
-          None => ()
-        }
-      }
-      for edge in sorted_oriented_edges(trace.rank_seed_oriented_edges) {
-        let (source_id, target_id) = edge
-        println("SEED_EDGE\t\{source_id}\t\{target_id}")
-      }
-      dump_rank_layers("SEED_LAYER", trace.rank_seed_layers)
-      dump_rank_layers("SEED_LAYER_VIRTUAL", trace.rank_seed_virtual_layers)
-      dump_rank_layers(
-        "ORDER_LAYER_OPTIMIZED_SEED",
-        trace.rank_order_optimized_seed_layers,
-      )
-      dump_rank_layers(
-        "ORDER_LAYER_OPTIMIZED_REVERSED_SEED",
-        trace.rank_order_optimized_reversed_seed_layers,
-      )
-      dump_rank_layers(
-        "ORDER_LAYER_VIRTUAL_CANDIDATE",
-        trace.rank_order_virtual_candidate_layers,
-      )
-      dump_rank_layers(
-        "ORDER_LAYER_SELECTED_VIRTUAL",
-        trace.rank_order_selected_virtual_layers,
-      )
-      dump_rank_layers("ORDER_LAYER_SELECTED", trace.rank_order_selected_layers)
-      dump_rank_layers("RANK_LAYER", trace.rank_layers)
-      println("PLACEMENT_MAJOR_STRATEGY\t\{trace.placement_major_strategy}")
-      for node_id in sorted_string_keys(trace.placement_major_coord_by_node_id) {
-        match trace.placement_major_coord_by_node_id.get(node_id) {
-          Some(major_coord) =>
-            println("PLACEMENT_MAJOR\t\{node_id}\t\{major_coord}")
-          None => ()
-        }
-      }
-      for node_id in sorted_string_keys(trace.placement_minor_coord_by_node_id) {
-        match trace.placement_minor_coord_by_node_id.get(node_id) {
-          Some(minor_coord) =>
-            println("PLACEMENT_MINOR\t\{node_id}\t\{minor_coord}")
-          None => ()
-        }
+    @layout_engine_graph_engine_elk_core.collect_elk_layered_rank_trace_lines(
+      request,
+    ) {
+    Some(lines) => {
+      for line in lines {
+        println(line)
       }
       true
     }

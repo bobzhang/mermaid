@@ -285,3 +285,50 @@ test "elk layered rank trace matches upstream sort-by-input layers on stress_006
   assert_eq(trace.placement_major_coord_by_node_id.length(), 18)
   assert_eq(trace.placement_minor_coord_by_node_id.length(), 18)
 }
+
+///|
+test "elk layered rank trace line formatter keeps sorted deterministic sections" {
+  let graph = wb_graph(["A", "B", "C", "D", "E", "F"], [
+    ("A", "B"),
+    ("A", "C"),
+    ("A", "D"),
+    ("B", "E"),
+    ("C", "E"),
+    ("D", "F"),
+    ("E", "F"),
+  ])
+  let trace = collect_rank_trace_for_graph(graph)
+  let lines = elk_layered_rank_trace_lines(trace)
+  assert_true(
+    match lines {
+      ["SEED\tnative-feedback", ..] => true
+      _ => false
+    },
+  )
+  let seed_edge_lines : Array[String] = []
+  let placement_major_lines : Array[String] = []
+  for line in lines {
+    if line is [.. "SEED_EDGE\t", ..] {
+      seed_edge_lines.push(line)
+    }
+    if line is [.. "PLACEMENT_MAJOR\t", ..] {
+      placement_major_lines.push(line)
+    }
+  }
+  assert_eq(seed_edge_lines, [
+    "SEED_EDGE\tA\tB", "SEED_EDGE\tA\tC", "SEED_EDGE\tA\tD", "SEED_EDGE\tB\tE", "SEED_EDGE\tC\tE",
+    "SEED_EDGE\tD\tF", "SEED_EDGE\tE\tF",
+  ])
+  assert_true(
+    match placement_major_lines {
+      [first, ..] => first is [.. "PLACEMENT_MAJOR\tA\t", ..]
+      [] => false
+    },
+  )
+  assert_true(
+    match placement_major_lines {
+      [.., last] => last is [.. "PLACEMENT_MAJOR\tF\t", ..]
+      [] => false
+    },
+  )
+}

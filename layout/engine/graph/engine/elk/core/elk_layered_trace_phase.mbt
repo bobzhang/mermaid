@@ -1,6 +1,6 @@
 ///|
 /// Rank-phase trace payload for ELK layered layout.
-pub(all) struct ElkLayeredRankTrace {
+priv struct ElkLayeredRankTrace {
   rank_input_node_ids_in_order : Array[String]
   rank_input_resolved_edges : Array[(String, String)]
   rank_feedback_oriented_edges : Array[(String, String)]
@@ -153,7 +153,7 @@ fn placement_axis_coord_maps(
 
 ///|
 /// Collects ELK layered rank-phase trace for flowchart graphs.
-pub fn collect_elk_layered_rank_trace(
+fn collect_elk_layered_rank_trace(
   request : GraphLayoutBackendRequest,
 ) -> ElkLayeredRankTrace? {
   if !elk_graph_supports_layered_pipeline(request.graph) {
@@ -339,4 +339,179 @@ pub fn collect_elk_layered_rank_trace(
     placement_major_coord_by_node_id,
     placement_minor_coord_by_node_id,
   })
+}
+
+///|
+fn sorted_string_keys(entries : Map[String, Int]) -> Array[String] {
+  let keys : Array[String] = []
+  for key, _ in entries {
+    keys.push(key)
+  }
+  keys.sort()
+  keys
+}
+
+///|
+fn sorted_oriented_edges(
+  edges : Array[(String, String)],
+) -> Array[(String, String)] {
+  let sorted = edges.copy()
+  sorted.sort_by((left, right) => {
+    let (left_source, left_target) = left
+    let (right_source, right_target) = right
+    let source_cmp = left_source.compare(right_source)
+    if source_cmp != 0 {
+      source_cmp
+    } else {
+      left_target.compare(right_target)
+    }
+  })
+  sorted
+}
+
+///|
+fn append_rank_layer_lines(
+  lines : Array[String],
+  prefix : String,
+  layers : Array[Array[String]],
+) -> Unit {
+  for rank, node_ids in layers {
+    let joined_node_ids = node_ids.join(",")
+    lines.push("\{prefix}\t\{rank}\t\{joined_node_ids}")
+  }
+}
+
+///|
+fn append_sorted_map_lines(
+  lines : Array[String],
+  prefix : String,
+  entries : Map[String, Int],
+) -> Unit {
+  for node_id in sorted_string_keys(entries) {
+    match entries.get(node_id) {
+      Some(value) => lines.push("\{prefix}\t\{node_id}\t\{value}")
+      None => ()
+    }
+  }
+}
+
+///|
+/// Renders a deterministic line-oriented dump for an ELK layered rank trace.
+fn elk_layered_rank_trace_lines(trace : ElkLayeredRankTrace) -> Array[String] {
+  let lines : Array[String] = []
+  lines.push("SEED\t\{trace.rank_seed_strategy}")
+  for i, node_id in trace.rank_input_node_ids_in_order {
+    lines.push("INPUT_NODE\t\{i}\t\{node_id}")
+  }
+  for edge in trace.rank_input_resolved_edges {
+    let (source_id, target_id) = edge
+    lines.push("INPUT_EDGE\t\{source_id}\t\{target_id}")
+  }
+  for edge in trace.rank_feedback_oriented_edges {
+    let (source_id, target_id) = edge
+    lines.push("FEEDBACK_EDGE\t\{source_id}\t\{target_id}")
+  }
+  for edge in trace.rank_feedback_oriented_edges_model_order {
+    let (source_id, target_id) = edge
+    lines.push("FEEDBACK_EDGE_MODEL_ORDER\t\{source_id}\t\{target_id}")
+  }
+  lines.push("ORDER_STRATEGY\t\{trace.rank_order_strategy}")
+  lines.push("ORDER_SELECTED_SOURCE\t\{trace.rank_order_selected_source}")
+  lines.push(
+    "ORDER_SCORE\toptimized-seed\t\{trace.rank_order_optimized_seed_crossings}",
+  )
+  lines.push(
+    "ORDER_SCORE\toptimized-reversed-seed\t\{trace.rank_order_optimized_reversed_seed_crossings}",
+  )
+  lines.push(
+    "ORDER_SCORE\tvirtual-candidate\t\{trace.rank_order_virtual_candidate_crossings}",
+  )
+  lines.push("ORDER_SCORE\tselected\t\{trace.rank_order_selected_crossings}")
+  for node_id in trace.rank_seed_virtual_node_ids {
+    lines.push("SEED_VIRTUAL_NODE\t\{node_id}")
+  }
+  for edge in sorted_oriented_edges(trace.rank_seed_virtual_edges) {
+    let (source_id, target_id) = edge
+    lines.push("SEED_VIRTUAL_EDGE\t\{source_id}\t\{target_id}")
+  }
+  for port in trace.rank_seed_virtual_ports {
+    let (source_id, slot, target_id) = port
+    lines.push("SEED_VIRTUAL_PORT\t\{source_id}\t\{slot}\t\{target_id}")
+  }
+  for node_id in trace.rank_order_selected_virtual_node_ids {
+    lines.push("VIRTUAL_NODE\t\{node_id}")
+  }
+  for edge in sorted_oriented_edges(trace.rank_order_selected_virtual_edges) {
+    let (source_id, target_id) = edge
+    lines.push("VIRTUAL_EDGE\t\{source_id}\t\{target_id}")
+  }
+  for port in trace.rank_order_selected_virtual_ports {
+    let (source_id, slot, target_id) = port
+    lines.push("VIRTUAL_PORT\t\{source_id}\t\{slot}\t\{target_id}")
+  }
+  append_sorted_map_lines(lines, "SEED_RANK", trace.rank_seed_rank_by_node_id)
+  append_sorted_map_lines(
+    lines,
+    "SEED_ORDER",
+    trace.rank_seed_order_index_by_node_id,
+  )
+  for edge in sorted_oriented_edges(trace.rank_seed_oriented_edges) {
+    let (source_id, target_id) = edge
+    lines.push("SEED_EDGE\t\{source_id}\t\{target_id}")
+  }
+  append_rank_layer_lines(lines, "SEED_LAYER", trace.rank_seed_layers)
+  append_rank_layer_lines(
+    lines,
+    "SEED_LAYER_VIRTUAL",
+    trace.rank_seed_virtual_layers,
+  )
+  append_rank_layer_lines(
+    lines,
+    "ORDER_LAYER_OPTIMIZED_SEED",
+    trace.rank_order_optimized_seed_layers,
+  )
+  append_rank_layer_lines(
+    lines,
+    "ORDER_LAYER_OPTIMIZED_REVERSED_SEED",
+    trace.rank_order_optimized_reversed_seed_layers,
+  )
+  append_rank_layer_lines(
+    lines,
+    "ORDER_LAYER_VIRTUAL_CANDIDATE",
+    trace.rank_order_virtual_candidate_layers,
+  )
+  append_rank_layer_lines(
+    lines,
+    "ORDER_LAYER_SELECTED_VIRTUAL",
+    trace.rank_order_selected_virtual_layers,
+  )
+  append_rank_layer_lines(
+    lines,
+    "ORDER_LAYER_SELECTED",
+    trace.rank_order_selected_layers,
+  )
+  append_rank_layer_lines(lines, "RANK_LAYER", trace.rank_layers)
+  lines.push("PLACEMENT_MAJOR_STRATEGY\t\{trace.placement_major_strategy}")
+  append_sorted_map_lines(
+    lines,
+    "PLACEMENT_MAJOR",
+    trace.placement_major_coord_by_node_id,
+  )
+  append_sorted_map_lines(
+    lines,
+    "PLACEMENT_MINOR",
+    trace.placement_minor_coord_by_node_id,
+  )
+  lines
+}
+
+///|
+/// Collects and formats ELK layered rank-phase trace lines for CLI/debug usage.
+pub fn collect_elk_layered_rank_trace_lines(
+  request : GraphLayoutBackendRequest,
+) -> Array[String]? {
+  match collect_elk_layered_rank_trace(request) {
+    Some(trace) => Some(elk_layered_rank_trace_lines(trace))
+    None => None
+  }
 }
