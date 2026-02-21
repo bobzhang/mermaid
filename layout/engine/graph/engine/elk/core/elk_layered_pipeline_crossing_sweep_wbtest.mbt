@@ -545,6 +545,44 @@ test "elk layered neighbor sort keeps current rank order on full ties" {
 }
 
 ///|
+test "elk layered fixed-layer connection order tracks free-layer positions" {
+  let fixed_node_ids = ["S"]
+  let free_node_ids = ["B", "A", "C"]
+  let connected_node_ids_by_fixed_node_id : Map[String, Array[String]] = {
+    "S": ["A", "C", "B"],
+  }
+  update_fixed_layer_connected_order_by_free_rank_positions(
+    fixed_node_ids, free_node_ids, connected_node_ids_by_fixed_node_id, false,
+  )
+  assert_eq(
+    match connected_node_ids_by_fixed_node_id.get("S") {
+      Some(node_ids) => node_ids
+      None => []
+    },
+    ["B", "A", "C"],
+  )
+}
+
+///|
+test "elk layered fixed-layer connection order supports descending mode" {
+  let fixed_node_ids = ["S"]
+  let free_node_ids = ["B", "A", "C"]
+  let connected_node_ids_by_fixed_node_id : Map[String, Array[String]] = {
+    "S": ["A", "C", "B"],
+  }
+  update_fixed_layer_connected_order_by_free_rank_positions(
+    fixed_node_ids, free_node_ids, connected_node_ids_by_fixed_node_id, true,
+  )
+  assert_eq(
+    match connected_node_ids_by_fixed_node_id.get("S") {
+      Some(node_ids) => node_ids
+      None => []
+    },
+    ["C", "A", "B"],
+  )
+}
+
+///|
 test "elk layered long-span rank-order candidates stay score-tied" {
   let graph = wb_graph(["N0", "N1", "N2", "N3", "N4", "N5", "N6"], [
     ("N0", "N1"),

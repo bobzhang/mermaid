@@ -104,6 +104,69 @@ fn edge_slot_offset_within_fixed_node(
 }
 
 ///|
+fn stable_sorted_connected_node_ids_by_rank_position(
+  connected_node_ids : Array[String],
+  free_rank_position_by_node_id : Map[String, Int],
+  descending_in_fixed_node : Bool,
+) -> Array[String] {
+  let indexed_connected_node_ids : Array[(String, Int)] = []
+  for index, node_id in connected_node_ids {
+    indexed_connected_node_ids.push((node_id, index))
+  }
+  indexed_connected_node_ids.sort_by((left, right) => {
+    let left_id = left.0
+    let left_index = left.1
+    let right_id = right.0
+    let right_index = right.1
+    let left_position = option_int_or(
+      free_rank_position_by_node_id.get(left_id),
+      left_index,
+    )
+    let right_position = option_int_or(
+      free_rank_position_by_node_id.get(right_id),
+      right_index,
+    )
+    let by_position = left_position.compare(right_position)
+    if by_position != 0 {
+      if descending_in_fixed_node {
+        -by_position
+      } else {
+        by_position
+      }
+    } else {
+      left_index.compare(right_index)
+    }
+  })
+  let sorted_connected_node_ids : Array[String] = []
+  for entry in indexed_connected_node_ids {
+    sorted_connected_node_ids.push(entry.0)
+  }
+  sorted_connected_node_ids
+}
+
+///|
+fn update_fixed_layer_connected_order_by_free_rank_positions(
+  fixed_node_ids : Array[String],
+  free_node_ids : Array[String],
+  connected_node_ids_by_fixed_node_id : Map[String, Array[String]],
+  descending_in_fixed_node : Bool,
+) -> Unit {
+  let free_rank_position_by_node_id : Map[String, Int] = {}
+  for index, node_id in free_node_ids {
+    free_rank_position_by_node_id[node_id] = index
+  }
+  for fixed_node_id in fixed_node_ids {
+    match connected_node_ids_by_fixed_node_id.get(fixed_node_id) {
+      Some(connected_node_ids) =>
+        connected_node_ids_by_fixed_node_id[fixed_node_id] = stable_sorted_connected_node_ids_by_rank_position(
+          connected_node_ids, free_rank_position_by_node_id, descending_in_fixed_node,
+        )
+      None => ()
+    }
+  }
+}
+
+///|
 fn collect_connected_free_nodes(
   fixed_node_id : String,
   connected_node_ids_by_fixed_node_id : Map[String, Array[String]],
@@ -505,7 +568,7 @@ fn sweep_rank_order_once_from_input_with_kernel(
           match sweep_input.rank_node_ids_by_rank.get(rank - 1) {
             Some(fixed_node_ids) =>
               match sweep_input.rank_node_ids_by_rank.get(rank) {
-                Some(free_node_ids) =>
+                Some(free_node_ids) => {
                   if sort_rank_nodes_by_fixed_layer_edge_slots(
                       free_node_ids,
                       fixed_node_ids,
@@ -516,6 +579,13 @@ fn sweep_rank_order_once_from_input_with_kernel(
                     ) {
                     changed = true
                   }
+                  update_fixed_layer_connected_order_by_free_rank_positions(
+                    fixed_node_ids,
+                    free_node_ids,
+                    sweep_input.successors_by_node_id,
+                    false,
+                  )
+                }
                 None => ()
               }
             None => ()
@@ -527,7 +597,7 @@ fn sweep_rank_order_once_from_input_with_kernel(
           match sweep_input.rank_node_ids_by_rank.get(rank + 1) {
             Some(fixed_node_ids) =>
               match sweep_input.rank_node_ids_by_rank.get(rank) {
-                Some(free_node_ids) =>
+                Some(free_node_ids) => {
                   if sort_rank_nodes_by_fixed_layer_edge_slots(
                       free_node_ids,
                       fixed_node_ids,
@@ -538,6 +608,13 @@ fn sweep_rank_order_once_from_input_with_kernel(
                     ) {
                     changed = true
                   }
+                  update_fixed_layer_connected_order_by_free_rank_positions(
+                    fixed_node_ids,
+                    free_node_ids,
+                    sweep_input.predecessors_by_node_id,
+                    false,
+                  )
+                }
                 None => ()
               }
             None => ()
@@ -558,7 +635,7 @@ fn sweep_rank_order_once_from_input_with_kernel(
           match sweep_input.rank_node_ids_by_rank.get(rank - 1) {
             Some(fixed_node_ids) =>
               match sweep_input.rank_node_ids_by_rank.get(rank) {
-                Some(free_node_ids) =>
+                Some(free_node_ids) => {
                   if sort_rank_nodes_by_fixed_layer_port_ranks(
                       free_node_ids,
                       fixed_node_ids,
@@ -574,6 +651,13 @@ fn sweep_rank_order_once_from_input_with_kernel(
                     ) {
                     changed = true
                   }
+                  update_fixed_layer_connected_order_by_free_rank_positions(
+                    fixed_node_ids,
+                    free_node_ids,
+                    sweep_input.successors_by_node_id,
+                    false,
+                  )
+                }
                 None => ()
               }
             None => ()
@@ -589,7 +673,7 @@ fn sweep_rank_order_once_from_input_with_kernel(
           match sweep_input.rank_node_ids_by_rank.get(rank + 1) {
             Some(fixed_node_ids) =>
               match sweep_input.rank_node_ids_by_rank.get(rank) {
-                Some(free_node_ids) =>
+                Some(free_node_ids) => {
                   if sort_rank_nodes_by_fixed_layer_port_ranks(
                       free_node_ids,
                       fixed_node_ids,
@@ -605,6 +689,13 @@ fn sweep_rank_order_once_from_input_with_kernel(
                     ) {
                     changed = true
                   }
+                  update_fixed_layer_connected_order_by_free_rank_positions(
+                    fixed_node_ids,
+                    free_node_ids,
+                    sweep_input.predecessors_by_node_id,
+                    false,
+                  )
+                }
                 None => ()
               }
             None => ()
