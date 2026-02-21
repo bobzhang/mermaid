@@ -637,3 +637,39 @@ test "elk backend exposes stable phase snapshots and counts" {
   assert_eq(elk_backend.positioned_graph.nodes.length(), 2)
   assert_eq(elk_backend.positioned_graph.edges.length(), 1)
 }
+
+///|
+test "elk backend rank phase trace includes crossing-plan metadata" {
+  let graph = flow_graph()
+  let request : @layout_engine_graph_contract_core.GraphLayoutBackendRequest = {
+    graph,
+    options: @model.RenderOptions::default(),
+    use_subgraph_redirects: true,
+    compact_fanin: false,
+  }
+  let elk_backend = layout_graph_elk_backend(request)
+  assert_eq(elk_backend.phase_traces.length(), 4)
+  let rank_trace = elk_backend.phase_traces[1]
+  assert_eq(rank_trace.phase, "rank")
+  assert_eq(
+    match rank_trace.metrics.get("rank_order_sweep_pass_count") {
+      Some(value) => value
+      None => -1
+    },
+    4,
+  )
+  assert_eq(
+    match rank_trace.metrics.get("rank_order_trial_count") {
+      Some(value) => value
+      None => -1
+    },
+    1,
+  )
+  assert_eq(
+    match rank_trace.labels.get("rank_order_sweep_kernel") {
+      Some(value) => value
+      None => ""
+    },
+    "neighbor-mean-bidirectional",
+  )
+}
