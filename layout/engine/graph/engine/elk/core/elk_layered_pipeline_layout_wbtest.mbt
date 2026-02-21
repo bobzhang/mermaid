@@ -56,6 +56,35 @@ fn wb_rank_crossings_between(
 }
 
 ///|
+fn wb_collect_rank_order_edge_segments(
+  rank_node_ids_by_rank : Map[Int, Array[String]],
+  max_rank : Int,
+  rank_by_node_id : Map[String, Int],
+  successors_by_node_id : Map[String, Array[String]],
+) -> Array[RankOrderEdgeSegment] {
+  let rank_position_by_node_id = rank_position_by_node_id(
+    rank_node_ids_by_rank, max_rank,
+  )
+  collect_rank_order_edge_segments_from_rank_positions(
+    rank_position_by_node_id, rank_by_node_id, successors_by_node_id,
+  )
+}
+
+///|
+fn wb_global_crossing_count(
+  rank_node_ids_by_rank : Map[Int, Array[String]],
+  max_rank : Int,
+  rank_by_node_id : Map[String, Int],
+  successors_by_node_id : Map[String, Array[String]],
+) -> Int {
+  global_crossing_count_from_segments(
+    wb_collect_rank_order_edge_segments(
+      rank_node_ids_by_rank, max_rank, rank_by_node_id, successors_by_node_id,
+    ),
+  )
+}
+
+///|
 test "elk layered crossing phase input enumerates rank nodes for port-order slots" {
   let rank_node_ids_by_rank : Map[Int, Array[String]] = {
     0: ["A", "B"],
@@ -171,7 +200,37 @@ test "elk layered crossing objective evaluator matches direct counters" {
   )
   assert_eq(
     objective.global_crossings,
-    global_crossing_count(
+    wb_global_crossing_count(
+      rank_node_ids_by_rank, 1, rank_by_node_id, successors_by_node_id,
+    ),
+  )
+}
+
+///|
+test "elk layered segment-derived counters match wrapper crossing counters" {
+  let rank_node_ids_by_rank : Map[Int, Array[String]] = {
+    0: ["A", "B"],
+    1: ["C", "D"],
+  }
+  let rank_by_node_id : Map[String, Int] = { "A": 0, "B": 0, "C": 1, "D": 1 }
+  let successors_by_node_id : Map[String, Array[String]] = {
+    "A": ["D"],
+    "B": ["C"],
+    "C": [],
+    "D": [],
+  }
+  let segments = wb_collect_rank_order_edge_segments(
+    rank_node_ids_by_rank, 1, rank_by_node_id, successors_by_node_id,
+  )
+  assert_eq(
+    layered_crossing_count_from_segments(segments),
+    layered_crossing_count(
+      rank_node_ids_by_rank, 1, rank_by_node_id, successors_by_node_id,
+    ),
+  )
+  assert_eq(
+    global_crossing_count_from_segments(segments),
+    wb_global_crossing_count(
       rank_node_ids_by_rank, 1, rank_by_node_id, successors_by_node_id,
     ),
   )
@@ -1308,10 +1367,10 @@ test "elk layered crossing optimizer reduces global crossings on long-span backj
     rank_by_node_id.length(),
     graph.edges.length(),
   )
-  let base_global_crossings = global_crossing_count(
+  let base_global_crossings = wb_global_crossing_count(
     base_rank_node_ids_by_rank, max_rank, rank_by_node_id, successors_by_node_id,
   )
-  let optimized_global_crossings = global_crossing_count(
+  let optimized_global_crossings = wb_global_crossing_count(
     optimized_rank_node_ids_by_rank, max_rank, rank_by_node_id, successors_by_node_id,
   )
   assert_true(optimized_global_crossings < base_global_crossings)

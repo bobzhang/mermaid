@@ -377,30 +377,27 @@ fn layered_crossing_count(
   let rank_position_by_node_id = rank_position_by_node_id(
     rank_node_ids_by_rank, max_rank,
   )
+  layered_crossing_count_from_segments(
+    collect_rank_order_edge_segments_from_rank_positions(
+      rank_position_by_node_id, rank_by_node_id, successors_by_node_id,
+    ),
+  )
+}
+
+///|
+fn layered_crossing_count_from_segments(
+  segments : Array[RankOrderEdgeSegment],
+) -> Int {
   let edge_pairs_by_rank_pair : Map[String, Array[(Int, Int)]] = {}
-  for source_id, successors in successors_by_node_id {
-    let source_rank = option_int_or(rank_by_node_id.get(source_id), -1)
-    let source_pos = option_int_or(rank_position_by_node_id.get(source_id), -1)
-    if source_rank < 0 || source_pos < 0 {
-      continue
+  for segment in segments {
+    let rank_pair_key = "\{segment.source_rank}->\{segment.target_rank}"
+    if !edge_pairs_by_rank_pair.contains(rank_pair_key) {
+      edge_pairs_by_rank_pair[rank_pair_key] = []
     }
-    for target_id in successors {
-      let target_rank = option_int_or(rank_by_node_id.get(target_id), -1)
-      let target_pos = option_int_or(
-        rank_position_by_node_id.get(target_id),
-        -1,
-      )
-      if target_rank <= source_rank || target_pos < 0 {
-        continue
-      }
-      let rank_pair_key = "\{source_rank}->\{target_rank}"
-      if !edge_pairs_by_rank_pair.contains(rank_pair_key) {
-        edge_pairs_by_rank_pair[rank_pair_key] = []
-      }
-      match edge_pairs_by_rank_pair.get(rank_pair_key) {
-        Some(edge_pairs) => edge_pairs.push((source_pos, target_pos))
-        None => ()
-      }
+    match edge_pairs_by_rank_pair.get(rank_pair_key) {
+      Some(edge_pairs) =>
+        edge_pairs.push((segment.source_pos, segment.target_pos))
+      None => ()
     }
   }
   let mut crossings = 0
@@ -421,16 +418,12 @@ priv struct RankOrderEdgeSegment {
 }
 
 ///|
-fn collect_rank_order_edge_segments(
-  rank_node_ids_by_rank : Map[Int, Array[String]],
-  max_rank : Int,
+fn collect_rank_order_edge_segments_from_rank_positions(
+  rank_position_by_node_id : Map[String, Int],
   rank_by_node_id : Map[String, Int],
   successors_by_node_id : Map[String, Array[String]],
 ) -> Array[RankOrderEdgeSegment] {
   let segments : Array[RankOrderEdgeSegment] = []
-  let rank_position_by_node_id = rank_position_by_node_id(
-    rank_node_ids_by_rank, max_rank,
-  )
   for source_id, successors in successors_by_node_id {
     let source_rank = option_int_or(rank_by_node_id.get(source_id), -1)
     let source_pos = option_int_or(rank_position_by_node_id.get(source_id), -1)
@@ -530,15 +523,9 @@ fn rank_order_edge_segments_cross(
 }
 
 ///|
-fn global_crossing_count(
-  rank_node_ids_by_rank : Map[Int, Array[String]],
-  max_rank : Int,
-  rank_by_node_id : Map[String, Int],
-  successors_by_node_id : Map[String, Array[String]],
+fn global_crossing_count_from_segments(
+  segments : Array[RankOrderEdgeSegment],
 ) -> Int {
-  let segments = collect_rank_order_edge_segments(
-    rank_node_ids_by_rank, max_rank, rank_by_node_id, successors_by_node_id,
-  )
   let mut crossings = 0
   for left_index in 0..<segments.length() {
     let left = segments[left_index]
@@ -575,19 +562,18 @@ fn evaluate_crossing_objective(
   rank_node_ids_by_rank : Map[Int, Array[String]],
   context : ElkLayeredCrossingObjectiveContext,
 ) -> ElkLayeredCrossingObjective {
+  let rank_position_by_node_id = rank_position_by_node_id(
+    rank_node_ids_by_rank,
+    context.max_rank,
+  )
+  let segments = collect_rank_order_edge_segments_from_rank_positions(
+    rank_position_by_node_id,
+    context.rank_by_node_id,
+    context.successors_by_node_id,
+  )
   {
-    layered_crossings: layered_crossing_count(
-      rank_node_ids_by_rank,
-      context.max_rank,
-      context.rank_by_node_id,
-      context.successors_by_node_id,
-    ),
-    global_crossings: global_crossing_count(
-      rank_node_ids_by_rank,
-      context.max_rank,
-      context.rank_by_node_id,
-      context.successors_by_node_id,
-    ),
+    layered_crossings: layered_crossing_count_from_segments(segments),
+    global_crossings: global_crossing_count_from_segments(segments),
   }
 }
 
