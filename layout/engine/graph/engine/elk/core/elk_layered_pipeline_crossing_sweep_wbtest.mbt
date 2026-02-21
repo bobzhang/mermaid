@@ -387,7 +387,7 @@ test "elk layered neighbor sort keeps current rank order on full ties" {
   let neighbor_by_node_id : Map[String, Array[String]] = {}
   let rank_position_by_node_id : Map[String, Int] = { "B": 0, "A": 1 }
   let order_index_by_node_id : Map[String, Int] = { "A": 0, "B": 1 }
-  sort_rank_nodes_by_neighbors(
+  let _ = sort_rank_nodes_by_neighbors(
     node_ids, neighbor_by_node_id, rank_position_by_node_id, order_index_by_node_id,
     true,
   )
