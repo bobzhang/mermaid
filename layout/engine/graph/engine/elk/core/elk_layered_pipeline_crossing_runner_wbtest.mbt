@@ -152,7 +152,10 @@ test "elk layered crossing execution plan keeps default kernels ordered" {
   let plan = default_crossing_execution_plan(LayerSweepWithLocalRefinement)
   assert_true(plan.sweep_kernel is NeighborMeanBidirectional)
   assert_true(plan.local_refinement_kernels is [AdjacentSwap, RankPermutation])
-  assert_eq(plan.config.trial_count, 1)
+  assert_eq(
+    plan.config.trial_count,
+    default_crossing_optimization_config().trial_count,
+  )
   assert_eq(plan.config.trial_random_seed, 1)
   assert_eq(plan.config.trial_model_order_inversion_influence, 0.0)
 }

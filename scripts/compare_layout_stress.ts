@@ -25,6 +25,7 @@
  *   bun run scripts/compare_layout_stress.ts --local-layout-engine dagre-parity
  *   bun run scripts/compare_layout_stress.ts --local-layout-engine elk
  *   bun run scripts/compare_layout_stress.ts --local-layout-engine elk-layered
+ *   bun run scripts/compare_layout_stress.ts --local-layout-engine elk --elk-trial-count 5 --elk-sweep-pass-count 6
  */
 
 import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, writeFileSync } from 'node:fs'
@@ -128,6 +129,8 @@ type CliOptions = {
   officialCacheDir?: string
   officialFlowchartRenderer: OfficialFlowchartRenderer
   localLayoutEngine?: 'legacy' | 'dagre-parity' | 'elk' | 'elk-layered'
+  elkTrialCount?: number
+  elkSweepPassCount?: number
   allowUnparsedEdgeLines: boolean
   useLocalEdgeDump: boolean
   maxLogicalCrossingMultiplier?: number
@@ -2182,13 +2185,52 @@ function localLayoutEngineArgs(options: CliOptions): string[] {
   return [`--layout-engine=${options.localLayoutEngine}`]
 }
 
+function hasElkCrossingOverrides(options: CliOptions): boolean {
+  return options.elkTrialCount !== undefined || options.elkSweepPassCount !== undefined
+}
+
+function localElkCrossingOverrideArgs(options: CliOptions): string[] {
+  const args: string[] = []
+  if (options.elkTrialCount !== undefined) {
+    args.push('--trial-count', String(options.elkTrialCount))
+  }
+  if (options.elkSweepPassCount !== undefined) {
+    args.push('--sweep-pass-count', String(options.elkSweepPassCount))
+  }
+  return args
+}
+
 function renderLocal(inputPath: string, outPath: string, options: CliOptions): void {
   const source = readFileSync(inputPath, 'utf8')
   for (let attempt = 0; attempt <= options.localRenderRetries; attempt += 1) {
     try {
+      let localRenderArgs: string[] = []
+      if (hasElkCrossingOverrides(options)) {
+        const localLayoutEngine = options.localLayoutEngine ?? 'elk'
+        localRenderArgs = [
+          'run',
+          'cmd/elk_render',
+          '--target',
+          'native',
+          '--',
+          `--layout-engine=${localLayoutEngine}`,
+          ...localElkCrossingOverrideArgs(options),
+          source,
+        ]
+      } else {
+        localRenderArgs = [
+          'run',
+          'cmd/main',
+          '--target',
+          'native',
+          '--',
+          ...localLayoutEngineArgs(options),
+          source,
+        ]
+      }
       const svg = runOrThrow(
         'moon',
-        ['run', 'cmd/main', '--target', 'native', '--', ...localLayoutEngineArgs(options), source],
+        localRenderArgs,
         options.localTimeoutMs,
       )
       writeFileSync(outPath, svg)
@@ -2204,6 +2246,9 @@ function renderLocal(inputPath: string, outPath: string, options: CliOptions): v
 }
 
 function renderLocalEdgePoints(inputPath: string, options: CliOptions): Point[][] {
+  if (hasElkCrossingOverrides(options)) {
+    fail('local edge dump is not supported with --elk-trial-count/--elk-sweep-pass-count overrides')
+  }
   const source = readFileSync(inputPath, 'utf8')
   for (let attempt = 0; attempt <= options.localRenderRetries; attempt += 1) {
     try {
@@ -2603,6 +2648,8 @@ function parseCliOptions(args: string[]): CliOptions {
     | 'elk'
     | 'elk-layered'
     | undefined = undefined
+  let elkTrialCount: number | undefined = undefined
+  let elkSweepPassCount: number | undefined = undefined
   let allowUnparsedEdgeLines = false
   let useLocalEdgeDump = false
   let maxLogicalCrossingMultiplier: number | undefined = undefined
@@ -2704,6 +2751,46 @@ function parseCliOptions(args: string[]): CliOptions {
         fail("invalid --local-layout-engine value, expected 'legacy', 'dagre-parity', 'elk', or 'elk-layered'")
       }
       localLayoutEngine = normalized
+      continue
+    }
+    if (arg === '--elk-trial-count') {
+      const next = args[i + 1]
+      if (!next) fail('missing value after --elk-trial-count')
+      const parsed = Number.parseInt(next, 10)
+      if (!Number.isFinite(parsed) || parsed <= 0) {
+        fail('invalid --elk-trial-count value, expected positive integer')
+      }
+      elkTrialCount = parsed
+      i += 1
+      continue
+    }
+    if (arg.startsWith('--elk-trial-count=')) {
+      const value = arg.slice('--elk-trial-count='.length)
+      const parsed = Number.parseInt(value, 10)
+      if (!Number.isFinite(parsed) || parsed <= 0) {
+        fail('invalid --elk-trial-count value, expected positive integer')
+      }
+      elkTrialCount = parsed
+      continue
+    }
+    if (arg === '--elk-sweep-pass-count') {
+      const next = args[i + 1]
+      if (!next) fail('missing value after --elk-sweep-pass-count')
+      const parsed = Number.parseInt(next, 10)
+      if (!Number.isFinite(parsed) || parsed <= 0) {
+        fail('invalid --elk-sweep-pass-count value, expected positive integer')
+      }
+      elkSweepPassCount = parsed
+      i += 1
+      continue
+    }
+    if (arg.startsWith('--elk-sweep-pass-count=')) {
+      const value = arg.slice('--elk-sweep-pass-count='.length)
+      const parsed = Number.parseInt(value, 10)
+      if (!Number.isFinite(parsed) || parsed <= 0) {
+        fail('invalid --elk-sweep-pass-count value, expected positive integer')
+      }
+      elkSweepPassCount = parsed
       continue
     }
     if (arg === '--allow-unparsed-edge-lines') {
@@ -3031,6 +3118,18 @@ function parseCliOptions(args: string[]): CliOptions {
       maxAvgWeightedGapIndex ?? selectedProfile.maxAvgWeightedGapIndex
   }
 
+  const hasElkOverrides = elkTrialCount !== undefined || elkSweepPassCount !== undefined
+  if (
+    hasElkOverrides &&
+    (localLayoutEngine === undefined ||
+      (localLayoutEngine !== 'elk' && localLayoutEngine !== 'elk-layered'))
+  ) {
+    fail('--elk-trial-count/--elk-sweep-pass-count require --local-layout-engine elk or elk-layered')
+  }
+  if (hasElkOverrides && useLocalEdgeDump) {
+    fail('--use-local-edge-dump is not supported with ELK crossing override flags')
+  }
+
   return {
     profile,
     fixtures,
@@ -3038,6 +3137,8 @@ function parseCliOptions(args: string[]): CliOptions {
     officialCacheDir,
     officialFlowchartRenderer,
     localLayoutEngine,
+    elkTrialCount,
+    elkSweepPassCount,
     allowUnparsedEdgeLines,
     useLocalEdgeDump,
     maxLogicalCrossingMultiplier,

@@ -1,0 +1,17 @@
+import {
+  "bobzhang/beautiful_mermaid/layout/engine/graph/contract/core" @layout_engine_graph_contract_core,
+  "bobzhang/beautiful_mermaid/layout/engine/graph/engine/elk/core" @layout_engine_graph_engine_elk_core,
+  "bobzhang/beautiful_mermaid/model" @model,
+  "bobzhang/beautiful_mermaid/parser/header/core" @parser_header_core,
+  "bobzhang/beautiful_mermaid/renderer/svg/engine/core" @renderer_svg,
+  "moonbitlang/core/env" @env,
+  "moonbitlang/core/strconv" @strconv,
+}
+
+import {
+  "moonbitlang/core/test",
+} for "test"
+
+options(
+  "is-main": true,
+)

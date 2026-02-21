@@ -1,0 +1,14 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "bobzhang/beautiful_mermaid/cmd/elk_render"
+
+// Values
+
+// Errors
+
+// Types and methods
+type ElkRenderCliArgs
+
+// Type aliases
+
+// Traits
+

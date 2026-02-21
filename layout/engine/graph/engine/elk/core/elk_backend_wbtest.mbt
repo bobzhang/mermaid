@@ -663,7 +663,7 @@ test "elk backend rank phase trace includes crossing-plan metadata" {
       Some(value) => value
       None => -1
     },
-    1,
+    default_crossing_optimization_config().trial_count,
   )
   assert_eq(
     match rank_trace.labels.get("rank_order_sweep_kernel") {

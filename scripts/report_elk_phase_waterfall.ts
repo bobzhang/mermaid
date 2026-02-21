@@ -588,7 +588,7 @@ function parsePlacementMajor(): { totalLayerMismatch: number; avgInversionRate: 
   return { totalLayerMismatch, avgInversionRate }
 }
 
-function parseEndToEnd(): {
+function parseEndToEnd(options: CliOptions): {
   avgWeightedGapIndex: number
   totalMajorRankCompositionMismatches: number
   avgLogicalCrossingMultiplier: number
@@ -597,7 +597,7 @@ function parseEndToEnd(): {
 } {
   const tempRoot = mkdtempSync(join(tmpdir(), 'elk-phase-waterfall-'))
   const jsonPath = join(tempRoot, 'elk.json')
-  runOrThrow('bun', [
+  const args = [
     'run',
     'scripts/compare_layout_stress.ts',
     '--local-layout-engine',
@@ -607,7 +607,14 @@ function parseEndToEnd(): {
     '--include-rank-layers',
     '--json',
     jsonPath,
-  ])
+  ]
+  if (options.trialCount !== undefined) {
+    args.push('--elk-trial-count', String(options.trialCount))
+  }
+  if (options.sweepPassCount !== undefined) {
+    args.push('--elk-sweep-pass-count', String(options.sweepPassCount))
+  }
+  runOrThrow('bun', args)
   const payload = JSON.parse(readFileSync(jsonPath, 'utf8')) as StressPayload
   const summary = payload.summary
   if (!summary) fail('missing end-to-end summary')
@@ -660,7 +667,7 @@ function main(): void {
   const crossingRankOrder = parseCrossingRankOrder(options)
   const crossingPhaseTrace = parseCrossingPhaseTrace(options)
   const placementMajor = parsePlacementMajor()
-  const endToEnd = parseEndToEnd()
+  const endToEnd = parseEndToEnd(options)
 
   const reportBase = {
     fixtures: STRESS_FIXTURES,

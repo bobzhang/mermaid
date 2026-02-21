@@ -14,6 +14,8 @@ pub fn collect_elk_layered_rank_trace_lines_with_sweep_kernel(@bobzhang/beautifu
 
 pub fn layout_graph_elk_backend(@bobzhang/beautiful_mermaid/layout/engine/graph/contract/core.GraphLayoutBackendRequest) -> @bobzhang/beautiful_mermaid/layout/engine/graph/contract/core.GraphLayoutBackendResult
 
+pub fn layout_graph_elk_backend_with_crossing_overrides(@bobzhang/beautiful_mermaid/layout/engine/graph/contract/core.GraphLayoutBackendRequest, ElkLayeredRankTraceSweepKernel, Int?, Int?) -> @bobzhang/beautiful_mermaid/layout/engine/graph/contract/core.GraphLayoutBackendResult
+
 // Errors
 
 // Types and methods

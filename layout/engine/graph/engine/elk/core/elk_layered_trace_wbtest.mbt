@@ -42,7 +42,10 @@ test "elk layered rank trace keeps fanout kernel baseline" {
   assert_eq(trace.rank_order_strategy, "optimized-seed-with-virtual-candidate")
   assert_eq(trace.rank_order_sweep_kernel, "neighbor-mean-bidirectional")
   assert_eq(trace.rank_order_sweep_pass_count, 4)
-  assert_eq(trace.rank_order_trial_count, 1)
+  assert_eq(
+    trace.rank_order_trial_count,
+    default_crossing_optimization_config().trial_count,
+  )
   assert_eq(trace.rank_order_selected_source, "virtual")
   assert_true(
     trace.rank_order_optimized_seed_post_sweep_crossings >=
@@ -98,7 +101,10 @@ test "elk layered rank trace keeps feedback mesh kernel baseline" {
   assert_eq(trace.rank_order_strategy, "optimized-seed-with-virtual-candidate")
   assert_eq(trace.rank_order_sweep_kernel, "neighbor-mean-bidirectional")
   assert_eq(trace.rank_order_sweep_pass_count, 4)
-  assert_eq(trace.rank_order_trial_count, 1)
+  assert_eq(
+    trace.rank_order_trial_count,
+    default_crossing_optimization_config().trial_count,
+  )
   assert_eq(trace.rank_order_selected_source, "virtual")
   assert_true(
     trace.rank_order_optimized_seed_post_sweep_crossings >=
@@ -164,7 +170,10 @@ test "elk layered rank trace keeps long span kernel baseline" {
   assert_eq(trace.rank_order_strategy, "optimized-seed-with-virtual-candidate")
   assert_eq(trace.rank_order_sweep_kernel, "neighbor-mean-bidirectional")
   assert_eq(trace.rank_order_sweep_pass_count, 4)
-  assert_eq(trace.rank_order_trial_count, 1)
+  assert_eq(
+    trace.rank_order_trial_count,
+    default_crossing_optimization_config().trial_count,
+  )
   assert_eq(trace.rank_order_selected_source, "virtual")
   assert_true(
     trace.rank_order_optimized_seed_post_sweep_crossings >=
@@ -289,7 +298,11 @@ test "elk layered rank trace line formatter keeps sorted deterministic sections"
   assert_true(sweep_layer_lines.length() >= 1)
   assert_true(lines.contains("ORDER_SWEEP_KERNEL\tneighbor-mean-bidirectional"))
   assert_true(lines.contains("ORDER_SWEEP_PASSES\t4"))
-  assert_true(lines.contains("ORDER_TRIAL_COUNT\t1"))
+  assert_true(
+    lines.contains(
+      "ORDER_TRIAL_COUNT\t\{default_crossing_optimization_config().trial_count}",
+    ),
+  )
 }
 
 ///|
