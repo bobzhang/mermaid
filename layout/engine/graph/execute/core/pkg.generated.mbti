@@ -8,6 +8,8 @@ import {
 // Values
 pub fn execute_layout_plan(@bobzhang/beautiful_mermaid/layout/engine/graph/plan/core.LayoutExecutionPlan, @model.RenderOptions) -> @model.PositionedGraph
 
+pub fn execute_layout_plan_with_phase_traces(@bobzhang/beautiful_mermaid/layout/engine/graph/plan/core.LayoutExecutionPlan, @model.RenderOptions) -> (@model.PositionedGraph, Array[@bobzhang/beautiful_mermaid/layout/engine/graph/phase_contract/core.PhaseTrace])
+
 // Errors
 
 // Types and methods

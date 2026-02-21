@@ -12,7 +12,7 @@ pub fn execute_layout_plan(
 
 ///|
 /// Executes a selected graph layout plan and returns phase traces when available.
-fn execute_layout_plan_with_phase_traces(
+pub fn execute_layout_plan_with_phase_traces(
   plan : LayoutExecutionPlan,
   options : RenderOptions,
 ) -> (PositionedGraph, Array[GraphLayoutPhaseTrace]) {
