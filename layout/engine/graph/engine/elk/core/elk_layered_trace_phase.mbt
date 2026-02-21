@@ -631,6 +631,22 @@ fn append_trial_summary_lines(
       lines.push(
         "ORDER_TRIAL_PASS\t\{source}\t\{summary.trial_index}\t\{pass_summary.pass_index}\t\{pass_summary.sweep_direction}\t\{changed}\t\{pass_summary.objective.layered_crossings}\t\{pass_summary.objective.global_crossings}",
       )
+      let ranks : Array[Int] = []
+      for rank, _ in pass_summary.rank_node_ids_by_rank {
+        ranks.push(rank)
+      }
+      ranks.sort()
+      for rank in ranks {
+        match pass_summary.rank_node_ids_by_rank.get(rank) {
+          Some(node_ids) => {
+            let joined_node_ids = node_ids.join(",")
+            lines.push(
+              "ORDER_TRIAL_LAYER\t\{source}\t\{summary.trial_index}\t\{pass_summary.pass_index}\t\{rank}\t\{joined_node_ids}",
+            )
+          }
+          None => ()
+        }
+      }
     }
   }
 }

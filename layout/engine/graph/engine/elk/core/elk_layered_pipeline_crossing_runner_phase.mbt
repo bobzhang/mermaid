@@ -23,6 +23,7 @@ priv struct ElkLayeredCrossingSweepPassSummary {
   sweep_direction : String
   changed : Bool
   objective : ElkLayeredCrossingObjective
+  rank_node_ids_by_rank : Map[Int, Array[String]]
 }
 
 ///|
@@ -235,6 +236,10 @@ fn execute_crossing_phase_once_with_plan_and_seed(
       objective: evaluate_crossing_objective(
         trace_sweep_input.rank_node_ids_by_rank,
         objective_context,
+      ),
+      rank_node_ids_by_rank: clone_rank_node_ids_by_rank(
+        trace_sweep_input.rank_node_ids_by_rank,
+        input.max_rank,
       ),
     })
     if !changed {
