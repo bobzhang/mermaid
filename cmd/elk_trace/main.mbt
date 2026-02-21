@@ -149,16 +149,6 @@ fn flow_edge(source : String, target : String) -> @model.MermaidEdge {
 }
 
 ///|
-fn empty_graph_maps() -> (
-  Map[String, Map[String, String]],
-  Map[String, String],
-  Map[String, Map[String, String]],
-  Map[String, @model.SequenceParticipantKind],
-) {
-  ({}, {}, {}, {})
-}
-
-///|
 fn build_graph(kernel : ElkTraceKernel) -> @model.MermaidGraph {
   let node_map : Map[String, @model.MermaidNode] = {}
   for node_id in kernel.nodes {
@@ -169,7 +159,10 @@ fn build_graph(kernel : ElkTraceKernel) -> @model.MermaidGraph {
     let (source, target) = edge
     edges.push(flow_edge(source, target))
   }
-  let (class_defs, class_assignments, node_styles, sequence_actor_kinds) = empty_graph_maps()
+  let class_defs : Map[String, Map[String, String]] = {}
+  let class_assignments : Map[String, String] = {}
+  let node_styles : Map[String, Map[String, String]] = {}
+  let sequence_actor_kinds : Map[String, @model.SequenceParticipantKind] = {}
   {
     diagram_kind: Flowchart,
     direction: kernel.direction,
