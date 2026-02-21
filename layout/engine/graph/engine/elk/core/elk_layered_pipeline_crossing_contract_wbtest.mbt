@@ -43,6 +43,36 @@ test "elk layered crossing phase input keeps duplicate edges in deterministic so
 }
 
 ///|
+test "elk layered crossing in-layer successor builder filters by rank and deduplicates edges" {
+  let in_layer_successors_by_node_id = build_crossing_in_layer_successors_by_node_id(
+    [("A", "B"), ("A", "B"), ("A", "C"), ("D", "E"), ("E", "D"), ("F", "F")],
+    { "A": 0, "B": 0, "C": 1, "D": 2, "E": 2, "F": 3 },
+  )
+  assert_eq(
+    match in_layer_successors_by_node_id.get("A") {
+      Some(successors) => successors
+      None => []
+    },
+    ["B"],
+  )
+  assert_eq(
+    match in_layer_successors_by_node_id.get("D") {
+      Some(successors) => successors
+      None => []
+    },
+    ["E"],
+  )
+  assert_eq(
+    match in_layer_successors_by_node_id.get("E") {
+      Some(successors) => successors
+      None => []
+    },
+    ["D"],
+  )
+  assert_true(!in_layer_successors_by_node_id.contains("F"))
+}
+
+///|
 test "elk layered crossing optimization config keeps baseline thresholds" {
   let config = default_crossing_optimization_config()
   assert_eq(config.preserve_order_node_threshold, 16)

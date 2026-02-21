@@ -6,6 +6,7 @@ priv struct ElkLayeredCrossingSweepInput {
   max_rank : Int
   predecessors_by_node_id : Map[String, Array[String]]
   successors_by_node_id : Map[String, Array[String]]
+  in_layer_successors_by_node_id : Map[String, Array[String]]
   order_index_by_node_id : Map[String, Int]
   preserve_current_order_on_tie : Bool
   neighbor_mean_barycenter_perturbation : Bool
@@ -19,6 +20,7 @@ fn build_crossing_sweep_input(
   max_rank : Int,
   predecessors_by_node_id : Map[String, Array[String]],
   successors_by_node_id : Map[String, Array[String]],
+  in_layer_successors_by_node_id : Map[String, Array[String]],
   order_index_by_node_id : Map[String, Int],
   preserve_current_order_on_tie : Bool,
   neighbor_mean_barycenter_perturbation : Bool,
@@ -30,6 +32,7 @@ fn build_crossing_sweep_input(
     max_rank,
     predecessors_by_node_id,
     successors_by_node_id,
+    in_layer_successors_by_node_id,
     order_index_by_node_id,
     preserve_current_order_on_tie,
     neighbor_mean_barycenter_perturbation,
@@ -71,6 +74,10 @@ fn build_crossing_sweep_input_from_phase_input(
     input.max_rank,
     input.predecessors_by_node_id,
     input.successors_by_node_id,
+    build_crossing_in_layer_successors_by_node_id(
+      input.ordering_edges,
+      input.rank_by_node_id,
+    ),
     input.order_index_by_node_id,
     crossing_preserve_current_order_on_tie(
       input.node_count,
@@ -421,7 +428,7 @@ fn sweep_rank_order_once_from_input_with_kernel(
             sweep_input.max_rank,
           )
           match sweep_input.rank_node_ids_by_rank.get(rank) {
-            Some(node_ids) =>
+            Some(node_ids) => {
               if sort_rank_nodes_by_neighbors(
                   node_ids,
                   sweep_input.predecessors_by_node_id,
@@ -435,6 +442,13 @@ fn sweep_rank_order_once_from_input_with_kernel(
                 ) {
                 changed = true
               }
+              if apply_crossing_in_layer_successor_constraints(
+                  node_ids,
+                  sweep_input.in_layer_successors_by_node_id,
+                ) {
+                changed = true
+              }
+            }
             None => ()
           }
         }
@@ -446,7 +460,7 @@ fn sweep_rank_order_once_from_input_with_kernel(
             sweep_input.max_rank,
           )
           match sweep_input.rank_node_ids_by_rank.get(rank) {
-            Some(node_ids) =>
+            Some(node_ids) => {
               if sort_rank_nodes_by_neighbors(
                   node_ids,
                   sweep_input.successors_by_node_id,
@@ -460,6 +474,13 @@ fn sweep_rank_order_once_from_input_with_kernel(
                 ) {
                 changed = true
               }
+              if apply_crossing_in_layer_successor_constraints(
+                  node_ids,
+                  sweep_input.in_layer_successors_by_node_id,
+                ) {
+                changed = true
+              }
+            }
             None => ()
           }
           if rank == 0 {
@@ -478,7 +499,7 @@ fn sweep_rank_order_once_from_input_with_kernel(
             sweep_input.max_rank,
           )
           match sweep_input.rank_node_ids_by_rank.get(rank) {
-            Some(node_ids) =>
+            Some(node_ids) => {
               if sort_rank_nodes_by_neighbors_median(
                   node_ids,
                   sweep_input.predecessors_by_node_id,
@@ -488,6 +509,13 @@ fn sweep_rank_order_once_from_input_with_kernel(
                 ) {
                 changed = true
               }
+              if apply_crossing_in_layer_successor_constraints(
+                  node_ids,
+                  sweep_input.in_layer_successors_by_node_id,
+                ) {
+                changed = true
+              }
+            }
             None => ()
           }
         }
@@ -499,7 +527,7 @@ fn sweep_rank_order_once_from_input_with_kernel(
             sweep_input.max_rank,
           )
           match sweep_input.rank_node_ids_by_rank.get(rank) {
-            Some(node_ids) =>
+            Some(node_ids) => {
               if sort_rank_nodes_by_neighbors_median(
                   node_ids,
                   sweep_input.successors_by_node_id,
@@ -509,6 +537,13 @@ fn sweep_rank_order_once_from_input_with_kernel(
                 ) {
                 changed = true
               }
+              if apply_crossing_in_layer_successor_constraints(
+                  node_ids,
+                  sweep_input.in_layer_successors_by_node_id,
+                ) {
+                changed = true
+              }
+            }
             None => ()
           }
           if rank == 0 {
@@ -531,6 +566,12 @@ fn sweep_rank_order_once_from_input_with_kernel(
                       sweep_input.order_index_by_node_id,
                       sweep_input.preserve_current_order_on_tie,
                       false,
+                    ) {
+                    changed = true
+                  }
+                  if apply_crossing_in_layer_successor_constraints(
+                      free_node_ids,
+                      sweep_input.in_layer_successors_by_node_id,
                     ) {
                     changed = true
                   }
@@ -560,6 +601,12 @@ fn sweep_rank_order_once_from_input_with_kernel(
                       sweep_input.order_index_by_node_id,
                       sweep_input.preserve_current_order_on_tie,
                       true,
+                    ) {
+                    changed = true
+                  }
+                  if apply_crossing_in_layer_successor_constraints(
+                      free_node_ids,
+                      sweep_input.in_layer_successors_by_node_id,
                     ) {
                     changed = true
                   }
@@ -602,6 +649,12 @@ fn sweep_rank_order_once_from_input_with_kernel(
                     ) {
                     changed = true
                   }
+                  if apply_crossing_in_layer_successor_constraints(
+                      free_node_ids,
+                      sweep_input.in_layer_successors_by_node_id,
+                    ) {
+                    changed = true
+                  }
                   update_fixed_layer_connected_order_by_free_rank_positions(
                     fixed_node_ids,
                     free_node_ids,
@@ -633,6 +686,12 @@ fn sweep_rank_order_once_from_input_with_kernel(
                       sweep_input.order_index_by_node_id,
                       sweep_input.preserve_current_order_on_tie,
                       true,
+                    ) {
+                    changed = true
+                  }
+                  if apply_crossing_in_layer_successor_constraints(
+                      free_node_ids,
+                      sweep_input.in_layer_successors_by_node_id,
                     ) {
                     changed = true
                   }

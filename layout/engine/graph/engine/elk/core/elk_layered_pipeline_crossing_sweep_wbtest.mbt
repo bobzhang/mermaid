@@ -101,6 +101,7 @@ fn wb_optimize_rank_order_with_sweep_passes_and_kernel(
       max_rank,
       predecessors_by_node_id,
       successors_by_node_id,
+      {},
       order_index_by_node_id,
       preserve_current_order_on_tie,
       false,
@@ -138,6 +139,28 @@ fn wb_optimize_rank_order_with_sweep_passes_from_input_and_start_direction(
     forward_sweep = !forward_sweep
     pass = pass + 1
   }
+}
+
+///|
+test "elk layered in-layer successor constraints enforce deterministic topological order" {
+  let node_ids = ["B", "A", "C"]
+  let changed = apply_crossing_in_layer_successor_constraints(node_ids, {
+    "A": ["B"],
+    "B": ["C"],
+  })
+  assert_true(changed)
+  assert_eq(node_ids, ["A", "B", "C"])
+}
+
+///|
+test "elk layered in-layer successor constraints keep current order when constraints cycle" {
+  let node_ids = ["B", "A"]
+  let changed = apply_crossing_in_layer_successor_constraints(node_ids, {
+    "A": ["B"],
+    "B": ["A"],
+  })
+  assert_true(!changed)
+  assert_eq(node_ids, ["B", "A"])
 }
 
 ///|
@@ -316,6 +339,7 @@ test "elk layered sweep input entry matches explicit parameter entry" {
       2,
       predecessors_by_node_id,
       successors_by_node_id,
+      {},
       order_index_by_node_id,
       false,
       false,
