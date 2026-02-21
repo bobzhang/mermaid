@@ -230,3 +230,53 @@ test "elk layered virtual ordering filters placeholders before placement" {
   }
   assert_true(wb_contains_node_id(rank_one_nodes, "B"))
 }
+
+///|
+test "elk layered rank-seeded neighbor orientation stays forward by rank" {
+  let graph = wb_graph(["A", "B", "C", "D"], [
+    ("A", "B"),
+    ("B", "C"),
+    ("C", "A"),
+    ("C", "D"),
+  ])
+  let prep_state = @layout_engine_graph_prep_core.prepare_graph_inputs(
+    graph, false,
+  )
+  let nodes_in_order = @layout_engine_graph_internal_core.reorder_nodes_for_flow_layout(
+    prep_state.nodes_in_order,
+    graph.edges,
+  )
+  let lane_state = @layout_engine_graph_lane_core.compute_legacy_lane_state(
+    graph, nodes_in_order, false, false, true, false, false, false, false,
+  )
+  let rank_by_node_id = lane_state.flow_rank_by_node_id
+  let order_index_by_node_id = build_order_index_by_node_id(nodes_in_order)
+  let node_ids : Array[String] = []
+  for node in nodes_in_order {
+    node_ids.push(node.id)
+  }
+  let (successors_by_node_id, _predecessors_by_node_id) = build_layered_neighbor_state_from_rank_seed(
+    graph,
+    false,
+    prep_state.subgraph_entry_by_id,
+    prep_state.subgraph_exit_by_id,
+    node_ids,
+    rank_by_node_id,
+    order_index_by_node_id,
+  )
+  for source_id, successors in successors_by_node_id {
+    let source_rank = option_int_or(rank_by_node_id.get(source_id), -1)
+    let source_order = option_int_or(order_index_by_node_id.get(source_id), -1)
+    for target_id in successors {
+      let target_rank = option_int_or(rank_by_node_id.get(target_id), -1)
+      let target_order = option_int_or(
+        order_index_by_node_id.get(target_id),
+        -1,
+      )
+      assert_true(source_rank <= target_rank)
+      if source_rank == target_rank {
+        assert_true(source_order < target_order)
+      }
+    }
+  }
+}
