@@ -4,7 +4,6 @@
 priv struct ElkLayeredCrossingPhaseResult {
   post_sweep_rank_node_ids_by_rank : Map[Int, Array[String]]
   optimized_rank_node_ids_by_rank : Map[Int, Array[String]]
-  base_objective : ElkLayeredCrossingObjective
   post_sweep_objective : ElkLayeredCrossingObjective
   optimized_objective : ElkLayeredCrossingObjective
 }
@@ -34,10 +33,6 @@ fn run_crossing_phase_with_plan(
   let objective_context = build_crossing_objective_context_from_phase_input(
     input,
   )
-  let base_objective = evaluate_crossing_objective(
-    input.rank_node_ids_by_rank,
-    objective_context,
-  )
   let execution_state = execute_crossing_phase_with_plan_with_trace(input, plan)
   let post_sweep_objective = evaluate_crossing_objective(
     execution_state.post_sweep_rank_node_ids_by_rank,
@@ -50,50 +45,9 @@ fn run_crossing_phase_with_plan(
   {
     post_sweep_rank_node_ids_by_rank: execution_state.post_sweep_rank_node_ids_by_rank,
     optimized_rank_node_ids_by_rank: execution_state.post_refinement_rank_node_ids_by_rank,
-    base_objective,
     post_sweep_objective,
     optimized_objective,
   }
-}
-
-///|
-fn optimize_rank_node_ids_by_crossing_phase(
-  input : ElkLayeredCrossingPhaseInput,
-) -> Map[Int, Array[String]] {
-  optimize_rank_node_ids_by_crossing_phase_with_strategy(
-    input,
-    LayerSweepWithLocalRefinement,
-  )
-}
-
-///|
-fn optimize_rank_node_ids_by_crossing_phase_with_strategy(
-  input : ElkLayeredCrossingPhaseInput,
-  strategy : ElkLayeredCrossingOptimizerStrategy,
-) -> Map[Int, Array[String]] {
-  let phase_result = run_crossing_phase_with_plan(
-    input,
-    default_crossing_execution_plan(strategy),
-  )
-  let _ = phase_result.base_objective
-  let _ = phase_result.optimized_objective
-  phase_result.optimized_rank_node_ids_by_rank
-}
-
-///|
-fn optimize_rank_node_ids_by_crossing_phase_with_plan(
-  input : ElkLayeredCrossingPhaseInput,
-  plan : ElkLayeredCrossingExecutionPlan,
-) -> Map[Int, Array[String]] {
-  execute_crossing_phase_with_plan(input, plan)
-}
-
-///|
-fn execute_crossing_phase_with_plan(
-  input : ElkLayeredCrossingPhaseInput,
-  plan : ElkLayeredCrossingExecutionPlan,
-) -> Map[Int, Array[String]] {
-  execute_crossing_phase_with_plan_with_trace(input, plan).post_refinement_rank_node_ids_by_rank
 }
 
 ///|
@@ -159,21 +113,4 @@ fn build_optimized_rank_node_ids_by_rank_with_trace(
     ),
     default_crossing_execution_plan(LayerSweepWithLocalRefinement),
   )
-}
-
-///|
-fn build_optimized_rank_node_ids_by_rank(
-  base_rank_node_ids_by_rank : Map[Int, Array[String]],
-  max_rank : Int,
-  predecessors_by_node_id : Map[String, Array[String]],
-  successors_by_node_id : Map[String, Array[String]],
-  order_index_by_node_id : Map[String, Int],
-  rank_by_node_id : Map[String, Int],
-  node_count : Int,
-  edge_count : Int,
-) -> Map[Int, Array[String]] {
-  build_optimized_rank_node_ids_by_rank_with_trace(
-    base_rank_node_ids_by_rank, max_rank, predecessors_by_node_id, successors_by_node_id,
-    order_index_by_node_id, rank_by_node_id, node_count, edge_count,
-  ).optimized_rank_node_ids_by_rank
 }

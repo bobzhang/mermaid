@@ -433,30 +433,30 @@ test "elk layered long-span rank-order candidates stay score-tied" {
     nodes_in_order, rank_by_node_id, order_index_by_node_id, base_order_index_by_node_id,
     max_rank,
   )
-  let optimized_base_rank_node_ids_by_rank = build_optimized_rank_node_ids_by_rank(
-    base_rank_node_ids_by_rank,
-    max_rank,
-    predecessors_by_node_id,
-    successors_by_node_id,
-    order_index_by_node_id,
-    rank_by_node_id,
-    rank_by_node_id.length(),
-    graph.edges.length(),
-  )
+  let optimized_base_rank_node_ids_by_rank = build_optimized_rank_node_ids_by_rank_with_trace(
+      base_rank_node_ids_by_rank,
+      max_rank,
+      predecessors_by_node_id,
+      successors_by_node_id,
+      order_index_by_node_id,
+      rank_by_node_id,
+      rank_by_node_id.length(),
+      graph.edges.length(),
+    ).optimized_rank_node_ids_by_rank
   let virtual_ordering_state = build_virtual_ordering_state(
     base_rank_node_ids_by_rank, rank_by_node_id, max_rank, order_index_by_node_id,
     successors_by_node_id,
   )
-  let optimized_virtual_rank_node_ids_by_rank = build_optimized_rank_node_ids_by_rank(
-    virtual_ordering_state.rank_node_ids_by_rank,
-    max_rank,
-    virtual_ordering_state.predecessors_by_node_id,
-    virtual_ordering_state.successors_by_node_id,
-    virtual_ordering_state.order_index_by_node_id,
-    virtual_ordering_state.rank_by_node_id,
-    virtual_ordering_state.rank_by_node_id.length(),
-    graph.edges.length(),
-  )
+  let optimized_virtual_rank_node_ids_by_rank = build_optimized_rank_node_ids_by_rank_with_trace(
+      virtual_ordering_state.rank_node_ids_by_rank,
+      max_rank,
+      virtual_ordering_state.predecessors_by_node_id,
+      virtual_ordering_state.successors_by_node_id,
+      virtual_ordering_state.order_index_by_node_id,
+      virtual_ordering_state.rank_by_node_id,
+      virtual_ordering_state.rank_by_node_id.length(),
+      graph.edges.length(),
+    ).optimized_rank_node_ids_by_rank
   let real_virtual_rank_node_ids_by_rank = filter_real_rank_node_ids_by_rank(
     optimized_virtual_rank_node_ids_by_rank,
     max_rank,
@@ -579,16 +579,16 @@ test "elk layered crossing optimizer reduces global crossings on long-span backj
     setup_state.base_order_index_by_node_id,
     max_rank,
   )
-  let optimized_rank_node_ids_by_rank = build_optimized_rank_node_ids_by_rank(
-    base_rank_node_ids_by_rank,
-    max_rank,
-    predecessors_by_node_id,
-    successors_by_node_id,
-    order_index_by_node_id,
-    rank_by_node_id,
-    rank_by_node_id.length(),
-    graph.edges.length(),
-  )
+  let optimized_rank_node_ids_by_rank = build_optimized_rank_node_ids_by_rank_with_trace(
+      base_rank_node_ids_by_rank,
+      max_rank,
+      predecessors_by_node_id,
+      successors_by_node_id,
+      order_index_by_node_id,
+      rank_by_node_id,
+      rank_by_node_id.length(),
+      graph.edges.length(),
+    ).optimized_rank_node_ids_by_rank
   let base_global_crossings = wb_global_crossing_count(
     base_rank_node_ids_by_rank, max_rank, rank_by_node_id, successors_by_node_id,
   )
