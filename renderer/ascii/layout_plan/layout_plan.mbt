@@ -932,10 +932,10 @@ fn build_flow_subgraph_layout(
 ) -> AsciiFlowSubgraphLayout {
   let layer_spacing = (options.padding_y + 5).max(5) * 9
   {
-    positioned: @layout.layout_graph_for_ascii(graph, {
-      ..@model.RenderOptions::default(),
-      layer_spacing: Some(layer_spacing),
-    }),
+    positioned: @layout_engine_graph_execute_core.execute_layout_plan(
+      @layout_engine_graph_plan_core.build_ascii_layout_execution_plan(graph),
+      { ..@model.RenderOptions::default(), layer_spacing: Some(layer_spacing) },
+    ),
   }
 }
 

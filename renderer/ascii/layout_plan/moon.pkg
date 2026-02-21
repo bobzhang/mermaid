@@ -1,6 +1,7 @@
 import {
   "bobzhang/beautiful_mermaid/layout/engine/graph/ascii/core" @layout_engine_graph_ascii_core,
-  "bobzhang/beautiful_mermaid/layout/engine/graph/core" @layout,
+  "bobzhang/beautiful_mermaid/layout/engine/graph/execute/core" @layout_engine_graph_execute_core,
+  "bobzhang/beautiful_mermaid/layout/engine/graph/plan/core" @layout_engine_graph_plan_core,
   "bobzhang/beautiful_mermaid/layout/engine/pathfinder/core" @layout_engine_pathfinder_core,
   "bobzhang/beautiful_mermaid/model" @model,
 }

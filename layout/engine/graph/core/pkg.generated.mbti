@@ -8,8 +8,6 @@ import {
 // Values
 pub fn layout_graph(@model.MermaidGraph, @model.RenderOptions) -> @model.PositionedGraph
 
-pub fn layout_graph_for_ascii(@model.MermaidGraph, @model.RenderOptions) -> @model.PositionedGraph
-
 // Errors
 
 // Types and methods
