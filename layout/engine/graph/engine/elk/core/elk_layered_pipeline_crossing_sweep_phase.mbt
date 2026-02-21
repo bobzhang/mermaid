@@ -199,8 +199,12 @@ fn optimize_rank_order_with_sweep_passes_from_input(
     return
   }
   let mut pass = 0
+  let mut forward_sweep = true
   while pass < sweep_pass_count {
-    sweep_rank_order_once_from_input_with_kernel(sweep_input, sweep_kernel)
+    sweep_rank_order_once_from_input_with_kernel(
+      sweep_input, sweep_kernel, forward_sweep,
+    )
+    forward_sweep = !forward_sweep
     pass += 1
   }
 }
@@ -209,54 +213,56 @@ fn optimize_rank_order_with_sweep_passes_from_input(
 fn sweep_rank_order_once_from_input_with_kernel(
   sweep_input : ElkLayeredCrossingSweepInput,
   sweep_kernel : ElkLayeredCrossingSweepKernel,
+  forward_sweep : Bool,
 ) -> Unit {
   if sweep_input.max_rank <= 0 {
     return
   }
   match sweep_kernel {
-    NeighborMeanBidirectional => {
-      for rank in 1..<=sweep_input.max_rank {
-        // Keep the layer-sweep state coherent: each rank update should observe
-        // already-updated neighbor order from earlier ranks in the same pass.
-        let forward_positions = rank_position_by_node_id(
-          sweep_input.rank_node_ids_by_rank,
-          sweep_input.max_rank,
-        )
-        match sweep_input.rank_node_ids_by_rank.get(rank) {
-          Some(node_ids) =>
-            sort_rank_nodes_by_neighbors(
-              node_ids,
-              sweep_input.predecessors_by_node_id,
-              forward_positions,
-              sweep_input.order_index_by_node_id,
-              sweep_input.preserve_current_order_on_tie,
-            )
-          None => ()
+    NeighborMeanBidirectional =>
+      if forward_sweep {
+        for rank in 1..<=sweep_input.max_rank {
+          // Keep the layer-sweep state coherent: each rank update should observe
+          // already-updated neighbor order from earlier ranks in the same pass.
+          let forward_positions = rank_position_by_node_id(
+            sweep_input.rank_node_ids_by_rank,
+            sweep_input.max_rank,
+          )
+          match sweep_input.rank_node_ids_by_rank.get(rank) {
+            Some(node_ids) =>
+              sort_rank_nodes_by_neighbors(
+                node_ids,
+                sweep_input.predecessors_by_node_id,
+                forward_positions,
+                sweep_input.order_index_by_node_id,
+                sweep_input.preserve_current_order_on_tie,
+              )
+            None => ()
+          }
+        }
+      } else {
+        let mut rank = sweep_input.max_rank - 1
+        while true {
+          let backward_positions = rank_position_by_node_id(
+            sweep_input.rank_node_ids_by_rank,
+            sweep_input.max_rank,
+          )
+          match sweep_input.rank_node_ids_by_rank.get(rank) {
+            Some(node_ids) =>
+              sort_rank_nodes_by_neighbors(
+                node_ids,
+                sweep_input.successors_by_node_id,
+                backward_positions,
+                sweep_input.order_index_by_node_id,
+                sweep_input.preserve_current_order_on_tie,
+              )
+            None => ()
+          }
+          if rank == 0 {
+            break
+          }
+          rank = rank - 1
         }
       }
-
-      let mut rank = sweep_input.max_rank - 1
-      while true {
-        let backward_positions = rank_position_by_node_id(
-          sweep_input.rank_node_ids_by_rank,
-          sweep_input.max_rank,
-        )
-        match sweep_input.rank_node_ids_by_rank.get(rank) {
-          Some(node_ids) =>
-            sort_rank_nodes_by_neighbors(
-              node_ids,
-              sweep_input.successors_by_node_id,
-              backward_positions,
-              sweep_input.order_index_by_node_id,
-              sweep_input.preserve_current_order_on_tie,
-            )
-          None => ()
-        }
-        if rank == 0 {
-          break
-        }
-        rank = rank - 1
-      }
-    }
   }
 }
