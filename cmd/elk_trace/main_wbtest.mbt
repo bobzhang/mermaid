@@ -22,7 +22,13 @@ test "elk_trace parse_cli_args accepts case flag forms" {
 
 ///|
 test "elk_trace parse_cli_args accepts source payload" {
-  guard parse_cli_args(["--source", "graph TD\nA --> B"])
+  let source = (
+      #|graph TD
+      #|A --> B
+    )
+    .trim_end()
+    .to_string()
+  guard parse_cli_args(["--source", source])
     is Some({ show_help: false, case_name: None, source: Some(_) }) else {
     fail("expected --source payload to parse")
   }
@@ -44,10 +50,13 @@ test "elk_trace parse_cli_args decodes escaped newlines in source payload" {
 
 ///|
 test "elk_trace parse_cli_args rejects conflicting source and case" {
-  assert_true(
-    parse_cli_args(["--case", "fanout", "--source", "graph TD\nA --> B"])
-    is None,
-  )
+  let source = (
+      #|graph TD
+      #|A --> B
+    )
+    .trim_end()
+    .to_string()
+  assert_true(parse_cli_args(["--case", "fanout", "--source", source]) is None)
 }
 
 ///|
