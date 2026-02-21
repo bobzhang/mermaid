@@ -417,6 +417,14 @@ test "elk layered rank trace can switch sweep kernel without changing seed phase
     Some(trace) => trace
     None => fail("expected edge-slot-kernel trace")
   }
+  let port_rank_trace = match
+    collect_elk_layered_rank_trace_with_crossing_execution_plan(request, {
+      ..default_plan,
+      sweep_kernel: NeighborMeanPortRankBidirectional,
+    }) {
+    Some(trace) => trace
+    None => fail("expected port-rank-kernel trace")
+  }
   assert_eq(
     default_trace.rank_order_sweep_kernel,
     "neighbor-mean-bidirectional",
@@ -426,25 +434,50 @@ test "elk layered rank trace can switch sweep kernel without changing seed phase
     "neighbor-mean-edge-slot-bidirectional",
   )
   assert_eq(
+    port_rank_trace.rank_order_sweep_kernel,
+    "neighbor-mean-port-rank-bidirectional",
+  )
+  assert_eq(
     default_trace.rank_input_node_ids_in_order,
     edge_slot_trace.rank_input_node_ids_in_order,
+  )
+  assert_eq(
+    default_trace.rank_input_node_ids_in_order,
+    port_rank_trace.rank_input_node_ids_in_order,
   )
   assert_eq(
     default_trace.rank_input_resolved_edges,
     edge_slot_trace.rank_input_resolved_edges,
   )
+  assert_eq(
+    default_trace.rank_input_resolved_edges,
+    port_rank_trace.rank_input_resolved_edges,
+  )
   assert_eq(default_trace.rank_seed_layers, edge_slot_trace.rank_seed_layers)
+  assert_eq(default_trace.rank_seed_layers, port_rank_trace.rank_seed_layers)
   assert_eq(
     default_trace.rank_order_sweep_pass_count,
     edge_slot_trace.rank_order_sweep_pass_count,
+  )
+  assert_eq(
+    default_trace.rank_order_sweep_pass_count,
+    port_rank_trace.rank_order_sweep_pass_count,
   )
   assert_eq(
     default_trace.rank_order_trial_count,
     edge_slot_trace.rank_order_trial_count,
   )
   assert_eq(
+    default_trace.rank_order_trial_count,
+    port_rank_trace.rank_order_trial_count,
+  )
+  assert_eq(
     default_trace.rank_order_trial_model_order_inversion_influence,
     edge_slot_trace.rank_order_trial_model_order_inversion_influence,
+  )
+  assert_eq(
+    default_trace.rank_order_trial_model_order_inversion_influence,
+    port_rank_trace.rank_order_trial_model_order_inversion_influence,
   )
 }
 
@@ -470,12 +503,25 @@ test "elk layered rank trace public kernel selector emits requested kernel tag" 
     Some(lines) => lines
     None => fail("expected edge-slot trace lines")
   }
+  let port_rank_lines = match
+    collect_elk_layered_rank_trace_lines_with_sweep_kernel(
+      request,
+      NeighborMeanPortRankBidirectional,
+    ) {
+    Some(lines) => lines
+    None => fail("expected port-rank trace lines")
+  }
   assert_true(
     default_lines.contains("ORDER_SWEEP_KERNEL\tneighbor-mean-bidirectional"),
   )
   assert_true(
     edge_slot_lines.contains(
       "ORDER_SWEEP_KERNEL\tneighbor-mean-edge-slot-bidirectional",
+    ),
+  )
+  assert_true(
+    port_rank_lines.contains(
+      "ORDER_SWEEP_KERNEL\tneighbor-mean-port-rank-bidirectional",
     ),
   )
 }

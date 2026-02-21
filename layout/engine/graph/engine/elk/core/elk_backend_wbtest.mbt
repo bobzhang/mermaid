@@ -720,8 +720,17 @@ test "elk layered backend plan injection keeps default parity and exposes non-de
     },
     { ..default_plan, sweep_kernel: NeighborMeanEdgeSlotBidirectional },
   )
+  let port_rank_backend = run_elk_layered_flow_backend_with_crossing_execution_plan(
+    request,
+    {
+      enable_target_boundary_ports: true,
+      preserve_assigned_endpoint_ports: false,
+    },
+    { ..default_plan, sweep_kernel: NeighborMeanPortRankBidirectional },
+  )
   assert_eq(default_backend.phase_traces.length(), 4)
   assert_eq(edge_slot_backend.phase_traces.length(), 4)
+  assert_eq(port_rank_backend.phase_traces.length(), 4)
   assert_eq(
     match
       default_backend.phase_traces[1].labels.get("rank_order_sweep_kernel") {
@@ -737,6 +746,14 @@ test "elk layered backend plan injection keeps default parity and exposes non-de
       None => ""
     },
     "neighbor-mean-edge-slot-bidirectional",
+  )
+  assert_eq(
+    match
+      port_rank_backend.phase_traces[1].labels.get("rank_order_sweep_kernel") {
+      Some(value) => value
+      None => ""
+    },
+    "neighbor-mean-port-rank-bidirectional",
   )
   assert_eq(
     match
@@ -776,6 +793,18 @@ test "elk layered backend plan injection keeps default parity and exposes non-de
     },
     match
       edge_slot_backend.phase_traces[1].metrics.get("rank_order_trial_count") {
+      Some(value) => value
+      None => -1
+    },
+  )
+  assert_eq(
+    match
+      default_backend.phase_traces[1].metrics.get("rank_order_trial_count") {
+      Some(value) => value
+      None => -1
+    },
+    match
+      port_rank_backend.phase_traces[1].metrics.get("rank_order_trial_count") {
       Some(value) => value
       None => -1
     },
