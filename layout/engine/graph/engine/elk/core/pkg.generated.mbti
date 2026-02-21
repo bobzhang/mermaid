@@ -34,6 +34,7 @@ pub(all) enum ElkLayeredRankTraceLocalRefinementProfile {
 pub(all) enum ElkLayeredRankTraceSweepKernel {
   Default
   NeighborMeanBidirectional
+  NeighborMedianBidirectional
   NeighborMeanEdgeSlotBidirectional
 }
 

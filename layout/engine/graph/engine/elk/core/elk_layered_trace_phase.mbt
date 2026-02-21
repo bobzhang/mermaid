@@ -64,6 +64,7 @@ priv struct ElkLayeredRankTrace {
 pub(all) enum ElkLayeredRankTraceSweepKernel {
   Default
   NeighborMeanBidirectional
+  NeighborMedianBidirectional
   NeighborMeanEdgeSlotBidirectional
 }
 
@@ -117,6 +118,7 @@ fn crossing_sweep_kernel_for_rank_trace(
   match trace_sweep_kernel {
     Default => default_crossing_sweep_kernel()
     NeighborMeanBidirectional => NeighborMeanBidirectional
+    NeighborMedianBidirectional => NeighborMedianBidirectional
     NeighborMeanEdgeSlotBidirectional => NeighborMeanEdgeSlotBidirectional
   }
 }

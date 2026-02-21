@@ -15,7 +15,7 @@
 import { readdirSync } from 'node:fs'
 import { spawnSync } from 'node:child_process'
 
-type SweepKernel = 'default' | 'edge-slot'
+type SweepKernel = 'default' | 'neighbor-median' | 'edge-slot'
 type TrialPolicy = 'default' | 'pass-changes' | 'objective-improves'
 type LocalRefinementProfile =
   | 'default'
@@ -106,7 +106,11 @@ function parseKernelCsv(raw: string): SweepKernel[] {
   if (values.length === 0) fail('empty --kernels list')
   const parsed: SweepKernel[] = []
   for (const value of values) {
-    if (value !== 'default' && value !== 'edge-slot') {
+    if (
+      value !== 'default' &&
+      value !== 'neighbor-median' &&
+      value !== 'edge-slot'
+    ) {
       fail(`invalid --kernels value: ${value}`)
     }
     parsed.push(value)
@@ -159,7 +163,7 @@ function parseProfileCsv(raw: string): LocalRefinementProfile[] {
 function parseCliOptions(args: string[]): CliOptions {
   let trials: number[] = [1, 2, 5]
   let passes: number[] = [4, 5, 6]
-  let kernels: SweepKernel[] = ['default']
+  let kernels: SweepKernel[] = ['default', 'neighbor-median']
   let policies: TrialPolicy[] = ['default', 'objective-improves']
   let profiles: LocalRefinementProfile[] = ['default']
   let skipEndToEnd = false

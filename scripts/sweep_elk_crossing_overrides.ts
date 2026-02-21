@@ -10,7 +10,7 @@
  *
  * Usage:
  *   bun run scripts/sweep_elk_crossing_overrides.ts
- *   bun run scripts/sweep_elk_crossing_overrides.ts --trial-counts 1,3,5 --sweep-pass-counts 4,6 --sweep-kernels default,edge-slot
+ *   bun run scripts/sweep_elk_crossing_overrides.ts --trial-counts 1,3,5 --sweep-pass-counts 4,6 --sweep-kernels default,neighbor-median,edge-slot
  *   bun run scripts/sweep_elk_crossing_overrides.ts --model-order-inversion-influences none,0.25,0.5
  *   bun run scripts/sweep_elk_crossing_overrides.ts --include-regressing --top 20
  *   bun run scripts/sweep_elk_crossing_overrides.ts --json /tmp/elk_crossing_sweep.json
@@ -21,7 +21,7 @@ import { spawnSync } from 'node:child_process'
 import { join } from 'node:path'
 import { tmpdir } from 'node:os'
 
-type SweepKernel = 'default' | 'neighbor-mean' | 'edge-slot'
+type SweepKernel = 'default' | 'neighbor-mean' | 'neighbor-median' | 'edge-slot'
 
 type SweepCliOptions = {
   trialCounts: number[]
@@ -151,9 +151,14 @@ function parseKernelList(raw: string, flag: string): SweepKernel[] {
   }
   const kernels: SweepKernel[] = []
   for (const value of values) {
-    if (value !== 'default' && value !== 'neighbor-mean' && value !== 'edge-slot') {
+    if (
+      value !== 'default' &&
+      value !== 'neighbor-mean' &&
+      value !== 'neighbor-median' &&
+      value !== 'edge-slot'
+    ) {
       fail(
-        `invalid ${flag} entry '${value}', expected default|neighbor-mean|edge-slot`,
+        `invalid ${flag} entry '${value}', expected default|neighbor-mean|neighbor-median|edge-slot`,
       )
     }
     kernels.push(value)
@@ -216,7 +221,12 @@ function parseModelOrderInfluenceList(
 function parseCliOptions(args: string[]): SweepCliOptions {
   let trialCounts = [1, 3, 5, 7]
   let sweepPassCounts = [4, 6]
-  let sweepKernels: SweepKernel[] = ['default', 'neighbor-mean', 'edge-slot']
+  let sweepKernels: SweepKernel[] = [
+    'default',
+    'neighbor-mean',
+    'neighbor-median',
+    'edge-slot',
+  ]
   let modelOrderInversionInfluences: Array<number | null> = [null]
   let includeRegressing = false
   let top: number | undefined

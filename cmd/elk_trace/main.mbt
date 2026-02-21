@@ -26,7 +26,7 @@ fn print_usage() -> Unit {
     #|Flags:
     #|  --case   fanout | feedback_mesh | long_span | all
     #|  --source Mermaid source text (use shell command substitution for fixture files)
-    #|  --sweep-kernel  default | neighbor-mean | edge-slot
+    #|  --sweep-kernel  default | neighbor-mean | neighbor-median | edge-slot
     #|  --trial-count  Positive crossing trial count override
     #|  --sweep-pass-count  Positive crossing sweep-pass override
     #|  --trial-continuation-policy  default | pass-changes | objective-improves
@@ -81,6 +81,7 @@ fn decode_sweep_kernel_arg(
   match raw.trim().to_lower() {
     "default" => Some(Default)
     "neighbor-mean" => Some(NeighborMeanBidirectional)
+    "neighbor-median" => Some(NeighborMedianBidirectional)
     "edge-slot" => Some(NeighborMeanEdgeSlotBidirectional)
     _ => None
   }

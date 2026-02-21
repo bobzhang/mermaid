@@ -348,10 +348,15 @@ test "elk layered crossing execution plan keeps default kernels ordered" {
 }
 
 ///|
-test "elk layered crossing sweep kernel registry includes default and edge-slot variants" {
+test "elk layered crossing sweep kernel registry includes mean, median, and edge-slot variants" {
   let kernels = available_crossing_sweep_kernels()
   assert_true(
-    kernels is [NeighborMeanBidirectional, NeighborMeanEdgeSlotBidirectional],
+    kernels
+    is [
+      NeighborMeanBidirectional,
+      NeighborMedianBidirectional,
+      NeighborMeanEdgeSlotBidirectional,
+    ],
   )
 }
 

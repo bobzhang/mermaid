@@ -277,6 +277,55 @@ fn sweep_rank_order_once_from_input_with_kernel(
           rank = rank - 1
         }
       }
+    NeighborMedianBidirectional =>
+      if forward_sweep {
+        for rank in 1..<=sweep_input.max_rank {
+          // Keep the layer-sweep state coherent: each rank update should observe
+          // already-updated neighbor order from earlier ranks in the same pass.
+          let forward_positions = rank_position_by_node_id(
+            sweep_input.rank_node_ids_by_rank,
+            sweep_input.max_rank,
+          )
+          match sweep_input.rank_node_ids_by_rank.get(rank) {
+            Some(node_ids) =>
+              if sort_rank_nodes_by_neighbors_median(
+                  node_ids,
+                  sweep_input.predecessors_by_node_id,
+                  forward_positions,
+                  sweep_input.order_index_by_node_id,
+                  sweep_input.preserve_current_order_on_tie,
+                ) {
+                changed = true
+              }
+            None => ()
+          }
+        }
+      } else {
+        let mut rank = sweep_input.max_rank - 1
+        while true {
+          let backward_positions = rank_position_by_node_id(
+            sweep_input.rank_node_ids_by_rank,
+            sweep_input.max_rank,
+          )
+          match sweep_input.rank_node_ids_by_rank.get(rank) {
+            Some(node_ids) =>
+              if sort_rank_nodes_by_neighbors_median(
+                  node_ids,
+                  sweep_input.successors_by_node_id,
+                  backward_positions,
+                  sweep_input.order_index_by_node_id,
+                  sweep_input.preserve_current_order_on_tie,
+                ) {
+                changed = true
+              }
+            None => ()
+          }
+          if rank == 0 {
+            break
+          }
+          rank = rank - 1
+        }
+      }
     NeighborMeanEdgeSlotBidirectional =>
       if forward_sweep {
         for rank in 1..<=sweep_input.max_rank {

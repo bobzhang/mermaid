@@ -42,6 +42,26 @@ test "elk_render parse_cli_args accepts override flags" {
 }
 
 ///|
+test "elk_render parse_cli_args accepts neighbor-median sweep kernel override" {
+  guard parse_cli_args(["--sweep-kernel=neighbor-median", "graph TD\\nA --> B"])
+    is Some(
+      {
+        show_help: false,
+        source: Some("graph TD\\nA --> B"),
+        sweep_kernel: NeighborMedianBidirectional,
+        trial_count_override: None,
+        sweep_pass_count_override: None,
+        trial_continuation_policy_override: None,
+        local_refinement_profile_override: None,
+        trial_model_order_inversion_influence_override: None,
+        layout_engine: Elk,
+      }
+    ) else {
+    fail("expected --sweep-kernel=neighbor-median to parse")
+  }
+}
+
+///|
 test "elk_render parse_cli_args preserves help mode" {
   guard parse_cli_args(["--help"])
     is Some(

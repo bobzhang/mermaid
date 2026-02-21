@@ -10,6 +10,7 @@
  *   bun run scripts/compare_elk_crossing_rank_order.ts fixtures/layout_stress_001_dense_dag.mmd
  *   bun run scripts/compare_elk_crossing_rank_order.ts fixtures/layout_stress_001_dense_dag.mmd fixtures/layout_stress_013_rl_dual_scc_weave.mmd
  *   bun run scripts/compare_elk_crossing_rank_order.ts --trial-count 5 fixtures/layout_stress_001_dense_dag.mmd
+ *   bun run scripts/compare_elk_crossing_rank_order.ts --sweep-kernel neighbor-median --trial-count 5 fixtures/layout_stress_001_dense_dag.mmd
  *   bun run scripts/compare_elk_crossing_rank_order.ts --sweep-kernel edge-slot --trial-count 5 fixtures/layout_stress_001_dense_dag.mmd
  *   bun run scripts/compare_elk_crossing_rank_order.ts --trial-continuation-policy objective-improves fixtures/layout_stress_001_dense_dag.mmd
  *   bun run scripts/compare_elk_crossing_rank_order.ts --local-refinement-profile none fixtures/layout_stress_001_dense_dag.mmd
@@ -63,7 +64,7 @@ type CliOptions = {
   detailLimit: number
   trialCount?: number
   sweepPassCount?: number
-  sweepKernel?: 'default' | 'neighbor-mean' | 'edge-slot'
+  sweepKernel?: 'default' | 'neighbor-mean' | 'neighbor-median' | 'edge-slot'
   trialContinuationPolicy?: 'default' | 'pass-changes' | 'objective-improves'
   localRefinementProfile?:
     | 'default'
@@ -499,7 +500,12 @@ function parseCliOptions(args: string[]): CliOptions {
   let detailLimit = Number.MAX_SAFE_INTEGER
   let trialCount: number | undefined
   let sweepPassCount: number | undefined
-  let sweepKernel: 'default' | 'neighbor-mean' | 'edge-slot' | undefined
+  let sweepKernel:
+    | 'default'
+    | 'neighbor-mean'
+    | 'neighbor-median'
+    | 'edge-slot'
+    | undefined
   let trialContinuationPolicy:
     | 'default'
     | 'pass-changes'
@@ -571,10 +577,11 @@ function parseCliOptions(args: string[]): CliOptions {
       if (
         normalized !== 'default' &&
         normalized !== 'neighbor-mean' &&
+        normalized !== 'neighbor-median' &&
         normalized !== 'edge-slot'
       ) {
         fail(
-          "invalid --sweep-kernel value, expected 'default', 'neighbor-mean', or 'edge-slot'",
+          "invalid --sweep-kernel value, expected 'default', 'neighbor-mean', 'neighbor-median', or 'edge-slot'",
         )
       }
       sweepKernel = normalized
@@ -622,10 +629,11 @@ function parseCliOptions(args: string[]): CliOptions {
       if (
         normalized !== 'default' &&
         normalized !== 'neighbor-mean' &&
+        normalized !== 'neighbor-median' &&
         normalized !== 'edge-slot'
       ) {
         fail(
-          "invalid --sweep-kernel value, expected 'default', 'neighbor-mean', or 'edge-slot'",
+          "invalid --sweep-kernel value, expected 'default', 'neighbor-mean', 'neighbor-median', or 'edge-slot'",
         )
       }
       sweepKernel = normalized
@@ -698,7 +706,7 @@ function parseCliOptions(args: string[]): CliOptions {
   }
   if (fixtures.length === 0) {
     fail(
-      'usage: bun run scripts/compare_elk_crossing_rank_order.ts [--details] [--limit N] [--trial-count N] [--sweep-pass-count N] [--sweep-kernel default|neighbor-mean|edge-slot] [--trial-continuation-policy default|pass-changes|objective-improves] [--local-refinement-profile default|none|adjacent-swap|rank-permutation|adjacent-swap-then-rank-permutation] [--model-order-inversion-influence N] <fixture.mmd> [more...]',
+      'usage: bun run scripts/compare_elk_crossing_rank_order.ts [--details] [--limit N] [--trial-count N] [--sweep-pass-count N] [--sweep-kernel default|neighbor-mean|neighbor-median|edge-slot] [--trial-continuation-policy default|pass-changes|objective-improves] [--local-refinement-profile default|none|adjacent-swap|rank-permutation|adjacent-swap-then-rank-permutation] [--model-order-inversion-influence N] <fixture.mmd> [more...]',
     )
   }
   return {

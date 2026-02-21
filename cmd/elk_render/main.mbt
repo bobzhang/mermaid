@@ -44,6 +44,9 @@ fn parse_sweep_kernel(
   if normalized == "neighbor-mean" || normalized == "neighbor_mean" {
     return Some(NeighborMeanBidirectional)
   }
+  if normalized == "neighbor-median" || normalized == "neighbor_median" {
+    return Some(NeighborMedianBidirectional)
+  }
   if normalized == "edge-slot" || normalized == "edge_slot" {
     return Some(NeighborMeanEdgeSlotBidirectional)
   }
@@ -361,7 +364,7 @@ fn usage_text() -> String {
     #|
     #|Flags:
     #|  --source <text>          Mermaid source payload (or positional arg)
-    #|  --sweep-kernel <name>    default | neighbor-mean | edge-slot
+    #|  --sweep-kernel <name>    default | neighbor-mean | neighbor-median | edge-slot
     #|  --trial-count <int>      Positive crossing trial-count override
     #|  --sweep-pass-count <int> Positive crossing sweep-pass-count override
     #|  --trial-continuation-policy <name> default | pass-changes | objective-improves

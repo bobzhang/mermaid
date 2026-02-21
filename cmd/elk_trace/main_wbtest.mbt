@@ -173,6 +173,23 @@ test "elk_trace parse_cli_args accepts sweep-kernel flag forms" {
     ) else {
     fail("expected --sweep-kernel=neighbor-mean to parse")
   }
+  guard parse_cli_args(["--sweep-kernel=neighbor-median"])
+    is Some(
+      {
+        show_help: false,
+        case_name: Some("all"),
+        source: None,
+        sweep_kernel: NeighborMedianBidirectional,
+        trial_count_override: None,
+        sweep_pass_count_override: None,
+        trial_model_order_inversion_influence_override: None,
+        compare_kernels: false,
+        trial_continuation_policy_override: None,
+        local_refinement_profile_override: None,
+      }
+    ) else {
+    fail("expected --sweep-kernel=neighbor-median to parse")
+  }
 }
 
 ///|

@@ -25,6 +25,7 @@
  *   bun run scripts/compare_layout_stress.ts --local-layout-engine dagre-parity
  *   bun run scripts/compare_layout_stress.ts --local-layout-engine elk
  *   bun run scripts/compare_layout_stress.ts --local-layout-engine elk-layered
+ *   bun run scripts/compare_layout_stress.ts --local-layout-engine elk --elk-trial-count 5 --elk-sweep-pass-count 6 --elk-sweep-kernel neighbor-median
  *   bun run scripts/compare_layout_stress.ts --local-layout-engine elk --elk-trial-count 5 --elk-sweep-pass-count 6 --elk-sweep-kernel edge-slot
  *   bun run scripts/compare_layout_stress.ts --local-layout-engine elk --elk-trial-continuation-policy objective-improves
  *   bun run scripts/compare_layout_stress.ts --local-layout-engine elk --elk-local-refinement-profile none
@@ -134,7 +135,11 @@ type CliOptions = {
   localLayoutEngine?: 'legacy' | 'dagre-parity' | 'elk' | 'elk-layered'
   elkTrialCount?: number
   elkSweepPassCount?: number
-  elkSweepKernel?: 'default' | 'neighbor-mean' | 'edge-slot'
+  elkSweepKernel?:
+    | 'default'
+    | 'neighbor-mean'
+    | 'neighbor-median'
+    | 'edge-slot'
   elkTrialContinuationPolicy?: 'default' | 'pass-changes' | 'objective-improves'
   elkLocalRefinementProfile?:
     | 'default'
@@ -2692,7 +2697,12 @@ function parseCliOptions(args: string[]): CliOptions {
     | undefined = undefined
   let elkTrialCount: number | undefined = undefined
   let elkSweepPassCount: number | undefined = undefined
-  let elkSweepKernel: 'default' | 'neighbor-mean' | 'edge-slot' | undefined = undefined
+  let elkSweepKernel:
+    | 'default'
+    | 'neighbor-mean'
+    | 'neighbor-median'
+    | 'edge-slot'
+    | undefined = undefined
   let elkTrialContinuationPolicy:
     | 'default'
     | 'pass-changes'
@@ -2856,9 +2866,12 @@ function parseCliOptions(args: string[]): CliOptions {
       if (
         normalized !== 'default' &&
         normalized !== 'neighbor-mean' &&
+        normalized !== 'neighbor-median' &&
         normalized !== 'edge-slot'
       ) {
-        fail("invalid --elk-sweep-kernel value, expected 'default', 'neighbor-mean', or 'edge-slot'")
+        fail(
+          "invalid --elk-sweep-kernel value, expected 'default', 'neighbor-mean', 'neighbor-median', or 'edge-slot'",
+        )
       }
       elkSweepKernel = normalized
       i += 1
@@ -2869,9 +2882,12 @@ function parseCliOptions(args: string[]): CliOptions {
       if (
         normalized !== 'default' &&
         normalized !== 'neighbor-mean' &&
+        normalized !== 'neighbor-median' &&
         normalized !== 'edge-slot'
       ) {
-        fail("invalid --elk-sweep-kernel value, expected 'default', 'neighbor-mean', or 'edge-slot'")
+        fail(
+          "invalid --elk-sweep-kernel value, expected 'default', 'neighbor-mean', 'neighbor-median', or 'edge-slot'",
+        )
       }
       elkSweepKernel = normalized
       continue
