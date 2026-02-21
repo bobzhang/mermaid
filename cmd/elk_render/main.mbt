@@ -5,6 +5,7 @@ struct ElkRenderCliArgs {
   sweep_kernel : @layout_engine_graph_engine_elk_core.ElkLayeredRankTraceSweepKernel
   trial_count_override : Int?
   sweep_pass_count_override : Int?
+  trial_continuation_policy_override : @layout_engine_graph_engine_elk_core.ElkLayeredRankTraceTrialContinuationPolicy?
   trial_model_order_inversion_influence_override : Double?
   layout_engine : @model.LayoutEngine
 }
@@ -49,6 +50,23 @@ fn parse_sweep_kernel(
 }
 
 ///|
+fn parse_trial_continuation_policy(
+  raw : String,
+) -> @layout_engine_graph_engine_elk_core.ElkLayeredRankTraceTrialContinuationPolicy? {
+  let normalized = raw.trim().to_lower()
+  if normalized == "default" {
+    return Some(DefaultTrialContinuationPolicy)
+  }
+  if normalized == "pass-changes" || normalized == "pass_changes" {
+    return Some(WhilePassChanges)
+  }
+  if normalized == "objective-improves" || normalized == "objective_improves" {
+    return Some(WhileObjectiveImproves)
+  }
+  None
+}
+
+///|
 fn parse_layout_engine(raw : String) -> @model.LayoutEngine? {
   let normalized = raw.trim().to_lower()
   if normalized == "elk" {
@@ -67,12 +85,14 @@ fn parse_cli_args(args : Array[String]) -> ElkRenderCliArgs? {
   let mut sweep_kernel : @layout_engine_graph_engine_elk_core.ElkLayeredRankTraceSweepKernel = Default
   let mut trial_count_override : Int? = None
   let mut sweep_pass_count_override : Int? = None
+  let mut trial_continuation_policy_override : @layout_engine_graph_engine_elk_core.ElkLayeredRankTraceTrialContinuationPolicy? = None
   let mut trial_model_order_inversion_influence_override : Double? = None
   let mut layout_engine : @model.LayoutEngine = Elk
   let mut expect_source = false
   let mut expect_sweep_kernel = false
   let mut expect_trial_count = false
   let mut expect_sweep_pass_count = false
+  let mut expect_trial_continuation_policy = false
   let mut expect_layout_engine = false
   let mut expect_model_order_inversion_influence = false
 
@@ -116,6 +136,17 @@ fn parse_cli_args(args : Array[String]) -> ElkRenderCliArgs? {
         None => return None
       }
       expect_sweep_pass_count = false
+      continue
+    }
+    if expect_trial_continuation_policy {
+      if arg is [.. "--", ..] {
+        return None
+      }
+      match parse_trial_continuation_policy(arg) {
+        Some(value) => trial_continuation_policy_override = Some(value)
+        None => return None
+      }
+      expect_trial_continuation_policy = false
       continue
     }
     if expect_layout_engine {
@@ -162,6 +193,10 @@ fn parse_cli_args(args : Array[String]) -> ElkRenderCliArgs? {
       expect_sweep_pass_count = true
       continue
     }
+    if arg == "--trial-continuation-policy" {
+      expect_trial_continuation_policy = true
+      continue
+    }
     if arg == "--layout-engine" {
       expect_layout_engine = true
       continue
@@ -196,6 +231,17 @@ fn parse_cli_args(args : Array[String]) -> ElkRenderCliArgs? {
     if arg is [.. "--sweep-pass-count=", .. raw_sweep_pass_count] {
       match parse_positive_int(raw_sweep_pass_count.to_string()) {
         Some(value) => sweep_pass_count_override = Some(value)
+        None => return None
+      }
+      continue
+    }
+    if arg
+      is [.. "--trial-continuation-policy=", .. raw_trial_continuation_policy] {
+      match
+        parse_trial_continuation_policy(
+          raw_trial_continuation_policy.to_string(),
+        ) {
+        Some(value) => trial_continuation_policy_override = Some(value)
         None => return None
       }
       continue
@@ -235,6 +281,7 @@ fn parse_cli_args(args : Array[String]) -> ElkRenderCliArgs? {
     expect_sweep_kernel ||
     expect_trial_count ||
     expect_sweep_pass_count ||
+    expect_trial_continuation_policy ||
     expect_layout_engine ||
     expect_model_order_inversion_influence {
     return None
@@ -245,6 +292,7 @@ fn parse_cli_args(args : Array[String]) -> ElkRenderCliArgs? {
     sweep_kernel,
     trial_count_override,
     sweep_pass_count_override,
+    trial_continuation_policy_override,
     trial_model_order_inversion_influence_override,
     layout_engine,
   })
@@ -263,6 +311,7 @@ fn usage_text() -> String {
     #|  --sweep-kernel <name>    default | neighbor-mean | edge-slot
     #|  --trial-count <int>      Positive crossing trial-count override
     #|  --sweep-pass-count <int> Positive crossing sweep-pass-count override
+    #|  --trial-continuation-policy <name> default | pass-changes | objective-improves
     #|  --model-order-inversion-influence <double> Non-negative trial tie-break influence
     #|  --layout-engine <name>   elk | elk-layered
     #|  --help                   Show this usage text
@@ -323,6 +372,7 @@ fn print_svg_with_overrides(args : ElkRenderCliArgs) -> Unit {
     args.sweep_kernel,
     args.trial_count_override,
     args.sweep_pass_count_override,
+    args.trial_continuation_policy_override,
     args.trial_model_order_inversion_influence_override,
   )
   println(
