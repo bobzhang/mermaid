@@ -40,6 +40,15 @@ fn crossing_trial_initial_forward_sweep(trial_index : Int) -> Bool {
 }
 
 ///|
+fn crossing_trial_uses_initial_order_seed(trial_index : Int) -> Bool {
+  // Align with upstream layered crossing runs:
+  // - trial 0: initial input order + forward sweep
+  // - trial 1: initial input order + backward sweep
+  // - later trials: randomized first-layer seed.
+  trial_index < 2
+}
+
+///|
 fn shuffle_node_ids_for_crossing_trial(
   node_ids : Array[String],
   random_state : UInt64,
@@ -72,10 +81,9 @@ fn build_crossing_trial_seed_rank_node_ids_by_rank(
   trial_random_seed : Int,
 ) -> Map[Int, Array[String]] {
   let seed_rank_node_ids_by_rank = clone_rank_node_ids_by_rank(
-    input_rank_node_ids_by_rank,
-    max_rank,
+    input_rank_node_ids_by_rank, max_rank,
   )
-  if trial_index <= 0 {
+  if crossing_trial_uses_initial_order_seed(trial_index) {
     return seed_rank_node_ids_by_rank
   }
   let start_rank = if crossing_trial_initial_forward_sweep(trial_index) {
@@ -100,6 +108,7 @@ fn crossing_execution_state_is_better(
   incumbent : ElkLayeredCrossingExecutionState,
   objective_context : ElkLayeredCrossingObjectiveContext,
   input : ElkLayeredCrossingPhaseInput,
+  config : ElkLayeredCrossingOptimizationConfig,
 ) -> Bool {
   let candidate_objective = evaluate_crossing_objective(
     candidate.post_refinement_rank_node_ids_by_rank,
@@ -109,10 +118,12 @@ fn crossing_execution_state_is_better(
     incumbent.post_refinement_rank_node_ids_by_rank,
     objective_context,
   )
-  if candidate_objective.layered_crossings < incumbent_objective.layered_crossings {
+  if candidate_objective.layered_crossings <
+    incumbent_objective.layered_crossings {
     return true
   }
-  if candidate_objective.layered_crossings > incumbent_objective.layered_crossings {
+  if candidate_objective.layered_crossings >
+    incumbent_objective.layered_crossings {
     return false
   }
   if candidate_objective.global_crossings < incumbent_objective.global_crossings {
@@ -121,15 +132,21 @@ fn crossing_execution_state_is_better(
   if candidate_objective.global_crossings > incumbent_objective.global_crossings {
     return false
   }
-  rank_order_model_inversion_score(
+  if config.trial_model_order_inversion_influence <= 0.0 {
+    // Keep incumbent on crossing ties, matching upstream layered trial selection.
+    return false
+  }
+  let candidate_model_order_inversion = rank_order_model_inversion_score(
     candidate.post_refinement_rank_node_ids_by_rank,
     input.max_rank,
     input.order_index_by_node_id,
-  ) < rank_order_model_inversion_score(
+  )
+  let incumbent_model_order_inversion = rank_order_model_inversion_score(
     incumbent.post_refinement_rank_node_ids_by_rank,
     input.max_rank,
     input.order_index_by_node_id,
   )
+  candidate_model_order_inversion < incumbent_model_order_inversion
 }
 
 ///|
@@ -143,9 +160,7 @@ fn execute_crossing_phase_once_with_plan_and_seed(
   let config = plan.config
   let optimized_rank_node_ids_by_rank = seed_rank_node_ids_by_rank
   let sweep_input = build_crossing_sweep_input_from_phase_input(
-    optimized_rank_node_ids_by_rank,
-    input,
-    config,
+    optimized_rank_node_ids_by_rank, input, config,
   )
   if initial_forward_sweep {
     optimize_rank_order_with_sweep_passes_and_kernel(
@@ -172,8 +187,7 @@ fn execute_crossing_phase_once_with_plan_and_seed(
   )
   apply_crossing_local_refinement_kernels(
     build_crossing_refinement_input_from_phase_input(
-      optimized_rank_node_ids_by_rank,
-      input,
+      optimized_rank_node_ids_by_rank, input,
     ),
     config,
     plan.local_refinement_kernels,
@@ -237,10 +251,7 @@ fn execute_crossing_phase_with_plan_with_trace(
         match best_execution_state {
           Some(incumbent) =>
             if crossing_execution_state_is_better(
-                trial_execution_state,
-                incumbent,
-                objective_context,
-                input,
+                trial_execution_state, incumbent, objective_context, input, config,
               ) {
               best_execution_state = Some(trial_execution_state)
             }

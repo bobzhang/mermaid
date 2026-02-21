@@ -147,6 +147,7 @@ test "elk layered crossing execution plan keeps default kernels ordered" {
   assert_true(plan.local_refinement_kernels is [AdjacentSwap, RankPermutation])
   assert_eq(plan.config.trial_count, 1)
   assert_eq(plan.config.trial_random_seed, 1)
+  assert_eq(plan.config.trial_model_order_inversion_influence, 0.0)
 }
 
 ///|
@@ -162,59 +163,69 @@ test "elk layered crossing trial seed builder is deterministic and rank-local" {
     0: ["A", "B", "C", "G"],
     1: ["D", "E", "F", "H"],
   }
-  let backward_trial_seed = build_crossing_trial_seed_rank_node_ids_by_rank(
-    base_rank_node_ids_by_rank,
-    1,
-    1,
-    1,
+  let backward_initial_seed = build_crossing_trial_seed_rank_node_ids_by_rank(
+    base_rank_node_ids_by_rank, 1, 1, 1,
   )
-  let backward_trial_seed_again = build_crossing_trial_seed_rank_node_ids_by_rank(
-    base_rank_node_ids_by_rank,
-    1,
-    1,
-    1,
+  let backward_initial_seed_again = build_crossing_trial_seed_rank_node_ids_by_rank(
+    base_rank_node_ids_by_rank, 1, 1, 1,
   )
-  assert_eq(backward_trial_seed, backward_trial_seed_again)
+  assert_eq(backward_initial_seed, backward_initial_seed_again)
   assert_eq(
-    match backward_trial_seed.get(0) {
+    match backward_initial_seed.get(0) {
       Some(node_ids) => node_ids
       None => []
     },
     ["A", "B", "C", "G"],
   )
-  let backward_target_rank = match backward_trial_seed.get(1) {
-    Some(node_ids) => node_ids.copy()
-    None => []
-  }
-  backward_target_rank.sort()
-  assert_eq(backward_target_rank, ["D", "E", "F", "H"])
-
-  let forward_trial_seed = build_crossing_trial_seed_rank_node_ids_by_rank(
-    base_rank_node_ids_by_rank,
-    1,
-    2,
-    1,
-  )
-  let forward_trial_seed_again = build_crossing_trial_seed_rank_node_ids_by_rank(
-    base_rank_node_ids_by_rank,
-    1,
-    2,
-    1,
-  )
-  assert_eq(forward_trial_seed, forward_trial_seed_again)
   assert_eq(
-    match forward_trial_seed.get(1) {
+    match backward_initial_seed.get(1) {
       Some(node_ids) => node_ids
       None => []
     },
     ["D", "E", "F", "H"],
   )
-  let forward_target_rank = match forward_trial_seed.get(0) {
+
+  let randomized_forward_seed = build_crossing_trial_seed_rank_node_ids_by_rank(
+    base_rank_node_ids_by_rank, 1, 2, 1,
+  )
+  let randomized_forward_seed_again = build_crossing_trial_seed_rank_node_ids_by_rank(
+    base_rank_node_ids_by_rank, 1, 2, 1,
+  )
+  assert_eq(randomized_forward_seed, randomized_forward_seed_again)
+  assert_eq(
+    match randomized_forward_seed.get(1) {
+      Some(node_ids) => node_ids
+      None => []
+    },
+    ["D", "E", "F", "H"],
+  )
+  let randomized_forward_target_rank = match randomized_forward_seed.get(0) {
     Some(node_ids) => node_ids.copy()
     None => []
   }
-  forward_target_rank.sort()
-  assert_eq(forward_target_rank, ["A", "B", "C", "G"])
+  randomized_forward_target_rank.sort()
+  assert_eq(randomized_forward_target_rank, ["A", "B", "C", "G"])
+
+  let randomized_backward_seed = build_crossing_trial_seed_rank_node_ids_by_rank(
+    base_rank_node_ids_by_rank, 1, 3, 1,
+  )
+  let randomized_backward_seed_again = build_crossing_trial_seed_rank_node_ids_by_rank(
+    base_rank_node_ids_by_rank, 1, 3, 1,
+  )
+  assert_eq(randomized_backward_seed, randomized_backward_seed_again)
+  assert_eq(
+    match randomized_backward_seed.get(0) {
+      Some(node_ids) => node_ids
+      None => []
+    },
+    ["A", "B", "C", "G"],
+  )
+  let randomized_backward_target_rank = match randomized_backward_seed.get(1) {
+    Some(node_ids) => node_ids.copy()
+    None => []
+  }
+  randomized_backward_target_rank.sort()
+  assert_eq(randomized_backward_target_rank, ["D", "E", "F", "H"])
 }
 
 ///|
@@ -241,6 +252,7 @@ test "elk layered crossing single-trial config remains behavior-equivalent" {
       sweep_pass_count: single_plan.config.sweep_pass_count,
       trial_count: 1,
       trial_random_seed: single_plan.config.trial_random_seed,
+      trial_model_order_inversion_influence: single_plan.config.trial_model_order_inversion_influence,
       swap_refine_node_limit: single_plan.config.swap_refine_node_limit,
       swap_refine_edge_limit: single_plan.config.swap_refine_edge_limit,
       permutation_refine_node_limit: single_plan.config.permutation_refine_node_limit,
