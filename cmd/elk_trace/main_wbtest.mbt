@@ -7,6 +7,8 @@ test "elk_trace parse_cli_args defaults to all case" {
         case_name: Some("all"),
         source: None,
         sweep_kernel: Default,
+        trial_count_override: None,
+        sweep_pass_count_override: None,
         compare_kernels: false,
       }
     ) else {
@@ -23,6 +25,8 @@ test "elk_trace parse_cli_args accepts case flag forms" {
         case_name: Some("fanout"),
         source: None,
         sweep_kernel: Default,
+        trial_count_override: None,
+        sweep_pass_count_override: None,
         compare_kernels: false,
       }
     ) else {
@@ -35,6 +39,8 @@ test "elk_trace parse_cli_args accepts case flag forms" {
         case_name: Some("feedback_mesh"),
         source: None,
         sweep_kernel: Default,
+        trial_count_override: None,
+        sweep_pass_count_override: None,
         compare_kernels: false,
       }
     ) else {
@@ -57,6 +63,8 @@ test "elk_trace parse_cli_args accepts source payload" {
         case_name: None,
         source: Some(_),
         sweep_kernel: Default,
+        trial_count_override: None,
+        sweep_pass_count_override: None,
         compare_kernels: false,
       }
     ) else {
@@ -73,6 +81,8 @@ test "elk_trace parse_cli_args decodes escaped newlines in source payload" {
         case_name: None,
         source: Some("graph TD\nA --> B\nB --> C"),
         sweep_kernel: Default,
+        trial_count_override: None,
+        sweep_pass_count_override: None,
         compare_kernels: false,
       }
     ) else {
@@ -100,6 +110,8 @@ test "elk_trace parse_cli_args preserves help mode" {
         case_name: None,
         source: None,
         sweep_kernel: Default,
+        trial_count_override: None,
+        sweep_pass_count_override: None,
         compare_kernels: false,
       }
     ) else {
@@ -116,6 +128,8 @@ test "elk_trace parse_cli_args accepts sweep-kernel flag forms" {
         case_name: Some("all"),
         source: None,
         sweep_kernel: NeighborMeanEdgeSlotBidirectional,
+        trial_count_override: None,
+        sweep_pass_count_override: None,
         compare_kernels: false,
       }
     ) else {
@@ -128,6 +142,8 @@ test "elk_trace parse_cli_args accepts sweep-kernel flag forms" {
         case_name: Some("all"),
         source: None,
         sweep_kernel: NeighborMeanBidirectional,
+        trial_count_override: None,
+        sweep_pass_count_override: None,
         compare_kernels: false,
       }
     ) else {
@@ -150,9 +166,39 @@ test "elk_trace parse_cli_args accepts compare-kernels flag" {
         case_name: Some("all"),
         source: None,
         sweep_kernel: Default,
+        trial_count_override: None,
+        sweep_pass_count_override: None,
         compare_kernels: true,
       }
     ) else {
     fail("expected --compare-kernels to parse")
   }
+}
+
+///|
+test "elk_trace parse_cli_args accepts crossing override flags" {
+  guard parse_cli_args(["--trial-count", "5", "--sweep-pass-count=6"])
+    is Some(
+      {
+        show_help: false,
+        case_name: Some("all"),
+        source: None,
+        sweep_kernel: Default,
+        trial_count_override: Some(5),
+        sweep_pass_count_override: Some(6),
+        compare_kernels: false,
+      }
+    ) else {
+    fail("expected crossing override flags to parse")
+  }
+}
+
+///|
+test "elk_trace parse_cli_args rejects invalid crossing override values" {
+  assert_true(parse_cli_args(["--trial-count", "0"]) is None)
+  assert_true(parse_cli_args(["--trial-count=-1"]) is None)
+  assert_true(parse_cli_args(["--trial-count", "x"]) is None)
+  assert_true(parse_cli_args(["--sweep-pass-count", "0"]) is None)
+  assert_true(parse_cli_args(["--sweep-pass-count=-2"]) is None)
+  assert_true(parse_cli_args(["--sweep-pass-count", "x"]) is None)
 }

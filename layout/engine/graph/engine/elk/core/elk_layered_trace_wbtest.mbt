@@ -383,6 +383,29 @@ test "elk layered rank trace public kernel selector emits requested kernel tag" 
 }
 
 ///|
+test "elk layered rank trace crossing overrides are reflected in trace lines" {
+  let graph = wb_graph(["A", "B", "C", "D"], [
+    ("A", "B"),
+    ("A", "C"),
+    ("B", "D"),
+    ("C", "D"),
+  ])
+  let request = trace_request_for_graph(graph)
+  let lines = match
+    collect_elk_layered_rank_trace_lines_with_crossing_overrides(
+      request,
+      Default,
+      Some(3),
+      Some(6),
+    ) {
+    Some(lines) => lines
+    None => fail("expected trace lines with crossing overrides")
+  }
+  assert_true(lines.contains("ORDER_TRIAL_COUNT\t3"))
+  assert_true(lines.contains("ORDER_SWEEP_PASSES\t6"))
+}
+
+///|
 test "elk layered rank trace kernel comparison lines expose deterministic diff keys" {
   let graph = wb_graph(["A", "B", "C", "D"], [
     ("A", "B"),

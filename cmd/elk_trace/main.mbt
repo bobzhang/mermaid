@@ -19,12 +19,16 @@ fn print_usage() -> Unit {
     #|  moon run cmd/elk_trace -- --case long_span
     #|  moon run cmd/elk_trace -- --source "graph LR\nA --> B\nB --> C"
     #|  moon run cmd/elk_trace -- --case fanout --sweep-kernel edge-slot
+    #|  moon run cmd/elk_trace -- --case fanout --trial-count 5
+    #|  moon run cmd/elk_trace -- --case fanout --sweep-pass-count 6
     #|  moon run cmd/elk_trace -- --case fanout --compare-kernels
     #|  moon run cmd/elk_trace -- --case all
     #|Flags:
     #|  --case   fanout | feedback_mesh | long_span | all
     #|  --source Mermaid source text (use shell command substitution for fixture files)
     #|  --sweep-kernel  default | neighbor-mean | edge-slot
+    #|  --trial-count  Positive crossing trial count override
+    #|  --sweep-pass-count  Positive crossing sweep-pass override
     #|  --compare-kernels  Print default-vs-edge-slot rank trace comparison summary
     #|  --help   Show this help
     #|
@@ -51,6 +55,8 @@ priv struct ElkTraceCliArgs {
   case_name : String?
   source : String?
   sweep_kernel : @layout_engine_graph_engine_elk_core.ElkLayeredRankTraceSweepKernel
+  trial_count_override : Int?
+  sweep_pass_count_override : Int?
   compare_kernels : Bool
 }
 
@@ -75,11 +81,28 @@ fn decode_sweep_kernel_arg(
 }
 
 ///|
+fn decode_positive_int_arg(raw : String) -> Int? {
+  let normalized = raw.trim().to_string()
+  if normalized == "" {
+    return None
+  }
+  let parsed : Result[Int, @strconv.StrConvError] = try? @strconv.parse_int(
+    normalized,
+  )
+  match parsed {
+    Ok(value) => if value > 0 { Some(value) } else { None }
+    Err(_) => None
+  }
+}
+
+///|
 fn parse_cli_args(args : Array[String]) -> ElkTraceCliArgs? {
   let mut show_help = false
   let mut case_name : String? = None
   let mut source : String? = None
   let mut sweep_kernel : @layout_engine_graph_engine_elk_core.ElkLayeredRankTraceSweepKernel = Default
+  let mut trial_count_override : Int? = None
+  let mut sweep_pass_count_override : Int? = None
   let mut compare_kernels = false
 
   let mut i = 0
@@ -130,6 +153,28 @@ fn parse_cli_args(args : Array[String]) -> ElkTraceCliArgs? {
       i += 1
       continue
     }
+    if arg == "--trial-count" {
+      if i + 1 >= args.length() {
+        return None
+      }
+      match decode_positive_int_arg(args[i + 1]) {
+        Some(value) => trial_count_override = Some(value)
+        None => return None
+      }
+      i += 2
+      continue
+    }
+    if arg == "--sweep-pass-count" {
+      if i + 1 >= args.length() {
+        return None
+      }
+      match decode_positive_int_arg(args[i + 1]) {
+        Some(value) => sweep_pass_count_override = Some(value)
+        None => return None
+      }
+      i += 2
+      continue
+    }
     if arg is [.. "--case=", .. raw_case] {
       let parsed_case_name = raw_case.trim().to_lower()
       if parsed_case_name == "" {
@@ -156,6 +201,22 @@ fn parse_cli_args(args : Array[String]) -> ElkTraceCliArgs? {
       i += 1
       continue
     }
+    if arg is [.. "--trial-count=", .. raw_trial_count] {
+      match decode_positive_int_arg(raw_trial_count.to_string()) {
+        Some(value) => trial_count_override = Some(value)
+        None => return None
+      }
+      i += 1
+      continue
+    }
+    if arg is [.. "--sweep-pass-count=", .. raw_sweep_pass_count] {
+      match decode_positive_int_arg(raw_sweep_pass_count.to_string()) {
+        Some(value) => sweep_pass_count_override = Some(value)
+        None => return None
+      }
+      i += 1
+      continue
+    }
     return None
   }
 
@@ -176,6 +237,8 @@ fn parse_cli_args(args : Array[String]) -> ElkTraceCliArgs? {
     case_name: resolved_case_name,
     source,
     sweep_kernel,
+    trial_count_override,
+    sweep_pass_count_override,
     compare_kernels,
   })
 }
@@ -290,6 +353,8 @@ fn kernel_by_case_name(case_name : String) -> ElkTraceKernel? {
 fn dump_graph_trace(
   graph : @model.MermaidGraph,
   sweep_kernel : @layout_engine_graph_engine_elk_core.ElkLayeredRankTraceSweepKernel,
+  trial_count_override : Int?,
+  sweep_pass_count_override : Int?,
 ) -> Bool {
   let options = { ..@model.RenderOptions::default(), layout_engine: Some(Elk) }
   let request : @layout_engine_graph_contract_core.GraphLayoutBackendRequest = {
@@ -299,8 +364,8 @@ fn dump_graph_trace(
     compact_fanin: false,
   }
   match
-    @layout_engine_graph_engine_elk_core.collect_elk_layered_rank_trace_lines_with_sweep_kernel(
-      request, sweep_kernel,
+    @layout_engine_graph_engine_elk_core.collect_elk_layered_rank_trace_lines_with_crossing_overrides(
+      request, sweep_kernel, trial_count_override, sweep_pass_count_override,
     ) {
     Some(lines) => {
       for line in lines {
@@ -316,7 +381,11 @@ fn dump_graph_trace(
 }
 
 ///|
-fn dump_graph_kernel_comparison(graph : @model.MermaidGraph) -> Bool {
+fn dump_graph_kernel_comparison(
+  graph : @model.MermaidGraph,
+  trial_count_override : Int?,
+  sweep_pass_count_override : Int?,
+) -> Bool {
   let options = { ..@model.RenderOptions::default(), layout_engine: Some(Elk) }
   let request : @layout_engine_graph_contract_core.GraphLayoutBackendRequest = {
     graph,
@@ -325,10 +394,12 @@ fn dump_graph_kernel_comparison(graph : @model.MermaidGraph) -> Bool {
     compact_fanin: false,
   }
   match
-    @layout_engine_graph_engine_elk_core.collect_elk_layered_rank_trace_kernel_comparison_lines(
+    @layout_engine_graph_engine_elk_core.collect_elk_layered_rank_trace_kernel_comparison_lines_with_crossing_overrides(
       request,
       Default,
       NeighborMeanEdgeSlotBidirectional,
+      trial_count_override,
+      sweep_pass_count_override,
     ) {
     Some(lines) => {
       for line in lines {
@@ -347,17 +418,34 @@ fn dump_graph_kernel_comparison(graph : @model.MermaidGraph) -> Bool {
 fn dump_case_trace(
   case_name : String,
   sweep_kernel : @layout_engine_graph_engine_elk_core.ElkLayeredRankTraceSweepKernel,
+  trial_count_override : Int?,
+  sweep_pass_count_override : Int?,
 ) -> Bool {
   match kernel_by_case_name(case_name) {
-    Some(kernel) => dump_graph_trace(build_graph(kernel), sweep_kernel)
+    Some(kernel) =>
+      dump_graph_trace(
+        build_graph(kernel),
+        sweep_kernel,
+        trial_count_override,
+        sweep_pass_count_override,
+      )
     None => false
   }
 }
 
 ///|
-fn dump_case_kernel_comparison(case_name : String) -> Bool {
+fn dump_case_kernel_comparison(
+  case_name : String,
+  trial_count_override : Int?,
+  sweep_pass_count_override : Int?,
+) -> Bool {
   match kernel_by_case_name(case_name) {
-    Some(kernel) => dump_graph_kernel_comparison(build_graph(kernel))
+    Some(kernel) =>
+      dump_graph_kernel_comparison(
+        build_graph(kernel),
+        trial_count_override,
+        sweep_pass_count_override,
+      )
     None => false
   }
 }
@@ -366,12 +454,17 @@ fn dump_case_kernel_comparison(case_name : String) -> Bool {
 fn dump_source_trace(
   source : String,
   sweep_kernel : @layout_engine_graph_engine_elk_core.ElkLayeredRankTraceSweepKernel,
+  trial_count_override : Int?,
+  sweep_pass_count_override : Int?,
 ) -> Bool {
   let graph_result : Result[@model.MermaidGraph, @model.MermaidError] = try? @parser_header_core.parse_mermaid(
     source,
   )
   match graph_result {
-    Ok(graph) => dump_graph_trace(graph, sweep_kernel)
+    Ok(graph) =>
+      dump_graph_trace(
+        graph, sweep_kernel, trial_count_override, sweep_pass_count_override,
+      )
     Err(err) => {
       println("Error: failed to parse --source payload")
       println("\{err}")
@@ -381,12 +474,19 @@ fn dump_source_trace(
 }
 
 ///|
-fn dump_source_kernel_comparison(source : String) -> Bool {
+fn dump_source_kernel_comparison(
+  source : String,
+  trial_count_override : Int?,
+  sweep_pass_count_override : Int?,
+) -> Bool {
   let graph_result : Result[@model.MermaidGraph, @model.MermaidError] = try? @parser_header_core.parse_mermaid(
     source,
   )
   match graph_result {
-    Ok(graph) => dump_graph_kernel_comparison(graph)
+    Ok(graph) =>
+      dump_graph_kernel_comparison(
+        graph, trial_count_override, sweep_pass_count_override,
+      )
     Err(err) => {
       println("Error: failed to parse --source payload")
       println("\{err}")
@@ -404,10 +504,19 @@ fn run() -> Unit {
         print_usage()
       } else if parsed_args.source is Some(source) {
         if parsed_args.compare_kernels {
-          if !dump_source_kernel_comparison(source) {
+          if !dump_source_kernel_comparison(
+              source,
+              parsed_args.trial_count_override,
+              parsed_args.sweep_pass_count_override,
+            ) {
             print_usage()
           }
-        } else if !dump_source_trace(source, parsed_args.sweep_kernel) {
+        } else if !dump_source_trace(
+            source,
+            parsed_args.sweep_kernel,
+            parsed_args.trial_count_override,
+            parsed_args.sweep_pass_count_override,
+          ) {
           print_usage()
         }
       } else if parsed_args.case_name is Some(case_name) {
@@ -415,17 +524,35 @@ fn run() -> Unit {
           for case_name in ["fanout", "feedback_mesh", "long_span"] {
             println("CASE\t\{case_name}")
             if parsed_args.compare_kernels {
-              let _ = dump_case_kernel_comparison(case_name)
+              let _ = dump_case_kernel_comparison(
+                case_name,
+                parsed_args.trial_count_override,
+                parsed_args.sweep_pass_count_override,
+              )
             } else {
-              let _ = dump_case_trace(case_name, parsed_args.sweep_kernel)
+              let _ = dump_case_trace(
+                case_name,
+                parsed_args.sweep_kernel,
+                parsed_args.trial_count_override,
+                parsed_args.sweep_pass_count_override,
+              )
             }
           }
         } else if parsed_args.compare_kernels &&
-          !dump_case_kernel_comparison(case_name) {
+          !dump_case_kernel_comparison(
+            case_name,
+            parsed_args.trial_count_override,
+            parsed_args.sweep_pass_count_override,
+          ) {
           println("Error: unknown case '\{case_name}'")
           print_usage()
         } else if !parsed_args.compare_kernels &&
-          !dump_case_trace(case_name, parsed_args.sweep_kernel) {
+          !dump_case_trace(
+            case_name,
+            parsed_args.sweep_kernel,
+            parsed_args.trial_count_override,
+            parsed_args.sweep_pass_count_override,
+          ) {
           println("Error: unknown case '\{case_name}'")
           print_usage()
         }
