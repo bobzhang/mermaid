@@ -672,6 +672,13 @@ test "elk backend rank phase trace includes crossing-plan metadata" {
     },
     "neighbor-mean-bidirectional",
   )
+  assert_true(
+    match
+      rank_trace.labels.get("rank_order_trial_model_order_inversion_influence") {
+      Some(value) => value is ['0', ..]
+      None => false
+    },
+  )
 }
 
 ///|
@@ -724,6 +731,22 @@ test "elk layered backend plan injection keeps default parity and exposes non-de
       None => ""
     },
     "neighbor-mean-edge-slot-bidirectional",
+  )
+  assert_eq(
+    match
+      default_backend.phase_traces[1].labels.get(
+        "rank_order_trial_model_order_inversion_influence",
+      ) {
+      Some(value) => value
+      None => ""
+    },
+    match
+      edge_slot_backend.phase_traces[1].labels.get(
+        "rank_order_trial_model_order_inversion_influence",
+      ) {
+      Some(value) => value
+      None => ""
+    },
   )
   assert_eq(
     match

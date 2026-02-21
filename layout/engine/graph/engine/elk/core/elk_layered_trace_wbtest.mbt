@@ -46,6 +46,7 @@ test "elk layered rank trace keeps fanout kernel baseline" {
     trace.rank_order_trial_count,
     default_crossing_optimization_config().trial_count,
   )
+  assert_eq(trace.rank_order_trial_model_order_inversion_influence, 0.0)
   assert_eq(trace.rank_order_selected_source, "virtual")
   assert_true(
     trace.rank_order_optimized_seed_post_sweep_crossings >=
@@ -105,6 +106,7 @@ test "elk layered rank trace keeps feedback mesh kernel baseline" {
     trace.rank_order_trial_count,
     default_crossing_optimization_config().trial_count,
   )
+  assert_eq(trace.rank_order_trial_model_order_inversion_influence, 0.0)
   assert_eq(trace.rank_order_selected_source, "virtual")
   assert_true(
     trace.rank_order_optimized_seed_post_sweep_crossings >=
@@ -174,6 +176,7 @@ test "elk layered rank trace keeps long span kernel baseline" {
     trace.rank_order_trial_count,
     default_crossing_optimization_config().trial_count,
   )
+  assert_eq(trace.rank_order_trial_model_order_inversion_influence, 0.0)
   assert_eq(trace.rank_order_selected_source, "virtual")
   assert_true(
     trace.rank_order_optimized_seed_post_sweep_crossings >=
@@ -303,6 +306,13 @@ test "elk layered rank trace line formatter keeps sorted deterministic sections"
       "ORDER_TRIAL_COUNT\t\{default_crossing_optimization_config().trial_count}",
     ),
   )
+  let mut has_model_order_inversion_influence = false
+  for line in lines {
+    if line is [.. "ORDER_TRIAL_MODEL_ORDER_INVERSION_INFLUENCE\t", ..] {
+      has_model_order_inversion_influence = true
+    }
+  }
+  assert_true(has_model_order_inversion_influence)
 }
 
 ///|
@@ -361,6 +371,10 @@ test "elk layered rank trace can switch sweep kernel without changing seed phase
     default_trace.rank_order_trial_count,
     edge_slot_trace.rank_order_trial_count,
   )
+  assert_eq(
+    default_trace.rank_order_trial_model_order_inversion_influence,
+    edge_slot_trace.rank_order_trial_model_order_inversion_influence,
+  )
 }
 
 ///|
@@ -405,17 +419,21 @@ test "elk layered rank trace crossing overrides are reflected in trace lines" {
   ])
   let request = trace_request_for_graph(graph)
   let lines = match
-    collect_elk_layered_rank_trace_lines_with_crossing_overrides(
+    collect_elk_layered_rank_trace_lines_with_crossing_execution_overrides(
       request,
       Default,
       Some(3),
       Some(6),
+      Some(0.25),
     ) {
     Some(lines) => lines
     None => fail("expected trace lines with crossing overrides")
   }
   assert_true(lines.contains("ORDER_TRIAL_COUNT\t3"))
   assert_true(lines.contains("ORDER_SWEEP_PASSES\t6"))
+  assert_true(
+    lines.contains("ORDER_TRIAL_MODEL_ORDER_INVERSION_INFLUENCE\t0.25"),
+  )
 }
 
 ///|
@@ -443,6 +461,7 @@ test "elk layered rank trace kernel comparison lines expose deterministic diff k
   let mut has_selected_crossings = false
   let mut has_selected_layer_mismatch = false
   let mut has_rank_layer_mismatch = false
+  let mut has_model_order_inversion_influence = false
   for line in lines {
     if line is [.. "ORDER_SELECTED_CROSSINGS\t", ..] {
       has_selected_crossings = true
@@ -453,8 +472,12 @@ test "elk layered rank trace kernel comparison lines expose deterministic diff k
     if line is [.. "RANK_LAYER_MISMATCH_COUNT\t", ..] {
       has_rank_layer_mismatch = true
     }
+    if line is [.. "ORDER_TRIAL_MODEL_ORDER_INVERSION_INFLUENCE\t", ..] {
+      has_model_order_inversion_influence = true
+    }
   }
   assert_true(has_selected_crossings)
   assert_true(has_selected_layer_mismatch)
   assert_true(has_rank_layer_mismatch)
+  assert_true(has_model_order_inversion_influence)
 }

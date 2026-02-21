@@ -127,6 +127,7 @@ priv struct ElkLayeredRankOrderDebugState {
   crossing_sweep_kernel : ElkLayeredCrossingSweepKernel
   crossing_sweep_pass_count : Int
   crossing_trial_count : Int
+  crossing_trial_model_order_inversion_influence : Double
   optimized_seed_post_sweep_rank_node_ids_by_rank : Map[Int, Array[String]]
   optimized_seed_post_sweep_crossing_score : Int
   optimized_seed_rank_node_ids_by_rank : Map[Int, Array[String]]
@@ -429,6 +430,7 @@ fn build_rank_node_ids_by_rank_for_order_strategy_with_debug(
           crossing_trial_count: normalized_crossing_trial_count(
             crossing_execution_plan.config.trial_count,
           ),
+          crossing_trial_model_order_inversion_influence: crossing_execution_plan.config.trial_model_order_inversion_influence,
           optimized_seed_post_sweep_rank_node_ids_by_rank,
           optimized_seed_post_sweep_crossing_score,
           optimized_seed_rank_node_ids_by_rank: optimized_base_rank_node_ids_by_rank,
@@ -456,6 +458,7 @@ fn build_rank_node_ids_by_rank_for_order_strategy_with_debug(
           crossing_trial_count: normalized_crossing_trial_count(
             crossing_execution_plan.config.trial_count,
           ),
+          crossing_trial_model_order_inversion_influence: crossing_execution_plan.config.trial_model_order_inversion_influence,
           optimized_seed_post_sweep_rank_node_ids_by_rank,
           optimized_seed_post_sweep_crossing_score,
           optimized_seed_rank_node_ids_by_rank: optimized_base_rank_node_ids_by_rank,
@@ -522,6 +525,7 @@ fn build_rank_node_ids_by_rank_for_order_strategy_with_debug(
           crossing_trial_count: normalized_crossing_trial_count(
             crossing_execution_plan.config.trial_count,
           ),
+          crossing_trial_model_order_inversion_influence: crossing_execution_plan.config.trial_model_order_inversion_influence,
           optimized_seed_post_sweep_rank_node_ids_by_rank,
           optimized_seed_post_sweep_crossing_score,
           optimized_seed_rank_node_ids_by_rank: optimized_base_rank_node_ids_by_rank,

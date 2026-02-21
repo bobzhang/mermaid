@@ -18,6 +18,7 @@ priv struct ElkLayeredRankTrace {
   rank_order_sweep_kernel : String
   rank_order_sweep_pass_count : Int
   rank_order_trial_count : Int
+  rank_order_trial_model_order_inversion_influence : Double
   rank_order_optimized_seed_post_sweep_layers : Array[Array[String]]
   rank_order_optimized_seed_post_sweep_crossings : Int
   rank_order_optimized_seed_layers : Array[Array[String]]
@@ -477,6 +478,7 @@ fn collect_elk_layered_rank_trace_with_crossing_execution_plan(
     ),
     rank_order_sweep_pass_count: rank_order_debug_state.crossing_sweep_pass_count,
     rank_order_trial_count: rank_order_debug_state.crossing_trial_count,
+    rank_order_trial_model_order_inversion_influence: rank_order_debug_state.crossing_trial_model_order_inversion_influence,
     rank_order_optimized_seed_post_sweep_layers: rank_layers_from_rank_map(
       rank_order_debug_state.optimized_seed_post_sweep_rank_node_ids_by_rank,
       rank_seed_state.max_rank,
@@ -618,6 +620,9 @@ fn elk_layered_rank_trace_lines(trace : ElkLayeredRankTrace) -> Array[String] {
   lines.push("ORDER_SWEEP_KERNEL\t\{trace.rank_order_sweep_kernel}")
   lines.push("ORDER_SWEEP_PASSES\t\{trace.rank_order_sweep_pass_count}")
   lines.push("ORDER_TRIAL_COUNT\t\{trace.rank_order_trial_count}")
+  lines.push(
+    "ORDER_TRIAL_MODEL_ORDER_INVERSION_INFLUENCE\t\{trace.rank_order_trial_model_order_inversion_influence}",
+  )
   lines.push("ORDER_SELECTED_SOURCE\t\{trace.rank_order_selected_source}")
   lines.push(
     "ORDER_SCORE_SWEEP\toptimized-seed\t\{trace.rank_order_optimized_seed_post_sweep_crossings}",
@@ -846,6 +851,9 @@ pub fn collect_elk_layered_rank_trace_kernel_comparison_lines_with_crossing_exec
       lines.push("KERNEL_RIGHT\t\{right.rank_order_sweep_kernel}")
       lines.push(
         "ORDER_SELECTED_SOURCE\t\{left.rank_order_selected_source}\t\{right.rank_order_selected_source}",
+      )
+      lines.push(
+        "ORDER_TRIAL_MODEL_ORDER_INVERSION_INFLUENCE\t\{left.rank_order_trial_model_order_inversion_influence}\t\{right.rank_order_trial_model_order_inversion_influence}",
       )
       lines.push(
         "ORDER_SELECTED_CROSSINGS\t\{left.rank_order_selected_crossings}\t\{right.rank_order_selected_crossings}",

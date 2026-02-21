@@ -414,6 +414,7 @@ fn rank_phase_trace(
   labels["rank_order_sweep_kernel"] = crossing_sweep_kernel_tag(
     rank_order_debug_state.crossing_sweep_kernel,
   )
+  labels["rank_order_trial_model_order_inversion_influence"] = rank_order_debug_state.crossing_trial_model_order_inversion_influence.to_string()
   labels["rank_order_selected_source"] = rank_order_debug_state.selected_source
   labels["rank_layers"] = encode_rank_layers(rank_layers)
   labels["layout_family"] = "elk-layered"
