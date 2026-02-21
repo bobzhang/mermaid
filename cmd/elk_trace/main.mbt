@@ -131,33 +131,23 @@ fn parse_cli_args(args : Array[String]) -> ElkTraceCliArgs? {
 }
 
 ///|
-fn flow_node(id : String) -> @model.MermaidNode {
-  { id, label: id, shape: Rectangle }
-}
-
-///|
-fn flow_edge(source : String, target : String) -> @model.MermaidEdge {
-  {
-    source,
-    target,
-    label: None,
-    style: Solid,
-    has_arrow_start: false,
-    has_arrow_end: true,
-    relation_operator: Some("-->"),
-  }
-}
-
-///|
 fn build_graph(kernel : ElkTraceKernel) -> @model.MermaidGraph {
   let node_map : Map[String, @model.MermaidNode] = {}
   for node_id in kernel.nodes {
-    node_map[node_id] = flow_node(node_id)
+    node_map[node_id] = { id: node_id, label: node_id, shape: Rectangle }
   }
   let edges : Array[@model.MermaidEdge] = []
   for edge in kernel.edges {
     let (source, target) = edge
-    edges.push(flow_edge(source, target))
+    edges.push({
+      source,
+      target,
+      label: None,
+      style: Solid,
+      has_arrow_start: false,
+      has_arrow_end: true,
+      relation_operator: Some("-->"),
+    })
   }
   let class_defs : Map[String, Map[String, String]] = {}
   let class_assignments : Map[String, String] = {}

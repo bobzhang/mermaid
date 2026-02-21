@@ -110,24 +110,6 @@ fn direction_tag(direction : @model.Direction) -> String {
 }
 
 ///|
-fn flow_node(id : String) -> @model.MermaidNode {
-  { id, label: id, shape: Rectangle }
-}
-
-///|
-fn flow_edge(source : String, target : String) -> @model.MermaidEdge {
-  {
-    source,
-    target,
-    label: None,
-    style: Solid,
-    has_arrow_start: false,
-    has_arrow_end: true,
-    relation_operator: Some("-->"),
-  }
-}
-
-///|
 fn flow_graph(
   node_ids : Array[String],
   edges : Array[(String, String)],
@@ -135,12 +117,20 @@ fn flow_graph(
 ) -> @model.MermaidGraph {
   let nodes : Map[String, @model.MermaidNode] = {}
   for node_id in node_ids {
-    nodes[node_id] = flow_node(node_id)
+    nodes[node_id] = { id: node_id, label: node_id, shape: Rectangle }
   }
   let graph_edges : Array[@model.MermaidEdge] = []
   for edge in edges {
     let (source, target) = edge
-    graph_edges.push(flow_edge(source, target))
+    graph_edges.push({
+      source,
+      target,
+      label: None,
+      style: Solid,
+      has_arrow_start: false,
+      has_arrow_end: true,
+      relation_operator: Some("-->"),
+    })
   }
   let class_defs : Map[String, Map[String, String]] = {}
   let class_assignments : Map[String, String] = {}
