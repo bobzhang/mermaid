@@ -42,6 +42,11 @@ type ConflictCounters = {
   comparableNextPairs: number
   strictNextConflicts: number
   tiedNextPairs: number
+  comparableCombinedPairs: number
+  strictCombinedConflicts: number
+  tiedCombinedPairs: number
+  comparableOraclePairs: number
+  strictOracleConflicts: number
 }
 
 type CliOptions = {
@@ -531,6 +536,11 @@ function countPairConflicts(
     comparableNextPairs: 0,
     strictNextConflicts: 0,
     tiedNextPairs: 0,
+    comparableCombinedPairs: 0,
+    strictCombinedConflicts: 0,
+    tiedCombinedPairs: 0,
+    comparableOraclePairs: 0,
+    strictOracleConflicts: 0,
   }
 
   for (let rank = 0; rank < localLayers.length; rank += 1) {
@@ -559,9 +569,11 @@ function countPairConflicts(
           localRankPosByNodeId,
           rank - 1,
         )
+        let prevSignNonTie: -1 | 0 | 1 | null = null
         if (prevLeft !== null && prevRight !== null) {
           counters.comparablePrevPairs += 1
           const prevSign = sign(prevLeft - prevRight)
+          prevSignNonTie = prevSign
           if (prevSign === 0) {
             counters.tiedPrevPairs += 1
           } else if (prevSign !== upstreamSign) {
@@ -581,13 +593,51 @@ function countPairConflicts(
           localRankPosByNodeId,
           rank + 1,
         )
+        let nextSignNonTie: -1 | 0 | 1 | null = null
         if (nextLeft !== null && nextRight !== null) {
           counters.comparableNextPairs += 1
           const nextSign = sign(nextLeft - nextRight)
+          nextSignNonTie = nextSign
           if (nextSign === 0) {
             counters.tiedNextPairs += 1
           } else if (nextSign !== upstreamSign) {
             counters.strictNextConflicts += 1
+          }
+        }
+
+        const combinedLeftValues: number[] = []
+        const combinedRightValues: number[] = []
+        if (prevLeft !== null) combinedLeftValues.push(prevLeft)
+        if (nextLeft !== null) combinedLeftValues.push(nextLeft)
+        if (prevRight !== null) combinedRightValues.push(prevRight)
+        if (nextRight !== null) combinedRightValues.push(nextRight)
+        if (combinedLeftValues.length > 0 && combinedRightValues.length > 0) {
+          counters.comparableCombinedPairs += 1
+          const combinedLeft =
+            combinedLeftValues.reduce((acc, value) => acc + value, 0) /
+            combinedLeftValues.length
+          const combinedRight =
+            combinedRightValues.reduce((acc, value) => acc + value, 0) /
+            combinedRightValues.length
+          const combinedSign = sign(combinedLeft - combinedRight)
+          if (combinedSign === 0) {
+            counters.tiedCombinedPairs += 1
+          } else if (combinedSign !== upstreamSign) {
+            counters.strictCombinedConflicts += 1
+          }
+        }
+
+        const oracleSigns: Array<-1 | 1> = []
+        if (prevSignNonTie !== null && prevSignNonTie !== 0) {
+          oracleSigns.push(prevSignNonTie)
+        }
+        if (nextSignNonTie !== null && nextSignNonTie !== 0) {
+          oracleSigns.push(nextSignNonTie)
+        }
+        if (oracleSigns.length > 0) {
+          counters.comparableOraclePairs += 1
+          if (!oracleSigns.some(value => value === upstreamSign)) {
+            counters.strictOracleConflicts += 1
           }
         }
       }
@@ -631,6 +681,11 @@ function main(): void {
     comparableNextPairs: 0,
     strictNextConflicts: 0,
     tiedNextPairs: 0,
+    comparableCombinedPairs: 0,
+    strictCombinedConflicts: 0,
+    tiedCombinedPairs: 0,
+    comparableOraclePairs: 0,
+    strictOracleConflicts: 0,
   }
   for (const fixture of targets) {
     const counters = analyzeFixture(fixture, options)
@@ -640,8 +695,13 @@ function main(): void {
     total.comparableNextPairs += counters.comparableNextPairs
     total.strictNextConflicts += counters.strictNextConflicts
     total.tiedNextPairs += counters.tiedNextPairs
+    total.comparableCombinedPairs += counters.comparableCombinedPairs
+    total.strictCombinedConflicts += counters.strictCombinedConflicts
+    total.tiedCombinedPairs += counters.tiedCombinedPairs
+    total.comparableOraclePairs += counters.comparableOraclePairs
+    total.strictOracleConflicts += counters.strictOracleConflicts
     console.log(
-      `${fixture}\tprev_strict=${counters.strictPrevConflicts}/${counters.comparablePrevPairs}\tprev_tied=${counters.tiedPrevPairs}/${counters.comparablePrevPairs}\tnext_strict=${counters.strictNextConflicts}/${counters.comparableNextPairs}\tnext_tied=${counters.tiedNextPairs}/${counters.comparableNextPairs}`,
+      `${fixture}\tprev_strict=${counters.strictPrevConflicts}/${counters.comparablePrevPairs}\tnext_strict=${counters.strictNextConflicts}/${counters.comparableNextPairs}\tcombined_strict=${counters.strictCombinedConflicts}/${counters.comparableCombinedPairs}\toracle_strict=${counters.strictOracleConflicts}/${counters.comparableOraclePairs}`,
     )
   }
   console.log('')
@@ -657,6 +717,15 @@ function main(): void {
   )
   console.log(
     `next_tied_pairs=${total.tiedNextPairs}/${total.comparableNextPairs} (${formatRatio(total.tiedNextPairs, total.comparableNextPairs)})`,
+  )
+  console.log(
+    `combined_strict_conflict=${total.strictCombinedConflicts}/${total.comparableCombinedPairs} (${formatRatio(total.strictCombinedConflicts, total.comparableCombinedPairs)})`,
+  )
+  console.log(
+    `combined_tied_pairs=${total.tiedCombinedPairs}/${total.comparableCombinedPairs} (${formatRatio(total.tiedCombinedPairs, total.comparableCombinedPairs)})`,
+  )
+  console.log(
+    `oracle_strict_conflict=${total.strictOracleConflicts}/${total.comparableOraclePairs} (${formatRatio(total.strictOracleConflicts, total.comparableOraclePairs)})`,
   )
 }
 
