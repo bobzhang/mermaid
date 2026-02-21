@@ -567,7 +567,7 @@ fn sweep_rank_order_once_from_input_with_kernel(
                     fixed_node_ids,
                     free_node_ids,
                     sweep_input.predecessors_by_node_id,
-                    false,
+                    true,
                   )
                 }
                 None => ()
@@ -640,7 +640,7 @@ fn sweep_rank_order_once_from_input_with_kernel(
                     fixed_node_ids,
                     free_node_ids,
                     sweep_input.predecessors_by_node_id,
-                    false,
+                    true,
                   )
                 }
                 None => ()

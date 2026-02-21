@@ -306,19 +306,35 @@ fn execute_crossing_phase_once_with_plan_and_seed(
   let optimized_objective = evaluate_crossing_objective_with_counter(
     optimized_rank_node_ids_by_rank, objective_context, components,
   )
-  let optimized_is_pareto_worse_than_post_sweep = (
-      optimized_objective.layered_crossings >
+  let objectives_equal = optimized_objective.layered_crossings ==
+    post_sweep_objective.layered_crossings &&
+    optimized_objective.global_crossings ==
+    post_sweep_objective.global_crossings
+  let optimized_improves_post_sweep = (
+      optimized_objective.layered_crossings <
       post_sweep_objective.layered_crossings &&
-      optimized_objective.global_crossings >=
+      optimized_objective.global_crossings <=
       post_sweep_objective.global_crossings
     ) ||
     (
-      optimized_objective.layered_crossings ==
-      post_sweep_objective.layered_crossings &&
-      optimized_objective.global_crossings >
-      post_sweep_objective.global_crossings
+      optimized_objective.global_crossings <
+      post_sweep_objective.global_crossings &&
+      optimized_objective.layered_crossings <=
+      post_sweep_objective.layered_crossings
     )
-  if optimized_is_pareto_worse_than_post_sweep {
+  let optimized_wins_equal_objective_by_model_order = objectives_equal &&
+    rank_order_model_inversion_score(
+      optimized_rank_node_ids_by_rank,
+      input.max_rank,
+      input.order_index_by_node_id,
+    ) <
+    rank_order_model_inversion_score(
+      post_sweep_rank_node_ids_by_rank,
+      input.max_rank,
+      input.order_index_by_node_id,
+    )
+  if !optimized_improves_post_sweep &&
+    !optimized_wins_equal_objective_by_model_order {
     return {
       post_sweep_rank_node_ids_by_rank,
       post_refinement_rank_node_ids_by_rank: clone_rank_node_ids_by_rank(

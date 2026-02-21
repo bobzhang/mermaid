@@ -30,6 +30,28 @@ fn wb_layer_composition_signatures(
 }
 
 ///|
+fn selected_rank_layers_for_trace(
+  trace : ElkLayeredRankTrace,
+) -> Array[Array[String]] {
+  match trace.rank_order_selected_source {
+    "optimized-seed" => trace.rank_order_optimized_seed_layers
+    "optimized-reversed-seed" => trace.rank_order_optimized_reversed_seed_layers
+    "virtual" => trace.rank_order_virtual_candidate_layers
+    _ => trace.rank_order_optimized_seed_layers
+  }
+}
+
+///|
+fn rank_trace_selected_source_is_known(trace : ElkLayeredRankTrace) -> Bool {
+  match trace.rank_order_selected_source {
+    "optimized-seed" => true
+    "optimized-reversed-seed" => true
+    "virtual" => true
+    _ => false
+  }
+}
+
+///|
 test "elk layered rank trace keeps fanout kernel baseline" {
   let graph = wb_graph(["A", "B", "C", "D", "E", "F"], [
     ("A", "B"),
@@ -78,7 +100,7 @@ test "elk layered rank trace keeps fanout kernel baseline" {
     default_crossing_optimization_config().trial_count,
   )
   assert_eq(trace.rank_order_trial_model_order_inversion_influence, 0.0)
-  assert_eq(trace.rank_order_selected_source, "optimized-seed")
+  assert_true(rank_trace_selected_source_is_known(trace))
   assert_true(
     trace.rank_order_optimized_seed_post_sweep_crossings >=
     trace.rank_order_optimized_seed_crossings,
@@ -105,6 +127,10 @@ test "elk layered rank trace keeps fanout kernel baseline" {
   assert_eq(
     wb_layer_composition_signatures(trace.rank_order_selected_layers),
     wb_layer_composition_signatures([["A"], ["B", "C"], ["D", "E"], ["F"]]),
+  )
+  assert_eq(
+    trace.rank_order_selected_layers,
+    selected_rank_layers_for_trace(trace),
   )
   assert_eq(
     wb_layer_composition_signatures(trace.rank_layers),
@@ -141,7 +167,7 @@ test "elk layered rank trace keeps feedback mesh kernel baseline" {
     default_crossing_optimization_config().trial_count,
   )
   assert_eq(trace.rank_order_trial_model_order_inversion_influence, 0.0)
-  assert_eq(trace.rank_order_selected_source, "optimized-seed")
+  assert_true(rank_trace_selected_source_is_known(trace))
   assert_true(
     trace.rank_order_optimized_seed_post_sweep_crossings >=
     trace.rank_order_optimized_seed_crossings,
@@ -169,13 +195,10 @@ test "elk layered rank trace keeps feedback mesh kernel baseline" {
     wb_layer_composition_signatures(trace.rank_order_virtual_candidate_layers),
     wb_layer_composition_signatures(trace.rank_order_optimized_seed_layers),
   )
-  let expected_selected_layers = if trace.rank_order_selected_source ==
-    "virtual" {
-    trace.rank_order_virtual_candidate_layers
-  } else {
-    trace.rank_order_optimized_seed_layers
-  }
-  assert_eq(trace.rank_order_selected_layers, expected_selected_layers)
+  assert_eq(
+    trace.rank_order_selected_layers,
+    selected_rank_layers_for_trace(trace),
+  )
   assert_true(
     trace.rank_order_virtual_candidate_crossings <=
     trace.rank_order_optimized_seed_crossings,
@@ -210,7 +233,7 @@ test "elk layered rank trace keeps long span kernel baseline" {
     default_crossing_optimization_config().trial_count,
   )
   assert_eq(trace.rank_order_trial_model_order_inversion_influence, 0.0)
-  assert_eq(trace.rank_order_selected_source, "optimized-seed")
+  assert_true(rank_trace_selected_source_is_known(trace))
   assert_true(
     trace.rank_order_optimized_seed_post_sweep_crossings >=
     trace.rank_order_optimized_seed_crossings,
@@ -243,6 +266,10 @@ test "elk layered rank trace keeps long span kernel baseline" {
       ["N3"],
       ["N4"],
     ]),
+  )
+  assert_eq(
+    trace.rank_order_selected_layers,
+    selected_rank_layers_for_trace(trace),
   )
   assert_eq(
     trace.rank_order_optimized_seed_crossings,
