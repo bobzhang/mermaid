@@ -1321,19 +1321,3 @@ pub fn collect_dagre_network_simplex_ranks_from_directed_edge_specs(
     nodes_in_order, edge_specs, false,
   )
 }
-
-///|
-/// Compute dagre network simplex ranks from a pre-oriented edge list.
-pub fn collect_dagre_network_simplex_ranks_from_directed_edges(
-  nodes_in_order : Array[MermaidNode],
-  directed_edges : Array[(String, String)],
-) -> (Map[String, Int], Int, Bool) {
-  let directed_edge_specs : Array[(String, String, Int)] = []
-  for edge in directed_edges {
-    let (source_id, target_id) = edge
-    directed_edge_specs.push((source_id, target_id, 1))
-  }
-  collect_dagre_network_simplex_ranks_from_directed_edge_specs(
-    nodes_in_order, directed_edge_specs,
-  )
-}

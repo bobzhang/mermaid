@@ -8,8 +8,6 @@ import {
 // Values
 pub fn collect_dagre_network_simplex_ranks_from_directed_edge_specs(Array[@model.MermaidNode], Array[(String, String, Int)]) -> (Map[String, Int], Int, Bool)
 
-pub fn collect_dagre_network_simplex_ranks_from_directed_edges(Array[@model.MermaidNode], Array[(String, String)]) -> (Map[String, Int], Int, Bool)
-
 pub fn collect_dagre_parity_order_trace(Array[@model.MermaidNode], Map[String, Int], Int, Array[@model.MermaidEdge]) -> DagreParityOrderTrace
 
 pub fn compute_legacy_lane_state(@model.MermaidGraph, Array[@model.MermaidNode], Bool, Bool, Bool, Bool, Bool, Bool, Bool) -> LegacyLaneState
