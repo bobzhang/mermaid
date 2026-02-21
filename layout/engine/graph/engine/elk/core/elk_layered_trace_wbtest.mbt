@@ -327,6 +327,7 @@ test "elk layered rank trace line formatter keeps sorted deterministic sections"
   let mut has_model_order_inversion_influence = false
   let mut has_order_trial_selected = false
   let mut has_order_trial_rows = false
+  let mut has_order_trial_pass_rows = false
   for line in lines {
     if line is [.. "ORDER_TRIAL_MODEL_ORDER_INVERSION_INFLUENCE\t", ..] {
       has_model_order_inversion_influence = true
@@ -337,10 +338,14 @@ test "elk layered rank trace line formatter keeps sorted deterministic sections"
     if line is [.. "ORDER_TRIAL\t", ..] {
       has_order_trial_rows = true
     }
+    if line is [.. "ORDER_TRIAL_PASS\t", ..] {
+      has_order_trial_pass_rows = true
+    }
   }
   assert_true(has_model_order_inversion_influence)
   assert_true(has_order_trial_selected)
   assert_true(has_order_trial_rows)
+  assert_true(has_order_trial_pass_rows)
 }
 
 ///|

@@ -14,6 +14,15 @@ priv struct ElkLayeredCrossingPhaseResult {
 priv struct ElkLayeredCrossingExecutionState {
   post_sweep_rank_node_ids_by_rank : Map[Int, Array[String]]
   post_refinement_rank_node_ids_by_rank : Map[Int, Array[String]]
+  sweep_pass_summaries : Array[ElkLayeredCrossingSweepPassSummary]
+}
+
+///|
+priv struct ElkLayeredCrossingSweepPassSummary {
+  pass_index : Int
+  sweep_direction : String
+  changed : Bool
+  objective : ElkLayeredCrossingObjective
 }
 
 ///|
@@ -21,6 +30,7 @@ priv struct ElkLayeredCrossingTrialSummary {
   trial_index : Int
   seed_kind : String
   initial_sweep_direction : String
+  sweep_pass_summaries : Array[ElkLayeredCrossingSweepPassSummary]
   post_sweep_objective : ElkLayeredCrossingObjective
   optimized_objective : ElkLayeredCrossingObjective
   model_order_inversion_score : Int
@@ -195,10 +205,44 @@ fn execute_crossing_phase_once_with_plan_and_seed(
 ) -> ElkLayeredCrossingExecutionState {
   let _ = input.port_order_slots_by_node_id
   let config = plan.config
+  let objective_context = build_crossing_objective_context_from_phase_input(
+    input,
+  )
   let optimized_rank_node_ids_by_rank = seed_rank_node_ids_by_rank
   let sweep_input = build_crossing_sweep_input_from_phase_input(
     optimized_rank_node_ids_by_rank, input, config,
   )
+  let sweep_pass_summaries : Array[ElkLayeredCrossingSweepPassSummary] = []
+  let trace_rank_node_ids_by_rank = clone_rank_node_ids_by_rank(
+    optimized_rank_node_ids_by_rank,
+    input.max_rank,
+  )
+  let trace_sweep_input = build_crossing_sweep_input_from_phase_input(
+    trace_rank_node_ids_by_rank, input, config,
+  )
+  let mut pass = 0
+  let mut forward_sweep = initial_forward_sweep
+  while pass < config.sweep_pass_count {
+    let changed = sweep_rank_order_once_from_input_with_kernel(
+      trace_sweep_input,
+      plan.sweep_kernel,
+      forward_sweep,
+    )
+    sweep_pass_summaries.push({
+      pass_index: pass,
+      sweep_direction: crossing_sweep_direction_tag(forward_sweep),
+      changed,
+      objective: evaluate_crossing_objective(
+        trace_sweep_input.rank_node_ids_by_rank,
+        objective_context,
+      ),
+    })
+    if !changed {
+      break
+    }
+    forward_sweep = !forward_sweep
+    pass += 1
+  }
   if initial_forward_sweep {
     optimize_rank_order_with_sweep_passes_and_kernel(
       sweep_input.rank_node_ids_by_rank,
@@ -232,6 +276,7 @@ fn execute_crossing_phase_once_with_plan_and_seed(
   {
     post_sweep_rank_node_ids_by_rank,
     post_refinement_rank_node_ids_by_rank: optimized_rank_node_ids_by_rank,
+    sweep_pass_summaries,
   }
 }
 
@@ -309,6 +354,7 @@ fn execute_crossing_phase_with_plan_with_trial_trace(
           initial_sweep_direction: crossing_sweep_direction_tag(
             initial_forward_sweep,
           ),
+          sweep_pass_summaries: trial_execution_state.sweep_pass_summaries,
           post_sweep_objective,
           optimized_objective,
           model_order_inversion_score: rank_order_model_inversion_score(
@@ -350,6 +396,7 @@ fn execute_crossing_phase_with_plan_with_trial_trace(
             trial_index: 0,
             seed_kind: crossing_trial_seed_kind_tag(0),
             initial_sweep_direction: crossing_sweep_direction_tag(true),
+            sweep_pass_summaries: fallback_execution_state.sweep_pass_summaries,
             post_sweep_objective: evaluate_crossing_objective(
               fallback_execution_state.post_sweep_rank_node_ids_by_rank,
               objective_context,

@@ -626,6 +626,12 @@ fn append_trial_summary_lines(
     lines.push(
       "ORDER_TRIAL\t\{source}\t\{summary.trial_index}\t\{summary.seed_kind}\t\{summary.initial_sweep_direction}\t\{summary.post_sweep_objective.layered_crossings}\t\{summary.post_sweep_objective.global_crossings}\t\{summary.optimized_objective.layered_crossings}\t\{summary.optimized_objective.global_crossings}\t\{summary.model_order_inversion_score}",
     )
+    for pass_summary in summary.sweep_pass_summaries {
+      let changed = if pass_summary.changed { 1 } else { 0 }
+      lines.push(
+        "ORDER_TRIAL_PASS\t\{source}\t\{summary.trial_index}\t\{pass_summary.pass_index}\t\{pass_summary.sweep_direction}\t\{changed}\t\{pass_summary.objective.layered_crossings}\t\{pass_summary.objective.global_crossings}",
+      )
+    }
   }
 }
 
