@@ -9,6 +9,7 @@ test "elk_trace parse_cli_args defaults to all case" {
         sweep_kernel: Default,
         trial_count_override: None,
         sweep_pass_count_override: None,
+        trial_model_order_inversion_influence_override: None,
         compare_kernels: false,
       }
     ) else {
@@ -27,6 +28,7 @@ test "elk_trace parse_cli_args accepts case flag forms" {
         sweep_kernel: Default,
         trial_count_override: None,
         sweep_pass_count_override: None,
+        trial_model_order_inversion_influence_override: None,
         compare_kernels: false,
       }
     ) else {
@@ -41,6 +43,7 @@ test "elk_trace parse_cli_args accepts case flag forms" {
         sweep_kernel: Default,
         trial_count_override: None,
         sweep_pass_count_override: None,
+        trial_model_order_inversion_influence_override: None,
         compare_kernels: false,
       }
     ) else {
@@ -65,6 +68,7 @@ test "elk_trace parse_cli_args accepts source payload" {
         sweep_kernel: Default,
         trial_count_override: None,
         sweep_pass_count_override: None,
+        trial_model_order_inversion_influence_override: None,
         compare_kernels: false,
       }
     ) else {
@@ -83,6 +87,7 @@ test "elk_trace parse_cli_args decodes escaped newlines in source payload" {
         sweep_kernel: Default,
         trial_count_override: None,
         sweep_pass_count_override: None,
+        trial_model_order_inversion_influence_override: None,
         compare_kernels: false,
       }
     ) else {
@@ -112,6 +117,7 @@ test "elk_trace parse_cli_args preserves help mode" {
         sweep_kernel: Default,
         trial_count_override: None,
         sweep_pass_count_override: None,
+        trial_model_order_inversion_influence_override: None,
         compare_kernels: false,
       }
     ) else {
@@ -130,6 +136,7 @@ test "elk_trace parse_cli_args accepts sweep-kernel flag forms" {
         sweep_kernel: NeighborMeanEdgeSlotBidirectional,
         trial_count_override: None,
         sweep_pass_count_override: None,
+        trial_model_order_inversion_influence_override: None,
         compare_kernels: false,
       }
     ) else {
@@ -144,6 +151,7 @@ test "elk_trace parse_cli_args accepts sweep-kernel flag forms" {
         sweep_kernel: NeighborMeanBidirectional,
         trial_count_override: None,
         sweep_pass_count_override: None,
+        trial_model_order_inversion_influence_override: None,
         compare_kernels: false,
       }
     ) else {
@@ -168,6 +176,7 @@ test "elk_trace parse_cli_args accepts compare-kernels flag" {
         sweep_kernel: Default,
         trial_count_override: None,
         sweep_pass_count_override: None,
+        trial_model_order_inversion_influence_override: None,
         compare_kernels: true,
       }
     ) else {
@@ -186,6 +195,7 @@ test "elk_trace parse_cli_args accepts crossing override flags" {
         sweep_kernel: Default,
         trial_count_override: Some(5),
         sweep_pass_count_override: Some(6),
+        trial_model_order_inversion_influence_override: None,
         compare_kernels: false,
       }
     ) else {
@@ -201,4 +211,29 @@ test "elk_trace parse_cli_args rejects invalid crossing override values" {
   assert_true(parse_cli_args(["--sweep-pass-count", "0"]) is None)
   assert_true(parse_cli_args(["--sweep-pass-count=-2"]) is None)
   assert_true(parse_cli_args(["--sweep-pass-count", "x"]) is None)
+  assert_true(
+    parse_cli_args(["--model-order-inversion-influence", "-0.1"]) is None,
+  )
+  assert_true(
+    parse_cli_args(["--model-order-inversion-influence", "x"]) is None,
+  )
+}
+
+///|
+test "elk_trace parse_cli_args accepts model-order inversion influence override" {
+  guard parse_cli_args(["--model-order-inversion-influence=0.25"])
+    is Some(
+      {
+        show_help: false,
+        case_name: Some("all"),
+        source: None,
+        sweep_kernel: Default,
+        trial_count_override: None,
+        sweep_pass_count_override: None,
+        trial_model_order_inversion_influence_override: Some(0.25),
+        compare_kernels: false,
+      }
+    ) else {
+    fail("expected model-order inversion influence override to parse")
+  }
 }

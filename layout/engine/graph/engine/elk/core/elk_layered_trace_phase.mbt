@@ -84,6 +84,7 @@ fn crossing_execution_plan_with_trace_overrides(
   base_plan : ElkLayeredCrossingExecutionPlan,
   trial_count_override : Int?,
   sweep_pass_count_override : Int?,
+  trial_model_order_inversion_influence_override : Double?,
 ) -> ElkLayeredCrossingExecutionPlan {
   let config = base_plan.config
   let configured_trial_count = match trial_count_override {
@@ -94,12 +95,23 @@ fn crossing_execution_plan_with_trace_overrides(
     Some(value) => if value > 0 { value } else { config.sweep_pass_count }
     None => config.sweep_pass_count
   }
+  let configured_trial_model_order_inversion_influence = match
+    trial_model_order_inversion_influence_override {
+    Some(value) =>
+      if value >= 0.0 {
+        value
+      } else {
+        config.trial_model_order_inversion_influence
+      }
+    None => config.trial_model_order_inversion_influence
+  }
   {
     ..base_plan,
     config: {
       ..config,
       trial_count: configured_trial_count,
       sweep_pass_count: configured_sweep_pass_count,
+      trial_model_order_inversion_influence: configured_trial_model_order_inversion_influence,
     },
   }
 }
@@ -109,11 +121,13 @@ fn crossing_execution_plan_for_rank_trace_kernel_with_overrides(
   trace_sweep_kernel : ElkLayeredRankTraceSweepKernel,
   trial_count_override : Int?,
   sweep_pass_count_override : Int?,
+  trial_model_order_inversion_influence_override : Double?,
 ) -> ElkLayeredCrossingExecutionPlan {
   crossing_execution_plan_with_trace_overrides(
     crossing_execution_plan_for_rank_trace_kernel(trace_sweep_kernel),
     trial_count_override,
     sweep_pass_count_override,
+    trial_model_order_inversion_influence_override,
   )
 }
 
@@ -121,8 +135,11 @@ fn crossing_execution_plan_for_rank_trace_kernel_with_overrides(
 fn has_rank_trace_crossing_overrides(
   trial_count_override : Int?,
   sweep_pass_count_override : Int?,
+  trial_model_order_inversion_influence_override : Double?,
 ) -> Bool {
-  trial_count_override is Some(_) || sweep_pass_count_override is Some(_)
+  trial_count_override is Some(_) ||
+  sweep_pass_count_override is Some(_) ||
+  trial_model_order_inversion_influence_override is Some(_)
 }
 
 ///|
@@ -135,6 +152,7 @@ fn collect_elk_layered_rank_trace_for_sweep_kernel(
     trace_sweep_kernel,
     None,
     None,
+    None,
   )
 }
 
@@ -144,9 +162,10 @@ fn collect_elk_layered_rank_trace_for_sweep_kernel_with_overrides(
   trace_sweep_kernel : ElkLayeredRankTraceSweepKernel,
   trial_count_override : Int?,
   sweep_pass_count_override : Int?,
+  trial_model_order_inversion_influence_override : Double?,
 ) -> ElkLayeredRankTrace? {
   let has_overrides = has_rank_trace_crossing_overrides(
-    trial_count_override, sweep_pass_count_override,
+    trial_count_override, sweep_pass_count_override, trial_model_order_inversion_influence_override,
   )
   if trace_sweep_kernel is Default && !has_overrides {
     collect_elk_layered_rank_trace(request)
@@ -154,7 +173,7 @@ fn collect_elk_layered_rank_trace_for_sweep_kernel_with_overrides(
     collect_elk_layered_rank_trace_with_crossing_execution_plan(
       request,
       crossing_execution_plan_for_rank_trace_kernel_with_overrides(
-        trace_sweep_kernel, trial_count_override, sweep_pass_count_override,
+        trace_sweep_kernel, trial_count_override, sweep_pass_count_override, trial_model_order_inversion_influence_override,
       ),
     )
   }
@@ -741,9 +760,28 @@ pub fn collect_elk_layered_rank_trace_lines_with_crossing_overrides(
   trial_count_override : Int?,
   sweep_pass_count_override : Int?,
 ) -> Array[String]? {
+  collect_elk_layered_rank_trace_lines_with_crossing_execution_overrides(
+    request,
+    trace_sweep_kernel,
+    trial_count_override,
+    sweep_pass_count_override,
+    None,
+  )
+}
+
+///|
+/// Collects and formats ELK layered rank-phase trace lines with explicit crossing overrides.
+pub fn collect_elk_layered_rank_trace_lines_with_crossing_execution_overrides(
+  request : GraphLayoutBackendRequest,
+  trace_sweep_kernel : ElkLayeredRankTraceSweepKernel,
+  trial_count_override : Int?,
+  sweep_pass_count_override : Int?,
+  trial_model_order_inversion_influence_override : Double?,
+) -> Array[String]? {
   match
     collect_elk_layered_rank_trace_for_sweep_kernel_with_overrides(
       request, trace_sweep_kernel, trial_count_override, sweep_pass_count_override,
+      trial_model_order_inversion_influence_override,
     ) {
     Some(trace) => Some(elk_layered_rank_trace_lines(trace))
     None => None
@@ -775,11 +813,31 @@ pub fn collect_elk_layered_rank_trace_kernel_comparison_lines_with_crossing_over
   trial_count_override : Int?,
   sweep_pass_count_override : Int?,
 ) -> Array[String]? {
+  collect_elk_layered_rank_trace_kernel_comparison_lines_with_crossing_execution_overrides(
+    request,
+    left_kernel,
+    right_kernel,
+    trial_count_override,
+    sweep_pass_count_override,
+    None,
+  )
+}
+
+///|
+/// Collects deterministic rank-phase differences between two sweep kernels with explicit crossing overrides.
+pub fn collect_elk_layered_rank_trace_kernel_comparison_lines_with_crossing_execution_overrides(
+  request : GraphLayoutBackendRequest,
+  left_kernel : ElkLayeredRankTraceSweepKernel,
+  right_kernel : ElkLayeredRankTraceSweepKernel,
+  trial_count_override : Int?,
+  sweep_pass_count_override : Int?,
+  trial_model_order_inversion_influence_override : Double?,
+) -> Array[String]? {
   let left_trace = collect_elk_layered_rank_trace_for_sweep_kernel_with_overrides(
-    request, left_kernel, trial_count_override, sweep_pass_count_override,
+    request, left_kernel, trial_count_override, sweep_pass_count_override, trial_model_order_inversion_influence_override,
   )
   let right_trace = collect_elk_layered_rank_trace_for_sweep_kernel_with_overrides(
-    request, right_kernel, trial_count_override, sweep_pass_count_override,
+    request, right_kernel, trial_count_override, sweep_pass_count_override, trial_model_order_inversion_influence_override,
   )
   match (left_trace, right_trace) {
     (Some(left), Some(right)) => {

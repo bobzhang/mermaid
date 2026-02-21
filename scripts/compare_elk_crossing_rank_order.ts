@@ -11,6 +11,7 @@
  *   bun run scripts/compare_elk_crossing_rank_order.ts fixtures/layout_stress_001_dense_dag.mmd fixtures/layout_stress_013_rl_dual_scc_weave.mmd
  *   bun run scripts/compare_elk_crossing_rank_order.ts --trial-count 5 fixtures/layout_stress_001_dense_dag.mmd
  *   bun run scripts/compare_elk_crossing_rank_order.ts --sweep-kernel edge-slot --trial-count 5 fixtures/layout_stress_001_dense_dag.mmd
+ *   bun run scripts/compare_elk_crossing_rank_order.ts --model-order-inversion-influence 0.25 fixtures/layout_stress_001_dense_dag.mmd
  *   bun run scripts/compare_elk_crossing_rank_order.ts --details --limit 3 fixtures/layout_stress_013_rl_dual_scc_weave.mmd
  */
 
@@ -61,6 +62,7 @@ type CliOptions = {
   trialCount?: number
   sweepPassCount?: number
   sweepKernel?: 'default' | 'neighbor-mean' | 'edge-slot'
+  modelOrderInversionInfluence?: number
 }
 
 type NeighborSummary = {
@@ -139,6 +141,12 @@ function parseLocalTrace(source: string, options: CliOptions): LocalTrace {
   }
   if (options.sweepKernel !== undefined) {
     args.push('--sweep-kernel', options.sweepKernel)
+  }
+  if (options.modelOrderInversionInfluence !== undefined) {
+    args.push(
+      '--model-order-inversion-influence',
+      String(options.modelOrderInversionInfluence),
+    )
   }
   const stdout = runOrThrow('moon', args)
   const inputNodeIdsByIndex = new Map<number, string>()
@@ -477,6 +485,7 @@ function parseCliOptions(args: string[]): CliOptions {
   let trialCount: number | undefined
   let sweepPassCount: number | undefined
   let sweepKernel: 'default' | 'neighbor-mean' | 'edge-slot' | undefined
+  let modelOrderInversionInfluence: number | undefined
   const fixtures: string[] = []
   for (let i = 0; i < args.length; i += 1) {
     const arg = args[i]!
@@ -559,6 +568,30 @@ function parseCliOptions(args: string[]): CliOptions {
       sweepKernel = normalized
       continue
     }
+    if (arg === '--model-order-inversion-influence') {
+      const next = args[i + 1]
+      if (!next) fail('missing value after --model-order-inversion-influence')
+      const parsed = Number.parseFloat(next)
+      if (!Number.isFinite(parsed) || parsed < 0) {
+        fail(
+          `invalid --model-order-inversion-influence value: ${next}, expected non-negative number`,
+        )
+      }
+      modelOrderInversionInfluence = parsed
+      i += 1
+      continue
+    }
+    if (arg.startsWith('--model-order-inversion-influence=')) {
+      const raw = arg.slice('--model-order-inversion-influence='.length)
+      const parsed = Number.parseFloat(raw)
+      if (!Number.isFinite(parsed) || parsed < 0) {
+        fail(
+          `invalid --model-order-inversion-influence value: ${raw}, expected non-negative number`,
+        )
+      }
+      modelOrderInversionInfluence = parsed
+      continue
+    }
     if (arg.startsWith('--')) {
       fail(`unknown argument: ${arg}`)
     }
@@ -566,7 +599,7 @@ function parseCliOptions(args: string[]): CliOptions {
   }
   if (fixtures.length === 0) {
     fail(
-      'usage: bun run scripts/compare_elk_crossing_rank_order.ts [--details] [--limit N] [--trial-count N] [--sweep-pass-count N] [--sweep-kernel default|neighbor-mean|edge-slot] <fixture.mmd> [more...]',
+      'usage: bun run scripts/compare_elk_crossing_rank_order.ts [--details] [--limit N] [--trial-count N] [--sweep-pass-count N] [--sweep-kernel default|neighbor-mean|edge-slot] [--model-order-inversion-influence N] <fixture.mmd> [more...]',
     )
   }
   return {
@@ -576,6 +609,7 @@ function parseCliOptions(args: string[]): CliOptions {
     trialCount,
     sweepPassCount,
     sweepKernel,
+    modelOrderInversionInfluence,
   }
 }
 

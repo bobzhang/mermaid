@@ -29,6 +29,7 @@ fn print_usage() -> Unit {
     #|  --sweep-kernel  default | neighbor-mean | edge-slot
     #|  --trial-count  Positive crossing trial count override
     #|  --sweep-pass-count  Positive crossing sweep-pass override
+    #|  --model-order-inversion-influence  Non-negative trial tie-break influence override
     #|  --compare-kernels  Print default-vs-edge-slot rank trace comparison summary
     #|  --help   Show this help
     #|
@@ -57,6 +58,7 @@ priv struct ElkTraceCliArgs {
   sweep_kernel : @layout_engine_graph_engine_elk_core.ElkLayeredRankTraceSweepKernel
   trial_count_override : Int?
   sweep_pass_count_override : Int?
+  trial_model_order_inversion_influence_override : Double?
   compare_kernels : Bool
 }
 
@@ -96,6 +98,21 @@ fn decode_positive_int_arg(raw : String) -> Int? {
 }
 
 ///|
+fn decode_non_negative_double_arg(raw : String) -> Double? {
+  let normalized = raw.trim().to_string()
+  if normalized == "" {
+    return None
+  }
+  let parsed : Result[Double, @strconv.StrConvError] = try? @strconv.parse_double(
+    normalized,
+  )
+  match parsed {
+    Ok(value) => if value >= 0.0 { Some(value) } else { None }
+    Err(_) => None
+  }
+}
+
+///|
 fn parse_cli_args(args : Array[String]) -> ElkTraceCliArgs? {
   let mut show_help = false
   let mut case_name : String? = None
@@ -103,6 +120,7 @@ fn parse_cli_args(args : Array[String]) -> ElkTraceCliArgs? {
   let mut sweep_kernel : @layout_engine_graph_engine_elk_core.ElkLayeredRankTraceSweepKernel = Default
   let mut trial_count_override : Int? = None
   let mut sweep_pass_count_override : Int? = None
+  let mut trial_model_order_inversion_influence_override : Double? = None
   let mut compare_kernels = false
 
   let mut i = 0
@@ -175,6 +193,18 @@ fn parse_cli_args(args : Array[String]) -> ElkTraceCliArgs? {
       i += 2
       continue
     }
+    if arg == "--model-order-inversion-influence" {
+      if i + 1 >= args.length() {
+        return None
+      }
+      match decode_non_negative_double_arg(args[i + 1]) {
+        Some(value) =>
+          trial_model_order_inversion_influence_override = Some(value)
+        None => return None
+      }
+      i += 2
+      continue
+    }
     if arg is [.. "--case=", .. raw_case] {
       let parsed_case_name = raw_case.trim().to_lower()
       if parsed_case_name == "" {
@@ -217,6 +247,22 @@ fn parse_cli_args(args : Array[String]) -> ElkTraceCliArgs? {
       i += 1
       continue
     }
+    if arg
+      is [
+        .. "--model-order-inversion-influence=",
+        .. raw_model_order_inversion_influence,
+      ] {
+      match
+        decode_non_negative_double_arg(
+          raw_model_order_inversion_influence.to_string(),
+        ) {
+        Some(value) =>
+          trial_model_order_inversion_influence_override = Some(value)
+        None => return None
+      }
+      i += 1
+      continue
+    }
     return None
   }
 
@@ -239,6 +285,7 @@ fn parse_cli_args(args : Array[String]) -> ElkTraceCliArgs? {
     sweep_kernel,
     trial_count_override,
     sweep_pass_count_override,
+    trial_model_order_inversion_influence_override,
     compare_kernels,
   })
 }
@@ -355,6 +402,7 @@ fn dump_graph_trace(
   sweep_kernel : @layout_engine_graph_engine_elk_core.ElkLayeredRankTraceSweepKernel,
   trial_count_override : Int?,
   sweep_pass_count_override : Int?,
+  trial_model_order_inversion_influence_override : Double?,
 ) -> Bool {
   let options = { ..@model.RenderOptions::default(), layout_engine: Some(Elk) }
   let request : @layout_engine_graph_contract_core.GraphLayoutBackendRequest = {
@@ -364,8 +412,8 @@ fn dump_graph_trace(
     compact_fanin: false,
   }
   match
-    @layout_engine_graph_engine_elk_core.collect_elk_layered_rank_trace_lines_with_crossing_overrides(
-      request, sweep_kernel, trial_count_override, sweep_pass_count_override,
+    @layout_engine_graph_engine_elk_core.collect_elk_layered_rank_trace_lines_with_crossing_execution_overrides(
+      request, sweep_kernel, trial_count_override, sweep_pass_count_override, trial_model_order_inversion_influence_override,
     ) {
     Some(lines) => {
       for line in lines {
@@ -385,6 +433,7 @@ fn dump_graph_kernel_comparison(
   graph : @model.MermaidGraph,
   trial_count_override : Int?,
   sweep_pass_count_override : Int?,
+  trial_model_order_inversion_influence_override : Double?,
 ) -> Bool {
   let options = { ..@model.RenderOptions::default(), layout_engine: Some(Elk) }
   let request : @layout_engine_graph_contract_core.GraphLayoutBackendRequest = {
@@ -394,12 +443,13 @@ fn dump_graph_kernel_comparison(
     compact_fanin: false,
   }
   match
-    @layout_engine_graph_engine_elk_core.collect_elk_layered_rank_trace_kernel_comparison_lines_with_crossing_overrides(
+    @layout_engine_graph_engine_elk_core.collect_elk_layered_rank_trace_kernel_comparison_lines_with_crossing_execution_overrides(
       request,
       Default,
       NeighborMeanEdgeSlotBidirectional,
       trial_count_override,
       sweep_pass_count_override,
+      trial_model_order_inversion_influence_override,
     ) {
     Some(lines) => {
       for line in lines {
@@ -420,6 +470,7 @@ fn dump_case_trace(
   sweep_kernel : @layout_engine_graph_engine_elk_core.ElkLayeredRankTraceSweepKernel,
   trial_count_override : Int?,
   sweep_pass_count_override : Int?,
+  trial_model_order_inversion_influence_override : Double?,
 ) -> Bool {
   match kernel_by_case_name(case_name) {
     Some(kernel) =>
@@ -428,6 +479,7 @@ fn dump_case_trace(
         sweep_kernel,
         trial_count_override,
         sweep_pass_count_override,
+        trial_model_order_inversion_influence_override,
       )
     None => false
   }
@@ -438,6 +490,7 @@ fn dump_case_kernel_comparison(
   case_name : String,
   trial_count_override : Int?,
   sweep_pass_count_override : Int?,
+  trial_model_order_inversion_influence_override : Double?,
 ) -> Bool {
   match kernel_by_case_name(case_name) {
     Some(kernel) =>
@@ -445,6 +498,7 @@ fn dump_case_kernel_comparison(
         build_graph(kernel),
         trial_count_override,
         sweep_pass_count_override,
+        trial_model_order_inversion_influence_override,
       )
     None => false
   }
@@ -456,6 +510,7 @@ fn dump_source_trace(
   sweep_kernel : @layout_engine_graph_engine_elk_core.ElkLayeredRankTraceSweepKernel,
   trial_count_override : Int?,
   sweep_pass_count_override : Int?,
+  trial_model_order_inversion_influence_override : Double?,
 ) -> Bool {
   let graph_result : Result[@model.MermaidGraph, @model.MermaidError] = try? @parser_header_core.parse_mermaid(
     source,
@@ -463,7 +518,7 @@ fn dump_source_trace(
   match graph_result {
     Ok(graph) =>
       dump_graph_trace(
-        graph, sweep_kernel, trial_count_override, sweep_pass_count_override,
+        graph, sweep_kernel, trial_count_override, sweep_pass_count_override, trial_model_order_inversion_influence_override,
       )
     Err(err) => {
       println("Error: failed to parse --source payload")
@@ -478,6 +533,7 @@ fn dump_source_kernel_comparison(
   source : String,
   trial_count_override : Int?,
   sweep_pass_count_override : Int?,
+  trial_model_order_inversion_influence_override : Double?,
 ) -> Bool {
   let graph_result : Result[@model.MermaidGraph, @model.MermaidError] = try? @parser_header_core.parse_mermaid(
     source,
@@ -485,7 +541,7 @@ fn dump_source_kernel_comparison(
   match graph_result {
     Ok(graph) =>
       dump_graph_kernel_comparison(
-        graph, trial_count_override, sweep_pass_count_override,
+        graph, trial_count_override, sweep_pass_count_override, trial_model_order_inversion_influence_override,
       )
     Err(err) => {
       println("Error: failed to parse --source payload")
@@ -508,6 +564,7 @@ fn run() -> Unit {
               source,
               parsed_args.trial_count_override,
               parsed_args.sweep_pass_count_override,
+              parsed_args.trial_model_order_inversion_influence_override,
             ) {
             print_usage()
           }
@@ -516,6 +573,7 @@ fn run() -> Unit {
             parsed_args.sweep_kernel,
             parsed_args.trial_count_override,
             parsed_args.sweep_pass_count_override,
+            parsed_args.trial_model_order_inversion_influence_override,
           ) {
           print_usage()
         }
@@ -528,6 +586,7 @@ fn run() -> Unit {
                 case_name,
                 parsed_args.trial_count_override,
                 parsed_args.sweep_pass_count_override,
+                parsed_args.trial_model_order_inversion_influence_override,
               )
             } else {
               let _ = dump_case_trace(
@@ -535,6 +594,7 @@ fn run() -> Unit {
                 parsed_args.sweep_kernel,
                 parsed_args.trial_count_override,
                 parsed_args.sweep_pass_count_override,
+                parsed_args.trial_model_order_inversion_influence_override,
               )
             }
           }
@@ -543,6 +603,7 @@ fn run() -> Unit {
             case_name,
             parsed_args.trial_count_override,
             parsed_args.sweep_pass_count_override,
+            parsed_args.trial_model_order_inversion_influence_override,
           ) {
           println("Error: unknown case '\{case_name}'")
           print_usage()
@@ -552,6 +613,7 @@ fn run() -> Unit {
             parsed_args.sweep_kernel,
             parsed_args.trial_count_override,
             parsed_args.sweep_pass_count_override,
+            parsed_args.trial_model_order_inversion_influence_override,
           ) {
           println("Error: unknown case '\{case_name}'")
           print_usage()

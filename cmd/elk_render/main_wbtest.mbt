@@ -8,6 +8,7 @@ test "elk_render parse_cli_args accepts default positional source" {
         sweep_kernel: Default,
         trial_count_override: None,
         sweep_pass_count_override: None,
+        trial_model_order_inversion_influence_override: None,
         layout_engine: Elk,
       }
     ) else {
@@ -28,6 +29,7 @@ test "elk_render parse_cli_args accepts override flags" {
         sweep_kernel: NeighborMeanEdgeSlotBidirectional,
         trial_count_override: Some(5),
         sweep_pass_count_override: Some(6),
+        trial_model_order_inversion_influence_override: None,
         layout_engine: ElkLayered,
       }
     ) else {
@@ -45,6 +47,7 @@ test "elk_render parse_cli_args preserves help mode" {
         sweep_kernel: Default,
         trial_count_override: None,
         sweep_pass_count_override: None,
+        trial_model_order_inversion_influence_override: None,
         layout_engine: Elk,
       }
     ) else {
@@ -66,4 +69,30 @@ test "elk_render parse_cli_args rejects invalid values" {
   assert_true(
     parse_cli_args(["--sweep-kernel=unknown", "graph TD\\nA --> B"]) is None,
   )
+  assert_true(
+    parse_cli_args([
+      "--model-order-inversion-influence=-0.1", "graph TD\\nA --> B",
+    ])
+    is None,
+  )
+}
+
+///|
+test "elk_render parse_cli_args accepts model-order inversion influence override" {
+  guard parse_cli_args([
+      "--model-order-inversion-influence", "0.25", "graph TD\\nA --> B",
+    ])
+    is Some(
+      {
+        show_help: false,
+        source: Some("graph TD\\nA --> B"),
+        sweep_kernel: Default,
+        trial_count_override: None,
+        sweep_pass_count_override: None,
+        trial_model_order_inversion_influence_override: Some(0.25),
+        layout_engine: Elk,
+      }
+    ) else {
+    fail("expected model-order inversion influence override parse")
+  }
 }

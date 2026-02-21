@@ -13,6 +13,7 @@
  *   bun run scripts/report_elk_phase_waterfall.ts --json /tmp/elk_phase_waterfall.json
  *   bun run scripts/report_elk_phase_waterfall.ts --trial-count 5 --sweep-pass-count 6
  *   bun run scripts/report_elk_phase_waterfall.ts --sweep-kernel edge-slot --trial-count 5 --sweep-pass-count 6
+ *   bun run scripts/report_elk_phase_waterfall.ts --model-order-inversion-influence 0.25 --trial-count 5 --sweep-pass-count 6
  */
 
 import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs'
@@ -25,6 +26,7 @@ type CliOptions = {
   trialCount?: number
   sweepPassCount?: number
   sweepKernel?: 'default' | 'neighbor-mean' | 'edge-slot'
+  modelOrderInversionInfluence?: number
 }
 
 type PhaseWaterfallReport = {
@@ -140,6 +142,7 @@ function parseCliOptions(args: string[]): CliOptions {
   let trialCount: number | undefined
   let sweepPassCount: number | undefined
   let sweepKernel: 'default' | 'neighbor-mean' | 'edge-slot' | undefined
+  let modelOrderInversionInfluence: number | undefined
   for (let i = 0; i < args.length; i += 1) {
     const arg = args[i]!
     if (arg === '--json') {
@@ -222,9 +225,39 @@ function parseCliOptions(args: string[]): CliOptions {
       sweepKernel = normalized
       continue
     }
+    if (arg === '--model-order-inversion-influence') {
+      const next = args[i + 1]
+      if (!next) fail('missing value after --model-order-inversion-influence')
+      const parsed = Number.parseFloat(next)
+      if (!Number.isFinite(parsed) || parsed < 0) {
+        fail(
+          `invalid --model-order-inversion-influence value: ${next}, expected non-negative number`,
+        )
+      }
+      modelOrderInversionInfluence = parsed
+      i += 1
+      continue
+    }
+    if (arg.startsWith('--model-order-inversion-influence=')) {
+      const raw = arg.slice('--model-order-inversion-influence='.length)
+      const parsed = Number.parseFloat(raw)
+      if (!Number.isFinite(parsed) || parsed < 0) {
+        fail(
+          `invalid --model-order-inversion-influence value: ${raw}, expected non-negative number`,
+        )
+      }
+      modelOrderInversionInfluence = parsed
+      continue
+    }
     fail(`unknown argument: ${arg}`)
   }
-  return { jsonPath, trialCount, sweepPassCount, sweepKernel }
+  return {
+    jsonPath,
+    trialCount,
+    sweepPassCount,
+    sweepKernel,
+    modelOrderInversionInfluence,
+  }
 }
 
 function parseCounter(line: string, pattern: RegExp, label: string): [number, number] {
@@ -338,6 +371,12 @@ function parseCrossingRankOrder(options: CliOptions): {
   if (options.sweepKernel !== undefined) {
     args.push('--sweep-kernel', options.sweepKernel)
   }
+  if (options.modelOrderInversionInfluence !== undefined) {
+    args.push(
+      '--model-order-inversion-influence',
+      String(options.modelOrderInversionInfluence),
+    )
+  }
   const stdout = runOrThrow('bun', args)
   const lines = stdout
     .split('\n')
@@ -447,6 +486,12 @@ function parseCrossingPhaseTrace(options: CliOptions): {
   }
   if (options.sweepKernel !== undefined) {
     args.push('--sweep-kernel', options.sweepKernel)
+  }
+  if (options.modelOrderInversionInfluence !== undefined) {
+    args.push(
+      '--model-order-inversion-influence',
+      String(options.modelOrderInversionInfluence),
+    )
   }
   const stdout = runOrThrow('bun', args)
   const lines = stdout
@@ -652,6 +697,12 @@ function parseEndToEnd(options: CliOptions): {
   }
   if (options.sweepKernel !== undefined) {
     args.push('--elk-sweep-kernel', options.sweepKernel)
+  }
+  if (options.modelOrderInversionInfluence !== undefined) {
+    args.push(
+      '--elk-model-order-inversion-influence',
+      String(options.modelOrderInversionInfluence),
+    )
   }
   runOrThrow('bun', args)
   const payload = JSON.parse(readFileSync(jsonPath, 'utf8')) as StressPayload

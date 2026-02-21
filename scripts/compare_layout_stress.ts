@@ -26,6 +26,7 @@
  *   bun run scripts/compare_layout_stress.ts --local-layout-engine elk
  *   bun run scripts/compare_layout_stress.ts --local-layout-engine elk-layered
  *   bun run scripts/compare_layout_stress.ts --local-layout-engine elk --elk-trial-count 5 --elk-sweep-pass-count 6 --elk-sweep-kernel edge-slot
+ *   bun run scripts/compare_layout_stress.ts --local-layout-engine elk --elk-model-order-inversion-influence 0.25
  */
 
 import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, writeFileSync } from 'node:fs'
@@ -132,6 +133,7 @@ type CliOptions = {
   elkTrialCount?: number
   elkSweepPassCount?: number
   elkSweepKernel?: 'default' | 'neighbor-mean' | 'edge-slot'
+  elkModelOrderInversionInfluence?: number
   allowUnparsedEdgeLines: boolean
   useLocalEdgeDump: boolean
   maxLogicalCrossingMultiplier?: number
@@ -2190,7 +2192,8 @@ function hasElkCrossingOverrides(options: CliOptions): boolean {
   return (
     options.elkTrialCount !== undefined ||
     options.elkSweepPassCount !== undefined ||
-    options.elkSweepKernel !== undefined
+    options.elkSweepKernel !== undefined ||
+    options.elkModelOrderInversionInfluence !== undefined
   )
 }
 
@@ -2204,6 +2207,12 @@ function localElkCrossingOverrideArgs(options: CliOptions): string[] {
   }
   if (options.elkSweepPassCount !== undefined) {
     args.push('--sweep-pass-count', String(options.elkSweepPassCount))
+  }
+  if (options.elkModelOrderInversionInfluence !== undefined) {
+    args.push(
+      '--model-order-inversion-influence',
+      String(options.elkModelOrderInversionInfluence),
+    )
   }
   return args
 }
@@ -2255,7 +2264,9 @@ function renderLocal(inputPath: string, outPath: string, options: CliOptions): v
 
 function renderLocalEdgePoints(inputPath: string, options: CliOptions): Point[][] {
   if (hasElkCrossingOverrides(options)) {
-    fail('local edge dump is not supported with --elk-trial-count/--elk-sweep-pass-count overrides')
+    fail(
+      'local edge dump is not supported with ELK crossing override flags (--elk-trial-count/--elk-sweep-pass-count/--elk-sweep-kernel/--elk-model-order-inversion-influence)',
+    )
   }
   const source = readFileSync(inputPath, 'utf8')
   for (let attempt = 0; attempt <= options.localRenderRetries; attempt += 1) {
@@ -2659,6 +2670,7 @@ function parseCliOptions(args: string[]): CliOptions {
   let elkTrialCount: number | undefined = undefined
   let elkSweepPassCount: number | undefined = undefined
   let elkSweepKernel: 'default' | 'neighbor-mean' | 'edge-slot' | undefined = undefined
+  let elkModelOrderInversionInfluence: number | undefined = undefined
   let allowUnparsedEdgeLines = false
   let useLocalEdgeDump = false
   let maxLogicalCrossingMultiplier: number | undefined = undefined
@@ -2827,6 +2839,30 @@ function parseCliOptions(args: string[]): CliOptions {
         fail("invalid --elk-sweep-kernel value, expected 'default', 'neighbor-mean', or 'edge-slot'")
       }
       elkSweepKernel = normalized
+      continue
+    }
+    if (arg === '--elk-model-order-inversion-influence') {
+      const next = args[i + 1]
+      if (!next) fail('missing value after --elk-model-order-inversion-influence')
+      const parsed = Number.parseFloat(next)
+      if (!Number.isFinite(parsed) || parsed < 0) {
+        fail(
+          'invalid --elk-model-order-inversion-influence value, expected non-negative number',
+        )
+      }
+      elkModelOrderInversionInfluence = parsed
+      i += 1
+      continue
+    }
+    if (arg.startsWith('--elk-model-order-inversion-influence=')) {
+      const raw = arg.slice('--elk-model-order-inversion-influence='.length)
+      const parsed = Number.parseFloat(raw)
+      if (!Number.isFinite(parsed) || parsed < 0) {
+        fail(
+          'invalid --elk-model-order-inversion-influence value, expected non-negative number',
+        )
+      }
+      elkModelOrderInversionInfluence = parsed
       continue
     }
     if (arg === '--allow-unparsed-edge-lines') {
@@ -3157,13 +3193,16 @@ function parseCliOptions(args: string[]): CliOptions {
   const hasElkOverrides =
     elkTrialCount !== undefined ||
     elkSweepPassCount !== undefined ||
-    elkSweepKernel !== undefined
+    elkSweepKernel !== undefined ||
+    elkModelOrderInversionInfluence !== undefined
   if (
     hasElkOverrides &&
     (localLayoutEngine === undefined ||
       (localLayoutEngine !== 'elk' && localLayoutEngine !== 'elk-layered'))
   ) {
-    fail('--elk-trial-count/--elk-sweep-pass-count require --local-layout-engine elk or elk-layered')
+    fail(
+      'ELK crossing override flags (--elk-trial-count/--elk-sweep-pass-count/--elk-sweep-kernel/--elk-model-order-inversion-influence) require --local-layout-engine elk or elk-layered',
+    )
   }
   if (hasElkOverrides && useLocalEdgeDump) {
     fail('--use-local-edge-dump is not supported with ELK crossing override flags')
@@ -3179,6 +3218,7 @@ function parseCliOptions(args: string[]): CliOptions {
     elkTrialCount,
     elkSweepPassCount,
     elkSweepKernel,
+    elkModelOrderInversionInfluence,
     allowUnparsedEdgeLines,
     useLocalEdgeDump,
     maxLogicalCrossingMultiplier,

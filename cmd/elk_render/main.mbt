@@ -5,6 +5,7 @@ struct ElkRenderCliArgs {
   sweep_kernel : @layout_engine_graph_engine_elk_core.ElkLayeredRankTraceSweepKernel
   trial_count_override : Int?
   sweep_pass_count_override : Int?
+  trial_model_order_inversion_influence_override : Double?
   layout_engine : @model.LayoutEngine
 }
 
@@ -15,6 +16,17 @@ fn parse_positive_int(raw : String) -> Int? {
   )
   match parsed {
     Ok(value) => if value > 0 { Some(value) } else { None }
+    Err(_) => None
+  }
+}
+
+///|
+fn parse_non_negative_double(raw : String) -> Double? {
+  let parsed : Result[Double, @strconv.StrConvError] = try? @strconv.parse_double(
+    raw.trim().to_string(),
+  )
+  match parsed {
+    Ok(value) => if value >= 0.0 { Some(value) } else { None }
     Err(_) => None
   }
 }
@@ -55,12 +67,14 @@ fn parse_cli_args(args : Array[String]) -> ElkRenderCliArgs? {
   let mut sweep_kernel : @layout_engine_graph_engine_elk_core.ElkLayeredRankTraceSweepKernel = Default
   let mut trial_count_override : Int? = None
   let mut sweep_pass_count_override : Int? = None
+  let mut trial_model_order_inversion_influence_override : Double? = None
   let mut layout_engine : @model.LayoutEngine = Elk
   let mut expect_source = false
   let mut expect_sweep_kernel = false
   let mut expect_trial_count = false
   let mut expect_sweep_pass_count = false
   let mut expect_layout_engine = false
+  let mut expect_model_order_inversion_influence = false
 
   for arg in args {
     if expect_source {
@@ -115,6 +129,18 @@ fn parse_cli_args(args : Array[String]) -> ElkRenderCliArgs? {
       expect_layout_engine = false
       continue
     }
+    if expect_model_order_inversion_influence {
+      if arg is [.. "--", ..] {
+        return None
+      }
+      match parse_non_negative_double(arg) {
+        Some(value) =>
+          trial_model_order_inversion_influence_override = Some(value)
+        None => return None
+      }
+      expect_model_order_inversion_influence = false
+      continue
+    }
 
     if arg == "--help" {
       show_help = true
@@ -138,6 +164,10 @@ fn parse_cli_args(args : Array[String]) -> ElkRenderCliArgs? {
     }
     if arg == "--layout-engine" {
       expect_layout_engine = true
+      continue
+    }
+    if arg == "--model-order-inversion-influence" {
+      expect_model_order_inversion_influence = true
       continue
     }
 
@@ -177,6 +207,21 @@ fn parse_cli_args(args : Array[String]) -> ElkRenderCliArgs? {
       }
       continue
     }
+    if arg
+      is [
+        .. "--model-order-inversion-influence=",
+        .. raw_model_order_inversion_influence,
+      ] {
+      match
+        parse_non_negative_double(
+          raw_model_order_inversion_influence.to_string(),
+        ) {
+        Some(value) =>
+          trial_model_order_inversion_influence_override = Some(value)
+        None => return None
+      }
+      continue
+    }
     if arg is [.. "--", ..] {
       return None
     }
@@ -190,7 +235,8 @@ fn parse_cli_args(args : Array[String]) -> ElkRenderCliArgs? {
     expect_sweep_kernel ||
     expect_trial_count ||
     expect_sweep_pass_count ||
-    expect_layout_engine {
+    expect_layout_engine ||
+    expect_model_order_inversion_influence {
     return None
   }
   Some({
@@ -199,6 +245,7 @@ fn parse_cli_args(args : Array[String]) -> ElkRenderCliArgs? {
     sweep_kernel,
     trial_count_override,
     sweep_pass_count_override,
+    trial_model_order_inversion_influence_override,
     layout_engine,
   })
 }
@@ -216,6 +263,7 @@ fn usage_text() -> String {
     #|  --sweep-kernel <name>    default | neighbor-mean | edge-slot
     #|  --trial-count <int>      Positive crossing trial-count override
     #|  --sweep-pass-count <int> Positive crossing sweep-pass-count override
+    #|  --model-order-inversion-influence <double> Non-negative trial tie-break influence
     #|  --layout-engine <name>   elk | elk-layered
     #|  --help                   Show this usage text
   )
@@ -275,6 +323,7 @@ fn print_svg_with_overrides(args : ElkRenderCliArgs) -> Unit {
     args.sweep_kernel,
     args.trial_count_override,
     args.sweep_pass_count_override,
+    args.trial_model_order_inversion_influence_override,
   )
   println(
     @renderer_svg.render_svg(

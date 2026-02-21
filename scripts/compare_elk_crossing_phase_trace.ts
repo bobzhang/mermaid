@@ -12,6 +12,7 @@
  *   bun run scripts/compare_elk_crossing_phase_trace.ts fixtures/layout_stress_001_dense_dag.mmd fixtures/layout_stress_013_rl_dual_scc_weave.mmd
  *   bun run scripts/compare_elk_crossing_phase_trace.ts --trial-count 5 fixtures/layout_stress_006_nested_bridge_loops.mmd
  *   bun run scripts/compare_elk_crossing_phase_trace.ts --sweep-kernel edge-slot --trial-count 5 fixtures/layout_stress_006_nested_bridge_loops.mmd
+ *   bun run scripts/compare_elk_crossing_phase_trace.ts --model-order-inversion-influence 0.25 fixtures/layout_stress_006_nested_bridge_loops.mmd
  */
 
 import { readFileSync } from 'node:fs'
@@ -58,6 +59,7 @@ type CliOptions = {
   trialCount?: number
   sweepPassCount?: number
   sweepKernel?: 'default' | 'neighbor-mean' | 'edge-slot'
+  modelOrderInversionInfluence?: number
 }
 
 function fail(message: string): never {
@@ -154,6 +156,12 @@ function parseLocalTrace(source: string, options: CliOptions): LocalTrace {
   }
   if (options.sweepKernel !== undefined) {
     args.push('--sweep-kernel', options.sweepKernel)
+  }
+  if (options.modelOrderInversionInfluence !== undefined) {
+    args.push(
+      '--model-order-inversion-influence',
+      String(options.modelOrderInversionInfluence),
+    )
   }
   const stdout = runOrThrow('moon', args)
   const lines = stdout
@@ -510,6 +518,7 @@ function parseCliOptions(args: string[]): CliOptions {
   let trialCount: number | undefined
   let sweepPassCount: number | undefined
   let sweepKernel: 'default' | 'neighbor-mean' | 'edge-slot' | undefined
+  let modelOrderInversionInfluence: number | undefined
   for (let i = 0; i < args.length; i += 1) {
     const arg = args[i]!
     if (arg === '--trial-count') {
@@ -567,6 +576,30 @@ function parseCliOptions(args: string[]): CliOptions {
       sweepKernel = normalized
       continue
     }
+    if (arg === '--model-order-inversion-influence') {
+      const next = args[i + 1]
+      if (!next) fail('missing value after --model-order-inversion-influence')
+      const parsed = Number.parseFloat(next)
+      if (!Number.isFinite(parsed) || parsed < 0) {
+        fail(
+          `invalid --model-order-inversion-influence value: ${next}, expected non-negative number`,
+        )
+      }
+      modelOrderInversionInfluence = parsed
+      i += 1
+      continue
+    }
+    if (arg.startsWith('--model-order-inversion-influence=')) {
+      const raw = arg.slice('--model-order-inversion-influence='.length)
+      const parsed = Number.parseFloat(raw)
+      if (!Number.isFinite(parsed) || parsed < 0) {
+        fail(
+          `invalid --model-order-inversion-influence value: ${raw}, expected non-negative number`,
+        )
+      }
+      modelOrderInversionInfluence = parsed
+      continue
+    }
     if (arg.startsWith('--')) {
       fail(`unknown argument: ${arg}`)
     }
@@ -574,10 +607,16 @@ function parseCliOptions(args: string[]): CliOptions {
   }
   if (fixtures.length === 0) {
     fail(
-      'usage: bun run scripts/compare_elk_crossing_phase_trace.ts [--trial-count N] [--sweep-pass-count N] [--sweep-kernel default|neighbor-mean|edge-slot] <fixture.mmd> [more...]',
+      'usage: bun run scripts/compare_elk_crossing_phase_trace.ts [--trial-count N] [--sweep-pass-count N] [--sweep-kernel default|neighbor-mean|edge-slot] [--model-order-inversion-influence N] <fixture.mmd> [more...]',
     )
   }
-  return { fixtures, trialCount, sweepPassCount, sweepKernel }
+  return {
+    fixtures,
+    trialCount,
+    sweepPassCount,
+    sweepKernel,
+    modelOrderInversionInfluence,
+  }
 }
 
 function main(): void {
