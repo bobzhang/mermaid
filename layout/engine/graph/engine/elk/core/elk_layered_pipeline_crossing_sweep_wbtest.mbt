@@ -85,6 +85,24 @@ fn wb_global_crossing_count(
 }
 
 ///|
+fn wb_rank_by_node_id_from_rank_layers(
+  rank_node_ids_by_rank : Map[Int, Array[String]],
+  max_rank : Int,
+) -> Map[String, Int] {
+  let rank_by_node_id : Map[String, Int] = {}
+  for rank in 0..<=max_rank {
+    match rank_node_ids_by_rank.get(rank) {
+      Some(node_ids) =>
+        for node_id in node_ids {
+          rank_by_node_id[node_id] = rank
+        }
+      None => ()
+    }
+  }
+  rank_by_node_id
+}
+
+///|
 fn wb_optimize_rank_order_with_sweep_passes_and_kernel(
   rank_node_ids_by_rank : Map[Int, Array[String]],
   max_rank : Int,
@@ -97,8 +115,16 @@ fn wb_optimize_rank_order_with_sweep_passes_and_kernel(
 ) -> Unit {
   wb_optimize_rank_order_with_sweep_passes_from_input_and_start_direction(
     build_crossing_sweep_input(
-      rank_node_ids_by_rank, max_rank, predecessors_by_node_id, successors_by_node_id,
-      order_index_by_node_id, preserve_current_order_on_tie,
+      rank_node_ids_by_rank,
+      max_rank,
+      wb_rank_by_node_id_from_rank_layers(rank_node_ids_by_rank, max_rank),
+      predecessors_by_node_id,
+      successors_by_node_id,
+      build_crossing_ordering_edges(
+        successors_by_node_id, order_index_by_node_id,
+      ),
+      order_index_by_node_id,
+      preserve_current_order_on_tie,
     ),
     sweep_pass_count,
     sweep_kernel,
@@ -302,7 +328,15 @@ test "elk layered sweep input entry matches explicit parameter entry" {
   )
   wb_optimize_rank_order_with_sweep_passes_from_input_and_start_direction(
     build_crossing_sweep_input(
-      via_input, 2, predecessors_by_node_id, successors_by_node_id, order_index_by_node_id,
+      via_input,
+      2,
+      wb_rank_by_node_id_from_rank_layers(via_input, 2),
+      predecessors_by_node_id,
+      successors_by_node_id,
+      build_crossing_ordering_edges(
+        successors_by_node_id, order_index_by_node_id,
+      ),
+      order_index_by_node_id,
       false,
     ),
     3,

@@ -36,6 +36,7 @@ pub(all) enum ElkLayeredRankTraceSweepKernel {
   NeighborMeanBidirectional
   NeighborMedianBidirectional
   NeighborMeanEdgeSlotBidirectional
+  NeighborMeanPortRankBidirectional
 }
 
 pub(all) enum ElkLayeredRankTraceTrialContinuationPolicy {

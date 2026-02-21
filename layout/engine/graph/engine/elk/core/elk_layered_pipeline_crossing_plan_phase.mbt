@@ -8,6 +8,7 @@ priv enum ElkLayeredCrossingSweepKernel {
   NeighborMeanBidirectional
   NeighborMedianBidirectional
   NeighborMeanEdgeSlotBidirectional
+  NeighborMeanPortRankBidirectional
 }
 
 ///|
@@ -64,6 +65,7 @@ fn available_crossing_sweep_kernels() -> Array[ElkLayeredCrossingSweepKernel] {
     NeighborMeanBidirectional,
     NeighborMedianBidirectional,
     NeighborMeanEdgeSlotBidirectional,
+    NeighborMeanPortRankBidirectional,
   ]
 }
 
@@ -75,6 +77,7 @@ fn crossing_sweep_kernel_tag(
     NeighborMeanBidirectional => "neighbor-mean-bidirectional"
     NeighborMedianBidirectional => "neighbor-median-bidirectional"
     NeighborMeanEdgeSlotBidirectional => "neighbor-mean-edge-slot-bidirectional"
+    NeighborMeanPortRankBidirectional => "neighbor-mean-port-rank-bidirectional"
   }
 }
 

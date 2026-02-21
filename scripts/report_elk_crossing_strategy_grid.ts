@@ -8,14 +8,19 @@
  * Usage:
  *   bun run scripts/report_elk_crossing_strategy_grid.ts
  *   bun run scripts/report_elk_crossing_strategy_grid.ts --skip-end-to-end
- *   bun run scripts/report_elk_crossing_strategy_grid.ts --trials 1,5 --passes 4,6 --kernels default --policies default,objective-improves
+ *   bun run scripts/report_elk_crossing_strategy_grid.ts --trials 1,5 --passes 4,6 --kernels default,neighbor-mean,neighbor-median,edge-slot,port-rank --policies default,objective-improves
  *   bun run scripts/report_elk_crossing_strategy_grid.ts --profiles default,none
  */
 
 import { readdirSync } from 'node:fs'
 import { spawnSync } from 'node:child_process'
 
-type SweepKernel = 'default' | 'neighbor-median' | 'edge-slot'
+type SweepKernel =
+  | 'default'
+  | 'neighbor-mean'
+  | 'neighbor-median'
+  | 'edge-slot'
+  | 'port-rank'
 type TrialPolicy = 'default' | 'pass-changes' | 'objective-improves'
 type LocalRefinementProfile =
   | 'default'
@@ -108,8 +113,10 @@ function parseKernelCsv(raw: string): SweepKernel[] {
   for (const value of values) {
     if (
       value !== 'default' &&
+      value !== 'neighbor-mean' &&
       value !== 'neighbor-median' &&
-      value !== 'edge-slot'
+      value !== 'edge-slot' &&
+      value !== 'port-rank'
     ) {
       fail(`invalid --kernels value: ${value}`)
     }
@@ -163,7 +170,7 @@ function parseProfileCsv(raw: string): LocalRefinementProfile[] {
 function parseCliOptions(args: string[]): CliOptions {
   let trials: number[] = [1, 2, 5]
   let passes: number[] = [4, 5, 6]
-  let kernels: SweepKernel[] = ['default', 'neighbor-median']
+  let kernels: SweepKernel[] = ['default', 'neighbor-median', 'edge-slot']
   let policies: TrialPolicy[] = ['default', 'objective-improves']
   let profiles: LocalRefinementProfile[] = ['default']
   let skipEndToEnd = false

@@ -13,6 +13,7 @@
  *   bun run scripts/compare_elk_crossing_phase_trace.ts --trial-count 5 fixtures/layout_stress_006_nested_bridge_loops.mmd
  *   bun run scripts/compare_elk_crossing_phase_trace.ts --sweep-kernel neighbor-median --trial-count 5 fixtures/layout_stress_006_nested_bridge_loops.mmd
  *   bun run scripts/compare_elk_crossing_phase_trace.ts --sweep-kernel edge-slot --trial-count 5 fixtures/layout_stress_006_nested_bridge_loops.mmd
+ *   bun run scripts/compare_elk_crossing_phase_trace.ts --sweep-kernel port-rank --trial-count 5 fixtures/layout_stress_006_nested_bridge_loops.mmd
  *   bun run scripts/compare_elk_crossing_phase_trace.ts --trial-continuation-policy objective-improves fixtures/layout_stress_006_nested_bridge_loops.mmd
  *   bun run scripts/compare_elk_crossing_phase_trace.ts --local-refinement-profile none fixtures/layout_stress_006_nested_bridge_loops.mmd
  *   bun run scripts/compare_elk_crossing_phase_trace.ts --model-order-inversion-influence 0.25 fixtures/layout_stress_006_nested_bridge_loops.mmd
@@ -61,7 +62,12 @@ type CliOptions = {
   fixtures: string[]
   trialCount?: number
   sweepPassCount?: number
-  sweepKernel?: 'default' | 'neighbor-mean' | 'neighbor-median' | 'edge-slot'
+  sweepKernel?:
+    | 'default'
+    | 'neighbor-mean'
+    | 'neighbor-median'
+    | 'edge-slot'
+    | 'port-rank'
   trialContinuationPolicy?: 'default' | 'pass-changes' | 'objective-improves'
   localRefinementProfile?:
     | 'default'
@@ -538,6 +544,7 @@ function parseCliOptions(args: string[]): CliOptions {
     | 'neighbor-mean'
     | 'neighbor-median'
     | 'edge-slot'
+    | 'port-rank'
     | undefined
   let trialContinuationPolicy:
     | 'default'
@@ -586,10 +593,11 @@ function parseCliOptions(args: string[]): CliOptions {
         normalized !== 'default' &&
         normalized !== 'neighbor-mean' &&
         normalized !== 'neighbor-median' &&
-        normalized !== 'edge-slot'
+        normalized !== 'edge-slot' &&
+        normalized !== 'port-rank'
       ) {
         fail(
-          "invalid --sweep-kernel value, expected 'default', 'neighbor-mean', 'neighbor-median', or 'edge-slot'",
+          "invalid --sweep-kernel value, expected 'default', 'neighbor-mean', 'neighbor-median', 'edge-slot', or 'port-rank'",
         )
       }
       sweepKernel = normalized
@@ -638,10 +646,11 @@ function parseCliOptions(args: string[]): CliOptions {
         normalized !== 'default' &&
         normalized !== 'neighbor-mean' &&
         normalized !== 'neighbor-median' &&
-        normalized !== 'edge-slot'
+        normalized !== 'edge-slot' &&
+        normalized !== 'port-rank'
       ) {
         fail(
-          "invalid --sweep-kernel value, expected 'default', 'neighbor-mean', 'neighbor-median', or 'edge-slot'",
+          "invalid --sweep-kernel value, expected 'default', 'neighbor-mean', 'neighbor-median', 'edge-slot', or 'port-rank'",
         )
       }
       sweepKernel = normalized
@@ -714,7 +723,7 @@ function parseCliOptions(args: string[]): CliOptions {
   }
   if (fixtures.length === 0) {
     fail(
-      'usage: bun run scripts/compare_elk_crossing_phase_trace.ts [--trial-count N] [--sweep-pass-count N] [--sweep-kernel default|neighbor-mean|neighbor-median|edge-slot] [--trial-continuation-policy default|pass-changes|objective-improves] [--local-refinement-profile default|none|adjacent-swap|rank-permutation|adjacent-swap-then-rank-permutation] [--model-order-inversion-influence N] <fixture.mmd> [more...]',
+      'usage: bun run scripts/compare_elk_crossing_phase_trace.ts [--trial-count N] [--sweep-pass-count N] [--sweep-kernel default|neighbor-mean|neighbor-median|edge-slot|port-rank] [--trial-continuation-policy default|pass-changes|objective-improves] [--local-refinement-profile default|none|adjacent-swap|rank-permutation|adjacent-swap-then-rank-permutation] [--model-order-inversion-influence N] <fixture.mmd> [more...]',
     )
   }
   return {

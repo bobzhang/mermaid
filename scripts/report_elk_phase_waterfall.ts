@@ -14,6 +14,7 @@
  *   bun run scripts/report_elk_phase_waterfall.ts --trial-count 5 --sweep-pass-count 6
  *   bun run scripts/report_elk_phase_waterfall.ts --sweep-kernel neighbor-median --trial-count 5 --sweep-pass-count 6
  *   bun run scripts/report_elk_phase_waterfall.ts --sweep-kernel edge-slot --trial-count 5 --sweep-pass-count 6
+ *   bun run scripts/report_elk_phase_waterfall.ts --sweep-kernel port-rank --trial-count 5 --sweep-pass-count 6
  *   bun run scripts/report_elk_phase_waterfall.ts --trial-continuation-policy objective-improves --trial-count 5 --sweep-pass-count 6
  *   bun run scripts/report_elk_phase_waterfall.ts --local-refinement-profile none --trial-count 5 --sweep-pass-count 6
  *   bun run scripts/report_elk_phase_waterfall.ts --model-order-inversion-influence 0.25 --trial-count 5 --sweep-pass-count 6
@@ -28,7 +29,12 @@ type CliOptions = {
   jsonPath?: string
   trialCount?: number
   sweepPassCount?: number
-  sweepKernel?: 'default' | 'neighbor-mean' | 'neighbor-median' | 'edge-slot'
+  sweepKernel?:
+    | 'default'
+    | 'neighbor-mean'
+    | 'neighbor-median'
+    | 'edge-slot'
+    | 'port-rank'
   trialContinuationPolicy?: 'default' | 'pass-changes' | 'objective-improves'
   localRefinementProfile?:
     | 'default'
@@ -156,6 +162,7 @@ function parseCliOptions(args: string[]): CliOptions {
     | 'neighbor-mean'
     | 'neighbor-median'
     | 'edge-slot'
+    | 'port-rank'
     | undefined
   let trialContinuationPolicy:
     | 'default'
@@ -233,10 +240,11 @@ function parseCliOptions(args: string[]): CliOptions {
         normalized !== 'default' &&
         normalized !== 'neighbor-mean' &&
         normalized !== 'neighbor-median' &&
-        normalized !== 'edge-slot'
+        normalized !== 'edge-slot' &&
+        normalized !== 'port-rank'
       ) {
         fail(
-          "invalid --sweep-kernel value, expected 'default', 'neighbor-mean', 'neighbor-median', or 'edge-slot'",
+          "invalid --sweep-kernel value, expected 'default', 'neighbor-mean', 'neighbor-median', 'edge-slot', or 'port-rank'",
         )
       }
       sweepKernel = normalized
@@ -249,10 +257,11 @@ function parseCliOptions(args: string[]): CliOptions {
         normalized !== 'default' &&
         normalized !== 'neighbor-mean' &&
         normalized !== 'neighbor-median' &&
-        normalized !== 'edge-slot'
+        normalized !== 'edge-slot' &&
+        normalized !== 'port-rank'
       ) {
         fail(
-          "invalid --sweep-kernel value, expected 'default', 'neighbor-mean', 'neighbor-median', or 'edge-slot'",
+          "invalid --sweep-kernel value, expected 'default', 'neighbor-mean', 'neighbor-median', 'edge-slot', or 'port-rank'",
         )
       }
       sweepKernel = normalized

@@ -10,7 +10,7 @@
  *
  * Usage:
  *   bun run scripts/sweep_elk_crossing_overrides.ts
- *   bun run scripts/sweep_elk_crossing_overrides.ts --trial-counts 1,3,5 --sweep-pass-counts 4,6 --sweep-kernels default,neighbor-median,edge-slot
+ *   bun run scripts/sweep_elk_crossing_overrides.ts --trial-counts 1,3,5 --sweep-pass-counts 4,6 --sweep-kernels default,neighbor-median,edge-slot,port-rank
  *   bun run scripts/sweep_elk_crossing_overrides.ts --model-order-inversion-influences none,0.25,0.5
  *   bun run scripts/sweep_elk_crossing_overrides.ts --include-regressing --top 20
  *   bun run scripts/sweep_elk_crossing_overrides.ts --json /tmp/elk_crossing_sweep.json
@@ -21,7 +21,12 @@ import { spawnSync } from 'node:child_process'
 import { join } from 'node:path'
 import { tmpdir } from 'node:os'
 
-type SweepKernel = 'default' | 'neighbor-mean' | 'neighbor-median' | 'edge-slot'
+type SweepKernel =
+  | 'default'
+  | 'neighbor-mean'
+  | 'neighbor-median'
+  | 'edge-slot'
+  | 'port-rank'
 
 type SweepCliOptions = {
   trialCounts: number[]
@@ -155,10 +160,11 @@ function parseKernelList(raw: string, flag: string): SweepKernel[] {
       value !== 'default' &&
       value !== 'neighbor-mean' &&
       value !== 'neighbor-median' &&
-      value !== 'edge-slot'
+      value !== 'edge-slot' &&
+      value !== 'port-rank'
     ) {
       fail(
-        `invalid ${flag} entry '${value}', expected default|neighbor-mean|neighbor-median|edge-slot`,
+        `invalid ${flag} entry '${value}', expected default|neighbor-mean|neighbor-median|edge-slot|port-rank`,
       )
     }
     kernels.push(value)
@@ -226,6 +232,7 @@ function parseCliOptions(args: string[]): SweepCliOptions {
     'neighbor-mean',
     'neighbor-median',
     'edge-slot',
+    'port-rank',
   ]
   let modelOrderInversionInfluences: Array<number | null> = [null]
   let includeRegressing = false

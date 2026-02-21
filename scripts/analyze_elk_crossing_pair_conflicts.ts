@@ -53,7 +53,12 @@ type CliOptions = {
   fixtures: string[]
   trialCount?: number
   sweepPassCount?: number
-  sweepKernel?: 'default' | 'neighbor-mean' | 'neighbor-median' | 'edge-slot'
+  sweepKernel?:
+    | 'default'
+    | 'neighbor-mean'
+    | 'neighbor-median'
+    | 'edge-slot'
+    | 'port-rank'
   trialContinuationPolicy?: 'default' | 'pass-changes' | 'objective-improves'
   localRefinementProfile?:
     | 'default'
@@ -93,6 +98,7 @@ function parseCliOptions(args: string[]): CliOptions {
     | 'neighbor-mean'
     | 'neighbor-median'
     | 'edge-slot'
+    | 'port-rank'
     | undefined
   let trialContinuationPolicy:
     | 'default'
@@ -140,10 +146,11 @@ function parseCliOptions(args: string[]): CliOptions {
         normalized !== 'default' &&
         normalized !== 'neighbor-mean' &&
         normalized !== 'neighbor-median' &&
-        normalized !== 'edge-slot'
+        normalized !== 'edge-slot' &&
+        normalized !== 'port-rank'
       ) {
         fail(
-          "invalid --sweep-kernel value, expected 'default', 'neighbor-mean', 'neighbor-median', or 'edge-slot'",
+          "invalid --sweep-kernel value, expected 'default', 'neighbor-mean', 'neighbor-median', 'edge-slot', or 'port-rank'",
         )
       }
       sweepKernel = normalized

@@ -3,6 +3,7 @@ priv enum ElkLayeredCrossingHeuristic {
   LayerSweepNeighborMeanHeuristic
   LayerSweepNeighborMedianHeuristic
   LayerSweepEdgeSlotHeuristic
+  LayerSweepPortRankHeuristic
 }
 
 ///|
@@ -37,6 +38,7 @@ fn build_crossing_component_bundle(
       NeighborMeanBidirectional => LayerSweepNeighborMeanHeuristic
       NeighborMedianBidirectional => LayerSweepNeighborMedianHeuristic
       NeighborMeanEdgeSlotBidirectional => LayerSweepEdgeSlotHeuristic
+      NeighborMeanPortRankBidirectional => LayerSweepPortRankHeuristic
     },
     port_distributor: IntegratedPortDistribution,
     constraint_resolver: LocalRefinementConstraintResolver,
@@ -81,6 +83,12 @@ fn apply_crossing_sweep_heuristic_once(
           sweep_rank_order_once_from_input_with_kernel(
             sweep_input,
             NeighborMeanEdgeSlotBidirectional,
+            forward_sweep,
+          )
+        LayerSweepPortRankHeuristic =>
+          sweep_rank_order_once_from_input_with_kernel(
+            sweep_input,
+            NeighborMeanPortRankBidirectional,
             forward_sweep,
           )
       }

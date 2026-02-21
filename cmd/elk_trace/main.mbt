@@ -19,6 +19,7 @@ fn print_usage() -> Unit {
     #|  moon run cmd/elk_trace -- --case long_span
     #|  moon run cmd/elk_trace -- --source "graph LR\nA --> B\nB --> C"
     #|  moon run cmd/elk_trace -- --case fanout --sweep-kernel edge-slot
+    #|  moon run cmd/elk_trace -- --case fanout --sweep-kernel port-rank
     #|  moon run cmd/elk_trace -- --case fanout --trial-count 5
     #|  moon run cmd/elk_trace -- --case fanout --sweep-pass-count 6
     #|  moon run cmd/elk_trace -- --case fanout --compare-kernels
@@ -26,7 +27,7 @@ fn print_usage() -> Unit {
     #|Flags:
     #|  --case   fanout | feedback_mesh | long_span | all
     #|  --source Mermaid source text (use shell command substitution for fixture files)
-    #|  --sweep-kernel  default | neighbor-mean | neighbor-median | edge-slot
+    #|  --sweep-kernel  default | neighbor-mean | neighbor-median | edge-slot | port-rank
     #|  --trial-count  Positive crossing trial count override
     #|  --sweep-pass-count  Positive crossing sweep-pass override
     #|  --trial-continuation-policy  default | pass-changes | objective-improves
@@ -83,6 +84,8 @@ fn decode_sweep_kernel_arg(
     "neighbor-mean" => Some(NeighborMeanBidirectional)
     "neighbor-median" => Some(NeighborMedianBidirectional)
     "edge-slot" => Some(NeighborMeanEdgeSlotBidirectional)
+    "port-rank" => Some(NeighborMeanPortRankBidirectional)
+    "port_rank" => Some(NeighborMeanPortRankBidirectional)
     _ => None
   }
 }
