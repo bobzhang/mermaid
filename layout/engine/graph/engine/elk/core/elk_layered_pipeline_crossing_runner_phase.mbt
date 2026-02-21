@@ -225,6 +225,7 @@ fn execute_crossing_phase_once_with_plan_and_seed(
   components : ElkLayeredCrossingComponentBundle,
   seed_rank_node_ids_by_rank : Map[Int, Array[String]],
   initial_forward_sweep : Bool,
+  sweep_random_seed : Int,
 ) -> ElkLayeredCrossingExecutionState {
   let _ = input.port_order_slots_by_node_id
   let _ = input.ordering_edges
@@ -234,7 +235,7 @@ fn execute_crossing_phase_once_with_plan_and_seed(
   )
   let sweep_rank_node_ids_by_rank = seed_rank_node_ids_by_rank
   let sweep_input = build_crossing_sweep_input_from_phase_input(
-    sweep_rank_node_ids_by_rank, input, config,
+    sweep_rank_node_ids_by_rank, input, config, sweep_random_seed,
   )
   let sweep_pass_summaries : Array[ElkLayeredCrossingSweepPassSummary] = []
   let mut best_post_sweep_rank_node_ids_by_rank = clone_rank_node_ids_by_rank(
@@ -395,6 +396,7 @@ fn execute_crossing_phase_with_plan_with_trial_trace(
             config.trial_random_seed,
           ),
           initial_forward_sweep,
+          config.trial_random_seed + trial_index,
         )
         let post_sweep_objective = evaluate_crossing_objective_with_counter(
           trial_execution_state.post_sweep_rank_node_ids_by_rank,
@@ -451,6 +453,7 @@ fn execute_crossing_phase_with_plan_with_trial_trace(
               config.trial_random_seed,
             ),
             true,
+            config.trial_random_seed,
           )
           let fallback_trace : ElkLayeredCrossingTrialSummary = {
             trial_index: 0,

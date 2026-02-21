@@ -3,11 +3,53 @@ priv struct NodeNeighborOrderKey {
   has_center : Bool
   neighbor_position_sum : Int
   neighbor_position_count : Int
+  barycenter_perturbation : Double
 }
 
 ///|
 fn empty_neighbor_order_key() -> NodeNeighborOrderKey {
-  { has_center: false, neighbor_position_sum: 0, neighbor_position_count: 0 }
+  {
+    has_center: false,
+    neighbor_position_sum: 0,
+    neighbor_position_count: 0,
+    barycenter_perturbation: 0.0,
+  }
+}
+
+///|
+let crossing_neighbor_random_state_key = "__crossing_neighbor_random_state"
+
+///|
+fn next_crossing_neighbor_mean_barycenter_perturbation(
+  random_state_by_key : Map[String, UInt64],
+  perturbation_amount : Double,
+) -> Double {
+  if perturbation_amount <= 0.0 {
+    return 0.0
+  }
+  let random_state = match
+    random_state_by_key.get(crossing_neighbor_random_state_key) {
+    Some(value) => value
+    None => java_random_state_from_seed(1)
+  }
+  let (next_state, bits) = java_random_next_bits(random_state, 24)
+  random_state_by_key[crossing_neighbor_random_state_key] = next_state
+  bits.to_double() / 16777216.0 * perturbation_amount -
+  perturbation_amount / 2.0
+}
+
+///|
+fn compare_neighbor_order_center(
+  left : NodeNeighborOrderKey,
+  right : NodeNeighborOrderKey,
+) -> Int {
+  (left.neighbor_position_sum.to_double() /
+  left.neighbor_position_count.to_double() +
+  left.barycenter_perturbation).compare(
+    right.neighbor_position_sum.to_double() /
+    right.neighbor_position_count.to_double() +
+    right.barycenter_perturbation,
+  )
 }
 
 ///|
@@ -15,6 +57,7 @@ fn node_neighbor_order_key(
   node_id : String,
   neighbor_by_node_id : Map[String, Array[String]],
   rank_position_by_node_id : Map[String, Int],
+  barycenter_perturbation : Double,
 ) -> NodeNeighborOrderKey {
   let mut count = 0
   let mut sum = 0
@@ -38,6 +81,7 @@ fn node_neighbor_order_key(
       has_center: true,
       neighbor_position_sum: sum,
       neighbor_position_count: count,
+      barycenter_perturbation,
     }
   }
 }
@@ -68,10 +112,7 @@ fn compare_neighbor_order_key(
   right : NodeNeighborOrderKey,
 ) -> Int {
   if left.has_center && right.has_center {
-    let left_scaled = left.neighbor_position_sum * right.neighbor_position_count
-    let right_scaled = right.neighbor_position_sum *
-      left.neighbor_position_count
-    left_scaled.compare(right_scaled)
+    compare_neighbor_order_center(left, right)
   } else if left.has_center != right.has_center {
     if left.has_center {
       -1
@@ -140,12 +181,22 @@ fn sort_rank_nodes_by_neighbors(
   rank_position_by_node_id : Map[String, Int],
   order_index_by_node_id : Map[String, Int],
   preserve_current_order_on_tie : Bool,
+  neighbor_mean_barycenter_perturbation : Bool,
+  random_state_by_key : Map[String, UInt64],
+  neighbor_mean_barycenter_perturbation_amount : Double,
 ) -> Bool {
   let original_node_ids = node_ids.copy()
   let neighbor_key_by_node_id : Map[String, NodeNeighborOrderKey] = {}
   for node_id in node_ids {
+    let perturbation = if neighbor_mean_barycenter_perturbation {
+      next_crossing_neighbor_mean_barycenter_perturbation(
+        random_state_by_key, neighbor_mean_barycenter_perturbation_amount,
+      )
+    } else {
+      0.0
+    }
     neighbor_key_by_node_id[node_id] = node_neighbor_order_key(
-      node_id, neighbor_by_node_id, rank_position_by_node_id,
+      node_id, neighbor_by_node_id, rank_position_by_node_id, perturbation,
     )
   }
   node_ids.sort_by((left, right) => {

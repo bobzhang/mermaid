@@ -8,6 +8,9 @@ priv struct ElkLayeredCrossingSweepInput {
   successors_by_node_id : Map[String, Array[String]]
   order_index_by_node_id : Map[String, Int]
   preserve_current_order_on_tie : Bool
+  neighbor_mean_barycenter_perturbation : Bool
+  neighbor_mean_barycenter_perturbation_amount : Double
+  neighbor_mean_random_state_by_key : Map[String, UInt64]
 }
 
 ///|
@@ -18,6 +21,9 @@ fn build_crossing_sweep_input(
   successors_by_node_id : Map[String, Array[String]],
   order_index_by_node_id : Map[String, Int],
   preserve_current_order_on_tie : Bool,
+  neighbor_mean_barycenter_perturbation : Bool,
+  neighbor_mean_barycenter_perturbation_amount : Double,
+  neighbor_mean_random_state_by_key : Map[String, UInt64],
 ) -> ElkLayeredCrossingSweepInput {
   {
     rank_node_ids_by_rank,
@@ -26,7 +32,21 @@ fn build_crossing_sweep_input(
     successors_by_node_id,
     order_index_by_node_id,
     preserve_current_order_on_tie,
+    neighbor_mean_barycenter_perturbation,
+    neighbor_mean_barycenter_perturbation_amount,
+    neighbor_mean_random_state_by_key,
   }
+}
+
+///|
+fn build_crossing_neighbor_mean_random_state_by_seed(
+  random_seed : Int,
+) -> Map[String, UInt64] {
+  let random_state_by_key : Map[String, UInt64] = {}
+  random_state_by_key[crossing_neighbor_random_state_key] = java_random_state_from_seed(
+    random_seed,
+  )
+  random_state_by_key
 }
 
 ///|
@@ -44,6 +64,7 @@ fn build_crossing_sweep_input_from_phase_input(
   rank_node_ids_by_rank : Map[Int, Array[String]],
   input : ElkLayeredCrossingPhaseInput,
   config : ElkLayeredCrossingOptimizationConfig,
+  random_seed : Int,
 ) -> ElkLayeredCrossingSweepInput {
   build_crossing_sweep_input(
     rank_node_ids_by_rank,
@@ -56,6 +77,9 @@ fn build_crossing_sweep_input_from_phase_input(
       input.edge_count,
       config,
     ),
+    config.neighbor_mean_barycenter_perturbation,
+    config.neighbor_mean_barycenter_perturbation_amount,
+    build_crossing_neighbor_mean_random_state_by_seed(random_seed),
   )
 }
 
@@ -403,6 +427,9 @@ fn sweep_rank_order_once_from_input_with_kernel(
                   forward_positions,
                   sweep_input.order_index_by_node_id,
                   sweep_input.preserve_current_order_on_tie,
+                  sweep_input.neighbor_mean_barycenter_perturbation,
+                  sweep_input.neighbor_mean_random_state_by_key,
+                  sweep_input.neighbor_mean_barycenter_perturbation_amount,
                 ) {
                 changed = true
               }
@@ -424,6 +451,9 @@ fn sweep_rank_order_once_from_input_with_kernel(
                   backward_positions,
                   sweep_input.order_index_by_node_id,
                   sweep_input.preserve_current_order_on_tie,
+                  sweep_input.neighbor_mean_barycenter_perturbation,
+                  sweep_input.neighbor_mean_random_state_by_key,
+                  sweep_input.neighbor_mean_barycenter_perturbation_amount,
                 ) {
                 changed = true
               }

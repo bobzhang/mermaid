@@ -130,6 +130,8 @@ priv struct ElkLayeredCrossingOptimizationConfig {
   sweep_pass_count : Int
   trial_count : Int
   trial_random_seed : Int
+  neighbor_mean_barycenter_perturbation : Bool
+  neighbor_mean_barycenter_perturbation_amount : Double
   trial_continuation_policy : ElkLayeredCrossingTrialContinuationPolicy
   trial_model_order_inversion_influence : Double
   swap_refine_node_limit : Int
@@ -147,6 +149,8 @@ fn default_crossing_optimization_config() -> ElkLayeredCrossingOptimizationConfi
     sweep_pass_count: 4,
     trial_count: 1,
     trial_random_seed: 1,
+    neighbor_mean_barycenter_perturbation: false,
+    neighbor_mean_barycenter_perturbation_amount: 0.07,
     trial_continuation_policy: default_crossing_trial_continuation_policy(),
     trial_model_order_inversion_influence: 0.0,
     swap_refine_node_limit: 40,

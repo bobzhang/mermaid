@@ -90,20 +90,7 @@ test "elk layered crossing selected trial retains best post-sweep objective acro
   )
   let plan : ElkLayeredCrossingExecutionPlan = {
     strategy: default_plan.strategy,
-    config: {
-      preserve_order_node_threshold: default_plan.config.preserve_order_node_threshold,
-      preserve_order_edge_threshold: default_plan.config.preserve_order_edge_threshold,
-      sweep_pass_count: default_plan.config.sweep_pass_count,
-      trial_count: 2,
-      trial_random_seed: default_plan.config.trial_random_seed,
-      trial_continuation_policy: default_plan.config.trial_continuation_policy,
-      trial_model_order_inversion_influence: default_plan.config.trial_model_order_inversion_influence,
-      swap_refine_node_limit: default_plan.config.swap_refine_node_limit,
-      swap_refine_edge_limit: default_plan.config.swap_refine_edge_limit,
-      permutation_refine_node_limit: default_plan.config.permutation_refine_node_limit,
-      permutation_refine_edge_limit: default_plan.config.permutation_refine_edge_limit,
-      permutation_rank_size_limit: default_plan.config.permutation_rank_size_limit,
-    },
+    config: { ..default_plan.config, trial_count: 2 },
     sweep_kernel: default_plan.sweep_kernel,
     local_refinement_kernels: default_plan.local_refinement_kernels,
   }
@@ -169,20 +156,7 @@ test "elk layered crossing local refinement does not worsen trial objective" {
   )
   let plan : ElkLayeredCrossingExecutionPlan = {
     strategy: default_plan.strategy,
-    config: {
-      preserve_order_node_threshold: default_plan.config.preserve_order_node_threshold,
-      preserve_order_edge_threshold: default_plan.config.preserve_order_edge_threshold,
-      sweep_pass_count: default_plan.config.sweep_pass_count,
-      trial_count: 5,
-      trial_random_seed: default_plan.config.trial_random_seed,
-      trial_continuation_policy: default_plan.config.trial_continuation_policy,
-      trial_model_order_inversion_influence: default_plan.config.trial_model_order_inversion_influence,
-      swap_refine_node_limit: default_plan.config.swap_refine_node_limit,
-      swap_refine_edge_limit: default_plan.config.swap_refine_edge_limit,
-      permutation_refine_node_limit: default_plan.config.permutation_refine_node_limit,
-      permutation_refine_edge_limit: default_plan.config.permutation_refine_edge_limit,
-      permutation_rank_size_limit: default_plan.config.permutation_rank_size_limit,
-    },
+    config: { ..default_plan.config, trial_count: 5 },
     sweep_kernel: default_plan.sweep_kernel,
     local_refinement_kernels: default_plan.local_refinement_kernels,
   }
@@ -344,6 +318,8 @@ test "elk layered crossing execution plan keeps default kernels ordered" {
     default_crossing_optimization_config().trial_count,
   )
   assert_eq(plan.config.trial_random_seed, 1)
+  assert_true(!plan.config.neighbor_mean_barycenter_perturbation)
+  assert_eq(plan.config.neighbor_mean_barycenter_perturbation_amount, 0.07)
   assert_eq(plan.config.trial_model_order_inversion_influence, 0.0)
 }
 
@@ -465,20 +441,7 @@ test "elk layered crossing single-trial config remains behavior-equivalent" {
   let single_result = run_crossing_phase_with_plan(input, single_plan)
   let multi_plan : ElkLayeredCrossingExecutionPlan = {
     strategy: LayerSweepWithLocalRefinement,
-    config: {
-      preserve_order_node_threshold: single_plan.config.preserve_order_node_threshold,
-      preserve_order_edge_threshold: single_plan.config.preserve_order_edge_threshold,
-      sweep_pass_count: single_plan.config.sweep_pass_count,
-      trial_count: 1,
-      trial_random_seed: single_plan.config.trial_random_seed,
-      trial_continuation_policy: single_plan.config.trial_continuation_policy,
-      trial_model_order_inversion_influence: single_plan.config.trial_model_order_inversion_influence,
-      swap_refine_node_limit: single_plan.config.swap_refine_node_limit,
-      swap_refine_edge_limit: single_plan.config.swap_refine_edge_limit,
-      permutation_refine_node_limit: single_plan.config.permutation_refine_node_limit,
-      permutation_refine_edge_limit: single_plan.config.permutation_refine_edge_limit,
-      permutation_rank_size_limit: single_plan.config.permutation_rank_size_limit,
-    },
+    config: { ..single_plan.config, trial_count: 1 },
     sweep_kernel: single_plan.sweep_kernel,
     local_refinement_kernels: single_plan.local_refinement_kernels,
   }

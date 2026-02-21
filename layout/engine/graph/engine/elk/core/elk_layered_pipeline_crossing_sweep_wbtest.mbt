@@ -97,8 +97,15 @@ fn wb_optimize_rank_order_with_sweep_passes_and_kernel(
 ) -> Unit {
   wb_optimize_rank_order_with_sweep_passes_from_input_and_start_direction(
     build_crossing_sweep_input(
-      rank_node_ids_by_rank, max_rank, predecessors_by_node_id, successors_by_node_id,
-      order_index_by_node_id, preserve_current_order_on_tie,
+      rank_node_ids_by_rank,
+      max_rank,
+      predecessors_by_node_id,
+      successors_by_node_id,
+      order_index_by_node_id,
+      preserve_current_order_on_tie,
+      false,
+      0.07,
+      build_crossing_neighbor_mean_random_state_by_seed(1),
     ),
     sweep_pass_count,
     sweep_kernel,
@@ -302,8 +309,15 @@ test "elk layered sweep input entry matches explicit parameter entry" {
   )
   wb_optimize_rank_order_with_sweep_passes_from_input_and_start_direction(
     build_crossing_sweep_input(
-      via_input, 2, predecessors_by_node_id, successors_by_node_id, order_index_by_node_id,
+      via_input,
+      2,
+      predecessors_by_node_id,
+      successors_by_node_id,
+      order_index_by_node_id,
       false,
+      false,
+      0.07,
+      build_crossing_neighbor_mean_random_state_by_seed(1),
     ),
     3,
     NeighborMeanBidirectional,
@@ -504,10 +518,72 @@ test "elk layered neighbor sort keeps current rank order on full ties" {
   let rank_position_by_node_id : Map[String, Int] = { "B": 0, "A": 1 }
   let order_index_by_node_id : Map[String, Int] = { "A": 0, "B": 1 }
   let _ = sort_rank_nodes_by_neighbors(
-    node_ids, neighbor_by_node_id, rank_position_by_node_id, order_index_by_node_id,
+    node_ids,
+    neighbor_by_node_id,
+    rank_position_by_node_id,
+    order_index_by_node_id,
     true,
+    false,
+    build_crossing_neighbor_mean_random_state_by_seed(1),
+    0.07,
   )
   assert_eq(node_ids, ["B", "A"])
+}
+
+///|
+test "elk layered neighbor-mean perturbation uses deterministic java-random sequence" {
+  let state_one = build_crossing_neighbor_mean_random_state_by_seed(9)
+  let state_two = build_crossing_neighbor_mean_random_state_by_seed(9)
+  let one_a = next_crossing_neighbor_mean_barycenter_perturbation(
+    state_one, 0.07,
+  )
+  let one_b = next_crossing_neighbor_mean_barycenter_perturbation(
+    state_one, 0.07,
+  )
+  let two_a = next_crossing_neighbor_mean_barycenter_perturbation(
+    state_two, 0.07,
+  )
+  let two_b = next_crossing_neighbor_mean_barycenter_perturbation(
+    state_two, 0.07,
+  )
+  assert_eq(one_a, two_a)
+  assert_eq(one_b, two_b)
+  assert_true(one_a >= -0.035 && one_a <= 0.035)
+  assert_true(one_b >= -0.035 && one_b <= 0.035)
+}
+
+///|
+test "elk layered neighbor-mean perturbation keeps tie-break deterministic by seed" {
+  let neighbor_by_node_id : Map[String, Array[String]] = {
+    "A": ["X", "Y"],
+    "B": ["X", "Y"],
+    "C": ["X", "Y"],
+  }
+  let rank_position_by_node_id : Map[String, Int] = { "X": 0, "Y": 1 }
+  let order_index_by_node_id : Map[String, Int] = { "A": 0, "B": 1, "C": 2 }
+  let run_one = ["A", "B", "C"]
+  let run_two = ["A", "B", "C"]
+  let _ = sort_rank_nodes_by_neighbors(
+    run_one,
+    neighbor_by_node_id,
+    rank_position_by_node_id,
+    order_index_by_node_id,
+    true,
+    true,
+    build_crossing_neighbor_mean_random_state_by_seed(1),
+    0.07,
+  )
+  let _ = sort_rank_nodes_by_neighbors(
+    run_two,
+    neighbor_by_node_id,
+    rank_position_by_node_id,
+    order_index_by_node_id,
+    true,
+    true,
+    build_crossing_neighbor_mean_random_state_by_seed(1),
+    0.07,
+  )
+  assert_eq(run_one, run_two)
 }
 
 ///|
