@@ -1,4 +1,45 @@
 ///|
+
+///|
+priv struct ElkLayeredCrossingPhaseResult {
+  optimized_rank_node_ids_by_rank : Map[Int, Array[String]]
+  base_objective : ElkLayeredCrossingObjective
+  optimized_objective : ElkLayeredCrossingObjective
+}
+
+///|
+fn build_crossing_objective_context_from_phase_input(
+  input : ElkLayeredCrossingPhaseInput,
+) -> ElkLayeredCrossingObjectiveContext {
+  {
+    max_rank: input.max_rank,
+    rank_by_node_id: input.rank_by_node_id,
+    successors_by_node_id: input.successors_by_node_id,
+  }
+}
+
+///|
+fn run_crossing_phase_with_plan(
+  input : ElkLayeredCrossingPhaseInput,
+  plan : ElkLayeredCrossingExecutionPlan,
+) -> ElkLayeredCrossingPhaseResult {
+  let objective_context = build_crossing_objective_context_from_phase_input(
+    input,
+  )
+  let base_objective = evaluate_crossing_objective(
+    input.rank_node_ids_by_rank,
+    objective_context,
+  )
+  let optimized_rank_node_ids_by_rank = optimize_rank_node_ids_by_crossing_phase_with_plan(
+    input, plan,
+  )
+  let optimized_objective = evaluate_crossing_objective(
+    optimized_rank_node_ids_by_rank, objective_context,
+  )
+  { optimized_rank_node_ids_by_rank, base_objective, optimized_objective }
+}
+
+///|
 fn optimize_rank_node_ids_by_crossing_phase(
   input : ElkLayeredCrossingPhaseInput,
 ) -> Map[Int, Array[String]] {
@@ -13,14 +54,25 @@ fn optimize_rank_node_ids_by_crossing_phase_with_strategy(
   input : ElkLayeredCrossingPhaseInput,
   strategy : ElkLayeredCrossingOptimizerStrategy,
 ) -> Map[Int, Array[String]] {
-  optimize_rank_node_ids_by_crossing_phase_with_plan(
+  let phase_result = run_crossing_phase_with_plan(
     input,
     default_crossing_execution_plan(strategy),
   )
+  let _ = phase_result.base_objective
+  let _ = phase_result.optimized_objective
+  phase_result.optimized_rank_node_ids_by_rank
 }
 
 ///|
 fn optimize_rank_node_ids_by_crossing_phase_with_plan(
+  input : ElkLayeredCrossingPhaseInput,
+  plan : ElkLayeredCrossingExecutionPlan,
+) -> Map[Int, Array[String]] {
+  execute_crossing_phase_with_plan(input, plan)
+}
+
+///|
+fn execute_crossing_phase_with_plan(
   input : ElkLayeredCrossingPhaseInput,
   plan : ElkLayeredCrossingExecutionPlan,
 ) -> Map[Int, Array[String]] {
