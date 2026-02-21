@@ -9,6 +9,7 @@
  *   bun run scripts/report_elk_crossing_strategy_grid.ts
  *   bun run scripts/report_elk_crossing_strategy_grid.ts --skip-end-to-end
  *   bun run scripts/report_elk_crossing_strategy_grid.ts --trials 1,5 --passes 4,6 --kernels default --policies default,objective-improves
+ *   bun run scripts/report_elk_crossing_strategy_grid.ts --profiles default,none
  */
 
 import { readdirSync } from 'node:fs'
@@ -16,12 +17,19 @@ import { spawnSync } from 'node:child_process'
 
 type SweepKernel = 'default' | 'edge-slot'
 type TrialPolicy = 'default' | 'pass-changes' | 'objective-improves'
+type LocalRefinementProfile =
+  | 'default'
+  | 'none'
+  | 'adjacent-swap'
+  | 'rank-permutation'
+  | 'adjacent-swap-then-rank-permutation'
 
 type CliOptions = {
   trials: number[]
   passes: number[]
   kernels: SweepKernel[]
   policies: TrialPolicy[]
+  profiles: LocalRefinementProfile[]
   skipEndToEnd: boolean
 }
 
@@ -47,6 +55,7 @@ type CandidateResult = {
   sweepPassCount: number
   sweepKernel: SweepKernel
   trialPolicy: TrialPolicy
+  localRefinementProfile: LocalRefinementProfile
   crossing: CrossingSummary
   endToEnd?: EndToEndSummary
 }
@@ -125,11 +134,34 @@ function parsePolicyCsv(raw: string): TrialPolicy[] {
   return [...new Set(parsed)]
 }
 
+function parseProfileCsv(raw: string): LocalRefinementProfile[] {
+  const values = raw
+    .split(',')
+    .map(item => item.trim().toLowerCase())
+    .filter(item => item !== '')
+  if (values.length === 0) fail('empty --profiles list')
+  const parsed: LocalRefinementProfile[] = []
+  for (const value of values) {
+    if (
+      value !== 'default' &&
+      value !== 'none' &&
+      value !== 'adjacent-swap' &&
+      value !== 'rank-permutation' &&
+      value !== 'adjacent-swap-then-rank-permutation'
+    ) {
+      fail(`invalid --profiles value: ${value}`)
+    }
+    parsed.push(value)
+  }
+  return [...new Set(parsed)]
+}
+
 function parseCliOptions(args: string[]): CliOptions {
   let trials: number[] = [1, 2, 5]
   let passes: number[] = [4, 5, 6]
   let kernels: SweepKernel[] = ['default']
   let policies: TrialPolicy[] = ['default', 'objective-improves']
+  let profiles: LocalRefinementProfile[] = ['default']
   let skipEndToEnd = false
   for (let i = 0; i < args.length; i += 1) {
     const arg = args[i]!
@@ -177,6 +209,17 @@ function parseCliOptions(args: string[]): CliOptions {
       policies = parsePolicyCsv(arg.slice('--policies='.length))
       continue
     }
+    if (arg === '--profiles') {
+      const next = args[i + 1]
+      if (!next) fail('missing value after --profiles')
+      profiles = parseProfileCsv(next)
+      i += 1
+      continue
+    }
+    if (arg.startsWith('--profiles=')) {
+      profiles = parseProfileCsv(arg.slice('--profiles='.length))
+      continue
+    }
     if (arg === '--skip-end-to-end') {
       skipEndToEnd = true
       continue
@@ -188,6 +231,7 @@ function parseCliOptions(args: string[]): CliOptions {
     passes,
     kernels,
     policies,
+    profiles,
     skipEndToEnd,
   }
 }
@@ -350,6 +394,7 @@ function crossingArgs(
   sweepPassCount: number,
   sweepKernel: SweepKernel,
   trialPolicy: TrialPolicy,
+  localRefinementProfile: LocalRefinementProfile,
 ): string[] {
   const args = [
     'run',
@@ -366,6 +411,9 @@ function crossingArgs(
   if (trialPolicy !== 'default') {
     args.push('--trial-continuation-policy', trialPolicy)
   }
+  if (localRefinementProfile !== 'default') {
+    args.push('--local-refinement-profile', localRefinementProfile)
+  }
   return args
 }
 
@@ -374,6 +422,7 @@ function endToEndArgs(
   sweepPassCount: number,
   sweepKernel: SweepKernel,
   trialPolicy: TrialPolicy,
+  localRefinementProfile: LocalRefinementProfile,
 ): string[] {
   const args = [
     'run',
@@ -394,6 +443,9 @@ function endToEndArgs(
   if (trialPolicy !== 'default') {
     args.push('--elk-trial-continuation-policy', trialPolicy)
   }
+  if (localRefinementProfile !== 'default') {
+    args.push('--elk-local-refinement-profile', localRefinementProfile)
+  }
   return args
 }
 
@@ -403,26 +455,55 @@ function runCandidate(
   sweepPassCount: number,
   sweepKernel: SweepKernel,
   trialPolicy: TrialPolicy,
+  localRefinementProfile: LocalRefinementProfile,
   skipEndToEnd: boolean,
 ): CandidateResult {
   const crossingStdout = runOrThrow(
     'bun',
-    crossingArgs(fixtures, trialCount, sweepPassCount, sweepKernel, trialPolicy),
+    crossingArgs(
+      fixtures,
+      trialCount,
+      sweepPassCount,
+      sweepKernel,
+      trialPolicy,
+      localRefinementProfile,
+    ),
   )
   const crossing = parseCrossingSummary(crossingStdout)
   if (skipEndToEnd) {
-    return { trialCount, sweepPassCount, sweepKernel, trialPolicy, crossing }
+    return {
+      trialCount,
+      sweepPassCount,
+      sweepKernel,
+      trialPolicy,
+      localRefinementProfile,
+      crossing,
+    }
   }
   const endToEndStdout = runOrThrow(
     'bun',
-    endToEndArgs(trialCount, sweepPassCount, sweepKernel, trialPolicy),
+    endToEndArgs(
+      trialCount,
+      sweepPassCount,
+      sweepKernel,
+      trialPolicy,
+      localRefinementProfile,
+    ),
   )
   const endToEnd = parseEndToEndSummary(endToEndStdout)
-  return { trialCount, sweepPassCount, sweepKernel, trialPolicy, crossing, endToEnd }
+  return {
+    trialCount,
+    sweepPassCount,
+    sweepKernel,
+    trialPolicy,
+    localRefinementProfile,
+    crossing,
+    endToEnd,
+  }
 }
 
 function candidateTag(result: CandidateResult): string {
-  return `trial=${result.trialCount} pass=${result.sweepPassCount} kernel=${result.sweepKernel} policy=${result.trialPolicy}`
+  return `trial=${result.trialCount} pass=${result.sweepPassCount} kernel=${result.sweepKernel} policy=${result.trialPolicy} profile=${result.localRefinementProfile}`
 }
 
 function printRow(result: CandidateResult): void {
@@ -488,19 +569,22 @@ function main(): void {
     for (const sweepPassCount of options.passes) {
       for (const sweepKernel of options.kernels) {
         for (const trialPolicy of options.policies) {
-          if (trialPolicy === 'pass-changes') {
-            // Same behavior as default policy; keep one representative.
-            continue
+          for (const localRefinementProfile of options.profiles) {
+            if (trialPolicy === 'pass-changes') {
+              // Same behavior as default policy; keep one representative.
+              continue
+            }
+            const result = runCandidate(
+              fixtures,
+              trialCount,
+              sweepPassCount,
+              sweepKernel,
+              trialPolicy,
+              localRefinementProfile,
+              options.skipEndToEnd,
+            )
+            results.push(result)
           }
-          const result = runCandidate(
-            fixtures,
-            trialCount,
-            sweepPassCount,
-            sweepKernel,
-            trialPolicy,
-            options.skipEndToEnd,
-          )
-          results.push(result)
         }
       }
     }

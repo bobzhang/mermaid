@@ -27,6 +27,7 @@
  *   bun run scripts/compare_layout_stress.ts --local-layout-engine elk-layered
  *   bun run scripts/compare_layout_stress.ts --local-layout-engine elk --elk-trial-count 5 --elk-sweep-pass-count 6 --elk-sweep-kernel edge-slot
  *   bun run scripts/compare_layout_stress.ts --local-layout-engine elk --elk-trial-continuation-policy objective-improves
+ *   bun run scripts/compare_layout_stress.ts --local-layout-engine elk --elk-local-refinement-profile none
  *   bun run scripts/compare_layout_stress.ts --local-layout-engine elk --elk-model-order-inversion-influence 0.25
  */
 
@@ -135,6 +136,12 @@ type CliOptions = {
   elkSweepPassCount?: number
   elkSweepKernel?: 'default' | 'neighbor-mean' | 'edge-slot'
   elkTrialContinuationPolicy?: 'default' | 'pass-changes' | 'objective-improves'
+  elkLocalRefinementProfile?:
+    | 'default'
+    | 'none'
+    | 'adjacent-swap'
+    | 'rank-permutation'
+    | 'adjacent-swap-then-rank-permutation'
   elkModelOrderInversionInfluence?: number
   allowUnparsedEdgeLines: boolean
   useLocalEdgeDump: boolean
@@ -2196,6 +2203,7 @@ function hasElkCrossingOverrides(options: CliOptions): boolean {
     options.elkSweepPassCount !== undefined ||
     options.elkSweepKernel !== undefined ||
     options.elkTrialContinuationPolicy !== undefined ||
+    options.elkLocalRefinementProfile !== undefined ||
     options.elkModelOrderInversionInfluence !== undefined
   )
 }
@@ -2215,6 +2223,12 @@ function localElkCrossingOverrideArgs(options: CliOptions): string[] {
     args.push(
       '--trial-continuation-policy',
       options.elkTrialContinuationPolicy,
+    )
+  }
+  if (options.elkLocalRefinementProfile !== undefined) {
+    args.push(
+      '--local-refinement-profile',
+      options.elkLocalRefinementProfile,
     )
   }
   if (options.elkModelOrderInversionInfluence !== undefined) {
@@ -2274,7 +2288,7 @@ function renderLocal(inputPath: string, outPath: string, options: CliOptions): v
 function renderLocalEdgePoints(inputPath: string, options: CliOptions): Point[][] {
   if (hasElkCrossingOverrides(options)) {
     fail(
-      'local edge dump is not supported with ELK crossing override flags (--elk-trial-count/--elk-sweep-pass-count/--elk-sweep-kernel/--elk-trial-continuation-policy/--elk-model-order-inversion-influence)',
+      'local edge dump is not supported with ELK crossing override flags (--elk-trial-count/--elk-sweep-pass-count/--elk-sweep-kernel/--elk-trial-continuation-policy/--elk-local-refinement-profile/--elk-model-order-inversion-influence)',
     )
   }
   const source = readFileSync(inputPath, 'utf8')
@@ -2684,6 +2698,13 @@ function parseCliOptions(args: string[]): CliOptions {
     | 'pass-changes'
     | 'objective-improves'
     | undefined = undefined
+  let elkLocalRefinementProfile:
+    | 'default'
+    | 'none'
+    | 'adjacent-swap'
+    | 'rank-permutation'
+    | 'adjacent-swap-then-rank-permutation'
+    | undefined = undefined
   let elkModelOrderInversionInfluence: number | undefined = undefined
   let allowUnparsedEdgeLines = false
   let useLocalEdgeDump = false
@@ -2887,6 +2908,44 @@ function parseCliOptions(args: string[]): CliOptions {
         )
       }
       elkTrialContinuationPolicy = normalized
+      continue
+    }
+    if (arg === '--elk-local-refinement-profile') {
+      const next = args[i + 1]
+      if (!next) fail('missing value after --elk-local-refinement-profile')
+      const normalized = next.trim().toLowerCase()
+      if (
+        normalized !== 'default' &&
+        normalized !== 'none' &&
+        normalized !== 'adjacent-swap' &&
+        normalized !== 'rank-permutation' &&
+        normalized !== 'adjacent-swap-then-rank-permutation'
+      ) {
+        fail(
+          "invalid --elk-local-refinement-profile value, expected 'default', 'none', 'adjacent-swap', 'rank-permutation', or 'adjacent-swap-then-rank-permutation'",
+        )
+      }
+      elkLocalRefinementProfile = normalized
+      i += 1
+      continue
+    }
+    if (arg.startsWith('--elk-local-refinement-profile=')) {
+      const normalized = arg
+        .slice('--elk-local-refinement-profile='.length)
+        .trim()
+        .toLowerCase()
+      if (
+        normalized !== 'default' &&
+        normalized !== 'none' &&
+        normalized !== 'adjacent-swap' &&
+        normalized !== 'rank-permutation' &&
+        normalized !== 'adjacent-swap-then-rank-permutation'
+      ) {
+        fail(
+          "invalid --elk-local-refinement-profile value, expected 'default', 'none', 'adjacent-swap', 'rank-permutation', or 'adjacent-swap-then-rank-permutation'",
+        )
+      }
+      elkLocalRefinementProfile = normalized
       continue
     }
     if (arg === '--elk-model-order-inversion-influence') {
@@ -3243,6 +3302,7 @@ function parseCliOptions(args: string[]): CliOptions {
     elkSweepPassCount !== undefined ||
     elkSweepKernel !== undefined ||
     elkTrialContinuationPolicy !== undefined ||
+    elkLocalRefinementProfile !== undefined ||
     elkModelOrderInversionInfluence !== undefined
   if (
     hasElkOverrides &&
@@ -3250,7 +3310,7 @@ function parseCliOptions(args: string[]): CliOptions {
       (localLayoutEngine !== 'elk' && localLayoutEngine !== 'elk-layered'))
   ) {
     fail(
-      'ELK crossing override flags (--elk-trial-count/--elk-sweep-pass-count/--elk-sweep-kernel/--elk-trial-continuation-policy/--elk-model-order-inversion-influence) require --local-layout-engine elk or elk-layered',
+      'ELK crossing override flags (--elk-trial-count/--elk-sweep-pass-count/--elk-sweep-kernel/--elk-trial-continuation-policy/--elk-local-refinement-profile/--elk-model-order-inversion-influence) require --local-layout-engine elk or elk-layered',
     )
   }
   if (hasElkOverrides && useLocalEdgeDump) {
@@ -3268,6 +3328,7 @@ function parseCliOptions(args: string[]): CliOptions {
     elkSweepPassCount,
     elkSweepKernel,
     elkTrialContinuationPolicy,
+    elkLocalRefinementProfile,
     elkModelOrderInversionInfluence,
     allowUnparsedEdgeLines,
     useLocalEdgeDump,
