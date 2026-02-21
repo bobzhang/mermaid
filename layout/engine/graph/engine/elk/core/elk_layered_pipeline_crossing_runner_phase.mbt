@@ -278,7 +278,8 @@ fn execute_crossing_phase_with_plan_with_trace(
 }
 
 ///|
-fn build_optimized_rank_node_ids_by_rank_with_trace(
+fn build_optimized_rank_node_ids_by_rank_with_plan_and_trace(
+  plan : ElkLayeredCrossingExecutionPlan,
   base_rank_node_ids_by_rank : Map[Int, Array[String]],
   max_rank : Int,
   predecessors_by_node_id : Map[String, Array[String]],
@@ -293,6 +294,6 @@ fn build_optimized_rank_node_ids_by_rank_with_trace(
       base_rank_node_ids_by_rank, max_rank, predecessors_by_node_id, successors_by_node_id,
       order_index_by_node_id, rank_by_node_id, node_count, edge_count,
     ),
-    default_crossing_execution_plan(LayerSweepWithLocalRefinement),
+    plan,
   )
 }

@@ -61,9 +61,16 @@ test "elk layered optimized-rank helper matches explicit crossing phase run" {
     "D": 3,
   }
   let rank_by_node_id : Map[String, Int] = { "A": 0, "B": 0, "C": 1, "D": 1 }
-  let via_helper = build_optimized_rank_node_ids_by_rank_with_trace(
-    base_rank_node_ids_by_rank, max_rank, predecessors_by_node_id, successors_by_node_id,
-    order_index_by_node_id, rank_by_node_id, 4, 2,
+  let via_helper = build_optimized_rank_node_ids_by_rank_with_plan_and_trace(
+    default_crossing_execution_plan(LayerSweepWithLocalRefinement),
+    base_rank_node_ids_by_rank,
+    max_rank,
+    predecessors_by_node_id,
+    successors_by_node_id,
+    order_index_by_node_id,
+    rank_by_node_id,
+    4,
+    2,
   )
   let via_phase = run_crossing_phase_with_plan(
     build_crossing_phase_input(

@@ -15,6 +15,9 @@ priv struct ElkLayeredRankTrace {
   rank_seed_virtual_ports : Array[(String, Int, String)]
   rank_seed_virtual_layers : Array[Array[String]]
   rank_order_strategy : String
+  rank_order_sweep_kernel : String
+  rank_order_sweep_pass_count : Int
+  rank_order_trial_count : Int
   rank_order_optimized_seed_post_sweep_layers : Array[Array[String]]
   rank_order_optimized_seed_post_sweep_crossings : Int
   rank_order_optimized_seed_layers : Array[Array[String]]
@@ -162,6 +165,17 @@ fn placement_axis_coord_maps(
 fn collect_elk_layered_rank_trace(
   request : GraphLayoutBackendRequest,
 ) -> ElkLayeredRankTrace? {
+  collect_elk_layered_rank_trace_with_crossing_execution_plan(
+    request,
+    default_crossing_execution_plan(LayerSweepWithLocalRefinement),
+  )
+}
+
+///|
+fn collect_elk_layered_rank_trace_with_crossing_execution_plan(
+  request : GraphLayoutBackendRequest,
+  crossing_execution_plan : ElkLayeredCrossingExecutionPlan,
+) -> ElkLayeredRankTrace? {
   if !elk_graph_supports_layered_pipeline(request.graph) {
     return None
   }
@@ -199,7 +213,9 @@ fn collect_elk_layered_rank_trace(
     setup_state.base_order_index_by_node_id,
     ModelOrderFirst,
   )
-  let rank_phase_state = run_elk_layered_rank_phase(setup_state)
+  let rank_phase_state = run_elk_layered_rank_phase_with_crossing_execution_plan(
+    setup_state, crossing_execution_plan,
+  )
   let rank_seed_state = rank_phase_state.rank_seed_state
   let rank_order_debug_state = rank_phase_state.rank_order_debug_state
   let node_size_state = build_elk_layered_node_size_state(
@@ -299,6 +315,11 @@ fn collect_elk_layered_rank_trace(
     rank_order_strategy: rank_order_strategy_tag(
       rank_phase_state.rank_order_strategy,
     ),
+    rank_order_sweep_kernel: crossing_sweep_kernel_tag(
+      rank_order_debug_state.crossing_sweep_kernel,
+    ),
+    rank_order_sweep_pass_count: rank_order_debug_state.crossing_sweep_pass_count,
+    rank_order_trial_count: rank_order_debug_state.crossing_trial_count,
     rank_order_optimized_seed_post_sweep_layers: rank_layers_from_rank_map(
       rank_order_debug_state.optimized_seed_post_sweep_rank_node_ids_by_rank,
       rank_seed_state.max_rank,
@@ -437,6 +458,9 @@ fn elk_layered_rank_trace_lines(trace : ElkLayeredRankTrace) -> Array[String] {
     lines.push("FEEDBACK_EDGE_MODEL_ORDER\t\{source_id}\t\{target_id}")
   }
   lines.push("ORDER_STRATEGY\t\{trace.rank_order_strategy}")
+  lines.push("ORDER_SWEEP_KERNEL\t\{trace.rank_order_sweep_kernel}")
+  lines.push("ORDER_SWEEP_PASSES\t\{trace.rank_order_sweep_pass_count}")
+  lines.push("ORDER_TRIAL_COUNT\t\{trace.rank_order_trial_count}")
   lines.push("ORDER_SELECTED_SOURCE\t\{trace.rank_order_selected_source}")
   lines.push(
     "ORDER_SCORE_SWEEP\toptimized-seed\t\{trace.rank_order_optimized_seed_post_sweep_crossings}",

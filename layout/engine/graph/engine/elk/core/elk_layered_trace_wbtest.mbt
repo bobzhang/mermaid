@@ -40,6 +40,9 @@ test "elk layered rank trace keeps fanout kernel baseline" {
   ])
   assert_eq(trace.rank_seed_strategy, "native-feedback")
   assert_eq(trace.rank_order_strategy, "optimized-seed-with-virtual-candidate")
+  assert_eq(trace.rank_order_sweep_kernel, "neighbor-mean-bidirectional")
+  assert_eq(trace.rank_order_sweep_pass_count, 4)
+  assert_eq(trace.rank_order_trial_count, 1)
   assert_eq(trace.rank_order_selected_source, "virtual")
   assert_true(
     trace.rank_order_optimized_seed_post_sweep_crossings >=
@@ -93,6 +96,9 @@ test "elk layered rank trace keeps feedback mesh kernel baseline" {
   let trace = collect_rank_trace_for_graph(graph)
   assert_eq(trace.rank_seed_strategy, "native-feedback")
   assert_eq(trace.rank_order_strategy, "optimized-seed-with-virtual-candidate")
+  assert_eq(trace.rank_order_sweep_kernel, "neighbor-mean-bidirectional")
+  assert_eq(trace.rank_order_sweep_pass_count, 4)
+  assert_eq(trace.rank_order_trial_count, 1)
   assert_eq(trace.rank_order_selected_source, "virtual")
   assert_true(
     trace.rank_order_optimized_seed_post_sweep_crossings >=
@@ -156,6 +162,9 @@ test "elk layered rank trace keeps long span kernel baseline" {
   let trace = collect_rank_trace_for_graph(graph)
   assert_eq(trace.rank_seed_strategy, "native-feedback")
   assert_eq(trace.rank_order_strategy, "optimized-seed-with-virtual-candidate")
+  assert_eq(trace.rank_order_sweep_kernel, "neighbor-mean-bidirectional")
+  assert_eq(trace.rank_order_sweep_pass_count, 4)
+  assert_eq(trace.rank_order_trial_count, 1)
   assert_eq(trace.rank_order_selected_source, "virtual")
   assert_true(
     trace.rank_order_optimized_seed_post_sweep_crossings >=
@@ -278,4 +287,65 @@ test "elk layered rank trace line formatter keeps sorted deterministic sections"
   )
   assert_true(sweep_score_lines.length() >= 3)
   assert_true(sweep_layer_lines.length() >= 1)
+  assert_true(lines.contains("ORDER_SWEEP_KERNEL\tneighbor-mean-bidirectional"))
+  assert_true(lines.contains("ORDER_SWEEP_PASSES\t4"))
+  assert_true(lines.contains("ORDER_TRIAL_COUNT\t1"))
+}
+
+///|
+test "elk layered rank trace can switch sweep kernel without changing seed phase metadata" {
+  let graph = wb_graph(["A", "B", "C", "D", "E", "F"], [
+    ("A", "B"),
+    ("A", "C"),
+    ("A", "D"),
+    ("B", "E"),
+    ("C", "E"),
+    ("D", "F"),
+    ("E", "F"),
+  ])
+  let request = trace_request_for_graph(graph)
+  let default_plan = default_crossing_execution_plan(
+    LayerSweepWithLocalRefinement,
+  )
+  let default_trace = match
+    collect_elk_layered_rank_trace_with_crossing_execution_plan(request, {
+      ..default_plan,
+      sweep_kernel: NeighborMeanBidirectional,
+    }) {
+    Some(trace) => trace
+    None => fail("expected default-kernel trace")
+  }
+  let edge_slot_trace = match
+    collect_elk_layered_rank_trace_with_crossing_execution_plan(request, {
+      ..default_plan,
+      sweep_kernel: NeighborMeanEdgeSlotBidirectional,
+    }) {
+    Some(trace) => trace
+    None => fail("expected edge-slot-kernel trace")
+  }
+  assert_eq(
+    default_trace.rank_order_sweep_kernel,
+    "neighbor-mean-bidirectional",
+  )
+  assert_eq(
+    edge_slot_trace.rank_order_sweep_kernel,
+    "neighbor-mean-edge-slot-bidirectional",
+  )
+  assert_eq(
+    default_trace.rank_input_node_ids_in_order,
+    edge_slot_trace.rank_input_node_ids_in_order,
+  )
+  assert_eq(
+    default_trace.rank_input_resolved_edges,
+    edge_slot_trace.rank_input_resolved_edges,
+  )
+  assert_eq(default_trace.rank_seed_layers, edge_slot_trace.rank_seed_layers)
+  assert_eq(
+    default_trace.rank_order_sweep_pass_count,
+    edge_slot_trace.rank_order_sweep_pass_count,
+  )
+  assert_eq(
+    default_trace.rank_order_trial_count,
+    edge_slot_trace.rank_order_trial_count,
+  )
 }

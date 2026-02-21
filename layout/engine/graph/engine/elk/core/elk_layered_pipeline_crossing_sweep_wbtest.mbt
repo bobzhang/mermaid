@@ -502,7 +502,8 @@ test "elk layered long-span rank-order candidates stay score-tied" {
     nodes_in_order, rank_by_node_id, order_index_by_node_id, base_order_index_by_node_id,
     max_rank,
   )
-  let optimized_base_rank_node_ids_by_rank = build_optimized_rank_node_ids_by_rank_with_trace(
+  let optimized_base_rank_node_ids_by_rank = build_optimized_rank_node_ids_by_rank_with_plan_and_trace(
+      default_crossing_execution_plan(LayerSweepWithLocalRefinement),
       base_rank_node_ids_by_rank,
       max_rank,
       predecessors_by_node_id,
@@ -516,7 +517,8 @@ test "elk layered long-span rank-order candidates stay score-tied" {
     base_rank_node_ids_by_rank, rank_by_node_id, max_rank, order_index_by_node_id,
     successors_by_node_id,
   )
-  let optimized_virtual_rank_node_ids_by_rank = build_optimized_rank_node_ids_by_rank_with_trace(
+  let optimized_virtual_rank_node_ids_by_rank = build_optimized_rank_node_ids_by_rank_with_plan_and_trace(
+      default_crossing_execution_plan(LayerSweepWithLocalRefinement),
       virtual_ordering_state.rank_node_ids_by_rank,
       max_rank,
       virtual_ordering_state.predecessors_by_node_id,
@@ -648,7 +650,8 @@ test "elk layered crossing optimizer reduces global crossings on long-span backj
     setup_state.base_order_index_by_node_id,
     max_rank,
   )
-  let optimized_rank_node_ids_by_rank = build_optimized_rank_node_ids_by_rank_with_trace(
+  let optimized_rank_node_ids_by_rank = build_optimized_rank_node_ids_by_rank_with_plan_and_trace(
+      default_crossing_execution_plan(LayerSweepWithLocalRefinement),
       base_rank_node_ids_by_rank,
       max_rank,
       predecessors_by_node_id,

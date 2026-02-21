@@ -26,6 +26,16 @@ fn available_crossing_sweep_kernels() -> Array[ElkLayeredCrossingSweepKernel] {
 }
 
 ///|
+fn crossing_sweep_kernel_tag(
+  sweep_kernel : ElkLayeredCrossingSweepKernel,
+) -> String {
+  match sweep_kernel {
+    NeighborMeanBidirectional => "neighbor-mean-bidirectional"
+    NeighborMeanEdgeSlotBidirectional => "neighbor-mean-edge-slot-bidirectional"
+  }
+}
+
+///|
 priv struct ElkLayeredCrossingOptimizationConfig {
   preserve_order_node_threshold : Int
   preserve_order_edge_threshold : Int

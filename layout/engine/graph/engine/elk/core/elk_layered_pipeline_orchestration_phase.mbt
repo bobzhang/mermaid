@@ -11,6 +11,17 @@ priv struct ElkLayeredRankPhaseState {
 fn run_elk_layered_rank_phase(
   setup_state : ElkLayeredSetupState,
 ) -> ElkLayeredRankPhaseState {
+  run_elk_layered_rank_phase_with_crossing_execution_plan(
+    setup_state,
+    default_crossing_execution_plan(LayerSweepWithLocalRefinement),
+  )
+}
+
+///|
+fn run_elk_layered_rank_phase_with_crossing_execution_plan(
+  setup_state : ElkLayeredSetupState,
+  crossing_execution_plan : ElkLayeredCrossingExecutionPlan,
+) -> ElkLayeredRankPhaseState {
   let graph = setup_state.graph
   let use_subgraph_redirects = setup_state.use_subgraph_redirects
   let subgraph_entry_by_id = setup_state.subgraph_entry_by_id
@@ -79,6 +90,7 @@ fn run_elk_layered_rank_phase(
   let (rank_node_ids_by_rank, rank_order_debug_state) = build_rank_node_ids_by_rank_for_order_strategy_with_debug(
     rank_order_strategy,
     graph,
+    crossing_execution_plan,
     base_rank_node_ids_by_rank,
     rank_seed_state.rank_by_node_id,
     rank_seed_state.max_rank,
@@ -397,6 +409,8 @@ fn rank_phase_trace(
   metrics["rank_order_seed_crossings"] = rank_order_debug_state.optimized_seed_crossing_score
   metrics["rank_order_reversed_seed_crossings"] = rank_order_debug_state.optimized_reversed_seed_crossing_score
   metrics["rank_order_virtual_crossings"] = rank_order_debug_state.virtual_candidate_crossing_score
+  metrics["rank_order_sweep_pass_count"] = rank_order_debug_state.crossing_sweep_pass_count
+  metrics["rank_order_trial_count"] = rank_order_debug_state.crossing_trial_count
   metrics["legacy_seed_mode"] = bool_flag(
     rank_phase_state.rank_seed_strategy is LegacyLaneSeed,
   )
@@ -406,6 +420,9 @@ fn rank_phase_trace(
   )
   labels["rank_order_strategy"] = rank_order_strategy_tag(
     rank_phase_state.rank_order_strategy,
+  )
+  labels["rank_order_sweep_kernel"] = crossing_sweep_kernel_tag(
+    rank_order_debug_state.crossing_sweep_kernel,
   )
   labels["rank_order_selected_source"] = rank_order_debug_state.selected_source
   labels["rank_layers"] = encode_rank_layers(rank_layers)

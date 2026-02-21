@@ -124,6 +124,9 @@ priv enum ElkLayeredRankOrderStrategy {
 
 ///|
 priv struct ElkLayeredRankOrderDebugState {
+  crossing_sweep_kernel : ElkLayeredCrossingSweepKernel
+  crossing_sweep_pass_count : Int
+  crossing_trial_count : Int
   optimized_seed_post_sweep_rank_node_ids_by_rank : Map[Int, Array[String]]
   optimized_seed_post_sweep_crossing_score : Int
   optimized_seed_rank_node_ids_by_rank : Map[Int, Array[String]]
@@ -332,6 +335,7 @@ fn select_optimized_seed_rank_order_candidate(
 fn build_rank_node_ids_by_rank_for_order_strategy_with_debug(
   strategy : ElkLayeredRankOrderStrategy,
   graph : MermaidGraph,
+  crossing_execution_plan : ElkLayeredCrossingExecutionPlan,
   base_rank_node_ids_by_rank : Map[Int, Array[String]],
   rank_by_node_id : Map[String, Int],
   max_rank : Int,
@@ -339,7 +343,8 @@ fn build_rank_node_ids_by_rank_for_order_strategy_with_debug(
   successors_by_node_id : Map[String, Array[String]],
   predecessors_by_node_id : Map[String, Array[String]],
 ) -> (Map[Int, Array[String]], ElkLayeredRankOrderDebugState) {
-  let optimized_base_crossing_result = build_optimized_rank_node_ids_by_rank_with_trace(
+  let optimized_base_crossing_result = build_optimized_rank_node_ids_by_rank_with_plan_and_trace(
+    crossing_execution_plan,
     base_rank_node_ids_by_rank,
     max_rank,
     predecessors_by_node_id,
@@ -375,7 +380,8 @@ fn build_rank_node_ids_by_rank_for_order_strategy_with_debug(
       None => ()
     }
   }
-  let optimized_reversed_crossing_result = build_optimized_rank_node_ids_by_rank_with_trace(
+  let optimized_reversed_crossing_result = build_optimized_rank_node_ids_by_rank_with_plan_and_trace(
+    crossing_execution_plan,
     reversed_base_rank_node_ids_by_rank,
     max_rank,
     predecessors_by_node_id,
@@ -418,6 +424,11 @@ fn build_rank_node_ids_by_rank_for_order_strategy_with_debug(
       (
         base_rank_node_ids_by_rank,
         {
+          crossing_sweep_kernel: crossing_execution_plan.sweep_kernel,
+          crossing_sweep_pass_count: crossing_execution_plan.config.sweep_pass_count,
+          crossing_trial_count: normalized_crossing_trial_count(
+            crossing_execution_plan.config.trial_count,
+          ),
           optimized_seed_post_sweep_rank_node_ids_by_rank,
           optimized_seed_post_sweep_crossing_score,
           optimized_seed_rank_node_ids_by_rank: optimized_base_rank_node_ids_by_rank,
@@ -440,6 +451,11 @@ fn build_rank_node_ids_by_rank_for_order_strategy_with_debug(
       (
         optimized_seed_selected_rank_node_ids_by_rank,
         {
+          crossing_sweep_kernel: crossing_execution_plan.sweep_kernel,
+          crossing_sweep_pass_count: crossing_execution_plan.config.sweep_pass_count,
+          crossing_trial_count: normalized_crossing_trial_count(
+            crossing_execution_plan.config.trial_count,
+          ),
           optimized_seed_post_sweep_rank_node_ids_by_rank,
           optimized_seed_post_sweep_crossing_score,
           optimized_seed_rank_node_ids_by_rank: optimized_base_rank_node_ids_by_rank,
@@ -462,7 +478,8 @@ fn build_rank_node_ids_by_rank_for_order_strategy_with_debug(
         base_rank_node_ids_by_rank, rank_by_node_id, max_rank, order_index_by_node_id,
         successors_by_node_id,
       )
-      let optimized_virtual_crossing_result = build_optimized_rank_node_ids_by_rank_with_trace(
+      let optimized_virtual_crossing_result = build_optimized_rank_node_ids_by_rank_with_plan_and_trace(
+        crossing_execution_plan,
         virtual_ordering_state.rank_node_ids_by_rank,
         max_rank,
         virtual_ordering_state.predecessors_by_node_id,
@@ -500,6 +517,11 @@ fn build_rank_node_ids_by_rank_for_order_strategy_with_debug(
       (
         selected_rank_node_ids_by_rank,
         {
+          crossing_sweep_kernel: crossing_execution_plan.sweep_kernel,
+          crossing_sweep_pass_count: crossing_execution_plan.config.sweep_pass_count,
+          crossing_trial_count: normalized_crossing_trial_count(
+            crossing_execution_plan.config.trial_count,
+          ),
           optimized_seed_post_sweep_rank_node_ids_by_rank,
           optimized_seed_post_sweep_crossing_score,
           optimized_seed_rank_node_ids_by_rank: optimized_base_rank_node_ids_by_rank,
