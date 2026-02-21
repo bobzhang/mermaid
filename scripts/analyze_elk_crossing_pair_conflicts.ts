@@ -44,6 +44,21 @@ type ConflictCounters = {
   tiedNextPairs: number
 }
 
+type CliOptions = {
+  fixtures: string[]
+  trialCount?: number
+  sweepPassCount?: number
+  sweepKernel?: 'default' | 'neighbor-mean' | 'neighbor-median' | 'edge-slot'
+  trialContinuationPolicy?: 'default' | 'pass-changes' | 'objective-improves'
+  localRefinementProfile?:
+    | 'default'
+    | 'none'
+    | 'adjacent-swap'
+    | 'rank-permutation'
+    | 'adjacent-swap-then-rank-permutation'
+  modelOrderInversionInfluence?: number
+}
+
 const STRESS_FIXTURES = [
   'fixtures/layout_stress_001_dense_dag.mmd',
   'fixtures/layout_stress_002_feedback_mesh.mmd',
@@ -62,6 +77,136 @@ const STRESS_FIXTURES = [
 
 function fail(message: string): never {
   throw new Error(message)
+}
+
+function parseCliOptions(args: string[]): CliOptions {
+  const fixtures: string[] = []
+  let trialCount: number | undefined
+  let sweepPassCount: number | undefined
+  let sweepKernel:
+    | 'default'
+    | 'neighbor-mean'
+    | 'neighbor-median'
+    | 'edge-slot'
+    | undefined
+  let trialContinuationPolicy:
+    | 'default'
+    | 'pass-changes'
+    | 'objective-improves'
+    | undefined
+  let localRefinementProfile:
+    | 'default'
+    | 'none'
+    | 'adjacent-swap'
+    | 'rank-permutation'
+    | 'adjacent-swap-then-rank-permutation'
+    | undefined
+  let modelOrderInversionInfluence: number | undefined
+
+  for (let i = 0; i < args.length; i += 1) {
+    const arg = args[i]!
+    if (arg === '--trial-count') {
+      const next = args[i + 1]
+      if (!next) fail('missing value after --trial-count')
+      const parsed = Number.parseInt(next, 10)
+      if (!Number.isFinite(parsed) || parsed <= 0) {
+        fail(`invalid --trial-count value: ${next}`)
+      }
+      trialCount = parsed
+      i += 1
+      continue
+    }
+    if (arg === '--sweep-pass-count') {
+      const next = args[i + 1]
+      if (!next) fail('missing value after --sweep-pass-count')
+      const parsed = Number.parseInt(next, 10)
+      if (!Number.isFinite(parsed) || parsed <= 0) {
+        fail(`invalid --sweep-pass-count value: ${next}`)
+      }
+      sweepPassCount = parsed
+      i += 1
+      continue
+    }
+    if (arg === '--sweep-kernel') {
+      const next = args[i + 1]
+      if (!next) fail('missing value after --sweep-kernel')
+      const normalized = next.trim().toLowerCase()
+      if (
+        normalized !== 'default' &&
+        normalized !== 'neighbor-mean' &&
+        normalized !== 'neighbor-median' &&
+        normalized !== 'edge-slot'
+      ) {
+        fail(
+          "invalid --sweep-kernel value, expected 'default', 'neighbor-mean', 'neighbor-median', or 'edge-slot'",
+        )
+      }
+      sweepKernel = normalized
+      i += 1
+      continue
+    }
+    if (arg === '--trial-continuation-policy') {
+      const next = args[i + 1]
+      if (!next) fail('missing value after --trial-continuation-policy')
+      const normalized = next.trim().toLowerCase()
+      if (
+        normalized !== 'default' &&
+        normalized !== 'pass-changes' &&
+        normalized !== 'objective-improves'
+      ) {
+        fail(
+          "invalid --trial-continuation-policy value, expected 'default', 'pass-changes', or 'objective-improves'",
+        )
+      }
+      trialContinuationPolicy = normalized
+      i += 1
+      continue
+    }
+    if (arg === '--local-refinement-profile') {
+      const next = args[i + 1]
+      if (!next) fail('missing value after --local-refinement-profile')
+      const normalized = next.trim().toLowerCase()
+      if (
+        normalized !== 'default' &&
+        normalized !== 'none' &&
+        normalized !== 'adjacent-swap' &&
+        normalized !== 'rank-permutation' &&
+        normalized !== 'adjacent-swap-then-rank-permutation'
+      ) {
+        fail(
+          "invalid --local-refinement-profile value, expected 'default', 'none', 'adjacent-swap', 'rank-permutation', or 'adjacent-swap-then-rank-permutation'",
+        )
+      }
+      localRefinementProfile = normalized
+      i += 1
+      continue
+    }
+    if (arg === '--model-order-inversion-influence') {
+      const next = args[i + 1]
+      if (!next) fail('missing value after --model-order-inversion-influence')
+      const parsed = Number.parseFloat(next)
+      if (!Number.isFinite(parsed) || parsed < 0) {
+        fail(`invalid --model-order-inversion-influence value: ${next}`)
+      }
+      modelOrderInversionInfluence = parsed
+      i += 1
+      continue
+    }
+    if (arg.startsWith('-')) {
+      fail(`unknown argument: ${arg}`)
+    }
+    fixtures.push(arg)
+  }
+
+  return {
+    fixtures: fixtures.length > 0 ? fixtures : STRESS_FIXTURES,
+    trialCount,
+    sweepPassCount,
+    sweepKernel,
+    trialContinuationPolicy,
+    localRefinementProfile,
+    modelOrderInversionInfluence,
+  }
 }
 
 function runOrThrow(cmd: string, args: string[], env?: NodeJS.ProcessEnv): string {
@@ -108,8 +253,8 @@ function elkDirection(direction: Direction): 'RIGHT' | 'LEFT' | 'DOWN' | 'UP' {
   return 'RIGHT'
 }
 
-function parseLocalTrace(source: string): LocalTrace {
-  const stdout = runOrThrow('moon', [
+function parseLocalTrace(source: string, options: CliOptions): LocalTrace {
+  const args = [
     'run',
     'cmd/elk_trace',
     '--target',
@@ -117,7 +262,29 @@ function parseLocalTrace(source: string): LocalTrace {
     '--',
     '--source',
     source,
-  ])
+  ]
+  if (options.trialCount !== undefined) {
+    args.push('--trial-count', String(options.trialCount))
+  }
+  if (options.sweepPassCount !== undefined) {
+    args.push('--sweep-pass-count', String(options.sweepPassCount))
+  }
+  if (options.sweepKernel !== undefined) {
+    args.push('--sweep-kernel', options.sweepKernel)
+  }
+  if (options.trialContinuationPolicy !== undefined) {
+    args.push('--trial-continuation-policy', options.trialContinuationPolicy)
+  }
+  if (options.localRefinementProfile !== undefined) {
+    args.push('--local-refinement-profile', options.localRefinementProfile)
+  }
+  if (options.modelOrderInversionInfluence !== undefined) {
+    args.push(
+      '--model-order-inversion-influence',
+      String(options.modelOrderInversionInfluence),
+    )
+  }
+  const stdout = runOrThrow('moon', args)
   const inputNodeIdsByIndex = new Map<number, string>()
   const inputEdges: Edge[] = []
   const rankLayersByRank = new Map<number, string[]>()
@@ -434,10 +601,10 @@ function formatRatio(numerator: number, denominator: number): string {
   return `${((numerator / denominator) * 100).toFixed(1)}%`
 }
 
-function analyzeFixture(fixturePath: string): ConflictCounters {
+function analyzeFixture(fixturePath: string, options: CliOptions): ConflictCounters {
   const source = readFileSync(fixturePath, 'utf8')
   const direction = parseGraphDirection(source)
-  const local = parseLocalTrace(source)
+  const local = parseLocalTrace(source, options)
   const upstream = runUpstreamPlacement(local.inputNodeIds, local.inputEdges, direction)
   const upstreamLayersRaw = buildLayersByMajor(
     local.inputNodeIds,
@@ -455,8 +622,8 @@ function analyzeFixture(fixturePath: string): ConflictCounters {
 }
 
 function main(): void {
-  const fixtures = process.argv.slice(2)
-  const targets = fixtures.length > 0 ? fixtures : STRESS_FIXTURES
+  const options = parseCliOptions(process.argv.slice(2))
+  const targets = options.fixtures
   const total: ConflictCounters = {
     comparablePrevPairs: 0,
     strictPrevConflicts: 0,
@@ -466,7 +633,7 @@ function main(): void {
     tiedNextPairs: 0,
   }
   for (const fixture of targets) {
-    const counters = analyzeFixture(fixture)
+    const counters = analyzeFixture(fixture, options)
     total.comparablePrevPairs += counters.comparablePrevPairs
     total.strictPrevConflicts += counters.strictPrevConflicts
     total.tiedPrevPairs += counters.tiedPrevPairs
