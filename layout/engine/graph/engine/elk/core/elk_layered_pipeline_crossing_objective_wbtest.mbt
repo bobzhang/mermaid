@@ -91,8 +91,14 @@ test "elk layered segment-derived counters match wrapper crossing counters" {
 }
 
 ///|
-test "elk layered crossing selector prefers lower-crossing rank order candidate" {
+test "elk layered rank-order comparator prefers lower-crossing candidate" {
   let rank_by_node_id : Map[String, Int] = { "A": 0, "B": 0, "C": 1, "D": 1 }
+  let order_index_by_node_id : Map[String, Int] = {
+    "A": 0,
+    "B": 1,
+    "C": 2,
+    "D": 3,
+  }
   let successors_by_node_id : Map[String, Array[String]] = {
     "A": ["D"],
     "B": ["C"],
@@ -107,20 +113,25 @@ test "elk layered crossing selector prefers lower-crossing rank order candidate"
     0: ["A", "B"],
     1: ["D", "C"],
   }
-  let selected_rank_node_ids_by_rank = select_lower_crossing_rank_order(
-    base_rank_node_ids_by_rank, alternate_rank_node_ids_by_rank, 1, rank_by_node_id,
-    successors_by_node_id,
+  let alternate_layered_score = rank_order_crossing_score(
+    alternate_rank_node_ids_by_rank, 1, rank_by_node_id, successors_by_node_id,
   )
-  let selected_rank_one = match selected_rank_node_ids_by_rank.get(1) {
-    Some(node_ids) => node_ids
-    None => []
-  }
-  assert_eq(selected_rank_one, ["D", "C"])
+  let base_layered_score = rank_order_crossing_score(
+    base_rank_node_ids_by_rank, 1, rank_by_node_id, successors_by_node_id,
+  )
+  let _ = order_index_by_node_id
+  assert_true(alternate_layered_score < base_layered_score)
 }
 
 ///|
-test "elk layered crossing selector keeps alternate on layered-crossing ties" {
+test "elk layered rank-order comparator breaks ties by model-order inversion" {
   let rank_by_node_id : Map[String, Int] = { "A": 0, "B": 0, "C": 1, "D": 1 }
+  let order_index_by_node_id : Map[String, Int] = {
+    "A": 0,
+    "B": 1,
+    "C": 2,
+    "D": 3,
+  }
   let successors_by_node_id : Map[String, Array[String]] = {
     "A": ["C"],
     "B": [],
@@ -135,13 +146,9 @@ test "elk layered crossing selector keeps alternate on layered-crossing ties" {
     0: ["A", "B"],
     1: ["D", "C"],
   }
-  let selected_rank_node_ids_by_rank = select_lower_crossing_rank_order(
-    base_rank_node_ids_by_rank, alternate_rank_node_ids_by_rank, 1, rank_by_node_id,
-    successors_by_node_id,
+  let base_vs_alternate_compare = compare_rank_order_candidate_tie_break(
+    base_rank_node_ids_by_rank, alternate_rank_node_ids_by_rank, 1, order_index_by_node_id,
+    rank_by_node_id, successors_by_node_id,
   )
-  let selected_rank_one = match selected_rank_node_ids_by_rank.get(1) {
-    Some(node_ids) => node_ids
-    None => []
-  }
-  assert_eq(selected_rank_one, ["D", "C"])
+  assert_true(base_vs_alternate_compare < 0)
 }

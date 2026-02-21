@@ -275,6 +275,49 @@ fn rank_order_model_inversion_score(
 }
 
 ///|
+fn rank_order_global_crossing_score(
+  rank_node_ids_by_rank : Map[Int, Array[String]],
+  max_rank : Int,
+  rank_by_node_id : Map[String, Int],
+  successors_by_node_id : Map[String, Array[String]],
+) -> Int {
+  global_crossing_count_from_segments(
+    collect_rank_order_edge_segments_from_rank_positions(
+      rank_position_by_node_id(rank_node_ids_by_rank, max_rank),
+      rank_by_node_id,
+      successors_by_node_id,
+    ),
+  )
+}
+
+///|
+fn compare_rank_order_candidate_tie_break(
+  left_rank_node_ids_by_rank : Map[Int, Array[String]],
+  right_rank_node_ids_by_rank : Map[Int, Array[String]],
+  max_rank : Int,
+  order_index_by_node_id : Map[String, Int],
+  rank_by_node_id : Map[String, Int],
+  successors_by_node_id : Map[String, Array[String]],
+) -> Int {
+  let left_global_score = rank_order_global_crossing_score(
+    left_rank_node_ids_by_rank, max_rank, rank_by_node_id, successors_by_node_id,
+  )
+  let right_global_score = rank_order_global_crossing_score(
+    right_rank_node_ids_by_rank, max_rank, rank_by_node_id, successors_by_node_id,
+  )
+  if left_global_score != right_global_score {
+    return left_global_score.compare(right_global_score)
+  }
+  let left_inversion_score = rank_order_model_inversion_score(
+    left_rank_node_ids_by_rank, max_rank, order_index_by_node_id,
+  )
+  let right_inversion_score = rank_order_model_inversion_score(
+    right_rank_node_ids_by_rank, max_rank, order_index_by_node_id,
+  )
+  left_inversion_score.compare(right_inversion_score)
+}
+
+///|
 fn select_optimized_seed_rank_order_candidate(
   optimized_seed_rank_node_ids_by_rank : Map[Int, Array[String]],
   optimized_seed_crossing_score : Int,
@@ -285,63 +328,26 @@ fn select_optimized_seed_rank_order_candidate(
   rank_by_node_id : Map[String, Int],
   successors_by_node_id : Map[String, Array[String]],
 ) -> (Map[Int, Array[String]], Int, String) {
-  if optimized_reversed_seed_crossing_score < optimized_seed_crossing_score {
+  let reversed_vs_seed_compare = if optimized_reversed_seed_crossing_score !=
+    optimized_seed_crossing_score {
+    optimized_reversed_seed_crossing_score.compare(
+      optimized_seed_crossing_score,
+    )
+  } else {
+    compare_rank_order_candidate_tie_break(
+      optimized_reversed_seed_rank_node_ids_by_rank, optimized_seed_rank_node_ids_by_rank,
+      max_rank, order_index_by_node_id, rank_by_node_id, successors_by_node_id,
+    )
+  }
+  if reversed_vs_seed_compare < 0 {
     (
       optimized_reversed_seed_rank_node_ids_by_rank, optimized_reversed_seed_crossing_score,
       "optimized-reversed-seed",
     )
-  } else if optimized_reversed_seed_crossing_score >
-    optimized_seed_crossing_score {
+  } else {
     (
       optimized_seed_rank_node_ids_by_rank, optimized_seed_crossing_score, "optimized-seed",
     )
-  } else {
-    let optimized_seed_global_crossing_score = global_crossing_count_from_segments(
-      collect_rank_order_edge_segments_from_rank_positions(
-        rank_position_by_node_id(optimized_seed_rank_node_ids_by_rank, max_rank),
-        rank_by_node_id,
-        successors_by_node_id,
-      ),
-    )
-    let optimized_reversed_seed_global_crossing_score = global_crossing_count_from_segments(
-      collect_rank_order_edge_segments_from_rank_positions(
-        rank_position_by_node_id(
-          optimized_reversed_seed_rank_node_ids_by_rank, max_rank,
-        ),
-        rank_by_node_id,
-        successors_by_node_id,
-      ),
-    )
-    if optimized_reversed_seed_global_crossing_score <
-      optimized_seed_global_crossing_score {
-      (
-        optimized_reversed_seed_rank_node_ids_by_rank, optimized_reversed_seed_crossing_score,
-        "optimized-reversed-seed",
-      )
-    } else if optimized_reversed_seed_global_crossing_score >
-      optimized_seed_global_crossing_score {
-      (
-        optimized_seed_rank_node_ids_by_rank, optimized_seed_crossing_score, "optimized-seed",
-      )
-    } else {
-      let optimized_seed_model_inversion_score = rank_order_model_inversion_score(
-        optimized_seed_rank_node_ids_by_rank, max_rank, order_index_by_node_id,
-      )
-      let optimized_reversed_seed_model_inversion_score = rank_order_model_inversion_score(
-        optimized_reversed_seed_rank_node_ids_by_rank, max_rank, order_index_by_node_id,
-      )
-      if optimized_reversed_seed_model_inversion_score <
-        optimized_seed_model_inversion_score {
-        (
-          optimized_reversed_seed_rank_node_ids_by_rank, optimized_reversed_seed_crossing_score,
-          "optimized-reversed-seed",
-        )
-      } else {
-        (
-          optimized_seed_rank_node_ids_by_rank, optimized_seed_crossing_score, "optimized-seed",
-        )
-      }
-    }
   }
 }
 
@@ -554,12 +560,23 @@ fn build_rank_node_ids_by_rank_for_order_strategy_with_debug(
       let virtual_candidate_crossing_score = rank_order_crossing_score(
         real_virtual_rank_node_ids_by_rank, max_rank, rank_by_node_id, successors_by_node_id,
       )
-      let selected_rank_node_ids_by_rank = select_lower_crossing_rank_order(
-        optimized_seed_selected_rank_node_ids_by_rank, real_virtual_rank_node_ids_by_rank,
-        max_rank, rank_by_node_id, successors_by_node_id,
-      )
-      let select_virtual_candidate = virtual_candidate_crossing_score <=
-        optimized_seed_selected_crossing_score
+      let virtual_vs_seed_compare = if virtual_candidate_crossing_score !=
+        optimized_seed_selected_crossing_score {
+        virtual_candidate_crossing_score.compare(
+          optimized_seed_selected_crossing_score,
+        )
+      } else {
+        compare_rank_order_candidate_tie_break(
+          real_virtual_rank_node_ids_by_rank, optimized_seed_selected_rank_node_ids_by_rank,
+          max_rank, order_index_by_node_id, rank_by_node_id, successors_by_node_id,
+        )
+      }
+      let select_virtual_candidate = virtual_vs_seed_compare < 0
+      let selected_rank_node_ids_by_rank = if select_virtual_candidate {
+        real_virtual_rank_node_ids_by_rank
+      } else {
+        optimized_seed_selected_rank_node_ids_by_rank
+      }
       let selected_trial_index = if select_virtual_candidate {
         optimized_virtual_crossing_result.selected_trial_index
       } else {

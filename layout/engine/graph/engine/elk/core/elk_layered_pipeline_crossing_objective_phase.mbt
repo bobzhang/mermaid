@@ -206,11 +206,6 @@ priv struct ElkLayeredCrossingObjective {
 }
 
 ///|
-priv enum ElkLayeredRankOrderSelectionPolicy {
-  LayeredCrossingsPreferAlternateOnTie
-}
-
-///|
 fn evaluate_crossing_objective(
   rank_node_ids_by_rank : Map[Int, Array[String]],
   context : ElkLayeredCrossingObjectiveContext,
@@ -231,30 +226,6 @@ fn evaluate_crossing_objective(
 }
 
 ///|
-fn select_rank_order_candidate_by_policy(
-  base_rank_node_ids_by_rank : Map[Int, Array[String]],
-  alternate_rank_node_ids_by_rank : Map[Int, Array[String]],
-  context : ElkLayeredCrossingObjectiveContext,
-  policy : ElkLayeredRankOrderSelectionPolicy,
-) -> Map[Int, Array[String]] {
-  let base_objective = evaluate_crossing_objective(
-    base_rank_node_ids_by_rank, context,
-  )
-  let alternate_objective = evaluate_crossing_objective(
-    alternate_rank_node_ids_by_rank, context,
-  )
-  match policy {
-    LayeredCrossingsPreferAlternateOnTie =>
-      if alternate_objective.layered_crossings <=
-        base_objective.layered_crossings {
-        alternate_rank_node_ids_by_rank
-      } else {
-        base_rank_node_ids_by_rank
-      }
-  }
-}
-
-///|
 fn rank_order_crossing_score(
   rank_node_ids_by_rank : Map[Int, Array[String]],
   max_rank : Int,
@@ -263,21 +234,5 @@ fn rank_order_crossing_score(
 ) -> Int {
   layered_crossing_count(
     rank_node_ids_by_rank, max_rank, rank_by_node_id, successors_by_node_id,
-  )
-}
-
-///|
-fn select_lower_crossing_rank_order(
-  base_rank_node_ids_by_rank : Map[Int, Array[String]],
-  alternate_rank_node_ids_by_rank : Map[Int, Array[String]],
-  max_rank : Int,
-  rank_by_node_id : Map[String, Int],
-  successors_by_node_id : Map[String, Array[String]],
-) -> Map[Int, Array[String]] {
-  select_rank_order_candidate_by_policy(
-    base_rank_node_ids_by_rank,
-    alternate_rank_node_ids_by_rank,
-    { max_rank, rank_by_node_id, successors_by_node_id },
-    LayeredCrossingsPreferAlternateOnTie,
   )
 }

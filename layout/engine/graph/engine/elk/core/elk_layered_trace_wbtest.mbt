@@ -78,7 +78,7 @@ test "elk layered rank trace keeps fanout kernel baseline" {
     default_crossing_optimization_config().trial_count,
   )
   assert_eq(trace.rank_order_trial_model_order_inversion_influence, 0.0)
-  assert_eq(trace.rank_order_selected_source, "virtual")
+  assert_eq(trace.rank_order_selected_source, "optimized-seed")
   assert_true(
     trace.rank_order_optimized_seed_post_sweep_crossings >=
     trace.rank_order_optimized_seed_crossings,
@@ -141,7 +141,7 @@ test "elk layered rank trace keeps feedback mesh kernel baseline" {
     default_crossing_optimization_config().trial_count,
   )
   assert_eq(trace.rank_order_trial_model_order_inversion_influence, 0.0)
-  assert_eq(trace.rank_order_selected_source, "virtual")
+  assert_eq(trace.rank_order_selected_source, "optimized-seed")
   assert_true(
     trace.rank_order_optimized_seed_post_sweep_crossings >=
     trace.rank_order_optimized_seed_crossings,
@@ -169,10 +169,13 @@ test "elk layered rank trace keeps feedback mesh kernel baseline" {
     wb_layer_composition_signatures(trace.rank_order_virtual_candidate_layers),
     wb_layer_composition_signatures(trace.rank_order_optimized_seed_layers),
   )
-  assert_eq(
-    trace.rank_order_selected_layers,
-    trace.rank_order_virtual_candidate_layers,
-  )
+  let expected_selected_layers = if trace.rank_order_selected_source ==
+    "virtual" {
+    trace.rank_order_virtual_candidate_layers
+  } else {
+    trace.rank_order_optimized_seed_layers
+  }
+  assert_eq(trace.rank_order_selected_layers, expected_selected_layers)
   assert_true(
     trace.rank_order_virtual_candidate_crossings <=
     trace.rank_order_optimized_seed_crossings,
@@ -207,7 +210,7 @@ test "elk layered rank trace keeps long span kernel baseline" {
     default_crossing_optimization_config().trial_count,
   )
   assert_eq(trace.rank_order_trial_model_order_inversion_influence, 0.0)
-  assert_eq(trace.rank_order_selected_source, "virtual")
+  assert_eq(trace.rank_order_selected_source, "optimized-seed")
   assert_true(
     trace.rank_order_optimized_seed_post_sweep_crossings >=
     trace.rank_order_optimized_seed_crossings,
