@@ -33,6 +33,7 @@ test "elk layered crossing optimization config keeps baseline thresholds" {
   assert_eq(config.preserve_order_edge_threshold, 30)
   assert_eq(config.sweep_pass_count, 4)
   assert_eq(config.trial_count, 1)
+  assert_true(config.trial_continuation_policy is ContinueWhilePassChanges)
   assert_eq(config.swap_refine_node_limit, 40)
   assert_eq(config.swap_refine_edge_limit, 120)
   assert_eq(config.permutation_refine_node_limit, 28)

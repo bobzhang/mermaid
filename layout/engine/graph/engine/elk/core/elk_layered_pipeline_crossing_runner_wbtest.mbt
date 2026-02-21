@@ -1,4 +1,12 @@
 ///|
+fn wb_crossing_objective_not_worse(
+  left : ElkLayeredCrossingObjective,
+  right : ElkLayeredCrossingObjective,
+) -> Bool {
+  left.layered_crossings <= right.layered_crossings
+}
+
+///|
 test "elk layered crossing execution trace matches phase result maps" {
   let input = build_crossing_phase_input(
     { 0: ["A", "B"], 1: ["C", "D"] },
@@ -35,6 +43,85 @@ test "elk layered crossing execution trace matches phase result maps" {
       None => []
     },
   )
+}
+
+///|
+test "elk layered crossing selected trial retains best post-sweep objective across passes" {
+  let graph = @parser_header_core.parse_mermaid(stress_005_source())
+  let setup_state = run_elk_layered_setup_phase({
+    graph,
+    options: RenderOptions::default(),
+    use_subgraph_redirects: true,
+    compact_fanin: false,
+  })
+  let (
+    rank_by_node_id,
+    max_rank,
+    order_index_by_node_id,
+    successors_by_node_id,
+    predecessors_by_node_id,
+  ) = build_layered_rank_state(
+    graph,
+    setup_state.use_subgraph_redirects,
+    setup_state.subgraph_entry_by_id,
+    setup_state.subgraph_exit_by_id,
+    setup_state.nodes_in_order,
+  )
+  let base_rank_node_ids_by_rank = build_rank_node_ids_by_lane(
+    setup_state.nodes_in_order,
+    rank_by_node_id,
+    order_index_by_node_id,
+    setup_state.base_order_index_by_node_id,
+    max_rank,
+  )
+  let default_plan = default_crossing_execution_plan(
+    LayerSweepWithLocalRefinement,
+  )
+  let plan : ElkLayeredCrossingExecutionPlan = {
+    strategy: default_plan.strategy,
+    config: {
+      preserve_order_node_threshold: default_plan.config.preserve_order_node_threshold,
+      preserve_order_edge_threshold: default_plan.config.preserve_order_edge_threshold,
+      sweep_pass_count: default_plan.config.sweep_pass_count,
+      trial_count: 2,
+      trial_random_seed: default_plan.config.trial_random_seed,
+      trial_continuation_policy: default_plan.config.trial_continuation_policy,
+      trial_model_order_inversion_influence: default_plan.config.trial_model_order_inversion_influence,
+      swap_refine_node_limit: default_plan.config.swap_refine_node_limit,
+      swap_refine_edge_limit: default_plan.config.swap_refine_edge_limit,
+      permutation_refine_node_limit: default_plan.config.permutation_refine_node_limit,
+      permutation_refine_edge_limit: default_plan.config.permutation_refine_edge_limit,
+      permutation_rank_size_limit: default_plan.config.permutation_rank_size_limit,
+    },
+    sweep_kernel: default_plan.sweep_kernel,
+    local_refinement_kernels: default_plan.local_refinement_kernels,
+  }
+  let result = run_crossing_phase_with_plan(
+    build_crossing_phase_input(
+      base_rank_node_ids_by_rank,
+      max_rank,
+      predecessors_by_node_id,
+      successors_by_node_id,
+      order_index_by_node_id,
+      rank_by_node_id,
+      rank_by_node_id.length(),
+      graph.edges.length(),
+    ),
+    plan,
+  )
+  guard result.trial_summaries.get(result.selected_trial_index)
+    is Some(selected_trial) else {
+    fail("expected selected trial summary to exist")
+  }
+  assert_true(selected_trial.sweep_pass_summaries.length() > 0)
+  for pass_summary in selected_trial.sweep_pass_summaries {
+    assert_true(
+      wb_crossing_objective_not_worse(
+        selected_trial.post_sweep_objective,
+        pass_summary.objective,
+      ),
+    )
+  }
 }
 
 ///|
@@ -184,6 +271,14 @@ test "elk layered crossing sweep kernel registry includes default and edge-slot 
 }
 
 ///|
+test "elk layered crossing trial continuation policy registry includes improvement policy" {
+  let policies = available_crossing_trial_continuation_policies()
+  assert_true(
+    policies is [ContinueWhilePassChanges, ContinueWhileObjectiveImproves],
+  )
+}
+
+///|
 test "elk layered crossing trial count normalization keeps at least one trial" {
   assert_eq(normalized_crossing_trial_count(-3), 1)
   assert_eq(normalized_crossing_trial_count(0), 1)
@@ -285,6 +380,7 @@ test "elk layered crossing single-trial config remains behavior-equivalent" {
       sweep_pass_count: single_plan.config.sweep_pass_count,
       trial_count: 1,
       trial_random_seed: single_plan.config.trial_random_seed,
+      trial_continuation_policy: single_plan.config.trial_continuation_policy,
       trial_model_order_inversion_influence: single_plan.config.trial_model_order_inversion_influence,
       swap_refine_node_limit: single_plan.config.swap_refine_node_limit,
       swap_refine_edge_limit: single_plan.config.swap_refine_edge_limit,

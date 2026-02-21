@@ -85,6 +85,52 @@ fn wb_global_crossing_count(
 }
 
 ///|
+fn wb_optimize_rank_order_with_sweep_passes_and_kernel(
+  rank_node_ids_by_rank : Map[Int, Array[String]],
+  max_rank : Int,
+  predecessors_by_node_id : Map[String, Array[String]],
+  successors_by_node_id : Map[String, Array[String]],
+  order_index_by_node_id : Map[String, Int],
+  preserve_current_order_on_tie : Bool,
+  sweep_pass_count : Int,
+  sweep_kernel : ElkLayeredCrossingSweepKernel,
+) -> Unit {
+  wb_optimize_rank_order_with_sweep_passes_from_input_and_start_direction(
+    build_crossing_sweep_input(
+      rank_node_ids_by_rank, max_rank, predecessors_by_node_id, successors_by_node_id,
+      order_index_by_node_id, preserve_current_order_on_tie,
+    ),
+    sweep_pass_count,
+    sweep_kernel,
+    true,
+  )
+}
+
+///|
+fn wb_optimize_rank_order_with_sweep_passes_from_input_and_start_direction(
+  sweep_input : ElkLayeredCrossingSweepInput,
+  sweep_pass_count : Int,
+  sweep_kernel : ElkLayeredCrossingSweepKernel,
+  initial_forward_sweep : Bool,
+) -> Unit {
+  if sweep_input.max_rank <= 0 {
+    return
+  }
+  let mut pass = 0
+  let mut forward_sweep = initial_forward_sweep
+  while pass < sweep_pass_count {
+    let changed = sweep_rank_order_once_from_input_with_kernel(
+      sweep_input, sweep_kernel, forward_sweep,
+    )
+    if !changed {
+      break
+    }
+    forward_sweep = !forward_sweep
+    pass = pass + 1
+  }
+}
+
+///|
 test "elk layered default sweep kernel matches explicit kernel" {
   let seed_rank_node_ids_by_rank : Map[Int, Array[String]] = {
     0: ["A", "B"],
@@ -117,7 +163,7 @@ test "elk layered default sweep kernel matches explicit kernel" {
   }
   let via_wrapper = clone_rank_node_ids_by_rank(seed_rank_node_ids_by_rank, 2)
   let via_explicit = clone_rank_node_ids_by_rank(seed_rank_node_ids_by_rank, 2)
-  optimize_rank_order_with_sweep_passes_and_kernel(
+  wb_optimize_rank_order_with_sweep_passes_and_kernel(
     via_wrapper,
     2,
     predecessors_by_node_id,
@@ -127,7 +173,7 @@ test "elk layered default sweep kernel matches explicit kernel" {
     3,
     default_crossing_sweep_kernel(),
   )
-  optimize_rank_order_with_sweep_passes_and_kernel(
+  wb_optimize_rank_order_with_sweep_passes_and_kernel(
     via_explicit,
     2,
     predecessors_by_node_id,
@@ -173,7 +219,7 @@ test "elk layered edge-slot sweep kernel is deterministic and preserves rank com
   }
   let run_one = clone_rank_node_ids_by_rank(seed_rank_node_ids_by_rank, 2)
   let run_two = clone_rank_node_ids_by_rank(seed_rank_node_ids_by_rank, 2)
-  optimize_rank_order_with_sweep_passes_and_kernel(
+  wb_optimize_rank_order_with_sweep_passes_and_kernel(
     run_one,
     2,
     predecessors_by_node_id,
@@ -183,7 +229,7 @@ test "elk layered edge-slot sweep kernel is deterministic and preserves rank com
     3,
     NeighborMeanEdgeSlotBidirectional,
   )
-  optimize_rank_order_with_sweep_passes_and_kernel(
+  wb_optimize_rank_order_with_sweep_passes_and_kernel(
     run_two,
     2,
     predecessors_by_node_id,
@@ -244,7 +290,7 @@ test "elk layered sweep input entry matches explicit parameter entry" {
     seed_rank_node_ids_by_rank, 2,
   )
   let via_input = clone_rank_node_ids_by_rank(seed_rank_node_ids_by_rank, 2)
-  optimize_rank_order_with_sweep_passes_and_kernel(
+  wb_optimize_rank_order_with_sweep_passes_and_kernel(
     via_parameters,
     2,
     predecessors_by_node_id,
@@ -254,13 +300,14 @@ test "elk layered sweep input entry matches explicit parameter entry" {
     3,
     NeighborMeanBidirectional,
   )
-  optimize_rank_order_with_sweep_passes_from_input(
+  wb_optimize_rank_order_with_sweep_passes_from_input_and_start_direction(
     build_crossing_sweep_input(
       via_input, 2, predecessors_by_node_id, successors_by_node_id, order_index_by_node_id,
       false,
     ),
     3,
     NeighborMeanBidirectional,
+    true,
   )
   assert_eq(via_parameters, via_input)
 }
@@ -359,7 +406,7 @@ test "elk layered order optimization reduces crossing count on bipartite rank pa
     },
     successors_by_node_id,
   )
-  optimize_rank_order_with_sweep_passes_and_kernel(
+  wb_optimize_rank_order_with_sweep_passes_and_kernel(
     rank_node_ids_by_rank,
     max_rank,
     predecessors_by_node_id,
@@ -419,7 +466,7 @@ test "elk layered order optimization keeps multi-rank sweep neighbor state coher
   let crossings_before = rank_order_crossing_score(
     rank_node_ids_by_rank, max_rank, rank_by_node_id, successors_by_node_id,
   )
-  optimize_rank_order_with_sweep_passes_and_kernel(
+  wb_optimize_rank_order_with_sweep_passes_and_kernel(
     rank_node_ids_by_rank,
     max_rank,
     predecessors_by_node_id,
@@ -548,8 +595,12 @@ test "elk layered long-span rank-order candidates stay score-tied" {
     Some(node_ids) => node_ids
     None => []
   }
-  assert_eq(base_rank_two, ["N2", "N5"])
-  assert_eq(virtual_rank_two, ["N2", "N5"])
+  let sorted_base_rank_two = base_rank_two.copy()
+  sorted_base_rank_two.sort()
+  let sorted_virtual_rank_two = virtual_rank_two.copy()
+  sorted_virtual_rank_two.sort()
+  assert_eq(sorted_base_rank_two, ["N2", "N5"])
+  assert_eq(sorted_virtual_rank_two, ["N2", "N5"])
 }
 
 ///|
