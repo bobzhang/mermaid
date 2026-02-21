@@ -35,15 +35,63 @@ fn normalized_crossing_trial_count(trial_count : Int) -> Int {
 }
 
 ///|
+fn crossing_trial_initial_forward_sweep(trial_index : Int) -> Bool {
+  trial_index % 2 == 0
+}
+
+///|
+fn shuffle_node_ids_for_crossing_trial(
+  node_ids : Array[String],
+  random_state : UInt64,
+) -> Unit {
+  if node_ids.length() <= 1 {
+    return
+  }
+  let mut next_random_state = random_state
+  let mut index = node_ids.length() - 1
+  while index > 0 {
+    let (candidate_random_state, swap_index) = java_random_next_int(
+      next_random_state,
+      index + 1,
+    )
+    next_random_state = candidate_random_state
+    if swap_index != index {
+      let value = node_ids[index]
+      node_ids[index] = node_ids[swap_index]
+      node_ids[swap_index] = value
+    }
+    index = index - 1
+  }
+}
+
+///|
 fn build_crossing_trial_seed_rank_node_ids_by_rank(
   input_rank_node_ids_by_rank : Map[Int, Array[String]],
   max_rank : Int,
   trial_index : Int,
   trial_random_seed : Int,
 ) -> Map[Int, Array[String]] {
-  let _ = trial_index
-  let _ = trial_random_seed
-  clone_rank_node_ids_by_rank(input_rank_node_ids_by_rank, max_rank)
+  let seed_rank_node_ids_by_rank = clone_rank_node_ids_by_rank(
+    input_rank_node_ids_by_rank,
+    max_rank,
+  )
+  if trial_index <= 0 {
+    return seed_rank_node_ids_by_rank
+  }
+  let start_rank = if crossing_trial_initial_forward_sweep(trial_index) {
+    0
+  } else {
+    max_rank
+  }
+  match seed_rank_node_ids_by_rank.get(start_rank) {
+    Some(node_ids) =>
+      shuffle_node_ids_for_crossing_trial(
+        node_ids,
+        java_random_state_from_seed(trial_random_seed + trial_index),
+      )
+    None => ()
+  }
+  seed_rank_node_ids_by_rank
 }
 
 ///|
@@ -89,6 +137,7 @@ fn execute_crossing_phase_once_with_plan_and_seed(
   input : ElkLayeredCrossingPhaseInput,
   plan : ElkLayeredCrossingExecutionPlan,
   seed_rank_node_ids_by_rank : Map[Int, Array[String]],
+  initial_forward_sweep : Bool,
 ) -> ElkLayeredCrossingExecutionState {
   let _ = input.port_order_slots_by_node_id
   let config = plan.config
@@ -98,16 +147,25 @@ fn execute_crossing_phase_once_with_plan_and_seed(
     input,
     config,
   )
-  optimize_rank_order_with_sweep_passes_and_kernel(
-    sweep_input.rank_node_ids_by_rank,
-    sweep_input.max_rank,
-    sweep_input.predecessors_by_node_id,
-    sweep_input.successors_by_node_id,
-    sweep_input.order_index_by_node_id,
-    sweep_input.preserve_current_order_on_tie,
-    config.sweep_pass_count,
-    plan.sweep_kernel,
-  )
+  if initial_forward_sweep {
+    optimize_rank_order_with_sweep_passes_and_kernel(
+      sweep_input.rank_node_ids_by_rank,
+      sweep_input.max_rank,
+      sweep_input.predecessors_by_node_id,
+      sweep_input.successors_by_node_id,
+      sweep_input.order_index_by_node_id,
+      sweep_input.preserve_current_order_on_tie,
+      config.sweep_pass_count,
+      plan.sweep_kernel,
+    )
+  } else {
+    optimize_rank_order_with_sweep_passes_from_input_and_start_direction(
+      sweep_input,
+      config.sweep_pass_count,
+      plan.sweep_kernel,
+      false,
+    )
+  }
   let post_sweep_rank_node_ids_by_rank = clone_rank_node_ids_by_rank(
     optimized_rank_node_ids_by_rank,
     input.max_rank,
@@ -174,6 +232,7 @@ fn execute_crossing_phase_with_plan_with_trace(
             trial_index,
             config.trial_random_seed,
           ),
+          crossing_trial_initial_forward_sweep(trial_index),
         )
         match best_execution_state {
           Some(incumbent) =>
@@ -200,6 +259,7 @@ fn execute_crossing_phase_with_plan_with_trace(
               0,
               config.trial_random_seed,
             ),
+            true,
           )
       }
     }

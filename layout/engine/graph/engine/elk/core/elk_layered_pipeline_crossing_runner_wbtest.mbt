@@ -157,7 +157,68 @@ test "elk layered crossing trial count normalization keeps at least one trial" {
 }
 
 ///|
-test "elk layered crossing multi-trial framework preserves single-trial output by default seed builder" {
+test "elk layered crossing trial seed builder is deterministic and rank-local" {
+  let base_rank_node_ids_by_rank : Map[Int, Array[String]] = {
+    0: ["A", "B", "C", "G"],
+    1: ["D", "E", "F", "H"],
+  }
+  let backward_trial_seed = build_crossing_trial_seed_rank_node_ids_by_rank(
+    base_rank_node_ids_by_rank,
+    1,
+    1,
+    1,
+  )
+  let backward_trial_seed_again = build_crossing_trial_seed_rank_node_ids_by_rank(
+    base_rank_node_ids_by_rank,
+    1,
+    1,
+    1,
+  )
+  assert_eq(backward_trial_seed, backward_trial_seed_again)
+  assert_eq(
+    match backward_trial_seed.get(0) {
+      Some(node_ids) => node_ids
+      None => []
+    },
+    ["A", "B", "C", "G"],
+  )
+  let backward_target_rank = match backward_trial_seed.get(1) {
+    Some(node_ids) => node_ids.copy()
+    None => []
+  }
+  backward_target_rank.sort()
+  assert_eq(backward_target_rank, ["D", "E", "F", "H"])
+
+  let forward_trial_seed = build_crossing_trial_seed_rank_node_ids_by_rank(
+    base_rank_node_ids_by_rank,
+    1,
+    2,
+    1,
+  )
+  let forward_trial_seed_again = build_crossing_trial_seed_rank_node_ids_by_rank(
+    base_rank_node_ids_by_rank,
+    1,
+    2,
+    1,
+  )
+  assert_eq(forward_trial_seed, forward_trial_seed_again)
+  assert_eq(
+    match forward_trial_seed.get(1) {
+      Some(node_ids) => node_ids
+      None => []
+    },
+    ["D", "E", "F", "H"],
+  )
+  let forward_target_rank = match forward_trial_seed.get(0) {
+    Some(node_ids) => node_ids.copy()
+    None => []
+  }
+  forward_target_rank.sort()
+  assert_eq(forward_target_rank, ["A", "B", "C", "G"])
+}
+
+///|
+test "elk layered crossing single-trial config remains behavior-equivalent" {
   let input = build_crossing_phase_input(
     { 0: ["A", "B"], 1: ["C", "D"] },
     1,
@@ -178,7 +239,7 @@ test "elk layered crossing multi-trial framework preserves single-trial output b
       preserve_order_node_threshold: single_plan.config.preserve_order_node_threshold,
       preserve_order_edge_threshold: single_plan.config.preserve_order_edge_threshold,
       sweep_pass_count: single_plan.config.sweep_pass_count,
-      trial_count: 3,
+      trial_count: 1,
       trial_random_seed: single_plan.config.trial_random_seed,
       swap_refine_node_limit: single_plan.config.swap_refine_node_limit,
       swap_refine_edge_limit: single_plan.config.swap_refine_edge_limit,

@@ -204,11 +204,26 @@ fn optimize_rank_order_with_sweep_passes_from_input(
   sweep_pass_count : Int,
   sweep_kernel : ElkLayeredCrossingSweepKernel,
 ) -> Unit {
+  optimize_rank_order_with_sweep_passes_from_input_and_start_direction(
+    sweep_input,
+    sweep_pass_count,
+    sweep_kernel,
+    true,
+  )
+}
+
+///|
+fn optimize_rank_order_with_sweep_passes_from_input_and_start_direction(
+  sweep_input : ElkLayeredCrossingSweepInput,
+  sweep_pass_count : Int,
+  sweep_kernel : ElkLayeredCrossingSweepKernel,
+  initial_forward_sweep : Bool,
+) -> Unit {
   if sweep_input.max_rank <= 0 {
     return
   }
   let mut pass = 0
-  let mut forward_sweep = true
+  let mut forward_sweep = initial_forward_sweep
   while pass < sweep_pass_count {
     let changed = sweep_rank_order_once_from_input_with_kernel(
       sweep_input, sweep_kernel, forward_sweep,
