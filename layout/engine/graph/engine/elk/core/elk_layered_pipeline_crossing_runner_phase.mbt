@@ -155,29 +155,24 @@ fn crossing_execution_state_is_better(
   candidate : ElkLayeredCrossingExecutionState,
   incumbent : ElkLayeredCrossingExecutionState,
   objective_context : ElkLayeredCrossingObjectiveContext,
+  components : ElkLayeredCrossingComponentBundle,
   input : ElkLayeredCrossingPhaseInput,
   config : ElkLayeredCrossingOptimizationConfig,
 ) -> Bool {
-  let candidate_objective = evaluate_crossing_objective(
+  let candidate_objective = evaluate_crossing_objective_with_counter(
     candidate.post_refinement_rank_node_ids_by_rank,
     objective_context,
+    components,
   )
-  let incumbent_objective = evaluate_crossing_objective(
+  let incumbent_objective = evaluate_crossing_objective_with_counter(
     incumbent.post_refinement_rank_node_ids_by_rank,
     objective_context,
+    components,
   )
-  if candidate_objective.layered_crossings <
-    incumbent_objective.layered_crossings {
+  if crossing_objective_is_better(candidate_objective, incumbent_objective) {
     return true
   }
-  if candidate_objective.layered_crossings >
-    incumbent_objective.layered_crossings {
-    return false
-  }
-  if candidate_objective.global_crossings < incumbent_objective.global_crossings {
-    return true
-  }
-  if candidate_objective.global_crossings > incumbent_objective.global_crossings {
+  if crossing_objective_is_better(incumbent_objective, candidate_objective) {
     return false
   }
   if config.trial_model_order_inversion_influence <= 0.0 {
@@ -198,9 +193,36 @@ fn crossing_execution_state_is_better(
 }
 
 ///|
+fn crossing_objective_is_better(
+  candidate : ElkLayeredCrossingObjective,
+  incumbent : ElkLayeredCrossingObjective,
+) -> Bool {
+  candidate.layered_crossings < incumbent.layered_crossings
+}
+
+///|
+fn should_continue_crossing_trial_pass(
+  config : ElkLayeredCrossingOptimizationConfig,
+  pass_changed : Bool,
+  pass_objective : ElkLayeredCrossingObjective,
+  previous_pass_objective : ElkLayeredCrossingObjective?,
+) -> Bool {
+  match config.trial_continuation_policy {
+    ContinueWhilePassChanges => pass_changed
+    ContinueWhileObjectiveImproves =>
+      match previous_pass_objective {
+        Some(previous_objective) =>
+          crossing_objective_is_better(pass_objective, previous_objective)
+        None => true
+      }
+  }
+}
+
+///|
 fn execute_crossing_phase_once_with_plan_and_seed(
   input : ElkLayeredCrossingPhaseInput,
   plan : ElkLayeredCrossingExecutionPlan,
+  components : ElkLayeredCrossingComponentBundle,
   seed_rank_node_ids_by_rank : Map[Int, Array[String]],
   initial_forward_sweep : Bool,
 ) -> ElkLayeredCrossingExecutionState {
@@ -209,74 +231,69 @@ fn execute_crossing_phase_once_with_plan_and_seed(
   let objective_context = build_crossing_objective_context_from_phase_input(
     input,
   )
-  let optimized_rank_node_ids_by_rank = seed_rank_node_ids_by_rank
+  let sweep_rank_node_ids_by_rank = seed_rank_node_ids_by_rank
   let sweep_input = build_crossing_sweep_input_from_phase_input(
-    optimized_rank_node_ids_by_rank, input, config,
+    sweep_rank_node_ids_by_rank, input, config,
   )
   let sweep_pass_summaries : Array[ElkLayeredCrossingSweepPassSummary] = []
-  let trace_rank_node_ids_by_rank = clone_rank_node_ids_by_rank(
-    optimized_rank_node_ids_by_rank,
+  let mut best_post_sweep_rank_node_ids_by_rank = clone_rank_node_ids_by_rank(
+    sweep_rank_node_ids_by_rank,
     input.max_rank,
   )
-  let trace_sweep_input = build_crossing_sweep_input_from_phase_input(
-    trace_rank_node_ids_by_rank, input, config,
+  let mut best_post_sweep_objective = evaluate_crossing_objective_with_counter(
+    best_post_sweep_rank_node_ids_by_rank, objective_context, components,
   )
+  let mut previous_pass_objective : ElkLayeredCrossingObjective? = None
   let mut pass = 0
   let mut forward_sweep = initial_forward_sweep
   while pass < config.sweep_pass_count {
-    let changed = sweep_rank_order_once_from_input_with_kernel(
-      trace_sweep_input,
-      plan.sweep_kernel,
-      forward_sweep,
+    let changed = apply_crossing_sweep_heuristic_once(
+      sweep_input, forward_sweep, components,
+    )
+    let pass_objective = evaluate_crossing_objective_with_counter(
+      sweep_input.rank_node_ids_by_rank,
+      objective_context,
+      components,
     )
     sweep_pass_summaries.push({
       pass_index: pass,
       sweep_direction: crossing_sweep_direction_tag(forward_sweep),
       changed,
-      objective: evaluate_crossing_objective(
-        trace_sweep_input.rank_node_ids_by_rank,
-        objective_context,
-      ),
+      objective: pass_objective,
       rank_node_ids_by_rank: clone_rank_node_ids_by_rank(
-        trace_sweep_input.rank_node_ids_by_rank,
+        sweep_input.rank_node_ids_by_rank,
         input.max_rank,
       ),
     })
-    if !changed {
+    if crossing_objective_is_better(pass_objective, best_post_sweep_objective) {
+      best_post_sweep_objective = pass_objective
+      best_post_sweep_rank_node_ids_by_rank = clone_rank_node_ids_by_rank(
+        sweep_input.rank_node_ids_by_rank,
+        input.max_rank,
+      )
+    }
+    let should_continue = should_continue_crossing_trial_pass(
+      config, changed, pass_objective, previous_pass_objective,
+    )
+    previous_pass_objective = Some(pass_objective)
+    if !should_continue {
       break
     }
     forward_sweep = !forward_sweep
-    pass += 1
+    pass = pass + 1
   }
-  if initial_forward_sweep {
-    optimize_rank_order_with_sweep_passes_and_kernel(
-      sweep_input.rank_node_ids_by_rank,
-      sweep_input.max_rank,
-      sweep_input.predecessors_by_node_id,
-      sweep_input.successors_by_node_id,
-      sweep_input.order_index_by_node_id,
-      sweep_input.preserve_current_order_on_tie,
-      config.sweep_pass_count,
-      plan.sweep_kernel,
-    )
-  } else {
-    optimize_rank_order_with_sweep_passes_from_input_and_start_direction(
-      sweep_input,
-      config.sweep_pass_count,
-      plan.sweep_kernel,
-      false,
-    )
-  }
-  let post_sweep_rank_node_ids_by_rank = clone_rank_node_ids_by_rank(
-    optimized_rank_node_ids_by_rank,
+  let post_sweep_rank_node_ids_by_rank = best_post_sweep_rank_node_ids_by_rank
+  let optimized_rank_node_ids_by_rank = clone_rank_node_ids_by_rank(
+    sweep_input.rank_node_ids_by_rank,
     input.max_rank,
   )
-  apply_crossing_local_refinement_kernels(
+  apply_crossing_constraint_resolver(
     build_crossing_refinement_input_from_phase_input(
       optimized_rank_node_ids_by_rank, input,
     ),
     config,
     plan.local_refinement_kernels,
+    components,
   )
   {
     post_sweep_rank_node_ids_by_rank,
@@ -290,6 +307,7 @@ fn run_crossing_phase_with_plan(
   input : ElkLayeredCrossingPhaseInput,
   plan : ElkLayeredCrossingExecutionPlan,
 ) -> ElkLayeredCrossingPhaseResult {
+  let components = build_crossing_component_bundle(plan)
   let objective_context = build_crossing_objective_context_from_phase_input(
     input,
   )
@@ -297,13 +315,15 @@ fn run_crossing_phase_with_plan(
     input, plan,
   )
   let execution_state = execution_trace.execution_state
-  let post_sweep_objective = evaluate_crossing_objective(
+  let post_sweep_objective = evaluate_crossing_objective_with_counter(
     execution_state.post_sweep_rank_node_ids_by_rank,
     objective_context,
+    components,
   )
-  let optimized_objective = evaluate_crossing_objective(
+  let optimized_objective = evaluate_crossing_objective_with_counter(
     execution_state.post_refinement_rank_node_ids_by_rank,
     objective_context,
+    components,
   )
   {
     post_sweep_rank_node_ids_by_rank: execution_state.post_sweep_rank_node_ids_by_rank,
@@ -321,6 +341,7 @@ fn execute_crossing_phase_with_plan_with_trial_trace(
   plan : ElkLayeredCrossingExecutionPlan,
 ) -> ElkLayeredCrossingExecutionTrace {
   let config = plan.config
+  let components = build_crossing_component_bundle(plan)
   let objective_context = build_crossing_objective_context_from_phase_input(
     input,
   )
@@ -337,6 +358,7 @@ fn execute_crossing_phase_with_plan_with_trial_trace(
         let trial_execution_state = execute_crossing_phase_once_with_plan_and_seed(
           input,
           plan,
+          components,
           build_crossing_trial_seed_rank_node_ids_by_rank(
             input.rank_node_ids_by_rank,
             input.max_rank,
@@ -345,13 +367,15 @@ fn execute_crossing_phase_with_plan_with_trial_trace(
           ),
           initial_forward_sweep,
         )
-        let post_sweep_objective = evaluate_crossing_objective(
+        let post_sweep_objective = evaluate_crossing_objective_with_counter(
           trial_execution_state.post_sweep_rank_node_ids_by_rank,
           objective_context,
+          components,
         )
-        let optimized_objective = evaluate_crossing_objective(
+        let optimized_objective = evaluate_crossing_objective_with_counter(
           trial_execution_state.post_refinement_rank_node_ids_by_rank,
           objective_context,
+          components,
         )
         trial_summaries.push({
           trial_index,
@@ -371,7 +395,8 @@ fn execute_crossing_phase_with_plan_with_trial_trace(
         match best_execution_state {
           Some(incumbent) =>
             if crossing_execution_state_is_better(
-                trial_execution_state, incumbent, objective_context, input, config,
+                trial_execution_state, incumbent, objective_context, components,
+                input, config,
               ) {
               best_execution_state = Some(trial_execution_state)
               selected_trial_index = trial_index
@@ -389,6 +414,7 @@ fn execute_crossing_phase_with_plan_with_trial_trace(
           let fallback_execution_state = execute_crossing_phase_once_with_plan_and_seed(
             input,
             plan,
+            components,
             build_crossing_trial_seed_rank_node_ids_by_rank(
               input.rank_node_ids_by_rank,
               input.max_rank,
@@ -402,13 +428,15 @@ fn execute_crossing_phase_with_plan_with_trial_trace(
             seed_kind: crossing_trial_seed_kind_tag(0),
             initial_sweep_direction: crossing_sweep_direction_tag(true),
             sweep_pass_summaries: fallback_execution_state.sweep_pass_summaries,
-            post_sweep_objective: evaluate_crossing_objective(
+            post_sweep_objective: evaluate_crossing_objective_with_counter(
               fallback_execution_state.post_sweep_rank_node_ids_by_rank,
               objective_context,
+              components,
             ),
-            optimized_objective: evaluate_crossing_objective(
+            optimized_objective: evaluate_crossing_objective_with_counter(
               fallback_execution_state.post_refinement_rank_node_ids_by_rank,
               objective_context,
+              components,
             ),
             model_order_inversion_score: rank_order_model_inversion_score(
               fallback_execution_state.post_refinement_rank_node_ids_by_rank,
