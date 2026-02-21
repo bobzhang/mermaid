@@ -1,4 +1,65 @@
 ///|
+
+///|
+priv struct ElkLayeredCrossingSweepInput {
+  rank_node_ids_by_rank : Map[Int, Array[String]]
+  max_rank : Int
+  predecessors_by_node_id : Map[String, Array[String]]
+  successors_by_node_id : Map[String, Array[String]]
+  order_index_by_node_id : Map[String, Int]
+  preserve_current_order_on_tie : Bool
+}
+
+///|
+fn build_crossing_sweep_input(
+  rank_node_ids_by_rank : Map[Int, Array[String]],
+  max_rank : Int,
+  predecessors_by_node_id : Map[String, Array[String]],
+  successors_by_node_id : Map[String, Array[String]],
+  order_index_by_node_id : Map[String, Int],
+  preserve_current_order_on_tie : Bool,
+) -> ElkLayeredCrossingSweepInput {
+  {
+    rank_node_ids_by_rank,
+    max_rank,
+    predecessors_by_node_id,
+    successors_by_node_id,
+    order_index_by_node_id,
+    preserve_current_order_on_tie,
+  }
+}
+
+///|
+fn crossing_preserve_current_order_on_tie(
+  node_count : Int,
+  edge_count : Int,
+  config : ElkLayeredCrossingOptimizationConfig,
+) -> Bool {
+  node_count > config.preserve_order_node_threshold ||
+  edge_count > config.preserve_order_edge_threshold
+}
+
+///|
+fn build_crossing_sweep_input_from_phase_input(
+  rank_node_ids_by_rank : Map[Int, Array[String]],
+  input : ElkLayeredCrossingPhaseInput,
+  config : ElkLayeredCrossingOptimizationConfig,
+) -> ElkLayeredCrossingSweepInput {
+  build_crossing_sweep_input(
+    rank_node_ids_by_rank,
+    input.max_rank,
+    input.predecessors_by_node_id,
+    input.successors_by_node_id,
+    input.order_index_by_node_id,
+    crossing_preserve_current_order_on_tie(
+      input.node_count,
+      input.edge_count,
+      config,
+    ),
+  )
+}
+
+///|
 priv struct NodeNeighborOrderKey {
   has_center : Bool
   mean_scaled : Int
