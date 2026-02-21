@@ -283,14 +283,11 @@ fn rank_layers(
 
 ///|
 fn dump_case_trace(case_name : String) -> Bool {
-  let kernel = if case_name == "case1" {
-    Some(case1_kernel())
-  } else if case_name == "case2" {
-    Some(case2_kernel())
-  } else if case_name == "case3" {
-    Some(case3_kernel())
-  } else {
-    None
+  let kernel = match case_name {
+    "case1" => Some(case1_kernel())
+    "case2" => Some(case2_kernel())
+    "case3" => Some(case3_kernel())
+    _ => None
   }
   match kernel {
     Some(found) => {
@@ -384,9 +381,9 @@ fn run() -> Unit {
       if case_name == "help" {
         print_usage()
       } else if case_name == "all" {
-        let _ = dump_case_trace("case1")
-        let _ = dump_case_trace("case2")
-        let _ = dump_case_trace("case3")
+        for case_name in ["case1", "case2", "case3"] {
+          let _ = dump_case_trace(case_name)
+        }
       } else if !dump_case_trace(case_name) {
         println("Error: unknown case '\{case_name}'")
         print_usage()

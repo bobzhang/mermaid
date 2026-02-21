@@ -238,14 +238,11 @@ fn long_span_kernel() -> ElkTraceKernel {
 
 ///|
 fn kernel_by_case_name(case_name : String) -> ElkTraceKernel? {
-  if case_name == "fanout" {
-    Some(fanout_kernel())
-  } else if case_name == "feedback_mesh" {
-    Some(feedback_mesh_kernel())
-  } else if case_name == "long_span" {
-    Some(long_span_kernel())
-  } else {
-    None
+  match case_name {
+    "fanout" => Some(fanout_kernel())
+    "feedback_mesh" => Some(feedback_mesh_kernel())
+    "long_span" => Some(long_span_kernel())
+    _ => None
   }
 }
 
@@ -311,12 +308,10 @@ fn run() -> Unit {
         }
       } else if parsed_args.case_name is Some(case_name) {
         if case_name == "all" {
-          println("CASE\tfanout")
-          let _ = dump_case_trace("fanout")
-          println("CASE\tfeedback_mesh")
-          let _ = dump_case_trace("feedback_mesh")
-          println("CASE\tlong_span")
-          let _ = dump_case_trace("long_span")
+          for case_name in ["fanout", "feedback_mesh", "long_span"] {
+            println("CASE\t\{case_name}")
+            let _ = dump_case_trace(case_name)
+          }
         } else if !dump_case_trace(case_name) {
           println("Error: unknown case '\{case_name}'")
           print_usage()
