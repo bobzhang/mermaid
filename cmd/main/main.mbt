@@ -205,39 +205,6 @@ fn print_routed_edge_points(
 }
 
 ///|
-fn bool_literal(value : Bool) -> String {
-  if value {
-    "true"
-  } else {
-    "false"
-  }
-}
-
-///|
-fn sorted_int_keys_for_barycenters(
-  entries : Map[Int, Map[String, String]],
-) -> Array[Int] {
-  let keys : Array[Int] = []
-  for rank, _ in entries {
-    keys.push(rank)
-  }
-  keys.sort()
-  keys
-}
-
-///|
-fn sorted_string_keys_for_barycenter_rank(
-  entries : Map[String, String],
-) -> Array[String] {
-  let keys : Array[String] = []
-  for node_id, _ in entries {
-    keys.push(node_id)
-  }
-  keys.sort()
-  keys
-}
-
-///|
 fn print_dagre_order_trace(
   input : String,
   options : @model.RenderOptions,
@@ -268,17 +235,33 @@ fn print_dagre_order_trace(
         }
       }
       for step in trace.sweep_step_trace {
+        let incoming_literal = if step.incoming_from_neighbor {
+          "true"
+        } else {
+          "false"
+        }
+        let bias_literal = if step.bias_right { "true" } else { "false" }
         println(
-          "PASS\t\{step.pass_index}\t\{bool_literal(step.incoming_from_neighbor)}\t\{bool_literal(step.bias_right)}\t\{step.candidate_crossings}",
+          "PASS\t\{step.pass_index}\t\{incoming_literal}\t\{bias_literal}\t\{step.candidate_crossings}",
         )
         for rank, node_ids in step.rank_nodes {
           let joined_node_ids = node_ids.join(",")
           println("PASS_LAYER\t\{step.pass_index}\t\{rank}\t\{joined_node_ids}")
         }
-        for rank in sorted_int_keys_for_barycenters(step.barycenters_by_rank) {
+        let sorted_ranks : Array[Int] = []
+        for rank, _ in step.barycenters_by_rank {
+          sorted_ranks.push(rank)
+        }
+        sorted_ranks.sort()
+        for rank in sorted_ranks {
           match step.barycenters_by_rank.get(rank) {
-            Some(entries) =>
-              for node_id in sorted_string_keys_for_barycenter_rank(entries) {
+            Some(entries) => {
+              let sorted_node_ids : Array[String] = []
+              for node_id, _ in entries {
+                sorted_node_ids.push(node_id)
+              }
+              sorted_node_ids.sort()
+              for node_id in sorted_node_ids {
                 match entries.get(node_id) {
                   Some(value) =>
                     println(
@@ -287,6 +270,7 @@ fn print_dagre_order_trace(
                   None => ()
                 }
               }
+            }
             None => ()
           }
         }
