@@ -325,6 +325,30 @@ test "elk layered rank order strategy uses optimized seed order for large native
 }
 
 ///|
+test "elk layered seed tie policy preserves candidate only for seed-order strategy" {
+  assert_true(
+    seed_candidate_tie_policy_for_strategy(SeedOrderOnly)
+    is PreserveCurrentCandidate,
+  )
+  assert_true(
+    seed_candidate_tie_policy_for_strategy(OptimizedSeedOrder)
+    is PreferLowerGlobalCrossings,
+  )
+}
+
+///|
+test "elk layered virtual tie policy defaults to objective tie-break for optimized strategies" {
+  assert_true(
+    virtual_candidate_tie_policy_for_strategy(SeedOrderOnly)
+    is PreserveCurrentCandidate,
+  )
+  assert_true(
+    virtual_candidate_tie_policy_for_strategy(OptimizedSeedWithVirtualCandidate)
+    is PreferLowerGlobalCrossings,
+  )
+}
+
+///|
 test "elk layered optimized seed selector prefers lower crossing score" {
   let optimized_seed_rank_node_ids_by_rank : Map[Int, Array[String]] = {
     0: ["A", "B"],
@@ -348,8 +372,15 @@ test "elk layered optimized seed selector prefers lower crossing score" {
     "D": [],
   }
   let (selected_rank_node_ids_by_rank, selected_crossing_score, selected_source) = select_optimized_seed_rank_order_candidate(
-    optimized_seed_rank_node_ids_by_rank, 9, optimized_reversed_seed_rank_node_ids_by_rank,
-    2, 1, order_index_by_node_id, rank_by_node_id, successors_by_node_id,
+    PreferLowerGlobalCrossings,
+    optimized_seed_rank_node_ids_by_rank,
+    9,
+    optimized_reversed_seed_rank_node_ids_by_rank,
+    2,
+    1,
+    order_index_by_node_id,
+    rank_by_node_id,
+    successors_by_node_id,
   )
   assert_eq(selected_source, "optimized-reversed-seed")
   assert_eq(selected_crossing_score, 2)
@@ -382,8 +413,15 @@ test "elk layered optimized seed selector keeps seed order on crossing ties" {
     "D": [],
   }
   let (selected_rank_node_ids_by_rank, selected_crossing_score, selected_source) = select_optimized_seed_rank_order_candidate(
-    optimized_seed_rank_node_ids_by_rank, 4, optimized_reversed_seed_rank_node_ids_by_rank,
-    4, 1, order_index_by_node_id, rank_by_node_id, successors_by_node_id,
+    PreferLowerGlobalCrossings,
+    optimized_seed_rank_node_ids_by_rank,
+    4,
+    optimized_reversed_seed_rank_node_ids_by_rank,
+    4,
+    1,
+    order_index_by_node_id,
+    rank_by_node_id,
+    successors_by_node_id,
   )
   assert_eq(selected_source, "optimized-seed")
   assert_eq(selected_crossing_score, 4)

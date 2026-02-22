@@ -123,6 +123,12 @@ priv enum ElkLayeredRankOrderStrategy {
 }
 
 ///|
+priv enum ElkLayeredRankCandidateTiePolicy {
+  PreserveCurrentCandidate
+  PreferLowerGlobalCrossings
+}
+
+///|
 priv struct ElkLayeredRankOrderDebugState {
   crossing_sweep_kernel : ElkLayeredCrossingSweepKernel
   crossing_sweep_pass_count : Int
@@ -172,6 +178,26 @@ fn select_elk_layered_rank_order_strategy(
     OptimizedSeedWithVirtualCandidate
   } else {
     OptimizedSeedOrder
+  }
+}
+
+///|
+fn seed_candidate_tie_policy_for_strategy(
+  strategy : ElkLayeredRankOrderStrategy,
+) -> ElkLayeredRankCandidateTiePolicy {
+  match strategy {
+    SeedOrderOnly => PreserveCurrentCandidate
+    _ => PreferLowerGlobalCrossings
+  }
+}
+
+///|
+fn virtual_candidate_tie_policy_for_strategy(
+  strategy : ElkLayeredRankOrderStrategy,
+) -> ElkLayeredRankCandidateTiePolicy {
+  match strategy {
+    SeedOrderOnly => PreserveCurrentCandidate
+    _ => PreferLowerGlobalCrossings
   }
 }
 
@@ -311,7 +337,27 @@ fn compare_rank_order_candidate_tie_break(
 }
 
 ///|
+fn compare_rank_order_candidates_on_crossing_tie(
+  tie_policy : ElkLayeredRankCandidateTiePolicy,
+  left_rank_node_ids_by_rank : Map[Int, Array[String]],
+  right_rank_node_ids_by_rank : Map[Int, Array[String]],
+  max_rank : Int,
+  rank_by_node_id : Map[String, Int],
+  successors_by_node_id : Map[String, Array[String]],
+) -> Int {
+  match tie_policy {
+    PreserveCurrentCandidate => 0
+    PreferLowerGlobalCrossings =>
+      compare_rank_order_candidate_tie_break(
+        left_rank_node_ids_by_rank, right_rank_node_ids_by_rank, max_rank, rank_by_node_id,
+        successors_by_node_id,
+      )
+  }
+}
+
+///|
 fn select_optimized_seed_rank_order_candidate(
+  tie_policy : ElkLayeredRankCandidateTiePolicy,
   optimized_seed_rank_node_ids_by_rank : Map[Int, Array[String]],
   optimized_seed_crossing_score : Int,
   optimized_reversed_seed_rank_node_ids_by_rank : Map[Int, Array[String]],
@@ -328,8 +374,8 @@ fn select_optimized_seed_rank_order_candidate(
       optimized_seed_crossing_score,
     )
   } else {
-    compare_rank_order_candidate_tie_break(
-      optimized_reversed_seed_rank_node_ids_by_rank, optimized_seed_rank_node_ids_by_rank,
+    compare_rank_order_candidates_on_crossing_tie(
+      tie_policy, optimized_reversed_seed_rank_node_ids_by_rank, optimized_seed_rank_node_ids_by_rank,
       max_rank, rank_by_node_id, successors_by_node_id,
     )
   }
@@ -357,6 +403,12 @@ fn build_rank_node_ids_by_rank_for_order_strategy_with_debug(
   successors_by_node_id : Map[String, Array[String]],
   predecessors_by_node_id : Map[String, Array[String]],
 ) -> (Map[Int, Array[String]], ElkLayeredRankOrderDebugState) {
+  let seed_candidate_tie_policy = seed_candidate_tie_policy_for_strategy(
+    strategy,
+  )
+  let virtual_candidate_tie_policy = virtual_candidate_tie_policy_for_strategy(
+    strategy,
+  )
   let optimized_base_crossing_result = build_optimized_rank_node_ids_by_rank_with_plan_and_trace(
     crossing_execution_plan,
     base_rank_node_ids_by_rank,
@@ -414,9 +466,9 @@ fn build_rank_node_ids_by_rank_for_order_strategy_with_debug(
     optimized_seed_selected_crossing_score,
     optimized_seed_selected_source,
   ) = select_optimized_seed_rank_order_candidate(
-    optimized_base_rank_node_ids_by_rank, optimized_seed_crossing_score, optimized_reversed_seed_rank_node_ids_by_rank,
-    optimized_reversed_seed_crossing_score, max_rank, order_index_by_node_id, rank_by_node_id,
-    successors_by_node_id,
+    seed_candidate_tie_policy, optimized_base_rank_node_ids_by_rank, optimized_seed_crossing_score,
+    optimized_reversed_seed_rank_node_ids_by_rank, optimized_reversed_seed_crossing_score,
+    max_rank, order_index_by_node_id, rank_by_node_id, successors_by_node_id,
   )
   let optimized_seed_selected_post_sweep_rank_node_ids_by_rank = if optimized_seed_selected_source ==
     "optimized-reversed-seed" {
@@ -560,8 +612,8 @@ fn build_rank_node_ids_by_rank_for_order_strategy_with_debug(
           optimized_seed_selected_crossing_score,
         )
       } else {
-        compare_rank_order_candidate_tie_break(
-          real_virtual_rank_node_ids_by_rank, optimized_seed_selected_rank_node_ids_by_rank,
+        compare_rank_order_candidates_on_crossing_tie(
+          virtual_candidate_tie_policy, real_virtual_rank_node_ids_by_rank, optimized_seed_selected_rank_node_ids_by_rank,
           max_rank, rank_by_node_id, successors_by_node_id,
         )
       }
