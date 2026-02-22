@@ -16,6 +16,7 @@
  *   bun run scripts/compare_elk_crossing_rank_order.ts --trial-continuation-policy objective-improves fixtures/layout_stress_001_dense_dag.mmd
  *   bun run scripts/compare_elk_crossing_rank_order.ts --local-refinement-profile none fixtures/layout_stress_001_dense_dag.mmd
  *   bun run scripts/compare_elk_crossing_rank_order.ts --model-order-inversion-influence 0.25 fixtures/layout_stress_001_dense_dag.mmd
+ *   bun run scripts/compare_elk_crossing_rank_order.ts --upstream-layer-source layer-logs fixtures/layout_stress_001_dense_dag.mmd
  *   bun run scripts/compare_elk_crossing_rank_order.ts --details --limit 3 fixtures/layout_stress_013_rl_dual_scc_weave.mmd
  */
 
@@ -36,6 +37,11 @@ type LocalTrace = {
 type UpstreamPlacement = {
   majorByNodeId: Map<string, number>
   minorByNodeId: Map<string, number>
+}
+
+type UpstreamLayoutPayload = {
+  rows: Array<{ id: string; x: number; y: number }>
+  layers: Layering
 }
 
 type CaseMetrics = {
@@ -79,6 +85,7 @@ type CliOptions = {
     | 'rank-permutation'
     | 'adjacent-swap-then-rank-permutation'
   modelOrderInversionInfluence?: number
+  upstreamLayerSource: 'final-coordinates' | 'layer-logs'
 }
 
 type NeighborSummary = {
@@ -232,18 +239,26 @@ function parseLocalTrace(source: string, options: CliOptions): LocalTrace {
   return { inputNodeIds, inputEdges, rankLayers }
 }
 
-function parseJsonPlacement(raw: string): Array<{ id: string; x: number; y: number }> {
+function parseJsonUpstreamLayout(raw: string): UpstreamLayoutPayload {
   let parsed: unknown
   try {
     parsed = JSON.parse(raw)
   } catch (error) {
     fail(`invalid upstream placement payload: ${String(error)}`)
   }
-  if (!Array.isArray(parsed)) {
-    fail('invalid upstream placement payload: root is not an array')
+  if (!parsed || typeof parsed !== 'object') {
+    fail('invalid upstream placement payload: root is not an object')
+  }
+  const maybeRows = (parsed as { rows?: unknown }).rows
+  const maybeLayers = (parsed as { layers?: unknown }).layers
+  if (!Array.isArray(maybeRows)) {
+    fail('invalid upstream placement payload: rows is not an array')
+  }
+  if (!Array.isArray(maybeLayers)) {
+    fail('invalid upstream placement payload: layers is not an array')
   }
   const rows: Array<{ id: string; x: number; y: number }> = []
-  for (const row of parsed) {
+  for (const row of maybeRows) {
     if (!row || typeof row !== 'object') {
       fail('invalid upstream placement payload: row is not object')
     }
@@ -255,14 +270,30 @@ function parseJsonPlacement(raw: string): Array<{ id: string; x: number; y: numb
     }
     rows.push({ id: maybeId, x: maybeX, y: maybeY })
   }
-  return rows
+  const layers: Layering = []
+  for (const layer of maybeLayers) {
+    if (!Array.isArray(layer)) {
+      fail('invalid upstream placement payload: layer is not an array')
+    }
+    const normalizedLayer: string[] = []
+    for (const nodeId of layer) {
+      if (typeof nodeId !== 'string') {
+        fail('invalid upstream placement payload: layer node id is not a string')
+      }
+      normalizedLayer.push(nodeId)
+    }
+    if (normalizedLayer.length > 0) {
+      layers.push(normalizedLayer)
+    }
+  }
+  return { rows, layers }
 }
 
 function runUpstreamPlacement(
   inputNodeIds: string[],
   inputEdges: Edge[],
   direction: Direction,
-): UpstreamPlacement {
+): { placement: UpstreamPlacement; layers: Layering } {
   const payload = {
     inputNodeIds,
     inputEdges,
@@ -291,16 +322,55 @@ function runUpstreamPlacement(
     '    targets: [edge.target],',
     '  })),',
     '};',
-    'new ELK().layout(graph).then(out => {',
+    'function collectLoggingLines(node, out) {',
+    '  if (!node) return;',
+    '  if (Array.isArray(node.logs)) {',
+    '    for (const line of node.logs) out.push(String(line));',
+    '  }',
+    '  if (Array.isArray(node.children)) {',
+    '    for (const child of node.children) collectLoggingLines(child, out);',
+    '  }',
+    '}',
+    "new ELK().layout(graph, { logging: true }).then(out => {",
     '  const rows = (out.children ?? []).map(child => ({ id: child.id, x: child.x, y: child.y }));',
-    '  process.stdout.write(JSON.stringify(rows));',
+    '  const loggingLines = [];',
+    '  collectLoggingLines(out.logging, loggingLines);',
+    '  const layersByRank = new Map();',
+    '  const realNodeIds = new Set(payload.inputNodeIds);',
+    '  for (const line of loggingLines) {',
+    '    const match = /^Layer\\s+(\\d+):\\s+L_\\d+\\[(.*)\\]$/.exec(line);',
+    '    if (!match) continue;',
+    '    const rank = Number.parseInt(match[1], 10);',
+    '    if (!Number.isFinite(rank)) continue;',
+    '    const rawNodeIds = match[2].trim() === "" ? [] : match[2].split(",");',
+    '    const layer = [];',
+    '    for (const rawNodeId of rawNodeIds) {',
+    '      const token = rawNodeId.trim();',
+    '      if (token === "") continue;',
+    '      if (token.startsWith("n_g.")) {',
+    '        const nodeId = token.slice("n_g.".length);',
+    '        if (realNodeIds.has(nodeId)) layer.push(nodeId);',
+    '      } else if (realNodeIds.has(token)) {',
+    '        layer.push(token);',
+    '      }',
+    '    }',
+    '    layersByRank.set(rank, layer);',
+    '  }',
+    '  const ranks = [...layersByRank.keys()].sort((a, b) => a - b);',
+    '  const layers = [];',
+    '  for (const rank of ranks) {',
+    '    const layer = layersByRank.get(rank) ?? [];',
+    '    if (layer.length > 0) layers.push(layer);',
+    '  }',
+    '  process.stdout.write(JSON.stringify({ rows, layers }));',
     '}).catch(err => {',
     '  console.error(String(err));',
     '  process.exit(1);',
     '});',
   ].join('\n')
   const stdout = runOrThrow('node', ['-e', script, JSON.stringify(payload)])
-  const rows = parseJsonPlacement(stdout)
+  const parsed = parseJsonUpstreamLayout(stdout)
+  const rows = parsed.rows
   const majorByNodeId = new Map<string, number>()
   const minorByNodeId = new Map<string, number>()
   const majorAxis = majorAxisByDirection(direction)
@@ -313,7 +383,10 @@ function runUpstreamPlacement(
       minorByNodeId.set(row.id, row.x)
     }
   }
-  return { majorByNodeId, minorByNodeId }
+  return {
+    placement: { majorByNodeId, minorByNodeId },
+    layers: parsed.layers,
+  }
 }
 
 function buildLayersByMajor(
@@ -459,12 +532,19 @@ function compareFixture(fixturePath: string, options: CliOptions): CaseResult {
   const source = readFileSync(fixturePath, 'utf8')
   const direction = parseGraphDirection(source)
   const local = parseLocalTrace(source, options)
-  const upstream = runUpstreamPlacement(local.inputNodeIds, local.inputEdges, direction)
-  const upstreamLayers = buildLayersByMajor(
+  const upstream = runUpstreamPlacement(
     local.inputNodeIds,
-    upstream.majorByNodeId,
-    upstream.minorByNodeId,
+    local.inputEdges,
+    direction,
   )
+  const upstreamLayers =
+    options.upstreamLayerSource === 'layer-logs' && upstream.layers.length > 0
+      ? upstream.layers
+      : buildLayersByMajor(
+          local.inputNodeIds,
+          upstream.placement.majorByNodeId,
+          upstream.placement.minorByNodeId,
+        )
   const { selectedLayers, parity } = selectCloserUpstreamLayering(
     local.rankLayers,
     upstreamLayers,
@@ -526,6 +606,8 @@ function parseCliOptions(args: string[]): CliOptions {
     | 'adjacent-swap-then-rank-permutation'
     | undefined
   let modelOrderInversionInfluence: number | undefined
+  let upstreamLayerSource: 'final-coordinates' | 'layer-logs' =
+    'final-coordinates'
   const fixtures: string[] = []
   for (let i = 0; i < args.length; i += 1) {
     const arg = args[i]!
@@ -697,6 +779,19 @@ function parseCliOptions(args: string[]): CliOptions {
       i += 1
       continue
     }
+    if (arg === '--upstream-layer-source') {
+      const next = args[i + 1]
+      if (!next) fail('missing value after --upstream-layer-source')
+      const normalized = next.trim().toLowerCase()
+      if (normalized !== 'final-coordinates' && normalized !== 'layer-logs') {
+        fail(
+          "invalid --upstream-layer-source value, expected 'final-coordinates' or 'layer-logs'",
+        )
+      }
+      upstreamLayerSource = normalized
+      i += 1
+      continue
+    }
     if (arg.startsWith('--model-order-inversion-influence=')) {
       const raw = arg.slice('--model-order-inversion-influence='.length)
       const parsed = Number.parseFloat(raw)
@@ -708,6 +803,19 @@ function parseCliOptions(args: string[]): CliOptions {
       modelOrderInversionInfluence = parsed
       continue
     }
+    if (arg.startsWith('--upstream-layer-source=')) {
+      const normalized = arg
+        .slice('--upstream-layer-source='.length)
+        .trim()
+        .toLowerCase()
+      if (normalized !== 'final-coordinates' && normalized !== 'layer-logs') {
+        fail(
+          "invalid --upstream-layer-source value, expected 'final-coordinates' or 'layer-logs'",
+        )
+      }
+      upstreamLayerSource = normalized
+      continue
+    }
     if (arg.startsWith('--')) {
       fail(`unknown argument: ${arg}`)
     }
@@ -715,7 +823,7 @@ function parseCliOptions(args: string[]): CliOptions {
   }
   if (fixtures.length === 0) {
     fail(
-      'usage: bun run scripts/compare_elk_crossing_rank_order.ts [--details] [--limit N] [--trial-count N] [--sweep-pass-count N] [--sweep-kernel default|neighbor-mean|neighbor-median|edge-slot|port-rank] [--trial-continuation-policy default|pass-changes|objective-improves] [--local-refinement-profile default|none|adjacent-swap|rank-permutation|adjacent-swap-then-rank-permutation] [--model-order-inversion-influence N] <fixture.mmd> [more...]',
+      'usage: bun run scripts/compare_elk_crossing_rank_order.ts [--details] [--limit N] [--trial-count N] [--sweep-pass-count N] [--sweep-kernel default|neighbor-mean|neighbor-median|edge-slot|port-rank] [--trial-continuation-policy default|pass-changes|objective-improves] [--local-refinement-profile default|none|adjacent-swap|rank-permutation|adjacent-swap-then-rank-permutation] [--model-order-inversion-influence N] [--upstream-layer-source final-coordinates|layer-logs] <fixture.mmd> [more...]',
     )
   }
   return {
@@ -728,6 +836,7 @@ function parseCliOptions(args: string[]): CliOptions {
     trialContinuationPolicy,
     localRefinementProfile,
     modelOrderInversionInfluence,
+    upstreamLayerSource,
   }
 }
 

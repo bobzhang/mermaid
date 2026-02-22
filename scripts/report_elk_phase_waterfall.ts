@@ -18,6 +18,7 @@
  *   bun run scripts/report_elk_phase_waterfall.ts --trial-continuation-policy objective-improves --trial-count 5 --sweep-pass-count 6
  *   bun run scripts/report_elk_phase_waterfall.ts --local-refinement-profile none --trial-count 5 --sweep-pass-count 6
  *   bun run scripts/report_elk_phase_waterfall.ts --model-order-inversion-influence 0.25 --trial-count 5 --sweep-pass-count 6
+ *   bun run scripts/report_elk_phase_waterfall.ts --upstream-layer-source layer-logs
  */
 
 import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs'
@@ -43,6 +44,7 @@ type CliOptions = {
     | 'rank-permutation'
     | 'adjacent-swap-then-rank-permutation'
   modelOrderInversionInfluence?: number
+  upstreamLayerSource?: 'final-coordinates' | 'layer-logs'
 }
 
 type PhaseWaterfallReport = {
@@ -177,6 +179,7 @@ function parseCliOptions(args: string[]): CliOptions {
     | 'adjacent-swap-then-rank-permutation'
     | undefined
   let modelOrderInversionInfluence: number | undefined
+  let upstreamLayerSource: 'final-coordinates' | 'layer-logs' | undefined
   for (let i = 0; i < args.length; i += 1) {
     const arg = args[i]!
     if (arg === '--json') {
@@ -363,6 +366,38 @@ function parseCliOptions(args: string[]): CliOptions {
       modelOrderInversionInfluence = parsed
       continue
     }
+    if (arg === '--upstream-layer-source') {
+      const next = args[i + 1]
+      if (!next) fail('missing value after --upstream-layer-source')
+      const normalized = next.trim().toLowerCase()
+      if (
+        normalized !== 'final-coordinates' &&
+        normalized !== 'layer-logs'
+      ) {
+        fail(
+          "invalid --upstream-layer-source value, expected 'final-coordinates' or 'layer-logs'",
+        )
+      }
+      upstreamLayerSource = normalized
+      i += 1
+      continue
+    }
+    if (arg.startsWith('--upstream-layer-source=')) {
+      const normalized = arg
+        .slice('--upstream-layer-source='.length)
+        .trim()
+        .toLowerCase()
+      if (
+        normalized !== 'final-coordinates' &&
+        normalized !== 'layer-logs'
+      ) {
+        fail(
+          "invalid --upstream-layer-source value, expected 'final-coordinates' or 'layer-logs'",
+        )
+      }
+      upstreamLayerSource = normalized
+      continue
+    }
     fail(`unknown argument: ${arg}`)
   }
   return {
@@ -373,6 +408,7 @@ function parseCliOptions(args: string[]): CliOptions {
     trialContinuationPolicy,
     localRefinementProfile,
     modelOrderInversionInfluence,
+    upstreamLayerSource,
   }
 }
 
@@ -498,6 +534,9 @@ function parseCrossingRankOrder(options: CliOptions): {
       '--model-order-inversion-influence',
       String(options.modelOrderInversionInfluence),
     )
+  }
+  if (options.upstreamLayerSource !== undefined) {
+    args.push('--upstream-layer-source', options.upstreamLayerSource)
   }
   const stdout = runOrThrow('bun', args)
   const lines = stdout
@@ -926,6 +965,9 @@ function main(): void {
   )
   console.log(
     `sort_by_input_ports_mismatch_slots=${report.sortByInputPorts.mismatchedSlots}/${report.sortByInputPorts.comparableSlots}`,
+  )
+  console.log(
+    `crossing_rank_upstream_layer_source=${options.upstreamLayerSource ?? 'final-coordinates'}`,
   )
   console.log(
     `crossing_rank_order_mismatch=${report.crossingRankOrder.orderMismatched}/${report.crossingRankOrder.orderComparable}`,

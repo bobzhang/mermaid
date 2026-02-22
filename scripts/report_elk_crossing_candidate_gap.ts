@@ -15,6 +15,7 @@
  * Usage:
  *   bun run scripts/report_elk_crossing_candidate_gap.ts
  *   bun run scripts/report_elk_crossing_candidate_gap.ts --json /tmp/candidate_gap.json
+ *   bun run scripts/report_elk_crossing_candidate_gap.ts --upstream-layer-source layer-logs
  */
 
 import { spawnSync } from 'node:child_process'
@@ -51,6 +52,7 @@ type FullReport = {
 
 type CliOptions = {
   jsonPath?: string
+  upstreamLayerSource: 'final-coordinates' | 'layer-logs'
 }
 
 const STRESS_FIXTURES = [
@@ -97,6 +99,8 @@ function runOrThrow(
 
 function parseCliOptions(args: string[]): CliOptions {
   let jsonPath: string | undefined
+  let upstreamLayerSource: 'final-coordinates' | 'layer-logs' =
+    'final-coordinates'
   for (let i = 0; i < args.length; i += 1) {
     const arg = args[i]!
     if (arg === '--json') {
@@ -112,9 +116,41 @@ function parseCliOptions(args: string[]): CliOptions {
       jsonPath = value
       continue
     }
+    if (arg === '--upstream-layer-source') {
+      const next = args[i + 1]
+      if (!next) fail('missing value after --upstream-layer-source')
+      const normalized = next.trim().toLowerCase()
+      if (
+        normalized !== 'final-coordinates' &&
+        normalized !== 'layer-logs'
+      ) {
+        fail(
+          "invalid --upstream-layer-source value, expected 'final-coordinates' or 'layer-logs'",
+        )
+      }
+      upstreamLayerSource = normalized
+      i += 1
+      continue
+    }
+    if (arg.startsWith('--upstream-layer-source=')) {
+      const normalized = arg
+        .slice('--upstream-layer-source='.length)
+        .trim()
+        .toLowerCase()
+      if (
+        normalized !== 'final-coordinates' &&
+        normalized !== 'layer-logs'
+      ) {
+        fail(
+          "invalid --upstream-layer-source value, expected 'final-coordinates' or 'layer-logs'",
+        )
+      }
+      upstreamLayerSource = normalized
+      continue
+    }
     fail(`unknown argument: ${arg}`)
   }
-  return { jsonPath }
+  return { jsonPath, upstreamLayerSource }
 }
 
 function parseGraphDirection(source: string): Direction {
@@ -146,6 +182,11 @@ type ParsedTrace = {
   inputNodeIds: string[]
   inputEdges: Array<{ source: string; target: string }>
   layersByCandidate: Record<CandidateName, Layering>
+}
+
+type UpstreamLayoutPayload = {
+  rows: Array<{ id: string; x: number; y: number }>
+  layers: Layering
 }
 
 function parseRankLayersByPrefix(
@@ -224,11 +265,19 @@ function parseLocalTrace(source: string): ParsedTrace {
   }
 }
 
-function parseJsonPlacement(raw: string): Array<{ id: string; x: number; y: number }> {
+function parseJsonUpstreamLayout(raw: string): UpstreamLayoutPayload {
   const parsed = JSON.parse(raw) as unknown
-  if (!Array.isArray(parsed)) fail('invalid upstream payload: not an array')
+  if (!parsed || typeof parsed !== 'object') {
+    fail('invalid upstream payload: not an object')
+  }
+  const maybeRows = (parsed as { rows?: unknown }).rows
+  const maybeLayers = (parsed as { layers?: unknown }).layers
+  if (!Array.isArray(maybeRows)) fail('invalid upstream payload: rows is not an array')
+  if (!Array.isArray(maybeLayers)) {
+    fail('invalid upstream payload: layers is not an array')
+  }
   const rows: Array<{ id: string; x: number; y: number }> = []
-  for (const row of parsed) {
+  for (const row of maybeRows) {
     if (!row || typeof row !== 'object') fail('invalid upstream payload row')
     const maybeId = (row as { id?: unknown }).id
     const maybeX = (row as { x?: unknown }).x
@@ -238,13 +287,26 @@ function parseJsonPlacement(raw: string): Array<{ id: string; x: number; y: numb
     }
     rows.push({ id: maybeId, x: maybeX, y: maybeY })
   }
-  return rows
+  const layers: Layering = []
+  for (const layer of maybeLayers) {
+    if (!Array.isArray(layer)) fail('invalid upstream payload layer')
+    const normalizedLayer: string[] = []
+    for (const nodeId of layer) {
+      if (typeof nodeId !== 'string') {
+        fail('invalid upstream payload layer node id')
+      }
+      normalizedLayer.push(nodeId)
+    }
+    if (normalizedLayer.length > 0) layers.push(normalizedLayer)
+  }
+  return { rows, layers }
 }
 
 function runUpstreamLayers(
   inputNodeIds: string[],
   inputEdges: Array<{ source: string; target: string }>,
   direction: Direction,
+  upstreamLayerSource: 'final-coordinates' | 'layer-logs',
 ): Layering {
   const payload = {
     inputNodeIds,
@@ -274,16 +336,58 @@ function runUpstreamLayers(
     '    targets: [edge.target],',
     '  })),',
     '};',
-    'new ELK().layout(graph).then(out => {',
+    'function collectLoggingLines(node, out) {',
+    '  if (!node) return;',
+    '  if (Array.isArray(node.logs)) {',
+    '    for (const line of node.logs) out.push(String(line));',
+    '  }',
+    '  if (Array.isArray(node.children)) {',
+    '    for (const child of node.children) collectLoggingLines(child, out);',
+    '  }',
+    '}',
+    "new ELK().layout(graph, { logging: true }).then(out => {",
     '  const rows = (out.children ?? []).map(child => ({ id: child.id, x: child.x, y: child.y }));',
-    '  process.stdout.write(JSON.stringify(rows));',
+    '  const loggingLines = [];',
+    '  collectLoggingLines(out.logging, loggingLines);',
+    '  const layersByRank = new Map();',
+    '  const realNodeIds = new Set(payload.inputNodeIds);',
+    '  for (const line of loggingLines) {',
+    '    const match = /^Layer\\s+(\\d+):\\s+L_\\d+\\[(.*)\\]$/.exec(line);',
+    '    if (!match) continue;',
+    '    const rank = Number.parseInt(match[1], 10);',
+    '    if (!Number.isFinite(rank)) continue;',
+    '    const rawNodeIds = match[2].trim() === "" ? [] : match[2].split(",");',
+    '    const layer = [];',
+    '    for (const rawNodeId of rawNodeIds) {',
+    '      const token = rawNodeId.trim();',
+    '      if (token === "") continue;',
+    '      if (token.startsWith("n_g.")) {',
+    '        const nodeId = token.slice("n_g.".length);',
+    '        if (realNodeIds.has(nodeId)) layer.push(nodeId);',
+    '      } else if (realNodeIds.has(token)) {',
+    '        layer.push(token);',
+    '      }',
+    '    }',
+    '    layersByRank.set(rank, layer);',
+    '  }',
+    '  const ranks = [...layersByRank.keys()].sort((a, b) => a - b);',
+    '  const layers = [];',
+    '  for (const rank of ranks) {',
+    '    const layer = layersByRank.get(rank) ?? [];',
+    '    if (layer.length > 0) layers.push(layer);',
+    '  }',
+    '  process.stdout.write(JSON.stringify({ rows, layers }));',
     '}).catch(err => {',
     '  console.error(String(err));',
     '  process.exit(1);',
     '});',
   ].join('\n')
   const stdout = runOrThrow('node', ['-e', script, JSON.stringify(payload)])
-  const rows = parseJsonPlacement(stdout)
+  const parsed = parseJsonUpstreamLayout(stdout)
+  if (upstreamLayerSource === 'layer-logs' && parsed.layers.length > 0) {
+    return parsed.layers
+  }
+  const rows = parsed.rows
   const majorAxis = majorAxisByDirection(direction)
   const entries = rows
     .map(row => ({
@@ -327,13 +431,17 @@ function orderMismatchLayers(localLayers: Layering, upstreamLayers: Layering): n
   return mismatch
 }
 
-function compareFixture(fixture: string): CaseReport {
+function compareFixture(
+  fixture: string,
+  upstreamLayerSource: 'final-coordinates' | 'layer-logs',
+): CaseReport {
   const source = readFileSync(fixture, 'utf8')
   const local = parseLocalTrace(source)
   const upstream = runUpstreamLayers(
     local.inputNodeIds,
     local.inputEdges,
     parseGraphDirection(source),
+    upstreamLayerSource,
   )
   const seed = orderMismatchLayers(local.layersByCandidate.seed, upstream)
   const reversed = orderMismatchLayers(local.layersByCandidate.reversed, upstream)
@@ -355,7 +463,9 @@ function compareFixture(fixture: string): CaseReport {
 
 function main(): void {
   const options = parseCliOptions(process.argv.slice(2))
-  const cases = STRESS_FIXTURES.map(compareFixture)
+  const cases = STRESS_FIXTURES.map(fixture =>
+    compareFixture(fixture, options.upstreamLayerSource),
+  )
   const summary: SummaryReport = {
     fixtures: cases.length,
     perCandidateOrderMismatch: {
@@ -382,6 +492,7 @@ function main(): void {
   }
   console.log('\n=== summary ===')
   console.log(`fixtures=${summary.fixtures}`)
+  console.log(`upstream_layer_source=${options.upstreamLayerSource}`)
   console.log(
     `candidate_order_mismatch seed=${summary.perCandidateOrderMismatch.seed} reversed=${summary.perCandidateOrderMismatch.reversed} virtual=${summary.perCandidateOrderMismatch.virtual} selected=${summary.perCandidateOrderMismatch.selected} oracle=${summary.perCandidateOrderMismatch.oracleBest}`,
   )
