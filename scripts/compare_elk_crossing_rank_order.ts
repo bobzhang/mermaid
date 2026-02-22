@@ -15,6 +15,7 @@
  *   bun run scripts/compare_elk_crossing_rank_order.ts --sweep-kernel port-rank --trial-count 5 fixtures/layout_stress_001_dense_dag.mmd
  *   bun run scripts/compare_elk_crossing_rank_order.ts --trial-continuation-policy objective-improves fixtures/layout_stress_001_dense_dag.mmd
  *   bun run scripts/compare_elk_crossing_rank_order.ts --local-refinement-profile none fixtures/layout_stress_001_dense_dag.mmd
+ *   bun run scripts/compare_elk_crossing_rank_order.ts --seed-candidate-source-policy seed-only fixtures/layout_stress_001_dense_dag.mmd
  *   bun run scripts/compare_elk_crossing_rank_order.ts --model-order-inversion-influence 0.25 fixtures/layout_stress_001_dense_dag.mmd
  *   bun run scripts/compare_elk_crossing_rank_order.ts --upstream-layer-source layer-logs fixtures/layout_stress_001_dense_dag.mmd
  *   bun run scripts/compare_elk_crossing_rank_order.ts --details --limit 3 fixtures/layout_stress_013_rl_dual_scc_weave.mmd
@@ -84,6 +85,7 @@ type CliOptions = {
     | 'adjacent-swap'
     | 'rank-permutation'
     | 'adjacent-swap-then-rank-permutation'
+  seedCandidateSourcePolicy?: 'default' | 'seed-and-reversed' | 'seed-only'
   modelOrderInversionInfluence?: number
   upstreamLayerSource: 'final-coordinates' | 'layer-logs'
 }
@@ -170,6 +172,12 @@ function parseLocalTrace(source: string, options: CliOptions): LocalTrace {
   }
   if (options.localRefinementProfile !== undefined) {
     args.push('--local-refinement-profile', options.localRefinementProfile)
+  }
+  if (options.seedCandidateSourcePolicy !== undefined) {
+    args.push(
+      '--seed-candidate-source-policy',
+      options.seedCandidateSourcePolicy,
+    )
   }
   if (options.modelOrderInversionInfluence !== undefined) {
     args.push(
@@ -605,6 +613,11 @@ function parseCliOptions(args: string[]): CliOptions {
     | 'rank-permutation'
     | 'adjacent-swap-then-rank-permutation'
     | undefined
+  let seedCandidateSourcePolicy:
+    | 'default'
+    | 'seed-and-reversed'
+    | 'seed-only'
+    | undefined
   let modelOrderInversionInfluence: number | undefined
   let upstreamLayerSource: 'final-coordinates' | 'layer-logs' =
     'final-coordinates'
@@ -714,6 +727,23 @@ function parseCliOptions(args: string[]): CliOptions {
       i += 1
       continue
     }
+    if (arg === '--seed-candidate-source-policy') {
+      const next = args[i + 1]
+      if (!next) fail('missing value after --seed-candidate-source-policy')
+      const normalized = next.trim().toLowerCase()
+      if (
+        normalized !== 'default' &&
+        normalized !== 'seed-and-reversed' &&
+        normalized !== 'seed-only'
+      ) {
+        fail(
+          "invalid --seed-candidate-source-policy value, expected 'default', 'seed-and-reversed', or 'seed-only'",
+        )
+      }
+      seedCandidateSourcePolicy = normalized
+      i += 1
+      continue
+    }
     if (arg.startsWith('--sweep-kernel=')) {
       const normalized = arg.slice('--sweep-kernel='.length).trim().toLowerCase()
       if (
@@ -764,6 +794,23 @@ function parseCliOptions(args: string[]): CliOptions {
         )
       }
       localRefinementProfile = normalized
+      continue
+    }
+    if (arg.startsWith('--seed-candidate-source-policy=')) {
+      const normalized = arg
+        .slice('--seed-candidate-source-policy='.length)
+        .trim()
+        .toLowerCase()
+      if (
+        normalized !== 'default' &&
+        normalized !== 'seed-and-reversed' &&
+        normalized !== 'seed-only'
+      ) {
+        fail(
+          "invalid --seed-candidate-source-policy value, expected 'default', 'seed-and-reversed', or 'seed-only'",
+        )
+      }
+      seedCandidateSourcePolicy = normalized
       continue
     }
     if (arg === '--model-order-inversion-influence') {
@@ -823,7 +870,7 @@ function parseCliOptions(args: string[]): CliOptions {
   }
   if (fixtures.length === 0) {
     fail(
-      'usage: bun run scripts/compare_elk_crossing_rank_order.ts [--details] [--limit N] [--trial-count N] [--sweep-pass-count N] [--sweep-kernel default|neighbor-mean|neighbor-median|edge-slot|port-rank] [--trial-continuation-policy default|pass-changes|objective-improves] [--local-refinement-profile default|none|adjacent-swap|rank-permutation|adjacent-swap-then-rank-permutation] [--model-order-inversion-influence N] [--upstream-layer-source final-coordinates|layer-logs] <fixture.mmd> [more...]',
+      'usage: bun run scripts/compare_elk_crossing_rank_order.ts [--details] [--limit N] [--trial-count N] [--sweep-pass-count N] [--sweep-kernel default|neighbor-mean|neighbor-median|edge-slot|port-rank] [--trial-continuation-policy default|pass-changes|objective-improves] [--local-refinement-profile default|none|adjacent-swap|rank-permutation|adjacent-swap-then-rank-permutation] [--seed-candidate-source-policy default|seed-and-reversed|seed-only] [--model-order-inversion-influence N] [--upstream-layer-source final-coordinates|layer-logs] <fixture.mmd> [more...]',
     )
   }
   return {
@@ -835,6 +882,7 @@ function parseCliOptions(args: string[]): CliOptions {
     sweepKernel,
     trialContinuationPolicy,
     localRefinementProfile,
+    seedCandidateSourcePolicy,
     modelOrderInversionInfluence,
     upstreamLayerSource,
   }

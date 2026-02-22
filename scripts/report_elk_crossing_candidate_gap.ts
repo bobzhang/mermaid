@@ -16,6 +16,7 @@
  *   bun run scripts/report_elk_crossing_candidate_gap.ts
  *   bun run scripts/report_elk_crossing_candidate_gap.ts --json /tmp/candidate_gap.json
  *   bun run scripts/report_elk_crossing_candidate_gap.ts --upstream-layer-source layer-logs
+ *   bun run scripts/report_elk_crossing_candidate_gap.ts --seed-candidate-source-policy seed-only
  */
 
 import { spawnSync } from 'node:child_process'
@@ -53,6 +54,7 @@ type FullReport = {
 type CliOptions = {
   jsonPath?: string
   upstreamLayerSource: 'final-coordinates' | 'layer-logs'
+  seedCandidateSourcePolicy?: 'default' | 'seed-and-reversed' | 'seed-only'
 }
 
 const STRESS_FIXTURES = [
@@ -101,6 +103,11 @@ function parseCliOptions(args: string[]): CliOptions {
   let jsonPath: string | undefined
   let upstreamLayerSource: 'final-coordinates' | 'layer-logs' =
     'final-coordinates'
+  let seedCandidateSourcePolicy:
+    | 'default'
+    | 'seed-and-reversed'
+    | 'seed-only'
+    | undefined
   for (let i = 0; i < args.length; i += 1) {
     const arg = args[i]!
     if (arg === '--json') {
@@ -148,9 +155,43 @@ function parseCliOptions(args: string[]): CliOptions {
       upstreamLayerSource = normalized
       continue
     }
+    if (arg === '--seed-candidate-source-policy') {
+      const next = args[i + 1]
+      if (!next) fail('missing value after --seed-candidate-source-policy')
+      const normalized = next.trim().toLowerCase()
+      if (
+        normalized !== 'default' &&
+        normalized !== 'seed-and-reversed' &&
+        normalized !== 'seed-only'
+      ) {
+        fail(
+          "invalid --seed-candidate-source-policy value, expected 'default', 'seed-and-reversed', or 'seed-only'",
+        )
+      }
+      seedCandidateSourcePolicy = normalized
+      i += 1
+      continue
+    }
+    if (arg.startsWith('--seed-candidate-source-policy=')) {
+      const normalized = arg
+        .slice('--seed-candidate-source-policy='.length)
+        .trim()
+        .toLowerCase()
+      if (
+        normalized !== 'default' &&
+        normalized !== 'seed-and-reversed' &&
+        normalized !== 'seed-only'
+      ) {
+        fail(
+          "invalid --seed-candidate-source-policy value, expected 'default', 'seed-and-reversed', or 'seed-only'",
+        )
+      }
+      seedCandidateSourcePolicy = normalized
+      continue
+    }
     fail(`unknown argument: ${arg}`)
   }
-  return { jsonPath, upstreamLayerSource }
+  return { jsonPath, upstreamLayerSource, seedCandidateSourcePolicy }
 }
 
 function parseGraphDirection(source: string): Direction {
@@ -214,8 +255,8 @@ function parseRankLayersByPrefix(
   return layers
 }
 
-function parseLocalTrace(source: string): ParsedTrace {
-  const stdout = runOrThrow('moon', [
+function parseLocalTrace(source: string, options: CliOptions): ParsedTrace {
+  const args = [
     'run',
     'cmd/elk_trace',
     '--target',
@@ -223,7 +264,14 @@ function parseLocalTrace(source: string): ParsedTrace {
     '--',
     '--source',
     source,
-  ])
+  ]
+  if (options.seedCandidateSourcePolicy !== undefined) {
+    args.push(
+      '--seed-candidate-source-policy',
+      options.seedCandidateSourcePolicy,
+    )
+  }
+  const stdout = runOrThrow('moon', args)
   const lines = stdout.split(/\r?\n/)
   const inputNodeIdsByIndex = new Map<number, string>()
   const inputEdges: Array<{ source: string; target: string }> = []
@@ -433,15 +481,15 @@ function orderMismatchLayers(localLayers: Layering, upstreamLayers: Layering): n
 
 function compareFixture(
   fixture: string,
-  upstreamLayerSource: 'final-coordinates' | 'layer-logs',
+  options: CliOptions,
 ): CaseReport {
   const source = readFileSync(fixture, 'utf8')
-  const local = parseLocalTrace(source)
+  const local = parseLocalTrace(source, options)
   const upstream = runUpstreamLayers(
     local.inputNodeIds,
     local.inputEdges,
     parseGraphDirection(source),
-    upstreamLayerSource,
+    options.upstreamLayerSource,
   )
   const seed = orderMismatchLayers(local.layersByCandidate.seed, upstream)
   const reversed = orderMismatchLayers(local.layersByCandidate.reversed, upstream)
@@ -464,7 +512,7 @@ function compareFixture(
 function main(): void {
   const options = parseCliOptions(process.argv.slice(2))
   const cases = STRESS_FIXTURES.map(fixture =>
-    compareFixture(fixture, options.upstreamLayerSource),
+    compareFixture(fixture, options),
   )
   const summary: SummaryReport = {
     fixtures: cases.length,
@@ -493,6 +541,9 @@ function main(): void {
   console.log('\n=== summary ===')
   console.log(`fixtures=${summary.fixtures}`)
   console.log(`upstream_layer_source=${options.upstreamLayerSource}`)
+  console.log(
+    `seed_candidate_source_policy=${options.seedCandidateSourcePolicy ?? 'default'}`,
+  )
   console.log(
     `candidate_order_mismatch seed=${summary.perCandidateOrderMismatch.seed} reversed=${summary.perCandidateOrderMismatch.reversed} virtual=${summary.perCandidateOrderMismatch.virtual} selected=${summary.perCandidateOrderMismatch.selected} oracle=${summary.perCandidateOrderMismatch.oracleBest}`,
   )
