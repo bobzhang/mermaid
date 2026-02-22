@@ -93,6 +93,14 @@ pub(all) enum ElkLayeredRankTraceLocalRefinementProfile {
 }
 
 ///|
+/// Seed-candidate source selector used by ELK layered trace/debug collection.
+pub(all) enum ElkLayeredRankTraceSeedCandidateSourcePolicy {
+  DefaultSeedCandidateSourcePolicy
+  SeedAndReversed
+  SeedOnly
+}
+
+///|
 fn crossing_trial_continuation_policy_for_rank_trace(
   trace_trial_continuation_policy : ElkLayeredRankTraceTrialContinuationPolicy,
   fallback : ElkLayeredCrossingTrialContinuationPolicy,
@@ -114,6 +122,18 @@ fn crossing_local_refinement_profile_for_rank_trace(
     AdjacentSwapOnly => AdjacentSwapOnly
     RankPermutationOnly => RankPermutationOnly
     AdjacentSwapThenRankPermutation => AdjacentSwapThenRankPermutation
+  }
+}
+
+///|
+fn crossing_seed_candidate_source_policy_for_rank_trace(
+  trace_policy : ElkLayeredRankTraceSeedCandidateSourcePolicy,
+  fallback : ElkLayeredRankSeedCandidateSourcePolicy,
+) -> ElkLayeredRankSeedCandidateSourcePolicy {
+  match trace_policy {
+    DefaultSeedCandidateSourcePolicy => fallback
+    SeedAndReversed => SeedAndReversed
+    SeedOnly => SeedOnly
   }
 }
 
@@ -155,6 +175,7 @@ fn crossing_execution_plan_with_trace_overrides(
   trial_model_order_inversion_influence_override : Double?,
   trial_continuation_policy_override : ElkLayeredRankTraceTrialContinuationPolicy?,
   local_refinement_profile_override : ElkLayeredRankTraceLocalRefinementProfile?,
+  seed_candidate_source_policy_override : ElkLayeredRankTraceSeedCandidateSourcePolicy?,
 ) -> ElkLayeredCrossingExecutionPlan {
   let config = base_plan.config
   let configured_trial_count = match trial_count_override {
@@ -192,6 +213,15 @@ fn crossing_execution_plan_with_trace_overrides(
       )
     None => base_plan.local_refinement_kernels
   }
+  let configured_seed_candidate_source_policy = match
+    seed_candidate_source_policy_override {
+    Some(trace_policy) =>
+      crossing_seed_candidate_source_policy_for_rank_trace(
+        trace_policy,
+        config.seed_candidate_source_policy,
+      )
+    None => config.seed_candidate_source_policy
+  }
   {
     ..base_plan,
     local_refinement_kernels: configured_local_refinement_kernels,
@@ -200,6 +230,7 @@ fn crossing_execution_plan_with_trace_overrides(
       trial_count: configured_trial_count,
       sweep_pass_count: configured_sweep_pass_count,
       trial_continuation_policy: configured_trial_continuation_policy,
+      seed_candidate_source_policy: configured_seed_candidate_source_policy,
       trial_model_order_inversion_influence: configured_trial_model_order_inversion_influence,
     },
   }
@@ -213,6 +244,7 @@ fn crossing_execution_plan_for_rank_trace_kernel_with_overrides(
   trial_model_order_inversion_influence_override : Double?,
   trial_continuation_policy_override : ElkLayeredRankTraceTrialContinuationPolicy?,
   local_refinement_profile_override : ElkLayeredRankTraceLocalRefinementProfile?,
+  seed_candidate_source_policy_override : ElkLayeredRankTraceSeedCandidateSourcePolicy?,
 ) -> ElkLayeredCrossingExecutionPlan {
   crossing_execution_plan_with_trace_overrides(
     crossing_execution_plan_for_rank_trace_kernel(trace_sweep_kernel),
@@ -221,6 +253,7 @@ fn crossing_execution_plan_for_rank_trace_kernel_with_overrides(
     trial_model_order_inversion_influence_override,
     trial_continuation_policy_override,
     local_refinement_profile_override,
+    seed_candidate_source_policy_override,
   )
 }
 
@@ -231,12 +264,14 @@ fn has_rank_trace_crossing_overrides(
   trial_model_order_inversion_influence_override : Double?,
   trial_continuation_policy_override : ElkLayeredRankTraceTrialContinuationPolicy?,
   local_refinement_profile_override : ElkLayeredRankTraceLocalRefinementProfile?,
+  seed_candidate_source_policy_override : ElkLayeredRankTraceSeedCandidateSourcePolicy?,
 ) -> Bool {
   trial_count_override is Some(_) ||
   sweep_pass_count_override is Some(_) ||
   trial_model_order_inversion_influence_override is Some(_) ||
   trial_continuation_policy_override is Some(_) ||
-  local_refinement_profile_override is Some(_)
+  local_refinement_profile_override is Some(_) ||
+  seed_candidate_source_policy_override is Some(_)
 }
 
 ///|
@@ -247,6 +282,7 @@ fn collect_elk_layered_rank_trace_for_sweep_kernel(
   collect_elk_layered_rank_trace_for_sweep_kernel_with_overrides(
     request,
     trace_sweep_kernel,
+    None,
     None,
     None,
     None,
@@ -264,10 +300,11 @@ fn collect_elk_layered_rank_trace_for_sweep_kernel_with_overrides(
   trial_model_order_inversion_influence_override : Double?,
   trial_continuation_policy_override : ElkLayeredRankTraceTrialContinuationPolicy?,
   local_refinement_profile_override : ElkLayeredRankTraceLocalRefinementProfile?,
+  seed_candidate_source_policy_override : ElkLayeredRankTraceSeedCandidateSourcePolicy?,
 ) -> ElkLayeredRankTrace? {
   let has_overrides = has_rank_trace_crossing_overrides(
     trial_count_override, sweep_pass_count_override, trial_model_order_inversion_influence_override,
-    trial_continuation_policy_override, local_refinement_profile_override,
+    trial_continuation_policy_override, local_refinement_profile_override, seed_candidate_source_policy_override,
   )
   if trace_sweep_kernel is Default && !has_overrides {
     collect_elk_layered_rank_trace(request)
@@ -276,7 +313,7 @@ fn collect_elk_layered_rank_trace_for_sweep_kernel_with_overrides(
       request,
       crossing_execution_plan_for_rank_trace_kernel_with_overrides(
         trace_sweep_kernel, trial_count_override, sweep_pass_count_override, trial_model_order_inversion_influence_override,
-        trial_continuation_policy_override, local_refinement_profile_override,
+        trial_continuation_policy_override, local_refinement_profile_override, seed_candidate_source_policy_override,
       ),
     )
   }
@@ -978,6 +1015,7 @@ pub fn collect_elk_layered_rank_trace_lines_with_crossing_overrides(
     None,
     None,
     None,
+    None,
   )
 }
 
@@ -991,12 +1029,13 @@ pub fn collect_elk_layered_rank_trace_lines_with_crossing_execution_overrides(
   trial_model_order_inversion_influence_override : Double?,
   trial_continuation_policy_override : ElkLayeredRankTraceTrialContinuationPolicy?,
   local_refinement_profile_override : ElkLayeredRankTraceLocalRefinementProfile?,
+  seed_candidate_source_policy_override : ElkLayeredRankTraceSeedCandidateSourcePolicy?,
 ) -> Array[String]? {
   match
     collect_elk_layered_rank_trace_for_sweep_kernel_with_overrides(
       request, trace_sweep_kernel, trial_count_override, sweep_pass_count_override,
       trial_model_order_inversion_influence_override, trial_continuation_policy_override,
-      local_refinement_profile_override,
+      local_refinement_profile_override, seed_candidate_source_policy_override,
     ) {
     Some(trace) => Some(elk_layered_rank_trace_lines(trace))
     None => None
@@ -1037,6 +1076,7 @@ pub fn collect_elk_layered_rank_trace_kernel_comparison_lines_with_crossing_over
     None,
     None,
     None,
+    None,
   )
 }
 
@@ -1051,14 +1091,15 @@ pub fn collect_elk_layered_rank_trace_kernel_comparison_lines_with_crossing_exec
   trial_model_order_inversion_influence_override : Double?,
   trial_continuation_policy_override : ElkLayeredRankTraceTrialContinuationPolicy?,
   local_refinement_profile_override : ElkLayeredRankTraceLocalRefinementProfile?,
+  seed_candidate_source_policy_override : ElkLayeredRankTraceSeedCandidateSourcePolicy?,
 ) -> Array[String]? {
   let left_trace = collect_elk_layered_rank_trace_for_sweep_kernel_with_overrides(
     request, left_kernel, trial_count_override, sweep_pass_count_override, trial_model_order_inversion_influence_override,
-    trial_continuation_policy_override, local_refinement_profile_override,
+    trial_continuation_policy_override, local_refinement_profile_override, seed_candidate_source_policy_override,
   )
   let right_trace = collect_elk_layered_rank_trace_for_sweep_kernel_with_overrides(
     request, right_kernel, trial_count_override, sweep_pass_count_override, trial_model_order_inversion_influence_override,
-    trial_continuation_policy_override, local_refinement_profile_override,
+    trial_continuation_policy_override, local_refinement_profile_override, seed_candidate_source_policy_override,
   )
   match (left_trace, right_trace) {
     (Some(left), Some(right)) => {

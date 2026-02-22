@@ -571,6 +571,7 @@ test "elk layered rank trace crossing overrides are reflected in trace lines" {
       Some(0.25),
       None,
       Some(NoLocalRefinement),
+      None,
     ) {
     Some(lines) => lines
     None => fail("expected trace lines with crossing overrides")
