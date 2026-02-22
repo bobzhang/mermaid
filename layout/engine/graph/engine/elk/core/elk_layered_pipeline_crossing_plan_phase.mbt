@@ -33,6 +33,12 @@ priv enum ElkLayeredCrossingTrialContinuationPolicy {
 }
 
 ///|
+priv enum ElkLayeredRankSeedCandidateSourcePolicy {
+  SeedAndReversed
+  SeedOnly
+}
+
+///|
 fn default_crossing_trial_continuation_policy() -> ElkLayeredCrossingTrialContinuationPolicy {
   available_crossing_trial_continuation_policies()[1]
 }
@@ -52,6 +58,28 @@ fn crossing_trial_continuation_policy_tag(
     ContinueWhilePassChanges => "while-pass-changes"
     ContinueWhileObjectiveImproves => "while-objective-improves"
   }
+}
+
+///|
+fn rank_seed_candidate_source_policy_tag(
+  source_policy : ElkLayeredRankSeedCandidateSourcePolicy,
+) -> String {
+  match source_policy {
+    SeedAndReversed => "seed-and-reversed"
+    SeedOnly => "seed-only"
+  }
+}
+
+///|
+fn available_rank_seed_candidate_source_policies() -> Array[
+  ElkLayeredRankSeedCandidateSourcePolicy,
+] {
+  [SeedAndReversed, SeedOnly]
+}
+
+///|
+fn default_rank_seed_candidate_source_policy() -> ElkLayeredRankSeedCandidateSourcePolicy {
+  available_rank_seed_candidate_source_policies()[0]
 }
 
 ///|
@@ -135,6 +163,7 @@ priv struct ElkLayeredCrossingOptimizationConfig {
   neighbor_mean_barycenter_perturbation : Bool
   neighbor_mean_barycenter_perturbation_amount : Double
   trial_continuation_policy : ElkLayeredCrossingTrialContinuationPolicy
+  seed_candidate_source_policy : ElkLayeredRankSeedCandidateSourcePolicy
   trial_model_order_inversion_influence : Double
   swap_refine_node_limit : Int
   swap_refine_edge_limit : Int
@@ -156,6 +185,7 @@ fn default_crossing_optimization_config() -> ElkLayeredCrossingOptimizationConfi
     neighbor_mean_barycenter_perturbation: false,
     neighbor_mean_barycenter_perturbation_amount: 0.07,
     trial_continuation_policy: default_crossing_trial_continuation_policy(),
+    seed_candidate_source_policy: default_rank_seed_candidate_source_policy(),
     trial_model_order_inversion_influence: 0.0,
     swap_refine_node_limit: 200,
     swap_refine_edge_limit: 1000,

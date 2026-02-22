@@ -372,6 +372,7 @@ test "elk layered optimized seed selector prefers lower crossing score" {
     "D": [],
   }
   let (selected_rank_node_ids_by_rank, selected_crossing_score, selected_source) = select_optimized_seed_rank_order_candidate(
+    SeedAndReversed,
     PreferLowerGlobalCrossings,
     optimized_seed_rank_node_ids_by_rank,
     9,
@@ -413,6 +414,7 @@ test "elk layered optimized seed selector keeps seed order on crossing ties" {
     "D": [],
   }
   let (selected_rank_node_ids_by_rank, selected_crossing_score, selected_source) = select_optimized_seed_rank_order_candidate(
+    SeedAndReversed,
     PreferLowerGlobalCrossings,
     optimized_seed_rank_node_ids_by_rank,
     4,

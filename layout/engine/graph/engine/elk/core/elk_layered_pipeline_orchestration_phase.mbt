@@ -396,9 +396,13 @@ fn rank_phase_trace(
   let metrics = phase_metrics(snapshot)
   metrics["max_rank"] = rank_seed_state.max_rank
   metrics["rank_order_selected_crossings"] = rank_order_debug_state.selected_crossing_score
+  metrics["rank_order_selected_global_crossings"] = rank_order_debug_state.selected_global_crossing_score
   metrics["rank_order_seed_crossings"] = rank_order_debug_state.optimized_seed_crossing_score
+  metrics["rank_order_seed_global_crossings"] = rank_order_debug_state.optimized_seed_global_crossing_score
   metrics["rank_order_reversed_seed_crossings"] = rank_order_debug_state.optimized_reversed_seed_crossing_score
+  metrics["rank_order_reversed_seed_global_crossings"] = rank_order_debug_state.optimized_reversed_seed_global_crossing_score
   metrics["rank_order_virtual_crossings"] = rank_order_debug_state.virtual_candidate_crossing_score
+  metrics["rank_order_virtual_global_crossings"] = rank_order_debug_state.virtual_candidate_global_crossing_score
   metrics["rank_order_sweep_pass_count"] = rank_order_debug_state.crossing_sweep_pass_count
   metrics["rank_order_trial_count"] = rank_order_debug_state.crossing_trial_count
   metrics["rank_order_selected_trial_index"] = rank_order_debug_state.selected_trial_index
@@ -414,6 +418,9 @@ fn rank_phase_trace(
   )
   labels["rank_order_sweep_kernel"] = crossing_sweep_kernel_tag(
     rank_order_debug_state.crossing_sweep_kernel,
+  )
+  labels["rank_order_seed_candidate_source_policy"] = rank_seed_candidate_source_policy_tag(
+    rank_order_debug_state.crossing_seed_candidate_source_policy,
   )
   labels["rank_order_trial_model_order_inversion_influence"] = rank_order_debug_state.crossing_trial_model_order_inversion_influence.to_string()
   labels["rank_order_selected_source"] = rank_order_debug_state.selected_source

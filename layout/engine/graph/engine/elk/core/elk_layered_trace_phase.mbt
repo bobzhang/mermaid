@@ -19,6 +19,7 @@ priv struct ElkLayeredRankTrace {
   rank_order_sweep_pass_count : Int
   rank_order_trial_count : Int
   rank_order_trial_continuation_policy : String
+  rank_order_seed_candidate_source_policy : String
   rank_order_local_refinement_kernels : String
   rank_order_trial_model_order_inversion_influence : Double
   rank_order_selected_trial_index : Int
@@ -582,6 +583,9 @@ fn collect_elk_layered_rank_trace_with_crossing_execution_plan(
     rank_order_trial_continuation_policy: crossing_trial_continuation_policy_tag(
       rank_order_debug_state.crossing_trial_continuation_policy,
     ),
+    rank_order_seed_candidate_source_policy: rank_seed_candidate_source_policy_tag(
+      rank_order_debug_state.crossing_seed_candidate_source_policy,
+    ),
     rank_order_local_refinement_kernels: crossing_local_refinement_kernels_tag(
       rank_order_debug_state.crossing_local_refinement_kernels,
     ),
@@ -775,6 +779,9 @@ fn elk_layered_rank_trace_lines(trace : ElkLayeredRankTrace) -> Array[String] {
   lines.push("ORDER_TRIAL_COUNT\t\{trace.rank_order_trial_count}")
   lines.push(
     "ORDER_TRIAL_CONTINUATION_POLICY\t\{trace.rank_order_trial_continuation_policy}",
+  )
+  lines.push(
+    "ORDER_SEED_CANDIDATE_SOURCE_POLICY\t\{trace.rank_order_seed_candidate_source_policy}",
   )
   lines.push(
     "ORDER_LOCAL_REFINEMENT_KERNELS\t\{trace.rank_order_local_refinement_kernels}",
@@ -1063,6 +1070,9 @@ pub fn collect_elk_layered_rank_trace_kernel_comparison_lines_with_crossing_exec
       )
       lines.push(
         "ORDER_TRIAL_CONTINUATION_POLICY\t\{left.rank_order_trial_continuation_policy}\t\{right.rank_order_trial_continuation_policy}",
+      )
+      lines.push(
+        "ORDER_SEED_CANDIDATE_SOURCE_POLICY\t\{left.rank_order_seed_candidate_source_policy}\t\{right.rank_order_seed_candidate_source_policy}",
       )
       lines.push(
         "ORDER_LOCAL_REFINEMENT_KERNELS\t\{left.rank_order_local_refinement_kernels}\t\{right.rank_order_local_refinement_kernels}",

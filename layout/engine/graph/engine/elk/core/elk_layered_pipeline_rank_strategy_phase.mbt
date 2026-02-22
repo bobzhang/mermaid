@@ -134,6 +134,7 @@ priv struct ElkLayeredRankOrderDebugState {
   crossing_sweep_pass_count : Int
   crossing_trial_count : Int
   crossing_trial_continuation_policy : ElkLayeredCrossingTrialContinuationPolicy
+  crossing_seed_candidate_source_policy : ElkLayeredRankSeedCandidateSourcePolicy
   crossing_local_refinement_kernels : Array[
     ElkLayeredCrossingLocalRefinementKernel,
   ]
@@ -361,6 +362,7 @@ fn compare_rank_order_candidates_on_crossing_tie(
 
 ///|
 fn select_optimized_seed_rank_order_candidate(
+  source_policy : ElkLayeredRankSeedCandidateSourcePolicy,
   tie_policy : ElkLayeredRankCandidateTiePolicy,
   optimized_seed_rank_node_ids_by_rank : Map[Int, Array[String]],
   optimized_seed_crossing_score : Int,
@@ -371,6 +373,11 @@ fn select_optimized_seed_rank_order_candidate(
   rank_by_node_id : Map[String, Int],
   successors_by_node_id : Map[String, Array[String]],
 ) -> (Map[Int, Array[String]], Int, String) {
+  if source_policy is SeedOnly {
+    return (
+      optimized_seed_rank_node_ids_by_rank, optimized_seed_crossing_score, "optimized-seed",
+    )
+  }
   let _ = order_index_by_node_id
   let reversed_vs_seed_compare = if optimized_reversed_seed_crossing_score !=
     optimized_seed_crossing_score {
@@ -410,6 +417,7 @@ fn build_rank_node_ids_by_rank_for_order_strategy_with_debug(
   let seed_candidate_tie_policy = seed_candidate_tie_policy_for_strategy(
     strategy,
   )
+  let seed_candidate_source_policy = crossing_execution_plan.config.seed_candidate_source_policy
   let virtual_candidate_tie_policy = virtual_candidate_tie_policy_for_strategy(
     strategy,
   )
@@ -476,9 +484,10 @@ fn build_rank_node_ids_by_rank_for_order_strategy_with_debug(
     optimized_seed_selected_crossing_score,
     optimized_seed_selected_source,
   ) = select_optimized_seed_rank_order_candidate(
-    seed_candidate_tie_policy, optimized_base_rank_node_ids_by_rank, optimized_seed_crossing_score,
-    optimized_reversed_seed_rank_node_ids_by_rank, optimized_reversed_seed_crossing_score,
-    max_rank, order_index_by_node_id, rank_by_node_id, successors_by_node_id,
+    seed_candidate_source_policy, seed_candidate_tie_policy, optimized_base_rank_node_ids_by_rank,
+    optimized_seed_crossing_score, optimized_reversed_seed_rank_node_ids_by_rank,
+    optimized_reversed_seed_crossing_score, max_rank, order_index_by_node_id, rank_by_node_id,
+    successors_by_node_id,
   )
   let optimized_seed_selected_post_sweep_rank_node_ids_by_rank = if optimized_seed_selected_source ==
     "optimized-reversed-seed" {
@@ -527,6 +536,7 @@ fn build_rank_node_ids_by_rank_for_order_strategy_with_debug(
             crossing_execution_plan.config.trial_count,
           ),
           crossing_trial_continuation_policy: crossing_execution_plan.config.trial_continuation_policy,
+          crossing_seed_candidate_source_policy: seed_candidate_source_policy,
           crossing_local_refinement_kernels: crossing_execution_plan.local_refinement_kernels,
           crossing_trial_model_order_inversion_influence: crossing_execution_plan.config.trial_model_order_inversion_influence,
           optimized_seed_selected_trial_index: optimized_base_crossing_result.selected_trial_index,
@@ -568,6 +578,7 @@ fn build_rank_node_ids_by_rank_for_order_strategy_with_debug(
             crossing_execution_plan.config.trial_count,
           ),
           crossing_trial_continuation_policy: crossing_execution_plan.config.trial_continuation_policy,
+          crossing_seed_candidate_source_policy: seed_candidate_source_policy,
           crossing_local_refinement_kernels: crossing_execution_plan.local_refinement_kernels,
           crossing_trial_model_order_inversion_influence: crossing_execution_plan.config.trial_model_order_inversion_influence,
           optimized_seed_selected_trial_index: optimized_base_crossing_result.selected_trial_index,
@@ -672,6 +683,7 @@ fn build_rank_node_ids_by_rank_for_order_strategy_with_debug(
             crossing_execution_plan.config.trial_count,
           ),
           crossing_trial_continuation_policy: crossing_execution_plan.config.trial_continuation_policy,
+          crossing_seed_candidate_source_policy: seed_candidate_source_policy,
           crossing_local_refinement_kernels: crossing_execution_plan.local_refinement_kernels,
           crossing_trial_model_order_inversion_influence: crossing_execution_plan.config.trial_model_order_inversion_influence,
           optimized_seed_selected_trial_index: optimized_base_crossing_result.selected_trial_index,

@@ -84,11 +84,25 @@ test "elk layered crossing optimization config keeps baseline thresholds" {
   assert_true(
     config.trial_continuation_policy is ContinueWhileObjectiveImproves,
   )
+  assert_true(config.seed_candidate_source_policy is SeedAndReversed)
   assert_eq(config.swap_refine_node_limit, 200)
   assert_eq(config.swap_refine_edge_limit, 1000)
   assert_eq(config.permutation_refine_node_limit, 200)
   assert_eq(config.permutation_refine_edge_limit, 1000)
   assert_eq(config.permutation_rank_size_limit, 8)
+}
+
+///|
+test "elk layered crossing seed-candidate source policy exposes all modes" {
+  let policies = available_rank_seed_candidate_source_policies()
+  assert_eq(policies.length(), 2)
+  assert_true(policies[0] is SeedAndReversed)
+  assert_true(policies[1] is SeedOnly)
+  assert_eq(
+    rank_seed_candidate_source_policy_tag(SeedAndReversed),
+    "seed-and-reversed",
+  )
+  assert_eq(rank_seed_candidate_source_policy_tag(SeedOnly), "seed-only")
 }
 
 ///|
