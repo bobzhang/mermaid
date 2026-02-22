@@ -358,11 +358,19 @@ test "elk layered crossing trial seed builder is deterministic and rank-local" {
     0: ["A", "B", "C", "G"],
     1: ["D", "E", "F", "H"],
   }
-  let backward_initial_seed = build_crossing_trial_seed_rank_node_ids_by_rank(
-    base_rank_node_ids_by_rank, 1, 1, 1,
+  let backward_initial_seed = build_crossing_trial_seed_rank_node_ids_by_rank_with_random_state(
+    base_rank_node_ids_by_rank,
+    1,
+    1,
+    false,
+    build_crossing_neighbor_mean_random_state_by_seed(2),
   )
-  let backward_initial_seed_again = build_crossing_trial_seed_rank_node_ids_by_rank(
-    base_rank_node_ids_by_rank, 1, 1, 1,
+  let backward_initial_seed_again = build_crossing_trial_seed_rank_node_ids_by_rank_with_random_state(
+    base_rank_node_ids_by_rank,
+    1,
+    1,
+    false,
+    build_crossing_neighbor_mean_random_state_by_seed(2),
   )
   assert_eq(backward_initial_seed, backward_initial_seed_again)
   assert_eq(
@@ -380,11 +388,19 @@ test "elk layered crossing trial seed builder is deterministic and rank-local" {
     ["D", "E", "F", "H"],
   )
 
-  let randomized_forward_seed = build_crossing_trial_seed_rank_node_ids_by_rank(
-    base_rank_node_ids_by_rank, 1, 2, 1,
+  let randomized_forward_seed = build_crossing_trial_seed_rank_node_ids_by_rank_with_random_state(
+    base_rank_node_ids_by_rank,
+    1,
+    2,
+    true,
+    build_crossing_neighbor_mean_random_state_by_seed(3),
   )
-  let randomized_forward_seed_again = build_crossing_trial_seed_rank_node_ids_by_rank(
-    base_rank_node_ids_by_rank, 1, 2, 1,
+  let randomized_forward_seed_again = build_crossing_trial_seed_rank_node_ids_by_rank_with_random_state(
+    base_rank_node_ids_by_rank,
+    1,
+    2,
+    true,
+    build_crossing_neighbor_mean_random_state_by_seed(3),
   )
   assert_eq(randomized_forward_seed, randomized_forward_seed_again)
   assert_eq(
@@ -401,11 +417,19 @@ test "elk layered crossing trial seed builder is deterministic and rank-local" {
   randomized_forward_target_rank.sort()
   assert_eq(randomized_forward_target_rank, ["A", "B", "C", "G"])
 
-  let randomized_backward_seed = build_crossing_trial_seed_rank_node_ids_by_rank(
-    base_rank_node_ids_by_rank, 1, 3, 1,
+  let randomized_backward_seed = build_crossing_trial_seed_rank_node_ids_by_rank_with_random_state(
+    base_rank_node_ids_by_rank,
+    1,
+    3,
+    false,
+    build_crossing_neighbor_mean_random_state_by_seed(4),
   )
-  let randomized_backward_seed_again = build_crossing_trial_seed_rank_node_ids_by_rank(
-    base_rank_node_ids_by_rank, 1, 3, 1,
+  let randomized_backward_seed_again = build_crossing_trial_seed_rank_node_ids_by_rank_with_random_state(
+    base_rank_node_ids_by_rank,
+    1,
+    3,
+    false,
+    build_crossing_neighbor_mean_random_state_by_seed(4),
   )
   assert_eq(randomized_backward_seed, randomized_backward_seed_again)
   assert_eq(

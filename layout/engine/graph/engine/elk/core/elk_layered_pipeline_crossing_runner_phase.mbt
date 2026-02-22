@@ -97,36 +97,64 @@ fn crossing_sweep_direction_tag(initial_forward_sweep : Bool) -> String {
 }
 
 ///|
-fn shuffle_node_ids_for_crossing_trial(
+fn next_crossing_trial_random_double(
+  random_state_by_key : Map[String, UInt64],
+) -> Double {
+  let random_state = match
+    random_state_by_key.get(crossing_neighbor_random_state_key) {
+    Some(value) => value
+    None => java_random_state_from_seed(1)
+  }
+  let (next_state, high_bits) = java_random_next_bits(random_state, 26)
+  let (next_next_state, low_bits) = java_random_next_bits(next_state, 27)
+  random_state_by_key[crossing_neighbor_random_state_key] = next_next_state
+  ((high_bits.to_int64() << 27) + low_bits.to_int64()).to_double() /
+  9007199254740992.0
+}
+
+///|
+fn randomize_node_ids_for_crossing_trial(
   node_ids : Array[String],
-  random_state : UInt64,
+  random_state_by_key : Map[String, UInt64],
 ) -> Unit {
   if node_ids.length() <= 1 {
     return
   }
-  let mut next_random_state = random_state
-  let mut index = node_ids.length() - 1
-  while index > 0 {
-    let (candidate_random_state, swap_index) = java_random_next_int(
-      next_random_state,
-      index + 1,
+  let random_key_by_node_id : Map[String, Double] = {}
+  let initial_rank_position_by_node_id : Map[String, Int] = {}
+  for rank_position, node_id in node_ids {
+    initial_rank_position_by_node_id[node_id] = rank_position
+    random_key_by_node_id[node_id] = next_crossing_trial_random_double(
+      random_state_by_key,
     )
-    next_random_state = candidate_random_state
-    if swap_index != index {
-      let value = node_ids[index]
-      node_ids[index] = node_ids[swap_index]
-      node_ids[swap_index] = value
-    }
-    index = index - 1
   }
+  node_ids.sort_by((left, right) => {
+    let left_key = match random_key_by_node_id.get(left) {
+      Some(value) => value
+      None => 0.0
+    }
+    let right_key = match random_key_by_node_id.get(right) {
+      Some(value) => value
+      None => 0.0
+    }
+    let random_order = left_key.compare(right_key)
+    if random_order != 0 {
+      random_order
+    } else {
+      option_int_or(initial_rank_position_by_node_id.get(left), 0).compare(
+        option_int_or(initial_rank_position_by_node_id.get(right), 0),
+      )
+    }
+  })
 }
 
 ///|
-fn build_crossing_trial_seed_rank_node_ids_by_rank(
+fn build_crossing_trial_seed_rank_node_ids_by_rank_with_random_state(
   input_rank_node_ids_by_rank : Map[Int, Array[String]],
   max_rank : Int,
   trial_index : Int,
-  trial_random_seed : Int,
+  initial_forward_sweep : Bool,
+  trial_random_state_by_key : Map[String, UInt64],
 ) -> Map[Int, Array[String]] {
   let seed_rank_node_ids_by_rank = clone_rank_node_ids_by_rank(
     input_rank_node_ids_by_rank, max_rank,
@@ -134,17 +162,10 @@ fn build_crossing_trial_seed_rank_node_ids_by_rank(
   if crossing_trial_uses_initial_order_seed(trial_index) {
     return seed_rank_node_ids_by_rank
   }
-  let start_rank = if crossing_trial_initial_forward_sweep(trial_index) {
-    0
-  } else {
-    max_rank
-  }
+  let start_rank = if initial_forward_sweep { 0 } else { max_rank }
   match seed_rank_node_ids_by_rank.get(start_rank) {
     Some(node_ids) =>
-      shuffle_node_ids_for_crossing_trial(
-        node_ids,
-        java_random_state_from_seed(trial_random_seed + trial_index),
-      )
+      randomize_node_ids_for_crossing_trial(node_ids, trial_random_state_by_key)
     None => ()
   }
   seed_rank_node_ids_by_rank
@@ -251,7 +272,7 @@ fn execute_crossing_phase_once_with_plan_and_seed(
   components : ElkLayeredCrossingComponentBundle,
   seed_rank_node_ids_by_rank : Map[Int, Array[String]],
   initial_forward_sweep : Bool,
-  sweep_random_seed : Int,
+  neighbor_mean_random_state_by_key : Map[String, UInt64],
 ) -> ElkLayeredCrossingExecutionState {
   let _ = input.port_order_slots_by_node_id
   let _ = input.ordering_edges
@@ -260,8 +281,8 @@ fn execute_crossing_phase_once_with_plan_and_seed(
     input,
   )
   let sweep_rank_node_ids_by_rank = seed_rank_node_ids_by_rank
-  let sweep_input = build_crossing_sweep_input_from_phase_input(
-    sweep_rank_node_ids_by_rank, input, config, sweep_random_seed,
+  let sweep_input = build_crossing_sweep_input_from_phase_input_with_random_state(
+    sweep_rank_node_ids_by_rank, input, config, neighbor_mean_random_state_by_key,
   )
   let sweep_pass_summaries : Array[ElkLayeredCrossingSweepPassSummary] = []
   let mut best_post_sweep_rank_node_ids_by_rank = clone_rank_node_ids_by_rank(
@@ -492,18 +513,22 @@ fn execute_crossing_phase_with_plan_with_trial_trace(
         let initial_forward_sweep = crossing_trial_initial_forward_sweep(
           trial_index,
         )
+        let trial_random_state_by_key = build_crossing_neighbor_mean_random_state_by_seed(
+          config.trial_random_seed + trial_index,
+        )
         let trial_execution_state = execute_crossing_phase_once_with_plan_and_seed(
           input,
           plan,
           components,
-          build_crossing_trial_seed_rank_node_ids_by_rank(
+          build_crossing_trial_seed_rank_node_ids_by_rank_with_random_state(
             input.rank_node_ids_by_rank,
             input.max_rank,
             trial_index,
-            config.trial_random_seed,
+            initial_forward_sweep,
+            trial_random_state_by_key,
           ),
           initial_forward_sweep,
-          config.trial_random_seed + trial_index,
+          trial_random_state_by_key,
         )
         let post_sweep_objective = evaluate_crossing_objective_with_counter(
           trial_execution_state.post_sweep_rank_node_ids_by_rank,
@@ -549,18 +574,22 @@ fn execute_crossing_phase_with_plan_with_trial_trace(
         Some(state) =>
           { execution_state: state, selected_trial_index, trial_summaries }
         None => {
+          let fallback_random_state_by_key = build_crossing_neighbor_mean_random_state_by_seed(
+            config.trial_random_seed,
+          )
           let fallback_execution_state = execute_crossing_phase_once_with_plan_and_seed(
             input,
             plan,
             components,
-            build_crossing_trial_seed_rank_node_ids_by_rank(
+            build_crossing_trial_seed_rank_node_ids_by_rank_with_random_state(
               input.rank_node_ids_by_rank,
               input.max_rank,
               0,
-              config.trial_random_seed,
+              true,
+              fallback_random_state_by_key,
             ),
             true,
-            config.trial_random_seed,
+            fallback_random_state_by_key,
           )
           let fallback_trace : ElkLayeredCrossingTrialSummary = {
             trial_index: 0,

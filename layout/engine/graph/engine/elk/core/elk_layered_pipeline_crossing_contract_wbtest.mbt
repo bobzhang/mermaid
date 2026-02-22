@@ -130,11 +130,11 @@ test "elk layered crossing sweep input builder derives tie policy from phase inp
     17,
     2,
   )
-  let sweep_input = build_crossing_sweep_input_from_phase_input(
+  let sweep_input = build_crossing_sweep_input_from_phase_input_with_random_state(
     input.rank_node_ids_by_rank,
     input,
     config,
-    config.trial_random_seed,
+    build_crossing_neighbor_mean_random_state_by_seed(config.trial_random_seed),
   )
   assert_eq(sweep_input.max_rank, 1)
   assert_true(sweep_input.preserve_current_order_on_tie)
@@ -159,11 +159,13 @@ test "elk layered crossing sweep input carries neighbor-mean perturbation seed" 
     4,
     2,
   )
-  let sweep_input = build_crossing_sweep_input_from_phase_input(
+  let sweep_input = build_crossing_sweep_input_from_phase_input_with_random_state(
     input.rank_node_ids_by_rank,
     input,
     config,
-    config.trial_random_seed + 2,
+    build_crossing_neighbor_mean_random_state_by_seed(
+      config.trial_random_seed + 2,
+    ),
   )
   assert_true(sweep_input.neighbor_mean_barycenter_perturbation)
   let actual = next_crossing_neighbor_mean_barycenter_perturbation(

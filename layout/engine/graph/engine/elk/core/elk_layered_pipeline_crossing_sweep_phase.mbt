@@ -69,11 +69,11 @@ fn crossing_preserve_current_order_on_tie(
 }
 
 ///|
-fn build_crossing_sweep_input_from_phase_input(
+fn build_crossing_sweep_input_from_phase_input_with_random_state(
   rank_node_ids_by_rank : Map[Int, Array[String]],
   input : ElkLayeredCrossingPhaseInput,
   config : ElkLayeredCrossingOptimizationConfig,
-  random_seed : Int,
+  neighbor_mean_random_state_by_key : Map[String, UInt64],
 ) -> ElkLayeredCrossingSweepInput {
   build_crossing_sweep_input(
     rank_node_ids_by_rank,
@@ -94,7 +94,7 @@ fn build_crossing_sweep_input_from_phase_input(
     config.greedy_switch_pass_limit,
     config.neighbor_mean_barycenter_perturbation,
     config.neighbor_mean_barycenter_perturbation_amount,
-    build_crossing_neighbor_mean_random_state_by_seed(random_seed),
+    neighbor_mean_random_state_by_key,
   )
 }
 
