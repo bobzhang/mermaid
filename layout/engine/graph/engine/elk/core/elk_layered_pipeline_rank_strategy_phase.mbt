@@ -144,6 +144,7 @@ priv struct ElkLayeredRankOrderDebugState {
   optimized_seed_post_sweep_crossing_score : Int
   optimized_seed_rank_node_ids_by_rank : Map[Int, Array[String]]
   optimized_seed_crossing_score : Int
+  optimized_seed_global_crossing_score : Int
   optimized_reversed_seed_selected_trial_index : Int
   optimized_reversed_seed_trial_summaries : Array[
     ElkLayeredCrossingTrialSummary,
@@ -155,15 +156,18 @@ priv struct ElkLayeredRankOrderDebugState {
   optimized_reversed_seed_post_sweep_crossing_score : Int
   optimized_reversed_seed_rank_node_ids_by_rank : Map[Int, Array[String]]
   optimized_reversed_seed_crossing_score : Int
+  optimized_reversed_seed_global_crossing_score : Int
   virtual_candidate_selected_trial_index : Int
   virtual_candidate_trial_summaries : Array[ElkLayeredCrossingTrialSummary]
   virtual_candidate_post_sweep_rank_node_ids_by_rank : Map[Int, Array[String]]
   virtual_candidate_post_sweep_crossing_score : Int
   virtual_candidate_rank_node_ids_by_rank : Map[Int, Array[String]]
   virtual_candidate_crossing_score : Int
+  virtual_candidate_global_crossing_score : Int
   selected_trial_index : Int
   selected_rank_node_ids_by_rank : Map[Int, Array[String]]
   selected_crossing_score : Int
+  selected_global_crossing_score : Int
   selected_source : String
 }
 
@@ -424,6 +428,9 @@ fn build_rank_node_ids_by_rank_for_order_strategy_with_debug(
   let optimized_base_rank_node_ids_by_rank = optimized_base_crossing_result.optimized_rank_node_ids_by_rank
   let optimized_seed_post_sweep_crossing_score = optimized_base_crossing_result.post_sweep_objective.layered_crossings
   let optimized_seed_crossing_score = optimized_base_crossing_result.optimized_objective.layered_crossings
+  let optimized_seed_global_crossing_score = rank_order_global_crossing_score(
+    optimized_base_rank_node_ids_by_rank, max_rank, rank_by_node_id, successors_by_node_id,
+  )
   let reversed_base_rank_node_ids_by_rank = clone_rank_node_ids_by_rank(
     base_rank_node_ids_by_rank, max_rank,
   )
@@ -461,6 +468,9 @@ fn build_rank_node_ids_by_rank_for_order_strategy_with_debug(
   let optimized_reversed_seed_rank_node_ids_by_rank = optimized_reversed_crossing_result.optimized_rank_node_ids_by_rank
   let optimized_reversed_seed_post_sweep_crossing_score = optimized_reversed_crossing_result.post_sweep_objective.layered_crossings
   let optimized_reversed_seed_crossing_score = optimized_reversed_crossing_result.optimized_objective.layered_crossings
+  let optimized_reversed_seed_global_crossing_score = rank_order_global_crossing_score(
+    optimized_reversed_seed_rank_node_ids_by_rank, max_rank, rank_by_node_id, successors_by_node_id,
+  )
   let (
     optimized_seed_selected_rank_node_ids_by_rank,
     optimized_seed_selected_crossing_score,
@@ -494,9 +504,18 @@ fn build_rank_node_ids_by_rank_for_order_strategy_with_debug(
   } else {
     optimized_base_crossing_result.trial_summaries
   }
+  let optimized_seed_selected_global_crossing_score = if optimized_seed_selected_source ==
+    "optimized-reversed-seed" {
+    optimized_reversed_seed_global_crossing_score
+  } else {
+    optimized_seed_global_crossing_score
+  }
   match strategy {
     SeedOrderOnly => {
       let selected_crossing_score = rank_order_crossing_score(
+        base_rank_node_ids_by_rank, max_rank, rank_by_node_id, successors_by_node_id,
+      )
+      let selected_global_crossing_score = rank_order_global_crossing_score(
         base_rank_node_ids_by_rank, max_rank, rank_by_node_id, successors_by_node_id,
       )
       (
@@ -516,21 +535,25 @@ fn build_rank_node_ids_by_rank_for_order_strategy_with_debug(
           optimized_seed_post_sweep_crossing_score,
           optimized_seed_rank_node_ids_by_rank: optimized_base_rank_node_ids_by_rank,
           optimized_seed_crossing_score,
+          optimized_seed_global_crossing_score,
           optimized_reversed_seed_selected_trial_index: optimized_reversed_crossing_result.selected_trial_index,
           optimized_reversed_seed_trial_summaries: optimized_reversed_crossing_result.trial_summaries,
           optimized_reversed_seed_post_sweep_rank_node_ids_by_rank,
           optimized_reversed_seed_post_sweep_crossing_score,
           optimized_reversed_seed_rank_node_ids_by_rank,
           optimized_reversed_seed_crossing_score,
+          optimized_reversed_seed_global_crossing_score,
           virtual_candidate_selected_trial_index: optimized_base_crossing_result.selected_trial_index,
           virtual_candidate_trial_summaries: optimized_base_crossing_result.trial_summaries,
           virtual_candidate_post_sweep_rank_node_ids_by_rank: optimized_seed_post_sweep_rank_node_ids_by_rank,
           virtual_candidate_post_sweep_crossing_score: optimized_seed_post_sweep_crossing_score,
           virtual_candidate_rank_node_ids_by_rank: optimized_base_rank_node_ids_by_rank,
           virtual_candidate_crossing_score: optimized_seed_crossing_score,
+          virtual_candidate_global_crossing_score: optimized_seed_global_crossing_score,
           selected_trial_index: 0,
           selected_rank_node_ids_by_rank: base_rank_node_ids_by_rank,
           selected_crossing_score,
+          selected_global_crossing_score,
           selected_source: "seed-order",
         },
       )
@@ -553,21 +576,25 @@ fn build_rank_node_ids_by_rank_for_order_strategy_with_debug(
           optimized_seed_post_sweep_crossing_score,
           optimized_seed_rank_node_ids_by_rank: optimized_base_rank_node_ids_by_rank,
           optimized_seed_crossing_score,
+          optimized_seed_global_crossing_score,
           optimized_reversed_seed_selected_trial_index: optimized_reversed_crossing_result.selected_trial_index,
           optimized_reversed_seed_trial_summaries: optimized_reversed_crossing_result.trial_summaries,
           optimized_reversed_seed_post_sweep_rank_node_ids_by_rank,
           optimized_reversed_seed_post_sweep_crossing_score,
           optimized_reversed_seed_rank_node_ids_by_rank,
           optimized_reversed_seed_crossing_score,
+          optimized_reversed_seed_global_crossing_score,
           virtual_candidate_selected_trial_index: optimized_seed_selected_trial_index,
           virtual_candidate_trial_summaries: optimized_seed_selected_trial_summaries,
           virtual_candidate_post_sweep_rank_node_ids_by_rank: optimized_seed_selected_post_sweep_rank_node_ids_by_rank,
           virtual_candidate_post_sweep_crossing_score: optimized_seed_selected_post_sweep_crossing_score,
           virtual_candidate_rank_node_ids_by_rank: optimized_seed_selected_rank_node_ids_by_rank,
           virtual_candidate_crossing_score: optimized_seed_selected_crossing_score,
+          virtual_candidate_global_crossing_score: optimized_seed_selected_global_crossing_score,
           selected_trial_index: optimized_seed_selected_trial_index,
           selected_rank_node_ids_by_rank: optimized_seed_selected_rank_node_ids_by_rank,
           selected_crossing_score: optimized_seed_selected_crossing_score,
+          selected_global_crossing_score: optimized_seed_selected_global_crossing_score,
           selected_source: optimized_seed_selected_source,
         },
       )
@@ -606,6 +633,9 @@ fn build_rank_node_ids_by_rank_for_order_strategy_with_debug(
       let virtual_candidate_crossing_score = rank_order_crossing_score(
         real_virtual_rank_node_ids_by_rank, max_rank, rank_by_node_id, successors_by_node_id,
       )
+      let virtual_candidate_global_crossing_score = rank_order_global_crossing_score(
+        real_virtual_rank_node_ids_by_rank, max_rank, rank_by_node_id, successors_by_node_id,
+      )
       let virtual_vs_seed_compare = if virtual_candidate_crossing_score !=
         optimized_seed_selected_crossing_score {
         virtual_candidate_crossing_score.compare(
@@ -628,6 +658,11 @@ fn build_rank_node_ids_by_rank_for_order_strategy_with_debug(
       } else {
         optimized_seed_selected_trial_index
       }
+      let selected_global_crossing_score = if select_virtual_candidate {
+        virtual_candidate_global_crossing_score
+      } else {
+        optimized_seed_selected_global_crossing_score
+      }
       (
         selected_rank_node_ids_by_rank,
         {
@@ -645,18 +680,21 @@ fn build_rank_node_ids_by_rank_for_order_strategy_with_debug(
           optimized_seed_post_sweep_crossing_score,
           optimized_seed_rank_node_ids_by_rank: optimized_base_rank_node_ids_by_rank,
           optimized_seed_crossing_score,
+          optimized_seed_global_crossing_score,
           optimized_reversed_seed_selected_trial_index: optimized_reversed_crossing_result.selected_trial_index,
           optimized_reversed_seed_trial_summaries: optimized_reversed_crossing_result.trial_summaries,
           optimized_reversed_seed_post_sweep_rank_node_ids_by_rank,
           optimized_reversed_seed_post_sweep_crossing_score,
           optimized_reversed_seed_rank_node_ids_by_rank,
           optimized_reversed_seed_crossing_score,
+          optimized_reversed_seed_global_crossing_score,
           virtual_candidate_selected_trial_index: optimized_virtual_crossing_result.selected_trial_index,
           virtual_candidate_trial_summaries: optimized_virtual_crossing_result.trial_summaries,
           virtual_candidate_post_sweep_rank_node_ids_by_rank: real_virtual_post_sweep_rank_node_ids_by_rank,
           virtual_candidate_post_sweep_crossing_score,
           virtual_candidate_rank_node_ids_by_rank: real_virtual_rank_node_ids_by_rank,
           virtual_candidate_crossing_score,
+          virtual_candidate_global_crossing_score,
           selected_trial_index,
           selected_rank_node_ids_by_rank,
           selected_crossing_score: if select_virtual_candidate {
@@ -664,6 +702,7 @@ fn build_rank_node_ids_by_rank_for_order_strategy_with_debug(
           } else {
             optimized_seed_selected_crossing_score
           },
+          selected_global_crossing_score,
           selected_source: if select_virtual_candidate {
             "virtual"
           } else {

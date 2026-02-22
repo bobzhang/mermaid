@@ -38,20 +38,24 @@ priv struct ElkLayeredRankTrace {
   rank_order_optimized_seed_post_sweep_crossings : Int
   rank_order_optimized_seed_layers : Array[Array[String]]
   rank_order_optimized_seed_crossings : Int
+  rank_order_optimized_seed_global_crossings : Int
   rank_order_optimized_reversed_seed_post_sweep_layers : Array[Array[String]]
   rank_order_optimized_reversed_seed_post_sweep_crossings : Int
   rank_order_optimized_reversed_seed_layers : Array[Array[String]]
   rank_order_optimized_reversed_seed_crossings : Int
+  rank_order_optimized_reversed_seed_global_crossings : Int
   rank_order_virtual_candidate_post_sweep_layers : Array[Array[String]]
   rank_order_virtual_candidate_post_sweep_crossings : Int
   rank_order_virtual_candidate_layers : Array[Array[String]]
   rank_order_virtual_candidate_crossings : Int
+  rank_order_virtual_candidate_global_crossings : Int
   rank_order_selected_virtual_node_ids : Array[String]
   rank_order_selected_virtual_edges : Array[(String, String)]
   rank_order_selected_virtual_ports : Array[(String, Int, String)]
   rank_order_selected_virtual_layers : Array[Array[String]]
   rank_order_selected_layers : Array[Array[String]]
   rank_order_selected_crossings : Int
+  rank_order_selected_global_crossings : Int
   rank_order_selected_source : String
   rank_layers : Array[Array[String]]
   placement_major_strategy : String
@@ -599,6 +603,7 @@ fn collect_elk_layered_rank_trace_with_crossing_execution_plan(
       rank_seed_state.max_rank,
     ),
     rank_order_optimized_seed_crossings: rank_order_debug_state.optimized_seed_crossing_score,
+    rank_order_optimized_seed_global_crossings: rank_order_debug_state.optimized_seed_global_crossing_score,
     rank_order_optimized_reversed_seed_post_sweep_layers: rank_layers_from_rank_map(
       rank_order_debug_state.optimized_reversed_seed_post_sweep_rank_node_ids_by_rank,
       rank_seed_state.max_rank,
@@ -609,6 +614,7 @@ fn collect_elk_layered_rank_trace_with_crossing_execution_plan(
       rank_seed_state.max_rank,
     ),
     rank_order_optimized_reversed_seed_crossings: rank_order_debug_state.optimized_reversed_seed_crossing_score,
+    rank_order_optimized_reversed_seed_global_crossings: rank_order_debug_state.optimized_reversed_seed_global_crossing_score,
     rank_order_virtual_candidate_post_sweep_layers: rank_layers_from_rank_map(
       rank_order_debug_state.virtual_candidate_post_sweep_rank_node_ids_by_rank,
       rank_seed_state.max_rank,
@@ -619,6 +625,7 @@ fn collect_elk_layered_rank_trace_with_crossing_execution_plan(
       rank_seed_state.max_rank,
     ),
     rank_order_virtual_candidate_crossings: rank_order_debug_state.virtual_candidate_crossing_score,
+    rank_order_virtual_candidate_global_crossings: rank_order_debug_state.virtual_candidate_global_crossing_score,
     rank_order_selected_virtual_node_ids: collect_sorted_virtual_node_ids(
       selected_virtual_ordering_state.virtual_by_node_id,
     ),
@@ -639,6 +646,7 @@ fn collect_elk_layered_rank_trace_with_crossing_execution_plan(
       rank_seed_state.max_rank,
     ),
     rank_order_selected_crossings: rank_order_debug_state.selected_crossing_score,
+    rank_order_selected_global_crossings: rank_order_debug_state.selected_global_crossing_score,
     rank_order_selected_source: rank_order_debug_state.selected_source,
     rank_layers: rank_layers_from_rank_map(
       rank_phase_state.rank_node_ids_by_rank,
@@ -809,10 +817,16 @@ fn elk_layered_rank_trace_lines(trace : ElkLayeredRankTrace) -> Array[String] {
     "ORDER_SCORE\toptimized-seed\t\{trace.rank_order_optimized_seed_crossings}",
   )
   lines.push(
+    "ORDER_SCORE_GLOBAL\toptimized-seed\t\{trace.rank_order_optimized_seed_global_crossings}",
+  )
+  lines.push(
     "ORDER_SCORE_SWEEP\toptimized-reversed-seed\t\{trace.rank_order_optimized_reversed_seed_post_sweep_crossings}",
   )
   lines.push(
     "ORDER_SCORE\toptimized-reversed-seed\t\{trace.rank_order_optimized_reversed_seed_crossings}",
+  )
+  lines.push(
+    "ORDER_SCORE_GLOBAL\toptimized-reversed-seed\t\{trace.rank_order_optimized_reversed_seed_global_crossings}",
   )
   lines.push(
     "ORDER_SCORE_SWEEP\tvirtual-candidate\t\{trace.rank_order_virtual_candidate_post_sweep_crossings}",
@@ -820,7 +834,13 @@ fn elk_layered_rank_trace_lines(trace : ElkLayeredRankTrace) -> Array[String] {
   lines.push(
     "ORDER_SCORE\tvirtual-candidate\t\{trace.rank_order_virtual_candidate_crossings}",
   )
+  lines.push(
+    "ORDER_SCORE_GLOBAL\tvirtual-candidate\t\{trace.rank_order_virtual_candidate_global_crossings}",
+  )
   lines.push("ORDER_SCORE\tselected\t\{trace.rank_order_selected_crossings}")
+  lines.push(
+    "ORDER_SCORE_GLOBAL\tselected\t\{trace.rank_order_selected_global_crossings}",
+  )
   for node_id in trace.rank_seed_virtual_node_ids {
     lines.push("SEED_VIRTUAL_NODE\t\{node_id}")
   }
@@ -1055,6 +1075,9 @@ pub fn collect_elk_layered_rank_trace_kernel_comparison_lines_with_crossing_exec
       )
       lines.push(
         "ORDER_SELECTED_CROSSINGS\t\{left.rank_order_selected_crossings}\t\{right.rank_order_selected_crossings}",
+      )
+      lines.push(
+        "ORDER_SELECTED_GLOBAL_CROSSINGS\t\{left.rank_order_selected_global_crossings}\t\{right.rank_order_selected_global_crossings}",
       )
       lines.push(
         "ORDER_SELECTED_LAYER_MISMATCH_COUNT\t\{trace_rank_layer_mismatch_count(left.rank_order_selected_layers, right.rank_order_selected_layers)}",
