@@ -592,6 +592,44 @@ test "elk layered rank trace crossing overrides are reflected in trace lines" {
 }
 
 ///|
+test "elk layered rank trace seed candidate source override is reflected in trace lines" {
+  let graph = wb_graph(["A", "B", "C", "D"], [
+    ("A", "B"),
+    ("A", "C"),
+    ("B", "D"),
+    ("C", "D"),
+  ])
+  let request = trace_request_for_graph(graph)
+  let default_lines = match
+    collect_elk_layered_rank_trace_lines_with_sweep_kernel(request, Default) {
+    Some(lines) => lines
+    None => fail("expected default trace lines")
+  }
+  let seed_only_lines = match
+    collect_elk_layered_rank_trace_lines_with_crossing_execution_overrides(
+      request,
+      Default,
+      None,
+      None,
+      None,
+      None,
+      None,
+      Some(SeedOnly),
+    ) {
+    Some(lines) => lines
+    None => fail("expected trace lines with seed source override")
+  }
+  assert_true(
+    default_lines.contains(
+      "ORDER_SEED_CANDIDATE_SOURCE_POLICY\tseed-and-reversed",
+    ),
+  )
+  assert_true(
+    seed_only_lines.contains("ORDER_SEED_CANDIDATE_SOURCE_POLICY\tseed-only"),
+  )
+}
+
+///|
 test "elk layered rank trace kernel comparison lines expose deterministic diff keys" {
   let graph = wb_graph(["A", "B", "C", "D"], [
     ("A", "B"),
