@@ -295,7 +295,6 @@ fn compare_rank_order_candidate_tie_break(
   left_rank_node_ids_by_rank : Map[Int, Array[String]],
   right_rank_node_ids_by_rank : Map[Int, Array[String]],
   max_rank : Int,
-  order_index_by_node_id : Map[String, Int],
   rank_by_node_id : Map[String, Int],
   successors_by_node_id : Map[String, Array[String]],
 ) -> Int {
@@ -308,13 +307,7 @@ fn compare_rank_order_candidate_tie_break(
   if left_global_score != right_global_score {
     return left_global_score.compare(right_global_score)
   }
-  let left_inversion_score = rank_order_model_inversion_score(
-    left_rank_node_ids_by_rank, max_rank, order_index_by_node_id,
-  )
-  let right_inversion_score = rank_order_model_inversion_score(
-    right_rank_node_ids_by_rank, max_rank, order_index_by_node_id,
-  )
-  left_inversion_score.compare(right_inversion_score)
+  0
 }
 
 ///|
@@ -328,6 +321,7 @@ fn select_optimized_seed_rank_order_candidate(
   rank_by_node_id : Map[String, Int],
   successors_by_node_id : Map[String, Array[String]],
 ) -> (Map[Int, Array[String]], Int, String) {
+  let _ = order_index_by_node_id
   let reversed_vs_seed_compare = if optimized_reversed_seed_crossing_score !=
     optimized_seed_crossing_score {
     optimized_reversed_seed_crossing_score.compare(
@@ -336,7 +330,7 @@ fn select_optimized_seed_rank_order_candidate(
   } else {
     compare_rank_order_candidate_tie_break(
       optimized_reversed_seed_rank_node_ids_by_rank, optimized_seed_rank_node_ids_by_rank,
-      max_rank, order_index_by_node_id, rank_by_node_id, successors_by_node_id,
+      max_rank, rank_by_node_id, successors_by_node_id,
     )
   }
   if reversed_vs_seed_compare < 0 {
@@ -568,7 +562,7 @@ fn build_rank_node_ids_by_rank_for_order_strategy_with_debug(
       } else {
         compare_rank_order_candidate_tie_break(
           real_virtual_rank_node_ids_by_rank, optimized_seed_selected_rank_node_ids_by_rank,
-          max_rank, order_index_by_node_id, rank_by_node_id, successors_by_node_id,
+          max_rank, rank_by_node_id, successors_by_node_id,
         )
       }
       let select_virtual_candidate = virtual_vs_seed_compare < 0

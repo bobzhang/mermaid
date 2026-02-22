@@ -623,11 +623,7 @@ test "elk layered neighbor sort fills unknown barycenters in pre-ordered mode" {
 test "elk layered neighbor sort applies forster constraints with barycenter groups" {
   let node_ids = ["C", "B", "A"]
   let neighbor_by_node_id : Map[String, Array[String]] = {}
-  let rank_position_by_node_id : Map[String, Int] = {
-    "C": 0,
-    "B": 1,
-    "A": 2,
-  }
+  let rank_position_by_node_id : Map[String, Int] = { "C": 0, "B": 1, "A": 2 }
   let order_index_by_node_id : Map[String, Int] = { "A": 0, "B": 1, "C": 2 }
   let changed = sort_rank_nodes_by_neighbors(
     node_ids,

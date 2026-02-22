@@ -359,7 +359,7 @@ test "elk layered optimized seed selector prefers lower crossing score" {
 }
 
 ///|
-test "elk layered optimized seed selector breaks crossing ties by model order" {
+test "elk layered optimized seed selector keeps seed order on crossing ties" {
   let optimized_seed_rank_node_ids_by_rank : Map[Int, Array[String]] = {
     0: ["B", "A"],
     1: ["C", "D"],
@@ -385,10 +385,10 @@ test "elk layered optimized seed selector breaks crossing ties by model order" {
     optimized_seed_rank_node_ids_by_rank, 4, optimized_reversed_seed_rank_node_ids_by_rank,
     4, 1, order_index_by_node_id, rank_by_node_id, successors_by_node_id,
   )
-  assert_eq(selected_source, "optimized-reversed-seed")
+  assert_eq(selected_source, "optimized-seed")
   assert_eq(selected_crossing_score, 4)
   assert_eq(
-    selected_rank_node_ids_by_rank, optimized_reversed_seed_rank_node_ids_by_rank,
+    selected_rank_node_ids_by_rank, optimized_seed_rank_node_ids_by_rank,
   )
 }
 

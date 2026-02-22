@@ -124,14 +124,8 @@ test "elk layered rank-order comparator prefers lower-crossing candidate" {
 }
 
 ///|
-test "elk layered rank-order comparator breaks ties by model-order inversion" {
+test "elk layered rank-order comparator keeps global-crossing ties neutral" {
   let rank_by_node_id : Map[String, Int] = { "A": 0, "B": 0, "C": 1, "D": 1 }
-  let order_index_by_node_id : Map[String, Int] = {
-    "A": 0,
-    "B": 1,
-    "C": 2,
-    "D": 3,
-  }
   let successors_by_node_id : Map[String, Array[String]] = {
     "A": ["C"],
     "B": [],
@@ -147,8 +141,8 @@ test "elk layered rank-order comparator breaks ties by model-order inversion" {
     1: ["D", "C"],
   }
   let base_vs_alternate_compare = compare_rank_order_candidate_tie_break(
-    base_rank_node_ids_by_rank, alternate_rank_node_ids_by_rank, 1, order_index_by_node_id,
-    rank_by_node_id, successors_by_node_id,
+    base_rank_node_ids_by_rank, alternate_rank_node_ids_by_rank, 1, rank_by_node_id,
+    successors_by_node_id,
   )
-  assert_true(base_vs_alternate_compare < 0)
+  assert_eq(base_vs_alternate_compare, 0)
 }
