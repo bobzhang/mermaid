@@ -1,32 +1,64 @@
 ///|
-priv enum ElkLayeredCrossingHeuristic {
-  LayerSweepNeighborMeanHeuristic
-  LayerSweepNeighborMedianHeuristic
-  LayerSweepEdgeSlotHeuristic
-  LayerSweepPortRankHeuristic
+priv struct ElkLayeredCrossingHeuristicContract {
+  role : String
+  sweep_kernel : ElkLayeredCrossingSweepKernel
 }
 
 ///|
-priv enum ElkLayeredCrossingPortDistributor {
-  IntegratedPortDistribution
+priv struct ElkLayeredCrossingPortDistributorContract {
+  role : String
 }
 
 ///|
-priv enum ElkLayeredCrossingConstraintResolver {
-  LocalRefinementConstraintResolver
+priv struct ElkLayeredCrossingConstraintResolverContract {
+  role : String
 }
 
 ///|
-priv enum ElkLayeredCrossingCounter {
-  RankSegmentObjectiveCounter
+priv struct ElkLayeredCrossingCounterContract {
+  role : String
 }
 
 ///|
 priv struct ElkLayeredCrossingComponentBundle {
-  heuristic : ElkLayeredCrossingHeuristic
-  port_distributor : ElkLayeredCrossingPortDistributor
-  constraint_resolver : ElkLayeredCrossingConstraintResolver
-  counter : ElkLayeredCrossingCounter
+  heuristic : ElkLayeredCrossingHeuristicContract
+  port_distributor : ElkLayeredCrossingPortDistributorContract
+  constraint_resolver : ElkLayeredCrossingConstraintResolverContract
+  counter : ElkLayeredCrossingCounterContract
+}
+
+///|
+fn crossing_heuristic_role_tag(
+  sweep_kernel : ElkLayeredCrossingSweepKernel,
+) -> String {
+  match sweep_kernel {
+    NeighborMeanBidirectional => "layer-sweep-neighbor-mean"
+    NeighborMedianBidirectional => "layer-sweep-neighbor-median"
+    NeighborMeanEdgeSlotBidirectional => "layer-sweep-edge-slot"
+    NeighborMeanPortRankBidirectional => "layer-sweep-port-rank"
+  }
+}
+
+///|
+fn build_crossing_heuristic_contract(
+  sweep_kernel : ElkLayeredCrossingSweepKernel,
+) -> ElkLayeredCrossingHeuristicContract {
+  { role: crossing_heuristic_role_tag(sweep_kernel), sweep_kernel }
+}
+
+///|
+fn build_crossing_port_distributor_contract() -> ElkLayeredCrossingPortDistributorContract {
+  { role: "integrated-port-distribution" }
+}
+
+///|
+fn build_crossing_constraint_resolver_contract() -> ElkLayeredCrossingConstraintResolverContract {
+  { role: "local-refinement-constraint-resolver" }
+}
+
+///|
+fn build_crossing_counter_contract() -> ElkLayeredCrossingCounterContract {
+  { role: "rank-segment-objective-counter" }
 }
 
 ///|
@@ -34,15 +66,10 @@ fn build_crossing_component_bundle(
   plan : ElkLayeredCrossingExecutionPlan,
 ) -> ElkLayeredCrossingComponentBundle {
   {
-    heuristic: match plan.sweep_kernel {
-      NeighborMeanBidirectional => LayerSweepNeighborMeanHeuristic
-      NeighborMedianBidirectional => LayerSweepNeighborMedianHeuristic
-      NeighborMeanEdgeSlotBidirectional => LayerSweepEdgeSlotHeuristic
-      NeighborMeanPortRankBidirectional => LayerSweepPortRankHeuristic
-    },
-    port_distributor: IntegratedPortDistribution,
-    constraint_resolver: LocalRefinementConstraintResolver,
-    counter: RankSegmentObjectiveCounter,
+    heuristic: build_crossing_heuristic_contract(plan.sweep_kernel),
+    port_distributor: build_crossing_port_distributor_contract(),
+    constraint_resolver: build_crossing_constraint_resolver_contract(),
+    counter: build_crossing_counter_contract(),
   }
 }
 
@@ -52,10 +79,8 @@ fn evaluate_crossing_objective_with_counter(
   objective_context : ElkLayeredCrossingObjectiveContext,
   components : ElkLayeredCrossingComponentBundle,
 ) -> ElkLayeredCrossingObjective {
-  match components.counter {
-    RankSegmentObjectiveCounter =>
-      evaluate_crossing_objective(rank_node_ids_by_rank, objective_context)
-  }
+  let _ = components.counter.role
+  evaluate_crossing_objective(rank_node_ids_by_rank, objective_context)
 }
 
 ///|
@@ -65,39 +90,14 @@ fn apply_crossing_sweep_heuristic_once(
   is_first_sweep : Bool,
   components : ElkLayeredCrossingComponentBundle,
 ) -> Bool {
-  match components.port_distributor {
-    IntegratedPortDistribution =>
-      match components.heuristic {
-        LayerSweepNeighborMeanHeuristic =>
-          sweep_rank_order_once_from_input_with_kernel(
-            sweep_input,
-            NeighborMeanBidirectional,
-            forward_sweep,
-            is_first_sweep,
-          )
-        LayerSweepNeighborMedianHeuristic =>
-          sweep_rank_order_once_from_input_with_kernel(
-            sweep_input,
-            NeighborMedianBidirectional,
-            forward_sweep,
-            is_first_sweep,
-          )
-        LayerSweepEdgeSlotHeuristic =>
-          sweep_rank_order_once_from_input_with_kernel(
-            sweep_input,
-            NeighborMeanEdgeSlotBidirectional,
-            forward_sweep,
-            is_first_sweep,
-          )
-        LayerSweepPortRankHeuristic =>
-          sweep_rank_order_once_from_input_with_kernel(
-            sweep_input,
-            NeighborMeanPortRankBidirectional,
-            forward_sweep,
-            is_first_sweep,
-          )
-      }
-  }
+  let _ = components.heuristic.role
+  let _ = components.port_distributor.role
+  sweep_rank_order_once_from_input_with_kernel(
+    sweep_input,
+    components.heuristic.sweep_kernel,
+    forward_sweep,
+    is_first_sweep,
+  )
 }
 
 ///|
@@ -107,10 +107,8 @@ fn apply_crossing_constraint_resolver(
   local_refinement_kernels : Array[ElkLayeredCrossingLocalRefinementKernel],
   components : ElkLayeredCrossingComponentBundle,
 ) -> Unit {
-  match components.constraint_resolver {
-    LocalRefinementConstraintResolver =>
-      apply_crossing_local_refinement_kernels(
-        refinement_input, config, local_refinement_kernels,
-      )
-  }
+  let _ = components.constraint_resolver.role
+  apply_crossing_local_refinement_kernels(
+    refinement_input, config, local_refinement_kernels,
+  )
 }
