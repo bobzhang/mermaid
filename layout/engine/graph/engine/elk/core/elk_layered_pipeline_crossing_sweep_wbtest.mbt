@@ -558,6 +558,7 @@ test "elk layered neighbor sort keeps current rank order on full ties" {
     build_crossing_neighbor_mean_random_state_by_seed(1),
     0.07,
     true,
+    {},
   )
   assert_eq(node_ids, ["B", "A"])
 }
@@ -588,6 +589,7 @@ test "elk layered neighbor sort propagates in-layer edges through recursive bary
     build_crossing_neighbor_mean_random_state_by_seed(1),
     0.07,
     true,
+    {},
   )
   assert_eq(node_ids, ["A", "B", "C"])
 }
@@ -612,8 +614,35 @@ test "elk layered neighbor sort fills unknown barycenters in pre-ordered mode" {
     build_crossing_neighbor_mean_random_state_by_seed(1),
     0.07,
     true,
+    {},
   )
   assert_eq(node_ids, ["A", "B", "C"])
+}
+
+///|
+test "elk layered neighbor sort applies forster constraints with barycenter groups" {
+  let node_ids = ["C", "B", "A"]
+  let neighbor_by_node_id : Map[String, Array[String]] = {}
+  let rank_position_by_node_id : Map[String, Int] = {
+    "C": 0,
+    "B": 1,
+    "A": 2,
+  }
+  let order_index_by_node_id : Map[String, Int] = { "A": 0, "B": 1, "C": 2 }
+  let changed = sort_rank_nodes_by_neighbors(
+    node_ids,
+    neighbor_by_node_id,
+    rank_position_by_node_id,
+    order_index_by_node_id,
+    true,
+    false,
+    build_crossing_neighbor_mean_random_state_by_seed(1),
+    0.07,
+    true,
+    { "A": ["B"] },
+  )
+  assert_true(changed)
+  assert_eq(node_ids, ["C", "A", "B"])
 }
 
 ///|
@@ -659,6 +688,7 @@ test "elk layered neighbor-mean perturbation keeps tie-break deterministic by se
     build_crossing_neighbor_mean_random_state_by_seed(1),
     0.07,
     true,
+    {},
   )
   let _ = sort_rank_nodes_by_neighbors(
     run_two,
@@ -670,6 +700,7 @@ test "elk layered neighbor-mean perturbation keeps tie-break deterministic by se
     build_crossing_neighbor_mean_random_state_by_seed(1),
     0.07,
     true,
+    {},
   )
   assert_eq(run_one, run_two)
 }

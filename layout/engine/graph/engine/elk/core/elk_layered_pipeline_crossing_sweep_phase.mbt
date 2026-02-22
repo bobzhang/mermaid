@@ -473,11 +473,6 @@ fn sweep_rank_order_once_from_input_with_kernel(
                   sweep_input.neighbor_mean_random_state_by_key,
                   sweep_input.neighbor_mean_barycenter_perturbation_amount,
                   !is_first_sweep,
-                ) {
-                changed = true
-              }
-              if apply_crossing_in_layer_successor_constraints(
-                  node_ids,
                   sweep_input.in_layer_successors_by_node_id,
                 ) {
                 changed = true
@@ -518,11 +513,6 @@ fn sweep_rank_order_once_from_input_with_kernel(
                   sweep_input.neighbor_mean_random_state_by_key,
                   sweep_input.neighbor_mean_barycenter_perturbation_amount,
                   !is_first_sweep,
-                ) {
-                changed = true
-              }
-              if apply_crossing_in_layer_successor_constraints(
-                  node_ids,
                   sweep_input.in_layer_successors_by_node_id,
                 ) {
                 changed = true

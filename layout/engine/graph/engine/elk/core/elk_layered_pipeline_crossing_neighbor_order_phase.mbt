@@ -351,6 +351,7 @@ fn sort_rank_nodes_by_neighbors(
   random_state_by_key : Map[String, UInt64],
   neighbor_mean_barycenter_perturbation_amount : Double,
   pre_ordered : Bool,
+  in_layer_successors_by_node_id : Map[String, Array[String]],
 ) -> Bool {
   let original_node_ids = node_ids.copy()
   let free_node_id_set = build_node_id_set(node_ids)
@@ -399,6 +400,31 @@ fn sort_rank_nodes_by_neighbors(
       changed = true
       break
     }
+  }
+  let barycenter_by_node_id : Map[String, Double] = {}
+  let degree_by_node_id : Map[String, Int] = {}
+  for index, node_id in node_ids {
+    let key = match neighbor_key_by_node_id.get(node_id) {
+      Some(value) => value
+      None => neighbor_order_key_with_center(index.to_double())
+    }
+    if key.has_center {
+      let degree = if key.neighbor_position_count > 0 {
+        key.neighbor_position_count
+      } else {
+        1
+      }
+      barycenter_by_node_id[node_id] = neighbor_order_center_value(key)
+      degree_by_node_id[node_id] = degree
+    } else {
+      barycenter_by_node_id[node_id] = index.to_double()
+      degree_by_node_id[node_id] = 1
+    }
+  }
+  if apply_crossing_in_layer_successor_constraints_forster(
+      node_ids, in_layer_successors_by_node_id, barycenter_by_node_id, degree_by_node_id,
+    ) {
+    changed = true
   }
   changed
 }
