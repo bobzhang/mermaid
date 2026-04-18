@@ -1,13 +1,17 @@
 // Generated using `moon info`, DON'T EDIT IT
 package "bobzhang/beautiful_mermaid/model"
 
+import {
+  "moonbitlang/core/debug",
+}
+
 // Values
 
 // Errors
 pub(all) suberror MermaidError {
   ParseFailure(String)
   UnknownTheme(String)
-}
+} derive(@debug.Debug)
 pub impl Show for MermaidError
 
 // Types and methods
@@ -50,8 +54,7 @@ pub(all) enum EdgeStyle {
   Solid
   Dotted
   Thick
-}
-pub impl Eq for EdgeStyle
+} derive(Eq)
 
 pub(all) enum LayoutEngine {
   Legacy
@@ -119,8 +122,7 @@ pub(all) enum NodeShape {
   ClassEntity
   ErEntity
   SequenceParticipant
-}
-pub impl Eq for NodeShape
+} derive(Eq)
 
 pub(all) struct Point {
   x : Int
@@ -254,8 +256,7 @@ pub(all) enum SequenceBlockType {
   Critical
   Break
   Rect
-}
-pub impl Eq for SequenceBlockType
+} derive(Eq)
 
 pub(all) struct SequenceNote {
   actor_ids : Array[String]
