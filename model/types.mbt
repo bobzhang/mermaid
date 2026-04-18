@@ -3,7 +3,7 @@
 pub(all) suberror MermaidError {
   ParseFailure(String)
   UnknownTheme(String)
-} derive(Show)
+} derive(Debug)
 
 ///|
 /// Flow/state layout direction.
@@ -359,4 +359,9 @@ pub(all) struct PositionedGraph {
   sequence_activations : Array[PositionedSequenceActivation]
   sequence_blocks : Array[PositionedSequenceBlock]
   sequence_notes : Array[PositionedSequenceNote]
+}
+
+///|
+pub impl Show for MermaidError with output(self, logger) {
+  logger.write_string(@debug.render(self.to_repr(), max_depth=2147483647))
 }

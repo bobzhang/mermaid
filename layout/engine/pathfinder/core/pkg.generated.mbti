@@ -12,8 +12,7 @@ pub fn ascii_grid_pathfind(AsciiGridCoord, AsciiGridCoord, Map[String, Bool], In
 pub(all) struct AsciiGridCoord {
   x : Int
   y : Int
-}
-pub impl Eq for AsciiGridCoord
+} derive(Eq)
 
 // Type aliases
 
