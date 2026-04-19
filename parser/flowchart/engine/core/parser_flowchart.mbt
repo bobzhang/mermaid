@@ -102,7 +102,7 @@ fn strip_node_metadata(raw_token : String) -> String {
   match token.find("@{") {
     Some(index) =>
       if token is [.., .. "}"] {
-        (try! token[:index]).to_string().trim().to_string()
+        token[:index].to_string().trim().to_string()
       } else {
         token
       }
@@ -129,10 +129,9 @@ fn parse_node_shape_metadata(raw_token : String) -> @model.NodeShape? {
   let token = node_part.trim().to_string()
   let metadata = match token.find("@{") {
     Some(start_index) => {
-      let after = (try! token[start_index + 2:]).to_string()
+      let after = token[start_index + 2:].to_string()
       match after.find("}") {
-        Some(end_index) =>
-          (try! after[:end_index]).to_string().trim().to_string()
+        Some(end_index) => after[:end_index].to_string().trim().to_string()
         None => return None
       }
     }
@@ -239,7 +238,7 @@ fn split_parallel_node_segments(segment : String) -> Array[String] {
       continue
     }
     if unit == '&' && square_depth == 0 && round_depth == 0 && curly_depth == 0 {
-      let part = (try! segment[start:i]).to_string().trim().to_string()
+      let part = segment[start:i].to_string().trim().to_string()
       if part != "" {
         parts.push(part)
       }
@@ -248,7 +247,7 @@ fn split_parallel_node_segments(segment : String) -> Array[String] {
   }
 
   let tail = if start < segment.length() {
-    (try! segment[start:]).to_string().trim().to_string()
+    segment[start:].to_string().trim().to_string()
   } else {
     ""
   }
@@ -432,7 +431,7 @@ fn leading_node_token(raw_line : String) -> String {
   if end_index == 0 {
     ""
   } else {
-    (try! line[:end_index]).to_string()
+    line[:end_index].to_string()
   }
 }
 
@@ -505,7 +504,7 @@ fn top_level_operator_at(
     if index + op_len > line.length() {
       continue
     }
-    let slice = (try! line[index:index + op_len]).to_string()
+    let slice = line[index:index + op_len].to_string()
     if slice != op.symbol {
       continue
     }
@@ -657,7 +656,7 @@ fn top_level_last_index(text : String, marker : String) -> Int? {
     if i + marker_len > text.length() {
       continue
     }
-    if (try! text[i:i + marker_len]).to_string() == marker {
+    if text[i:i + marker_len].to_string() == marker {
       found = Some(i)
     }
   }
@@ -683,8 +682,8 @@ fn parse_mid_label_edge(
     Some(found) =>
       match mid_label_left_marker(found.op.symbol) {
         Some(marker) => {
-          let lhs = (try! line[:found.index]).to_string().trim().to_string()
-          let rhs = (try! line[found.index + found.op.symbol.length():])
+          let lhs = line[:found.index].to_string().trim().to_string()
+          let rhs = line[found.index + found.op.symbol.length():]
             .to_string()
             .trim()
             .to_string()
@@ -693,11 +692,11 @@ fn parse_mid_label_edge(
           }
           match top_level_last_index(lhs, marker) {
             Some(marker_index) => {
-              let source_segment = (try! lhs[:marker_index])
+              let source_segment = lhs[:marker_index]
                 .to_string()
                 .trim()
                 .to_string()
-              let label = (try! lhs[marker_index + marker.length():])
+              let label = lhs[marker_index + marker.length():]
                 .to_string()
                 .trim()
                 .to_string()
@@ -1115,8 +1114,8 @@ fn parse_class_line(
   }
   match rest.rev_find(" ") {
     Some(idx) => {
-      let node_list = (try! rest[:idx]).to_string().trim().to_string()
-      let class_name = (try! rest[idx + 1:]).to_string().trim().to_string()
+      let node_list = rest[:idx].to_string().trim().to_string()
+      let class_name = rest[idx + 1:].to_string().trim().to_string()
       if class_name == "" || node_list == "" {
         return
       }
@@ -1222,8 +1221,8 @@ fn parse_subgraph_start_line(line : String) -> MermaidSubgraph? {
   match rest.find("[") {
     Some(open_idx) =>
       if rest is [.. without_close, .. "]"] {
-        let raw_id = (try! rest[:open_idx]).to_string().trim().to_string()
-        let raw_label = (try! without_close[open_idx + 1:])
+        let raw_id = rest[:open_idx].to_string().trim().to_string()
+        let raw_label = without_close[open_idx + 1:]
           .to_string()
           .trim()
           .to_string()
@@ -1290,10 +1289,7 @@ fn parse_flow_line(
   match find_top_level_edge_operator(line, edge_operators()) {
     Some(found) => {
       let touched_node_ids : Array[String] = []
-      let left_segment = (try! line[:found.index])
-        .to_string()
-        .trim()
-        .to_string()
+      let left_segment = line[:found.index].to_string().trim().to_string()
       if !is_clean_parallel_node_group(left_segment) {
         return ensure_leading_node_only(line, nodes, class_assignments)
       }
@@ -1305,7 +1301,7 @@ fn parse_flow_line(
       push_unique_node_ids(touched_node_ids, current_sources)
 
       let mut current_op = found.op
-      let mut rhs = (try! line[found.index + found.op.symbol.length():])
+      let mut rhs = line[found.index + found.op.symbol.length():]
         .to_string()
         .trim()
         .to_string()
@@ -1316,7 +1312,7 @@ fn parse_flow_line(
         match
           find_top_level_edge_operator(rhs_without_label, edge_operators()) {
           Some(next_found) => {
-            let target_segment = (try! rhs_without_label[:next_found.index])
+            let target_segment = rhs_without_label[:next_found.index]
               .to_string()
               .trim()
               .to_string()
@@ -1335,8 +1331,8 @@ fn parse_flow_line(
             )
             current_sources = next_targets
             current_op = next_found.op
-            rhs = (try! rhs_without_label[next_found.index +
-              next_found.op.symbol.length():])
+            rhs = rhs_without_label[next_found.index +
+              next_found.op.symbol.length():]
               .to_string()
               .trim()
               .to_string()

@@ -21,8 +21,8 @@ fn parse_delimited_token(
       if prefix.length() < start + open.length() {
         return None
       }
-      let raw_id = (try! prefix[:start]).to_string().trim().to_string()
-      let raw_label = (try! prefix[start + open.length():])
+      let raw_id = prefix[:start].to_string().trim().to_string()
+      let raw_label = prefix[start + open.length():]
         .to_string()
         .trim()
         .to_string()
