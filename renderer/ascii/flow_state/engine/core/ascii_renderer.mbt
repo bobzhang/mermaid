@@ -1922,7 +1922,7 @@ fn flow_draw_group_labels(
 ) -> Unit {
   let label_room = (group.width - 2).max(0)
   let label = if group.label.length() > label_room {
-    (try! group.label[:label_room]).to_string()
+    group.label[:label_room].to_string()
   } else {
     group.label
   }
@@ -1939,7 +1939,7 @@ fn flow_draw_group_labels(
 fn leading_spaces(line : String) -> Int {
   let mut idx = 0
   while idx < line.length() {
-    let ch = (try! line[idx:idx + 1]).to_string()
+    let ch = line[idx:idx + 1].to_string()
     if ch != " " {
       break
     }
@@ -1989,7 +1989,7 @@ fn trim_flow_canvas_output(output : String) -> String {
       if line.length() <= max_width {
         normalized.push(line)
       } else {
-        normalized.push((try! line[:max_width]).to_string())
+        normalized.push(line[:max_width].to_string())
       }
     }
     return normalized.iter().join("\n")
@@ -2000,7 +2000,7 @@ fn trim_flow_canvas_output(output : String) -> String {
     if line.length() <= min_leading {
       trimmed.push("")
     } else {
-      trimmed.push((try! line[min_leading:]).to_string())
+      trimmed.push(line[min_leading:].to_string())
     }
   }
   let max_width = trimmed.fold(init=0, fn(acc, line) {
@@ -2015,7 +2015,7 @@ fn trim_flow_canvas_output(output : String) -> String {
     if line.length() <= max_width {
       normalized.push(line)
     } else {
-      normalized.push((try! line[:max_width]).to_string())
+      normalized.push(line[:max_width].to_string())
     }
   }
   normalized.iter().join("\n")

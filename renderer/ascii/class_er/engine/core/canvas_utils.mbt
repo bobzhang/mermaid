@@ -37,7 +37,7 @@ fn write_canvas_text(
   for i in 0..<text.length() {
     let target_x = x + i
     if target_x >= 0 && target_x < canvas[y].length() {
-      put_canvas(canvas, target_x, y, (try! text[i:i + 1]).to_string())
+      put_canvas(canvas, target_x, y, text[i:i + 1].to_string())
     }
   }
 }

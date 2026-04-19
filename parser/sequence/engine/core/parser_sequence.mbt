@@ -212,8 +212,8 @@ fn parse_sequence_message_line(
 ) -> Bool {
   match find_earliest_operator(line, sequence_edge_operators()) {
     Some(found) => {
-      let source = (try! line[:found.index]).to_string().trim().to_string()
-      let rhs = (try! line[found.index + found.op.symbol.length():])
+      let source = line[:found.index].to_string().trim().to_string()
+      let rhs = line[found.index + found.op.symbol.length():]
         .to_string()
         .trim()
         .to_string()

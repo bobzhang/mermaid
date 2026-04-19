@@ -337,11 +337,8 @@ pub fn parse_state_diagram(lines : Array[String]) -> MermaidGraph {
 
     match find_edge_operator(transition_line) {
       Some(found) => {
-        let left = (try! transition_line[:found.index])
-          .to_string()
-          .trim()
-          .to_string()
-        let right = (try! transition_line[found.index + found.op.symbol.length():])
+        let left = transition_line[:found.index].to_string().trim().to_string()
+        let right = transition_line[found.index + found.op.symbol.length():]
           .to_string()
           .trim()
           .to_string()

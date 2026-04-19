@@ -38,12 +38,12 @@ fn parse_compact_relation_parts(
     return None
   }
 
-  let source = (try! trimmed[:operator_start]).to_string().trim().to_string()
-  let operator = (try! trimmed[operator_start:operator_end + 1])
+  let source = trimmed[:operator_start].to_string().trim().to_string()
+  let operator = trimmed[operator_start:operator_end + 1]
     .to_string()
     .trim()
     .to_string()
-  let target = (try! trimmed[operator_end + 1:]).to_string().trim().to_string()
+  let target = trimmed[operator_end + 1:].to_string().trim().to_string()
   if source == "" ||
     operator == "" ||
     target == "" ||
@@ -221,11 +221,8 @@ fn normalize_class_member(raw : String) -> String {
   if body.contains("(") && body.contains(")") {
     match (body.find("("), body.find(")")) {
       (Some(open_idx), Some(close_idx)) => {
-        let name = (try! body[:open_idx]).to_string().trim().to_string()
-        let return_type = (try! body[close_idx + 1:])
-          .to_string()
-          .trim()
-          .to_string()
+        let name = body[:open_idx].to_string().trim().to_string()
+        let return_type = body[close_idx + 1:].to_string().trim().to_string()
         if name == "" {
           return trimmed
         }
@@ -351,8 +348,8 @@ fn parse_inline_class_declaration(line : String) -> (String, String?)? {
   }
   match class_body.find("{") {
     Some(open_idx) => {
-      let class_id = (try! class_body[:open_idx]).to_string().trim().to_string()
-      let inline_detail = (try! class_body[open_idx + 1:])
+      let class_id = class_body[:open_idx].to_string().trim().to_string()
+      let inline_detail = class_body[open_idx + 1:]
         .to_string()
         .trim()
         .to_string()

@@ -21,8 +21,8 @@ fn er_operator_tokens(operator : String?) -> (String, String) {
       match (start_sep, end_sep) {
         (Some(start), Some(end)) =>
           (
-            (try! op[:start]).to_string().trim().to_string(),
-            (try! op[end + 1:]).to_string().trim().to_string(),
+            op[:start].to_string().trim().to_string(),
+            op[end + 1:].to_string().trim().to_string(),
           )
         _ => ("", "")
       }
@@ -199,7 +199,7 @@ pub fn render_ascii_er(
                         canvas,
                         lx,
                         label_y,
-                        (try! label[i:i + 1]).to_string(),
+                        label[i:i + 1].to_string(),
                       )
                     }
                   }

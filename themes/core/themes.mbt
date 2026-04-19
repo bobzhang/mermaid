@@ -204,7 +204,7 @@ fn normalize_theme_name(name : String) -> String {
   if start == end {
     ""
   } else {
-    (try! collapsed[start:end]).to_string()
+    collapsed[start:end].to_string()
   }
 }
 
