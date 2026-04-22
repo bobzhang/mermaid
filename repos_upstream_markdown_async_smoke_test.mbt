@@ -11,7 +11,7 @@ async fn repos_markdown_files_from(
   match kind_result {
     Ok(Directory) => {
       let name = match path.rev_find("/") {
-        Some(index) => (try! path[index + 1:]).to_string()
+        Some(index) => path[index + 1:].to_string()
         None => path
       }
       if name

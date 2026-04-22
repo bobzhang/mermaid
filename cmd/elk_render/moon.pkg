@@ -5,7 +5,7 @@ import {
   "bobzhang/beautiful_mermaid/parser/header/core" @parser_header_core,
   "bobzhang/beautiful_mermaid/renderer/svg/engine/core" @renderer_svg,
   "moonbitlang/core/env" @env,
-  "moonbitlang/core/strconv" @strconv,
+  "moonbitlang/core/string",
 }
 
 import {

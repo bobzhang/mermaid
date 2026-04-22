@@ -87,9 +87,7 @@ fn parse_non_negative_int(raw : String) -> Int? {
   if normalized == "" {
     return None
   }
-  let parsed : Result[Int, @strconv.StrConvError] = try? @strconv.parse_int(
-    normalized,
-  )
+  let parsed = try? @string.parse_int(normalized)
   match parsed {
     Ok(value) => if value >= 0 { Some(value) } else { None }
     Err(_) => None

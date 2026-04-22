@@ -5,9 +5,9 @@ async fn golden_from_text_fixture(path : String) -> String {
   let delimiter = "\n---\n"
   match content.find(delimiter) {
     Some(first_sep) => {
-      let rest = (try! content[first_sep + delimiter.length():]).to_string()
+      let rest = content[first_sep + delimiter.length():].to_string()
       let golden = match rest.find(delimiter) {
-        Some(second_sep) => (try! rest[:second_sep]).to_string()
+        Some(second_sep) => rest[:second_sep].to_string()
         None => rest
       }
       match golden.strip_suffix("\n") {
