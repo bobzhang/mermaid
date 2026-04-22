@@ -12,6 +12,6 @@ import {
   "moonbitlang/async",
   "moonbitlang/async/fs" @fs,
   "moonbitlang/core/json" @json,
-  "moonbitlang/core/strconv" @strconv,
+  "moonbitlang/core/string",
   "moonbitlang/core/test",
 } for "test"

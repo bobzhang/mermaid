@@ -108,12 +108,10 @@ fn ts_parse_padding_value(trimmed : String, prefix : String) -> Int? {
   }
   let raw_value = match trimmed.find("=") {
     Some(eq_index) =>
-      (try! trimmed[eq_index + 1:]).to_string().trim().to_string()
+      trimmed[eq_index + 1:].to_string().trim().to_string()
     None => return None
   }
-  let parsed : Result[Int, @strconv.StrConvError] = try? @strconv.parse_int(
-    raw_value,
-  )
+  let parsed = try? @string.parse_int(raw_value)
   match parsed {
     Ok(value) => Some(value)
     Err(_) => None
@@ -191,13 +189,11 @@ fn ts_svg_attr_int(svg : String, attr : String) -> Int? {
   match svg.find(marker) {
     Some(start_index) => {
       let value_start = start_index + marker.length()
-      let rest = (try! svg[value_start:]).to_string()
+      let rest = svg[value_start:].to_string()
       match rest.find("\"") {
         Some(end_index) => {
-          let raw_value = (try! rest[:end_index]).to_string()
-          let parsed : Result[Int, @strconv.StrConvError] = try? @strconv.parse_int(
-            raw_value,
-          )
+          let raw_value = rest[:end_index].to_string()
+          let parsed = try? @string.parse_int(raw_value)
           match parsed {
             Ok(value) => Some(value)
             Err(_) => None
@@ -216,10 +212,10 @@ fn ts_collect_edge_label_rects(svg : String) -> Array[(Int, Int, Int, Int)] {
   let marker = "<rect class=\"edge-label-bg\""
   let mut offset = 0
   while offset < svg.length() {
-    let rest = (try! svg[offset:]).to_string()
+    let rest = svg[offset:].to_string()
     match rest.find(marker) {
       Some(found) => {
-        let snippet = (try! rest[found:]).to_string()
+        let snippet = rest[found:].to_string()
         match
           (
             ts_svg_attr_int(snippet, "x"),

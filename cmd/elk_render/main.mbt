@@ -13,9 +13,7 @@ struct ElkRenderCliArgs {
 
 ///|
 fn parse_positive_int(raw : String) -> Int? {
-  let parsed : Result[Int, @strconv.StrConvError] = try? @strconv.parse_int(
-    raw.trim().to_string(),
-  )
+  let parsed = try? @string.parse_int(raw.trim().to_string())
   match parsed {
     Ok(value) => if value > 0 { Some(value) } else { None }
     Err(_) => None
@@ -24,9 +22,7 @@ fn parse_positive_int(raw : String) -> Int? {
 
 ///|
 fn parse_non_negative_double(raw : String) -> Double? {
-  let parsed : Result[Double, @strconv.StrConvError] = try? @strconv.parse_double(
-    raw.trim().to_string(),
-  )
+  let parsed = try? @string.parse_double(raw.trim().to_string())
   match parsed {
     Ok(value) => if value >= 0.0 { Some(value) } else { None }
     Err(_) => None

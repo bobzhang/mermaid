@@ -98,9 +98,7 @@ fn decode_positive_int_arg(raw : String) -> Int? {
   if normalized == "" {
     return None
   }
-  let parsed : Result[Int, @strconv.StrConvError] = try? @strconv.parse_int(
-    normalized,
-  )
+  let parsed = try? @string.parse_int(normalized)
   match parsed {
     Ok(value) => if value > 0 { Some(value) } else { None }
     Err(_) => None
@@ -113,9 +111,7 @@ fn decode_non_negative_double_arg(raw : String) -> Double? {
   if normalized == "" {
     return None
   }
-  let parsed : Result[Double, @strconv.StrConvError] = try? @strconv.parse_double(
-    normalized,
-  )
+  let parsed = try? @string.parse_double(normalized)
   match parsed {
     Ok(value) => if value >= 0.0 { Some(value) } else { None }
     Err(_) => None

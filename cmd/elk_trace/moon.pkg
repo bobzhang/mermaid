@@ -4,7 +4,7 @@ import {
   "bobzhang/beautiful_mermaid/model" @model,
   "bobzhang/beautiful_mermaid/parser/header/core" @parser_header_core,
   "moonbitlang/core/env" @env,
-  "moonbitlang/core/strconv" @strconv,
+  "moonbitlang/core/string",
 }
 
 import {
