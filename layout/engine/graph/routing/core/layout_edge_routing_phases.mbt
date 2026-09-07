@@ -253,7 +253,7 @@ fn assign_compact_boundary_offsets_for_cohort(
       ),
     )
   }
-  let used_offsets : Map[Int, Bool] = {}
+  let used_offsets : Map[Int, Bool] = Map([])
   if preserve_existing_offsets {
     for assignment in cohort_assignments {
       match offsets_by_context_index.get(assignment.context_index) {
@@ -356,7 +356,7 @@ fn rebalance_boundary_offsets_for_bucket(
     half_span_limit,
     ordered_assignments.length(),
   )
-  let used_offsets : Map[Int, Bool] = {}
+  let used_offsets : Map[Int, Bool] = Map([])
   let normalized_total = ordered_assignments.length().max(1)
   for slot, assignment in ordered_assignments {
     let existing_offset = if assignment.source_endpoint {
@@ -396,8 +396,8 @@ fn bucket_has_source_target_offset_conflict(
   if assignments.length() == 0 {
     return false
   }
-  let source_offsets : Map[Int, Bool] = {}
-  let target_offsets : Map[Int, Bool] = {}
+  let source_offsets : Map[Int, Bool] = Map([])
+  let target_offsets : Map[Int, Bool] = Map([])
   let normalized_total = assignments.length().max(1)
   for slot, assignment in assignments {
     let context = edge_layout_contexts[assignment.context_index]
@@ -1160,10 +1160,10 @@ fn back_edge_lane_crossing_penalty(
   target_y : Int,
   candidate_y : Int,
 ) -> Int {
-  let start : Point = { x: source_anchor_x, y: source_y }
-  let bend_start : Point = { x: source_anchor_x, y: candidate_y }
-  let bend_end : Point = { x: target_anchor_x, y: candidate_y }
-  let end : Point = { x: target_anchor_x, y: target_y }
+  let start : Point = { x: source_anchor_x, y: source_y, }
+  let bend_start : Point = { x: source_anchor_x, y: candidate_y, }
+  let bend_end : Point = { x: target_anchor_x, y: candidate_y, }
+  let end : Point = { x: target_anchor_x, y: target_y, }
   let mut penalty = 0
   for segment in crossing_candidates {
     if back_edge_segments_properly_intersect(
@@ -1199,10 +1199,10 @@ fn back_edge_column_crossing_penalty(
   target_anchor_y : Int,
   candidate_x : Int,
 ) -> Int {
-  let start : Point = { x: source_x, y: source_anchor_y }
-  let bend_start : Point = { x: candidate_x, y: source_anchor_y }
-  let bend_end : Point = { x: candidate_x, y: target_anchor_y }
-  let end : Point = { x: target_x, y: target_anchor_y }
+  let start : Point = { x: source_x, y: source_anchor_y, }
+  let bend_start : Point = { x: candidate_x, y: source_anchor_y, }
+  let bend_end : Point = { x: candidate_x, y: target_anchor_y, }
+  let end : Point = { x: target_x, y: target_anchor_y, }
   let mut penalty = 0
   for segment in crossing_candidates {
     if back_edge_segments_properly_intersect(
@@ -1503,7 +1503,7 @@ fn reserve_back_edge_bend_y(
 
   let chosen_y = if has_choice { best_y } else { bottom + 42 }
 
-  reservations.push({ left, right, y: chosen_y })
+  reservations.push({ left, right, y: chosen_y, })
   chosen_y
 }
 
@@ -1712,7 +1712,7 @@ fn reserve_back_edge_bend_x(
 
   let chosen_x = if has_choice { best_x } else { right + 42 }
 
-  reservations.push({ top, bottom, x: chosen_x })
+  reservations.push({ top, bottom, x: chosen_x, })
   chosen_x
 }
 
@@ -1731,7 +1731,7 @@ priv struct LabelRouteScore {
 
 ///|
 fn edge_label_dimensions(label : String) -> (Int, Int) {
-  let lines = label.split("\n").map(part => part.to_string()).to_array()
+  let lines = label.split("\n").map(part => part.to_owned()).to_array()
   let mut longest_line = 0
   for line in lines {
     longest_line = longest_line.max(line.length())
@@ -1744,7 +1744,7 @@ fn edge_label_dimensions(label : String) -> (Int, Int) {
 ///|
 fn polyline_label_anchor(points : Array[Point]) -> Point {
   if points.length() == 0 {
-    return { x: 0, y: 0 }
+    return { x: 0, y: 0, }
   }
   if points.length() == 1 {
     return points[0]
@@ -1855,10 +1855,10 @@ fn segment_intersects_rect(
     point_inside_rect(end, left, right, top, bottom) {
     return true
   }
-  let top_left : Point = { x: left, y: top }
-  let top_right : Point = { x: right, y: top }
-  let bottom_left : Point = { x: left, y: bottom }
-  let bottom_right : Point = { x: right, y: bottom }
+  let top_left : Point = { x: left, y: top, }
+  let top_right : Point = { x: right, y: top, }
+  let bottom_left : Point = { x: left, y: bottom, }
+  let bottom_right : Point = { x: right, y: bottom, }
   back_edge_segments_intersect(start, end, top_left, top_right) ||
   back_edge_segments_intersect(start, end, top_right, bottom_right) ||
   back_edge_segments_intersect(start, end, bottom_right, bottom_left) ||
@@ -2238,7 +2238,7 @@ fn source_endpoint_turnback_compaction_candidate(
       source_stub_end.x == source_next.x {
       return None
     }
-    Some([source_anchor, { x: source_next.x, y: source_anchor.y }, source_next])
+    Some([source_anchor, { x: source_next.x, y: source_anchor.y, }, source_next])
   } else {
     if source_anchor.y != source_stub_end.y ||
       source_anchor.x == source_stub_end.x ||
@@ -2246,7 +2246,7 @@ fn source_endpoint_turnback_compaction_candidate(
       source_stub_end.y == source_next.y {
       return None
     }
-    Some([source_anchor, { x: source_anchor.x, y: source_next.y }, source_next])
+    Some([source_anchor, { x: source_anchor.x, y: source_next.y, }, source_next])
   }
 }
 
@@ -2314,8 +2314,8 @@ fn reciprocal_target_dogleg_candidate(
     for i in 0..<(count - 2) {
       candidate.push(points[i])
     }
-    candidate.push({ x: detour_x, y: approach.y })
-    candidate.push({ x: detour_x, y: anchor.y })
+    candidate.push({ x: detour_x, y: approach.y, })
+    candidate.push({ x: detour_x, y: anchor.y, })
     candidate.push(anchor)
     return Some(candidate)
   }
@@ -2327,8 +2327,8 @@ fn reciprocal_target_dogleg_candidate(
     for i in 0..<(count - 2) {
       candidate.push(points[i])
     }
-    candidate.push({ x: approach.x, y: detour_y })
-    candidate.push({ x: anchor.x, y: detour_y })
+    candidate.push({ x: approach.x, y: detour_y, })
+    candidate.push({ x: anchor.x, y: detour_y, })
     candidate.push(anchor)
     return Some(candidate)
   }
@@ -2360,7 +2360,7 @@ fn reciprocal_two_point_dogleg_candidate(
     return Some(
       @layout_engine_graph_edge_core.simplify_polyline_points([
         start,
-        { x: apex_x, y: apex_y },
+        { x: apex_x, y: apex_y, },
         end,
       ]),
     )
@@ -2378,7 +2378,7 @@ fn reciprocal_two_point_dogleg_candidate(
   Some(
     @layout_engine_graph_edge_core.simplify_polyline_points([
       start,
-      { x: apex_x, y: apex_y },
+      { x: apex_x, y: apex_y, },
       end,
     ]),
   )
@@ -2409,8 +2409,8 @@ fn reciprocal_two_point_outer_detour_candidate(
     return Some(
       @layout_engine_graph_edge_core.simplify_polyline_points([
         start,
-        { x: detour_x, y: start.y },
-        { x: detour_x, y: end.y },
+        { x: detour_x, y: start.y, },
+        { x: detour_x, y: end.y, },
         end,
       ]),
     )
@@ -2427,8 +2427,8 @@ fn reciprocal_two_point_outer_detour_candidate(
   Some(
     @layout_engine_graph_edge_core.simplify_polyline_points([
       start,
-      { x: start.x, y: detour_y },
-      { x: end.x, y: detour_y },
+      { x: start.x, y: detour_y, },
+      { x: end.x, y: detour_y, },
       end,
     ]),
   )
@@ -2461,9 +2461,9 @@ fn reciprocal_two_point_outer_shifted_candidate(
     return Some(
       @layout_engine_graph_edge_core.simplify_polyline_points([
         start,
-        { x: start.x, y: lane_y },
-        { x: detour_x, y: lane_y },
-        { x: detour_x, y: end.y },
+        { x: start.x, y: lane_y, },
+        { x: detour_x, y: lane_y, },
+        { x: detour_x, y: end.y, },
         end,
       ]),
     )
@@ -2481,9 +2481,9 @@ fn reciprocal_two_point_outer_shifted_candidate(
   Some(
     @layout_engine_graph_edge_core.simplify_polyline_points([
       start,
-      { x: lane_x, y: start.y },
-      { x: lane_x, y: detour_y },
-      { x: end.x, y: detour_y },
+      { x: lane_x, y: start.y, },
+      { x: lane_x, y: detour_y, },
+      { x: end.x, y: detour_y, },
       end,
     ]),
   )
@@ -2535,7 +2535,7 @@ fn maybe_optimize_reciprocal_target_dogleg(
     context.resolved_target_id,
     routed_edge_segments,
   )
-  let seen_signatures : Map[String, Bool] = {}
+  let seen_signatures : Map[String, Bool] = Map([])
   seen_signatures[points_signature(best_points)] = true
   if points.length() == 2 {
     let start = points[0]
@@ -2856,7 +2856,7 @@ fn points_signature(points : Array[Point]) -> String {
   if points.length() == 0 {
     return ""
   }
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   for i in 0..<points.length() {
     if i > 0 {
       sb.write_string("|")
@@ -2943,7 +2943,7 @@ fn optimize_labeled_route_points(
     -(base_clearance + step * 2),
     base_clearance + step * 2,
   ]
-  let seen_signatures : Map[String, Bool] = {}
+  let seen_signatures : Map[String, Bool] = Map([])
   seen_signatures[points_signature(best_points)] = true
 
   for candidate_offset in candidate_offsets {

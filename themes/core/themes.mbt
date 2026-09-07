@@ -181,7 +181,7 @@ fn theme_colors(theme : ThemeName) -> DiagramColors {
 fn normalize_theme_name(name : String) -> String {
   let normalized = name
     .trim()
-    .to_string()
+    .to_owned()
     .to_lower()
     .replace_all(old="_", new="-")
     .replace_all(old=" ", new="-")
@@ -204,7 +204,7 @@ fn normalize_theme_name(name : String) -> String {
   if start == end {
     ""
   } else {
-    collapsed[start:end].to_string()
+    collapsed[start:end].to_owned()
   }
 }
 

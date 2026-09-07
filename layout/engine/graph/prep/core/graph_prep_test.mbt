@@ -1,6 +1,6 @@
 ///|
 fn test_node(id : String) -> @model.MermaidNode {
-  { id, label: id, shape: Rectangle }
+  { id, label: id, shape: Rectangle, }
 }
 
 ///|
@@ -9,7 +9,7 @@ fn test_graph(
   edges : Array[(String, String)],
   subgraphs : Array[@model.MermaidSubgraph],
 ) -> @model.MermaidGraph {
-  let nodes : Map[String, @model.MermaidNode] = {}
+  let nodes : Map[String, @model.MermaidNode] = Map([])
   for node_id in node_ids {
     nodes[node_id] = test_node(node_id)
   }

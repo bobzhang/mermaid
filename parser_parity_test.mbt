@@ -10,21 +10,27 @@ test "Parser parity gate cases" {
 
 ///|
 test "Parser rejects unsupported header" {
-  let result : Result[@model.MermaidGraph, @model.MermaidError] = try? @parser_header_core.parse_mermaid(
-    (
-      #|pie
-      #|A : 1
-    ),
-  )
-  assert_true(result is Err(_))
+  try
+    @parser_header_core.parse_mermaid(
+      (
+        #|pie
+        #|A : 1
+      ),
+    )
+  catch {
+    _ => ()
+  } noraise {
+    _ => fail("expected parse to fail")
+  }
 }
 
 ///|
 test "Parser rejects empty input" {
-  let result : Result[@model.MermaidGraph, @model.MermaidError] = try? @parser_header_core.parse_mermaid(
-    "",
-  )
-  assert_true(result is Err(_))
+  try @parser_header_core.parse_mermaid("") catch {
+    _ => ()
+  } noraise {
+    _ => fail("expected parse to fail")
+  }
 }
 
 ///|
@@ -73,7 +79,7 @@ test "Parser accepts all supported flowchart directions" {
         $|
       )
       .trim_end()
-      .to_string(),
+      .to_owned(),
     )
     assert_eq(direction_name(graph.direction), direction)
     assert_eq(graph.edges.length(), 1)
@@ -103,13 +109,18 @@ test "Parser accepts graph/flowchart headers without direction" {
 
 ///|
 test "Parser rejects flowchart header with invalid direction token" {
-  let result : Result[@model.MermaidGraph, @model.MermaidError] = try? @parser_header_core.parse_mermaid(
-    (
-      #|graph XX
-      #|A --> B
-    ),
-  )
-  assert_true(result is Err(_))
+  try
+    @parser_header_core.parse_mermaid(
+      (
+        #|graph XX
+        #|A --> B
+      ),
+    )
+  catch {
+    _ => ()
+  } noraise {
+    _ => fail("expected parse to fail")
+  }
 }
 
 ///|
@@ -431,7 +442,7 @@ test "Parser handles extra whitespace and empty lines" {
       #|
     )
     .trim_end()
-    .to_string(),
+    .to_owned(),
   )
   assert_eq(direction_name(graph.direction), "TD")
   assert_eq(graph.nodes.length(), 3)
@@ -456,13 +467,18 @@ test "Parser handles diagram with only standalone nodes" {
 
 ///|
 test "Parser rejects flowchart header with extra trailing tokens" {
-  let result : Result[@model.MermaidGraph, @model.MermaidError] = try? @parser_header_core.parse_mermaid(
-    (
-      #|graph TD extra
-      #|A --> B
-    ),
-  )
-  assert_true(result is Err(_))
+  try
+    @parser_header_core.parse_mermaid(
+      (
+        #|graph TD extra
+        #|A --> B
+      ),
+    )
+  catch {
+    _ => ()
+  } noraise {
+    _ => fail("expected parse to fail")
+  }
 }
 
 ///|
@@ -483,13 +499,18 @@ test "Parser ignores comment lines including indented comments" {
 
 ///|
 test "Parser rejects stateDiagram header with extra trailing tokens" {
-  let result : Result[@model.MermaidGraph, @model.MermaidError] = try? @parser_header_core.parse_mermaid(
-    (
-      #|stateDiagram-v2 extra
-      #|A --> B
-    ),
-  )
-  assert_true(result is Err(_))
+  try
+    @parser_header_core.parse_mermaid(
+      (
+        #|stateDiagram-v2 extra
+        #|A --> B
+      ),
+    )
+  catch {
+    _ => ()
+  } noraise {
+    _ => fail("expected parse to fail")
+  }
 }
 
 ///|

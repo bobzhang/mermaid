@@ -15,4 +15,3 @@ pub fn parse_mermaid(String) -> @model.MermaidGraph raise @model.MermaidError
 // Type aliases
 
 // Traits
-

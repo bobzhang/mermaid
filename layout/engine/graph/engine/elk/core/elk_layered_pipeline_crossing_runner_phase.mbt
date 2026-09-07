@@ -120,8 +120,8 @@ fn randomize_node_ids_for_crossing_trial(
   if node_ids.length() <= 1 {
     return
   }
-  let random_key_by_node_id : Map[String, Double] = {}
-  let initial_rank_position_by_node_id : Map[String, Int] = {}
+  let random_key_by_node_id : Map[String, Double] = Map([])
+  let initial_rank_position_by_node_id : Map[String, Int] = Map([])
   for rank_position, node_id in node_ids {
     initial_rank_position_by_node_id[node_id] = rank_position
     random_key_by_node_id[node_id] = next_crossing_trial_random_double(
@@ -572,7 +572,7 @@ fn execute_crossing_phase_with_plan_with_trial_trace(
       }
       match best_execution_state {
         Some(state) =>
-          { execution_state: state, selected_trial_index, trial_summaries }
+          { execution_state: state, selected_trial_index, trial_summaries, }
         None => {
           let fallback_random_state_by_key = build_crossing_neighbor_mean_random_state_by_seed(
             config.trial_random_seed,

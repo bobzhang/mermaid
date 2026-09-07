@@ -13,19 +13,25 @@ struct ElkRenderCliArgs {
 
 ///|
 fn parse_positive_int(raw : String) -> Int? {
-  let parsed = try? @string.parse_int(raw.trim().to_string())
-  match parsed {
-    Ok(value) => if value > 0 { Some(value) } else { None }
-    Err(_) => None
+  let value = @string.parse_int(raw.trim().to_owned()) catch {
+    _ => return None
+  }
+  if value > 0 {
+    Some(value)
+  } else {
+    None
   }
 }
 
 ///|
 fn parse_non_negative_double(raw : String) -> Double? {
-  let parsed = try? @string.parse_double(raw.trim().to_string())
-  match parsed {
-    Ok(value) => if value >= 0.0 { Some(value) } else { None }
-    Err(_) => None
+  let value = @string.parse_double(raw.trim().to_owned()) catch {
+    _ => return None
+  }
+  if value >= 0.0 {
+    Some(value)
+  } else {
+    None
   }
 }
 
@@ -251,7 +257,7 @@ fn parse_cli_args(args : Array[String]) -> ElkRenderCliArgs? {
     }
 
     if arg is [.. "--source=", .. raw_source] {
-      let source_value = raw_source.to_string()
+      let source_value = raw_source.to_owned()
       if source_value == "" {
         return None
       }
@@ -259,21 +265,21 @@ fn parse_cli_args(args : Array[String]) -> ElkRenderCliArgs? {
       continue
     }
     if arg is [.. "--sweep-kernel=", .. raw_sweep_kernel] {
-      match parse_sweep_kernel(raw_sweep_kernel.to_string()) {
+      match parse_sweep_kernel(raw_sweep_kernel.to_owned()) {
         Some(value) => sweep_kernel = value
         None => return None
       }
       continue
     }
     if arg is [.. "--trial-count=", .. raw_trial_count] {
-      match parse_positive_int(raw_trial_count.to_string()) {
+      match parse_positive_int(raw_trial_count.to_owned()) {
         Some(value) => trial_count_override = Some(value)
         None => return None
       }
       continue
     }
     if arg is [.. "--sweep-pass-count=", .. raw_sweep_pass_count] {
-      match parse_positive_int(raw_sweep_pass_count.to_string()) {
+      match parse_positive_int(raw_sweep_pass_count.to_owned()) {
         Some(value) => sweep_pass_count_override = Some(value)
         None => return None
       }
@@ -283,7 +289,7 @@ fn parse_cli_args(args : Array[String]) -> ElkRenderCliArgs? {
       is [.. "--trial-continuation-policy=", .. raw_trial_continuation_policy] {
       match
         parse_trial_continuation_policy(
-          raw_trial_continuation_policy.to_string(),
+          raw_trial_continuation_policy.to_owned(),
         ) {
         Some(value) => trial_continuation_policy_override = Some(value)
         None => return None
@@ -293,14 +299,14 @@ fn parse_cli_args(args : Array[String]) -> ElkRenderCliArgs? {
     if arg
       is [.. "--local-refinement-profile=", .. raw_local_refinement_profile] {
       match
-        parse_local_refinement_profile(raw_local_refinement_profile.to_string()) {
+        parse_local_refinement_profile(raw_local_refinement_profile.to_owned()) {
         Some(value) => local_refinement_profile_override = Some(value)
         None => return None
       }
       continue
     }
     if arg is [.. "--layout-engine=", .. raw_layout_engine] {
-      match parse_layout_engine(raw_layout_engine.to_string()) {
+      match parse_layout_engine(raw_layout_engine.to_owned()) {
         Some(value) => layout_engine = value
         None => return None
       }
@@ -313,7 +319,7 @@ fn parse_cli_args(args : Array[String]) -> ElkRenderCliArgs? {
       ] {
       match
         parse_non_negative_double(
-          raw_model_order_inversion_influence.to_string(),
+          raw_model_order_inversion_influence.to_owned(),
         ) {
         Some(value) =>
           trial_model_order_inversion_influence_override = Some(value)
@@ -373,7 +379,7 @@ fn usage_text() -> String {
     #|  --help                   Show this usage text
   )
   .trim_end()
-  .to_string()
+  .to_owned()
 }
 
 ///|
@@ -404,12 +410,8 @@ fn print_svg_with_overrides(args : ElkRenderCliArgs) -> Unit {
       return
     }
   }
-  let parsed : Result[@model.MermaidGraph, @model.MermaidError] = try? @parser_header_core.parse_mermaid(
-    source,
-  )
-  let graph = match parsed {
-    Ok(value) => value
-    Err(err) => {
+  let graph = @parser_header_core.parse_mermaid(source) catch {
+    err => {
       println("Error: \{err}")
       return
     }

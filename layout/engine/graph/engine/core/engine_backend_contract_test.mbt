@@ -1,6 +1,6 @@
 ///|
 fn stress_node(id : String) -> @model.MermaidNode {
-  { id, label: id, shape: Rectangle }
+  { id, label: id, shape: Rectangle, }
 }
 
 ///|
@@ -46,10 +46,10 @@ fn stress_graph() -> @model.MermaidGraph {
     stress_edge("H", "B", Some("hb")),
     stress_edge("G", "C", Some("gc")),
   ]
-  let class_defs : Map[String, Map[String, String]] = {}
-  let class_assignments : Map[String, String] = {}
-  let node_styles : Map[String, Map[String, String]] = {}
-  let sequence_actor_kinds : Map[String, @model.SequenceParticipantKind] = {}
+  let class_defs : Map[String, Map[String, String]] = Map([])
+  let class_assignments : Map[String, String] = Map([])
+  let node_styles : Map[String, Map[String, String]] = Map([])
+  let sequence_actor_kinds : Map[String, @model.SequenceParticipantKind] = Map([])
   let sequence_blocks : Array[@model.SequenceBlock] = []
   let sequence_notes : Array[@model.SequenceNote] = []
   let sequence_activation_commands : Array[@model.SequenceActivationCommand] = []
@@ -78,7 +78,7 @@ fn run_backend_with_snapshots(
   engine : @model.LayoutEngine,
 ) -> @layout_engine_graph_contract_core.GraphLayoutBackendResult {
   @layout_engine_graph_engine_profile_core.run_graph_layout_engine_backend(
-    { graph, options, use_subgraph_redirects: true, compact_fanin: false },
+    { graph, options, use_subgraph_redirects: true, compact_fanin: false, },
     engine,
   )
 }

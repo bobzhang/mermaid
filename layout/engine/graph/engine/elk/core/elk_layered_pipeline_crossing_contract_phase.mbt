@@ -18,7 +18,7 @@ fn build_default_port_order_slots_by_node_id(
   rank_node_ids_by_rank : Map[Int, Array[String]],
   max_rank : Int,
 ) -> Map[String, Array[Int]] {
-  let port_order_slots_by_node_id : Map[String, Array[Int]] = {}
+  let port_order_slots_by_node_id : Map[String, Array[Int]] = Map([])
   for rank in 0..<=max_rank {
     match rank_node_ids_by_rank.get(rank) {
       Some(node_ids) =>
@@ -61,8 +61,8 @@ fn build_crossing_in_layer_successors_by_node_id(
   ordering_edges : Array[(String, String)],
   rank_by_node_id : Map[String, Int],
 ) -> Map[String, Array[String]] {
-  let in_layer_successors_by_node_id : Map[String, Array[String]] = {}
-  let seen_edge_by_key : Map[String, Bool] = {}
+  let in_layer_successors_by_node_id : Map[String, Array[String]] = Map([])
+  let seen_edge_by_key : Map[String, Bool] = Map([])
   for edge in ordering_edges {
     let source_id = edge.0
     let target_id = edge.1

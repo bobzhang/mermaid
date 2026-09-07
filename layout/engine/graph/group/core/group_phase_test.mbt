@@ -103,8 +103,8 @@ test "group builds positioned group and registers anchor" {
     direction: None,
   }
   let nodes : Map[String, @model.MermaidNode] = {
-    "A": { id: "A", label: "A", shape: Rectangle },
-    "B": { id: "B", label: "B", shape: Rectangle },
+    "A": { id: "A", label: "A", shape: Rectangle, },
+    "B": { id: "B", label: "B", shape: Rectangle, },
   }
   let graph = test_graph(nodes, [subgraph])
   let (positioned_nodes, positioned_by_id, positioned_index_by_id) = test_positioned_state()
@@ -137,8 +137,8 @@ test "horizontal dagre parity keeps top-level flow subgraphs unshifted" {
     direction: None,
   }
   let nodes : Map[String, @model.MermaidNode] = {
-    "A": { id: "A", label: "A", shape: Rectangle },
-    "B": { id: "B", label: "B", shape: Rectangle },
+    "A": { id: "A", label: "A", shape: Rectangle, },
+    "B": { id: "B", label: "B", shape: Rectangle, },
   }
   let graph : @model.MermaidGraph = {
     ..test_graph(nodes, [first, second]),
@@ -193,8 +193,8 @@ test "non-horizontal dagre parity keeps top-level flow subgraphs unshifted" {
     direction: None,
   }
   let nodes : Map[String, @model.MermaidNode] = {
-    "A": { id: "A", label: "A", shape: Rectangle },
-    "B": { id: "B", label: "B", shape: Rectangle },
+    "A": { id: "A", label: "A", shape: Rectangle, },
+    "B": { id: "B", label: "B", shape: Rectangle, },
   }
   let graph = test_graph(nodes, [first, second])
 

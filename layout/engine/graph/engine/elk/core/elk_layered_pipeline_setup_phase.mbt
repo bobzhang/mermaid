@@ -22,7 +22,7 @@ fn node_dimensions(
 ) -> (Int, Int) {
   let label_lines = node.label
     .split("\n")
-    .map(part => part.to_string())
+    .map(part => part.to_owned())
     .to_array()
   let mut longest_line = 0
   for line in label_lines {
@@ -134,7 +134,7 @@ fn final_phase_snapshot(
 fn build_order_index_by_node_id(
   nodes_in_order : Array[MermaidNode],
 ) -> Map[String, Int] {
-  let order_index_by_node_id : Map[String, Int] = {}
+  let order_index_by_node_id : Map[String, Int] = Map([])
   for i, node in nodes_in_order {
     order_index_by_node_id[node.id] = i
   }
@@ -211,8 +211,8 @@ priv struct ElkLayeredNodeSizeState {
 fn build_elk_layered_node_size_state(
   nodes_in_order : Array[MermaidNode],
 ) -> ElkLayeredNodeSizeState {
-  let width_by_node_id : Map[String, Int] = {}
-  let height_by_node_id : Map[String, Int] = {}
+  let width_by_node_id : Map[String, Int] = Map([])
+  let height_by_node_id : Map[String, Int] = Map([])
   let compact_small_graph = nodes_in_order.length() <= 8
   let mut global_max_width = 0
   let mut global_max_height = 0

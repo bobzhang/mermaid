@@ -18,7 +18,7 @@ fn resolve_inline_style(
   graph : MermaidGraph,
   node_id : String,
 ) -> Map[String, String]? {
-  let resolved : Map[String, String] = {}
+  let resolved : Map[String, String] = Map([])
   let class_style = match graph.class_assignments.get(node_id) {
     Some(class_name) => graph.class_defs.get(class_name)
     None => None
@@ -43,7 +43,7 @@ fn rank_pair_key(left_rank : Int, right_rank : Int) -> String {
 
 ///|
 fn edge_label_major_extent(label : String, horizontal : Bool) -> Int {
-  let lines = label.split("\n").map(line => line.to_string()).to_array()
+  let lines = label.split("\n").map(line => line.to_owned()).to_array()
   let mut longest_line = 0
   for line in lines {
     longest_line = longest_line.max(line.length())
@@ -64,7 +64,7 @@ fn build_rank_pair_label_major_gap(
   rank_by_node_id : Map[String, Int],
   horizontal : Bool,
 ) -> Map[String, Int] {
-  let rank_pair_label_major_gap : Map[String, Int] = {}
+  let rank_pair_label_major_gap : Map[String, Int] = Map([])
   for edge in graph.edges {
     let source_id = resolve_edge_endpoint_id(
       edge.source,
@@ -128,7 +128,7 @@ fn build_rank_major_extent_by_rank(
   height_by_node_id : Map[String, Int],
   horizontal : Bool,
 ) -> Map[Int, Int] {
-  let rank_major_extent_by_rank : Map[Int, Int] = {}
+  let rank_major_extent_by_rank : Map[Int, Int] = Map([])
   for rank in 0..<=max_rank {
     let mut extent = 70
     match rank_node_ids_by_rank.get(rank) {
@@ -159,7 +159,7 @@ fn build_major_center_by_rank(
   base_major_gap : Int,
   rank_pair_label_major_gap : Map[String, Int],
 ) -> Map[Int, Int] {
-  let major_center_by_rank : Map[Int, Int] = {}
+  let major_center_by_rank : Map[Int, Int] = Map([])
   let first_rank = if reverse { max_rank } else { 0 }
   let first_rank_extent = option_int_or(
     rank_major_extent_by_rank.get(first_rank),
@@ -309,7 +309,7 @@ fn build_baseline_major_coord_by_node_id(
   max_rank : Int,
   major_center_by_rank : Map[Int, Int],
 ) -> Map[String, Int] {
-  let baseline_major_coord_by_node_id : Map[String, Int] = {}
+  let baseline_major_coord_by_node_id : Map[String, Int] = Map([])
   for rank in 0..<=max_rank {
     let major_center = option_int_or(major_center_by_rank.get(rank), 0)
     match rank_node_ids_by_rank.get(rank) {
@@ -387,7 +387,7 @@ priv struct MajorRelaxCandidate {
 fn clone_major_coord_by_node_id(
   major_coord_by_node_id : Map[String, Int],
 ) -> Map[String, Int] {
-  let cloned : Map[String, Int] = {}
+  let cloned : Map[String, Int] = Map([])
   for node_id, major_coord in major_coord_by_node_id {
     cloned[node_id] = major_coord
   }
@@ -854,7 +854,7 @@ fn average_major_coord_by_node_id(
   right_major_coord_by_node_id : Map[String, Int],
   baseline_major_coord_by_node_id : Map[String, Int],
 ) -> Map[String, Int] {
-  let averaged : Map[String, Int] = {}
+  let averaged : Map[String, Int] = Map([])
   for node_id in node_ids {
     let baseline_major = option_int_or(
       baseline_major_coord_by_node_id.get(node_id),
@@ -908,7 +908,7 @@ fn build_rank_major_coord_by_rank(
   major_coord_by_node_id : Map[String, Int],
   baseline_major_coord_by_node_id : Map[String, Int],
 ) -> Map[Int, Int] {
-  let rank_major_coord_by_rank : Map[Int, Int] = {}
+  let rank_major_coord_by_rank : Map[Int, Int] = Map([])
   for rank in 0..<=max_rank {
     match rank_node_ids_by_rank.get(rank) {
       Some(node_ids) =>
@@ -1038,7 +1038,7 @@ fn expand_rank_major_coord_to_nodes(
   rank_major_coord_by_rank : Map[Int, Int],
   baseline_major_coord_by_node_id : Map[String, Int],
 ) -> Map[String, Int] {
-  let major_coord_by_node_id : Map[String, Int] = {}
+  let major_coord_by_node_id : Map[String, Int] = Map([])
   for rank in 0..<=max_rank {
     match rank_node_ids_by_rank.get(rank) {
       Some(node_ids) =>
@@ -1229,8 +1229,8 @@ fn build_axis_coords_by_node_id(
   padding : Int,
   horizontal : Bool,
 ) -> (Map[String, Int], Map[String, Int]) {
-  let x_by_node_id : Map[String, Int] = {}
-  let y_by_node_id : Map[String, Int] = {}
+  let x_by_node_id : Map[String, Int] = Map([])
+  let y_by_node_id : Map[String, Int] = Map([])
   for rank in 0..<=max_rank {
     match rank_node_ids_by_rank.get(rank) {
       Some(node_ids) =>
@@ -1268,7 +1268,7 @@ fn build_positioned_nodes_from_axis_coords(
   padding : Int,
 ) -> (Array[PositionedNode], Map[String, PositionedNode]) {
   let positioned_nodes : Array[PositionedNode] = []
-  let positioned_by_id : Map[String, PositionedNode] = {}
+  let positioned_by_id : Map[String, PositionedNode] = Map([])
   for node in nodes_in_order {
     let width = option_int_or(width_by_node_id.get(node.id), 70)
     let height = option_int_or(height_by_node_id.get(node.id), 44)
@@ -1293,7 +1293,7 @@ fn build_node_horizontal_by_id(
   positioned_nodes : Array[PositionedNode],
   horizontal : Bool,
 ) -> Map[String, Bool] {
-  let node_horizontal_by_id : Map[String, Bool] = {}
+  let node_horizontal_by_id : Map[String, Bool] = Map([])
   for node in positioned_nodes {
     node_horizontal_by_id[node.id] = horizontal
   }

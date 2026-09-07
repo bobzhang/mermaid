@@ -55,33 +55,31 @@ fn branch_probe_svg_options(seed : Int) -> @model.RenderOptions {
 
 ///|
 fn branch_probe_exercise_case(input : String, seed : Int) -> (Bool, Bool, Bool) {
-  let parsed : Result[@model.MermaidGraph, @model.MermaidError] = try? @parser_header_core.parse_mermaid(
-    input,
-  )
-  match parsed {
-    Ok(_) => {
-      let ascii_result : Result[String, @model.MermaidError] = try? @beautiful_mermaid.render_mermaid_ascii(
-        input,
-        options=branch_probe_ascii_options(seed),
-      )
-      let ascii_ok = match ascii_result {
-        Ok(ascii) => {
-          ignore(ascii.length())
-          true
-        }
-        Err(_) => false
+  try @parser_header_core.parse_mermaid(input) catch {
+    _ => (false, false, false)
+  } noraise {
+    _ => {
+      let ascii_ok = try {
+        let ascii = @beautiful_mermaid.render_mermaid_ascii(
+          input,
+          options=branch_probe_ascii_options(seed),
+        )
+        ignore(ascii.length())
+        true
+      } catch {
+        _ => false
       }
-      let svg_result : Result[String, @model.MermaidError] = try? @beautiful_mermaid.render_mermaid(
-        input,
-        options=branch_probe_svg_options(seed),
-      )
-      let svg_ok = match svg_result {
-        Ok(svg) => svg.has_prefix("<svg ") && svg.has_suffix("</svg>")
-        Err(_) => false
+      let svg_ok = try {
+        let svg = @beautiful_mermaid.render_mermaid(
+          input,
+          options=branch_probe_svg_options(seed),
+        )
+        svg.has_prefix("<svg ") && svg.has_suffix("</svg>")
+      } catch {
+        _ => false
       }
       (true, ascii_ok, svg_ok)
     }
-    Err(_) => (false, false, false)
   }
 }
 

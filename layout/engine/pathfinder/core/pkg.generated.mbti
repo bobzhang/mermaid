@@ -13,8 +13,9 @@ pub(all) struct AsciiGridCoord {
   x : Int
   y : Int
 } derive(Eq)
+pub fn AsciiGridCoord::equal(Self, Self) -> Bool
+pub fn AsciiGridCoord::not_equal(Self, Self) -> Bool
 
 // Type aliases
 
 // Traits
-

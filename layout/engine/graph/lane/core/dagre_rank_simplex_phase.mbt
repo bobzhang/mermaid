@@ -78,7 +78,7 @@ fn prepare_dagre_network_simplex_graph_from_edge_specs(
   edge_specs : Array[DagreRankEdgeSpec],
   add_component_connectors : Bool,
 ) -> DagreNetworkSimplexPreparedGraph {
-  let node_index_by_id : Map[String, Int] = {}
+  let node_index_by_id : Map[String, Int] = Map([])
   for i, node in nodes_in_order {
     node_index_by_id[node.id] = i
   }
@@ -87,7 +87,7 @@ fn prepare_dagre_network_simplex_graph_from_edge_specs(
   let edge_target_index : Array[Int] = []
   let edge_minlen : Array[Int] = []
   let edge_weight : Array[Int] = []
-  let directed_edge_index_by_key : Map[String, Int] = {}
+  let directed_edge_index_by_key : Map[String, Int] = Map([])
   let out_edge_indices_by_source : Array[Array[Int]] = []
   let in_edge_indices_by_target : Array[Array[Int]] = []
   let incident_edge_indices_by_node : Array[Array[Int]] = []
@@ -737,7 +737,7 @@ fn collect_dagre_network_simplex_ranks_with_trace_from_prepared(
   prepared_graph : DagreNetworkSimplexPreparedGraph,
   capture_exchange_trace : Bool,
 ) -> (Map[String, Int], Int, Bool, Array[DagreNetworkSimplexExchangeStep]) {
-  let rank_by_id : Map[String, Int] = {}
+  let rank_by_id : Map[String, Int] = Map([])
   let exchange_trace : Array[DagreNetworkSimplexExchangeStep] = []
   for node in nodes_in_order {
     rank_by_id[node.id] = 0
@@ -1279,7 +1279,7 @@ fn collect_dagre_network_simplex_ranks_from_rank_edge_specs(
   edge_specs : Array[DagreRankEdgeSpec],
   add_component_connectors : Bool,
 ) -> (Map[String, Int], Int, Bool) {
-  let rank_by_id : Map[String, Int] = {}
+  let rank_by_id : Map[String, Int] = Map([])
   for node in nodes_in_order {
     rank_by_id[node.id] = 0
   }

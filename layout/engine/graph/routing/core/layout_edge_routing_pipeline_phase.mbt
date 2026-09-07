@@ -27,7 +27,7 @@ fn collect_edge_layout_contexts(
   node_horizontal_by_id : Map[String, Bool],
 ) -> (Array[EdgeLayoutContext], Map[String, Int]) {
   let edge_layout_contexts : Array[EdgeLayoutContext] = []
-  let directed_edge_count_by_key : Map[String, Int] = {}
+  let directed_edge_count_by_key : Map[String, Int] = Map([])
   for edge in graph.edges {
     let resolved_source_id = resolve_edge_endpoint_id(
       edge.source,
@@ -94,7 +94,7 @@ fn assign_edge_boundary_offsets_to_contexts(
   let boundary_assignments_by_bucket : Map[
     String,
     Array[BoundaryEndpointAssignment],
-  ] = {}
+  ] = Map([])
   for context_index, context in edge_layout_contexts {
     let source_side = context_source_boundary_side(context)
     let target_side = opposite_boundary_side(source_side)
@@ -157,14 +157,15 @@ fn assign_edge_boundary_offsets_to_contexts(
       None => ()
     }
   }
-  let source_boundary_offset_by_context_index : Map[Int, Int] = {}
-  let target_boundary_offset_by_context_index : Map[Int, Int] = {}
-  let source_boundary_cohort_size_by_context_index : Map[Int, Int] = {}
+  let source_boundary_offset_by_context_index : Map[Int, Int] = Map([])
+  let target_boundary_offset_by_context_index : Map[Int, Int] = Map([])
+  let source_boundary_cohort_size_by_context_index : Map[Int, Int] = Map([])
   for _, assignments in boundary_assignments_by_bucket {
     if assignments.length() == 0 {
       continue
     }
-    let assignments_by_peer_minor : Map[Int, Array[BoundaryEndpointAssignment]] = {}
+    let assignments_by_peer_minor : Map[Int, Array[BoundaryEndpointAssignment]] = Map([],
+    )
     let mut source_endpoint_count = 0
     let mut target_endpoint_count = 0
     for assignment in assignments {
@@ -370,7 +371,7 @@ fn materialize_positioned_edges_from_points(
   state_graph : Bool,
 ) -> Array[PositionedEdge] {
   let positioned_edges : Array[PositionedEdge] = []
-  let label_slots_by_anchor : Map[String, Int] = {}
+  let label_slots_by_anchor : Map[String, Int] = Map([])
   for context_index, context in edge_layout_contexts {
     match points_by_context_index.get(context_index) {
       Some(points) => {
@@ -386,7 +387,7 @@ fn materialize_positioned_edges_from_points(
             } else {
               base.x
             }
-            Some(Point::{ x: label_x, y: base.y + label_overlap_offset(slot) })
+            Some(Point::{ x: label_x, y: base.y + label_overlap_offset(slot), })
           }
           None => None
         }
@@ -540,7 +541,7 @@ pub fn route_legacy_positioned_edges(
   let routed_edge_segments : Array[RoutedEdgeSegment] = []
   let back_edge_lane_reservations : Array[BackEdgeLaneReservation] = []
   let back_edge_column_reservations : Array[BackEdgeColumnReservation] = []
-  let forward_fanout_out_count_by_bucket : Map[String, Int] = {}
+  let forward_fanout_out_count_by_bucket : Map[String, Int] = Map([])
   let forward_fanout_horizontal_minor_gap_threshold = (layer_spacing / 4).max(
     22,
   )
@@ -559,7 +560,7 @@ pub fn route_legacy_positioned_edges(
     graph, state_graph, class_or_er_graph, enable_target_boundary_ports, edge_layout_contexts,
   )
 
-  let forward_fanout_context_indices_by_bucket : Map[String, Array[Int]] = {}
+  let forward_fanout_context_indices_by_bucket : Map[String, Array[Int]] = Map([])
   for context_index, context in edge_layout_contexts {
     if !context_uses_forward_fanout_lane(
         context, forward_fanout_horizontal_span_threshold, forward_fanout_horizontal_minor_gap_threshold,
@@ -579,9 +580,9 @@ pub fn route_legacy_positioned_edges(
   for bucket, context_indices in forward_fanout_context_indices_by_bucket {
     forward_fanout_out_count_by_bucket[bucket] = context_indices.length()
   }
-  let forward_fanout_slot_by_context_index : Map[Int, Int] = {}
-  let forward_fanout_slots_resolved_by_bucket : Map[String, Bool] = {}
-  let forward_fanout_disabled_by_bucket : Map[String, Bool] = {}
+  let forward_fanout_slot_by_context_index : Map[Int, Int] = Map([])
+  let forward_fanout_slots_resolved_by_bucket : Map[String, Bool] = Map([])
+  let forward_fanout_disabled_by_bucket : Map[String, Bool] = Map([])
   let non_deferred_route_context_indices : Array[Int] = []
   let deferred_back_edge_context_indices : Array[Int] = []
   for context_index, context in edge_layout_contexts {
@@ -596,7 +597,7 @@ pub fn route_legacy_positioned_edges(
     }
   }
 
-  let points_by_context_index : Map[Int, Array[Point]] = {}
+  let points_by_context_index : Map[Int, Array[Point]] = Map([])
   let routed_polylines : Array[Array[Point]] = []
   let routed_label_boxes : Array[RoutedLabelBox] = []
 
@@ -855,7 +856,7 @@ pub fn route_legacy_positioned_edges(
     }
 
     let unique_deferred_order_candidates : Array[Array[Int]] = []
-    let seen_candidate_signatures : Map[String, Bool] = {}
+    let seen_candidate_signatures : Map[String, Bool] = Map([])
     for candidate_order in deferred_order_candidates {
       let signature = candidate_order
         .iter()
@@ -881,7 +882,7 @@ pub fn route_legacy_positioned_edges(
 
     let max_seed_count = unique_deferred_order_candidates.length().min(4)
     let selected_seed_indices : Array[Int] = []
-    let selected_seed_index_set : Map[Int, Bool] = {}
+    let selected_seed_index_set : Map[Int, Bool] = Map([])
     for _ in 0..<max_seed_count {
       let mut has_seed = false
       let mut best_seed_index = 0

@@ -6,7 +6,7 @@ fn test_node(
   width : Int,
   height : Int,
 ) -> @model.PositionedNode {
-  { id, label: id, shape: Rectangle, x, y, width, height, inline_style: None }
+  { id, label: id, shape: Rectangle, x, y, width, height, inline_style: None, }
 }
 
 ///|
@@ -18,7 +18,7 @@ fn test_group(
   height : Int,
   children : Array[@model.PositionedGroup],
 ) -> @model.PositionedGroup {
-  { id, label: id, x, y, width, height, children }
+  { id, label: id, x, y, width, height, children, }
 }
 
 ///|
@@ -37,8 +37,8 @@ test "finalize positioned graph applies padding shift to all artifacts" {
         has_arrow_start: false,
         has_arrow_end: true,
         relation_operator: None,
-        points: [{ x: -20, y: 0 }, { x: 0, y: 0 }],
-        label_position: Some({ x: -25, y: 0 }),
+        points: [{ x: -20, y: 0, }, { x: 0, y: 0, }],
+        label_position: Some({ x: -25, y: 0, }),
       },
     ],
     [],

@@ -29,23 +29,24 @@ fn parser_generated_svg_option(seed : Int) -> @model.RenderOptions {
 
 ///|
 fn parser_generated_exercise(input : String, seed : Int) -> Bool {
-  let parsed : Result[@model.MermaidGraph, @model.MermaidError] = try? @parser_header_core.parse_mermaid(
-    input,
-  )
-  match parsed {
-    Ok(_) => {
-      ignore(
-        try? render_mermaid_ascii(
-          input,
-          options=parser_generated_ascii_option(seed),
-        ),
-      )
-      ignore(
-        try? render_mermaid(input, options=parser_generated_svg_option(seed)),
-      )
+  try @parser_header_core.parse_mermaid(input) catch {
+    _ => false
+  } noraise {
+    _ => {
+      try
+        render_mermaid_ascii(input, options=parser_generated_ascii_option(seed))
+        |> ignore
+      catch {
+        _ => ()
+      }
+      try
+        render_mermaid(input, options=parser_generated_svg_option(seed))
+        |> ignore
+      catch {
+        _ => ()
+      }
       true
     }
-    Err(_) => false
   }
 }
 

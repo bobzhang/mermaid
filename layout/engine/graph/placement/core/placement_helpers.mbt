@@ -26,7 +26,7 @@ fn resolve_inline_style(
   graph : MermaidGraph,
   node_id : String,
 ) -> Map[String, String]? {
-  let resolved : Map[String, String] = {}
+  let resolved : Map[String, String] = Map([])
   let class_style = match graph.class_assignments.get(node_id) {
     Some(class_name) => graph.class_defs.get(class_name)
     None => None
@@ -46,7 +46,7 @@ fn resolve_inline_style(
 fn node_dimensions(node : MermaidNode) -> (Int, Int) {
   let label_lines = node.label
     .split("\n")
-    .map(part => part.to_string())
+    .map(part => part.to_owned())
     .to_array()
   let mut longest_line = 0
   for line in label_lines {
@@ -105,7 +105,7 @@ fn resolve_edge_endpoint_id(
 
 ///|
 fn edge_label_dimensions(label : String) -> (Int, Int) {
-  let lines = label.split("\n").map(part => part.to_string()).to_array()
+  let lines = label.split("\n").map(part => part.to_owned()).to_array()
   let mut longest_line = 0
   for line in lines {
     longest_line = longest_line.max(line.length())
@@ -205,7 +205,7 @@ fn solve_horizontal_label_rank_shifts(
   max_rank : Int,
   constraints : Array[HorizontalLabelRankConstraint],
 ) -> Map[Int, Int] {
-  let min_shift_by_rank_index : Map[Int, Int] = {}
+  let min_shift_by_rank_index : Map[Int, Int] = Map([])
   for rank_index in 0..<=max_rank {
     min_shift_by_rank_index[rank_index] = 0
   }
@@ -244,7 +244,7 @@ fn horizontal_label_boundary_extra_by_rank_index(
   max_rank : Int,
   min_shift_by_rank_index : Map[Int, Int],
 ) -> Map[Int, Int] {
-  let extra_by_rank_index : Map[Int, Int] = {}
+  let extra_by_rank_index : Map[Int, Int] = Map([])
   if max_rank <= 0 {
     return extra_by_rank_index
   }

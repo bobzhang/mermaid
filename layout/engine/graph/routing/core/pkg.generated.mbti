@@ -15,4 +15,3 @@ pub fn route_legacy_positioned_edges(@model.MermaidGraph, Bool, Bool, Bool, Int,
 // Type aliases
 
 // Traits
-

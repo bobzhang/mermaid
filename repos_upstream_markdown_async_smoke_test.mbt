@@ -4,14 +4,11 @@ async fn repos_markdown_files_from(
   path : String,
   files : Array[String],
 ) -> Unit {
-  let kind_result : Result[@fs.FileKind, Error] = try? @fs.kind(
-    path,
-    follow_symlink=false,
-  )
-  match kind_result {
-    Ok(Directory) => {
+  let kind = @fs.kind(path, follow_symlink=false) catch { _ => return }
+  match kind {
+    Directory => {
       let name = match path.rev_find("/") {
-        Some(index) => path[index + 1:].to_string()
+        Some(index) => path[index + 1:].to_owned()
         None => path
       }
       if name
@@ -24,20 +21,13 @@ async fn repos_markdown_files_from(
         | ".turbo") {
         return
       }
-      let entries_result : Result[Array[String], Error] = try? @fs.readdir(
-        path,
-        sort=true,
-      )
-      match entries_result {
-        Ok(entries) =>
-          for entry in entries {
-            let child = "\{path}/\{entry}"
-            repos_markdown_files_from(child, files)
-          }
-        Err(_) => ()
+      let entries = @fs.readdir(path, sort=true) catch { _ => [] }
+      for entry in entries {
+        let child = "\{path}/\{entry}"
+        repos_markdown_files_from(child, files)
       }
     }
-    Ok(Regular) => if path.has_suffix(".md") { files.push(path) }
+    Regular => if path.has_suffix(".md") { files.push(path) }
     _ => ()
   }
 }
@@ -60,7 +50,7 @@ fn repos_extract_mermaid_blocks(markdown : String) -> Array[String] {
   let mut in_block = false
   let mut block_lines : Array[String] = []
   for line in markdown.split("\n") {
-    let trimmed = line.trim().to_string()
+    let trimmed = line.trim().to_owned()
     if !in_block {
       if trimmed.has_prefix("```mermaid") || trimmed.has_prefix("~~~mermaid") {
         in_block = true
@@ -71,7 +61,7 @@ fn repos_extract_mermaid_blocks(markdown : String) -> Array[String] {
       blocks.push("\{block_body}\n")
       in_block = false
     } else {
-      block_lines.push(line.to_string())
+      block_lines.push(line.to_owned())
     }
   }
   blocks
@@ -81,7 +71,7 @@ fn repos_extract_mermaid_blocks(markdown : String) -> Array[String] {
 fn repos_supported_mermaid_block(source : String) -> Bool {
   let mut in_frontmatter = false
   for line in source.split("\n") {
-    let first = line.trim().to_string()
+    let first = line.trim().to_owned()
     if first == "" || first.has_prefix("%%") {
       continue
     }
@@ -134,36 +124,29 @@ async fn repos_verify_markdown_chunk(
 
       let id = "\{path}#\{i + 1}"
       checked += 1
-      let svg_result : Result[String, @model.MermaidError] = try? @beautiful_mermaid.render_mermaid(
-        block,
-      )
-      let ascii_result : Result[String, @model.MermaidError] = try? @beautiful_mermaid.render_mermaid_ascii(
-        block,
-        options={
+      let rendered_ok = try {
+        let svg = @beautiful_mermaid.render_mermaid(block)
+        let ascii = @beautiful_mermaid.render_mermaid_ascii(block, options={
           use_ascii: true,
           padding_x: 5,
           padding_y: 5,
           box_border_padding: 1,
-        },
-      )
-      let unicode_result : Result[String, @model.MermaidError] = try? @beautiful_mermaid.render_mermaid_ascii(
-        block,
-        options={
+        })
+        let unicode = @beautiful_mermaid.render_mermaid_ascii(block, options={
           use_ascii: false,
           padding_x: 5,
           padding_y: 5,
           box_border_padding: 1,
-        },
-      )
-      match (svg_result, ascii_result, unicode_result) {
-        (Ok(svg), Ok(ascii), Ok(unicode)) =>
-          if !svg.has_prefix("<svg ") ||
-            !svg.has_suffix("</svg>") ||
-            ts_normalize_whitespace(ascii) == "" ||
-            ts_normalize_whitespace(unicode) == "" {
-            failures.push(id)
-          }
-        _ => failures.push(id)
+        })
+        svg.has_prefix("<svg ") &&
+        svg.has_suffix("</svg>") &&
+        ts_normalize_whitespace(ascii) != "" &&
+        ts_normalize_whitespace(unicode) != ""
+      } catch {
+        _ => false
+      }
+      if !rendered_ok {
+        failures.push(id)
       }
     }
   }

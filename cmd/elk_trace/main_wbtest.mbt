@@ -67,7 +67,7 @@ test "elk_trace parse_cli_args accepts source payload" {
       #|A --> B
     )
     .trim_end()
-    .to_string()
+    .to_owned()
   guard parse_cli_args(["--source", source])
     is Some(
       {
@@ -117,7 +117,7 @@ test "elk_trace parse_cli_args rejects conflicting source and case" {
       #|A --> B
     )
     .trim_end()
-    .to_string()
+    .to_owned()
   assert_true(parse_cli_args(["--case", "fanout", "--source", source]) is None)
 }
 

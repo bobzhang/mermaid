@@ -15,4 +15,3 @@ pub fn theme_by_name(String) -> @model.DiagramColors?
 // Type aliases
 
 // Traits
-

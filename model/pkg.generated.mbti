@@ -12,6 +12,9 @@ pub(all) suberror MermaidError {
   ParseFailure(String)
   UnknownTheme(String)
 } derive(@debug.Debug)
+pub fn MermaidError::output(Self, &Logger) -> Unit
+pub fn MermaidError::to_repr(Self) -> @debug.Repr
+pub fn MermaidError::to_string(Self) -> String
 pub impl Show for MermaidError
 
 // Types and methods
@@ -55,6 +58,8 @@ pub(all) enum EdgeStyle {
   Dotted
   Thick
 } derive(Eq)
+pub fn EdgeStyle::equal(Self, Self) -> Bool
+pub fn EdgeStyle::not_equal(Self, Self) -> Bool
 
 pub(all) enum LayoutEngine {
   Legacy
@@ -123,6 +128,8 @@ pub(all) enum NodeShape {
   ErEntity
   SequenceParticipant
 } derive(Eq)
+pub fn NodeShape::equal(Self, Self) -> Bool
+pub fn NodeShape::not_equal(Self, Self) -> Bool
 
 pub(all) struct Point {
   x : Int
@@ -257,6 +264,8 @@ pub(all) enum SequenceBlockType {
   Break
   Rect
 } derive(Eq)
+pub fn SequenceBlockType::equal(Self, Self) -> Bool
+pub fn SequenceBlockType::not_equal(Self, Self) -> Bool
 
 pub(all) struct SequenceNote {
   actor_ids : Array[String]
@@ -279,4 +288,3 @@ pub(all) enum SequenceParticipantKind {
 // Type aliases
 
 // Traits
-

@@ -1096,7 +1096,7 @@ test "Render smoke for upstream samples-data corpus" (it : @test.Test) {
         $|
       )
       .trim_end()
-      .to_string()
+      .to_owned()
     svg_sections.push(section)
     if sample.transparent {
       assert_true(!svg.contains("background:var(--bg)"))
@@ -1137,7 +1137,7 @@ test "Render smoke for upstream samples-data corpus" (it : @test.Test) {
       $|
     )
     .trim_end()
-    .to_string()
+    .to_owned()
   it.write(gallery)
   it.snapshot(filename="upstream_samples_smoke_gallery.html")
 }

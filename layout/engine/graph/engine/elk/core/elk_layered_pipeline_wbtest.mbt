@@ -782,7 +782,7 @@ test "elk layered neighbor minor center ignores missing coordinates" {
 ///|
 test "elk layered neighbor minor center reports absent when no mapped neighbors" {
   let neighbor_by_node_id : Map[String, Array[String]] = { "A": ["B", "C"] }
-  let minor_coord_by_node_id : Map[String, Int] = {}
+  let minor_coord_by_node_id : Map[String, Int] = Map([])
   let (has_center, center) = node_neighbor_minor_center(
     "A", neighbor_by_node_id, minor_coord_by_node_id,
   )
@@ -880,8 +880,8 @@ test "elk layered major candidate selector prefers lower objective" {
   }
   let rank_by_node_id : Map[String, Int] = { "A": 0, "B": 1 }
   let successors_by_node_id : Map[String, Array[String]] = { "A": ["B"] }
-  let width_by_node_id : Map[String, Int] = {}
-  let height_by_node_id : Map[String, Int] = {}
+  let width_by_node_id : Map[String, Int] = Map([])
+  let height_by_node_id : Map[String, Int] = Map([])
 
   let feasible_major_coord_by_node_id : Map[String, Int] = {
     "A": 100,
@@ -936,8 +936,8 @@ test "elk layered major sweep candidates remain edge-feasible" {
     "B": 140,
     "C": 180,
   }
-  let width_by_node_id : Map[String, Int] = {}
-  let height_by_node_id : Map[String, Int] = {}
+  let width_by_node_id : Map[String, Int] = Map([])
+  let height_by_node_id : Map[String, Int] = Map([])
 
   let forward_major_coord_by_node_id = relax_major_coord_with_sweep_order(
     rank_node_ids_by_rank, 2, false, rank_by_node_id, predecessors_by_node_id, successors_by_node_id,
@@ -971,7 +971,7 @@ test "elk layered rank major anchor uses median major in rank" {
     "C": 220,
     "D": 500,
   }
-  let baseline_major_coord_by_node_id : Map[String, Int] = {}
+  let baseline_major_coord_by_node_id : Map[String, Int] = Map([])
   assert_eq(
     rank_major_anchor(
       node_ids, major_coord_by_node_id, baseline_major_coord_by_node_id,
@@ -992,7 +992,7 @@ test "elk layered rank major map collapses each rank to one anchor" {
     "C": 250,
     "D": 260,
   }
-  let baseline_major_coord_by_node_id : Map[String, Int] = {}
+  let baseline_major_coord_by_node_id : Map[String, Int] = Map([])
   let rank_major_coord_by_rank = build_rank_major_coord_by_rank(
     rank_node_ids_by_rank, 1, major_coord_by_node_id, baseline_major_coord_by_node_id,
   )
@@ -1013,8 +1013,8 @@ test "elk layered rank major edge constraints enforce rank-level spacing" {
     "B": 220,
     "C": 220,
   }
-  let width_by_node_id : Map[String, Int] = {}
-  let height_by_node_id : Map[String, Int] = {}
+  let width_by_node_id : Map[String, Int] = Map([])
+  let height_by_node_id : Map[String, Int] = Map([])
   enforce_rank_major_edge_constraints(
     rank_major_coord_by_rank, rank_by_node_id, successors_by_node_id, baseline_major_coord_by_node_id,
     20, true, width_by_node_id, height_by_node_id,
@@ -1084,8 +1084,8 @@ test "elk layered relaxed major output keeps each rank on one major axis" {
     "D": 140,
     "E": 120,
   }
-  let width_by_node_id : Map[String, Int] = {}
-  let height_by_node_id : Map[String, Int] = {}
+  let width_by_node_id : Map[String, Int] = Map([])
+  let height_by_node_id : Map[String, Int] = Map([])
   let major_coord_by_node_id = relax_major_coord_by_node_id(
     rank_node_ids_by_rank, 2, false, rank_by_node_id, predecessors_by_node_id, successors_by_node_id,
     baseline_major_coord_by_node_id, minor_coord_by_node_id, 20, true, width_by_node_id,
@@ -1103,7 +1103,7 @@ test "elk layered relaxed major output keeps each rank on one major axis" {
 
 ///|
 test "elk layered major center builder respects reverse display order" {
-  let rank_pair_label_major_gap : Map[String, Int] = {}
+  let rank_pair_label_major_gap : Map[String, Int] = Map([])
   let rank_major_extent_by_rank : Map[Int, Int] = { 0: 100, 1: 100, 2: 100 }
   let forward_centers = build_major_center_by_rank(
     2, rank_major_extent_by_rank, false, 40, 0, rank_pair_label_major_gap,
@@ -1148,10 +1148,10 @@ test "elk layered axis coordinate builder maps major/minor by orientation" {
 test "elk layered positioned-node builder applies defaults when dimensions/coords are missing" {
   let graph = wb_graph(["A"], [])
   let nodes_in_order : Array[@model.MermaidNode] = [wb_node("A")]
-  let width_by_node_id : Map[String, Int] = {}
-  let height_by_node_id : Map[String, Int] = {}
-  let x_by_node_id : Map[String, Int] = {}
-  let y_by_node_id : Map[String, Int] = {}
+  let width_by_node_id : Map[String, Int] = Map([])
+  let height_by_node_id : Map[String, Int] = Map([])
+  let x_by_node_id : Map[String, Int] = Map([])
+  let y_by_node_id : Map[String, Int] = Map([])
   let (positioned_nodes, positioned_by_id) = build_positioned_nodes_from_axis_coords(
     graph, nodes_in_order, width_by_node_id, height_by_node_id, x_by_node_id, y_by_node_id,
     20,

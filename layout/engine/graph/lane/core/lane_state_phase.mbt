@@ -47,7 +47,7 @@ fn collect_rank_peak_load(
   nodes_in_order : Array[MermaidNode],
   rank_by_id : Map[String, Int],
 ) -> Int {
-  let rank_load_by_rank : Map[Int, Int] = {}
+  let rank_load_by_rank : Map[Int, Int] = Map([])
   let mut peak_load = 0
   for node in nodes_in_order {
     let rank = option_int_or(rank_by_id.get(node.id), 0)
@@ -340,7 +340,7 @@ pub fn collect_dagre_parity_order_trace(
       rank_nodes: step.rank_nodes,
     })
   }
-  { rank_nodes_trace, sweep_step_trace }
+  { rank_nodes_trace, sweep_step_trace, }
 }
 
 ///|
@@ -356,11 +356,11 @@ pub fn compute_legacy_lane_state(
   flat_state_graph : Bool,
   prefer_dagre_network_simplex : Bool,
 ) -> LegacyLaneState {
-  let state_lane_by_node_id : Map[String, Int] = {}
-  let state_label_y_offset_by_node_id : Map[String, Int] = {}
-  let flow_rank_by_node_id : Map[String, Int] = {}
-  let flow_lane_by_node_id : Map[String, Int] = {}
-  let flow_label_y_offset_by_rank : Map[Int, Int] = {}
+  let state_lane_by_node_id : Map[String, Int] = Map([])
+  let state_label_y_offset_by_node_id : Map[String, Int] = Map([])
+  let flow_rank_by_node_id : Map[String, Int] = Map([])
+  let flow_lane_by_node_id : Map[String, Int] = Map([])
+  let flow_label_y_offset_by_rank : Map[Int, Int] = Map([])
   let mut refined_horizontal_non_state_flow = false
   let mut refined_horizontal_non_state_labeled_cycle_flow = false
   let mut flow_max_rank = 0
@@ -437,7 +437,7 @@ pub fn compute_legacy_lane_state(
     let use_greedy_feedback_arc_set = selected_rank_candidate.use_greedy_feedback_arc_set
     let enable_feedback_back_edge_ordering = base_enable_feedback_back_edge_ordering &&
       !use_greedy_feedback_arc_set
-    let precomputed_lane_by_id : Map[String, Int] = {}
+    let precomputed_lane_by_id : Map[String, Int] = Map([])
     let mut has_precomputed_lane_by_id = false
     let mut selected_rank_by_id = selected_rank_candidate.rank_by_id
     let mut selected_max_rank = selected_rank_candidate.max_rank
@@ -489,7 +489,7 @@ pub fn compute_legacy_lane_state(
       flow_rank_by_node_id[node_id] = rank
     }
     if compact_fanin && !state_graph && graph.subgraphs.length() > 0 {
-      let top_level_group_index_by_node_id : Map[String, Int] = {}
+      let top_level_group_index_by_node_id : Map[String, Int] = Map([])
       for i, subgraph in graph.subgraphs {
         collect_top_level_group_index_by_node_id(
           subgraph, i, top_level_group_index_by_node_id,
@@ -603,7 +603,7 @@ pub fn compute_legacy_lane_state(
       compact_non_state_refined_spacing || non_state_optional_lane_refinement
     }
     if use_horizontal_lane_refinement {
-      let baseline_lane_by_id : Map[String, Int] = {}
+      let baseline_lane_by_id : Map[String, Int] = Map([])
       let baseline_lane_crossings = if non_state_optional_lane_refinement {
         for node in nodes_in_order {
           baseline_lane_by_id[node.id] = option_int_or(
@@ -702,9 +702,9 @@ pub fn compute_legacy_lane_state(
     if !horizontal &&
       graph.subgraphs.length() > 0 &&
       graph.edges.any(edge => edge.label is Some(_)) {
-      let forward_extra_units_by_rank : Map[Int, Int] = {}
-      let single_forward_adjust_by_rank : Map[Int, Int] = {}
-      let forward_labeled_out_degree_by_source : Map[String, Int] = {}
+      let forward_extra_units_by_rank : Map[Int, Int] = Map([])
+      let single_forward_adjust_by_rank : Map[Int, Int] = Map([])
+      let forward_labeled_out_degree_by_source : Map[String, Int] = Map([])
       let label_row_units = 18
       for edge in graph.edges {
         match
@@ -777,9 +777,9 @@ pub fn compute_legacy_lane_state(
   }
 
   if flat_state_graph {
-    let node_order_by_id : Map[String, Int] = {}
-    let node_shape_by_id : Map[String, NodeShape] = {}
-    let lane_assigned : Map[String, Bool] = {}
+    let node_order_by_id : Map[String, Int] = Map([])
+    let node_shape_by_id : Map[String, NodeShape] = Map([])
+    let lane_assigned : Map[String, Bool] = Map([])
     for i, node in nodes_in_order {
       node_order_by_id[node.id] = i
       node_shape_by_id[node.id] = node.shape
@@ -796,7 +796,7 @@ pub fn compute_legacy_lane_state(
       }
     }
 
-    let forward_extra_rows_by_order : Map[Int, Int] = {}
+    let forward_extra_rows_by_order : Map[Int, Int] = Map([])
     for edge in graph.edges {
       let source_order = option_int_or(node_order_by_id.get(edge.source), -1)
       let target_order = option_int_or(node_order_by_id.get(edge.target), -1)
@@ -835,7 +835,7 @@ pub fn compute_legacy_lane_state(
       state_label_y_offset_by_node_id[node.id] = cumulative_label_offset
     }
 
-    let forward_targets_by_source : Map[String, Array[String]] = {}
+    let forward_targets_by_source : Map[String, Array[String]] = Map([])
     for edge in graph.edges {
       let source_order = option_int_or(node_order_by_id.get(edge.source), -1)
       let target_order = option_int_or(node_order_by_id.get(edge.target), -1)

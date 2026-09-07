@@ -17,12 +17,12 @@ fn flow_labeled_edge(
   target : String,
   label : String,
 ) -> MermaidEdge {
-  { ..flow_edge(source, target), label: Some(label) }
+  { ..flow_edge(source, target), label: Some(label), }
 }
 
 ///|
 fn flow_node(id : String) -> @model.MermaidNode {
-  { id, label: id, shape: Rectangle }
+  { id, label: id, shape: Rectangle, }
 }
 
 ///|
@@ -41,9 +41,9 @@ fn positioned_box(id : String, x : Int, y : Int) -> PositionedNode {
 
 ///|
 fn flow_graph_with_edges(edges : Array[MermaidEdge]) -> MermaidGraph {
-  let nodes : Map[String, @model.MermaidNode] = {}
+  let nodes : Map[String, @model.MermaidNode] = Map([])
   let node_definition_order : Array[String] = []
-  let seen_node_id : Map[String, Bool] = {}
+  let seen_node_id : Map[String, Bool] = Map([])
   fn append_node(id : String) -> Unit {
     nodes[id] = flow_node(id)
     if seen_node_id.contains(id) {
@@ -156,53 +156,61 @@ fn context_target_anchor(context : EdgeLayoutContext) -> Point {
 ///|
 test "Layout simplify polyline removes duplicate and interior collinear points" {
   let points : Array[Point] = [
-    { x: 0, y: 0 },
-    { x: 0, y: 0 },
-    { x: 12, y: 0 },
-    { x: 24, y: 0 },
-    { x: 24, y: 10 },
-    { x: 24, y: 20 },
+    { x: 0, y: 0, },
+    { x: 0, y: 0, },
+    { x: 12, y: 0, },
+    { x: 24, y: 0, },
+    { x: 24, y: 10, },
+    { x: 24, y: 20, },
   ]
   let simplified = @layout_engine_graph_edge_core.simplify_polyline_points(
     points,
   )
   assert_true(
     wb_points_equal(simplified, [
-      { x: 0, y: 0 },
-      { x: 24, y: 0 },
-      { x: 24, y: 20 },
+      { x: 0, y: 0, },
+      { x: 24, y: 0, },
+      { x: 24, y: 20, },
     ]),
   )
 }
 
 ///|
 test "Layout simplify polyline preserves turnback cusp points" {
-  let points : Array[Point] = [{ x: 0, y: 0 }, { x: 0, y: 10 }, { x: 0, y: -8 }]
+  let points : Array[Point] = [
+    { x: 0, y: 0, },
+    { x: 0, y: 10, },
+    { x: 0, y: -8, },
+  ]
   let simplified = @layout_engine_graph_edge_core.simplify_polyline_points(
     points,
   )
   assert_eq(simplified.length(), 3)
-  assert_true(wb_point_equal(simplified[1], { x: 0, y: 10 }))
+  assert_true(wb_point_equal(simplified[1], { x: 0, y: 10, }))
 }
 
 ///|
 test "Layout endpoint stubs preserve source fanout boundary separation" {
   let points = @layout_engine_graph_edge_core.apply_endpoint_port_stubs(
-    [{ x: 290, y: 155 }, { x: 290, y: 155 }, { x: 344, y: 200 }],
-    { x: 290, y: 161 },
-    { x: 344, y: 200 },
+    [{ x: 290, y: 155, }, { x: 290, y: 155, }, { x: 344, y: 200, }],
+    { x: 290, y: 161, },
+    { x: 344, y: 200, },
   )
-  assert_true(wb_points_equal(points, [{ x: 290, y: 161 }, { x: 344, y: 200 }]))
+  assert_true(
+    wb_points_equal(points, [{ x: 290, y: 161, }, { x: 344, y: 200, }]),
+  )
 }
 
 ///|
 test "Layout endpoint stubs preserve reciprocal endpoint separation" {
   let points = @layout_engine_graph_edge_core.apply_endpoint_port_stubs(
-    [{ x: 290, y: 155 }, { x: 290, y: 155 }, { x: 360, y: 110 }],
-    { x: 290, y: 149 },
-    { x: 360, y: 116 },
+    [{ x: 290, y: 155, }, { x: 290, y: 155, }, { x: 360, y: 110, }],
+    { x: 290, y: 149, },
+    { x: 360, y: 116, },
   )
-  assert_true(wb_points_equal(points, [{ x: 290, y: 149 }, { x: 360, y: 116 }]))
+  assert_true(
+    wb_points_equal(points, [{ x: 290, y: 149, }, { x: 360, y: 116, }]),
+  )
 }
 
 ///|
@@ -230,8 +238,8 @@ test "Layout back-edge lane selection avoids existing segment crossings" {
   let blocker : RoutedEdgeSegment = {
     source_id: "X",
     target_id: "Y",
-    start: { x: 140, y: 20 },
-    end: { x: 140, y: 80 },
+    start: { x: 140, y: 20, },
+    end: { x: 140, y: 80, },
     is_source_stub: false,
     is_target_stub: false,
   }
@@ -277,16 +285,16 @@ test "Layout back-edge lane selection can skip nearest lane for fewer crossings"
     {
       source_id: "A",
       target_id: "B",
-      start: { x: 140, y: 45 },
-      end: { x: 140, y: 75 },
+      start: { x: 140, y: 45, },
+      end: { x: 140, y: 75, },
       is_source_stub: false,
       is_target_stub: false,
     },
     {
       source_id: "C",
       target_id: "D",
-      start: { x: 160, y: 120 },
-      end: { x: 160, y: 150 },
+      start: { x: 160, y: 120, },
+      end: { x: 160, y: 150, },
       is_source_stub: false,
       is_target_stub: false,
     },
@@ -457,15 +465,15 @@ test "Layout long-span back-edge lane search can use extended candidates" {
 
   let reservations : Array[BackEdgeLaneReservation] = []
   for blocked_y in [58, 40, 22] {
-    reservations.push({ left: 112, right: 688, y: blocked_y })
+    reservations.push({ left: 112, right: 688, y: blocked_y, })
   }
 
   let routed_edge_segments : Array[RoutedEdgeSegment] = [
     {
       source_id: "U",
       target_id: "V",
-      start: { x: 400, y: 120 },
-      end: { x: 400, y: 260 },
+      start: { x: 400, y: 120, },
+      end: { x: 400, y: 260, },
       is_source_stub: false,
       is_target_stub: false,
     },
@@ -513,14 +521,14 @@ test "Layout mid-long span back-edge lane search upgrades to dense candidate spa
       58, 40, 38, 22, 18, 142, 160, 162, 178, 182, 196, 202, 214, 222, 232, 242,
       262,
     ] {
-    reservations.push({ left: 112, right: 568, y: blocked_y })
+    reservations.push({ left: 112, right: 568, y: blocked_y, })
   }
   let routed_edge_segments : Array[RoutedEdgeSegment] = [
     {
       source_id: "U",
       target_id: "V",
-      start: { x: 300, y: 236 },
-      end: { x: 300, y: 246 },
+      start: { x: 300, y: 236, },
+      end: { x: 300, y: 246, },
       is_source_stub: false,
       is_target_stub: false,
     },
@@ -541,19 +549,27 @@ test "Layout mid-long span back-edge lane search upgrades to dense candidate spa
 
 ///|
 test "Layout polyline crossing count ignores shared endpoints" {
-  let left : Array[Point] = [{ x: 0, y: 0 }, { x: 10, y: 10 }]
-  let right : Array[Point] = [{ x: 0, y: 0 }, { x: 10, y: 0 }, { x: 0, y: 10 }]
+  let left : Array[Point] = [{ x: 0, y: 0, }, { x: 10, y: 10, }]
+  let right : Array[Point] = [
+    { x: 0, y: 0, },
+    { x: 10, y: 0, },
+    { x: 0, y: 10, },
+  ]
 
   assert_eq(count_polyline_crossings([left, right]), 0)
 }
 
 ///|
 test "Layout polyline crossing count counts each pair at most once" {
-  let left : Array[Point] = [{ x: 0, y: 0 }, { x: 10, y: 10 }, { x: 0, y: 20 }]
+  let left : Array[Point] = [
+    { x: 0, y: 0, },
+    { x: 10, y: 10, },
+    { x: 0, y: 20, },
+  ]
   let right : Array[Point] = [
-    { x: 10, y: 0 },
-    { x: 0, y: 10 },
-    { x: 10, y: 20 },
+    { x: 10, y: 0, },
+    { x: 0, y: 10, },
+    { x: 10, y: 20, },
   ]
 
   assert_eq(count_polyline_crossings([left, right]), 1)
@@ -652,8 +668,8 @@ test "Layout boundary offsets keep source fanout separation on large graphs" {
   let graph = flow_graph_with_edges(edges)
   assert_true(graph.edges.length() > 20)
 
-  let positioned_by_id : Map[String, PositionedNode] = {}
-  let node_horizontal_by_id : Map[String, Bool] = {}
+  let positioned_by_id : Map[String, PositionedNode] = Map([])
+  let node_horizontal_by_id : Map[String, Bool] = Map([])
   positioned_by_id["A"] = positioned_box("A", 100, 100)
   positioned_by_id["B1"] = positioned_box("B1", 300, 40)
   positioned_by_id["B2"] = positioned_box("B2", 300, 100)
@@ -683,7 +699,7 @@ test "Layout boundary offsets keep source fanout separation on large graphs" {
   )
   assign_edge_boundary_offsets_to_contexts(graph, false, false, false, contexts)
 
-  let fanout_offsets : Map[Int, Bool] = {}
+  let fanout_offsets : Map[Int, Bool] = Map([])
   for context in contexts {
     if context.resolved_source_id == "A" {
       fanout_offsets[context.source_boundary_offset_minor] = true
@@ -773,7 +789,7 @@ test "Layout compact cohort assignment can rebalance preassigned source offsets"
     cohort_assignments, contexts, true, rebalanced_offsets, false,
   )
   assert_true(option_int_or(rebalanced_offsets.get(0), 0) != 0)
-  let unique_offsets : Map[Int, Bool] = {}
+  let unique_offsets : Map[Int, Bool] = Map([])
   for _, offset in rebalanced_offsets {
     unique_offsets[offset] = true
   }
@@ -905,11 +921,11 @@ test "Layout routing avoids reciprocal anchor pierce in labeled flow loop" {
   let graph = {
     ..flow_graph_with_edges(edges),
     nodes: {
-      "Start": { id: "Start", label: "Start", shape: Stadium },
-      "Check": { id: "Check", label: "Valid input?", shape: Diamond },
-      "Build": { id: "Build", label: "Build artifact", shape: Rectangle },
-      "Fix": { id: "Fix", label: "Fix source", shape: Rectangle },
-      "Ship": { id: "Ship", label: "Ship", shape: Stadium },
+      "Start": { id: "Start", label: "Start", shape: Stadium, },
+      "Check": { id: "Check", label: "Valid input?", shape: Diamond, },
+      "Build": { id: "Build", label: "Build artifact", shape: Rectangle, },
+      "Fix": { id: "Fix", label: "Fix source", shape: Rectangle, },
+      "Ship": { id: "Ship", label: "Ship", shape: Stadium, },
     },
   }
 
@@ -965,8 +981,8 @@ test "Layout routing avoids reciprocal anchor pierce in labeled flow loop" {
       inline_style: None,
     },
   ]
-  let positioned_by_id : Map[String, PositionedNode] = {}
-  let node_horizontal_by_id : Map[String, Bool] = {}
+  let positioned_by_id : Map[String, PositionedNode] = Map([])
+  let node_horizontal_by_id : Map[String, Bool] = Map([])
   for node in positioned_nodes {
     positioned_by_id[node.id] = node
     node_horizontal_by_id[node.id] = true

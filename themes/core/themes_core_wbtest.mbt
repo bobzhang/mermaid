@@ -6,7 +6,7 @@ fn github_newline_dark() -> String {
     #|
   )
   .trim_end()
-  .to_string()
+  .to_owned()
 }
 
 ///|
@@ -126,7 +126,7 @@ test "Built-in theme slugs are exported for CLI and config UX" {
   assert_true(slugs.contains("github-dark"))
   assert_true(slugs.contains("one-dark"))
   assert_eq(slugs.length(), 15)
-  let seen : Map[String, Bool] = {}
+  let seen : Map[String, Bool] = Map([])
   for slug in slugs {
     assert_true(!seen.contains(slug))
     seen[slug] = true

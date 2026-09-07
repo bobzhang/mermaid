@@ -4,7 +4,7 @@ import {
   "bobzhang/beautiful_mermaid/layout/engine/graph/group/core" @layout_engine_graph_group_core,
   "bobzhang/beautiful_mermaid/layout/engine/graph/internal/core" @layout_engine_graph_internal_core,
   "bobzhang/beautiful_mermaid/layout/engine/pathfinder/core" @layout_engine_pathfinder_core,
-  "bobzhang/beautiful_mermaid/model" @model,
+  "bobzhang/beautiful_mermaid/model",
 }
 
 import {
@@ -13,4 +13,5 @@ import {
 
 import {
   "bobzhang/beautiful_mermaid/parser/header/core" @parser,
+  "moonbitlang/core/debug",
 } for "wbtest"

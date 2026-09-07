@@ -54,7 +54,7 @@ fn write_canvas_text(
   for i in 0..<text.length() {
     let target_x = x + i
     if target_x >= 0 && target_x < canvas[y].length() {
-      put_canvas(canvas, target_x, y, text[i:i + 1].to_string())
+      put_canvas(canvas, target_x, y, text[i:i + 1].to_owned())
     }
   }
 }
@@ -349,7 +349,7 @@ pub fn render_ascii_sequence(
     for i in 0..<header.length() {
       let x = block_left + 1 + i
       if x < block_right {
-        put_canvas(canvas, x, top_y, header[i:i + 1].to_string())
+        put_canvas(canvas, x, top_y, header[i:i + 1].to_owned())
       }
     }
 
@@ -384,7 +384,7 @@ pub fn render_ascii_sequence(
                   canvas,
                   x,
                   divider_y,
-                  divider_text[i:i + 1].to_string(),
+                  divider_text[i:i + 1].to_owned(),
                 )
               }
             }

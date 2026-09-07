@@ -15,4 +15,3 @@ pub fn render_ascii(@model.MermaidGraph, @model.AsciiRenderOptions) -> String
 // Type aliases
 
 // Traits
-

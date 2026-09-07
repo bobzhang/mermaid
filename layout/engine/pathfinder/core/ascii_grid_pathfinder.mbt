@@ -14,6 +14,9 @@ pub(all) struct AsciiGridCoord {
 } derive(Eq)
 
 ///|
+pub extend AsciiGridCoord with Eq::{not_equal, equal}
+
+///|
 priv struct AsciiGridFrontierEntry {
   coord : AsciiGridCoord
   priority : Int
@@ -27,10 +30,10 @@ fn ascii_grid_key(coord : AsciiGridCoord) -> String {
 ///|
 fn ascii_grid_neighbors(coord : AsciiGridCoord) -> Array[AsciiGridCoord] {
   [
-    { x: coord.x + 1, y: coord.y },
-    { x: coord.x - 1, y: coord.y },
-    { x: coord.x, y: coord.y + 1 },
-    { x: coord.x, y: coord.y - 1 },
+    { x: coord.x + 1, y: coord.y, },
+    { x: coord.x - 1, y: coord.y, },
+    { x: coord.x, y: coord.y + 1, },
+    { x: coord.x, y: coord.y - 1, },
   ]
 }
 
@@ -168,11 +171,13 @@ pub fn ascii_grid_pathfind(
     return Some([start])
   }
 
-  let frontier : Array[AsciiGridFrontierEntry] = [{ coord: start, priority: 0 }]
+  let frontier : Array[AsciiGridFrontierEntry] = [
+    { coord: start, priority: 0, },
+  ]
 
-  let cost_so_far : Map[String, Int] = {}
+  let cost_so_far : Map[String, Int] = Map([])
   cost_so_far[ascii_grid_key(start)] = 0
-  let came_from : Map[String, AsciiGridCoord] = {}
+  let came_from : Map[String, AsciiGridCoord] = Map([])
   while frontier.length() > 0 {
     let entry = match ascii_grid_heap_pop(frontier) {
       Some(found) => found
@@ -205,7 +210,7 @@ pub fn ascii_grid_pathfind(
         cost_so_far[next_key] = new_cost
         came_from[next_key] = current
         let next_priority = new_cost + ascii_grid_heuristic(next, end)
-        ascii_grid_heap_push(frontier, { coord: next, priority: next_priority })
+        ascii_grid_heap_push(frontier, { coord: next, priority: next_priority, })
       }
     }
   }

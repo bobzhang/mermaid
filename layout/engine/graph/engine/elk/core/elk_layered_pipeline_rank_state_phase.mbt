@@ -2,7 +2,7 @@
 fn build_order_index_by_id(
   node_ids_in_order : Array[String],
 ) -> Map[String, Int] {
-  let order_index_by_node_id : Map[String, Int] = {}
+  let order_index_by_node_id : Map[String, Int] = Map([])
   for i, node_id in node_ids_in_order {
     order_index_by_node_id[node_id] = i
   }
@@ -37,11 +37,11 @@ fn build_edge_min_len_by_resolved_pair(
   subgraph_exit_by_id : Map[String, String],
   node_ids : Array[String],
 ) -> Map[String, Int] {
-  let visible_node_ids : Map[String, Bool] = {}
+  let visible_node_ids : Map[String, Bool] = Map([])
   for node_id in node_ids {
     visible_node_ids[node_id] = true
   }
-  let edge_min_len_by_pair : Map[String, Int] = {}
+  let edge_min_len_by_pair : Map[String, Int] = Map([])
   for edge in graph.edges {
     let source_id = resolve_edge_endpoint_id(
       edge.source,
@@ -99,7 +99,7 @@ fn collect_visible_resolved_edges(
   subgraph_exit_by_id : Map[String, String],
   node_ids : Array[String],
 ) -> Array[(String, String)] {
-  let visible_node_ids : Map[String, Bool] = {}
+  let visible_node_ids : Map[String, Bool] = Map([])
   for node_id in node_ids {
     visible_node_ids[node_id] = true
   }
@@ -134,8 +134,8 @@ fn build_rank_neighbors_from_oriented_edges(
   rank_by_node_id : Map[String, Int],
   order_index_by_node_id : Map[String, Int],
 ) -> (Map[String, Array[String]], Map[String, Array[String]]) {
-  let successors_by_node_id : Map[String, Array[String]] = {}
-  let predecessors_by_node_id : Map[String, Array[String]] = {}
+  let successors_by_node_id : Map[String, Array[String]] = Map([])
+  let predecessors_by_node_id : Map[String, Array[String]] = Map([])
   for node_id in node_ids {
     successors_by_node_id[node_id] = []
     predecessors_by_node_id[node_id] = []
@@ -173,9 +173,9 @@ fn build_longest_path_rank_by_node_id_from_oriented_edges(
   order_index_by_node_id : Map[String, Int],
   edge_min_len_by_pair : Map[String, Int],
 ) -> (Map[String, Int], Int) {
-  let rank_by_node_id : Map[String, Int] = {}
-  let indegree_by_node_id : Map[String, Int] = {}
-  let successors_by_node_id : Map[String, Array[String]] = {}
+  let rank_by_node_id : Map[String, Int] = Map([])
+  let indegree_by_node_id : Map[String, Int] = Map([])
+  let successors_by_node_id : Map[String, Array[String]] = Map([])
   for node_id in node_ids {
     rank_by_node_id[node_id] = 0
     indegree_by_node_id[node_id] = 0
@@ -245,8 +245,8 @@ fn build_incident_oriented_edges_by_node_id(
   Map[String, Array[(String, String)]],
   Map[String, Array[(String, String)]],
 ) {
-  let incoming_edges_by_node_id : Map[String, Array[(String, String)]] = {}
-  let outgoing_edges_by_node_id : Map[String, Array[(String, String)]] = {}
+  let incoming_edges_by_node_id : Map[String, Array[(String, String)]] = Map([])
+  let outgoing_edges_by_node_id : Map[String, Array[(String, String)]] = Map([])
   for node_id in node_ids {
     incoming_edges_by_node_id[node_id] = []
     outgoing_edges_by_node_id[node_id] = []
@@ -383,7 +383,7 @@ fn build_tight_incoming_shift_closure(
   if !rank_by_node_id.contains(seed_node_id) {
     return []
   }
-  let in_shift_set_by_node_id : Map[String, Bool] = {}
+  let in_shift_set_by_node_id : Map[String, Bool] = Map([])
   in_shift_set_by_node_id[seed_node_id] = true
   let queue : Array[String] = [seed_node_id]
   while queue.length() > 0 {
@@ -422,7 +422,7 @@ fn rank_shift_delta(
   shift_node_ids : Array[String],
   oriented_edges : Array[(String, String)],
 ) -> Int {
-  let in_shift_set_by_node_id : Map[String, Bool] = {}
+  let in_shift_set_by_node_id : Map[String, Bool] = Map([])
   for node_id in shift_node_ids {
     in_shift_set_by_node_id[node_id] = true
   }
@@ -463,7 +463,7 @@ fn has_incoming_cross_boundary(
   shift_node_ids : Array[String],
   oriented_edges : Array[(String, String)],
 ) -> Bool {
-  let in_shift_set_by_node_id : Map[String, Bool] = {}
+  let in_shift_set_by_node_id : Map[String, Bool] = Map([])
   for node_id in shift_node_ids {
     in_shift_set_by_node_id[node_id] = true
   }
@@ -650,8 +650,8 @@ fn build_layered_neighbor_state_from_rank_seed(
   rank_by_node_id : Map[String, Int],
   order_index_by_node_id : Map[String, Int],
 ) -> (Map[String, Array[String]], Map[String, Array[String]]) {
-  let successors_by_node_id : Map[String, Array[String]] = {}
-  let predecessors_by_node_id : Map[String, Array[String]] = {}
+  let successors_by_node_id : Map[String, Array[String]] = Map([])
+  let predecessors_by_node_id : Map[String, Array[String]] = Map([])
   for node_id in node_ids {
     successors_by_node_id[node_id] = []
     predecessors_by_node_id[node_id] = []
@@ -692,7 +692,7 @@ fn build_rank_node_ids(
   rank_by_node_id : Map[String, Int],
   max_rank : Int,
 ) -> Map[Int, Array[String]] {
-  let rank_node_ids_by_rank : Map[Int, Array[String]] = {}
+  let rank_node_ids_by_rank : Map[Int, Array[String]] = Map([])
   for rank in 0..<=max_rank {
     rank_node_ids_by_rank[rank] = []
   }

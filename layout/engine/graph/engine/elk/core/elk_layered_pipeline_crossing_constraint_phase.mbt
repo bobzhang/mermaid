@@ -3,14 +3,14 @@ fn build_rank_constraint_successors_by_node_id(
   node_ids : Array[String],
   in_layer_successors_by_node_id : Map[String, Array[String]],
 ) -> Map[String, Array[String]] {
-  let rank_node_id_set : Map[String, Bool] = {}
+  let rank_node_id_set : Map[String, Bool] = Map([])
   for node_id in node_ids {
     rank_node_id_set[node_id] = true
   }
-  let rank_constraint_successors_by_node_id : Map[String, Array[String]] = {}
+  let rank_constraint_successors_by_node_id : Map[String, Array[String]] = Map([])
   for source_id in node_ids {
     let filtered_successors : Array[String] = []
-    let seen_successor_by_node_id : Map[String, Bool] = {}
+    let seen_successor_by_node_id : Map[String, Bool] = Map([])
     match in_layer_successors_by_node_id.get(source_id) {
       Some(successors) =>
         for target_id in successors {
@@ -36,7 +36,7 @@ fn build_rank_constraint_successors_by_node_id(
 fn rank_constraint_order_index_by_node_id(
   node_ids : Array[String],
 ) -> Map[String, Int] {
-  let rank_order_index_by_node_id : Map[String, Int] = {}
+  let rank_order_index_by_node_id : Map[String, Int] = Map([])
   for index, node_id in node_ids {
     rank_order_index_by_node_id[node_id] = index
   }
@@ -148,7 +148,7 @@ fn build_crossing_constraint_groups(
 fn crossing_constraint_group_index_by_node_id(
   groups : Array[CrossingConstraintGroup],
 ) -> Map[String, Int] {
-  let group_index_by_node_id : Map[String, Int] = {}
+  let group_index_by_node_id : Map[String, Int] = Map([])
   for group_index, group in groups {
     for node_id in group.node_ids {
       group_index_by_node_id[node_id] = group_index
@@ -166,7 +166,7 @@ fn find_first_forster_violated_constraint(
     groups,
   )
   for source_group_index, source_group in groups {
-    let seen_target_group_by_index : Map[Int, Bool] = {}
+    let seen_target_group_by_index : Map[Int, Bool] = Map([])
     for source_node_id in source_group.node_ids {
       match rank_constraint_successors_by_node_id.get(source_node_id) {
         Some(target_node_ids) =>
@@ -333,7 +333,7 @@ fn apply_crossing_in_layer_successor_constraints(
   let rank_order_index_by_node_id = rank_constraint_order_index_by_node_id(
     node_ids,
   )
-  let incoming_count_by_node_id : Map[String, Int] = {}
+  let incoming_count_by_node_id : Map[String, Int] = Map([])
   for node_id in node_ids {
     incoming_count_by_node_id[node_id] = 0
   }
@@ -346,7 +346,7 @@ fn apply_crossing_in_layer_successor_constraints(
         1
     }
   }
-  let placed_by_node_id : Map[String, Bool] = {}
+  let placed_by_node_id : Map[String, Bool] = Map([])
   let resolved_node_ids : Array[String] = []
   while resolved_node_ids.length() < node_ids.length() {
     let next_node_id = match

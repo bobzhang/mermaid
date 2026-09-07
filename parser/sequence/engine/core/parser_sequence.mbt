@@ -25,10 +25,15 @@ fn sequence_edge_operators() -> Array[EdgeOp] {
       has_arrow_start: false,
       has_arrow_end: true,
     },
-    { symbol: "->>", style: Solid, has_arrow_start: false, has_arrow_end: true },
-    { symbol: "->", style: Solid, has_arrow_start: false, has_arrow_end: true },
-    { symbol: "-)", style: Solid, has_arrow_start: false, has_arrow_end: true },
-    { symbol: "-x", style: Solid, has_arrow_start: false, has_arrow_end: true },
+    {
+      symbol: "->>",
+      style: Solid,
+      has_arrow_start: false,
+      has_arrow_end: true,
+    },
+    { symbol: "->", style: Solid, has_arrow_start: false, has_arrow_end: true, },
+    { symbol: "-)", style: Solid, has_arrow_start: false, has_arrow_end: true, },
+    { symbol: "-x", style: Solid, has_arrow_start: false, has_arrow_end: true, },
   ]
 }
 
@@ -40,13 +45,13 @@ fn parse_sequence_participant_declaration(
   actor_kinds : Map[String, SequenceParticipantKind],
 ) -> Bool {
   let (kind, rest) = lexmatch line[:] {
-    ("(?i:participant) ", rest_part) =>
+    (re"^(?i:participant) ", after=rest_part) =>
       (
         SequenceParticipantKind::Participant,
-        rest_part.to_string().trim().to_string(),
+        rest_part.to_owned().trim().to_owned(),
       )
-    ("(?i:actor) ", rest_part) =>
-      (Actor, rest_part.to_string().trim().to_string())
+    (re"^(?i:actor) ", after=rest_part) =>
+      (Actor, rest_part.to_owned().trim().to_owned())
     _ => return false
   }
 
@@ -55,9 +60,9 @@ fn parse_sequence_participant_declaration(
   }
 
   lexmatch rest[:] {
-    (id_part, " (?i:as) ", label_part) => {
-      let id = id_part.trim().to_string()
-      let label = label_part.trim().to_string()
+    (re" (?i:as) ", before=id_part, after=label_part) => {
+      let id = id_part.trim().to_owned()
+      let label = label_part.trim().to_owned()
       if id != "" {
         if !nodes.contains(id) {
           actor_order.push(id)
@@ -78,7 +83,7 @@ fn parse_sequence_participant_declaration(
       if !nodes.contains(rest) {
         actor_order.push(rest)
       }
-      nodes[rest] = { id: rest, label: rest, shape: SequenceParticipant }
+      nodes[rest] = { id: rest, label: rest, shape: SequenceParticipant, }
       actor_kinds[rest] = kind
     }
   }
@@ -108,20 +113,21 @@ fn ensure_sequence_participant(
 ///|
 fn parse_sequence_block_header(line : String) -> (SequenceBlockType, String)? {
   lexmatch line[:] {
-    "(?i:loop)" => Some((Loop, ""))
-    ("(?i:loop) ", rest) => Some((Loop, rest.trim().to_string()))
-    "(?i:alt)" => Some((Alt, ""))
-    ("(?i:alt) ", rest) => Some((Alt, rest.trim().to_string()))
-    "(?i:opt)" => Some((Opt, ""))
-    ("(?i:opt) ", rest) => Some((Opt, rest.trim().to_string()))
-    "(?i:par)" => Some((Par, ""))
-    ("(?i:par) ", rest) => Some((Par, rest.trim().to_string()))
-    "(?i:critical)" => Some((Critical, ""))
-    ("(?i:critical) ", rest) => Some((Critical, rest.trim().to_string()))
-    "(?i:break)" => Some((Break, ""))
-    ("(?i:break) ", rest) => Some((Break, rest.trim().to_string()))
-    "(?i:rect)" => Some((Rect, ""))
-    ("(?i:rect) ", rest) => Some((Rect, rest.trim().to_string()))
+    re"^(?i:loop)$" => Some((Loop, ""))
+    (re"^(?i:loop) ", after=rest) => Some((Loop, rest.trim().to_owned()))
+    re"^(?i:alt)$" => Some((Alt, ""))
+    (re"^(?i:alt) ", after=rest) => Some((Alt, rest.trim().to_owned()))
+    re"^(?i:opt)$" => Some((Opt, ""))
+    (re"^(?i:opt) ", after=rest) => Some((Opt, rest.trim().to_owned()))
+    re"^(?i:par)$" => Some((Par, ""))
+    (re"^(?i:par) ", after=rest) => Some((Par, rest.trim().to_owned()))
+    re"^(?i:critical)$" => Some((Critical, ""))
+    (re"^(?i:critical) ", after=rest) =>
+      Some((Critical, rest.trim().to_owned()))
+    re"^(?i:break)$" => Some((Break, ""))
+    (re"^(?i:break) ", after=rest) => Some((Break, rest.trim().to_owned()))
+    re"^(?i:rect)$" => Some((Rect, ""))
+    (re"^(?i:rect) ", after=rest) => Some((Rect, rest.trim().to_owned()))
     _ => None
   }
 }
@@ -129,10 +135,10 @@ fn parse_sequence_block_header(line : String) -> (SequenceBlockType, String)? {
 ///|
 fn parse_sequence_divider_label(line : String) -> String? {
   lexmatch line[:] {
-    "(?i:else)" => Some("")
-    ("(?i:else) ", rest) => Some(rest.trim().to_string())
-    "(?i:and)" => Some("")
-    ("(?i:and) ", rest) => Some(rest.trim().to_string())
+    re"^(?i:else)$" => Some("")
+    (re"^(?i:else) ", after=rest) => Some(rest.trim().to_owned())
+    re"^(?i:and)$" => Some("")
+    (re"^(?i:and) ", after=rest) => Some(rest.trim().to_owned())
     _ => None
   }
 }
@@ -147,22 +153,24 @@ fn parse_sequence_note_line(
   after_index : Int,
 ) -> Bool {
   lexmatch line[:] {
-    ("(?i:note) ", rest) =>
+    (re"^(?i:note) ", after=rest) =>
       lexmatch rest {
-        (placement_part, ":", text_part) => {
+        (re":", before=placement_part, after=text_part) => {
           let placement = placement_part.trim()
-          let (position, raw_actors) = lexmatch placement {
-            ("(?i:left of) ", note_rest) =>
-              (SequenceNotePosition::Left, note_rest.trim().to_string())
-            ("(?i:right of) ", note_rest) =>
-              (Right, note_rest.trim().to_string())
-            ("(?i:over) ", note_rest) => (Over, note_rest.trim().to_string())
+          let (position, raw_actors) : (SequenceNotePosition, String) = lexmatch
+            placement {
+            (re"^(?i:left of) ", after=note_rest) =>
+              (Left, note_rest.trim().to_owned())
+            (re"^(?i:right of) ", after=note_rest) =>
+              (Right, note_rest.trim().to_owned())
+            (re"^(?i:over) ", after=note_rest) =>
+              (Over, note_rest.trim().to_owned())
             _ => return true
           }
-          let text = text_part.trim().to_string()
+          let text = text_part.trim().to_owned()
           let actor_ids : Array[String] = []
           for raw_actor in raw_actors.split(",") {
-            let actor_id = raw_actor.trim().to_string()
+            let actor_id = raw_actor.trim().to_owned()
             if actor_id != "" {
               ensure_sequence_participant(
                 nodes, actor_order, actor_kinds, actor_id,
@@ -171,7 +179,7 @@ fn parse_sequence_note_line(
             }
           }
           if actor_ids.length() > 0 && text != "" {
-            notes.push({ actor_ids, text, position, after_index })
+            notes.push({ actor_ids, text, position, after_index, })
           }
           true
         }
@@ -212,23 +220,23 @@ fn parse_sequence_message_line(
 ) -> Bool {
   match find_earliest_operator(line, sequence_edge_operators()) {
     Some(found) => {
-      let source = line[:found.index].to_string().trim().to_string()
+      let source = line[:found.index].to_owned().trim().to_owned()
       let rhs = line[found.index + found.op.symbol.length():]
-        .to_string()
+        .to_owned()
         .trim()
-        .to_string()
+        .to_owned()
       let (raw_target, label) = lexmatch rhs[:] {
-        (target_part, ":", label_part) => {
-          let target = target_part.trim().to_string()
-          let raw_label = label_part.trim().to_string()
+        (re":", before=target_part, after=label_part) => {
+          let target = target_part.trim().to_owned()
+          let raw_label = label_part.trim().to_owned()
           (target, if raw_label == "" { None } else { Some(raw_label) })
         }
         _ => (rhs, None)
       }
       let (activation_mark, target) = if raw_target is [.. "+", .. target_rest] {
-        ("+", target_rest.to_string().trim().to_string())
+        ("+", target_rest.to_owned().trim().to_owned())
       } else if raw_target is [.. "-", .. target_rest] {
-        ("-", target_rest.to_string().trim().to_string())
+        ("-", target_rest.to_owned().trim().to_owned())
       } else {
         ("", raw_target)
       }
@@ -262,10 +270,10 @@ fn parse_sequence_message_line(
 ///|
 /// Parses sequence diagram body lines into a `MermaidGraph`.
 pub fn parse_sequence_diagram(lines : Array[String]) -> MermaidGraph {
-  let nodes : Map[String, MermaidNode] = {}
+  let nodes : Map[String, MermaidNode] = Map([])
   let edges : Array[MermaidEdge] = []
   let actor_order : Array[String] = []
-  let actor_kinds : Map[String, SequenceParticipantKind] = {}
+  let actor_kinds : Map[String, SequenceParticipantKind] = Map([])
   let blocks : Array[SequenceBlock] = []
   let notes : Array[SequenceNote] = []
   let activation_commands : Array[SequenceActivationCommand] = []
@@ -292,8 +300,7 @@ pub fn parse_sequence_diagram(lines : Array[String]) -> MermaidGraph {
       continue
     }
 
-    if line[:] lexmatch? "(?i:activate) .*" ||
-      line[:] lexmatch? "(?i:deactivate) .*" {
+    if line[:] =~ re"^(?i:activate) .*$" || line[:] =~ re"^(?i:deactivate) .*$" {
       continue
     }
 
@@ -320,7 +327,7 @@ pub fn parse_sequence_diagram(lines : Array[String]) -> MermaidGraph {
           for divider in top.dividers {
             next_dividers.push(divider)
           }
-          next_dividers.push({ index: edges.length(), label })
+          next_dividers.push({ index: edges.length(), label, })
           open_blocks[top_index] = {
             block_type: top.block_type,
             label: top.label,
@@ -345,7 +352,7 @@ pub fn parse_sequence_diagram(lines : Array[String]) -> MermaidGraph {
       continue
     }
 
-    if line[:] lexmatch? "(?i:autonumber).*" {
+    if line[:] =~ re"^(?i:autonumber).*$" {
       continue
     }
 

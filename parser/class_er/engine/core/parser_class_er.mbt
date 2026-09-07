@@ -10,7 +10,7 @@ fn parse_compact_relation_parts(
   body : String,
   label : String?,
 ) -> (String, String, String, String?)? {
-  let trimmed = body.trim().to_string()
+  let trimmed = body.trim().to_owned()
   if trimmed == "" || trimmed.contains(" ") {
     return None
   }
@@ -38,12 +38,12 @@ fn parse_compact_relation_parts(
     return None
   }
 
-  let source = trimmed[:operator_start].to_string().trim().to_string()
+  let source = trimmed[:operator_start].to_owned().trim().to_owned()
   let operator = trimmed[operator_start:operator_end + 1]
-    .to_string()
+    .to_owned()
     .trim()
-    .to_string()
-  let target = trimmed[operator_end + 1:].to_string().trim().to_string()
+    .to_owned()
+  let target = trimmed[operator_end + 1:].to_owned().trim().to_owned()
   if source == "" ||
     operator == "" ||
     target == "" ||
@@ -83,16 +83,16 @@ fn is_double_quoted_token(token : String) -> Bool {
 ///|
 fn parse_relation_parts(line : String) -> (String, String, String, String?)? {
   let (body, label) = lexmatch line[:] {
-    (head, ":", raw_label) => {
-      let h = head.trim().to_string()
-      let rl = raw_label.trim().to_string()
+    (re":", before=head, after=raw_label) => {
+      let h = head.trim().to_owned()
+      let rl = raw_label.trim().to_owned()
       (h, if rl == "" { None } else { Some(rl) })
     }
     _ => (line, None)
   }
   let parts = body
     .split(" ")
-    .map(part => part.to_string().trim().to_string())
+    .map(part => part.to_owned().trim().to_owned())
     .filter(part => part != "")
     .to_array()
   if parts.length() < 3 {
@@ -143,7 +143,7 @@ fn edge_style_for_operator(operator : String) -> EdgeStyle {
 fn collapse_spaces(text : String) -> String {
   text
   .split(" ")
-  .map(part => part.to_string().trim().to_string())
+  .map(part => part.to_owned().trim().to_owned())
   .filter(part => part != "")
   .iter()
   .join(" ")
@@ -159,16 +159,16 @@ fn normalize_er_attribute(raw : String) -> String {
   let mut body = normalized
   let mut comment = ""
   lexmatch normalized[:] {
-    (before_quote, "\"", after_quote) => {
-      body = before_quote.to_string().trim().to_string()
-      comment = "\"\{after_quote.to_string()}".trim().to_string()
+    (re"\"", before=before_quote, after=after_quote) => {
+      body = before_quote.to_owned().trim().to_owned()
+      comment = "\"\{after_quote.to_owned()}".trim().to_owned()
     }
     _ => ()
   }
 
   let parts = body
     .split(" ")
-    .map(part => part.to_string().trim().to_string())
+    .map(part => part.to_owned().trim().to_owned())
     .filter(part => part != "")
     .to_array()
   if parts.length() < 2 {
@@ -204,13 +204,13 @@ fn normalize_class_member(raw : String) -> String {
   }
 
   let (visibility, body) = if trimmed is [.. "+", .. member_body] {
-    ("+", member_body.to_string().trim().to_string())
+    ("+", member_body.to_owned().trim().to_owned())
   } else if trimmed is [.. "-", .. member_body] {
-    ("-", member_body.to_string().trim().to_string())
+    ("-", member_body.to_owned().trim().to_owned())
   } else if trimmed is [.. "#", .. member_body] {
-    ("#", member_body.to_string().trim().to_string())
+    ("#", member_body.to_owned().trim().to_owned())
   } else if trimmed is [.. "~", .. member_body] {
-    ("~", member_body.to_string().trim().to_string())
+    ("~", member_body.to_owned().trim().to_owned())
   } else {
     ("", trimmed)
   }
@@ -221,8 +221,8 @@ fn normalize_class_member(raw : String) -> String {
   if body.contains("(") && body.contains(")") {
     match (body.find("("), body.find(")")) {
       (Some(open_idx), Some(close_idx)) => {
-        let name = body[:open_idx].to_string().trim().to_string()
-        let return_type = body[close_idx + 1:].to_string().trim().to_string()
+        let name = body[:open_idx].to_owned().trim().to_owned()
+        let return_type = body[close_idx + 1:].to_owned().trim().to_owned()
         if name == "" {
           return trimmed
         }
@@ -240,7 +240,7 @@ fn normalize_class_member(raw : String) -> String {
 
   let parts = body
     .split(" ")
-    .map(part => part.to_string().trim().to_string())
+    .map(part => part.to_owned().trim().to_owned())
     .filter(part => part != "")
     .to_array()
   if parts.length() >= 2 {
@@ -304,8 +304,8 @@ fn append_relation_edge(
   nodes : Map[String, MermaidNode],
   edges : Array[MermaidEdge],
 ) -> Unit {
-  ensure_node(nodes, { id: source, label: source, shape: default_shape })
-  ensure_node(nodes, { id: target, label: target, shape: default_shape })
+  ensure_node(nodes, { id: source, label: source, shape: default_shape, })
+  ensure_node(nodes, { id: target, label: target, shape: default_shape, })
   edges.push({
     source,
     target,
@@ -320,11 +320,11 @@ fn append_relation_edge(
 ///|
 fn parse_class_declaration(line : String) -> (String, Bool)? {
   let rest = lexmatch line[:] {
-    ("class ", class_rest) => class_rest.to_string().trim().to_string()
+    (re"^class ", after=class_rest) => class_rest.to_owned().trim().to_owned()
     _ => return None
   }
   let (class_id, opens_block) = if rest is [.. without_block, .. "{"] {
-    (without_block.to_string().trim().to_string(), true)
+    (without_block.to_owned().trim().to_owned(), true)
   } else {
     (rest, false)
   }
@@ -338,21 +338,18 @@ fn parse_class_declaration(line : String) -> (String, Bool)? {
 ///|
 fn parse_inline_class_declaration(line : String) -> (String, String?)? {
   let class_body = lexmatch line[:] {
-    ("class ", class_rest) => class_rest.to_string()
+    (re"^class ", after=class_rest) => class_rest.to_owned()
     _ => return None
   }
   let class_body = if class_body is [.. without_close, .. "}"] {
-    without_close.to_string()
+    without_close.to_owned()
   } else {
     return None
   }
   match class_body.find("{") {
     Some(open_idx) => {
-      let class_id = class_body[:open_idx].to_string().trim().to_string()
-      let inline_detail = class_body[open_idx + 1:]
-        .to_string()
-        .trim()
-        .to_string()
+      let class_id = class_body[:open_idx].to_owned().trim().to_owned()
+      let inline_detail = class_body[open_idx + 1:].to_owned().trim().to_owned()
       if class_id == "" {
         None
       } else if inline_detail == "" {
@@ -368,9 +365,9 @@ fn parse_inline_class_declaration(line : String) -> (String, String?)? {
 ///|
 /// Parses class diagram body lines into a `MermaidGraph`.
 pub fn parse_class_diagram(lines : Array[String]) -> MermaidGraph {
-  let nodes : Map[String, MermaidNode] = {}
+  let nodes : Map[String, MermaidNode] = Map([])
   let edges : Array[MermaidEdge] = []
-  let details : Map[String, Array[String]] = {}
+  let details : Map[String, Array[String]] = Map([])
   let mut current_class : String? = None
 
   for i in 1..<lines.length() {
@@ -393,7 +390,11 @@ pub fn parse_class_diagram(lines : Array[String]) -> MermaidGraph {
 
     match parse_inline_class_declaration(line) {
       Some((class_id, inline_detail)) => {
-        ensure_node(nodes, { id: class_id, label: class_id, shape: ClassEntity })
+        ensure_node(nodes, {
+          id: class_id,
+          label: class_id,
+          shape: ClassEntity,
+        })
         match inline_detail {
           Some(detail) =>
             append_detail(details, class_id, normalize_class_member(detail))
@@ -406,7 +407,11 @@ pub fn parse_class_diagram(lines : Array[String]) -> MermaidGraph {
 
     match parse_class_declaration(line) {
       Some((class_id, opens_block)) => {
-        ensure_node(nodes, { id: class_id, label: class_id, shape: ClassEntity })
+        ensure_node(nodes, {
+          id: class_id,
+          label: class_id,
+          shape: ClassEntity,
+        })
         if opens_block {
           current_class = Some(class_id)
         }
@@ -432,9 +437,9 @@ pub fn parse_class_diagram(lines : Array[String]) -> MermaidGraph {
     }
 
     lexmatch line[:] {
-      (candidate_part, ":", detail_part) => {
-        let candidate = candidate_part.trim().to_string()
-        let detail = normalize_class_member(detail_part.trim().to_string())
+      (re":", before=candidate_part, after=detail_part) => {
+        let candidate = candidate_part.trim().to_owned()
+        let detail = normalize_class_member(detail_part.trim().to_owned())
         if @parser_common_engine_core.is_plain_identifier(candidate) {
           ensure_node(nodes, {
             id: candidate,
@@ -474,14 +479,14 @@ fn parse_er_entity_declaration_line(
   nodes : Map[String, MermaidNode],
 ) -> String? {
   let id = if line is [.. raw_id, .. "{"] {
-    raw_id.to_string().trim().to_string()
+    raw_id.to_owned().trim().to_owned()
   } else {
     return None
   }
   if id == "" {
     return None
   }
-  ensure_node(nodes, { id, label: id, shape: ErEntity })
+  ensure_node(nodes, { id, label: id, shape: ErEntity, })
   Some(id)
 }
 
@@ -490,7 +495,7 @@ fn parse_er_standalone_entity_line(
   line : String,
   nodes : Map[String, MermaidNode],
 ) -> Bool {
-  let trimmed = line.trim().to_string()
+  let trimmed = line.trim().to_owned()
   if trimmed == "" ||
     trimmed is [.. "direction ", ..] ||
     trimmed is [.. "style ", ..] ||
@@ -500,7 +505,7 @@ fn parse_er_standalone_entity_line(
   }
 
   let (id, label) = if trimmed is [.. "\"", .. quoted_content, .. "\""] {
-    let content = quoted_content.to_string().trim().to_string()
+    let content = quoted_content.to_owned().trim().to_owned()
     if content == "" {
       return false
     }
@@ -512,16 +517,16 @@ fn parse_er_standalone_entity_line(
     (trimmed, trimmed)
   }
 
-  ensure_node(nodes, { id, label, shape: ErEntity })
+  ensure_node(nodes, { id, label, shape: ErEntity, })
   true
 }
 
 ///|
 /// Parses ER diagram body lines into a `MermaidGraph`.
 pub fn parse_er_diagram(lines : Array[String]) -> MermaidGraph {
-  let nodes : Map[String, MermaidNode] = {}
+  let nodes : Map[String, MermaidNode] = Map([])
   let edges : Array[MermaidEdge] = []
-  let details : Map[String, Array[String]] = {}
+  let details : Map[String, Array[String]] = Map([])
   let mut current_entity : String? = None
 
   for i in 1..<lines.length() {

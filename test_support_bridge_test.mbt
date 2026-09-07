@@ -17,7 +17,7 @@ fn ts_supported_unicode_cases() -> Array[CorpusCase] {
 fn ts_normalize_whitespace(text : String) -> String {
   let lines = text
     .split("\n")
-    .map(line => line.trim_end().to_string())
+    .map(line => line.trim_end().to_owned())
     .to_array()
 
   let mut start = 0
@@ -91,11 +91,11 @@ fn ts_files_for_chunk(
 fn ts_expected_case_name_from_json_path(path : String) -> String {
   let prefix = "testdata/corpus/expected/"
   let file = match path.strip_prefix(prefix) {
-    Some(rest) => rest.to_string()
+    Some(rest) => rest.to_owned()
     None => path
   }
   match file.strip_suffix(".json") {
-    Some(rest) => rest.to_string()
+    Some(rest) => rest.to_owned()
     None => file
   }
 }
@@ -107,14 +107,11 @@ fn ts_parse_padding_value(trimmed : String, prefix : String) -> Int? {
     return None
   }
   let raw_value = match trimmed.find("=") {
-    Some(eq_index) =>
-      trimmed[eq_index + 1:].to_string().trim().to_string()
+    Some(eq_index) => trimmed[eq_index + 1:].to_owned().trim().to_owned()
     None => return None
   }
-  let parsed = try? @string.parse_int(raw_value)
-  match parsed {
-    Ok(value) => Some(value)
-    Err(_) => None
+  Some(@string.parse_int(raw_value)) catch {
+    _ => None
   }
 }
 
@@ -144,7 +141,7 @@ fn ts_parse_golden_text_case(content : String) -> TsGoldenTextCase {
     }
 
     if in_mermaid {
-      let trimmed = line.trim().to_string()
+      let trimmed = line.trim().to_owned()
       if !mermaid_started {
         if trimmed == "" {
           continue
@@ -165,9 +162,9 @@ fn ts_parse_golden_text_case(content : String) -> TsGoldenTextCase {
         }
       }
       mermaid_started = true
-      mermaid_lines.push(line.to_string())
+      mermaid_lines.push(line.to_owned())
     } else {
-      expected_lines.push(line.to_string())
+      expected_lines.push(line.to_owned())
     }
   }
 
@@ -180,7 +177,7 @@ fn ts_parse_golden_text_case(content : String) -> TsGoldenTextCase {
     expected_lines.iter().join("\n")
   }
 
-  { mermaid, expected, padding_x, padding_y }
+  { mermaid, expected, padding_x, padding_y, }
 }
 
 ///|
@@ -189,14 +186,12 @@ fn ts_svg_attr_int(svg : String, attr : String) -> Int? {
   match svg.find(marker) {
     Some(start_index) => {
       let value_start = start_index + marker.length()
-      let rest = svg[value_start:].to_string()
+      let rest = svg[value_start:].to_owned()
       match rest.find("\"") {
         Some(end_index) => {
-          let raw_value = rest[:end_index].to_string()
-          let parsed = try? @string.parse_int(raw_value)
-          match parsed {
-            Ok(value) => Some(value)
-            Err(_) => None
+          let raw_value = rest[:end_index].to_owned()
+          Some(@string.parse_int(raw_value)) catch {
+            _ => None
           }
         }
         None => None
@@ -212,10 +207,10 @@ fn ts_collect_edge_label_rects(svg : String) -> Array[(Int, Int, Int, Int)] {
   let marker = "<rect class=\"edge-label-bg\""
   let mut offset = 0
   while offset < svg.length() {
-    let rest = svg[offset:].to_string()
+    let rest = svg[offset:].to_owned()
     match rest.find(marker) {
       Some(found) => {
-        let snippet = rest[found:].to_string()
+        let snippet = rest[found:].to_owned()
         match
           (
             ts_svg_attr_int(snippet, "x"),

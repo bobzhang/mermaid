@@ -46,7 +46,7 @@ fn edge_operators() -> Array[EdgeOp] {
   let operators : Array[EdgeOp] = []
   for spec in flow_edge_operator_specs() {
     let (symbol, style, has_arrow_start, has_arrow_end) = spec
-    operators.push({ symbol, style, has_arrow_start, has_arrow_end })
+    operators.push({ symbol, style, has_arrow_start, has_arrow_end, })
   }
   operators
 }
@@ -65,7 +65,7 @@ fn find_edge_operator(line : String) -> FoundEdgeOp? {
   let operators = edge_operators()
   match find_first_operator_indices(line, edge_operator_symbols(operators)) {
     Some((operator_index, index)) =>
-      Some({ op: operators[operator_index], index })
+      Some({ op: operators[operator_index], index, })
     None => None
   }
 }

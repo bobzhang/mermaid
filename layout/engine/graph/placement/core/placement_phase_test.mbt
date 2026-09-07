@@ -1,11 +1,11 @@
 ///|
 fn test_node(id : String) -> @model.MermaidNode {
-  { id, label: id, shape: Rectangle }
+  { id, label: id, shape: Rectangle, }
 }
 
 ///|
 fn test_node_with_label(id : String, label : String) -> @model.MermaidNode {
-  { id, label, shape: Rectangle }
+  { id, label, shape: Rectangle, }
 }
 
 ///|
@@ -27,7 +27,7 @@ fn test_graph(
   nodes_in_order : Array[@model.MermaidNode],
   edges : Array[@model.MermaidEdge],
 ) -> @model.MermaidGraph {
-  let nodes : Map[String, @model.MermaidNode] = {}
+  let nodes : Map[String, @model.MermaidNode] = Map([])
   for node in nodes_in_order {
     nodes[node.id] = node
   }
@@ -138,7 +138,7 @@ test "placement dagre parity horizontal axis uses rank width plus ranksep spacin
   ])
   let setup_state = @layout_engine_graph_legacy_setup_core.build_legacy_layout_setup(
     graph,
-    { ..@model.RenderOptions::default(), layout_engine: Some(DagreParity) },
+    { ..@model.RenderOptions::default(), layout_engine: Some(DagreParity), },
     true,
     false,
   )
@@ -178,7 +178,7 @@ test "placement dagre parity minor axis compacts sparse dummy lanes" {
   ])
   let setup_state = @layout_engine_graph_legacy_setup_core.build_legacy_layout_setup(
     graph,
-    { ..@model.RenderOptions::default(), layout_engine: Some(DagreParity) },
+    { ..@model.RenderOptions::default(), layout_engine: Some(DagreParity), },
     true,
     false,
   )

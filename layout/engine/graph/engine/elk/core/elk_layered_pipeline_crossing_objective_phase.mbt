@@ -41,7 +41,7 @@ fn layered_crossing_count(
 fn layered_crossing_count_from_segments(
   segments : Array[RankOrderEdgeSegment],
 ) -> Int {
-  let edge_pairs_by_rank_pair : Map[String, Array[(Int, Int)]] = {}
+  let edge_pairs_by_rank_pair : Map[String, Array[(Int, Int)]] = Map([])
   for segment in segments {
     let rank_pair_key = "\{segment.source_rank}->\{segment.target_rank}"
     if !edge_pairs_by_rank_pair.contains(rank_pair_key) {

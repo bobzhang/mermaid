@@ -5,13 +5,13 @@ async fn golden_from_text_fixture(path : String) -> String {
   let delimiter = "\n---\n"
   match content.find(delimiter) {
     Some(first_sep) => {
-      let rest = content[first_sep + delimiter.length():].to_string()
+      let rest = content[first_sep + delimiter.length():].to_owned()
       let golden = match rest.find(delimiter) {
-        Some(second_sep) => rest[:second_sep].to_string()
+        Some(second_sep) => rest[:second_sep].to_owned()
         None => rest
       }
       match golden.strip_suffix("\n") {
-        Some(without_newline) => without_newline.to_string()
+        Some(without_newline) => without_newline.to_owned()
         None => golden
       }
     }
@@ -22,29 +22,18 @@ async fn golden_from_text_fixture(path : String) -> String {
 ///|
 #cfg(target="native")
 fn expected_json_ascii_unicode(content : String) -> (String, String)? {
-  let parsed : Result[Json, @json.ParseError] = try? @json.parse(content)
-  match parsed {
-    Ok(value) =>
-      if value is Object(obj) {
-        match (obj.get("ascii"), obj.get("unicode")) {
-          (Some(ascii_json), Some(unicode_json)) => {
-            let ascii_result : Result[String, @json.JsonDecodeError] = try? @json.from_json(
-              ascii_json,
-            )
-            let unicode_result : Result[String, @json.JsonDecodeError] = try? @json.from_json(
-              unicode_json,
-            )
-            match (ascii_result, unicode_result) {
-              (Ok(ascii), Ok(unicode)) => Some((ascii, unicode))
-              _ => None
-            }
-          }
-          _ => None
-        }
-      } else {
-        None
-      }
-    Err(_) => None
+  try {
+    let value = @json.parse(content)
+    guard value is Object(obj) else { None }
+    guard (obj.get("ascii"), obj.get("unicode"))
+      is (Some(ascii_json), Some(unicode_json)) else {
+      None
+    }
+    let ascii : String = @json.from_json(ascii_json)
+    let unicode : String = @json.from_json(unicode_json)
+    Some((ascii, unicode))
+  } catch {
+    _ => None
   }
 }
 

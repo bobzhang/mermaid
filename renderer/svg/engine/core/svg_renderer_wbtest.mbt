@@ -86,8 +86,8 @@ fn count_occurrences(text : String, pattern : String) -> Int {
 ///|
 test "SVG renderer skips edges with fewer than two points" {
   let graph = make_svg_test_graph([
-    make_svg_test_edge([{ x: 10, y: 20 }]),
-    make_svg_test_edge([{ x: 20, y: 30 }, { x: 60, y: 70 }]),
+    make_svg_test_edge([{ x: 10, y: 20, }]),
+    make_svg_test_edge([{ x: 20, y: 30, }, { x: 60, y: 70, }]),
   ])
   let svg = render_svg(graph, DiagramColors::default(), "Inter", false)
 
@@ -105,8 +105,8 @@ test "SVG renderer uses explicit edge label position" {
       has_arrow_start: false,
       has_arrow_end: true,
       relation_operator: None,
-      points: [{ x: 100, y: 120 }, { x: 100, y: 200 }],
-      label_position: Some({ x: 50, y: 80 }),
+      points: [{ x: 100, y: 120, }, { x: 100, y: 200, }],
+      label_position: Some({ x: 50, y: 80, }),
     },
   ])
   let svg = render_svg(graph, DiagramColors::default(), "Inter", false)
@@ -146,7 +146,7 @@ test "SVG renderer falls back to midpoint for labels without explicit position" 
       has_arrow_start: false,
       has_arrow_end: true,
       relation_operator: None,
-      points: [{ x: 100, y: 120 }, { x: 100, y: 200 }],
+      points: [{ x: 100, y: 120, }, { x: 100, y: 200, }],
       label_position: None,
     },
   ])
@@ -636,7 +636,7 @@ test "SVG renderer edge-label midpoint follows polyline segments" {
       has_arrow_start: false,
       has_arrow_end: true,
       relation_operator: None,
-      points: [{ x: 0, y: 0 }, { x: 100, y: 0 }, { x: 100, y: 100 }],
+      points: [{ x: 0, y: 0, }, { x: 100, y: 0, }, { x: 100, y: 100, }],
       label_position: None,
     },
   ])
@@ -656,7 +656,7 @@ test "SVG renderer uses basis-curve path for multi-point edges" {
       has_arrow_start: false,
       has_arrow_end: true,
       relation_operator: None,
-      points: [{ x: 0, y: 0 }, { x: 80, y: 20 }, { x: 120, y: 100 }],
+      points: [{ x: 0, y: 0, }, { x: 80, y: 20, }, { x: 120, y: 100, }],
       label_position: None,
     },
   ])
@@ -680,7 +680,7 @@ test "SVG renderer keeps short terminal stub mixed edges as polyline" {
       has_arrow_start: false,
       has_arrow_end: true,
       relation_operator: None,
-      points: [{ x: 290, y: 104 }, { x: 290, y: 110 }, { x: 344, y: 200 }],
+      points: [{ x: 290, y: 104, }, { x: 290, y: 110, }, { x: 344, y: 200, }],
       label_position: None,
     },
   ])
@@ -703,7 +703,7 @@ test "SVG renderer rounds corners for orthogonal multi-point edges" {
       has_arrow_start: false,
       has_arrow_end: true,
       relation_operator: None,
-      points: [{ x: 0, y: 0 }, { x: 100, y: 0 }, { x: 100, y: 100 }],
+      points: [{ x: 0, y: 0, }, { x: 100, y: 0, }, { x: 100, y: 100, }],
       label_position: None,
     },
   ])
@@ -725,7 +725,7 @@ test "SVG renderer clamps rounded corners on short orthogonal segments" {
       has_arrow_start: false,
       has_arrow_end: true,
       relation_operator: None,
-      points: [{ x: 0, y: 0 }, { x: 12, y: 0 }, { x: 12, y: 8 }],
+      points: [{ x: 0, y: 0, }, { x: 12, y: 0, }, { x: 12, y: 8, }],
       label_position: None,
     },
   ])
@@ -747,7 +747,7 @@ test "SVG renderer keeps collinear orthogonal segments without curve corners" {
       has_arrow_start: false,
       has_arrow_end: true,
       relation_operator: None,
-      points: [{ x: 0, y: 0 }, { x: 20, y: 0 }, { x: 40, y: 0 }],
+      points: [{ x: 0, y: 0, }, { x: 20, y: 0, }, { x: 40, y: 0, }],
       label_position: None,
     },
   ])
@@ -769,10 +769,10 @@ test "SVG renderer removes duplicate consecutive edge points before rendering" {
       has_arrow_end: true,
       relation_operator: None,
       points: [
-        { x: 0, y: 0 },
-        { x: 100, y: 0 },
-        { x: 100, y: 0 },
-        { x: 100, y: 100 },
+        { x: 0, y: 0, },
+        { x: 100, y: 0, },
+        { x: 100, y: 0, },
+        { x: 100, y: 100, },
       ],
       label_position: None,
     },
@@ -796,7 +796,7 @@ test "SVG renderer keeps straight two-point edges as polyline" {
       has_arrow_start: false,
       has_arrow_end: true,
       relation_operator: None,
-      points: [{ x: 10, y: 20 }, { x: 60, y: 70 }],
+      points: [{ x: 10, y: 20, }, { x: 60, y: 70, }],
       label_position: None,
     },
   ])
@@ -817,7 +817,7 @@ test "SVG renderer renders thick edge with width 1.5" {
       has_arrow_start: false,
       has_arrow_end: true,
       relation_operator: None,
-      points: [{ x: 10, y: 20 }, { x: 60, y: 70 }],
+      points: [{ x: 10, y: 20, }, { x: 60, y: 70, }],
       label_position: None,
     },
   ])
@@ -919,7 +919,7 @@ test "SVG renderer solid edges omit dasharray" {
       has_arrow_start: false,
       has_arrow_end: true,
       relation_operator: None,
-      points: [{ x: 5, y: 5 }, { x: 20, y: 20 }],
+      points: [{ x: 5, y: 5, }, { x: 20, y: 20, }],
       label_position: None,
     },
   ])
@@ -980,7 +980,7 @@ test "SVG renderer flowchart arrow markers use 8x4.8 geometry and reversed start
 ///|
 test "SVG renderer omits edge-label elements when edge has no label" {
   let graph = make_svg_test_graph([
-    make_svg_test_edge([{ x: 100, y: 120 }, { x: 100, y: 200 }]),
+    make_svg_test_edge([{ x: 100, y: 120, }, { x: 100, y: 200, }]),
   ])
   let svg = render_svg(graph, DiagramColors::default(), "Inter", false)
 
@@ -1343,7 +1343,7 @@ test "SVG renderer bidirectional edges include both markers" {
       has_arrow_start: true,
       has_arrow_end: true,
       relation_operator: None,
-      points: [{ x: 20, y: 30 }, { x: 60, y: 70 }],
+      points: [{ x: 20, y: 30, }, { x: 60, y: 70, }],
       label_position: None,
     },
   ])
@@ -1355,7 +1355,7 @@ test "SVG renderer bidirectional edges include both markers" {
 
 ///|
 test "SVG renderer escapes injection in inline fill style attribute" {
-  let inline_style : Map[String, String] = {}
+  let inline_style : Map[String, String] = Map([])
   inline_style["fill"] = "red\" onmouseover=\"alert(1)"
   let graph = PositionedGraph::{
     width: 400,
@@ -1396,7 +1396,7 @@ test "SVG renderer edge-label midpoint uses Euclidean segment lengths" {
       has_arrow_start: false,
       has_arrow_end: true,
       relation_operator: None,
-      points: [{ x: 0, y: 0 }, { x: 10, y: 10 }, { x: 20, y: 10 }],
+      points: [{ x: 0, y: 0, }, { x: 10, y: 10, }, { x: 20, y: 10, }],
       label_position: None,
     },
   ])
@@ -1408,7 +1408,7 @@ test "SVG renderer edge-label midpoint uses Euclidean segment lengths" {
 
 ///|
 test "SVG renderer escapes injection in inline stroke-width style attribute" {
-  let inline_style : Map[String, String] = {}
+  let inline_style : Map[String, String] = Map([])
   inline_style["stroke-width"] = "2\" onmouseover=\"alert(1)"
   let graph = PositionedGraph::{
     width: 400,
@@ -1516,7 +1516,7 @@ test "SVG renderer no-arrow edges omit marker attributes" {
       has_arrow_start: false,
       has_arrow_end: false,
       relation_operator: None,
-      points: [{ x: 20, y: 30 }, { x: 60, y: 70 }],
+      points: [{ x: 20, y: 30, }, { x: 60, y: 70, }],
       label_position: None,
     },
   ])

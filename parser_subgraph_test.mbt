@@ -1,7 +1,7 @@
 ///|
 fn assert_contains_id(ids : Array[String], expected : String) -> Unit raise {
   if !ids.any(id => id == expected) {
-    fail("missing node id \{expected} in \{ids.to_string()}")
+    fail("missing node id \{expected} in \{Repr(ids)}")
   }
 }
 

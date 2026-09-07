@@ -18,7 +18,7 @@ fn shift_top_level_flow_subgraphs_with_gap(
 
   let member_indexes_by_root : Array[Array[Int]] = []
   for subgraph in graph.subgraphs {
-    let seen_node_ids : Map[String, Bool] = {}
+    let seen_node_ids : Map[String, Bool] = Map([])
     let indexes : Array[Int] = []
     collect_subgraph_node_indexes(
       subgraph, positioned_index_by_id, seen_node_ids, indexes,
@@ -110,9 +110,9 @@ fn shift_top_level_state_subgraphs_right(
   }
 
   let member_indexes_by_root : Array[Array[Int]] = []
-  let subgraph_node_ids : Map[String, Bool] = {}
+  let subgraph_node_ids : Map[String, Bool] = Map([])
   for subgraph in graph.subgraphs {
-    let seen_node_ids : Map[String, Bool] = {}
+    let seen_node_ids : Map[String, Bool] = Map([])
     let indexes : Array[Int] = []
     collect_subgraph_node_indexes(
       subgraph, positioned_index_by_id, seen_node_ids, indexes,

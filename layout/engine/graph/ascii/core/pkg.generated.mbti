@@ -17,4 +17,3 @@ pub fn layout_state_flat_grid_layout_data(@model.MermaidGraph) -> (Array[@model.
 // Type aliases
 
 // Traits
-

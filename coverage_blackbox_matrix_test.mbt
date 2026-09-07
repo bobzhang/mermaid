@@ -1,14 +1,14 @@
 ///|
 fn coverage_ascii_option_matrix() -> Array[@model.AsciiRenderOptions] {
   [
-    { use_ascii: true, padding_x: 5, padding_y: 5, box_border_padding: 1 },
-    { use_ascii: false, padding_x: 5, padding_y: 5, box_border_padding: 1 },
-    { use_ascii: true, padding_x: 0, padding_y: 0, box_border_padding: 0 },
-    { use_ascii: false, padding_x: 0, padding_y: 0, box_border_padding: 0 },
-    { use_ascii: true, padding_x: 1, padding_y: 2, box_border_padding: 2 },
-    { use_ascii: false, padding_x: 1, padding_y: 2, box_border_padding: 2 },
-    { use_ascii: true, padding_x: -1, padding_y: -1, box_border_padding: 0 },
-    { use_ascii: false, padding_x: -1, padding_y: -1, box_border_padding: 0 },
+    { use_ascii: true, padding_x: 5, padding_y: 5, box_border_padding: 1, },
+    { use_ascii: false, padding_x: 5, padding_y: 5, box_border_padding: 1, },
+    { use_ascii: true, padding_x: 0, padding_y: 0, box_border_padding: 0, },
+    { use_ascii: false, padding_x: 0, padding_y: 0, box_border_padding: 0, },
+    { use_ascii: true, padding_x: 1, padding_y: 2, box_border_padding: 2, },
+    { use_ascii: false, padding_x: 1, padding_y: 2, box_border_padding: 2, },
+    { use_ascii: true, padding_x: -1, padding_y: -1, box_border_padding: 0, },
+    { use_ascii: false, padding_x: -1, padding_y: -1, box_border_padding: 0, },
   ]
 }
 
@@ -92,16 +92,18 @@ test "Coverage matrix exercises parser corpus paths" {
 
   let all_cases = corpus_cases()
   for case_data in all_cases {
-    let parsed : Result[@model.MermaidGraph, @model.MermaidError] = try? @parser_header_core.parse_mermaid(
-      case_data.input,
-    )
-    match parsed {
-      Ok(_) => {
+    try @parser_header_core.parse_mermaid(case_data.input) catch {
+      _ => parse_failed = parse_failed + 1
+    } noraise {
+      _ => {
         parse_succeeded = parse_succeeded + 1
-        ignore(try? render_mermaid_ascii(case_data.input))
-        ignore(try? render_mermaid(case_data.input))
+        try render_mermaid_ascii(case_data.input) |> ignore catch {
+          _ => ()
+        }
+        try render_mermaid(case_data.input) |> ignore catch {
+          _ => ()
+        }
       }
-      Err(_) => parse_failed = parse_failed + 1
     }
   }
 
@@ -152,13 +154,11 @@ test "Coverage matrix parser malformed headers and bodies" {
   ]
 
   for input in invalid_inputs {
-    let parsed : Result[@model.MermaidGraph, @model.MermaidError] = try? @parser_header_core.parse_mermaid(
-      input,
-    )
-    match parsed {
-      Ok(_) => ()
-      Err(ParseFailure(_)) => ()
-      Err(UnknownTheme(_)) => fail("unexpected theme error")
+    try @parser_header_core.parse_mermaid(input) catch {
+      ParseFailure(_) => ()
+      UnknownTheme(_) => fail("unexpected theme error")
+    } noraise {
+      _ => ()
     }
   }
 }

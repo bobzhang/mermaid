@@ -54,4 +54,3 @@ pub(all) enum ElkLayeredRankTraceTrialContinuationPolicy {
 // Type aliases
 
 // Traits
-

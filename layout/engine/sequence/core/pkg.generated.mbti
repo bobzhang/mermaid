@@ -15,4 +15,3 @@ pub fn layout_sequence_graph(@model.MermaidGraph, @model.RenderOptions) -> @mode
 // Type aliases
 
 // Traits
-

@@ -88,7 +88,7 @@ fn snapshot_layout_only(
   filename : String,
   input : String,
 ) -> Unit raise {
-  let graph = @parser_header_core.parse_mermaid(input.trim_end().to_string())
+  let graph = @parser_header_core.parse_mermaid(input.trim_end().to_owned())
   let positioned = @layout.layout_graph(graph, @model.RenderOptions::default())
   let snapshot = positioned_graph_layout_snapshot(positioned)
   it.write(snapshot)

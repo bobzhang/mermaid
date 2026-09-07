@@ -250,7 +250,7 @@ pub(all) struct AsciiRenderOptions {
 ///|
 /// Default ASCII render options (Unicode mode, standard spacing).
 pub fn AsciiRenderOptions::default() -> AsciiRenderOptions {
-  { use_ascii: false, padding_x: 5, padding_y: 5, box_border_padding: 1 }
+  { use_ascii: false, padding_x: 5, padding_y: 5, box_border_padding: 1, }
 }
 
 ///|
@@ -362,6 +362,21 @@ pub(all) struct PositionedGraph {
 }
 
 ///|
-pub impl Show for MermaidError with output(self, logger) {
+pub impl Show for MermaidError with fn output(self, logger) {
   logger.write_string(@debug.render(self.to_repr(), max_depth=2147483647))
 }
+
+///|
+pub extend NodeShape with Eq::{not_equal, equal}
+
+///|
+pub extend EdgeStyle with Eq::{not_equal, equal}
+
+///|
+pub extend SequenceBlockType with Eq::{not_equal, equal}
+
+///|
+pub extend MermaidError with @debug.Debug::{to_repr}
+
+///|
+pub extend MermaidError with Show::{to_string, output}

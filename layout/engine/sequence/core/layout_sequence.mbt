@@ -26,7 +26,7 @@ fn resolve_inline_style(
   graph : MermaidGraph,
   node_id : String,
 ) -> Map[String, String]? {
-  let resolved : Map[String, String] = {}
+  let resolved : Map[String, String] = Map([])
   let class_style = match graph.class_assignments.get(node_id) {
     Some(class_name) => graph.class_defs.get(class_name)
     None => None
@@ -53,10 +53,10 @@ fn sequence_edge_points(
     let loop_x = start_x + 36
     let loop_bottom = y + 24
     [
-      { x: start_x, y },
-      { x: loop_x, y },
-      { x: loop_x, y: loop_bottom },
-      { x: start_x, y: loop_bottom },
+      { x: start_x, y, },
+      { x: loop_x, y, },
+      { x: loop_x, y: loop_bottom, },
+      { x: start_x, y: loop_bottom, },
     ]
   } else {
     let moving_right = target.x >= source.x
@@ -64,7 +64,7 @@ fn sequence_edge_points(
       (if moving_right { source.width / 2 } else { -source.width / 2 })
     let end_x = target.x +
       (if moving_right { -target.width / 2 } else { target.width / 2 })
-    [{ x: start_x, y }, { x: end_x, y }]
+    [{ x: start_x, y, }, { x: end_x, y, }]
   }
 }
 
@@ -75,7 +75,7 @@ fn sequence_text_width(text : String) -> Int {
 
 ///|
 fn sequence_note_width(text : String, base : Int, padding : Int) -> Int {
-  let lines = text.split("\n").map(part => part.to_string()).to_array()
+  let lines = text.split("\n").map(part => part.to_owned()).to_array()
   let mut longest = 0
   for line in lines {
     longest = longest.max(sequence_text_width(line))
@@ -218,7 +218,7 @@ fn sequence_apply_activation_command(
 ///|
 fn sequence_collect_ordered_nodes(graph : MermaidGraph) -> Array[MermaidNode] {
   let ordered : Array[MermaidNode] = []
-  let seen : Map[String, Bool] = {}
+  let seen : Map[String, Bool] = Map([])
   for actor_id in graph.sequence_actor_order {
     match graph.nodes.get(actor_id) {
       Some(node) => {
@@ -312,13 +312,13 @@ pub fn layout_sequence_graph(
     actor_center_x.push(cursor_x)
   }
 
-  let actor_index : Map[String, Int] = {}
+  let actor_index : Map[String, Int] = Map([])
   for i, node in nodes_in_order {
     actor_index[node.id] = i
   }
 
   let positioned_nodes : Array[PositionedNode] = []
-  let positioned_by_id : Map[String, PositionedNode] = {}
+  let positioned_by_id : Map[String, PositionedNode] = Map([])
   let actor_center_y = padding + actor_height / 2
   let mut max_right = padding
   for i, node in nodes_in_order {
@@ -349,7 +349,7 @@ pub fn layout_sequence_graph(
     max_right = max_right.max(x + width / 2)
   }
 
-  let extra_before : Map[Int, Int] = {}
+  let extra_before : Map[Int, Int] = Map([])
   for block in graph.sequence_blocks {
     let header_prev = option_int_or(extra_before.get(block.start_index), 0)
     let header_extra = sequence_block_header_extra()
@@ -367,9 +367,10 @@ pub fn layout_sequence_graph(
 
   let positioned_edges : Array[PositionedEdge] = []
   let message_rows : Array[Int] = []
-  let activation_starts : Map[String, Array[Int]] = {}
+  let activation_starts : Map[String, Array[Int]] = Map([])
   let sequence_activations : Array[PositionedSequenceActivation] = []
-  let activation_commands_by_after : Map[Int, Array[SequenceActivationCommand]] = {}
+  let activation_commands_by_after : Map[Int, Array[SequenceActivationCommand]] = Map([],
+  )
   for command in graph.sequence_activation_commands {
     let bucket = activation_commands_by_after.get_or_init(command.after_index, () => {
       []
@@ -402,9 +403,9 @@ pub fn layout_sequence_graph(
           Some(_) =>
             if points.length() >= 2 {
               if edge.source == edge.target {
-                Some(Point::{ x: points[1].x + 6, y: points[1].y + 10 })
+                Some(Point::{ x: points[1].x + 6, y: points[1].y + 10, })
               } else {
-                Some({ x: (points[0].x + points[1].x) / 2, y: points[0].y - 6 })
+                Some({ x: (points[0].x + points[1].x) / 2, y: points[0].y - 6, })
               }
             } else {
               None
@@ -430,7 +431,7 @@ pub fn layout_sequence_graph(
         }
         if sequence_operator_has_suffix(edge, "-") {
           sequence_apply_activation_command(
-            { actor_id: edge.source, activate: false, after_index: i },
+            { actor_id: edge.source, activate: false, after_index: i, },
             message_y,
             actor_index,
             actor_center_x,
@@ -550,7 +551,7 @@ pub fn layout_sequence_graph(
         actor_index,
         actor_center_x,
       )
-      dividers.push({ y: divider_row - divider_offset, label: divider.label })
+      dividers.push({ y: divider_row - divider_offset, label: divider.label, })
     }
     sequence_blocks.push({
       block_type: block.block_type,
@@ -640,11 +641,11 @@ pub fn layout_sequence_graph(
     for i, edge in positioned_edges {
       let shifted_points : Array[Point] = []
       for point in edge.points {
-        shifted_points.push({ x: point.x + shift_x, y: point.y })
+        shifted_points.push({ x: point.x + shift_x, y: point.y, })
       }
       let shifted_label = match edge.label_position {
         Some(position) =>
-          Some(Point::{ x: position.x + shift_x, y: position.y })
+          Some(Point::{ x: position.x + shift_x, y: position.y, })
         None => None
       }
       positioned_edges[i] = {

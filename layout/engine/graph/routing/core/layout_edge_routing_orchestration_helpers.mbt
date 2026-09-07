@@ -181,7 +181,7 @@ fn maybe_resolve_forward_fanout_slots_for_bucket(
   }
 
   fn evaluate_order_crossings(order : Array[Int]) -> Int {
-    let candidate_slot_by_context_index : Map[Int, Int] = {}
+    let candidate_slot_by_context_index : Map[Int, Int] = Map([])
     for slot, context_index in order {
       candidate_slot_by_context_index[context_index] = slot
     }
@@ -262,7 +262,7 @@ fn maybe_resolve_forward_fanout_slots_for_bucket(
   candidate_orders.push(descending_major)
 
   let unique_candidate_orders : Array[Array[Int]] = []
-  let seen_candidate_signatures : Map[String, Bool] = {}
+  let seen_candidate_signatures : Map[String, Bool] = Map([])
   for candidate_order in candidate_orders {
     let signature = candidate_order
       .iter()

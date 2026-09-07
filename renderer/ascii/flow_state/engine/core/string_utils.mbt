@@ -8,5 +8,5 @@ fn option_int_or(value : Int?, fallback : Int) -> Int {
 
 ///|
 fn midpoint(a : Point, b : Point) -> Point {
-  { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }
+  { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2, }
 }

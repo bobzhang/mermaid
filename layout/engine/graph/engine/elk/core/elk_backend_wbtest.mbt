@@ -1,6 +1,6 @@
 ///|
 fn flow_node(id : String) -> @model.MermaidNode {
-  { id, label: id, shape: Rectangle }
+  { id, label: id, shape: Rectangle, }
 }
 
 ///|
@@ -22,10 +22,10 @@ fn flow_graph() -> @model.MermaidGraph {
     "A": flow_node("A"),
     "B": flow_node("B"),
   }
-  let class_defs : Map[String, Map[String, String]] = {}
-  let class_assignments : Map[String, String] = {}
-  let node_styles : Map[String, Map[String, String]] = {}
-  let sequence_actor_kinds : Map[String, @model.SequenceParticipantKind] = {}
+  let class_defs : Map[String, Map[String, String]] = Map([])
+  let class_assignments : Map[String, String] = Map([])
+  let node_styles : Map[String, Map[String, String]] = Map([])
+  let sequence_actor_kinds : Map[String, @model.SequenceParticipantKind] = Map([])
   let sequence_blocks : Array[@model.SequenceBlock] = []
   let sequence_notes : Array[@model.SequenceNote] = []
   let sequence_activation_commands : Array[@model.SequenceActivationCommand] = []
@@ -95,10 +95,10 @@ fn fanout_graph() -> @model.MermaidGraph {
       relation_operator: Some("-->"),
     },
   ]
-  let class_defs : Map[String, Map[String, String]] = {}
-  let class_assignments : Map[String, String] = {}
-  let node_styles : Map[String, Map[String, String]] = {}
-  let sequence_actor_kinds : Map[String, @model.SequenceParticipantKind] = {}
+  let class_defs : Map[String, Map[String, String]] = Map([])
+  let class_assignments : Map[String, String] = Map([])
+  let node_styles : Map[String, Map[String, String]] = Map([])
+  let sequence_actor_kinds : Map[String, @model.SequenceParticipantKind] = Map([])
   let sequence_blocks : Array[@model.SequenceBlock] = []
   let sequence_notes : Array[@model.SequenceNote] = []
   let sequence_activation_commands : Array[@model.SequenceActivationCommand] = []
@@ -122,7 +122,7 @@ fn fanout_graph() -> @model.MermaidGraph {
 
 ///|
 fn large_flow_graph() -> @model.MermaidGraph {
-  let nodes : Map[String, @model.MermaidNode] = {}
+  let nodes : Map[String, @model.MermaidNode] = Map([])
   for i in 0..<17 {
     let node_id = "N\{i}"
     nodes[node_id] = flow_node(node_id)
@@ -131,10 +131,10 @@ fn large_flow_graph() -> @model.MermaidGraph {
   for i in 0..<16 {
     edges.push(flow_edge("N\{i}", "N\{i + 1}"))
   }
-  let class_defs : Map[String, Map[String, String]] = {}
-  let class_assignments : Map[String, String] = {}
-  let node_styles : Map[String, Map[String, String]] = {}
-  let sequence_actor_kinds : Map[String, @model.SequenceParticipantKind] = {}
+  let class_defs : Map[String, Map[String, String]] = Map([])
+  let class_assignments : Map[String, String] = Map([])
+  let node_styles : Map[String, Map[String, String]] = Map([])
+  let sequence_actor_kinds : Map[String, @model.SequenceParticipantKind] = Map([])
   let sequence_blocks : Array[@model.SequenceBlock] = []
   let sequence_notes : Array[@model.SequenceNote] = []
   let sequence_activation_commands : Array[@model.SequenceActivationCommand] = []
@@ -159,18 +159,18 @@ fn large_flow_graph() -> @model.MermaidGraph {
 ///|
 fn simple_state_graph() -> @model.MermaidGraph {
   let nodes : Map[String, @model.MermaidNode] = {
-    "start": { id: "start", label: "start", shape: StateStart },
-    "A": { id: "A", label: "A", shape: Circle },
-    "end": { id: "end", label: "end", shape: StateEnd },
+    "start": { id: "start", label: "start", shape: StateStart, },
+    "A": { id: "A", label: "A", shape: Circle, },
+    "end": { id: "end", label: "end", shape: StateEnd, },
   }
   let edges : Array[@model.MermaidEdge] = [
     flow_edge("start", "A"),
     flow_edge("A", "end"),
   ]
-  let class_defs : Map[String, Map[String, String]] = {}
-  let class_assignments : Map[String, String] = {}
-  let node_styles : Map[String, Map[String, String]] = {}
-  let sequence_actor_kinds : Map[String, @model.SequenceParticipantKind] = {}
+  let class_defs : Map[String, Map[String, String]] = Map([])
+  let class_assignments : Map[String, String] = Map([])
+  let node_styles : Map[String, Map[String, String]] = Map([])
+  let sequence_actor_kinds : Map[String, @model.SequenceParticipantKind] = Map([])
   let sequence_blocks : Array[@model.SequenceBlock] = []
   let sequence_notes : Array[@model.SequenceNote] = []
   let sequence_activation_commands : Array[@model.SequenceActivationCommand] = []
@@ -718,7 +718,7 @@ test "elk layered backend plan injection keeps default parity and exposes non-de
       enable_target_boundary_ports: true,
       preserve_assigned_endpoint_ports: false,
     },
-    { ..default_plan, sweep_kernel: NeighborMeanEdgeSlotBidirectional },
+    { ..default_plan, sweep_kernel: NeighborMeanEdgeSlotBidirectional, },
   )
   let port_rank_backend = run_elk_layered_flow_backend_with_crossing_execution_plan(
     request,
@@ -726,7 +726,7 @@ test "elk layered backend plan injection keeps default parity and exposes non-de
       enable_target_boundary_ports: true,
       preserve_assigned_endpoint_ports: false,
     },
-    { ..default_plan, sweep_kernel: NeighborMeanPortRankBidirectional },
+    { ..default_plan, sweep_kernel: NeighborMeanPortRankBidirectional, },
   )
   assert_eq(default_backend.phase_traces.length(), 4)
   assert_eq(edge_slot_backend.phase_traces.length(), 4)

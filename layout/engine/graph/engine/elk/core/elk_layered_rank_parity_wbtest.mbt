@@ -37,7 +37,7 @@ fn normalized_rank_layers(
 fn build_rank_index_by_node_id(
   layers : Array[Array[String]],
 ) -> Map[String, Int] {
-  let rank_by_node_id : Map[String, Int] = {}
+  let rank_by_node_id : Map[String, Int] = Map([])
   for rank, layer in layers {
     for node_id in layer {
       rank_by_node_id[node_id] = rank

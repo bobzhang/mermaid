@@ -122,12 +122,13 @@ fn build_feedback_greedy_neighbors(
   Map[String, Int],
   Map[String, Int],
 ) {
-  let visible_node_id_set : Map[String, Bool] = {}
-  let successors_by_node_id : Map[String, Array[String]] = {}
-  let predecessors_by_node_id : Map[String, Array[String]] = {}
-  let incident_edges_by_node_id : Map[String, Array[FeedbackIncidentEdge]] = {}
-  let indegree_by_node_id : Map[String, Int] = {}
-  let outdegree_by_node_id : Map[String, Int] = {}
+  let visible_node_id_set : Map[String, Bool] = Map([])
+  let successors_by_node_id : Map[String, Array[String]] = Map([])
+  let predecessors_by_node_id : Map[String, Array[String]] = Map([])
+  let incident_edges_by_node_id : Map[String, Array[FeedbackIncidentEdge]] = Map([],
+  )
+  let indegree_by_node_id : Map[String, Int] = Map([])
+  let outdegree_by_node_id : Map[String, Int] = Map([])
   for node_id in node_ids {
     visible_node_id_set[node_id] = true
     successors_by_node_id[node_id] = []
@@ -168,7 +169,10 @@ fn build_feedback_greedy_neighbors(
     }
     match incident_edges_by_node_id.get(source_id) {
       Some(incident_edges) =>
-        incident_edges.push({ endpoint_id: target_id, endpoint_is_target: true })
+        incident_edges.push({
+          endpoint_id: target_id,
+          endpoint_is_target: true,
+        })
       None => ()
     }
     match incident_edges_by_node_id.get(target_id) {
@@ -235,7 +239,7 @@ fn build_feedback_component_dfs_node_ids_in_order(
   node_ids_in_order : Array[String],
   incident_edges_by_node_id : Map[String, Array[FeedbackIncidentEdge]],
 ) -> Array[String] {
-  let visited_by_node_id : Map[String, Bool] = {}
+  let visited_by_node_id : Map[String, Bool] = Map([])
   let reordered_node_ids : Array[String] = []
 
   fn dfs_visit(node_id : String) -> Unit {
@@ -299,7 +303,12 @@ fn build_oriented_edges_from_feedback_marks(
         reversed: true,
       })
     } else {
-      oriented_edges.push({ source_id, target_id, model_order, reversed: false })
+      oriented_edges.push({
+        source_id,
+        target_id,
+        model_order,
+        reversed: false,
+      })
     }
   }
   oriented_edges
@@ -310,9 +319,10 @@ fn reorder_feedback_oriented_edges_by_model_order(
   oriented_edges : Array[FeedbackOrientedEdge],
   order_index_by_node_id : Map[String, Int],
 ) -> Array[(String, String)] {
-  let edge_entries_by_source_id : Map[String, Array[FeedbackOrientedEdge]] = {}
+  let edge_entries_by_source_id : Map[String, Array[FeedbackOrientedEdge]] = Map([],
+  )
   let source_ids : Array[String] = []
-  let target_model_order_by_pair : Map[String, Int] = {}
+  let target_model_order_by_pair : Map[String, Int] = Map([])
   for edge in oriented_edges {
     let source_id = edge.source_id
     if !edge_entries_by_source_id.contains(source_id) {
@@ -396,7 +406,7 @@ fn compute_feedback_order_orientation_state(
     node_ids_in_order, incident_edges_by_node_id,
   )
 
-  let mark_by_node_id : Map[String, Int] = {}
+  let mark_by_node_id : Map[String, Int] = Map([])
   let sinks : Array[String] = []
   let sources : Array[String] = []
   for node_id in traversal_node_ids_in_order {

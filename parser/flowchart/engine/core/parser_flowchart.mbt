@@ -14,14 +14,10 @@ fn parse_direction_token_strict(token : String) -> Direction? {
 fn parse_flow_direction(header : String) -> Direction? {
   let normalized = header.replace_all(old="\t", new=" ")
   lexmatch normalized[:] {
-    ("[[:space:]]*" "(?i:graph|flowchart)" "[[:space:]]*") => Some(TD)
-    (
-      "[[:space:]]*"
-      "(?i:graph|flowchart)"
-      "[[:space:]]+"
-      ("[^[:space:]]+" as dir)
-      "[[:space:]]*"
-    ) => parse_direction_token_strict(dir.to_string())
+    re"^[[:space:]]*(?i:graph|flowchart)[[:space:]]*$" => Some(TD)
+    re"^[[:space:]]*(?i:graph|flowchart)[[:space:]]+" +
+    (re"[^[:space:]]+" as dir) +
+    re"[[:space:]]*$" => parse_direction_token_strict(dir.to_owned())
     _ => None
   }
 }
@@ -98,11 +94,11 @@ fn set_current_subgraph_direction(
 
 ///|
 fn strip_node_metadata(raw_token : String) -> String {
-  let token = raw_token.trim().to_string()
+  let token = raw_token.trim().to_owned()
   match token.find("@{") {
     Some(index) =>
       if token is [.., .. "}"] {
-        token[:index].to_string().trim().to_string()
+        token[:index].to_owned().trim().to_owned()
       } else {
         token
       }
@@ -123,32 +119,32 @@ fn parse_shape_alias(raw_shape : String) -> @model.NodeShape? {
 ///|
 fn parse_node_shape_metadata(raw_token : String) -> @model.NodeShape? {
   let node_part = lexmatch raw_token[:] {
-    (token_part, ":::", _) => token_part.to_string()
+    (re":::", before=token_part, after=_) => token_part.to_owned()
     _ => raw_token
   }
-  let token = node_part.trim().to_string()
+  let token = node_part.trim().to_owned()
   let metadata = match token.find("@{") {
     Some(start_index) => {
-      let after = token[start_index + 2:].to_string()
+      let after = token[start_index + 2:].to_owned()
       match after.find("}") {
-        Some(end_index) => after[:end_index].to_string().trim().to_string()
+        Some(end_index) => after[:end_index].to_owned().trim().to_owned()
         None => return None
       }
     }
     None => return None
   }
   for entry in metadata.split(",") {
-    let kv = entry.trim().to_string()
+    let kv = entry.trim().to_owned()
     if kv == "" {
       continue
     }
     lexmatch kv[:] {
-      (key_part, ":", value_part) => {
-        let key = key_part.to_string().trim().to_string()
+      (re":", before=key_part, after=value_part) => {
+        let key = key_part.to_owned().trim().to_owned()
         if key.to_lower() != "shape" {
           continue
         }
-        let value = value_part.to_string().trim().to_string()
+        let value = value_part.to_owned().trim().to_owned()
         return parse_shape_alias(value)
       }
       _ => ()
@@ -160,16 +156,16 @@ fn parse_node_shape_metadata(raw_token : String) -> @model.NodeShape? {
 ///|
 fn split_node_and_class(raw_token : String) -> (String, String?) {
   lexmatch raw_token[:] {
-    (token, ":::", class_name) => {
-      let t = strip_node_metadata(token.trim().to_string())
-      let c = class_name.trim().to_string()
+    (re":::", before=token, after=class_name) => {
+      let t = strip_node_metadata(token.trim().to_owned())
+      let c = class_name.trim().to_owned()
       if c == "" {
         (t, None)
       } else {
         (t, Some(c))
       }
     }
-    _ => (strip_node_metadata(raw_token.trim().to_string()), None)
+    _ => (strip_node_metadata(raw_token.trim().to_owned()), None)
   }
 }
 
@@ -178,7 +174,7 @@ fn parse_node_and_class(raw_token : String) -> (MermaidNode, String?) {
   let (token, class_name) = split_node_and_class(raw_token)
   let parsed = @parser_common_engine_core.parse_node_token(token)
   let node : MermaidNode = match parse_node_shape_metadata(raw_token) {
-    Some(shape) => { id: parsed.id, label: parsed.label, shape }
+    Some(shape) => { id: parsed.id, label: parsed.label, shape, }
     None => parsed
   }
   (node, class_name)
@@ -238,7 +234,7 @@ fn split_parallel_node_segments(segment : String) -> Array[String] {
       continue
     }
     if unit == '&' && square_depth == 0 && round_depth == 0 && curly_depth == 0 {
-      let part = segment[start:i].to_string().trim().to_string()
+      let part = segment[start:i].to_owned().trim().to_owned()
       if part != "" {
         parts.push(part)
       }
@@ -247,7 +243,7 @@ fn split_parallel_node_segments(segment : String) -> Array[String] {
   }
 
   let tail = if start < segment.length() {
-    segment[start:].to_string().trim().to_string()
+    segment[start:].to_owned().trim().to_owned()
   } else {
     ""
   }
@@ -350,7 +346,7 @@ fn is_clean_parallel_node_group(segment : String) -> Bool {
   }
 
   for part in parts {
-    let trimmed = part.trim().to_string()
+    let trimmed = part.trim().to_owned()
     if trimmed == "" {
       return false
     }
@@ -364,7 +360,7 @@ fn is_clean_parallel_node_group(segment : String) -> Bool {
 
 ///|
 fn leading_node_token(raw_line : String) -> String {
-  let line = raw_line.trim().to_string()
+  let line = raw_line.trim().to_owned()
   if line == "" {
     return ""
   }
@@ -431,13 +427,13 @@ fn leading_node_token(raw_line : String) -> String {
   if end_index == 0 {
     ""
   } else {
-    line[:end_index].to_string()
+    line[:end_index].to_owned()
   }
 }
 
 ///|
 fn parse_leading_node_entry(line : String) -> (MermaidNode, String?)? {
-  let trimmed = line.trim().to_string()
+  let trimmed = line.trim().to_owned()
   if trimmed == "" {
     return None
   }
@@ -487,7 +483,7 @@ fn edge_operators() -> Array[EdgeOp] {
   let operators : Array[EdgeOp] = []
   for spec in flow_edge_operator_specs() {
     let (symbol, style, has_arrow_start, has_arrow_end) = spec
-    operators.push({ symbol, style, has_arrow_start, has_arrow_end })
+    operators.push({ symbol, style, has_arrow_start, has_arrow_end, })
   }
   operators
 }
@@ -504,7 +500,7 @@ fn top_level_operator_at(
     if index + op_len > line.length() {
       continue
     }
-    let slice = line[index:index + op_len].to_string()
+    let slice = line[index:index + op_len].to_owned()
     if slice != op.symbol {
       continue
     }
@@ -577,7 +573,7 @@ fn find_top_level_edge_operator(
       continue
     }
     match top_level_operator_at(line, i, operators) {
-      Some(op) => return Some({ op, index: i })
+      Some(op) => return Some({ op, index: i, })
       None => ()
     }
   }
@@ -656,7 +652,7 @@ fn top_level_last_index(text : String, marker : String) -> Int? {
     if i + marker_len > text.length() {
       continue
     }
-    if text[i:i + marker_len].to_string() == marker {
+    if text[i:i + marker_len].to_owned() == marker {
       found = Some(i)
     }
   }
@@ -682,24 +678,24 @@ fn parse_mid_label_edge(
     Some(found) =>
       match mid_label_left_marker(found.op.symbol) {
         Some(marker) => {
-          let lhs = line[:found.index].to_string().trim().to_string()
+          let lhs = line[:found.index].to_owned().trim().to_owned()
           let rhs = line[found.index + found.op.symbol.length():]
-            .to_string()
+            .to_owned()
             .trim()
-            .to_string()
+            .to_owned()
           if !is_clean_parallel_node_group(rhs) {
             return None
           }
           match top_level_last_index(lhs, marker) {
             Some(marker_index) => {
               let source_segment = lhs[:marker_index]
-                .to_string()
+                .to_owned()
                 .trim()
-                .to_string()
+                .to_owned()
               let label = lhs[marker_index + marker.length():]
-                .to_string()
+                .to_owned()
                 .trim()
-                .to_string()
+                .to_owned()
               if label == "" || !is_clean_parallel_node_group(source_segment) {
                 return None
               }
@@ -724,15 +720,14 @@ fn parse_mid_label_edge(
 ///|
 fn parse_label_and_target(raw_rhs : String) -> (String?, String) {
   let rhs = raw_rhs.trim()
-  if rhs lexmatch? ("\|", tail) {
+  if rhs =~ (re"^\|", after=tail) {
     lexmatch tail {
-      (label, "\|", target) =>
-        // FIXME: why `\|` needed here, otherwise warning reported?
-        (Some(label.trim().to_string()), target.trim().to_string())
-      _ => (None, rhs.to_string())
+      (re"\|", before=label, after=target) =>
+        (Some(label.trim().to_owned()), target.trim().to_owned())
+      _ => (None, rhs.to_owned())
     }
   } else {
-    (None, rhs.to_string())
+    (None, rhs.to_owned())
   }
 }
 
@@ -982,11 +977,11 @@ test "is_subgraph_id_token" {
 
 ///|
 test "parse_flow_line parses metadata nodes and middle labels" {
-  let nodes : Map[String, MermaidNode] = {}
+  let nodes : Map[String, MermaidNode] = Map([])
   let edges : Array[MermaidEdge] = []
-  let class_defs : Map[String, Map[String, String]] = {}
-  let class_assignments : Map[String, String] = {}
-  let node_styles : Map[String, Map[String, String]] = {}
+  let class_defs : Map[String, Map[String, String]] = Map([])
+  let class_assignments : Map[String, String] = Map([])
+  let node_styles : Map[String, Map[String, String]] = Map([])
 
   ignore(
     parse_flow_line(
@@ -1038,11 +1033,11 @@ test "parse_flow_line parses metadata nodes and middle labels" {
 
 ///|
 test "parse_flow_line keeps malformed edge statements non-fatal" {
-  let nodes : Map[String, MermaidNode] = {}
+  let nodes : Map[String, MermaidNode] = Map([])
   let edges : Array[MermaidEdge] = []
-  let class_defs : Map[String, Map[String, String]] = {}
-  let class_assignments : Map[String, String] = {}
-  let node_styles : Map[String, Map[String, String]] = {}
+  let class_defs : Map[String, Map[String, String]] = Map([])
+  let class_assignments : Map[String, String] = Map([])
+  let node_styles : Map[String, Map[String, String]] = Map([])
 
   ignore(
     parse_flow_line(
@@ -1063,16 +1058,16 @@ test "parse_flow_line keeps malformed edge statements non-fatal" {
 
 ///|
 fn parse_style_properties(text : String) -> Map[String, String] {
-  let props : Map[String, String] = {}
+  let props : Map[String, String] = Map([])
   for part in text.split(",") {
     let normalized = part.trim()
     if normalized.length() == 0 {
       continue
     }
     lexmatch normalized {
-      (key, ":", value) => {
-        let k = key.trim().to_string()
-        let v = value.trim().to_string()
+      (re":", before=key, after=value) => {
+        let k = key.trim().to_owned()
+        let v = value.trim().to_owned()
         if k != "" && v != "" {
           props[k] = v
         }
@@ -1089,14 +1084,14 @@ fn parse_class_def_line(
   class_defs : Map[String, Map[String, String]],
 ) -> Unit {
   let rest = lexmatch line[:] {
-    ("classDef ", class_def_rest) => class_def_rest.trim()
+    (re"^classDef ", after=class_def_rest) => class_def_rest.trim()
     _ => return
   }
   lexmatch rest {
-    ("[^[:space:]]+" as class_name, tail) => {
-      let cn = class_name.to_string()
+    (re"^[^[:space:]]+" as class_name, after=tail) => {
+      let cn = class_name.to_owned()
       if cn != "" {
-        class_defs[cn] = parse_style_properties(tail.trim().to_string())
+        class_defs[cn] = parse_style_properties(tail.trim().to_owned())
       }
     }
     _ => ()
@@ -1109,18 +1104,18 @@ fn parse_class_line(
   class_assignments : Map[String, String],
 ) -> Unit {
   let rest = lexmatch line[:] {
-    ("class ", class_rest) => class_rest.to_string().trim().to_string()
+    (re"^class ", after=class_rest) => class_rest.to_owned().trim().to_owned()
     _ => return
   }
   match rest.rev_find(" ") {
     Some(idx) => {
-      let node_list = rest[:idx].to_string().trim().to_string()
-      let class_name = rest[idx + 1:].to_string().trim().to_string()
+      let node_list = rest[:idx].to_owned().trim().to_owned()
+      let class_name = rest[idx + 1:].to_owned().trim().to_owned()
       if class_name == "" || node_list == "" {
         return
       }
       for node_part in node_list.split(",") {
-        let node_id = node_part.to_string().trim().to_string()
+        let node_id = node_part.to_owned().trim().to_owned()
         if node_id != "" {
           class_assignments[node_id] = class_name
         }
@@ -1136,14 +1131,14 @@ fn parse_style_line(
   node_styles : Map[String, Map[String, String]],
 ) -> Unit {
   let rest = lexmatch line[:] {
-    ("style ", style_rest) => style_rest.trim()
+    (re"^style ", after=style_rest) => style_rest.trim()
     _ => return
   }
   lexmatch rest {
-    ("[^[:space:]]+" as node_list, tail) => {
-      let style_map = parse_style_properties(tail.trim().to_string())
-      for node_part in node_list.to_string().split(",") {
-        let node_id = node_part.trim().to_string()
+    (re"^[^[:space:]]+" as node_list, after=tail) => {
+      let style_map = parse_style_properties(tail.trim().to_owned())
+      for node_part in node_list.to_owned().split(",") {
+        let node_id = node_part.trim().to_owned()
         if node_id != "" {
           node_styles[node_id] = style_map.copy()
         }
@@ -1183,18 +1178,18 @@ fn is_subgraph_slug_char(ch : Char) -> Bool {
 
 ///|
 fn is_subgraph_id_token(token : String) -> Bool {
-  token[:] lexmatch? "[a-zA-Z0-9_\-]+"
+  token[:] =~ re"^[a-zA-Z0-9_\-]+$"
 }
 
 ///|
 fn normalize_subgraph_id_from_label(label : String) -> String {
   let collapsed = label
     .split(" ")
-    .map(part => part.to_string().trim().to_string())
+    .map(part => part.to_owned().trim().to_owned())
     .filter(part => part != "")
     .iter()
     .join("_")
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   for ch in collapsed {
     if is_subgraph_slug_char(ch) {
       sb.write_char(ch)
@@ -1211,7 +1206,8 @@ fn normalize_subgraph_id_from_label(label : String) -> String {
 ///|
 fn parse_subgraph_start_line(line : String) -> MermaidSubgraph? {
   let rest = lexmatch line[:] {
-    ("subgraph ", subgraph_rest) => subgraph_rest.to_string().trim().to_string()
+    (re"^subgraph ", after=subgraph_rest) =>
+      subgraph_rest.to_owned().trim().to_owned()
     _ => return None
   }
   if rest == "" {
@@ -1221,11 +1217,11 @@ fn parse_subgraph_start_line(line : String) -> MermaidSubgraph? {
   match rest.find("[") {
     Some(open_idx) =>
       if rest is [.. without_close, .. "]"] {
-        let raw_id = rest[:open_idx].to_string().trim().to_string()
+        let raw_id = rest[:open_idx].to_owned().trim().to_owned()
         let raw_label = without_close[open_idx + 1:]
-          .to_string()
+          .to_owned()
           .trim()
-          .to_string()
+          .to_owned()
         if raw_id != "" && raw_label != "" && is_subgraph_id_token(raw_id) {
           return Some({
             id: raw_id,
@@ -1289,7 +1285,7 @@ fn parse_flow_line(
   match find_top_level_edge_operator(line, edge_operators()) {
     Some(found) => {
       let touched_node_ids : Array[String] = []
-      let left_segment = line[:found.index].to_string().trim().to_string()
+      let left_segment = line[:found.index].to_owned().trim().to_owned()
       if !is_clean_parallel_node_group(left_segment) {
         return ensure_leading_node_only(line, nodes, class_assignments)
       }
@@ -1302,9 +1298,9 @@ fn parse_flow_line(
 
       let mut current_op = found.op
       let mut rhs = line[found.index + found.op.symbol.length():]
-        .to_string()
+        .to_owned()
         .trim()
-        .to_string()
+        .to_owned()
 
       let mut done = false
       while !done {
@@ -1313,9 +1309,9 @@ fn parse_flow_line(
           find_top_level_edge_operator(rhs_without_label, edge_operators()) {
           Some(next_found) => {
             let target_segment = rhs_without_label[:next_found.index]
-              .to_string()
+              .to_owned()
               .trim()
-              .to_string()
+              .to_owned()
             if !is_clean_parallel_node_group(target_segment) {
               done = true
               continue
@@ -1333,9 +1329,9 @@ fn parse_flow_line(
             current_op = next_found.op
             rhs = rhs_without_label[next_found.index +
               next_found.op.symbol.length():]
-              .to_string()
+              .to_owned()
               .trim()
-              .to_string()
+              .to_owned()
           }
           None => {
             if !is_clean_parallel_node_group(rhs_without_label) {
@@ -1383,15 +1379,15 @@ fn parse_flow_line(
 pub fn parse_flowchart(
   lines : Array[String],
 ) -> MermaidGraph raise MermaidError {
-  let nodes : Map[String, MermaidNode] = {}
+  let nodes : Map[String, MermaidNode] = Map([])
   let node_definition_order : Array[String] = []
   let edges : Array[MermaidEdge] = []
   let subgraphs : Array[MermaidSubgraph] = []
   let subgraph_stack : Array[MermaidSubgraph] = []
-  let class_defs : Map[String, Map[String, String]] = {}
-  let class_assignments : Map[String, String] = {}
-  let node_styles : Map[String, Map[String, String]] = {}
-  let known_node_ids : Map[String, Bool] = {}
+  let class_defs : Map[String, Map[String, String]] = Map([])
+  let class_assignments : Map[String, String] = Map([])
+  let node_styles : Map[String, Map[String, String]] = Map([])
+  let known_node_ids : Map[String, Bool] = Map([])
   let direction = match parse_flow_direction(lines[0]) {
     Some(found) => found
     None =>
@@ -1404,9 +1400,9 @@ pub fn parse_flowchart(
     let line = lines[i]
 
     lexmatch line[:] {
-      ("direction ", direction_token) => {
+      (re"^direction ", after=direction_token) => {
         if subgraph_stack.length() > 0 {
-          let token = direction_token.to_string().trim().to_string()
+          let token = direction_token.to_owned().trim().to_owned()
           match parse_direction_token_strict(token) {
             Some(parsed_direction) =>
               set_current_subgraph_direction(subgraph_stack, parsed_direction)

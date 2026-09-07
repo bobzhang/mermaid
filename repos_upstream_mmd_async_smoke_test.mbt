@@ -9,18 +9,11 @@ async fn repos_verify_upstream_mmd_chunk(
   ]
   let files : Array[String] = []
   for root in roots {
-    let read_result : Result[Array[String], Error] = try? @fs.readdir(
-      root,
-      sort=true,
-    )
-    match read_result {
-      Ok(entries) =>
-        for entry in entries {
-          if entry.has_suffix(".mmd") {
-            files.push("\{root}/\{entry}")
-          }
-        }
-      Err(_) => ()
+    let entries = @fs.readdir(root, sort=true) catch { _ => [] }
+    for entry in entries {
+      if entry.has_suffix(".mmd") {
+        files.push("\{root}/\{entry}")
+      }
     }
   }
   files.sort()
@@ -35,37 +28,29 @@ async fn repos_verify_upstream_mmd_chunk(
   let failures : Array[String] = []
   for path in selected {
     let source = @fs.read_file(path).text()
-    let svg_result : Result[String, @model.MermaidError] = try? @beautiful_mermaid.render_mermaid(
-      source,
-    )
-    let ascii_result : Result[String, @model.MermaidError] = try? @beautiful_mermaid.render_mermaid_ascii(
-      source,
-      options={
+    let rendered_ok = try {
+      let svg = @beautiful_mermaid.render_mermaid(source)
+      let ascii = @beautiful_mermaid.render_mermaid_ascii(source, options={
         use_ascii: true,
         padding_x: 5,
         padding_y: 5,
         box_border_padding: 1,
-      },
-    )
-    let unicode_result : Result[String, @model.MermaidError] = try? @beautiful_mermaid.render_mermaid_ascii(
-      source,
-      options={
+      })
+      let unicode = @beautiful_mermaid.render_mermaid_ascii(source, options={
         use_ascii: false,
         padding_x: 5,
         padding_y: 5,
         box_border_padding: 1,
-      },
-    )
-
-    match (svg_result, ascii_result, unicode_result) {
-      (Ok(svg), Ok(ascii), Ok(unicode)) =>
-        if !svg.has_prefix("<svg ") ||
-          !svg.has_suffix("</svg>") ||
-          ts_normalize_whitespace(ascii) == "" ||
-          ts_normalize_whitespace(unicode) == "" {
-          failures.push(path)
-        }
-      _ => failures.push(path)
+      })
+      svg.has_prefix("<svg ") &&
+      svg.has_suffix("</svg>") &&
+      ts_normalize_whitespace(ascii) != "" &&
+      ts_normalize_whitespace(unicode) != ""
+    } catch {
+      _ => false
+    }
+    if !rendered_ok {
+      failures.push(path)
     }
   }
 

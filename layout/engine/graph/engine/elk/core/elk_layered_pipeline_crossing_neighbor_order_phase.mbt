@@ -7,7 +7,7 @@ priv struct NodeNeighborOrderKey {
 
 ///|
 fn empty_neighbor_order_key() -> NodeNeighborOrderKey {
-  { has_center: false, neighbor_position_sum: 0.0, neighbor_position_count: 0 }
+  { has_center: false, neighbor_position_sum: 0.0, neighbor_position_count: 0, }
 }
 
 ///|
@@ -19,12 +19,12 @@ priv struct NodeNeighborBarycenterState {
 
 ///|
 fn empty_neighbor_barycenter_state() -> NodeNeighborBarycenterState {
-  { visited: false, neighbor_position_sum: 0.0, neighbor_position_count: 0 }
+  { visited: false, neighbor_position_sum: 0.0, neighbor_position_count: 0, }
 }
 
 ///|
 fn empty_visited_neighbor_barycenter_state() -> NodeNeighborBarycenterState {
-  { visited: true, neighbor_position_sum: 0.0, neighbor_position_count: 0 }
+  { visited: true, neighbor_position_sum: 0.0, neighbor_position_count: 0, }
 }
 
 ///|
@@ -298,7 +298,7 @@ priv struct NodeNeighborMedianOrderKey {
 
 ///|
 fn empty_neighbor_median_order_key() -> NodeNeighborMedianOrderKey {
-  { has_center: false, median_x2: 0 }
+  { has_center: false, median_x2: 0, }
 }
 
 ///|
@@ -319,7 +319,7 @@ fn node_neighbor_median_order_key(
   } else {
     positions[positions.length() / 2 - 1] + positions[positions.length() / 2]
   }
-  { has_center: true, median_x2 }
+  { has_center: true, median_x2, }
 }
 
 ///|
@@ -355,8 +355,9 @@ fn sort_rank_nodes_by_neighbors(
 ) -> Bool {
   let original_node_ids = node_ids.copy()
   let free_node_id_set = build_node_id_set(node_ids)
-  let barycenter_state_by_node_id : Map[String, NodeNeighborBarycenterState] = {}
-  let neighbor_key_by_node_id : Map[String, NodeNeighborOrderKey] = {}
+  let barycenter_state_by_node_id : Map[String, NodeNeighborBarycenterState] = Map([],
+  )
+  let neighbor_key_by_node_id : Map[String, NodeNeighborOrderKey] = Map([])
   for node_id in node_ids {
     neighbor_key_by_node_id[node_id] = node_neighbor_order_key(
       node_id, neighbor_by_node_id, rank_position_by_node_id, free_node_id_set, barycenter_state_by_node_id,
@@ -401,8 +402,8 @@ fn sort_rank_nodes_by_neighbors(
       break
     }
   }
-  let barycenter_by_node_id : Map[String, Double] = {}
-  let degree_by_node_id : Map[String, Int] = {}
+  let barycenter_by_node_id : Map[String, Double] = Map([])
+  let degree_by_node_id : Map[String, Int] = Map([])
   for index, node_id in node_ids {
     let key = match neighbor_key_by_node_id.get(node_id) {
       Some(value) => value
@@ -438,7 +439,7 @@ fn sort_rank_nodes_by_neighbors_median(
   preserve_current_order_on_tie : Bool,
 ) -> Bool {
   let original_node_ids = node_ids.copy()
-  let neighbor_key_by_node_id : Map[String, NodeNeighborMedianOrderKey] = {}
+  let neighbor_key_by_node_id : Map[String, NodeNeighborMedianOrderKey] = Map([])
   for node_id in node_ids {
     neighbor_key_by_node_id[node_id] = node_neighbor_median_order_key(
       node_id, neighbor_by_node_id, rank_position_by_node_id,

@@ -1570,7 +1570,7 @@ test "Sequence note-left-right renders across text and SVG modes" (
       #|
     )
     .trim_end()
-    .to_string()
+    .to_owned()
 
   let ascii = @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: true,
@@ -1624,7 +1624,7 @@ test "Sequence critical/option block renders across text and SVG modes" (
       #|
     )
     .trim_end()
-    .to_string()
+    .to_owned()
 
   let ascii = @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: true,
@@ -1679,7 +1679,7 @@ test "Sequence par/and block renders across text and SVG modes" (
       #|
     )
     .trim_end()
-    .to_string()
+    .to_owned()
 
   let ascii = @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: true,
@@ -1729,7 +1729,7 @@ test "Sequence activation markers render across text and SVG modes" (
       #|
     )
     .trim_end()
-    .to_string()
+    .to_owned()
 
   let ascii = @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: true,
@@ -1774,7 +1774,7 @@ test "Sequence actor declarations render across text and SVG modes" (
       #|
     )
     .trim_end()
-    .to_string()
+    .to_owned()
 
   let ascii = @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: true,
@@ -1820,7 +1820,7 @@ test "Sequence mixed arrow operators render across text and SVG modes" (
       #|
     )
     .trim_end()
-    .to_string()
+    .to_owned()
 
   let ascii = @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: true,
@@ -1868,7 +1868,7 @@ test "Class inheritance labels render across text and SVG modes" (
       #|
     )
     .trim_end()
-    .to_string()
+    .to_owned()
 
   let ascii = @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: true,
@@ -1913,7 +1913,7 @@ test "Class abstract annotation renders across text and SVG modes" (
       #|
     )
     .trim_end()
-    .to_string()
+    .to_owned()
 
   let ascii = @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: true,
@@ -1961,7 +1961,7 @@ test "Class interface realization renders across text and SVG modes" (
       #|
     )
     .trim_end()
-    .to_string()
+    .to_owned()
 
   let ascii = @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: true,
@@ -2005,7 +2005,7 @@ test "Class enum annotation renders across text and SVG modes" (it : @test.Test)
       #|
     )
     .trim_end()
-    .to_string()
+    .to_owned()
 
   let ascii = @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: true,
@@ -2053,7 +2053,7 @@ test "Class visibility members render across text and SVG modes" (
       #|
     )
     .trim_end()
-    .to_string()
+    .to_owned()
 
   let ascii = @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: true,
@@ -2102,7 +2102,7 @@ test "Class relationship set renders across text and SVG modes" (
       #|
     )
     .trim_end()
-    .to_string()
+    .to_owned()
 
   let ascii = @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: true,
@@ -2159,7 +2159,7 @@ test "ER entities and relationship labels render across text and SVG modes" (
       #|
     )
     .trim_end()
-    .to_string()
+    .to_owned()
 
   let ascii = @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: true,
@@ -2203,7 +2203,7 @@ test "ER attribute keys render across text and SVG modes" (it : @test.Test) {
       #|
     )
     .trim_end()
-    .to_string()
+    .to_owned()
 
   let ascii = @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: true,
@@ -2248,7 +2248,7 @@ test "ER identifying and non-identifying edges render across text and SVG modes"
       #|
     )
     .trim_end()
-    .to_string()
+    .to_owned()
 
   let ascii = @beautiful_mermaid.render_mermaid_ascii(input, options={
     use_ascii: true,

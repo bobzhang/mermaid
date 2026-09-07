@@ -47,7 +47,7 @@ fn find_positioned_edge(
 
 ///|
 fn test_label_dimensions(label : String) -> (Int, Int) {
-  let lines = label.split("\n").map(part => part.to_string()).to_array()
+  let lines = label.split("\n").map(part => part.to_owned()).to_array()
   let mut longest_line = 0
   for line in lines {
     longest_line = longest_line.max(line.length())
@@ -346,7 +346,7 @@ fn count_logical_edge_crossings(
   positioned : PositionedGraph,
   edges : Array[@model.MermaidEdge],
 ) -> Int {
-  let node_by_id : Map[String, PositionedNode] = {}
+  let node_by_id : Map[String, PositionedNode] = Map([])
   for node in positioned.nodes {
     node_by_id[node.id] = node
   }
@@ -367,10 +367,10 @@ fn count_logical_edge_crossings(
           match (node_by_id.get(right.source), node_by_id.get(right.target)) {
             (Some(right_source), Some(right_target)) =>
               if segments_properly_intersect(
-                  { x: left_source.x, y: left_source.y },
-                  { x: left_target.x, y: left_target.y },
-                  { x: right_source.x, y: right_source.y },
-                  { x: right_target.x, y: right_target.y },
+                  { x: left_source.x, y: left_source.y, },
+                  { x: left_target.x, y: left_target.y, },
+                  { x: right_source.x, y: right_source.y, },
+                  { x: right_target.x, y: right_target.y, },
                 ) {
                 crossings += 1
               }
@@ -455,7 +455,7 @@ test "Layout LR long-span edges keep non-crossing sink order" {
       #|
     )
     .trim_end()
-    .to_string(),
+    .to_owned(),
   )
   let positioned = layout_graph(graph, RenderOptions::default())
   let a = find_positioned_node(positioned.nodes, "A")
@@ -547,7 +547,7 @@ test "Layout fanin fanout logical crossings stay bounded on stress case" {
       #|
     )
     .trim_end()
-    .to_string(),
+    .to_owned(),
   )
   let positioned = layout_graph(graph, RenderOptions::default())
   let crossings = count_logical_edge_crossings(positioned, graph.edges)
@@ -557,10 +557,22 @@ test "Layout fanin fanout logical crossings stay bounded on stress case" {
 ///|
 test "Layout segment-span intersection handles fractional crossing exactly" {
   assert_true(
-    segment_intersects_horizontal_span({ x: 0, y: 0 }, { x: 3, y: 2 }, 1, 2, 1),
+    segment_intersects_horizontal_span(
+      { x: 0, y: 0, },
+      { x: 3, y: 2, },
+      1,
+      2,
+      1,
+    ),
   )
   assert_eq(
-    segment_intersects_horizontal_span({ x: 0, y: 0 }, { x: 3, y: 2 }, 2, 3, 1),
+    segment_intersects_horizontal_span(
+      { x: 0, y: 0, },
+      { x: 3, y: 2, },
+      2,
+      3,
+      1,
+    ),
     false,
   )
 }
@@ -588,7 +600,7 @@ test "Layout cyclic LR flowchart without metadata keeps loop routing vertically 
       #|
     )
     .trim_end()
-    .to_string(),
+    .to_owned(),
   )
   let positioned = layout_graph(graph, RenderOptions::default())
 
@@ -649,7 +661,7 @@ test "Layout class cycle keeps controller and model in the same row" {
       #|
     )
     .trim_end()
-    .to_string(),
+    .to_owned(),
   )
   let positioned = layout_graph(graph, RenderOptions::default())
 
@@ -687,7 +699,7 @@ test "Layout NFA dotted back edge prefers lower lane when upper span is crowded"
       #|
     )
     .trim_end()
-    .to_string(),
+    .to_owned(),
   )
   let positioned = layout_graph(graph, RenderOptions::default())
 
@@ -722,7 +734,7 @@ test "Layout long-span solid back edge uses reserved bend lane" {
       #|
     )
     .trim_end()
-    .to_string(),
+    .to_owned(),
   )
   let positioned = layout_graph(graph, RenderOptions::default())
   let back_edge = find_positioned_edge(positioned.edges, "G", "A")
@@ -754,7 +766,7 @@ test "Layout long-span vertical solid back edge uses reserved bend column" {
       #|
     )
     .trim_end()
-    .to_string(),
+    .to_owned(),
   )
   let positioned = layout_graph(graph, RenderOptions::default())
   let back_edge = find_positioned_edge(positioned.edges, "G", "A")
@@ -782,7 +794,7 @@ test "Layout medium-span horizontal solid back edge uses reserved bend lane" {
       #|
     )
     .trim_end()
-    .to_string(),
+    .to_owned(),
   )
   let positioned = layout_graph(graph, RenderOptions::default())
   let back_edge = find_positioned_edge(positioned.edges, "E", "B")
@@ -808,7 +820,7 @@ test "Layout medium-span vertical solid back edge uses reserved bend column" {
       #|
     )
     .trim_end()
-    .to_string(),
+    .to_owned(),
   )
   let positioned = layout_graph(graph, RenderOptions::default())
   let back_edge = find_positioned_edge(positioned.edges, "D", "A")
@@ -835,7 +847,7 @@ test "Layout preserves declared edge order after deferred back-edge routing" {
       #|
     )
     .trim_end()
-    .to_string(),
+    .to_owned(),
   )
   let positioned = layout_graph(graph, RenderOptions::default())
 
@@ -861,7 +873,7 @@ test "Layout separates reciprocal short LR edges to avoid exact overlap" {
       #|
     )
     .trim_end()
-    .to_string(),
+    .to_owned(),
   )
   let positioned = layout_graph(graph, RenderOptions::default())
   let check = find_positioned_node(positioned.nodes, "Check")
@@ -892,7 +904,7 @@ test "Layout keeps diamond anchors on shape boundary for reciprocal fanout" {
       #|
     )
     .trim_end()
-    .to_string(),
+    .to_owned(),
   )
   let positioned = layout_graph(graph, RenderOptions::default())
   let check = find_positioned_node(positioned.nodes, "Check")
@@ -920,7 +932,7 @@ test "Layout horizontal rank spacing keeps wide adjacent nodes separated" {
       #|
     )
     .trim_end()
-    .to_string(),
+    .to_owned(),
   )
   let positioned = layout_graph(graph, RenderOptions::default())
   let build = find_positioned_node(positioned.nodes, "Build")
@@ -953,7 +965,7 @@ test "Layout reserves horizontal rank gap for labeled edge clearance" {
       #|
     )
     .trim_end()
-    .to_string(),
+    .to_owned(),
   )
   let positioned = layout_graph(graph, RenderOptions::default())
   let check = find_positioned_node(positioned.nodes, "Check")
@@ -980,7 +992,7 @@ test "Layout keeps Check->Build label clear of endpoint node boxes" {
       #|
     )
     .trim_end()
-    .to_string(),
+    .to_owned(),
   )
   let positioned = layout_graph(graph, RenderOptions::default())
   let check = find_positioned_node(positioned.nodes, "Check")
@@ -1038,7 +1050,7 @@ test "Layout reciprocal flow loop avoids polyline crossing at opposite ports" {
       #|
     )
     .trim_end()
-    .to_string(),
+    .to_owned(),
   )
   let positioned = layout_graph(graph, RenderOptions::default())
   let check_fix = find_positioned_edge(positioned.edges, "Check", "Fix")
@@ -1062,7 +1074,7 @@ test "Layout reciprocal fanout avoids pairwise crossings" {
       #|
     )
     .trim_end()
-    .to_string(),
+    .to_owned(),
   )
   let positioned = layout_graph(graph, RenderOptions::default())
   let edge_ab = find_positioned_edge(positioned.edges, "A", "B")
@@ -1096,7 +1108,7 @@ test "Layout spreads source anchors for horizontal fanout edges" {
       #|
     )
     .trim_end()
-    .to_string(),
+    .to_owned(),
   )
   let positioned = layout_graph(graph, RenderOptions::default())
   let edge_ab = find_positioned_edge(positioned.edges, "A", "B")
@@ -1141,7 +1153,7 @@ test "Layout dotted fanout follows target lanes with a single elbow" {
       #|
     )
     .trim_end()
-    .to_string(),
+    .to_owned(),
   )
   let positioned = layout_graph(graph, RenderOptions::default())
   let upper_edge = find_positioned_edge(positioned.edges, "8", "0")
@@ -1172,7 +1184,7 @@ test "Layout solid long-span fanout separates branch routes" {
       #|
     )
     .trim_end()
-    .to_string(),
+    .to_owned(),
   )
   let positioned = layout_graph(graph, RenderOptions::default())
   let branch_d = find_positioned_edge(positioned.edges, "A", "D")
@@ -1204,7 +1216,7 @@ test "Layout vertical long-span fanout separates branch routes" {
       #|
     )
     .trim_end()
-    .to_string(),
+    .to_owned(),
   )
   let positioned = layout_graph(graph, RenderOptions::default())
   let branch_d = find_positioned_edge(positioned.edges, "A", "D")
@@ -1230,7 +1242,7 @@ test "Layout LR promotes late-defined source for dotted back-reference" {
       #|
     )
     .trim_end()
-    .to_string(),
+    .to_owned(),
   )
   let positioned = layout_graph(graph, RenderOptions::default())
   let a = find_positioned_node(positioned.nodes, "A")
@@ -1269,7 +1281,7 @@ test "Layout LR late-defined fanout source still places branches to the right" {
       #|
     )
     .trim_end()
-    .to_string(),
+    .to_owned(),
   )
   let positioned = layout_graph(graph, RenderOptions::default())
   let start = find_positioned_node(positioned.nodes, "start")
@@ -1306,7 +1318,7 @@ test "Layout dotted forward transition bends toward target lane" {
       #|
     )
     .trim_end()
-    .to_string(),
+    .to_owned(),
   )
   let positioned = layout_graph(graph, RenderOptions::default())
   let edge = find_positioned_edge(positioned.edges, "3", "4")
@@ -1324,7 +1336,7 @@ test "Layout invariants: nodes stay inside canvas" {
       #|
     )
     .trim_end()
-    .to_string(),
+    .to_owned(),
   )
   let positioned = layout_graph(graph, RenderOptions::default())
 
@@ -1347,7 +1359,7 @@ test "Layout builds positioned groups for flowchart subgraphs" {
       #|
     )
     .trim_end()
-    .to_string(),
+    .to_owned(),
   )
   let positioned = layout_graph(graph, RenderOptions::default())
 
@@ -1378,7 +1390,7 @@ test "Layout keeps nested positioned groups inside parent group" {
       #|
     )
     .trim_end()
-    .to_string(),
+    .to_owned(),
   )
   let positioned = layout_graph(graph, RenderOptions::default())
 
@@ -1406,7 +1418,7 @@ test "Layout flowchart subgraph direction override keeps single-edge axis stable
       #|
     )
     .trim_end()
-    .to_string(),
+    .to_owned(),
   )
   let override_graph = @parser.parse_mermaid(
     (
@@ -1418,7 +1430,7 @@ test "Layout flowchart subgraph direction override keeps single-edge axis stable
       #|
     )
     .trim_end()
-    .to_string(),
+    .to_owned(),
   )
 
   let base_positioned = layout_graph(base_graph, RenderOptions::default())
@@ -1464,7 +1476,7 @@ test "Layout state composite direction override changes internal axis" {
       #|
     )
     .trim_end()
-    .to_string(),
+    .to_owned(),
   )
   let override_graph = @parser.parse_mermaid(
     (
@@ -1478,7 +1490,7 @@ test "Layout state composite direction override changes internal axis" {
       #|
     )
     .trim_end()
-    .to_string(),
+    .to_owned(),
   )
 
   let base_positioned = layout_graph(base_graph, RenderOptions::default())
@@ -1540,7 +1552,7 @@ test "Layout ascii state composite keeps node edge targets over group anchors" {
       #|
     )
     .trim_end()
-    .to_string(),
+    .to_owned(),
   )
   let positioned = @layout_engine_graph_execute_core.execute_layout_plan(
     @layout_engine_graph_plan_core.build_ascii_layout_execution_plan(graph),
@@ -1581,7 +1593,7 @@ test "Layout keeps subgraph-defined-first content near top in TD" {
       #|
     )
     .trim_end()
-    .to_string(),
+    .to_owned(),
   )
   let positioned = layout_graph(graph, RenderOptions::default())
 
@@ -1611,7 +1623,7 @@ test "Layout subgraph direction override arranges child subgraphs horizontally" 
       #|
     )
     .trim_end()
-    .to_string(),
+    .to_owned(),
   )
   let positioned = layout_graph(graph, RenderOptions::default())
 
@@ -1640,7 +1652,7 @@ test "Layout subgraph direction override arranges empty child subgraphs horizont
       #|
     )
     .trim_end()
-    .to_string(),
+    .to_owned(),
   )
   let positioned = layout_graph(graph, RenderOptions::default())
 
@@ -1664,7 +1676,7 @@ test "Layout invariants: edges have endpoints and labels have positions" {
       #|
     )
     .trim_end()
-    .to_string(),
+    .to_owned(),
   )
   let positioned = layout_graph(graph, RenderOptions::default())
 
@@ -1686,7 +1698,7 @@ test "Layout invariants: LR is wider, TD is taller" {
       #|
     )
     .trim_end()
-    .to_string(),
+    .to_owned(),
   )
   let td_graph = @parser.parse_mermaid(
     (
@@ -1695,7 +1707,7 @@ test "Layout invariants: LR is wider, TD is taller" {
       #|
     )
     .trim_end()
-    .to_string(),
+    .to_owned(),
   )
 
   let lr_layout = layout_graph(lr_graph, RenderOptions::default())
@@ -1714,7 +1726,7 @@ test "Layout RL reverses horizontal node ordering and edge direction" {
       #|
     )
     .trim_end()
-    .to_string(),
+    .to_owned(),
   )
   let positioned = layout_graph(rl_graph, RenderOptions::default())
 
@@ -1740,7 +1752,7 @@ test "Layout BT reverses vertical node ordering and edge direction" {
       #|
     )
     .trim_end()
-    .to_string(),
+    .to_owned(),
   )
   let positioned = layout_graph(bt_graph, RenderOptions::default())
 
@@ -1768,7 +1780,7 @@ test "Layout resolves inline styles with node override precedence" {
       #|
     )
     .trim_end()
-    .to_string(),
+    .to_owned(),
   )
   let positioned = layout_graph(graph, RenderOptions::default())
 
@@ -1805,7 +1817,7 @@ test "Layout sequence messages are vertically separated" {
       #|
     )
     .trim_end()
-    .to_string(),
+    .to_owned(),
   )
   let positioned = layout_graph(graph, RenderOptions::default())
 
@@ -1829,7 +1841,7 @@ test "Layout sequence adds block and divider spacing" {
       #|
     )
     .trim_end()
-    .to_string(),
+    .to_owned(),
   )
   let positioned = layout_graph(graph, RenderOptions::default())
 
@@ -1856,7 +1868,7 @@ test "Layout sequence includes notes and activation bars" {
       #|
     )
     .trim_end()
-    .to_string(),
+    .to_owned(),
   )
   let positioned = layout_graph(graph, RenderOptions::default())
 
@@ -1885,7 +1897,7 @@ test "Layout sequence increases divider offset on horizontal label overlap" {
       #|
     )
     .trim_end()
-    .to_string(),
+    .to_owned(),
   )
   let positioned = layout_graph(graph, RenderOptions::default())
 
@@ -1914,7 +1926,7 @@ test "Layout sequence ignores standalone activate/deactivate commands" {
       #|
     )
     .trim_end()
-    .to_string(),
+    .to_owned(),
   )
   let positioned = layout_graph(graph, RenderOptions::default())
 
@@ -1933,7 +1945,7 @@ test "Layout sequence keeps block header tab above first in-block message label"
       #|
     )
     .trim_end()
-    .to_string(),
+    .to_owned(),
   )
   let positioned = layout_graph(graph, RenderOptions::default())
 
@@ -1961,7 +1973,7 @@ test "Layout sequence keeps block header below previous message arrow" {
       #|
     )
     .trim_end()
-    .to_string(),
+    .to_owned(),
   )
   let positioned = layout_graph(graph, RenderOptions::default())
 
@@ -1989,7 +2001,7 @@ test "Layout sequence keeps divider label above following message label" {
       #|
     )
     .trim_end()
-    .to_string(),
+    .to_owned(),
   )
   let positioned = layout_graph(graph, RenderOptions::default())
 
@@ -2019,7 +2031,7 @@ test "Layout sequence ignores activation commands with self messages" {
       #|
     )
     .trim_end()
-    .to_string(),
+    .to_owned(),
   )
   let positioned = layout_graph(graph, RenderOptions::default())
 
@@ -2039,7 +2051,7 @@ test "Layout sequence height increases with block header extra spacing" {
       #|
     )
     .trim_end()
-    .to_string(),
+    .to_owned(),
   )
   let block_graph = @parser.parse_mermaid(
     (
@@ -2052,7 +2064,7 @@ test "Layout sequence height increases with block header extra spacing" {
       #|
     )
     .trim_end()
-    .to_string(),
+    .to_owned(),
   )
 
   let plain_positioned = layout_graph(plain_graph, RenderOptions::default())
@@ -2074,7 +2086,7 @@ test "Layout sequence height increases with divider extra spacing" {
       #|
     )
     .trim_end()
-    .to_string(),
+    .to_owned(),
   )
   let with_divider_graph = @parser.parse_mermaid(
     (
@@ -2090,7 +2102,7 @@ test "Layout sequence height increases with divider extra spacing" {
       #|
     )
     .trim_end()
-    .to_string(),
+    .to_owned(),
   )
 
   let no_divider_positioned = layout_graph(
@@ -2118,7 +2130,7 @@ test "Layout sequence block top stays above first in-block message by pad" {
       #|
     )
     .trim_end()
-    .to_string(),
+    .to_owned(),
   )
   let positioned = layout_graph(graph, RenderOptions::default())
 
@@ -2146,7 +2158,7 @@ test "Layout sequence divider row is between adjacent messages" {
       #|
     )
     .trim_end()
-    .to_string(),
+    .to_owned(),
   )
   let positioned = layout_graph(graph, RenderOptions::default())
 
@@ -2177,7 +2189,7 @@ test "Layout sequence block height encloses in-block messages" {
       #|
     )
     .trim_end()
-    .to_string(),
+    .to_owned(),
   )
   let positioned = layout_graph(graph, RenderOptions::default())
 
@@ -2203,7 +2215,7 @@ test "Layout sequence base spacing is uniform without blocks" {
       #|
     )
     .trim_end()
-    .to_string(),
+    .to_owned(),
   )
   let positioned = layout_graph(graph, RenderOptions::default())
 
@@ -2228,7 +2240,7 @@ test "Layout sequence spacing after block returns to base row height" {
       #|
     )
     .trim_end()
-    .to_string(),
+    .to_owned(),
   )
   let positioned = layout_graph(graph, RenderOptions::default())
 
@@ -2256,7 +2268,7 @@ test "Layout sequence multiple dividers each add divider extra spacing" {
       #|
     )
     .trim_end()
-    .to_string(),
+    .to_owned(),
   )
   let positioned = layout_graph(graph, RenderOptions::default())
 
@@ -2284,7 +2296,7 @@ test "Layout sequence par divider spacing matches alt divider spacing" {
       #|
     )
     .trim_end()
-    .to_string(),
+    .to_owned(),
   )
   let positioned = layout_graph(graph, RenderOptions::default())
 
@@ -2307,7 +2319,7 @@ test "Layout sequence note right of last actor stays within diagram bounds" {
       #|
     )
     .trim_end()
-    .to_string(),
+    .to_owned(),
   )
   let positioned = layout_graph(graph, RenderOptions::default())
 
@@ -2328,7 +2340,7 @@ test "Layout sequence note left of first actor stays within diagram bounds" {
       #|
     )
     .trim_end()
-    .to_string(),
+    .to_owned(),
   )
   let positioned = layout_graph(graph, RenderOptions::default())
 
@@ -2350,7 +2362,7 @@ test "Layout sequence notes on both sides stay within diagram bounds" {
       #|
     )
     .trim_end()
-    .to_string(),
+    .to_owned(),
   )
   let positioned = layout_graph(graph, RenderOptions::default())
 
@@ -2375,7 +2387,7 @@ test "Layout state cycle offsets opposite-direction edge labels" {
       #|
     )
     .trim_end()
-    .to_string(),
+    .to_owned(),
   )
   let positioned = layout_graph(graph, RenderOptions::default())
 
@@ -2404,7 +2416,7 @@ test "Layout sequence note over actor stays within diagram bounds" {
       #|
     )
     .trim_end()
-    .to_string(),
+    .to_owned(),
   )
   let positioned = layout_graph(graph, RenderOptions::default())
 
@@ -2425,11 +2437,11 @@ test "Layout sequence shift preserves actor message and lifeline alignment" {
       #|
     )
     .trim_end()
-    .to_string(),
+    .to_owned(),
   )
   let positioned = layout_graph(graph, RenderOptions::default())
 
-  let actor_node : Map[String, PositionedNode] = {}
+  let actor_node : Map[String, PositionedNode] = Map([])
   for node in positioned.nodes {
     actor_node[node.id] = node
   }
@@ -2474,7 +2486,7 @@ test "Layout sequence without notes has no extra horizontal shift" {
       #|
     )
     .trim_end()
-    .to_string(),
+    .to_owned(),
   )
   let positioned = layout_graph(graph, RenderOptions::default())
 
@@ -2500,7 +2512,7 @@ test "Layout sequence right-side note expands diagram width" {
       #|
     )
     .trim_end()
-    .to_string(),
+    .to_owned(),
   )
   let with_note_graph = @parser.parse_mermaid(
     (
@@ -2511,7 +2523,7 @@ test "Layout sequence right-side note expands diagram width" {
       #|
     )
     .trim_end()
-    .to_string(),
+    .to_owned(),
   )
 
   let without_note = layout_graph(without_note_graph, RenderOptions::default())
@@ -2530,7 +2542,7 @@ test "Layout sequence left-side note shifts actors right" {
       #|
     )
     .trim_end()
-    .to_string(),
+    .to_owned(),
   )
   let with_note_graph = @parser.parse_mermaid(
     (
@@ -2541,7 +2553,7 @@ test "Layout sequence left-side note shifts actors right" {
       #|
     )
     .trim_end()
-    .to_string(),
+    .to_owned(),
   )
 
   let without_note = layout_graph(without_note_graph, RenderOptions::default())
@@ -2566,7 +2578,7 @@ test "Layout sequence opt block header adds extra spacing" {
       #|
     )
     .trim_end()
-    .to_string(),
+    .to_owned(),
   )
   let positioned = layout_graph(graph, RenderOptions::default())
 
@@ -2588,7 +2600,7 @@ test "Layout sequence critical block header adds extra spacing" {
       #|
     )
     .trim_end()
-    .to_string(),
+    .to_owned(),
   )
   let positioned = layout_graph(graph, RenderOptions::default())
 
@@ -2614,7 +2626,7 @@ test "Layout sequence multiple dividers are between corresponding messages" {
       #|
     )
     .trim_end()
-    .to_string(),
+    .to_owned(),
   )
   let positioned = layout_graph(graph, RenderOptions::default())
 
@@ -2643,7 +2655,7 @@ test "Layout sequence divider line stays below previous message arrow" {
       #|
     )
     .trim_end()
-    .to_string(),
+    .to_owned(),
   )
   let positioned = layout_graph(graph, RenderOptions::default())
 
@@ -2674,7 +2686,7 @@ test "Layout sequence three-branch alt keeps header and divider clearance" {
       #|
     )
     .trim_end()
-    .to_string(),
+    .to_owned(),
   )
   let positioned = layout_graph(graph, RenderOptions::default())
 
@@ -2715,7 +2727,7 @@ test "Layout sequence long divider labels trigger larger offset" {
       #|
     )
     .trim_end()
-    .to_string(),
+    .to_owned(),
   )
   let positioned = layout_graph(graph, RenderOptions::default())
 
@@ -2747,7 +2759,7 @@ test "Layout sequence short divider labels keep default offset" {
       #|
     )
     .trim_end()
-    .to_string(),
+    .to_owned(),
   )
   let positioned = layout_graph(graph, RenderOptions::default())
 

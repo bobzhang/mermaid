@@ -21,8 +21,8 @@ fn er_operator_tokens(operator : String?) -> (String, String) {
       match (start_sep, end_sep) {
         (Some(start), Some(end)) =>
           (
-            op[:start].to_string().trim().to_string(),
-            op[end + 1:].to_string().trim().to_string(),
+            op[:start].to_owned().trim().to_owned(),
+            op[end + 1:].to_owned().trim().to_owned(),
           )
         _ => ("", "")
       }
@@ -195,12 +195,7 @@ pub fn render_ascii_er(
                   for i in 0..<label.length() {
                     let lx = label_start + i
                     if lx >= start_x && lx <= end_x {
-                      put_canvas(
-                        canvas,
-                        lx,
-                        label_y,
-                        label[i:i + 1].to_string(),
-                      )
+                      put_canvas(canvas, lx, label_y, label[i:i + 1].to_owned())
                     }
                   }
                 }

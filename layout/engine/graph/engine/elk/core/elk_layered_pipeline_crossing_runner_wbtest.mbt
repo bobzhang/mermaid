@@ -90,7 +90,7 @@ test "elk layered crossing selected trial retains best post-sweep objective acro
   )
   let plan : ElkLayeredCrossingExecutionPlan = {
     strategy: default_plan.strategy,
-    config: { ..default_plan.config, trial_count: 2 },
+    config: { ..default_plan.config, trial_count: 2, },
     sweep_kernel: default_plan.sweep_kernel,
     local_refinement_kernels: default_plan.local_refinement_kernels,
   }
@@ -156,7 +156,7 @@ test "elk layered crossing local refinement does not worsen trial objective" {
   )
   let plan : ElkLayeredCrossingExecutionPlan = {
     strategy: default_plan.strategy,
-    config: { ..default_plan.config, trial_count: 5 },
+    config: { ..default_plan.config, trial_count: 5, },
     sweep_kernel: default_plan.sweep_kernel,
     local_refinement_kernels: default_plan.local_refinement_kernels,
   }
@@ -465,7 +465,7 @@ test "elk layered crossing single-trial config remains behavior-equivalent" {
   let single_result = run_crossing_phase_with_plan(input, single_plan)
   let multi_plan : ElkLayeredCrossingExecutionPlan = {
     strategy: LayerSweepWithLocalRefinement,
-    config: { ..single_plan.config, trial_count: 1 },
+    config: { ..single_plan.config, trial_count: 1, },
     sweep_kernel: single_plan.sweep_kernel,
     local_refinement_kernels: single_plan.local_refinement_kernels,
   }

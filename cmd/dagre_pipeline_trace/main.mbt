@@ -22,7 +22,7 @@ fn print_usage() -> Unit {
     #|  --source  Mermaid source text
     #|  --help   Show this help
     #|
-  println(usage.trim_end().to_string())
+  println(usage.trim_end().to_owned())
 }
 
 ///|
@@ -54,7 +54,7 @@ fn parse_case_arg(args : Array[String]) -> String? {
       if case_name == "" {
         return None
       }
-      return Some(case_name.to_string())
+      return Some(case_name.to_owned())
     }
     return None
   }
@@ -63,7 +63,7 @@ fn parse_case_arg(args : Array[String]) -> String? {
     if case_name == "" {
       return None
     }
-    return Some(case_name.to_string())
+    return Some(case_name.to_owned())
   }
   None
 }
@@ -77,7 +77,7 @@ fn parse_source_arg(args : Array[String]) -> String? {
       if source == "" {
         return None
       }
-      return Some(source.to_string())
+      return Some(source.to_owned())
     }
   }
   if args.length() == 2 && args[0] == "--source" {
@@ -85,7 +85,7 @@ fn parse_source_arg(args : Array[String]) -> String? {
     if source == "" {
       return None
     }
-    return Some(source.to_string())
+    return Some(source.to_owned())
   }
   None
 }
@@ -107,9 +107,9 @@ fn flow_graph(
   edges : Array[(String, String)],
   direction : @model.Direction,
 ) -> @model.MermaidGraph {
-  let nodes : Map[String, @model.MermaidNode] = {}
+  let nodes : Map[String, @model.MermaidNode] = Map([])
   for node_id in node_ids {
-    nodes[node_id] = { id: node_id, label: node_id, shape: Rectangle }
+    nodes[node_id] = { id: node_id, label: node_id, shape: Rectangle, }
   }
   let graph_edges : Array[@model.MermaidEdge] = []
   for edge in edges {
@@ -124,10 +124,10 @@ fn flow_graph(
       relation_operator: Some("-->"),
     })
   }
-  let class_defs : Map[String, Map[String, String]] = {}
-  let class_assignments : Map[String, String] = {}
-  let node_styles : Map[String, Map[String, String]] = {}
-  let sequence_actor_kinds : Map[String, @model.SequenceParticipantKind] = {}
+  let class_defs : Map[String, Map[String, String]] = Map([])
+  let class_assignments : Map[String, String] = Map([])
+  let node_styles : Map[String, Map[String, String]] = Map([])
+  let sequence_actor_kinds : Map[String, @model.SequenceParticipantKind] = Map([])
   let sequence_blocks : Array[@model.SequenceBlock] = []
   let sequence_notes : Array[@model.SequenceNote] = []
   let sequence_activation_commands : Array[@model.SequenceActivationCommand] = []
@@ -332,19 +332,14 @@ fn dump_graph_trace(case_name : String, graph : @model.MermaidGraph) -> Unit {
 
 ///|
 fn dump_source_trace(source : String) -> Bool {
-  let parsed : Result[@model.MermaidGraph, @model.MermaidError] = try? @parser_header_core.parse_mermaid(
-    source,
-  )
-  match parsed {
-    Ok(graph) => {
-      dump_graph_trace("source", graph)
-      true
-    }
-    Err(err) => {
+  let graph = @parser_header_core.parse_mermaid(source) catch {
+    err => {
       println("Error: failed to parse source: \{err}")
-      false
+      return false
     }
   }
+  dump_graph_trace("source", graph)
+  true
 }
 
 ///|

@@ -18,4 +18,3 @@ pub fn render_ascii_er(@model.MermaidGraph, @layout_plan.AsciiErLayout, @model.A
 // Type aliases
 
 // Traits
-

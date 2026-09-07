@@ -2,7 +2,13 @@
 struct StateGridCoord {
   x : Int
   y : Int
-} derive(Eq, Show)
+} derive(Eq, Debug)
+
+///|
+pub extend StateGridCoord with Eq::{not_equal, equal}
+
+///|
+pub extend StateGridCoord with @debug.Debug::{to_repr}
 
 ///|
 fn state_grid_lifecycle_source() -> String {
@@ -40,7 +46,7 @@ fn state_grid_composite_source() -> String {
 
 ///|
 fn state_grid_target_ids(graph : MermaidGraph) -> Map[String, Bool] {
-  let target_ids : Map[String, Bool] = {}
+  let target_ids : Map[String, Bool] = Map([])
   for edge in graph.edges {
     target_ids[edge.target] = true
   }
@@ -66,8 +72,8 @@ fn state_grid_positions(
   graph : MermaidGraph,
   nodes_in_order : Array[MermaidNode],
 ) -> Map[String, StateGridCoord] {
-  let positions : Map[String, StateGridCoord] = {}
-  let highest_position_by_level : Map[Int, Int] = {}
+  let positions : Map[String, StateGridCoord] = Map([])
+  let highest_position_by_level : Map[Int, Int] = Map([])
   let target_ids = state_grid_target_ids(graph)
 
   for node in nodes_in_order {
@@ -78,12 +84,12 @@ fn state_grid_positions(
       highest_position_by_level.get(0),
       0,
     )
-    positions[node.id] = { x: highest, y: 0 }
+    positions[node.id] = { x: highest, y: 0, }
     highest_position_by_level[0] = highest + 4
   }
   if positions.length() == 0 && nodes_in_order.length() > 0 {
     let first_id = nodes_in_order[0].id
-    positions[first_id] = { x: 0, y: 0 }
+    positions[first_id] = { x: 0, y: 0, }
     highest_position_by_level[0] = 4
   }
 
@@ -99,7 +105,7 @@ fn state_grid_positions(
           if positions.contains(child_id) {
             continue
           }
-          positions[child_id] = { x: highest, y: child_level }
+          positions[child_id] = { x: highest, y: child_level, }
           highest = highest + 4
         }
         highest_position_by_level[child_level] = highest
@@ -117,7 +123,7 @@ fn state_grid_positions(
       highest_position_by_level.get(fallback_level),
       0,
     )
-    positions[node.id] = { x: highest, y: fallback_level }
+    positions[node.id] = { x: highest, y: fallback_level, }
     highest_position_by_level[fallback_level] = highest + 4
     fallback_level = fallback_level + 4
   }
@@ -195,43 +201,46 @@ struct StateEdgeDir {
 } derive(Eq)
 
 ///|
+pub extend StateEdgeDir with Eq::{not_equal, equal}
+
+///|
 fn state_dir_up() -> StateEdgeDir {
-  { x: 1, y: 0 }
+  { x: 1, y: 0, }
 }
 
 ///|
 fn state_dir_down() -> StateEdgeDir {
-  { x: 1, y: 2 }
+  { x: 1, y: 2, }
 }
 
 ///|
 fn state_dir_left() -> StateEdgeDir {
-  { x: 0, y: 1 }
+  { x: 0, y: 1, }
 }
 
 ///|
 fn state_dir_right() -> StateEdgeDir {
-  { x: 2, y: 1 }
+  { x: 2, y: 1, }
 }
 
 ///|
 fn state_dir_upper_right() -> StateEdgeDir {
-  { x: 2, y: 0 }
+  { x: 2, y: 0, }
 }
 
 ///|
 fn state_dir_upper_left() -> StateEdgeDir {
-  { x: 0, y: 0 }
+  { x: 0, y: 0, }
 }
 
 ///|
 fn state_dir_lower_right() -> StateEdgeDir {
-  { x: 2, y: 2 }
+  { x: 2, y: 2, }
 }
 
 ///|
 fn state_dir_lower_left() -> StateEdgeDir {
-  { x: 0, y: 2 }
+  { x: 0, y: 2, }
 }
 
 ///|
@@ -321,7 +330,7 @@ fn state_grid_coord_with_dir(
   coord : StateGridCoord,
   direction : StateEdgeDir,
 ) -> AsciiGridCoord {
-  { x: coord.x + direction.x, y: coord.y + direction.y }
+  { x: coord.x + direction.x, y: coord.y + direction.y, }
 }
 
 ///|
@@ -390,11 +399,11 @@ fn state_grid_bounds(positions : Map[String, StateGridCoord]) -> (Int, Int) {
 fn state_grid_blocked_cells(
   positions : Map[String, StateGridCoord],
 ) -> Map[String, Bool] {
-  let blocked : Map[String, Bool] = {}
+  let blocked : Map[String, Bool] = Map([])
   for _, position in positions {
     for y in position.y..<(position.y + 3) {
       for x in position.x..<(position.x + 3) {
-        blocked[ascii_grid_key({ x, y })] = true
+        blocked[ascii_grid_key({ x, y, })] = true
       }
     }
   }

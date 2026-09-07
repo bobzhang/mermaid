@@ -37,7 +37,7 @@ fn print_usage() -> Unit {
     #|  --compare-kernels  Print default-vs-edge-slot rank trace comparison summary
     #|  --help   Show this help
     #|
-  println(usage.trim_end().to_string())
+  println(usage.trim_end().to_owned())
 }
 
 ///|
@@ -94,27 +94,29 @@ fn decode_sweep_kernel_arg(
 
 ///|
 fn decode_positive_int_arg(raw : String) -> Int? {
-  let normalized = raw.trim().to_string()
+  let normalized = raw.trim().to_owned()
   if normalized == "" {
     return None
   }
-  let parsed = try? @string.parse_int(normalized)
-  match parsed {
-    Ok(value) => if value > 0 { Some(value) } else { None }
-    Err(_) => None
+  let value = @string.parse_int(normalized) catch { _ => return None }
+  if value > 0 {
+    Some(value)
+  } else {
+    None
   }
 }
 
 ///|
 fn decode_non_negative_double_arg(raw : String) -> Double? {
-  let normalized = raw.trim().to_string()
+  let normalized = raw.trim().to_owned()
   if normalized == "" {
     return None
   }
-  let parsed = try? @string.parse_double(normalized)
-  match parsed {
-    Ok(value) => if value >= 0.0 { Some(value) } else { None }
-    Err(_) => None
+  let value = @string.parse_double(normalized) catch { _ => return None }
+  if value >= 0.0 {
+    Some(value)
+  } else {
+    None
   }
 }
 
@@ -189,7 +191,7 @@ fn parse_cli_args(args : Array[String]) -> ElkTraceCliArgs? {
       if parsed_case_name == "" {
         return None
       }
-      case_name = Some(parsed_case_name.to_string())
+      case_name = Some(parsed_case_name.to_owned())
       i += 2
       continue
     }
@@ -293,12 +295,12 @@ fn parse_cli_args(args : Array[String]) -> ElkTraceCliArgs? {
       if parsed_case_name == "" {
         return None
       }
-      case_name = Some(parsed_case_name.to_string())
+      case_name = Some(parsed_case_name.to_owned())
       i += 1
       continue
     }
     if arg is [.. "--source=", .. raw_source] {
-      let parsed_source = decode_source_arg(raw_source.to_string())
+      let parsed_source = decode_source_arg(raw_source.to_owned())
       if parsed_source.trim() == "" {
         return None
       }
@@ -307,7 +309,7 @@ fn parse_cli_args(args : Array[String]) -> ElkTraceCliArgs? {
       continue
     }
     if arg is [.. "--sweep-kernel=", .. raw_sweep_kernel] {
-      match decode_sweep_kernel_arg(raw_sweep_kernel.to_string()) {
+      match decode_sweep_kernel_arg(raw_sweep_kernel.to_owned()) {
         Some(parsed_kernel) => sweep_kernel = parsed_kernel
         None => return None
       }
@@ -315,7 +317,7 @@ fn parse_cli_args(args : Array[String]) -> ElkTraceCliArgs? {
       continue
     }
     if arg is [.. "--trial-count=", .. raw_trial_count] {
-      match decode_positive_int_arg(raw_trial_count.to_string()) {
+      match decode_positive_int_arg(raw_trial_count.to_owned()) {
         Some(value) => trial_count_override = Some(value)
         None => return None
       }
@@ -323,7 +325,7 @@ fn parse_cli_args(args : Array[String]) -> ElkTraceCliArgs? {
       continue
     }
     if arg is [.. "--sweep-pass-count=", .. raw_sweep_pass_count] {
-      match decode_positive_int_arg(raw_sweep_pass_count.to_string()) {
+      match decode_positive_int_arg(raw_sweep_pass_count.to_owned()) {
         Some(value) => sweep_pass_count_override = Some(value)
         None => return None
       }
@@ -337,7 +339,7 @@ fn parse_cli_args(args : Array[String]) -> ElkTraceCliArgs? {
       ] {
       match
         decode_non_negative_double_arg(
-          raw_model_order_inversion_influence.to_string(),
+          raw_model_order_inversion_influence.to_owned(),
         ) {
         Some(value) =>
           trial_model_order_inversion_influence_override = Some(value)
@@ -350,7 +352,7 @@ fn parse_cli_args(args : Array[String]) -> ElkTraceCliArgs? {
       is [.. "--trial-continuation-policy=", .. raw_trial_continuation_policy] {
       match
         decode_trial_continuation_policy_arg(
-          raw_trial_continuation_policy.to_string(),
+          raw_trial_continuation_policy.to_owned(),
         ) {
         Some(value) => trial_continuation_policy_override = Some(value)
         None => return None
@@ -362,7 +364,7 @@ fn parse_cli_args(args : Array[String]) -> ElkTraceCliArgs? {
       is [.. "--local-refinement-profile=", .. raw_local_refinement_profile] {
       match
         decode_local_refinement_profile_arg(
-          raw_local_refinement_profile.to_string(),
+          raw_local_refinement_profile.to_owned(),
         ) {
         Some(value) => local_refinement_profile_override = Some(value)
         None => return None
@@ -377,7 +379,7 @@ fn parse_cli_args(args : Array[String]) -> ElkTraceCliArgs? {
       ] {
       match
         decode_seed_candidate_source_policy_arg(
-          raw_seed_candidate_source_policy.to_string(),
+          raw_seed_candidate_source_policy.to_owned(),
         ) {
         Some(value) => seed_candidate_source_policy_override = Some(value)
         None => return None
@@ -417,9 +419,9 @@ fn parse_cli_args(args : Array[String]) -> ElkTraceCliArgs? {
 
 ///|
 fn build_graph(kernel : ElkTraceKernel) -> @model.MermaidGraph {
-  let node_map : Map[String, @model.MermaidNode] = {}
+  let node_map : Map[String, @model.MermaidNode] = Map([])
   for node_id in kernel.nodes {
-    node_map[node_id] = { id: node_id, label: node_id, shape: Rectangle }
+    node_map[node_id] = { id: node_id, label: node_id, shape: Rectangle, }
   }
   let edges : Array[@model.MermaidEdge] = []
   for edge in kernel.edges {
@@ -434,10 +436,10 @@ fn build_graph(kernel : ElkTraceKernel) -> @model.MermaidGraph {
       relation_operator: Some("-->"),
     })
   }
-  let class_defs : Map[String, Map[String, String]] = {}
-  let class_assignments : Map[String, String] = {}
-  let node_styles : Map[String, Map[String, String]] = {}
-  let sequence_actor_kinds : Map[String, @model.SequenceParticipantKind] = {}
+  let class_defs : Map[String, Map[String, String]] = Map([])
+  let class_assignments : Map[String, String] = Map([])
+  let node_styles : Map[String, Map[String, String]] = Map([])
+  let sequence_actor_kinds : Map[String, @model.SequenceParticipantKind] = Map([])
   {
     diagram_kind: Flowchart,
     direction: kernel.direction,
@@ -532,7 +534,7 @@ fn dump_graph_trace(
   seed_candidate_source_policy_override : @layout_engine_graph_engine_elk_core.ElkLayeredRankTraceSeedCandidateSourcePolicy?,
   trial_model_order_inversion_influence_override : Double?,
 ) -> Bool {
-  let options = { ..@model.RenderOptions::default(), layout_engine: Some(Elk) }
+  let options = { ..@model.RenderOptions::default(), layout_engine: Some(Elk), }
   let request : @layout_engine_graph_contract_core.GraphLayoutBackendRequest = {
     graph,
     options,
@@ -567,7 +569,7 @@ fn dump_graph_kernel_comparison(
   seed_candidate_source_policy_override : @layout_engine_graph_engine_elk_core.ElkLayeredRankTraceSeedCandidateSourcePolicy?,
   trial_model_order_inversion_influence_override : Double?,
 ) -> Bool {
-  let options = { ..@model.RenderOptions::default(), layout_engine: Some(Elk) }
+  let options = { ..@model.RenderOptions::default(), layout_engine: Some(Elk), }
   let request : @layout_engine_graph_contract_core.GraphLayoutBackendRequest = {
     graph,
     options,
@@ -662,22 +664,17 @@ fn dump_source_trace(
   seed_candidate_source_policy_override : @layout_engine_graph_engine_elk_core.ElkLayeredRankTraceSeedCandidateSourcePolicy?,
   trial_model_order_inversion_influence_override : Double?,
 ) -> Bool {
-  let graph_result : Result[@model.MermaidGraph, @model.MermaidError] = try? @parser_header_core.parse_mermaid(
-    source,
-  )
-  match graph_result {
-    Ok(graph) =>
-      dump_graph_trace(
-        graph, sweep_kernel, trial_count_override, sweep_pass_count_override, trial_continuation_policy_override,
-        local_refinement_profile_override, seed_candidate_source_policy_override,
-        trial_model_order_inversion_influence_override,
-      )
-    Err(err) => {
+  let graph = @parser_header_core.parse_mermaid(source) catch {
+    err => {
       println("Error: failed to parse --source payload")
       println("\{err}")
-      false
+      return false
     }
   }
+  dump_graph_trace(
+    graph, sweep_kernel, trial_count_override, sweep_pass_count_override, trial_continuation_policy_override,
+    local_refinement_profile_override, seed_candidate_source_policy_override, trial_model_order_inversion_influence_override,
+  )
 }
 
 ///|
@@ -690,22 +687,17 @@ fn dump_source_kernel_comparison(
   seed_candidate_source_policy_override : @layout_engine_graph_engine_elk_core.ElkLayeredRankTraceSeedCandidateSourcePolicy?,
   trial_model_order_inversion_influence_override : Double?,
 ) -> Bool {
-  let graph_result : Result[@model.MermaidGraph, @model.MermaidError] = try? @parser_header_core.parse_mermaid(
-    source,
-  )
-  match graph_result {
-    Ok(graph) =>
-      dump_graph_kernel_comparison(
-        graph, trial_count_override, sweep_pass_count_override, trial_continuation_policy_override,
-        local_refinement_profile_override, seed_candidate_source_policy_override,
-        trial_model_order_inversion_influence_override,
-      )
-    Err(err) => {
+  let graph = @parser_header_core.parse_mermaid(source) catch {
+    err => {
       println("Error: failed to parse --source payload")
       println("\{err}")
-      false
+      return false
     }
   }
+  dump_graph_kernel_comparison(
+    graph, trial_count_override, sweep_pass_count_override, trial_continuation_policy_override,
+    local_refinement_profile_override, seed_candidate_source_policy_override, trial_model_order_inversion_influence_override,
+  )
 }
 
 ///|

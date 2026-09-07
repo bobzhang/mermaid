@@ -15,4 +15,3 @@ pub fn parse_state_diagram(Array[String]) -> @model.MermaidGraph
 // Type aliases
 
 // Traits
-

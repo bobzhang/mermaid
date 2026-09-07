@@ -34,7 +34,7 @@ pub fn run_graph_layout_engine_backend(
     DagreParity => {
       let tuned_request : GraphLayoutBackendRequest = {
         ..request,
-        options: { ..request.options, layout_engine: Some(DagreParity) },
+        options: { ..request.options, layout_engine: Some(DagreParity), },
       }
       @layout_engine_graph_backend_core.run_graph_backend_pipeline(
         tuned_request,

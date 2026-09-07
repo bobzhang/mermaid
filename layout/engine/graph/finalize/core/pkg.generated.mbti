@@ -15,4 +15,3 @@ pub fn finalize_positioned_graph(Int, Int, Int, Array[@model.PositionedNode], Ar
 // Type aliases
 
 // Traits
-

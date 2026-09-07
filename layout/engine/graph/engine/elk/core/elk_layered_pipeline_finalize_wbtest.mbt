@@ -28,7 +28,7 @@ test "elk layered finalize phase preserves placement coordinates for subgraph-he
   let placement_state = run_elk_layered_node_placement_phase(
     setup_state, rank_phase_state, node_size_state, spacing_state,
   )
-  let before_finalize : Map[String, (Int, Int)] = {}
+  let before_finalize : Map[String, (Int, Int)] = Map([])
   for node in placement_state.positioned_nodes {
     before_finalize[node.id] = (node.x, node.y)
   }

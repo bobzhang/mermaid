@@ -118,11 +118,11 @@ pub fn finalize_positioned_graph(
     for i, edge in positioned_edges {
       let shifted_points : Array[Point] = []
       for point in edge.points {
-        shifted_points.push({ x: point.x + shift_x, y: point.y + shift_y })
+        shifted_points.push({ x: point.x + shift_x, y: point.y + shift_y, })
       }
       let shifted_label = match edge.label_position {
         Some(position) =>
-          Some(Point::{ x: position.x + shift_x, y: position.y + shift_y })
+          Some(Point::{ x: position.x + shift_x, y: position.y + shift_y, })
         None => None
       }
       positioned_edges[i] = {

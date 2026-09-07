@@ -43,22 +43,22 @@ fn crossing_heuristic_role_tag(
 fn build_crossing_heuristic_contract(
   sweep_kernel : ElkLayeredCrossingSweepKernel,
 ) -> ElkLayeredCrossingHeuristicContract {
-  { role: crossing_heuristic_role_tag(sweep_kernel), sweep_kernel }
+  { role: crossing_heuristic_role_tag(sweep_kernel), sweep_kernel, }
 }
 
 ///|
 fn build_crossing_port_distributor_contract() -> ElkLayeredCrossingPortDistributorContract {
-  { role: "integrated-port-distribution" }
+  { role: "integrated-port-distribution", }
 }
 
 ///|
 fn build_crossing_constraint_resolver_contract() -> ElkLayeredCrossingConstraintResolverContract {
-  { role: "local-refinement-constraint-resolver" }
+  { role: "local-refinement-constraint-resolver", }
 }
 
 ///|
 fn build_crossing_counter_contract() -> ElkLayeredCrossingCounterContract {
-  { role: "rank-segment-objective-counter" }
+  { role: "rank-segment-objective-counter", }
 }
 
 ///|

@@ -52,7 +52,7 @@ fn collect_rank_layers_from_setup(
 fn build_rank_index_by_node_id(
   layers : Array[Array[String]],
 ) -> Map[String, Int] {
-  let rank_by_node_id : Map[String, Int] = {}
+  let rank_by_node_id : Map[String, Int] = Map([])
   for rank, layer in layers {
     for node_id in layer {
       rank_by_node_id[node_id] = rank
@@ -188,7 +188,7 @@ async fn snapshot_rank_phase_parity(
   official_layers : Array[Array[String]],
 ) -> Unit {
   let source = @fs.read_file(fixture_path).text()
-  let graph = @parser_header_core.parse_mermaid(source.trim_end().to_string())
+  let graph = @parser_header_core.parse_mermaid(source.trim_end().to_owned())
   let setup_state = @layout_legacy_setup.build_legacy_layout_setup(
     graph,
     @model.RenderOptions::default(),

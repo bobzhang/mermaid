@@ -4,8 +4,8 @@ fn wb_rank_crossings_between(
   right_rank_node_ids : Array[String],
   successors_by_node_id : Map[String, Array[String]],
 ) -> Int {
-  let right_position_by_node_id : Map[String, Int] = {}
-  let in_right_rank : Map[String, Bool] = {}
+  let right_position_by_node_id : Map[String, Int] = Map([])
+  let in_right_rank : Map[String, Bool] = Map([])
   for position, node_id in right_rank_node_ids {
     right_position_by_node_id[node_id] = position
     in_right_rank[node_id] = true
@@ -545,7 +545,7 @@ test "elk layered order optimization keeps multi-rank sweep neighbor state coher
 ///|
 test "elk layered neighbor sort keeps current rank order on full ties" {
   let node_ids = ["B", "A"]
-  let neighbor_by_node_id : Map[String, Array[String]] = {}
+  let neighbor_by_node_id : Map[String, Array[String]] = Map([])
   let rank_position_by_node_id : Map[String, Int] = { "B": 0, "A": 1 }
   let order_index_by_node_id : Map[String, Int] = { "A": 0, "B": 1 }
   let _ = sort_rank_nodes_by_neighbors(
@@ -622,7 +622,7 @@ test "elk layered neighbor sort fills unknown barycenters in pre-ordered mode" {
 ///|
 test "elk layered neighbor sort applies forster constraints with barycenter groups" {
   let node_ids = ["C", "B", "A"]
-  let neighbor_by_node_id : Map[String, Array[String]] = {}
+  let neighbor_by_node_id : Map[String, Array[String]] = Map([])
   let rank_position_by_node_id : Map[String, Int] = { "C": 0, "B": 1, "A": 2 }
   let order_index_by_node_id : Map[String, Int] = { "A": 0, "B": 1, "C": 2 }
   let changed = sort_rank_nodes_by_neighbors(
@@ -898,7 +898,7 @@ fn stress_005_source() -> String {
     #|
   )
   .trim_end()
-  .to_string()
+  .to_owned()
 }
 
 ///|

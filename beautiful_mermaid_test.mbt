@@ -73,22 +73,30 @@ test "render_mermaid_with_theme_name accepts default alias" (it : @test.Test) {
 
 ///|
 test "render_mermaid_with_theme_name rejects unknown theme" {
-  let rendered = try? @beautiful_mermaid.render_mermaid_with_theme_name(
-    simple_graph_ab(),
-    "moonbit-neon",
-  )
-  guard rendered is Err(err) else { fail("expected unknown theme to fail") }
-  guard err is UnknownTheme(name) else { fail("expected UnknownTheme error") }
-  assert_eq(name, "moonbit-neon")
+  try
+    @beautiful_mermaid.render_mermaid_with_theme_name(
+      simple_graph_ab(),
+      "moonbit-neon",
+    )
+  catch {
+    UnknownTheme(name) => assert_eq(name, "moonbit-neon")
+    _ => fail("expected UnknownTheme error")
+  } noraise {
+    _ => fail("expected unknown theme to fail")
+  }
 }
 
 ///|
 test "render_mermaid_with_theme_name unknown error keeps original input" {
-  let rendered = try? @beautiful_mermaid.render_mermaid_with_theme_name(
-    simple_graph_ab(),
-    "  moonbit   neon  ",
-  )
-  guard rendered is Err(err) else { fail("expected unknown theme to fail") }
-  guard err is UnknownTheme(name) else { fail("expected UnknownTheme error") }
-  assert_eq(name, "  moonbit   neon  ")
+  try
+    @beautiful_mermaid.render_mermaid_with_theme_name(
+      simple_graph_ab(),
+      "  moonbit   neon  ",
+    )
+  catch {
+    UnknownTheme(name) => assert_eq(name, "  moonbit   neon  ")
+    _ => fail("expected UnknownTheme error")
+  } noraise {
+    _ => fail("expected unknown theme to fail")
+  }
 }

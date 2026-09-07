@@ -23,7 +23,7 @@ fn print_usage() -> Unit {
     #|  --case   case1 | case2 | case3 | all
     #|  --help   Show this help
     #|
-  println(usage.trim_end().to_string())
+  println(usage.trim_end().to_owned())
 }
 
 ///|
@@ -55,7 +55,7 @@ fn parse_case_arg(args : Array[String]) -> String? {
       if case_name == "" {
         return None
       }
-      return Some(case_name.to_string())
+      return Some(case_name.to_owned())
     }
     return None
   }
@@ -64,7 +64,7 @@ fn parse_case_arg(args : Array[String]) -> String? {
     if case_name == "" {
       return None
     }
-    return Some(case_name.to_string())
+    return Some(case_name.to_owned())
   }
   None
 }
@@ -140,7 +140,7 @@ fn dump_trace(
 
 ///|
 fn flow_node(id : String) -> @model.MermaidNode {
-  { id, label: id, shape: Rectangle }
+  { id, label: id, shape: Rectangle, }
 }
 
 ///|
