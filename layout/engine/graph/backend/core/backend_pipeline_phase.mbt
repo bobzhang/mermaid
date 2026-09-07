@@ -239,11 +239,11 @@ fn setup_phase_trace(
   metrics["enhanced_horizontal_state_flow"] = bool_flag(
     setup_state.enhanced_horizontal_state_flow,
   )
-  let labels : Map[String, String] = {}
+  let labels : Map[String, String] = Map([])
   labels["diagram_kind"] = diagram_kind_tag(request.graph)
   labels["direction"] = direction_tag(request.graph)
   labels["layout_family"] = "legacy"
-  { phase: snapshot.phase, metrics, labels }
+  { phase: snapshot.phase, metrics, labels, }
 }
 
 ///|
@@ -257,19 +257,19 @@ fn rank_phase_trace(
     setup_state.lane_state.flow_lane_by_node_id,
   )
   metrics["dagre_parity_mode"] = bool_flag(setup_state.dagre_parity_mode)
-  let labels : Map[String, String] = {}
+  let labels : Map[String, String] = Map([])
   labels["rank_layers"] = encode_rank_layers(
     collect_rank_layers_from_setup_state(setup_state),
   )
   labels["layout_family"] = "legacy"
-  { phase: snapshot.phase, metrics, labels }
+  { phase: snapshot.phase, metrics, labels, }
 }
 
 ///|
 fn default_phase_trace(
   snapshot : GraphLayoutPhaseSnapshot,
 ) -> GraphLayoutPhaseTrace {
-  { phase: snapshot.phase, metrics: phase_metrics(snapshot), labels: {} }
+  { phase: snapshot.phase, metrics: phase_metrics(snapshot), labels: {}, }
 }
 
 ///|
@@ -310,5 +310,5 @@ pub fn run_graph_backend_pipeline(
     default_phase_trace(placement_snapshot),
     default_phase_trace(final_snapshot),
   ]
-  { positioned_graph, phase_snapshots, phase_traces }
+  { positioned_graph, phase_snapshots, phase_traces, }
 }

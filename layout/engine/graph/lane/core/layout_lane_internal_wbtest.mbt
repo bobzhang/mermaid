@@ -18,7 +18,7 @@ fn lane_policy_graph(
   edges : Array[MermaidEdge],
   subgraphs : Array[MermaidSubgraph],
 ) -> MermaidGraph {
-  let nodes : Map[String, MermaidNode] = {}
+  let nodes : Map[String, MermaidNode] = Map([])
   for node in nodes_in_order {
     nodes[node.id] = node
   }
@@ -59,7 +59,7 @@ fn densify_rank_assignment(
   nodes_in_order : Array[MermaidNode],
   rank_by_id : Map[String, Int],
 ) -> (Map[String, Int], Int) {
-  let seen_rank : Map[Int, Bool] = {}
+  let seen_rank : Map[Int, Bool] = Map([])
   let sorted_ranks : Array[Int] = []
   for node in nodes_in_order {
     let rank = option_int_or(rank_by_id.get(node.id), 0)
@@ -71,12 +71,12 @@ fn densify_rank_assignment(
   }
   sorted_ranks.sort()
 
-  let dense_rank_by_rank : Map[Int, Int] = {}
+  let dense_rank_by_rank : Map[Int, Int] = Map([])
   for dense_rank, rank in sorted_ranks {
     dense_rank_by_rank[rank] = dense_rank
   }
 
-  let dense_rank_by_id : Map[String, Int] = {}
+  let dense_rank_by_id : Map[String, Int] = Map([])
   let mut max_dense_rank = 0
   for node in nodes_in_order {
     let rank = option_int_or(rank_by_id.get(node.id), 0)
@@ -186,7 +186,7 @@ fn active_tree_cut_entries_from_cut_phase(
   seed_state : DagreNetworkSimplexSeedState,
   cut_phase_state : DagreNetworkSimplexCutPhaseState,
 ) -> Map[String, Int] {
-  let entries : Map[String, Int] = {}
+  let entries : Map[String, Int] = Map([])
   for tree_edge_index in 0..<seed_state.tree_edge_u.length() {
     if !seed_state.tree_edge_active[tree_edge_index] {
       continue
@@ -204,7 +204,7 @@ fn active_tree_cut_entries_from_exchange_step(
   nodes_in_order : Array[MermaidNode],
   exchange_step : DagreNetworkSimplexExchangeStep,
 ) -> Map[String, Int] {
-  let entries : Map[String, Int] = {}
+  let entries : Map[String, Int] = Map([])
   for tree_edge_index in 0..<exchange_step.tree_edge_u.length() {
     if !exchange_step.tree_edge_active[tree_edge_index] {
       continue
@@ -268,7 +268,7 @@ fn fixture_nodes_and_edges_for_acyclic_phase(
 fn fixture_graph_and_nodes_for_flow_layout(
   source : String,
 ) -> (MermaidGraph, Array[MermaidNode]) raise {
-  let graph = @parser.parse_mermaid(source.trim_end().to_string())
+  let graph = @parser.parse_mermaid(source.trim_end().to_owned())
   let prep_state = @layout_engine_graph_prep_core.prepare_graph_inputs(
     graph, true,
   )
@@ -374,7 +374,7 @@ fn stress_003_subgraph_bridges_source() -> String {
     #|
   )
   .trim_end()
-  .to_string()
+  .to_owned()
 }
 
 ///|
@@ -443,7 +443,7 @@ fn stress_005_long_span_backjumps_source() -> String {
     #|
   )
   .trim_end()
-  .to_string()
+  .to_owned()
 }
 
 ///|
@@ -520,7 +520,7 @@ fn stress_006_nested_bridge_loops_source() -> String {
     #|
   )
   .trim_end()
-  .to_string()
+  .to_owned()
 }
 
 ///|
@@ -622,7 +622,7 @@ fn stress_010_bipartite_crossfire_source() -> String {
     #|
   )
   .trim_end()
-  .to_string()
+  .to_owned()
 }
 
 ///|
@@ -741,7 +741,7 @@ fn stress_012_interleaved_subgraph_feedback_source() -> String {
     #|
   )
   .trim_end()
-  .to_string()
+  .to_owned()
 }
 
 ///|
@@ -870,7 +870,7 @@ fn official_layers_layout_stress_012() -> Array[Array[String]] {
 fn collect_fixture_dagre_nesting_rank_layers(
   source : String,
 ) -> Array[Array[String]] raise {
-  let graph = @parser.parse_mermaid(source.trim_end().to_string())
+  let graph = @parser.parse_mermaid(source.trim_end().to_owned())
   let prep_state = @layout_engine_graph_prep_core.prepare_graph_inputs(
     graph, true,
   )
@@ -912,7 +912,7 @@ fn collect_fixture_dagre_nesting_rank_layers(
 fn collect_fixture_lane_state_rank_layers_for_dagre_parity(
   source : String,
 ) -> Array[Array[String]] raise {
-  let graph = @parser.parse_mermaid(source.trim_end().to_string())
+  let graph = @parser.parse_mermaid(source.trim_end().to_owned())
   let prep_state = @layout_engine_graph_prep_core.prepare_graph_inputs(
     graph, true,
   )
@@ -938,14 +938,14 @@ fn collect_simplex_rank_trace_case(
   edges : Array[MermaidEdge],
 ) -> (Bool, Int, Int, Array[Int]) {
   let nodes : Array[MermaidNode] = [
-    { id: "A", label: "A", shape: Rectangle },
-    { id: "B", label: "B", shape: Rectangle },
-    { id: "C", label: "C", shape: Rectangle },
-    { id: "D", label: "D", shape: Rectangle },
-    { id: "E", label: "E", shape: Rectangle },
-    { id: "F", label: "F", shape: Rectangle },
-    { id: "G", label: "G", shape: Rectangle },
-    { id: "H", label: "H", shape: Rectangle },
+    { id: "A", label: "A", shape: Rectangle, },
+    { id: "B", label: "B", shape: Rectangle, },
+    { id: "C", label: "C", shape: Rectangle, },
+    { id: "D", label: "D", shape: Rectangle, },
+    { id: "E", label: "E", shape: Rectangle, },
+    { id: "F", label: "F", shape: Rectangle, },
+    { id: "G", label: "G", shape: Rectangle, },
+    { id: "H", label: "H", shape: Rectangle, },
   ]
   let relaxed_edge_indices : Array[Int] = []
   for edge_index in 0..<edges.length() {
@@ -968,11 +968,11 @@ fn collect_simplex_rank_trace_case(
 ///|
 test "Layout lane collection accounts for long-span edges via virtual segments" {
   let nodes : Array[MermaidNode] = [
-    { id: "A", label: "A", shape: Rectangle },
-    { id: "B", label: "B", shape: Rectangle },
-    { id: "M", label: "M", shape: Rectangle },
-    { id: "X", label: "X", shape: Rectangle },
-    { id: "Y", label: "Y", shape: Rectangle },
+    { id: "A", label: "A", shape: Rectangle, },
+    { id: "B", label: "B", shape: Rectangle, },
+    { id: "M", label: "M", shape: Rectangle, },
+    { id: "X", label: "X", shape: Rectangle, },
+    { id: "Y", label: "Y", shape: Rectangle, },
   ]
   let rank_by_id : Map[String, Int] = { "A": 0, "B": 0, "M": 1, "X": 2, "Y": 2 }
   let edges : Array[MermaidEdge] = [
@@ -995,12 +995,12 @@ test "Layout lane collection accounts for long-span edges via virtual segments" 
 ///|
 test "Layout lane collection uses long-span backward edges for ordering" {
   let nodes : Array[MermaidNode] = [
-    { id: "A", label: "A", shape: Rectangle },
-    { id: "B", label: "B", shape: Rectangle },
-    { id: "C", label: "C", shape: Rectangle },
-    { id: "D", label: "D", shape: Rectangle },
-    { id: "E", label: "E", shape: Rectangle },
-    { id: "F", label: "F", shape: Rectangle },
+    { id: "A", label: "A", shape: Rectangle, },
+    { id: "B", label: "B", shape: Rectangle, },
+    { id: "C", label: "C", shape: Rectangle, },
+    { id: "D", label: "D", shape: Rectangle, },
+    { id: "E", label: "E", shape: Rectangle, },
+    { id: "F", label: "F", shape: Rectangle, },
   ]
   let rank_by_id : Map[String, Int] = {
     "A": 0,
@@ -1042,11 +1042,11 @@ test "Layout lane collection uses long-span backward edges for ordering" {
 ///|
 test "Layout lane dagre parity ordering phase keeps corpus baseline" {
   let case1_nodes : Array[MermaidNode] = [
-    { id: "A", label: "A", shape: Rectangle },
-    { id: "B", label: "B", shape: Rectangle },
-    { id: "M", label: "M", shape: Rectangle },
-    { id: "X", label: "X", shape: Rectangle },
-    { id: "Y", label: "Y", shape: Rectangle },
+    { id: "A", label: "A", shape: Rectangle, },
+    { id: "B", label: "B", shape: Rectangle, },
+    { id: "M", label: "M", shape: Rectangle, },
+    { id: "X", label: "X", shape: Rectangle, },
+    { id: "Y", label: "Y", shape: Rectangle, },
   ]
   let case1_ranks : Map[String, Int] = {
     "A": 0,
@@ -1072,12 +1072,12 @@ test "Layout lane dagre parity ordering phase keeps corpus baseline" {
   )
 
   let case2_nodes : Array[MermaidNode] = [
-    { id: "A", label: "A", shape: Rectangle },
-    { id: "B", label: "B", shape: Rectangle },
-    { id: "C", label: "C", shape: Rectangle },
-    { id: "D", label: "D", shape: Rectangle },
-    { id: "E", label: "E", shape: Rectangle },
-    { id: "F", label: "F", shape: Rectangle },
+    { id: "A", label: "A", shape: Rectangle, },
+    { id: "B", label: "B", shape: Rectangle, },
+    { id: "C", label: "C", shape: Rectangle, },
+    { id: "D", label: "D", shape: Rectangle, },
+    { id: "E", label: "E", shape: Rectangle, },
+    { id: "F", label: "F", shape: Rectangle, },
   ]
   let case2_ranks : Map[String, Int] = {
     "A": 0,
@@ -1106,14 +1106,14 @@ test "Layout lane dagre parity ordering phase keeps corpus baseline" {
   )
 
   let case3_nodes : Array[MermaidNode] = [
-    { id: "A", label: "A", shape: Rectangle },
-    { id: "B", label: "B", shape: Rectangle },
-    { id: "C", label: "C", shape: Rectangle },
-    { id: "D", label: "D", shape: Rectangle },
-    { id: "E", label: "E", shape: Rectangle },
-    { id: "F", label: "F", shape: Rectangle },
-    { id: "G", label: "G", shape: Rectangle },
-    { id: "H", label: "H", shape: Rectangle },
+    { id: "A", label: "A", shape: Rectangle, },
+    { id: "B", label: "B", shape: Rectangle, },
+    { id: "C", label: "C", shape: Rectangle, },
+    { id: "D", label: "D", shape: Rectangle, },
+    { id: "E", label: "E", shape: Rectangle, },
+    { id: "F", label: "F", shape: Rectangle, },
+    { id: "G", label: "G", shape: Rectangle, },
+    { id: "H", label: "H", shape: Rectangle, },
   ]
   let case3_ranks : Map[String, Int] = {
     "A": 0,
@@ -1151,11 +1151,11 @@ test "Layout lane dagre parity ordering phase keeps corpus baseline" {
 ///|
 test "Layout lane dagre parity ordering phase keeps sweep trace baseline" {
   let case1_nodes : Array[MermaidNode] = [
-    { id: "A", label: "A", shape: Rectangle },
-    { id: "B", label: "B", shape: Rectangle },
-    { id: "M", label: "M", shape: Rectangle },
-    { id: "X", label: "X", shape: Rectangle },
-    { id: "Y", label: "Y", shape: Rectangle },
+    { id: "A", label: "A", shape: Rectangle, },
+    { id: "B", label: "B", shape: Rectangle, },
+    { id: "M", label: "M", shape: Rectangle, },
+    { id: "X", label: "X", shape: Rectangle, },
+    { id: "Y", label: "Y", shape: Rectangle, },
   ]
   let case1_ranks : Map[String, Int] = {
     "A": 0,
@@ -1253,12 +1253,12 @@ test "Layout lane dagre parity ordering phase keeps sweep trace baseline" {
   }
 
   let nodes : Array[MermaidNode] = [
-    { id: "A", label: "A", shape: Rectangle },
-    { id: "B", label: "B", shape: Rectangle },
-    { id: "C", label: "C", shape: Rectangle },
-    { id: "D", label: "D", shape: Rectangle },
-    { id: "E", label: "E", shape: Rectangle },
-    { id: "F", label: "F", shape: Rectangle },
+    { id: "A", label: "A", shape: Rectangle, },
+    { id: "B", label: "B", shape: Rectangle, },
+    { id: "C", label: "C", shape: Rectangle, },
+    { id: "D", label: "D", shape: Rectangle, },
+    { id: "E", label: "E", shape: Rectangle, },
+    { id: "F", label: "F", shape: Rectangle, },
   ]
   let ranks : Map[String, Int] = {
     "A": 0,
@@ -1429,14 +1429,14 @@ test "Layout lane dagre parity ordering phase keeps sweep trace baseline" {
   }
 
   let case3_nodes : Array[MermaidNode] = [
-    { id: "A", label: "A", shape: Rectangle },
-    { id: "B", label: "B", shape: Rectangle },
-    { id: "C", label: "C", shape: Rectangle },
-    { id: "D", label: "D", shape: Rectangle },
-    { id: "E", label: "E", shape: Rectangle },
-    { id: "F", label: "F", shape: Rectangle },
-    { id: "G", label: "G", shape: Rectangle },
-    { id: "H", label: "H", shape: Rectangle },
+    { id: "A", label: "A", shape: Rectangle, },
+    { id: "B", label: "B", shape: Rectangle, },
+    { id: "C", label: "C", shape: Rectangle, },
+    { id: "D", label: "D", shape: Rectangle, },
+    { id: "E", label: "E", shape: Rectangle, },
+    { id: "F", label: "F", shape: Rectangle, },
+    { id: "G", label: "G", shape: Rectangle, },
+    { id: "H", label: "H", shape: Rectangle, },
   ]
   let case3_ranks : Map[String, Int] = {
     "A": 0,
@@ -1550,9 +1550,9 @@ test "Layout lane dagre parity ordering phase keeps sweep trace baseline" {
 ///|
 test "Layout cycle detection flags simple feedback loops" {
   let nodes : Array[MermaidNode] = [
-    { id: "A", label: "A", shape: Rectangle },
-    { id: "B", label: "B", shape: Rectangle },
-    { id: "C", label: "C", shape: Rectangle },
+    { id: "A", label: "A", shape: Rectangle, },
+    { id: "B", label: "B", shape: Rectangle, },
+    { id: "C", label: "C", shape: Rectangle, },
   ]
   let cyclic_edges : Array[MermaidEdge] = [
     {
@@ -1611,10 +1611,10 @@ test "Layout cycle detection flags simple feedback loops" {
 ///|
 test "Layout greedy feedback edge selector marks incoming edges of max score pivot" {
   let nodes : Array[MermaidNode] = [
-    { id: "A", label: "A", shape: Rectangle },
-    { id: "B", label: "B", shape: Rectangle },
-    { id: "C", label: "C", shape: Rectangle },
-    { id: "D", label: "D", shape: Rectangle },
+    { id: "A", label: "A", shape: Rectangle, },
+    { id: "B", label: "B", shape: Rectangle, },
+    { id: "C", label: "C", shape: Rectangle, },
+    { id: "D", label: "D", shape: Rectangle, },
   ]
   let edges : Array[MermaidEdge] = [
     {
@@ -1680,8 +1680,8 @@ test "Layout greedy feedback edge selector marks incoming edges of max score piv
 ///|
 test "Layout greedy feedback edge selector prefers lighter reverse direction with multi-edges" {
   let nodes : Array[MermaidNode] = [
-    { id: "N1", label: "N1", shape: Rectangle },
-    { id: "N2", label: "N2", shape: Rectangle },
+    { id: "N1", label: "N1", shape: Rectangle, },
+    { id: "N2", label: "N2", shape: Rectangle, },
   ]
   let edges : Array[MermaidEdge] = [
     {
@@ -1728,8 +1728,8 @@ test "Layout greedy feedback edge selector prefers lighter reverse direction wit
 ///|
 test "Layout greedy feedback edge selector expands aggregated reverse multi-edges" {
   let nodes : Array[MermaidNode] = [
-    { id: "N1", label: "N1", shape: Rectangle },
-    { id: "N2", label: "N2", shape: Rectangle },
+    { id: "N1", label: "N1", shape: Rectangle, },
+    { id: "N2", label: "N2", shape: Rectangle, },
   ]
   let edges : Array[MermaidEdge] = [
     {
@@ -1776,12 +1776,12 @@ test "Layout greedy feedback edge selector expands aggregated reverse multi-edge
 ///|
 test "Layout greedy feedback edge selector matches upstream corpus" {
   let nodes : Array[MermaidNode] = [
-    { id: "A", label: "A", shape: Rectangle },
-    { id: "B", label: "B", shape: Rectangle },
-    { id: "C", label: "C", shape: Rectangle },
-    { id: "D", label: "D", shape: Rectangle },
-    { id: "E", label: "E", shape: Rectangle },
-    { id: "F", label: "F", shape: Rectangle },
+    { id: "A", label: "A", shape: Rectangle, },
+    { id: "B", label: "B", shape: Rectangle, },
+    { id: "C", label: "C", shape: Rectangle, },
+    { id: "D", label: "D", shape: Rectangle, },
+    { id: "E", label: "E", shape: Rectangle, },
+    { id: "F", label: "F", shape: Rectangle, },
   ]
 
   let case0_edges : Array[MermaidEdge] = [
@@ -1872,10 +1872,10 @@ test "Layout greedy feedback edge selector matches upstream corpus" {
 ///|
 test "Layout acyclic DFS phase matches upstream back-edge decomposition" {
   let nodes : Array[MermaidNode] = [
-    { id: "A", label: "A", shape: Rectangle },
-    { id: "B", label: "B", shape: Rectangle },
-    { id: "C", label: "C", shape: Rectangle },
-    { id: "D", label: "D", shape: Rectangle },
+    { id: "A", label: "A", shape: Rectangle, },
+    { id: "B", label: "B", shape: Rectangle, },
+    { id: "C", label: "C", shape: Rectangle, },
+    { id: "D", label: "D", shape: Rectangle, },
   ]
   let edges : Array[MermaidEdge] = [
     flow_edge("B", "A"),
@@ -1908,12 +1908,12 @@ test "Layout acyclic DFS phase matches upstream back-edge decomposition" {
 ///|
 test "Layout acyclic DFS phase matches upstream corpus" {
   let nodes : Array[MermaidNode] = [
-    { id: "A", label: "A", shape: Rectangle },
-    { id: "B", label: "B", shape: Rectangle },
-    { id: "C", label: "C", shape: Rectangle },
-    { id: "D", label: "D", shape: Rectangle },
-    { id: "E", label: "E", shape: Rectangle },
-    { id: "F", label: "F", shape: Rectangle },
+    { id: "A", label: "A", shape: Rectangle, },
+    { id: "B", label: "B", shape: Rectangle, },
+    { id: "C", label: "C", shape: Rectangle, },
+    { id: "D", label: "D", shape: Rectangle, },
+    { id: "E", label: "E", shape: Rectangle, },
+    { id: "F", label: "F", shape: Rectangle, },
   ]
 
   let case0_edges : Array[MermaidEdge] = [
@@ -2115,24 +2115,24 @@ test "Layout lane state dagre parity keeps stress fixture rank layers faithful" 
 ///|
 test "Layout dagre simplex ranker matches upstream nested bridge loop baseline" {
   let nodes : Array[MermaidNode] = [
-    { id: "SRC", label: "SRC", shape: Rectangle },
-    { id: "SNK", label: "SNK", shape: Rectangle },
-    { id: "L0", label: "L0", shape: Rectangle },
-    { id: "L1", label: "L1", shape: Rectangle },
-    { id: "L2", label: "L2", shape: Rectangle },
-    { id: "LI1", label: "LI1", shape: Rectangle },
-    { id: "LI2", label: "LI2", shape: Rectangle },
-    { id: "LI3", label: "LI3", shape: Rectangle },
-    { id: "L3", label: "L3", shape: Rectangle },
-    { id: "L4", label: "L4", shape: Rectangle },
-    { id: "R0", label: "R0", shape: Rectangle },
-    { id: "R1", label: "R1", shape: Rectangle },
-    { id: "R2", label: "R2", shape: Rectangle },
-    { id: "RI1", label: "RI1", shape: Rectangle },
-    { id: "RI2", label: "RI2", shape: Rectangle },
-    { id: "RI3", label: "RI3", shape: Rectangle },
-    { id: "R3", label: "R3", shape: Rectangle },
-    { id: "R4", label: "R4", shape: Rectangle },
+    { id: "SRC", label: "SRC", shape: Rectangle, },
+    { id: "SNK", label: "SNK", shape: Rectangle, },
+    { id: "L0", label: "L0", shape: Rectangle, },
+    { id: "L1", label: "L1", shape: Rectangle, },
+    { id: "L2", label: "L2", shape: Rectangle, },
+    { id: "LI1", label: "LI1", shape: Rectangle, },
+    { id: "LI2", label: "LI2", shape: Rectangle, },
+    { id: "LI3", label: "LI3", shape: Rectangle, },
+    { id: "L3", label: "L3", shape: Rectangle, },
+    { id: "L4", label: "L4", shape: Rectangle, },
+    { id: "R0", label: "R0", shape: Rectangle, },
+    { id: "R1", label: "R1", shape: Rectangle, },
+    { id: "R2", label: "R2", shape: Rectangle, },
+    { id: "RI1", label: "RI1", shape: Rectangle, },
+    { id: "RI2", label: "RI2", shape: Rectangle, },
+    { id: "RI3", label: "RI3", shape: Rectangle, },
+    { id: "R3", label: "R3", shape: Rectangle, },
+    { id: "R4", label: "R4", shape: Rectangle, },
   ]
   let edges : Array[MermaidEdge] = [
     flow_edge("SRC", "L0"),
@@ -2206,8 +2206,8 @@ test "Layout dagre simplex ranker matches upstream nested bridge loop baseline" 
 ///|
 test "Layout acyclic greedy phase matches upstream multi-edge decomposition" {
   let nodes : Array[MermaidNode] = [
-    { id: "N1", label: "N1", shape: Rectangle },
-    { id: "N2", label: "N2", shape: Rectangle },
+    { id: "N1", label: "N1", shape: Rectangle, },
+    { id: "N2", label: "N2", shape: Rectangle, },
   ]
   let edges : Array[MermaidEdge] = [
     flow_edge("N1", "N2"),
@@ -2227,9 +2227,9 @@ test "Layout acyclic greedy phase matches upstream multi-edge decomposition" {
 ///|
 test "Layout acyclic phase excludes definition-backward edges from relaxed DAG" {
   let nodes : Array[MermaidNode] = [
-    { id: "A", label: "A", shape: Rectangle },
-    { id: "B", label: "B", shape: Rectangle },
-    { id: "C", label: "C", shape: Rectangle },
+    { id: "A", label: "A", shape: Rectangle, },
+    { id: "B", label: "B", shape: Rectangle, },
+    { id: "C", label: "C", shape: Rectangle, },
   ]
   let edges : Array[MermaidEdge] = [flow_edge("C", "A"), flow_edge("A", "B")]
 
@@ -2245,12 +2245,12 @@ test "Layout acyclic phase excludes definition-backward edges from relaxed DAG" 
 ///|
 test "Layout definition-backward heuristic can collapse sink rank when sink is declared early" {
   let nodes : Array[MermaidNode] = [
-    { id: "SRC", label: "SRC", shape: Rectangle },
-    { id: "SNK", label: "SNK", shape: Rectangle },
-    { id: "A", label: "A", shape: Rectangle },
-    { id: "B", label: "B", shape: Rectangle },
-    { id: "C", label: "C", shape: Rectangle },
-    { id: "D", label: "D", shape: Rectangle },
+    { id: "SRC", label: "SRC", shape: Rectangle, },
+    { id: "SNK", label: "SNK", shape: Rectangle, },
+    { id: "A", label: "A", shape: Rectangle, },
+    { id: "B", label: "B", shape: Rectangle, },
+    { id: "C", label: "C", shape: Rectangle, },
+    { id: "D", label: "D", shape: Rectangle, },
   ]
   let edges : Array[MermaidEdge] = [
     flow_edge("SRC", "A"),
@@ -2322,10 +2322,10 @@ test "Layout definition-backward heuristic can collapse sink rank when sink is d
 ///|
 test "Layout cycle-aware rank collection rehydrates cyclic forward order" {
   let nodes : Array[MermaidNode] = [
-    { id: "A", label: "A", shape: Rectangle },
-    { id: "B", label: "B", shape: Rectangle },
-    { id: "C", label: "C", shape: Rectangle },
-    { id: "D", label: "D", shape: Rectangle },
+    { id: "A", label: "A", shape: Rectangle, },
+    { id: "B", label: "B", shape: Rectangle, },
+    { id: "C", label: "C", shape: Rectangle, },
+    { id: "D", label: "D", shape: Rectangle, },
   ]
   let edges : Array[MermaidEdge] = [
     {
@@ -2388,8 +2388,8 @@ test "Layout cycle-aware rank collection rehydrates cyclic forward order" {
 ///|
 test "Layout simplex prep aggregates relaxed and reversed edges into one directed edge" {
   let nodes : Array[MermaidNode] = [
-    { id: "A", label: "A", shape: Rectangle },
-    { id: "B", label: "B", shape: Rectangle },
+    { id: "A", label: "A", shape: Rectangle, },
+    { id: "B", label: "B", shape: Rectangle, },
   ]
   let edges : Array[MermaidEdge] = [
     flow_edge("A", "B"),
@@ -2416,11 +2416,11 @@ test "Layout simplex prep aggregates relaxed and reversed edges into one directe
 ///|
 test "Layout simplex prep adds zero-cost connectors across weak components" {
   let nodes : Array[MermaidNode] = [
-    { id: "A", label: "A", shape: Rectangle },
-    { id: "B", label: "B", shape: Rectangle },
-    { id: "C", label: "C", shape: Rectangle },
-    { id: "D", label: "D", shape: Rectangle },
-    { id: "E", label: "E", shape: Rectangle },
+    { id: "A", label: "A", shape: Rectangle, },
+    { id: "B", label: "B", shape: Rectangle, },
+    { id: "C", label: "C", shape: Rectangle, },
+    { id: "D", label: "D", shape: Rectangle, },
+    { id: "E", label: "E", shape: Rectangle, },
   ]
   let edges : Array[MermaidEdge] = [flow_edge("A", "B"), flow_edge("C", "D")]
 
@@ -2448,9 +2448,9 @@ test "Layout simplex prep adds zero-cost connectors across weak components" {
 ///|
 test "Layout simplex directed edge specs honor per-edge minlen" {
   let nodes : Array[MermaidNode] = [
-    { id: "A", label: "A", shape: Rectangle },
-    { id: "B", label: "B", shape: Rectangle },
-    { id: "C", label: "C", shape: Rectangle },
+    { id: "A", label: "A", shape: Rectangle, },
+    { id: "B", label: "B", shape: Rectangle, },
+    { id: "C", label: "C", shape: Rectangle, },
   ]
   let directed_edge_specs : Array[(String, String, Int)] = [
     ("A", "B", 2),
@@ -2510,10 +2510,10 @@ test "Layout dagre rank edge specs respect relaxed and reversed directions" {
 ///|
 test "Layout dagre nesting prep mirrors upstream minlen and weight rules" {
   let nodes : Array[MermaidNode] = [
-    { id: "A", label: "A", shape: Rectangle },
-    { id: "B", label: "B", shape: Rectangle },
-    { id: "C", label: "C", shape: Rectangle },
-    { id: "D", label: "D", shape: Rectangle },
+    { id: "A", label: "A", shape: Rectangle, },
+    { id: "B", label: "B", shape: Rectangle, },
+    { id: "C", label: "C", shape: Rectangle, },
+    { id: "D", label: "D", shape: Rectangle, },
   ]
   let edges : Array[MermaidEdge] = [
     flow_edge("A", "B"),
@@ -2688,10 +2688,10 @@ test "Layout dagre nesting prep mirrors upstream minlen and weight rules" {
 ///|
 test "Layout dagre nesting rank phase matches upstream tiny compound baseline" {
   let nodes : Array[MermaidNode] = [
-    { id: "A", label: "A", shape: Rectangle },
-    { id: "B", label: "B", shape: Rectangle },
-    { id: "C", label: "C", shape: Rectangle },
-    { id: "D", label: "D", shape: Rectangle },
+    { id: "A", label: "A", shape: Rectangle, },
+    { id: "B", label: "B", shape: Rectangle, },
+    { id: "C", label: "C", shape: Rectangle, },
+    { id: "D", label: "D", shape: Rectangle, },
   ]
   let edges : Array[MermaidEdge] = [
     flow_edge("A", "B"),
@@ -2739,12 +2739,12 @@ test "Layout dagre nesting rank phase matches upstream tiny compound baseline" {
 ///|
 test "Layout simplex seed phase matches upstream fanout baseline" {
   let nodes : Array[MermaidNode] = [
-    { id: "A", label: "A", shape: Rectangle },
-    { id: "B", label: "B", shape: Rectangle },
-    { id: "C", label: "C", shape: Rectangle },
-    { id: "D", label: "D", shape: Rectangle },
-    { id: "E", label: "E", shape: Rectangle },
-    { id: "F", label: "F", shape: Rectangle },
+    { id: "A", label: "A", shape: Rectangle, },
+    { id: "B", label: "B", shape: Rectangle, },
+    { id: "C", label: "C", shape: Rectangle, },
+    { id: "D", label: "D", shape: Rectangle, },
+    { id: "E", label: "E", shape: Rectangle, },
+    { id: "F", label: "F", shape: Rectangle, },
   ]
   let edges : Array[MermaidEdge] = [
     flow_edge("A", "B"),
@@ -2773,11 +2773,11 @@ test "Layout simplex seed phase matches upstream fanout baseline" {
 ///|
 test "Layout simplex seed phase matches upstream pivot baseline" {
   let nodes : Array[MermaidNode] = [
-    { id: "A", label: "A", shape: Rectangle },
-    { id: "B", label: "B", shape: Rectangle },
-    { id: "C", label: "C", shape: Rectangle },
-    { id: "D", label: "D", shape: Rectangle },
-    { id: "E", label: "E", shape: Rectangle },
+    { id: "A", label: "A", shape: Rectangle, },
+    { id: "B", label: "B", shape: Rectangle, },
+    { id: "C", label: "C", shape: Rectangle, },
+    { id: "D", label: "D", shape: Rectangle, },
+    { id: "E", label: "E", shape: Rectangle, },
   ]
   let edges : Array[MermaidEdge] = [
     flow_edge("A", "C"),
@@ -2807,12 +2807,12 @@ test "Layout simplex seed phase matches upstream pivot baseline" {
 ///|
 test "Layout simplex cut phase matches upstream fanout baseline" {
   let nodes : Array[MermaidNode] = [
-    { id: "A", label: "A", shape: Rectangle },
-    { id: "B", label: "B", shape: Rectangle },
-    { id: "C", label: "C", shape: Rectangle },
-    { id: "D", label: "D", shape: Rectangle },
-    { id: "E", label: "E", shape: Rectangle },
-    { id: "F", label: "F", shape: Rectangle },
+    { id: "A", label: "A", shape: Rectangle, },
+    { id: "B", label: "B", shape: Rectangle, },
+    { id: "C", label: "C", shape: Rectangle, },
+    { id: "D", label: "D", shape: Rectangle, },
+    { id: "E", label: "E", shape: Rectangle, },
+    { id: "F", label: "F", shape: Rectangle, },
   ]
   let edges : Array[MermaidEdge] = [
     flow_edge("A", "B"),
@@ -2855,11 +2855,11 @@ test "Layout simplex cut phase matches upstream fanout baseline" {
 ///|
 test "Layout simplex cut phase matches upstream pivot baseline" {
   let nodes : Array[MermaidNode] = [
-    { id: "A", label: "A", shape: Rectangle },
-    { id: "B", label: "B", shape: Rectangle },
-    { id: "C", label: "C", shape: Rectangle },
-    { id: "D", label: "D", shape: Rectangle },
-    { id: "E", label: "E", shape: Rectangle },
+    { id: "A", label: "A", shape: Rectangle, },
+    { id: "B", label: "B", shape: Rectangle, },
+    { id: "C", label: "C", shape: Rectangle, },
+    { id: "D", label: "D", shape: Rectangle, },
+    { id: "E", label: "E", shape: Rectangle, },
   ]
   let edges : Array[MermaidEdge] = [
     flow_edge("A", "C"),
@@ -2914,11 +2914,11 @@ test "Layout simplex cut phase matches upstream pivot baseline" {
 ///|
 test "Layout simplex ranker matches upstream pivot baseline final ranks" {
   let nodes : Array[MermaidNode] = [
-    { id: "A", label: "A", shape: Rectangle },
-    { id: "B", label: "B", shape: Rectangle },
-    { id: "C", label: "C", shape: Rectangle },
-    { id: "D", label: "D", shape: Rectangle },
-    { id: "E", label: "E", shape: Rectangle },
+    { id: "A", label: "A", shape: Rectangle, },
+    { id: "B", label: "B", shape: Rectangle, },
+    { id: "C", label: "C", shape: Rectangle, },
+    { id: "D", label: "D", shape: Rectangle, },
+    { id: "E", label: "E", shape: Rectangle, },
   ]
   let edges : Array[MermaidEdge] = [
     flow_edge("A", "C"),
@@ -2947,14 +2947,14 @@ test "Layout simplex ranker matches upstream pivot baseline final ranks" {
 ///|
 test "Layout simplex exchange trace matches upstream multi-pivot baseline" {
   let nodes : Array[MermaidNode] = [
-    { id: "A", label: "A", shape: Rectangle },
-    { id: "B", label: "B", shape: Rectangle },
-    { id: "C", label: "C", shape: Rectangle },
-    { id: "D", label: "D", shape: Rectangle },
-    { id: "E", label: "E", shape: Rectangle },
-    { id: "F", label: "F", shape: Rectangle },
-    { id: "G", label: "G", shape: Rectangle },
-    { id: "H", label: "H", shape: Rectangle },
+    { id: "A", label: "A", shape: Rectangle, },
+    { id: "B", label: "B", shape: Rectangle, },
+    { id: "C", label: "C", shape: Rectangle, },
+    { id: "D", label: "D", shape: Rectangle, },
+    { id: "E", label: "E", shape: Rectangle, },
+    { id: "F", label: "F", shape: Rectangle, },
+    { id: "G", label: "G", shape: Rectangle, },
+    { id: "H", label: "H", shape: Rectangle, },
   ]
   let edges : Array[MermaidEdge] = [
     flow_edge("A", "C"),
@@ -3155,14 +3155,14 @@ test "Layout simplex ranker matches upstream rank corpus with pivot coverage" {
 ///|
 test "Layout simplex exchange sequence matches upstream corpus" {
   let nodes : Array[MermaidNode] = [
-    { id: "A", label: "A", shape: Rectangle },
-    { id: "B", label: "B", shape: Rectangle },
-    { id: "C", label: "C", shape: Rectangle },
-    { id: "D", label: "D", shape: Rectangle },
-    { id: "E", label: "E", shape: Rectangle },
-    { id: "F", label: "F", shape: Rectangle },
-    { id: "G", label: "G", shape: Rectangle },
-    { id: "H", label: "H", shape: Rectangle },
+    { id: "A", label: "A", shape: Rectangle, },
+    { id: "B", label: "B", shape: Rectangle, },
+    { id: "C", label: "C", shape: Rectangle, },
+    { id: "D", label: "D", shape: Rectangle, },
+    { id: "E", label: "E", shape: Rectangle, },
+    { id: "F", label: "F", shape: Rectangle, },
+    { id: "G", label: "G", shape: Rectangle, },
+    { id: "H", label: "H", shape: Rectangle, },
   ]
 
   fn collect_exchange_sequence_case(
@@ -3274,12 +3274,12 @@ test "Layout simplex exchange sequence matches upstream corpus" {
 ///|
 test "Layout dagre simplex ranker matches upstream fanout compaction baseline" {
   let nodes : Array[MermaidNode] = [
-    { id: "A", label: "A", shape: Rectangle },
-    { id: "B", label: "B", shape: Rectangle },
-    { id: "C", label: "C", shape: Rectangle },
-    { id: "D", label: "D", shape: Rectangle },
-    { id: "E", label: "E", shape: Rectangle },
-    { id: "F", label: "F", shape: Rectangle },
+    { id: "A", label: "A", shape: Rectangle, },
+    { id: "B", label: "B", shape: Rectangle, },
+    { id: "C", label: "C", shape: Rectangle, },
+    { id: "D", label: "D", shape: Rectangle, },
+    { id: "E", label: "E", shape: Rectangle, },
+    { id: "F", label: "F", shape: Rectangle, },
   ]
   let edges : Array[MermaidEdge] = [
     flow_edge("A", "B"),
@@ -3305,12 +3305,12 @@ test "Layout dagre simplex ranker matches upstream fanout compaction baseline" {
 ///|
 test "Layout legacy ranker baseline stays unchanged when dagre simplex is disabled" {
   let nodes : Array[MermaidNode] = [
-    { id: "A", label: "A", shape: Rectangle },
-    { id: "B", label: "B", shape: Rectangle },
-    { id: "C", label: "C", shape: Rectangle },
-    { id: "D", label: "D", shape: Rectangle },
-    { id: "E", label: "E", shape: Rectangle },
-    { id: "F", label: "F", shape: Rectangle },
+    { id: "A", label: "A", shape: Rectangle, },
+    { id: "B", label: "B", shape: Rectangle, },
+    { id: "C", label: "C", shape: Rectangle, },
+    { id: "D", label: "D", shape: Rectangle, },
+    { id: "E", label: "E", shape: Rectangle, },
+    { id: "F", label: "F", shape: Rectangle, },
   ]
   let edges : Array[MermaidEdge] = [
     flow_edge("A", "B"),
@@ -3336,10 +3336,10 @@ test "Layout legacy ranker baseline stays unchanged when dagre simplex is disabl
 ///|
 test "Layout dagre simplex ranker preserves reversed feedback constraint baseline" {
   let nodes : Array[MermaidNode] = [
-    { id: "A", label: "A", shape: Rectangle },
-    { id: "B", label: "B", shape: Rectangle },
-    { id: "C", label: "C", shape: Rectangle },
-    { id: "D", label: "D", shape: Rectangle },
+    { id: "A", label: "A", shape: Rectangle, },
+    { id: "B", label: "B", shape: Rectangle, },
+    { id: "C", label: "C", shape: Rectangle, },
+    { id: "D", label: "D", shape: Rectangle, },
   ]
   let edges : Array[MermaidEdge] = [
     flow_edge("A", "B"),
@@ -3362,8 +3362,8 @@ test "Layout dagre simplex ranker preserves reversed feedback constraint baselin
 ///|
 test "Layout non-state rank selector keeps default strategy when exploration disabled" {
   let nodes : Array[MermaidNode] = [
-    { id: "A", label: "A", shape: Rectangle },
-    { id: "B", label: "B", shape: Rectangle },
+    { id: "A", label: "A", shape: Rectangle, },
+    { id: "B", label: "B", shape: Rectangle, },
   ]
   let edges : Array[MermaidEdge] = [flow_edge("A", "B"), flow_edge("B", "A")]
 
@@ -3391,10 +3391,10 @@ test "Layout non-state rank selector keeps default strategy when exploration dis
 ///|
 test "Layout rank densify phase compacts sparse rank indices while preserving order" {
   let nodes : Array[MermaidNode] = [
-    { id: "A", label: "A", shape: Rectangle },
-    { id: "B", label: "B", shape: Rectangle },
-    { id: "C", label: "C", shape: Rectangle },
-    { id: "D", label: "D", shape: Rectangle },
+    { id: "A", label: "A", shape: Rectangle, },
+    { id: "B", label: "B", shape: Rectangle, },
+    { id: "C", label: "C", shape: Rectangle, },
+    { id: "D", label: "D", shape: Rectangle, },
   ]
   let sparse_rank_by_id : Map[String, Int] = { "A": 0, "B": 2, "C": 5, "D": 2 }
 
@@ -3412,10 +3412,10 @@ test "Layout rank densify phase compacts sparse rank indices while preserving or
 ///|
 test "Layout non-state rank selector picks lower-scored candidate when exploration is enabled" {
   let nodes : Array[MermaidNode] = [
-    { id: "A", label: "A", shape: Rectangle },
-    { id: "B", label: "B", shape: Rectangle },
-    { id: "C", label: "C", shape: Rectangle },
-    { id: "D", label: "D", shape: Rectangle },
+    { id: "A", label: "A", shape: Rectangle, },
+    { id: "B", label: "B", shape: Rectangle, },
+    { id: "C", label: "C", shape: Rectangle, },
+    { id: "D", label: "D", shape: Rectangle, },
   ]
   let edges : Array[MermaidEdge] = [
     flow_edge("A", "B"),
@@ -3578,14 +3578,14 @@ fn map_int_bool_entry_count(entries : Map[Int, Bool]) -> Int {
 ///|
 test "Layout dagre simplex horizontal mode keeps per-rank lanes distinct" {
   let nodes : Array[MermaidNode] = [
-    { id: "A", label: "A", shape: Rectangle },
-    { id: "B", label: "B", shape: Rectangle },
-    { id: "C", label: "C", shape: Rectangle },
-    { id: "D", label: "D", shape: Rectangle },
-    { id: "E", label: "E", shape: Rectangle },
-    { id: "F", label: "F", shape: Rectangle },
-    { id: "G", label: "G", shape: Rectangle },
-    { id: "H", label: "H", shape: Rectangle },
+    { id: "A", label: "A", shape: Rectangle, },
+    { id: "B", label: "B", shape: Rectangle, },
+    { id: "C", label: "C", shape: Rectangle, },
+    { id: "D", label: "D", shape: Rectangle, },
+    { id: "E", label: "E", shape: Rectangle, },
+    { id: "F", label: "F", shape: Rectangle, },
+    { id: "G", label: "G", shape: Rectangle, },
+    { id: "H", label: "H", shape: Rectangle, },
   ]
   let edges : Array[MermaidEdge] = [
     flow_edge("A", "C"),
@@ -3606,7 +3606,7 @@ test "Layout dagre simplex horizontal mode keeps per-rank lanes distinct" {
     graph, nodes, false, false, true, false, false, false, true,
   )
   for rank in 0..<=lane_state.flow_max_rank {
-    let lanes : Map[Int, Bool] = {}
+    let lanes : Map[Int, Bool] = Map([])
     let mut node_count = 0
     for node in nodes {
       if option_int_or(lane_state.flow_rank_by_node_id.get(node.id), -1) == rank {
@@ -3625,7 +3625,7 @@ test "Layout lane feedback strategy policy disables greedy path in dagre simplex
   ]
   let nodes : Array[MermaidNode] = []
   for node_id in node_ids {
-    nodes.push({ id: node_id, label: node_id, shape: Rectangle })
+    nodes.push({ id: node_id, label: node_id, shape: Rectangle, })
   }
   let edges : Array[MermaidEdge] = []
   let node_count = node_ids.length()

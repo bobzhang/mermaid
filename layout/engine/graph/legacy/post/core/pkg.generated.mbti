@@ -15,4 +15,3 @@ pub fn finalize_legacy_layout_from_placement(@model.MermaidGraph, @bobzhang/beau
 // Type aliases
 
 // Traits
-

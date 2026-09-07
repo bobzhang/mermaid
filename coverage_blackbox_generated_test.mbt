@@ -4,7 +4,7 @@ fn generated_ascii_option(seed : Int) -> @model.AsciiRenderOptions {
   let padding_x = [0, 1, 2, 5][seed % 4]
   let padding_y = [0, 1, 2, 5][seed / 2 % 4]
   let box_border_padding = [0, 1, 2][seed % 3]
-  { use_ascii, padding_x, padding_y, box_border_padding }
+  { use_ascii, padding_x, padding_y, box_border_padding, }
 }
 
 ///|
@@ -33,24 +33,21 @@ fn generated_svg_option(seed : Int) -> @model.RenderOptions {
 
 ///|
 fn generated_render_attempt(input : String, seed : Int) -> (Bool, Bool) {
-  let ascii_result : Result[String, @model.MermaidError] = try? render_mermaid_ascii(
-    input,
-    options=generated_ascii_option(seed),
-  )
-  let ascii_ok = match ascii_result {
-    Ok(ascii) => {
-      ignore(ascii.length())
-      true
-    }
-    Err(_) => false
+  let ascii_ok = try {
+    let ascii = render_mermaid_ascii(
+      input,
+      options=generated_ascii_option(seed),
+    )
+    ignore(ascii.length())
+    true
+  } catch {
+    _ => false
   }
-  let svg_result : Result[String, @model.MermaidError] = try? render_mermaid(
-    input,
-    options=generated_svg_option(seed),
-  )
-  let svg_ok = match svg_result {
-    Ok(svg) => svg.has_prefix("<svg ") && svg.has_suffix("</svg>")
-    Err(_) => false
+  let svg_ok = try {
+    let svg = render_mermaid(input, options=generated_svg_option(seed))
+    svg.has_prefix("<svg ") && svg.has_suffix("</svg>")
+  } catch {
+    _ => false
   }
   (ascii_ok, svg_ok)
 }

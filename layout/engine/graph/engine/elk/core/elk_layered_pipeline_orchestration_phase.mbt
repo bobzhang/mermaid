@@ -375,11 +375,11 @@ fn setup_phase_trace(
     setup_state.use_subgraph_redirects,
   )
   metrics["compact_fanin"] = bool_flag(setup_state.compact_fanin)
-  let labels : Map[String, String] = {}
+  let labels : Map[String, String] = Map([])
   labels["diagram_kind"] = diagram_kind_tag(setup_state.graph)
   labels["direction"] = direction_tag(setup_state.graph)
   labels["layout_family"] = "elk-layered"
-  { phase: snapshot.phase, metrics, labels }
+  { phase: snapshot.phase, metrics, labels, }
 }
 
 ///|
@@ -409,7 +409,7 @@ fn rank_phase_trace(
   metrics["legacy_seed_mode"] = bool_flag(
     rank_phase_state.rank_seed_strategy is LegacyLaneSeed,
   )
-  let labels : Map[String, String] = {}
+  let labels : Map[String, String] = Map([])
   labels["rank_seed_strategy"] = rank_seed_strategy_tag(
     rank_phase_state.rank_seed_strategy,
   )
@@ -426,7 +426,7 @@ fn rank_phase_trace(
   labels["rank_order_selected_source"] = rank_order_debug_state.selected_source
   labels["rank_layers"] = encode_rank_layers(rank_layers)
   labels["layout_family"] = "elk-layered"
-  { phase: snapshot.phase, metrics, labels }
+  { phase: snapshot.phase, metrics, labels, }
 }
 
 ///|
@@ -441,7 +441,7 @@ fn placement_phase_trace(
   metrics["legacy_seed_mode"] = bool_flag(
     rank_phase_state.rank_seed_strategy is LegacyLaneSeed,
   )
-  let labels : Map[String, String] = {}
+  let labels : Map[String, String] = Map([])
   labels["minor_placement_strategy"] = if rank_phase_state.rank_seed_strategy
     is LegacyLaneSeed {
     "lane-seeded"
@@ -449,14 +449,14 @@ fn placement_phase_trace(
     "relaxed-neighbor"
   }
   labels["layout_family"] = "elk-layered"
-  { phase: snapshot.phase, metrics, labels }
+  { phase: snapshot.phase, metrics, labels, }
 }
 
 ///|
 fn default_phase_trace(
   snapshot : GraphLayoutPhaseSnapshot,
 ) -> GraphLayoutPhaseTrace {
-  { phase: snapshot.phase, metrics: phase_metrics(snapshot), labels: {} }
+  { phase: snapshot.phase, metrics: phase_metrics(snapshot), labels: {}, }
 }
 
 ///|
@@ -531,5 +531,5 @@ fn run_elk_layered_flow_backend_with_setup_and_rank_phase(
     placement_phase_trace(rank_phase_state, placement_state, placement_snapshot),
     default_phase_trace(final_snapshot),
   ]
-  { positioned_graph, phase_snapshots, phase_traces }
+  { positioned_graph, phase_snapshots, phase_traces, }
 }

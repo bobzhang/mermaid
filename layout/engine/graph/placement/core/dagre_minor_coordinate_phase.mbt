@@ -150,7 +150,7 @@ fn dagre_minor_find_type1_conflicts(
   order_by_id : Map[String, Int],
   predecessors_by_id : Map[String, Array[String]],
 ) -> Map[String, Map[String, Bool]] {
-  let conflicts : Map[String, Map[String, Bool]] = {}
+  let conflicts : Map[String, Map[String, Bool]] = Map([])
   if layering.length() <= 1 {
     return conflicts
   }
@@ -245,9 +245,9 @@ fn dagre_minor_vertical_alignment(
   successors_by_id : Map[String, Array[String]],
   incoming : Bool,
 ) -> (Map[String, String], Map[String, String]) {
-  let root_by_id : Map[String, String] = {}
-  let align_by_id : Map[String, String] = {}
-  let position_by_id : Map[String, Int] = {}
+  let root_by_id : Map[String, String] = Map([])
+  let align_by_id : Map[String, String] = Map([])
+  let position_by_id : Map[String, Int] = Map([])
   for layer in layering {
     for order, node_id in layer {
       root_by_id[node_id] = node_id
@@ -345,11 +345,11 @@ fn dagre_minor_horizontal_compaction(
   node_spacing : Int,
   edge_spacing : Int,
 ) -> Map[String, Int] {
-  let coordinate2_by_id : Map[String, Int] = {}
+  let coordinate2_by_id : Map[String, Int] = Map([])
   let block_node_ids : Array[String] = []
-  let block_predecessors_by_id : Map[String, Array[String]] = {}
-  let block_successors_by_id : Map[String, Array[String]] = {}
-  let block_edge_weight2_by_key : Map[String, Int] = {}
+  let block_predecessors_by_id : Map[String, Array[String]] = Map([])
+  let block_successors_by_id : Map[String, Array[String]] = Map([])
+  let block_edge_weight2_by_key : Map[String, Int] = Map([])
 
   for layer in layering {
     let mut previous_node_id : String? = None
@@ -391,7 +391,7 @@ fn dagre_minor_horizontal_compaction(
   }
 
   let forward_stack : Array[String] = []
-  let forward_visited : Map[String, Bool] = {}
+  let forward_visited : Map[String, Bool] = Map([])
   for block_node_id in block_node_ids {
     forward_stack.push(block_node_id)
   }
@@ -436,7 +436,7 @@ fn dagre_minor_horizontal_compaction(
   }
 
   let backward_stack : Array[String] = []
-  let backward_visited : Map[String, Bool] = {}
+  let backward_visited : Map[String, Bool] = Map([])
   for block_node_id in block_node_ids {
     backward_stack.push(block_node_id)
   }
@@ -620,7 +620,7 @@ fn dagre_minor_balance_coordinates2(
   dl : Map[String, Int],
   dr : Map[String, Int],
 ) -> Map[String, Int] {
-  let balanced : Map[String, Int] = {}
+  let balanced : Map[String, Int] = Map([])
   for node_id, _ in ul {
     let values = [
       option_int_or(ul.get(node_id), 0),
@@ -643,13 +643,13 @@ fn collect_dagre_parity_minor_offsets(
   dagre_parity_rank_nodes : Array[Array[String]],
   node_spacing : Int,
 ) -> Map[String, Int] {
-  let minor_offset_by_id : Map[String, Int] = {}
+  let minor_offset_by_id : Map[String, Int] = Map([])
   if dagre_parity_rank_nodes.length() == 0 {
     return minor_offset_by_id
   }
 
-  let real_node_id_set : Map[String, Bool] = {}
-  let width_by_id : Map[String, Int] = {}
+  let real_node_id_set : Map[String, Bool] = Map([])
+  let width_by_id : Map[String, Int] = Map([])
   for node in nodes_in_order {
     real_node_id_set[node.id] = true
     let (_, height) = node_dimensions(node)
@@ -666,10 +666,10 @@ fn collect_dagre_parity_minor_offsets(
     layering.push([])
   }
 
-  let dummy_by_id : Map[String, Bool] = {}
-  let order_by_id : Map[String, Int] = {}
-  let predecessors_by_id : Map[String, Array[String]] = {}
-  let successors_by_id : Map[String, Array[String]] = {}
+  let dummy_by_id : Map[String, Bool] = Map([])
+  let order_by_id : Map[String, Int] = Map([])
+  let predecessors_by_id : Map[String, Array[String]] = Map([])
+  let successors_by_id : Map[String, Array[String]] = Map([])
 
   for rank in 0..<layering.length() {
     let layer = layering[rank]

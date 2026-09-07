@@ -17,4 +17,3 @@ pub fn parse_node_token(String) -> @model.MermaidNode
 // Type aliases
 
 // Traits
-

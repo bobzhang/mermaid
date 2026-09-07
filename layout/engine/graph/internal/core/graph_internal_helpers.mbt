@@ -32,7 +32,7 @@ pub fn resolve_horizontal_state_node_spacing(
 fn node_dimensions(node : MermaidNode) -> (Int, Int) {
   let label_lines = node.label
     .split("\n")
-    .map(part => part.to_string())
+    .map(part => part.to_owned())
     .to_array()
   let mut longest_line = 0
   for line in label_lines {
@@ -91,8 +91,8 @@ pub fn reorder_nodes_for_flow_layout(
   nodes_in_order : Array[MermaidNode],
   edges : Array[MermaidEdge],
 ) -> Array[MermaidNode] {
-  let indegree_by_id : Map[String, Int] = {}
-  let outdegree_by_id : Map[String, Int] = {}
+  let indegree_by_id : Map[String, Int] = Map([])
+  let outdegree_by_id : Map[String, Int] = Map([])
   for node in nodes_in_order {
     indegree_by_id[node.id] = 0
     outdegree_by_id[node.id] = 0

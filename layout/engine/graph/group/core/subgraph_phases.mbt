@@ -165,7 +165,7 @@ fn build_empty_group_tree_at(
     height = height.max(max_child_bottom - y + group_padding)
   }
 
-  { id: subgraph.id, label: subgraph.label, x, y, width, height, children }
+  { id: subgraph.id, label: subgraph.label, x, y, width, height, children, }
 }
 
 ///|
@@ -269,7 +269,15 @@ fn build_positioned_group(
     empty_child_top = child_group.y + child_group.height + group_padding
   }
 
-  Some({ id: subgraph.id, label: subgraph.label, x, y, width, height, children })
+  Some({
+    id: subgraph.id,
+    label: subgraph.label,
+    x,
+    y,
+    width,
+    height,
+    children,
+  })
 }
 
 ///|
@@ -501,7 +509,7 @@ fn apply_subgraph_direction_override_to_children(
   let mut max_bottom = 0
 
   for child in children {
-    let seen_node_ids : Map[String, Bool] = {}
+    let seen_node_ids : Map[String, Bool] = Map([])
     let indexes : Array[Int] = []
     collect_subgraph_node_indexes(
       child, positioned_index_by_id, seen_node_ids, indexes,

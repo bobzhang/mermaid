@@ -24,12 +24,12 @@ fn test_graph(nodes : Map[String, MermaidNode]) -> MermaidGraph {
 ///|
 test "graph helper detects sequence-only nodes" {
   let sequence_nodes : Map[String, MermaidNode] = {
-    "A": { id: "A", label: "A", shape: SequenceParticipant },
-    "B": { id: "B", label: "B", shape: SequenceParticipant },
+    "A": { id: "A", label: "A", shape: SequenceParticipant, },
+    "B": { id: "B", label: "B", shape: SequenceParticipant, },
   }
   let mixed_nodes : Map[String, MermaidNode] = {
-    "A": { id: "A", label: "A", shape: SequenceParticipant },
-    "B": { id: "B", label: "B", shape: Rectangle },
+    "A": { id: "A", label: "A", shape: SequenceParticipant, },
+    "B": { id: "B", label: "B", shape: Rectangle, },
   }
 
   let sequence_layout = layout_graph(

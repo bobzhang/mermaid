@@ -17,21 +17,21 @@ fn parse_delimited_token(
 ) -> @model.MermaidNode? {
   match (token.find(open), token.strip_suffix(close)) {
     (Some(start), Some(without_close)) => {
-      let prefix = without_close.to_string()
+      let prefix = without_close.to_owned()
       if prefix.length() < start + open.length() {
         return None
       }
-      let raw_id = prefix[:start].to_string().trim().to_string()
+      let raw_id = prefix[:start].to_owned().trim().to_owned()
       let raw_label = prefix[start + open.length():]
-        .to_string()
+        .to_owned()
         .trim()
-        .to_string()
+        .to_owned()
       let id = if raw_id == "" {
         raw_label.to_lower().replace_all(old=" ", new="_")
       } else {
         raw_id
       }
-      Some({ id, label: raw_label, shape })
+      Some({ id, label: raw_label, shape, })
     }
     _ => None
   }
@@ -40,10 +40,10 @@ fn parse_delimited_token(
 ///|
 /// Parses a raw token string into a `MermaidNode` with shape detection.
 pub fn parse_node_token(raw_token : String) -> @model.MermaidNode {
-  let token = raw_token.trim().to_string()
+  let token = raw_token.trim().to_owned()
 
   if token == "" {
-    return { id: "unnamed", label: "unnamed", shape: Rectangle }
+    return { id: "unnamed", label: "unnamed", shape: Rectangle, }
   }
 
   match parse_delimited_token(token, "(((", ")))", DoubleCircle) {

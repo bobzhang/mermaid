@@ -59,7 +59,7 @@ fn print_usage() -> Unit {
     #|  --list-themes  Print built-in theme names
     #|  --help     Show this help
     #|
-  println(usage.trim_end().to_string())
+  println(usage.trim_end().to_owned())
 }
 
 ///|
@@ -83,14 +83,15 @@ fn available_theme_list() -> String {
 
 ///|
 fn parse_non_negative_int(raw : String) -> Int? {
-  let normalized = raw.trim().to_string()
+  let normalized = raw.trim().to_owned()
   if normalized == "" {
     return None
   }
-  let parsed = try? @string.parse_int(normalized)
-  match parsed {
-    Ok(value) => if value >= 0 { Some(value) } else { None }
-    Err(_) => None
+  let value = @string.parse_int(normalized) catch { _ => return None }
+  if value >= 0 {
+    Some(value)
+  } else {
+    None
   }
 }
 
@@ -174,21 +175,19 @@ fn print_routed_edge_points(
   input : String,
   options : @model.RenderOptions,
 ) -> Unit {
-  let parsed : Result[@model.MermaidGraph, @model.MermaidError] = try? @parser_header_core.parse_mermaid(
-    input,
-  )
-  match parsed {
-    Ok(graph) => {
-      let positioned = @layout_engine_graph_core.layout_graph(graph, options)
-      for edge in positioned.edges {
-        let points = edge.points
-          .iter()
-          .map(point => "\{point.x},\{point.y}")
-          .join(" ")
-        println("EDGE\t\{edge.source}\t\{edge.target}\t\{points}")
-      }
+  let graph = @parser_header_core.parse_mermaid(input) catch {
+    err => {
+      println("Error: \{err}")
+      return
     }
-    Err(err) => println("Error: \{err}")
+  }
+  let positioned = @layout_engine_graph_core.layout_graph(graph, options)
+  for edge in positioned.edges {
+    let points = edge.points
+      .iter()
+      .map(point => "\{point.x},\{point.y}")
+      .join(" ")
+    println("EDGE\t\{edge.source}\t\{edge.target}\t\{points}")
   }
 }
 
@@ -197,74 +196,72 @@ fn print_dagre_order_trace(
   input : String,
   options : @model.RenderOptions,
 ) -> Unit {
-  let parsed : Result[@model.MermaidGraph, @model.MermaidError] = try? @parser_header_core.parse_mermaid(
-    input,
+  let graph = @parser_header_core.parse_mermaid(input) catch {
+    err => {
+      println("Error: \{err}")
+      return
+    }
+  }
+  let dagre_options : @model.RenderOptions = {
+    ..options,
+    layout_engine: Some(DagreParity),
+  }
+  let setup_state = @layout_engine_graph_legacy_setup_core.build_legacy_layout_setup(
+    graph, dagre_options, true, false,
   )
-  match parsed {
-    Ok(graph) => {
-      let dagre_options : @model.RenderOptions = {
-        ..options,
-        layout_engine: Some(DagreParity),
-      }
-      let setup_state = @layout_engine_graph_legacy_setup_core.build_legacy_layout_setup(
-        graph, dagre_options, true, false,
-      )
-      let lane_state = setup_state.lane_state
-      let trace = @layout_engine_graph_lane_core.collect_dagre_parity_order_trace(
-        setup_state.nodes_in_order,
-        lane_state.flow_rank_by_node_id,
-        lane_state.flow_max_rank,
-        graph.edges,
-      )
-      for trace_index, rank_nodes in trace.rank_nodes_trace {
-        for rank, node_ids in rank_nodes {
-          let joined_node_ids = node_ids.join(",")
-          println("TRACE\t\{trace_index}\t\{rank}\t\{joined_node_ids}")
-        }
-      }
-      for step in trace.sweep_step_trace {
-        let incoming_literal = if step.incoming_from_neighbor {
-          "true"
-        } else {
-          "false"
-        }
-        let bias_literal = if step.bias_right { "true" } else { "false" }
-        println(
-          "PASS\t\{step.pass_index}\t\{incoming_literal}\t\{bias_literal}\t\{step.candidate_crossings}",
-        )
-        for rank, node_ids in step.rank_nodes {
-          let joined_node_ids = node_ids.join(",")
-          println("PASS_LAYER\t\{step.pass_index}\t\{rank}\t\{joined_node_ids}")
-        }
-        let sorted_ranks : Array[Int] = []
-        for rank, _ in step.barycenters_by_rank {
-          sorted_ranks.push(rank)
-        }
-        sorted_ranks.sort()
-        for rank in sorted_ranks {
-          match step.barycenters_by_rank.get(rank) {
-            Some(entries) => {
-              let sorted_node_ids : Array[String] = []
-              for node_id, _ in entries {
-                sorted_node_ids.push(node_id)
-              }
-              sorted_node_ids.sort()
-              for node_id in sorted_node_ids {
-                match entries.get(node_id) {
-                  Some(value) =>
-                    println(
-                      "BARY\t\{step.pass_index}\t\{rank}\t\{node_id}\t\{value}",
-                    )
-                  None => ()
-                }
-              }
+  let lane_state = setup_state.lane_state
+  let trace = @layout_engine_graph_lane_core.collect_dagre_parity_order_trace(
+    setup_state.nodes_in_order,
+    lane_state.flow_rank_by_node_id,
+    lane_state.flow_max_rank,
+    graph.edges,
+  )
+  for trace_index, rank_nodes in trace.rank_nodes_trace {
+    for rank, node_ids in rank_nodes {
+      let joined_node_ids = node_ids.join(",")
+      println("TRACE\t\{trace_index}\t\{rank}\t\{joined_node_ids}")
+    }
+  }
+  for step in trace.sweep_step_trace {
+    let incoming_literal = if step.incoming_from_neighbor {
+      "true"
+    } else {
+      "false"
+    }
+    let bias_literal = if step.bias_right { "true" } else { "false" }
+    println(
+      "PASS\t\{step.pass_index}\t\{incoming_literal}\t\{bias_literal}\t\{step.candidate_crossings}",
+    )
+    for rank, node_ids in step.rank_nodes {
+      let joined_node_ids = node_ids.join(",")
+      println("PASS_LAYER\t\{step.pass_index}\t\{rank}\t\{joined_node_ids}")
+    }
+    let sorted_ranks : Array[Int] = []
+    for rank, _ in step.barycenters_by_rank {
+      sorted_ranks.push(rank)
+    }
+    sorted_ranks.sort()
+    for rank in sorted_ranks {
+      match step.barycenters_by_rank.get(rank) {
+        Some(entries) => {
+          let sorted_node_ids : Array[String] = []
+          for node_id, _ in entries {
+            sorted_node_ids.push(node_id)
+          }
+          sorted_node_ids.sort()
+          for node_id in sorted_node_ids {
+            match entries.get(node_id) {
+              Some(value) =>
+                println(
+                  "BARY\t\{step.pass_index}\t\{rank}\t\{node_id}\t\{value}",
+                )
+              None => ()
             }
-            None => ()
           }
         }
+        None => ()
       }
     }
-    Err(err) => println("Error: \{err}")
   }
 }
 
@@ -630,7 +627,7 @@ fn run() -> Unit {
       continue
     }
     if arg is [.. "--font=", .. raw_font] {
-      let font = raw_font.to_string()
+      let font = raw_font.to_owned()
       if font == "" {
         println("Error: --font requires a non-empty value")
         print_usage()
@@ -640,7 +637,7 @@ fn run() -> Unit {
       continue
     }
     if arg is [.. "--bg=", .. raw_bg] {
-      let bg = raw_bg.to_string()
+      let bg = raw_bg.to_owned()
       if bg == "" {
         println("Error: --bg requires a non-empty value")
         print_usage()
@@ -650,7 +647,7 @@ fn run() -> Unit {
       continue
     }
     if arg is [.. "--fg=", .. raw_fg] {
-      let fg = raw_fg.to_string()
+      let fg = raw_fg.to_owned()
       if fg == "" {
         println("Error: --fg requires a non-empty value")
         print_usage()
@@ -660,7 +657,7 @@ fn run() -> Unit {
       continue
     }
     if arg is [.. "--line=", .. raw_line] {
-      let line = raw_line.to_string()
+      let line = raw_line.to_owned()
       if line == "" {
         println("Error: --line requires a non-empty value")
         print_usage()
@@ -670,7 +667,7 @@ fn run() -> Unit {
       continue
     }
     if arg is [.. "--accent=", .. raw_accent] {
-      let accent = raw_accent.to_string()
+      let accent = raw_accent.to_owned()
       if accent == "" {
         println("Error: --accent requires a non-empty value")
         print_usage()
@@ -680,7 +677,7 @@ fn run() -> Unit {
       continue
     }
     if arg is [.. "--muted=", .. raw_muted] {
-      let muted = raw_muted.to_string()
+      let muted = raw_muted.to_owned()
       if muted == "" {
         println("Error: --muted requires a non-empty value")
         print_usage()
@@ -690,7 +687,7 @@ fn run() -> Unit {
       continue
     }
     if arg is [.. "--surface=", .. raw_surface] {
-      let surface = raw_surface.to_string()
+      let surface = raw_surface.to_owned()
       if surface == "" {
         println("Error: --surface requires a non-empty value")
         print_usage()
@@ -700,7 +697,7 @@ fn run() -> Unit {
       continue
     }
     if arg is [.. "--border=", .. raw_border] {
-      let border = raw_border.to_string()
+      let border = raw_border.to_owned()
       if border == "" {
         println("Error: --border requires a non-empty value")
         print_usage()
@@ -710,7 +707,7 @@ fn run() -> Unit {
       continue
     }
     if arg is [.. "--padding=", .. raw_padding] {
-      let raw_padding = raw_padding.to_string()
+      let raw_padding = raw_padding.to_owned()
       if raw_padding == "" {
         println("Error: --padding requires a non-empty value")
         print_usage()
@@ -727,7 +724,7 @@ fn run() -> Unit {
       continue
     }
     if arg is [.. "--node-spacing=", .. raw_node_spacing] {
-      let raw_node_spacing = raw_node_spacing.to_string()
+      let raw_node_spacing = raw_node_spacing.to_owned()
       if raw_node_spacing == "" {
         println("Error: --node-spacing requires a non-empty value")
         print_usage()
@@ -744,7 +741,7 @@ fn run() -> Unit {
       continue
     }
     if arg is [.. "--layer-spacing=", .. raw_layer_spacing] {
-      let raw_layer_spacing = raw_layer_spacing.to_string()
+      let raw_layer_spacing = raw_layer_spacing.to_owned()
       if raw_layer_spacing == "" {
         println("Error: --layer-spacing requires a non-empty value")
         print_usage()
@@ -761,7 +758,7 @@ fn run() -> Unit {
       continue
     }
     if arg is [.. "--layout-engine=", .. raw_layout_engine] {
-      let raw_layout_engine = raw_layout_engine.to_string()
+      let raw_layout_engine = raw_layout_engine.to_owned()
       if raw_layout_engine == "" {
         println("Error: --layout-engine requires a non-empty value")
         print_usage()
@@ -780,7 +777,7 @@ fn run() -> Unit {
       continue
     }
     if arg is [.. "--ascii-padding-x=", .. raw_ascii_padding_x] {
-      let raw_ascii_padding_x = raw_ascii_padding_x.to_string()
+      let raw_ascii_padding_x = raw_ascii_padding_x.to_owned()
       if raw_ascii_padding_x == "" {
         println("Error: --ascii-padding-x requires a non-empty value")
         print_usage()
@@ -797,7 +794,7 @@ fn run() -> Unit {
       continue
     }
     if arg is [.. "--ascii-padding-y=", .. raw_ascii_padding_y] {
-      let raw_ascii_padding_y = raw_ascii_padding_y.to_string()
+      let raw_ascii_padding_y = raw_ascii_padding_y.to_owned()
       if raw_ascii_padding_y == "" {
         println("Error: --ascii-padding-y requires a non-empty value")
         print_usage()
@@ -815,7 +812,7 @@ fn run() -> Unit {
     }
     if arg
       is [.. "--ascii-box-border-padding=", .. raw_ascii_box_border_padding] {
-      let raw_ascii_box_border_padding = raw_ascii_box_border_padding.to_string()
+      let raw_ascii_box_border_padding = raw_ascii_box_border_padding.to_owned()
       if raw_ascii_box_border_padding == "" {
         println("Error: --ascii-box-border-padding requires a non-empty value")
         print_usage()
@@ -838,7 +835,7 @@ fn run() -> Unit {
       continue
     }
     if arg is [.. "--theme=", .. raw_theme] {
-      let theme = raw_theme.to_string()
+      let theme = raw_theme.to_owned()
       if theme == "" {
         println("Error: --theme requires a non-empty value")
         print_usage()
@@ -991,13 +988,8 @@ fn run() -> Unit {
       padding_y: ascii_padding_y,
       box_border_padding: ascii_box_border_padding,
     }
-    let rendered_ascii = try? @beautiful_mermaid.render_mermaid_ascii(
-      input,
-      options~,
-    )
-    match rendered_ascii {
-      Ok(output) => println(output)
-      Err(err) => println("Error: \{err}")
+    println(@beautiful_mermaid.render_mermaid_ascii(input, options~)) catch {
+      err => println("Error: \{err}")
     }
     return
   }
@@ -1030,26 +1022,29 @@ fn run() -> Unit {
 
   let svg_options = layout_options
 
-  let rendered_svg = match theme_slug {
-    Some(slug) =>
-      match @themes.theme_by_name(slug) {
-        Some(_) =>
-          try? @beautiful_mermaid.render_mermaid_with_theme_name(
-            input,
-            slug,
-            options=svg_options,
-          )
-        None => {
-          println("Unknown theme: \{slug}")
-          println("Available themes: \{available_theme_list()}")
-          return
+  let rendered_svg = try {
+    match theme_slug {
+      Some(slug) =>
+        match @themes.theme_by_name(slug) {
+          Some(_) =>
+            @beautiful_mermaid.render_mermaid_with_theme_name(
+              input,
+              slug,
+              options=svg_options,
+            )
+          None => {
+            println("Unknown theme: \{slug}")
+            println("Available themes: \{available_theme_list()}")
+            return
+          }
         }
-      }
-    None => try? @beautiful_mermaid.render_mermaid(input, options=svg_options)
+      None => @beautiful_mermaid.render_mermaid(input, options=svg_options)
+    }
+  } catch {
+    err => {
+      println("Error: \{err}")
+      return
+    }
   }
-
-  match rendered_svg {
-    Ok(output) => println(output)
-    Err(err) => println("Error: \{err}")
-  }
+  println(rendered_svg)
 }

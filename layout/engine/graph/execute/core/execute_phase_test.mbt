@@ -1,16 +1,16 @@
 ///|
 fn flow_node(id : String) -> @model.MermaidNode {
-  { id, label: id, shape: Rectangle }
+  { id, label: id, shape: Rectangle, }
 }
 
 ///|
 fn sequence_node(id : String) -> @model.MermaidNode {
-  { id, label: id, shape: SequenceParticipant }
+  { id, label: id, shape: SequenceParticipant, }
 }
 
 ///|
 fn state_node(id : String, shape : @model.NodeShape) -> @model.MermaidNode {
-  { id, label: id, shape }
+  { id, label: id, shape, }
 }
 
 ///|
@@ -40,9 +40,9 @@ fn graph_with_defaults(
   sequence_actor_order : Array[String],
   sequence_actor_kinds : Map[String, @model.SequenceParticipantKind],
 ) -> @model.MermaidGraph {
-  let class_defs : Map[String, Map[String, String]] = {}
-  let class_assignments : Map[String, String] = {}
-  let node_styles : Map[String, Map[String, String]] = {}
+  let class_defs : Map[String, Map[String, String]] = Map([])
+  let class_assignments : Map[String, String] = Map([])
+  let node_styles : Map[String, Map[String, String]] = Map([])
   let sequence_blocks : Array[@model.SequenceBlock] = []
   let sequence_notes : Array[@model.SequenceNote] = []
   let sequence_activation_commands : Array[@model.SequenceActivationCommand] = []

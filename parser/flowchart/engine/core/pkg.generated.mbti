@@ -15,4 +15,3 @@ pub fn parse_flowchart(Array[String]) -> @model.MermaidGraph raise @model.Mermai
 // Type aliases
 
 // Traits
-

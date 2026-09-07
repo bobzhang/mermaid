@@ -13,7 +13,7 @@ fn clone_rank_node_ids_by_rank(
   rank_node_ids_by_rank : Map[Int, Array[String]],
   max_rank : Int,
 ) -> Map[Int, Array[String]] {
-  let cloned : Map[Int, Array[String]] = {}
+  let cloned : Map[Int, Array[String]] = Map([])
   for rank in 0..<=max_rank {
     let copied_node_ids : Array[String] = []
     match rank_node_ids_by_rank.get(rank) {
@@ -69,11 +69,11 @@ fn build_virtual_ordering_state(
   let normalized_rank_node_ids_by_rank = clone_rank_node_ids_by_rank(
     rank_node_ids_by_rank, max_rank,
   )
-  let normalized_rank_by_node_id : Map[String, Int] = {}
-  let normalized_order_index_by_node_id : Map[String, Int] = {}
-  let normalized_predecessors_by_node_id : Map[String, Array[String]] = {}
-  let normalized_successors_by_node_id : Map[String, Array[String]] = {}
-  let virtual_by_node_id : Map[String, Bool] = {}
+  let normalized_rank_by_node_id : Map[String, Int] = Map([])
+  let normalized_order_index_by_node_id : Map[String, Int] = Map([])
+  let normalized_predecessors_by_node_id : Map[String, Array[String]] = Map([])
+  let normalized_successors_by_node_id : Map[String, Array[String]] = Map([])
+  let virtual_by_node_id : Map[String, Bool] = Map([])
 
   for rank in 0..<=max_rank {
     match normalized_rank_node_ids_by_rank.get(rank) {
@@ -188,7 +188,7 @@ fn filter_real_rank_node_ids_by_rank(
   max_rank : Int,
   virtual_by_node_id : Map[String, Bool],
 ) -> Map[Int, Array[String]] {
-  let real_rank_node_ids_by_rank : Map[Int, Array[String]] = {}
+  let real_rank_node_ids_by_rank : Map[Int, Array[String]] = Map([])
   for rank in 0..<=max_rank {
     let real_node_ids : Array[String] = []
     match rank_node_ids_by_rank.get(rank) {

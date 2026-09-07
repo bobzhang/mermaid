@@ -29,4 +29,3 @@ pub fn use_enhanced_horizontal_state_flow_lanes(Array[@model.MermaidNode]) -> Bo
 // Type aliases
 
 // Traits
-

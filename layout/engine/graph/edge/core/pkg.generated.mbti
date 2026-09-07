@@ -25,4 +25,3 @@ pub fn simplify_polyline_points(Array[@model.Point]) -> Array[@model.Point]
 // Type aliases
 
 // Traits
-

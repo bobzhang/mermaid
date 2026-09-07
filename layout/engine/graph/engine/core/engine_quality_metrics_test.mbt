@@ -1,6 +1,6 @@
 ///|
 fn qm_node(id : String) -> @model.MermaidNode {
-  { id, label: id, shape: Rectangle }
+  { id, label: id, shape: Rectangle, }
 }
 
 ///|
@@ -80,7 +80,7 @@ fn qm_segments(graph : @model.PositionedGraph) -> Array[QmSegment] {
     }
     let segment_count = edge.points.length() - 1
     for i in 0..<segment_count {
-      segments.push({ edge_index, p1: edge.points[i], p2: edge.points[i + 1] })
+      segments.push({ edge_index, p1: edge.points[i], p2: edge.points[i + 1], })
     }
   }
   segments

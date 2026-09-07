@@ -1,6 +1,6 @@
 ///|
 fn test_node(id : String) -> @model.MermaidNode {
-  { id, label: id, shape: Rectangle }
+  { id, label: id, shape: Rectangle, }
 }
 
 ///|
@@ -22,7 +22,7 @@ fn test_graph(
   nodes_in_order : Array[@model.MermaidNode],
   edges : Array[@model.MermaidEdge],
 ) -> @model.MermaidGraph {
-  let nodes : Map[String, @model.MermaidNode] = {}
+  let nodes : Map[String, @model.MermaidNode] = Map([])
   for node in nodes_in_order {
     nodes[node.id] = node
   }
@@ -94,7 +94,7 @@ test "legacy setup enables dagre simplex only when dagre-parity is selected" {
   )
   let dagre_setup = build_legacy_layout_setup(
     graph,
-    { ..@model.RenderOptions::default(), layout_engine: Some(DagreParity) },
+    { ..@model.RenderOptions::default(), layout_engine: Some(DagreParity), },
     true,
     false,
   )

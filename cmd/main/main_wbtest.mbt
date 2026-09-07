@@ -105,9 +105,9 @@ test "theme_by_name handles aliases and normalization" {
 test "available_theme_list remains deduplicated" {
   let items = available_theme_list()
     .split(",")
-    .map(item => item.trim().to_string())
+    .map(item => item.trim().to_owned())
     .to_array()
-  let seen : Map[String, Bool] = {}
+  let seen : Map[String, Bool] = Map([])
   for item in items {
     assert_true(item != "")
     assert_true(!seen.contains(item))

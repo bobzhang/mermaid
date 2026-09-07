@@ -68,8 +68,8 @@ pub fn prepare_graph_inputs(
   graph : MermaidGraph,
   use_subgraph_redirects : Bool,
 ) -> GraphPrepState {
-  let subgraph_entry_by_id : Map[String, String] = {}
-  let subgraph_exit_by_id : Map[String, String] = {}
+  let subgraph_entry_by_id : Map[String, String] = Map([])
+  let subgraph_exit_by_id : Map[String, String] = Map([])
   if use_subgraph_redirects {
     for subgraph in graph.subgraphs {
       collect_subgraph_edge_redirects(
@@ -77,7 +77,7 @@ pub fn prepare_graph_inputs(
       )
     }
   }
-  let hidden_subgraph_node_ids : Map[String, Bool] = {}
+  let hidden_subgraph_node_ids : Map[String, Bool] = Map([])
   if use_subgraph_redirects {
     collect_hidden_subgraph_node_ids(
       graph.subgraphs,
@@ -87,7 +87,7 @@ pub fn prepare_graph_inputs(
     )
   }
 
-  let node_priority_by_id : Map[String, Int] = {}
+  let node_priority_by_id : Map[String, Int] = Map([])
   let prioritized_node_ids : Array[String] = []
   fn append_prioritized_visible_node(node_id : String) -> Unit {
     if node_priority_by_id.contains(node_id) {
@@ -144,7 +144,7 @@ pub fn prepare_graph_inputs(
         None => ()
       }
     }
-    return { subgraph_entry_by_id, subgraph_exit_by_id, nodes_in_order }
+    return { subgraph_entry_by_id, subgraph_exit_by_id, nodes_in_order, }
   }
 
   fn priority_compare(
@@ -180,9 +180,9 @@ pub fn prepare_graph_inputs(
   }
 
   let visible_node_ids = prioritized_node_ids.copy()
-  let visible_node_by_id : Map[String, Bool] = {}
-  let indegree_by_id : Map[String, Int] = {}
-  let outgoing_target_ids_by_source : Map[String, Array[String]] = {}
+  let visible_node_by_id : Map[String, Bool] = Map([])
+  let indegree_by_id : Map[String, Int] = Map([])
+  let outgoing_target_ids_by_source : Map[String, Array[String]] = Map([])
   for node_id in visible_node_ids {
     visible_node_by_id[node_id] = true
     indegree_by_id[node_id] = 0
@@ -220,7 +220,7 @@ pub fn prepare_graph_inputs(
   sort_ready_node_ids_for_pop(ready_node_ids, node_priority_by_id)
 
   let ordered_node_ids : Array[String] = []
-  let emitted_node_by_id : Map[String, Bool] = {}
+  let emitted_node_by_id : Map[String, Bool] = Map([])
   while ready_node_ids.length() > 0 {
     let node_id = match ready_node_ids.pop() {
       Some(found) => found
@@ -263,5 +263,5 @@ pub fn prepare_graph_inputs(
     }
   }
 
-  { subgraph_entry_by_id, subgraph_exit_by_id, nodes_in_order }
+  { subgraph_entry_by_id, subgraph_exit_by_id, nodes_in_order, }
 }

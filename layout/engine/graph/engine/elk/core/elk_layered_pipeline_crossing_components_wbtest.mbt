@@ -17,7 +17,10 @@ test "elk layered crossing component bundle maps edge-slot heuristic role" {
   let default_plan = default_crossing_execution_plan(
     LayerSweepWithLocalRefinement,
   )
-  let plan = { ..default_plan, sweep_kernel: NeighborMeanEdgeSlotBidirectional }
+  let plan = {
+    ..default_plan,
+    sweep_kernel: NeighborMeanEdgeSlotBidirectional,
+  }
   let components = build_crossing_component_bundle(plan)
   assert_eq(components.heuristic.role, "layer-sweep-edge-slot")
   assert_true(
@@ -30,7 +33,10 @@ test "elk layered crossing component bundle maps port-rank heuristic role" {
   let default_plan = default_crossing_execution_plan(
     LayerSweepWithLocalRefinement,
   )
-  let plan = { ..default_plan, sweep_kernel: NeighborMeanPortRankBidirectional }
+  let plan = {
+    ..default_plan,
+    sweep_kernel: NeighborMeanPortRankBidirectional,
+  }
   let components = build_crossing_component_bundle(plan)
   assert_eq(components.heuristic.role, "layer-sweep-port-rank")
   assert_true(

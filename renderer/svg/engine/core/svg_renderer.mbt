@@ -109,7 +109,7 @@ fn rounded_orthogonal_path(
     return ""
   }
   let first = points[0]
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   sb.write_string("M\{first.x} \{first.y}")
 
   if points.length() == 2 {
@@ -185,7 +185,7 @@ fn basis_curve_path(points : Array[Point]) -> String {
   if points.length() < 2 {
     return ""
   }
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   let first = points[0]
   sb.write_string("M\{first.x} \{first.y}")
   if points.length() == 2 {
@@ -319,7 +319,7 @@ fn percent_hex(byte_value : Int) -> String {
 
 ///|
 fn font_url_component(font : String) -> String {
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   for ch in font {
     if is_uri_unreserved_char(ch) {
       sb.write_char(ch)
@@ -403,7 +403,7 @@ fn sequence_is_actor_node(node : PositionedNode) -> Bool {
 
 ///|
 fn class_like_lines(node : PositionedNode) -> (String, Array[String]) {
-  let lines = node.label.split("\n").map(part => part.to_string()).to_array()
+  let lines = node.label.split("\n").map(part => part.to_owned()).to_array()
   if lines.length() == 0 {
     (node.label, [])
   } else {
@@ -422,7 +422,7 @@ fn render_class_like_label(node : PositionedNode) -> String {
   let (header, rows) = class_like_lines(node)
   let header_height = 32
   let row_height = 16
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   sb.write_string(
     text_svg_with_attrs(
       node.x,
@@ -463,7 +463,7 @@ fn sequence_block_type_text(block_type : SequenceBlockType) -> String {
 
 ///|
 fn render_sequence_block(block : PositionedSequenceBlock) -> String {
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   sb.write_string(
     "<rect class=\"sequence-block\" x=\"\{block.x}\" y=\"\{block.y}\" width=\"\{block.width}\" height=\"\{block.height}\" />",
   )
@@ -508,7 +508,7 @@ fn render_sequence_activation(
 ///|
 fn render_sequence_note(note : PositionedSequenceNote) -> String {
   let fold = 6
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   sb.write_string(
     "<rect class=\"sequence-note\" x=\"\{note.x}\" y=\"\{note.y}\" width=\"\{note.width}\" height=\"\{note.height}\" />",
   )
@@ -531,7 +531,7 @@ fn subgraph_header_height() -> Int {
 ///|
 fn render_group(group : PositionedGroup) -> String {
   let header_height = subgraph_header_height()
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   sb.write_string(
     "<rect class=\"group-outer\" x=\"\{group.x}\" y=\"\{group.y}\" width=\"\{group.width}\" height=\"\{group.height}\" rx=\"0\" ry=\"0\" fill=\"var(--_group-fill)\" stroke=\"var(--_node-stroke)\" stroke-width=\"1\" />",
   )
@@ -562,14 +562,14 @@ fn render_node_label(node : PositionedNode) -> String {
   if node.shape is (ClassEntity | ErEntity) {
     return render_class_like_label(node)
   }
-  let lines = node.label.split("\n").map(part => part.to_string()).to_array()
+  let lines = node.label.split("\n").map(part => part.to_owned()).to_array()
   if lines.length() <= 1 {
     return text_svg_with_attrs(node.x, node.y, node.label, "label", label_attrs)
   }
 
   let line_height = 14
   let start_y = node.y - (lines.length() - 1) * line_height / 2
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   sb.write_string(
     "<text class=\"label\" x=\"\{node.x}\" text-anchor=\"middle\"\{label_attrs}>",
   )
@@ -720,8 +720,8 @@ fn er_endpoint_tokens(operator : String?) -> (String?, String?) {
       }
       match (start_sep, end_sep) {
         (Some(start), Some(end)) => {
-          let start_token = op[:start].to_string().trim().to_string()
-          let end_token = op[end + 1:].to_string().trim().to_string()
+          let start_token = op[:start].to_owned().trim().to_owned()
+          let end_token = op[end + 1:].to_owned().trim().to_owned()
           let start_value = if start_token == "" {
             None
           } else {
@@ -774,7 +774,7 @@ fn er_endpoint_text_svg(edge : PositionedEdge) -> String {
     (None, None) => ""
     _ => {
       let (start_pos, end_pos) = endpoint_text_positions(edge.points)
-      let sb = StringBuilder::new()
+      let sb = StringBuilder()
       match start_token {
         Some(token) =>
           sb.write_string(
@@ -914,7 +914,7 @@ pub fn render_svg(
   let er_mode = is_er_render(graph)
   let font_url = font_url_component(font)
   let root_style = {
-    let sb = StringBuilder::new()
+    let sb = StringBuilder()
     sb.write_string("--bg:\{colors.bg};--fg:\{colors.fg}")
     sb.write_string(css_var_attr("--line", colors.line))
     sb.write_string(css_var_attr("--accent", colors.accent))
@@ -927,7 +927,7 @@ pub fn render_svg(
     sb.to_string()
   }
 
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   sb.write_string(
     "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"\{graph.width}\" height=\"\{graph.height}\" viewBox=\"0 0 \{graph.width} \{graph.height}\" style=\"\{root_style}\">",
   )

@@ -15,4 +15,3 @@ pub fn render_svg(@model.PositionedGraph, @model.DiagramColors, String, Bool) ->
 // Type aliases
 
 // Traits
-

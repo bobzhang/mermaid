@@ -25,12 +25,12 @@ fn collect_non_state_flow_acyclic_phase_state(
   prefer_definition_back_edges : Bool,
   use_greedy_feedback_arc_set : Bool,
 ) -> NonStateFlowAcyclicPhaseState {
-  let node_order_by_id : Map[String, Int] = {}
-  let node_exists : Map[String, Bool] = {}
-  let outgoing_edge_indices_by_source : Map[String, Array[Int]] = {}
+  let node_order_by_id : Map[String, Int] = Map([])
+  let node_exists : Map[String, Bool] = Map([])
+  let outgoing_edge_indices_by_source : Map[String, Array[Int]] = Map([])
   let considered_edge_indices : Array[Int] = []
-  let definition_back_edge_by_index : Map[Int, Bool] = {}
-  let back_edge_by_index : Map[Int, Bool] = {}
+  let definition_back_edge_by_index : Map[Int, Bool] = Map([])
+  let back_edge_by_index : Map[Int, Bool] = Map([])
 
   for i, node in nodes_in_order {
     node_order_by_id[node.id] = i
@@ -71,7 +71,7 @@ fn collect_non_state_flow_acyclic_phase_state(
       back_edge_by_index[edge_index] = true
     }
   } else {
-    let visit_state_by_id : Map[String, Int] = {}
+    let visit_state_by_id : Map[String, Int] = Map([])
 
     fn mark_back_edges_from(
       node_id : String,
@@ -129,8 +129,8 @@ fn collect_non_state_flow_acyclic_phase_state(
   let relaxed_edge_indices : Array[Int] = []
   let reversed_back_edge_indices : Array[Int] = []
   let definition_backward_edge_indices : Array[Int] = []
-  let incoming_relaxed_edge_indices_by_target : Map[String, Array[Int]] = {}
-  let outgoing_relaxed_edge_indices_by_source : Map[String, Array[Int]] = {}
+  let incoming_relaxed_edge_indices_by_target : Map[String, Array[Int]] = Map([])
+  let outgoing_relaxed_edge_indices_by_source : Map[String, Array[Int]] = Map([])
   for node in nodes_in_order {
     incoming_relaxed_edge_indices_by_target[node.id] = []
     outgoing_relaxed_edge_indices_by_source[node.id] = []
@@ -186,8 +186,8 @@ fn collect_non_state_flow_ranks(
   use_dagre_network_simplex : Bool,
 ) -> (Map[String, Int], Int) {
   if !cycle_aware {
-    let node_order_by_id : Map[String, Int] = {}
-    let rank_by_id : Map[String, Int] = {}
+    let node_order_by_id : Map[String, Int] = Map([])
+    let rank_by_id : Map[String, Int] = Map([])
 
     for i, node in nodes_in_order {
       node_order_by_id[node.id] = i
@@ -199,7 +199,8 @@ fn collect_non_state_flow_ranks(
     }
 
     let forward_edge_indices : Array[Int] = []
-    let incoming_forward_source_ids_by_target : Map[String, Array[String]] = {}
+    let incoming_forward_source_ids_by_target : Map[String, Array[String]] = Map([],
+    )
     for node in nodes_in_order {
       incoming_forward_source_ids_by_target[node.id] = []
     }
@@ -337,7 +338,7 @@ fn collect_non_state_flow_ranks(
     return (rank_by_id, max_rank)
   }
 
-  let rank_by_id : Map[String, Int] = {}
+  let rank_by_id : Map[String, Int] = Map([])
 
   for _, node in nodes_in_order {
     rank_by_id[node.id] = 0
@@ -564,13 +565,13 @@ fn collect_greedy_feedback_edge_indices(
   edges : Array[MermaidEdge],
   considered_edge_indices : Array[Int],
 ) -> Map[Int, Bool] {
-  let node_index_by_id : Map[String, Int] = {}
+  let node_index_by_id : Map[String, Int] = Map([])
   let active_node_by_index : Array[Bool] = []
   let incoming_aggregated_edge_indices_by_target : Array[Array[Int]] = []
   let outgoing_aggregated_edge_indices_by_source : Array[Array[Int]] = []
   let incoming_weight_by_index : Array[Int] = []
   let outgoing_weight_by_index : Array[Int] = []
-  let back_edge_by_index : Map[Int, Bool] = {}
+  let back_edge_by_index : Map[Int, Bool] = Map([])
 
   for i, node in nodes_in_order {
     node_index_by_id[node.id] = i
@@ -591,7 +592,7 @@ fn collect_greedy_feedback_edge_indices(
   let aggregated_target_index : Array[Int] = []
   let aggregated_weight : Array[Int] = []
   let aggregated_original_edge_indices : Array[Array[Int]] = []
-  let aggregated_edge_index_by_key : Map[String, Int] = {}
+  let aggregated_edge_index_by_key : Map[String, Int] = Map([])
   for edge_index in considered_edge_indices {
     let edge = edges[edge_index]
     match
@@ -930,9 +931,9 @@ fn graph_has_cycle(
   nodes_in_order : Array[MermaidNode],
   edges : Array[MermaidEdge],
 ) -> Bool {
-  let node_exists : Map[String, Bool] = {}
-  let outgoing_targets_by_source : Map[String, Array[String]] = {}
-  let visit_state_by_id : Map[String, Int] = {}
+  let node_exists : Map[String, Bool] = Map([])
+  let outgoing_targets_by_source : Map[String, Array[String]] = Map([])
+  let visit_state_by_id : Map[String, Int] = Map([])
 
   for node in nodes_in_order {
     node_exists[node.id] = true
@@ -1003,7 +1004,7 @@ fn graph_has_definition_backward_dotted_edge(
   nodes_in_order : Array[MermaidNode],
   edges : Array[MermaidEdge],
 ) -> Bool {
-  let node_order_by_id : Map[String, Int] = {}
+  let node_order_by_id : Map[String, Int] = Map([])
   for i, node in nodes_in_order {
     node_order_by_id[node.id] = i
   }
@@ -1223,9 +1224,9 @@ fn collect_non_state_flow_lanes_internal(
   }
 
   let rank_nodes : Array[Array[String]] = []
-  let real_node_ids : Map[String, Bool] = {}
-  let lane_rank_by_id : Map[String, Int] = {}
-  let lane_node_insert_order_by_id : Map[String, Int] = {}
+  let real_node_ids : Map[String, Bool] = Map([])
+  let lane_rank_by_id : Map[String, Int] = Map([])
+  let lane_node_insert_order_by_id : Map[String, Int] = Map([])
   let lane_node_ids_in_insert_order : Array[String] = []
   let mut lane_node_insert_serial = 0
   for _ in 0..<=max_rank {
@@ -1284,14 +1285,14 @@ fn collect_non_state_flow_lanes_internal(
   let dotted_back_edge_ordering_min_span = 3
   let feedback_back_edge_ordering_min_span = 2
   let mut rank_backward_edge_count = 0
-  let rank_backward_count_by_target : Map[String, Int] = {}
+  let rank_backward_count_by_target : Map[String, Int] = Map([])
   let backward_rank_edges : Array[(Int, MermaidEdge, Int, Int)] = []
-  let node_order_by_id : Map[String, Int] = {}
+  let node_order_by_id : Map[String, Int] = Map([])
   for order, node in nodes_in_order {
     node_order_by_id[node.id] = order
   }
   let mut order_feedback_edge_count = 0
-  let order_feedback_count_by_target : Map[String, Int] = {}
+  let order_feedback_count_by_target : Map[String, Int] = Map([])
   for edge in edges {
     match
       (node_order_by_id.get(edge.source), node_order_by_id.get(edge.target)) {
@@ -1441,8 +1442,9 @@ fn collect_non_state_flow_lanes_internal(
     rank_backward_max_target_count <= 2
 
   if prefer_dagre_order_parity {
-    let outgoing_lane_target_ids_by_source : Map[String, Array[String]] = {}
-    let outgoing_lane_target_seen_by_source : Map[String, Map[String, Bool]] = {}
+    let outgoing_lane_target_ids_by_source : Map[String, Array[String]] = Map([])
+    let outgoing_lane_target_seen_by_source : Map[String, Map[String, Bool]] = Map([],
+    )
     for node_id in lane_node_ids_in_insert_order {
       outgoing_lane_target_ids_by_source[node_id] = []
       outgoing_lane_target_seen_by_source[node_id] = {}
@@ -1489,7 +1491,7 @@ fn collect_non_state_flow_lanes_internal(
     for _ in 0..<=max_rank {
       dagre_init_rank_nodes.push([])
     }
-    let visited_lane_node_by_id : Map[String, Bool] = {}
+    let visited_lane_node_by_id : Map[String, Bool] = Map([])
     fn dagre_init_dfs(
       node_id : String,
       lane_rank_by_id : Map[String, Int],
@@ -1542,18 +1544,18 @@ fn collect_non_state_flow_lanes_internal(
     }
   }
 
-  let adjacent_edge_indices_by_upper_rank : Map[Int, Array[Int]] = {}
+  let adjacent_edge_indices_by_upper_rank : Map[Int, Array[Int]] = Map([])
   let incoming_adjacent_neighbor_ids_by_rank_node : Map[
     Int,
     Map[String, Array[String]],
-  ] = {}
+  ] = Map([])
   let outgoing_adjacent_neighbor_ids_by_rank_node : Map[
     Int,
     Map[String, Array[String]],
-  ] = {}
+  ] = Map([])
   for rank in 0..<=max_rank {
-    let incoming_neighbor_ids_by_node : Map[String, Array[String]] = {}
-    let outgoing_neighbor_ids_by_node : Map[String, Array[String]] = {}
+    let incoming_neighbor_ids_by_node : Map[String, Array[String]] = Map([])
+    let outgoing_neighbor_ids_by_node : Map[String, Array[String]] = Map([])
     for node_id in rank_nodes[rank] {
       incoming_neighbor_ids_by_node[node_id] = []
       outgoing_neighbor_ids_by_node[node_id] = []
@@ -1609,8 +1611,8 @@ fn collect_non_state_flow_lanes_internal(
     adjacent_edge_indices_by_upper_rank : Map[Int, Array[Int]],
     lane_edges : Array[MermaidEdge],
   ) -> Int {
-    let upper_order : Map[String, Int] = {}
-    let lower_order : Map[String, Int] = {}
+    let upper_order : Map[String, Int] = Map([])
+    let lower_order : Map[String, Int] = Map([])
     for i, node_id in rank_nodes[upper_rank] {
       upper_order[node_id] = i
     }
@@ -1625,7 +1627,7 @@ fn collect_non_state_flow_lanes_internal(
           let edge = lane_edges[edge_index]
           match (upper_order.get(edge.source), lower_order.get(edge.target)) {
             (Some(source_order), Some(target_order)) =>
-              pairs.push({ x: source_order, y: target_order })
+              pairs.push({ x: source_order, y: target_order, })
             _ => ()
           }
         }
@@ -1705,7 +1707,7 @@ fn collect_non_state_flow_lanes_internal(
     if north_layer.length() == 0 || south_layer.length() == 0 {
       return 0
     }
-    let south_pos_by_id : Map[String, Int] = {}
+    let south_pos_by_id : Map[String, Int] = Map([])
     for i, node_id in south_layer {
       south_pos_by_id[node_id] = i
     }
@@ -1713,7 +1715,7 @@ fn collect_non_state_flow_lanes_internal(
     let south_entries_pos : Array[Int] = []
     let south_entries_weight : Array[Int] = []
     for north_id in north_layer {
-      let weight_by_pos : Map[Int, Int] = {}
+      let weight_by_pos : Map[Int, Int] = Map([])
       match adjacent_edge_indices_by_upper_rank.get(upper_rank) {
         Some(edge_indices) =>
           for edge_index in edge_indices {
@@ -1906,7 +1908,7 @@ fn collect_non_state_flow_lanes_internal(
         continue
       }
 
-      let neighbor_order : Map[String, Int] = {}
+      let neighbor_order : Map[String, Int] = Map([])
       for i, node_id in rank_nodes[neighbor_rank] {
         neighbor_order[node_id] = i
       }
@@ -1917,9 +1919,9 @@ fn collect_non_state_flow_lanes_internal(
       } else {
         outgoing_adjacent_neighbor_ids_by_rank_node.get(rank)
       }
-      let numerators : Map[String, Int] = {}
-      let denominators : Map[String, Int] = {}
-      let current_order : Map[String, Int] = {}
+      let numerators : Map[String, Int] = Map([])
+      let denominators : Map[String, Int] = Map([])
+      let current_order : Map[String, Int] = Map([])
       for i, node_id in current {
         current_order[node_id] = i
         numerators[node_id] = i
@@ -2001,7 +2003,7 @@ fn collect_non_state_flow_lanes_internal(
         continue
       }
 
-      let neighbor_order : Map[String, Int] = {}
+      let neighbor_order : Map[String, Int] = Map([])
       for i, node_id in rank_nodes[neighbor_rank] {
         neighbor_order[node_id] = i
       }
@@ -2026,16 +2028,16 @@ fn collect_non_state_flow_lanes_internal(
         )
         left_insert_index.compare(right_insert_index)
       })
-      let rank_local_insert_index_by_id : Map[String, Int] = {}
+      let rank_local_insert_index_by_id : Map[String, Int] = Map([])
       for local_index, node_id in rank_insert_sorted_node_ids {
         rank_local_insert_index_by_id[node_id] = local_index
       }
       let sortable_ids : Array[String] = []
-      let sortable_num_by_id : Map[String, Int] = {}
-      let sortable_den_by_id : Map[String, Int] = {}
-      let sortable_index_by_id : Map[String, Int] = {}
+      let sortable_num_by_id : Map[String, Int] = Map([])
+      let sortable_den_by_id : Map[String, Int] = Map([])
+      let sortable_index_by_id : Map[String, Int] = Map([])
       let unsortable_ids : Array[String] = []
-      let unsortable_index_by_id : Map[String, Int] = {}
+      let unsortable_index_by_id : Map[String, Int] = Map([])
 
       for i, node_id in current {
         let mut sum = 0
@@ -2092,7 +2094,7 @@ fn collect_non_state_flow_lanes_internal(
 
       match pass_barycenters_by_rank {
         Some(barycenters_by_rank) => {
-          let barycenters_by_node : Map[String, String] = {}
+          let barycenters_by_node : Map[String, String] = Map([])
           for node_id in sortable_ids {
             let sum = option_int_or(sortable_num_by_id.get(node_id), 0)
             let count = option_int_or(sortable_den_by_id.get(node_id), 1)
@@ -2267,7 +2269,7 @@ fn collect_non_state_flow_lanes_internal(
       )
       while rounds_since_best < 4 {
         let bias_right = pass % 4 >= 2
-        let pass_barycenters_by_rank : Map[Int, Map[String, String]] = {}
+        let pass_barycenters_by_rank : Map[Int, Map[String, String]] = Map([])
         if pass % 2 == 0 {
           dagre_parity_barycenter_pass(
             rank_nodes,
@@ -2517,7 +2519,7 @@ fn collect_non_state_flow_lanes_internal(
     rank_by_id : Map[String, Int],
     lane_by_id : Map[String, Int],
   ) -> Int {
-    let seen_pairs : Map[String, Bool] = {}
+    let seen_pairs : Map[String, Bool] = Map([])
     let mut crossings = 0
     for edge_index in incident_edge_indexes {
       for other_edge_index in crossing_edge_indexes {
@@ -2649,7 +2651,7 @@ fn collect_non_state_flow_lanes_internal(
     lane_slots.sort()
 
     let rank_incident_edge_indexes : Array[Int] = []
-    let seen_incident_edge_indexes : Map[Int, Bool] = {}
+    let seen_incident_edge_indexes : Map[Int, Bool] = Map([])
     for node_id in node_ids {
       append_incident_edge_indexes(
         node_id, incident_edge_indexes_by_node, rank_incident_edge_indexes, seen_incident_edge_indexes,
@@ -2659,7 +2661,7 @@ fn collect_non_state_flow_lanes_internal(
       return false
     }
     let rank_fanout_constraint_indexes : Array[Int] = []
-    let seen_rank_fanout_constraint_indexes : Map[Int, Bool] = {}
+    let seen_rank_fanout_constraint_indexes : Map[Int, Bool] = Map([])
     for node_id in node_ids {
       match fanout_constraint_indexes_by_target_id.get(node_id) {
         Some(indexes) =>
@@ -2772,7 +2774,7 @@ fn collect_non_state_flow_lanes_internal(
     }
   }
 
-  let lane_by_id : Map[String, Int] = {}
+  let lane_by_id : Map[String, Int] = Map([])
   for rank in 0..<=max_rank {
     let mut lane = 0
     for node_id in rank_nodes[rank] {
@@ -2789,7 +2791,7 @@ fn collect_non_state_flow_lanes_internal(
     }
   }
 
-  let real_node_ids_by_rank : Map[Int, Array[String]] = {}
+  let real_node_ids_by_rank : Map[Int, Array[String]] = Map([])
   for rank in 0..<=max_rank {
     let node_ids : Array[String] = []
     for node_id in rank_nodes[rank] {
@@ -2801,7 +2803,7 @@ fn collect_non_state_flow_lanes_internal(
   }
 
   let crossing_edge_indexes : Array[Int] = []
-  let incident_edge_indexes_by_node : Map[String, Array[Int]] = {}
+  let incident_edge_indexes_by_node : Map[String, Array[Int]] = Map([])
   for node in nodes_in_order {
     incident_edge_indexes_by_node[node.id] = []
   }
@@ -2825,7 +2827,7 @@ fn collect_non_state_flow_lanes_internal(
     }
   }
 
-  let fanout_targets_by_source_rank : Map[String, Array[String]] = {}
+  let fanout_targets_by_source_rank : Map[String, Array[String]] = Map([])
   if enable_fanout_tie_breaks {
     for _, edge in edges {
       match (rank_by_id.get(edge.source), rank_by_id.get(edge.target)) {
@@ -2846,7 +2848,7 @@ fn collect_non_state_flow_lanes_internal(
   }
   let fanout_constraint_left_target_ids : Array[String] = []
   let fanout_constraint_right_target_ids : Array[String] = []
-  let fanout_constraint_indexes_by_target_id : Map[String, Array[Int]] = {}
+  let fanout_constraint_indexes_by_target_id : Map[String, Array[Int]] = Map([])
   for _, targets in fanout_targets_by_source_rank {
     if targets.length() < 2 {
       continue
@@ -2896,7 +2898,7 @@ fn collect_non_state_flow_lanes_internal(
     let left_id = node_ids[left_index]
     let right_id = node_ids[right_index]
     let incident_edge_indexes : Array[Int] = []
-    let seen_incident_edge_indexes : Map[Int, Bool] = {}
+    let seen_incident_edge_indexes : Map[Int, Bool] = Map([])
     append_incident_edge_indexes(
       left_id, incident_edge_indexes_by_node, incident_edge_indexes, seen_incident_edge_indexes,
     )
@@ -2918,7 +2920,7 @@ fn collect_non_state_flow_lanes_internal(
       0
     }
     let fanout_constraint_indexes : Array[Int] = []
-    let seen_fanout_constraint_indexes : Map[Int, Bool] = {}
+    let seen_fanout_constraint_indexes : Map[Int, Bool] = Map([])
     match fanout_constraint_indexes_by_target_id.get(left_id) {
       Some(indexes) =>
         for index in indexes {
@@ -3291,7 +3293,7 @@ fn enforce_unique_lanes_per_rank(
   rank_by_id : Map[String, Int],
   lane_by_id : Map[String, Int],
 ) -> Unit {
-  let node_ids_by_rank : Map[Int, Array[String]] = {}
+  let node_ids_by_rank : Map[Int, Array[String]] = Map([])
   for node in nodes_in_order {
     let rank = option_int_or(rank_by_id.get(node.id), 0)
     if !node_ids_by_rank.contains(rank) {
@@ -3305,7 +3307,7 @@ fn enforce_unique_lanes_per_rank(
     if node_ids.length() <= 1 {
       continue
     }
-    let original_order_by_node_id : Map[String, Int] = {}
+    let original_order_by_node_id : Map[String, Int] = Map([])
     for i, node_id in node_ids {
       original_order_by_node_id[node_id] = i
     }
@@ -3353,12 +3355,12 @@ fn refine_horizontal_state_flow_lanes(
     return
   }
 
-  let node_exists : Map[String, Bool] = {}
-  let indegree_by_id : Map[String, Int] = {}
-  let outdegree_by_id : Map[String, Int] = {}
-  let has_self_loop_by_id : Map[String, Bool] = {}
-  let outgoing_edge_indices_by_source : Map[String, Array[Int]] = {}
-  let incoming_edge_indices_by_target : Map[String, Array[Int]] = {}
+  let node_exists : Map[String, Bool] = Map([])
+  let indegree_by_id : Map[String, Int] = Map([])
+  let outdegree_by_id : Map[String, Int] = Map([])
+  let has_self_loop_by_id : Map[String, Bool] = Map([])
+  let outgoing_edge_indices_by_source : Map[String, Array[Int]] = Map([])
+  let incoming_edge_indices_by_target : Map[String, Array[Int]] = Map([])
   let lane_scale = if enhanced_mode { 2 } else { 1 }
   for node in nodes_in_order {
     node_exists[node.id] = true
@@ -3396,12 +3398,12 @@ fn refine_horizontal_state_flow_lanes(
       1
   }
 
-  let seeded_lane_by_id : Map[String, Int] = {}
+  let seeded_lane_by_id : Map[String, Int] = Map([])
   for node in nodes_in_order {
     let source_rank = option_int_or(rank_by_id.get(node.id), 0)
     let source_lane = option_int_or(lane_by_id.get(node.id), 0)
     let forward_targets : Array[String] = []
-    let forward_target_encounter_index_by_id : Map[String, Int] = {}
+    let forward_target_encounter_index_by_id : Map[String, Int] = Map([])
     let mut forward_target_encounter_index = 0
     match outgoing_edge_indices_by_source.get(node.id) {
       Some(outgoing_edge_indices) =>
@@ -3449,7 +3451,7 @@ fn refine_horizontal_state_flow_lanes(
     }
   }
 
-  let anchored_lane_by_id : Map[String, Int] = {}
+  let anchored_lane_by_id : Map[String, Int] = Map([])
   for node in nodes_in_order {
     match node.shape {
       StateStart => {
@@ -3465,7 +3467,7 @@ fn refine_horizontal_state_flow_lanes(
   }
 
   for _ in 0..<6 {
-    let next_lane_by_id : Map[String, Int] = {}
+    let next_lane_by_id : Map[String, Int] = Map([])
     for node in nodes_in_order {
       match anchored_lane_by_id.get(node.id) {
         Some(anchored_lane) => {
@@ -3527,7 +3529,7 @@ fn refine_horizontal_state_flow_lanes(
   }
 
   if enhanced_mode {
-    let forward_solid_out_degree_by_source : Map[String, Int] = {}
+    let forward_solid_out_degree_by_source : Map[String, Int] = Map([])
     for edge in edges {
       if !node_exists.contains(edge.source) ||
         !node_exists.contains(edge.target) {

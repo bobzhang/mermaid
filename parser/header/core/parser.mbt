@@ -5,7 +5,7 @@ fn preprocess_lines(text : String) -> Array[String] {
   let mut at_start = true
   let mut in_frontmatter = false
   for raw in normalized.split("\n") {
-    let line = raw.to_string().trim().to_string()
+    let line = raw.to_owned().trim().to_owned()
     if in_frontmatter {
       if line == "---" {
         in_frontmatter = false

@@ -13,7 +13,7 @@ test "Render smoke for all supported corpus cases" (it : @test.Test) {
         $|
       )
       .trim_end()
-      .to_string()
+      .to_owned()
     svg_sections.push(section)
 
     let ascii_options = @model.AsciiRenderOptions::{
@@ -60,7 +60,7 @@ test "Render smoke for all supported corpus cases" (it : @test.Test) {
       $|
     )
     .trim_end()
-    .to_string()
+    .to_owned()
   it.write(gallery)
   it.snapshot(filename="supported_render_smoke_gallery.html")
 }

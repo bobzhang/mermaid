@@ -51,7 +51,7 @@ fn build_crossing_sweep_input(
 fn build_crossing_neighbor_mean_random_state_by_seed(
   random_seed : Int,
 ) -> Map[String, UInt64] {
-  let random_state_by_key : Map[String, UInt64] = {}
+  let random_state_by_key : Map[String, UInt64] = Map([])
   random_state_by_key[crossing_neighbor_random_state_key] = java_random_state_from_seed(
     random_seed,
   )
@@ -107,12 +107,12 @@ priv struct NodeEdgeSlotOrderKey {
 
 ///|
 fn empty_node_edge_slot_order_key() -> NodeEdgeSlotOrderKey {
-  { has_center: false, edge_slot_sum: 0.0, edge_slot_count: 0 }
+  { has_center: false, edge_slot_sum: 0.0, edge_slot_count: 0, }
 }
 
 ///|
 fn build_node_id_set(node_ids : Array[String]) -> Map[String, Bool] {
-  let node_id_set : Map[String, Bool] = {}
+  let node_id_set : Map[String, Bool] = Map([])
   for node_id in node_ids {
     node_id_set[node_id] = true
   }
@@ -182,7 +182,7 @@ fn update_fixed_layer_connected_order_by_free_rank_positions(
   connected_node_ids_by_fixed_node_id : Map[String, Array[String]],
   descending_in_fixed_node : Bool,
 ) -> Unit {
-  let free_rank_position_by_node_id : Map[String, Int] = {}
+  let free_rank_position_by_node_id : Map[String, Int] = Map([])
   for index, node_id in free_node_ids {
     free_rank_position_by_node_id[node_id] = index
   }
@@ -246,12 +246,12 @@ fn sort_rank_nodes_by_fixed_layer_edge_slots(
   descending_in_fixed_node : Bool,
 ) -> Bool {
   let original_free_node_ids = free_node_ids.copy()
-  let free_rank_position_by_node_id : Map[String, Int] = {}
+  let free_rank_position_by_node_id : Map[String, Int] = Map([])
   for index in 0..<free_node_ids.length() {
     free_rank_position_by_node_id[free_node_ids[index]] = index
   }
   let free_node_id_set = build_node_id_set(free_node_ids)
-  let edge_slot_key_by_node_id : Map[String, NodeEdgeSlotOrderKey] = {}
+  let edge_slot_key_by_node_id : Map[String, NodeEdgeSlotOrderKey] = Map([])
   for node_id in free_node_ids {
     edge_slot_key_by_node_id[node_id] = empty_node_edge_slot_order_key()
   }
@@ -330,12 +330,12 @@ fn sort_rank_nodes_by_fixed_layer_port_ranks(
   descending_in_fixed_node : Bool,
 ) -> Bool {
   let original_free_node_ids = free_node_ids.copy()
-  let free_rank_position_by_node_id : Map[String, Int] = {}
+  let free_rank_position_by_node_id : Map[String, Int] = Map([])
   for index in 0..<free_node_ids.length() {
     free_rank_position_by_node_id[free_node_ids[index]] = index
   }
   let free_node_id_set = build_node_id_set(free_node_ids)
-  let edge_slot_key_by_node_id : Map[String, NodeEdgeSlotOrderKey] = {}
+  let edge_slot_key_by_node_id : Map[String, NodeEdgeSlotOrderKey] = Map([])
   for node_id in free_node_ids {
     edge_slot_key_by_node_id[node_id] = empty_node_edge_slot_order_key()
   }

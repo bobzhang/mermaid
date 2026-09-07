@@ -1,6 +1,6 @@
 ///|
 fn flow_node(id : String) -> @model.MermaidNode {
-  { id, label: id, shape: Rectangle }
+  { id, label: id, shape: Rectangle, }
 }
 
 ///|
@@ -22,10 +22,10 @@ fn flow_graph() -> @model.MermaidGraph {
     "A": flow_node("A"),
     "B": flow_node("B"),
   }
-  let class_defs : Map[String, Map[String, String]] = {}
-  let class_assignments : Map[String, String] = {}
-  let node_styles : Map[String, Map[String, String]] = {}
-  let sequence_actor_kinds : Map[String, @model.SequenceParticipantKind] = {}
+  let class_defs : Map[String, Map[String, String]] = Map([])
+  let class_assignments : Map[String, String] = Map([])
+  let node_styles : Map[String, Map[String, String]] = Map([])
+  let sequence_actor_kinds : Map[String, @model.SequenceParticipantKind] = Map([])
   let sequence_blocks : Array[@model.SequenceBlock] = []
   let sequence_notes : Array[@model.SequenceNote] = []
   let sequence_activation_commands : Array[@model.SequenceActivationCommand] = []

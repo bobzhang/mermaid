@@ -147,7 +147,7 @@ fn sequence_ordered_actors(
   graph : @model.MermaidGraph,
 ) -> Array[@model.MermaidNode] {
   let ordered : Array[@model.MermaidNode] = []
-  let seen : Map[String, Bool] = {}
+  let seen : Map[String, Bool] = Map([])
   for actor_id in graph.sequence_actor_order {
     match graph.nodes.get(actor_id) {
       Some(actor) => {
@@ -168,11 +168,11 @@ fn sequence_ordered_actors(
 
 ///|
 fn sequence_note_lines(text : String) -> Array[String] {
-  let escaped = text.split("\\n").map(line => line.to_string()).to_array()
+  let escaped = text.split("\\n").map(line => line.to_owned()).to_array()
   if escaped.length() > 1 {
     escaped
   } else {
-    text.split("\n").map(line => line.to_string()).to_array()
+    text.split("\n").map(line => line.to_owned()).to_array()
   }
 }
 
@@ -200,7 +200,7 @@ fn sequence_apply_activation_command(
                 next_stack.push(stack[i])
               }
               activation_starts[command.actor_id] = next_stack
-              activations.push({ actor_idx, top_y, bottom_y: y })
+              activations.push({ actor_idx, top_y, bottom_y: y, })
             }
           None => ()
         }
@@ -233,7 +233,7 @@ fn build_sequence_layout(graph : @model.MermaidGraph) -> AsciiSequenceLayout {
   let box_pad = 1
   let actor_box_h = 3
 
-  let actor_index : Map[String, Int] = {}
+  let actor_index : Map[String, Int] = Map([])
   for i, actor in actors {
     actor_index[actor.id] = i
   }
@@ -297,7 +297,7 @@ fn build_sequence_layout(graph : @model.MermaidGraph) -> AsciiSequenceLayout {
     block_start_y.push(-1)
     block_end_y.push(-1)
   }
-  let divider_y_map : Map[String, Int] = {}
+  let divider_y_map : Map[String, Int] = Map([])
   let note_positions : Array[AsciiSequenceNoteLayout] = []
 
   let mut cur_y = actor_box_h
@@ -362,7 +362,7 @@ fn build_sequence_layout(graph : @model.MermaidGraph) -> AsciiSequenceLayout {
           note_x = 0
         }
 
-        note_positions.push({ x: note_x, y: cur_y, width, height, lines })
+        note_positions.push({ x: note_x, y: cur_y, width, height, lines, })
         cur_y = cur_y + height
       }
     }
@@ -410,11 +410,11 @@ fn build_sequence_layout(graph : @model.MermaidGraph) -> AsciiSequenceLayout {
     }
   }
 
-  let activation_starts : Map[String, Array[Int]] = {}
+  let activation_starts : Map[String, Array[Int]] = Map([])
   let activation_commands_by_after : Map[
     Int,
     Array[@model.SequenceActivationCommand],
-  ] = {}
+  ] = Map([])
   let activations : Array[AsciiSequenceActivationLayout] = []
 
   for command in graph.sequence_activation_commands {
@@ -445,7 +445,7 @@ fn build_sequence_layout(graph : @model.MermaidGraph) -> AsciiSequenceLayout {
 
     if edge.relation_operator is Some(op) && op is [.., .. "+"] {
       sequence_apply_activation_command(
-        { actor_id: edge.target, activate: true, after_index: edge_index },
+        { actor_id: edge.target, activate: true, after_index: edge_index, },
         row_y,
         actor_index,
         activation_starts,
@@ -455,7 +455,7 @@ fn build_sequence_layout(graph : @model.MermaidGraph) -> AsciiSequenceLayout {
 
     if edge.relation_operator is Some(op) && op is [.., .. "-"] {
       sequence_apply_activation_command(
-        { actor_id: edge.source, activate: false, after_index: edge_index },
+        { actor_id: edge.source, activate: false, after_index: edge_index, },
         row_y,
         actor_index,
         activation_starts,
@@ -531,7 +531,7 @@ fn class_strip_method_marker(detail : StringView) -> StringView {
 
 ///|
 fn class_sections(node : @model.MermaidNode) -> Array[Array[String]] {
-  let lines = node.label.split("\n").map(part => part.to_string()).to_array()
+  let lines = node.label.split("\n").map(part => part.to_owned()).to_array()
   if lines.length() == 0 {
     return [[node.id]]
   }
@@ -548,11 +548,11 @@ fn class_sections(node : @model.MermaidNode) -> Array[Array[String]] {
     let rendered = class_strip_method_marker(detail)
     if detail.strip_prefix("<<") is Some(without_prefix) &&
       without_prefix.strip_suffix(">>") is Some(_) {
-      header.push(rendered.to_string())
+      header.push(rendered.to_owned())
     } else if class_is_method_detail(detail) {
-      methods.push(rendered.to_string())
+      methods.push(rendered.to_owned())
     } else {
-      attributes.push(rendered.to_string())
+      attributes.push(rendered.to_owned())
     }
   }
   header.push(lines[0])
@@ -639,9 +639,9 @@ fn build_class_layout(graph : @model.MermaidGraph) -> AsciiClassLayout {
   let h_gap = 4
   let v_gap = 3
 
-  let class_sections_map : Map[String, Array[Array[String]]] = {}
-  let class_width : Map[String, Int] = {}
-  let class_height : Map[String, Int] = {}
+  let class_sections_map : Map[String, Array[Array[String]]] = Map([])
+  let class_width : Map[String, Int] = Map([])
+  let class_height : Map[String, Int] = Map([])
   let class_order : Array[String] = []
 
   for cls in classes {
@@ -653,8 +653,8 @@ fn build_class_layout(graph : @model.MermaidGraph) -> AsciiClassLayout {
     class_order.push(cls.id)
   }
 
-  let parents : Map[String, Array[String]] = {}
-  let children : Map[String, Array[String]] = {}
+  let parents : Map[String, Array[String]] = Map([])
+  let children : Map[String, Array[String]] = Map([])
 
   for edge in graph.edges {
     let (_, marker_at_to, _, hierarchical) = class_relation_meta(
@@ -669,7 +669,7 @@ fn build_class_layout(graph : @model.MermaidGraph) -> AsciiClassLayout {
     map_push_unique(children, parent_id, child_id)
   }
 
-  let level : Map[String, Int] = {}
+  let level : Map[String, Int] = Map([])
   let queue : Array[String] = []
 
   for class_id in class_order {
@@ -743,8 +743,8 @@ fn build_class_layout(graph : @model.MermaidGraph) -> AsciiClassLayout {
     }
   }
 
-  let placed_x : Map[String, Int] = {}
-  let placed_y : Map[String, Int] = {}
+  let placed_x : Map[String, Int] = Map([])
+  let placed_y : Map[String, Int] = Map([])
 
   let mut current_y = 0
   for lv in 0..<=max_level {
@@ -799,7 +799,7 @@ fn build_class_layout(graph : @model.MermaidGraph) -> AsciiClassLayout {
 
 ///|
 fn er_sections(node : @model.MermaidNode) -> Array[Array[String]] {
-  let lines = node.label.split("\n").map(part => part.to_string()).to_array()
+  let lines = node.label.split("\n").map(part => part.to_owned()).to_array()
   if lines.length() == 0 {
     return [[node.id]]
   }
@@ -807,7 +807,7 @@ fn er_sections(node : @model.MermaidNode) -> Array[Array[String]] {
   let header = [lines[0]]
   let attrs : Array[String] = []
   for i in 1..<lines.length() {
-    let line = lines[i].trim().to_string()
+    let line = lines[i].trim().to_owned()
     if line != "" {
       if line is [.. "PK ", ..] ||
         line is [.. "UK ", ..] ||
@@ -833,9 +833,9 @@ fn build_er_layout(graph : @model.MermaidGraph) -> AsciiErLayout {
   let h_gap = 6
   let v_gap = 4
 
-  let entity_sections : Map[String, Array[Array[String]]] = {}
-  let entity_width : Map[String, Int] = {}
-  let entity_height : Map[String, Int] = {}
+  let entity_sections : Map[String, Array[Array[String]]] = Map([])
+  let entity_width : Map[String, Int] = Map([])
+  let entity_height : Map[String, Int] = Map([])
   let entity_order : Array[String] = []
 
   for entity in entities {
@@ -852,8 +852,8 @@ fn build_er_layout(graph : @model.MermaidGraph) -> AsciiErLayout {
     max_per_row = max_per_row + 1
   }
 
-  let placed_x : Map[String, Int] = {}
-  let placed_y : Map[String, Int] = {}
+  let placed_x : Map[String, Int] = Map([])
+  let placed_y : Map[String, Int] = Map([])
 
   let mut current_x = 0
   let mut current_y = 0
@@ -922,7 +922,7 @@ fn build_state_flat_grid_layout(
   let (nodes_in_order, grid_positions, edge_paths) = @layout_engine_graph_ascii_core.layout_state_flat_grid_layout_data(
     graph,
   )
-  { nodes_in_order, grid_positions, edge_paths }
+  { nodes_in_order, grid_positions, edge_paths, }
 }
 
 ///|
@@ -934,7 +934,7 @@ fn build_flow_subgraph_layout(
   {
     positioned: @layout_engine_graph_execute_core.execute_layout_plan(
       @layout_engine_graph_plan_core.build_ascii_layout_execution_plan(graph),
-      { ..@model.RenderOptions::default(), layer_spacing: Some(layer_spacing) },
+      { ..@model.RenderOptions::default(), layer_spacing: Some(layer_spacing), },
     ),
   }
 }

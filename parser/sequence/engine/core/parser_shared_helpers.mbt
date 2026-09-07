@@ -55,7 +55,7 @@ fn find_earliest_operator(
 ) -> FoundEdgeOp? {
   match find_earliest_operator_indices(line, edge_operator_symbols(operators)) {
     Some((operator_index, index)) =>
-      Some({ op: operators[operator_index], index })
+      Some({ op: operators[operator_index], index, })
     None => None
   }
 }

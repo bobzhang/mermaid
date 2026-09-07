@@ -2,7 +2,7 @@
 fn crossing_greedy_build_node_id_set(
   node_ids : Array[String],
 ) -> Map[String, Bool] {
-  let node_id_set : Map[String, Bool] = {}
+  let node_id_set : Map[String, Bool] = Map([])
   for node_id in node_ids {
     node_id_set[node_id] = true
   }

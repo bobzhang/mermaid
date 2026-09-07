@@ -2,8 +2,8 @@
 fn trace_request_for_graph(
   graph : @model.MermaidGraph,
 ) -> GraphLayoutBackendRequest {
-  let options = { ..@model.RenderOptions::default(), layout_engine: Some(Elk) }
-  { graph, options, use_subgraph_redirects: true, compact_fanin: false }
+  let options = { ..@model.RenderOptions::default(), layout_engine: Some(Elk), }
+  { graph, options, use_subgraph_redirects: true, compact_fanin: false, }
 }
 
 ///|

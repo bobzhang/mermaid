@@ -17,4 +17,3 @@ pub fn parse_er_diagram(Array[String]) -> @model.MermaidGraph
 // Type aliases
 
 // Traits
-

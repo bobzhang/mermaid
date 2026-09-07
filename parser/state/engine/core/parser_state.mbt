@@ -6,17 +6,17 @@ fn parse_state_token(
   start_counter : Int,
   end_counter : Int,
 ) -> (String, Int, Int) {
-  let trimmed = token.trim().to_string()
+  let trimmed = token.trim().to_owned()
   if trimmed == "[*]" {
     if is_source {
       let next = start_counter + 1
       let id = "state_start_\{next}"
-      ensure_node(nodes, { id, label: "", shape: StateStart })
+      ensure_node(nodes, { id, label: "", shape: StateStart, })
       (id, next, end_counter)
     } else {
       let next = end_counter + 1
       let id = "state_end_\{next}"
-      ensure_node(nodes, { id, label: "", shape: StateEnd })
+      ensure_node(nodes, { id, label: "", shape: StateEnd, })
       (id, start_counter, next)
     }
   } else {
@@ -38,8 +38,8 @@ fn parse_state_token(
 ///|
 fn strip_quotes(s : StringView) -> String {
   lexmatch s {
-    ("\"" (".*" as content) "\"") => content.to_string()
-    _ => s.to_string()
+    re"^\"" + (re".*" as content) + re"\"$" => content.to_owned()
+    _ => s.to_owned()
   }
 }
 
@@ -139,20 +139,20 @@ fn parse_state_declaration(
   composite_stack : Array[MermaidSubgraph],
 ) -> Bool {
   let rest = lexmatch line[:] {
-    ("state ", state_rest) => state_rest.trim()
+    (re"^state ", after=state_rest) => state_rest.trim()
     _ => return false
   }
   lexmatch rest {
-    (raw_label, " as ", id_part) => {
-      let id = id_part.trim().to_string()
+    (re" as ", before=raw_label, after=id_part) => {
+      let id = id_part.trim().to_owned()
       let label = strip_quotes(raw_label.trim())
       if id != "" {
-        ensure_node(nodes, { id, label, shape: Rounded })
+        ensure_node(nodes, { id, label, shape: Rounded, })
         append_nodes_to_current_subgraph(composite_stack, [id])
       }
     }
     _ => {
-      let rest_str = rest.to_string()
+      let rest_str = rest.to_owned()
       let parsed = @parser_common_engine_core.parse_node_token(rest_str)
       let node = MermaidNode::{
         id: parsed.id,
@@ -182,8 +182,8 @@ fn parse_state_composite_start_line(line : String) -> MermaidSubgraph? {
   }
 
   lexmatch rest {
-    (raw_label, " as ", id_part) => {
-      let id = id_part.trim().to_string()
+    (re" as ", before=raw_label, after=id_part) => {
+      let id = id_part.trim().to_owned()
       if id == "" || !@parser_common_engine_core.is_plain_identifier(id) {
         return None
       }
@@ -203,7 +203,7 @@ fn parse_state_composite_start_line(line : String) -> MermaidSubgraph? {
     _ => ()
   }
 
-  let rest_str = rest.to_string()
+  let rest_str = rest.to_owned()
   if !@parser_common_engine_core.is_plain_identifier(rest_str) {
     return None
   }
@@ -233,8 +233,8 @@ fn parse_state_description_line(
   description : String,
   nodes : Map[String, MermaidNode],
 ) -> Bool {
-  let id = state_id.trim().to_string()
-  let label = description.trim().to_string()
+  let id = state_id.trim().to_owned()
+  let label = description.trim().to_owned()
   if id == "" ||
     label == "" ||
     !@parser_common_engine_core.is_plain_identifier(id) {
@@ -248,9 +248,9 @@ fn parse_state_description_line(
       } else {
         existing.shape
       }
-      nodes[id] = { id: existing.id, label, shape }
+      nodes[id] = { id: existing.id, label, shape, }
     }
-    None => nodes[id] = { id, label, shape: Rounded }
+    None => nodes[id] = { id, label, shape: Rounded, }
   }
   true
 }
@@ -261,13 +261,13 @@ fn parse_state_standalone_line(
   nodes : Map[String, MermaidNode],
   composite_stack : Array[MermaidSubgraph],
 ) -> Bool {
-  let candidate = line.trim().to_string()
+  let candidate = line.trim().to_owned()
   if candidate == "" ||
     !@parser_common_engine_core.is_plain_identifier(candidate) {
     return false
   }
 
-  ensure_node(nodes, { id: candidate, label: candidate, shape: Rounded })
+  ensure_node(nodes, { id: candidate, label: candidate, shape: Rounded, })
   append_state_node_to_current_composite(composite_stack, candidate)
   true
 }
@@ -275,7 +275,7 @@ fn parse_state_standalone_line(
 ///|
 /// Parses state diagram body lines into a `MermaidGraph`.
 pub fn parse_state_diagram(lines : Array[String]) -> MermaidGraph {
-  let nodes : Map[String, MermaidNode] = {}
+  let nodes : Map[String, MermaidNode] = Map([])
   let edges : Array[MermaidEdge] = []
   let subgraphs : Array[MermaidSubgraph] = []
   let composite_stack : Array[MermaidSubgraph] = []
@@ -286,8 +286,8 @@ pub fn parse_state_diagram(lines : Array[String]) -> MermaidGraph {
   for i in 1..<lines.length() {
     let line = lines[i]
     lexmatch line[:] {
-      ("direction ", direction_token) => {
-        let token = direction_token.to_string().trim().to_string()
+      (re"^direction ", after=direction_token) => {
+        let token = direction_token.to_owned().trim().to_owned()
         match parse_direction_token_strict(token) {
           Some(parsed_direction) =>
             if composite_stack.length() > 0 {
@@ -331,17 +331,18 @@ pub fn parse_state_diagram(lines : Array[String]) -> MermaidGraph {
     }
 
     let (transition_line, edge_label) = lexmatch line[:] {
-      (lhs, ":", rhs) => (lhs.trim().to_string(), Some(rhs.trim().to_string()))
+      (re":", before=lhs, after=rhs) =>
+        (lhs.trim().to_owned(), Some(rhs.trim().to_owned()))
       _ => (line, None)
     }
 
     match find_edge_operator(transition_line) {
       Some(found) => {
-        let left = transition_line[:found.index].to_string().trim().to_string()
+        let left = transition_line[:found.index].to_owned().trim().to_owned()
         let right = transition_line[found.index + found.op.symbol.length():]
-          .to_string()
+          .to_owned()
           .trim()
-          .to_string()
+          .to_owned()
         let (source_id, next_start, next_end) = parse_state_token(
           left, true, nodes, start_counter, end_counter,
         )
@@ -369,7 +370,7 @@ pub fn parse_state_diagram(lines : Array[String]) -> MermaidGraph {
             if parse_state_description_line(transition_line, description, nodes) {
               append_state_node_to_current_composite(
                 composite_stack,
-                transition_line.trim().to_string(),
+                transition_line.trim().to_owned(),
               )
             }
           None =>

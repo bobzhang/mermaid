@@ -16,4 +16,3 @@ pub fn render_ascii_sequence(@model.MermaidGraph, @layout_plan.AsciiSequenceLayo
 // Type aliases
 
 // Traits
-

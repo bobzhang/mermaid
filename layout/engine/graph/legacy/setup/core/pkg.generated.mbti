@@ -31,4 +31,3 @@ pub(all) struct LegacyLayoutSetupState {
 // Type aliases
 
 // Traits
-

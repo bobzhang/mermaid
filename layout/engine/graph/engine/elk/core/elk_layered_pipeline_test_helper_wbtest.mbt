@@ -1,6 +1,6 @@
 ///|
 fn wb_node(id : String) -> @model.MermaidNode {
-  { id, label: id, shape: Rectangle }
+  { id, label: id, shape: Rectangle, }
 }
 
 ///|
@@ -38,14 +38,14 @@ fn wb_graph_with_edges(
   nodes : Array[String],
   graph_edges : Array[@model.MermaidEdge],
 ) -> @model.MermaidGraph {
-  let node_map : Map[String, @model.MermaidNode] = {}
+  let node_map : Map[String, @model.MermaidNode] = Map([])
   for node_id in nodes {
     node_map[node_id] = wb_node(node_id)
   }
-  let class_defs : Map[String, Map[String, String]] = {}
-  let class_assignments : Map[String, String] = {}
-  let node_styles : Map[String, Map[String, String]] = {}
-  let sequence_actor_kinds : Map[String, @model.SequenceParticipantKind] = {}
+  let class_defs : Map[String, Map[String, String]] = Map([])
+  let class_assignments : Map[String, String] = Map([])
+  let node_styles : Map[String, Map[String, String]] = Map([])
+  let sequence_actor_kinds : Map[String, @model.SequenceParticipantKind] = Map([])
   let sequence_blocks : Array[@model.SequenceBlock] = []
   let sequence_notes : Array[@model.SequenceNote] = []
   let sequence_activation_commands : Array[@model.SequenceActivationCommand] = []
@@ -205,7 +205,7 @@ fn stress_006_source() -> String {
     #|
   )
   .trim_end()
-  .to_string()
+  .to_owned()
 }
 
 ///|
@@ -324,7 +324,7 @@ fn stress_012_source() -> String {
     #|
   )
   .trim_end()
-  .to_string()
+  .to_owned()
 }
 
 ///|

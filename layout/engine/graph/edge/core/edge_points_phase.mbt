@@ -81,46 +81,46 @@ fn boundary_polygon_points(node : PositionedNode) -> Array[Point]? {
   match node.shape {
     Diamond =>
       Some([
-        { x: node.x, y: top },
-        { x: right, y: node.y },
-        { x: node.x, y: bottom },
-        { x: left, y: node.y },
+        { x: node.x, y: top, },
+        { x: right, y: node.y, },
+        { x: node.x, y: bottom, },
+        { x: left, y: node.y, },
       ])
     Hexagon => {
       let offset = node.height / 4
       Some([
-        { x: left + offset, y: top },
-        { x: right - offset, y: top },
-        { x: right, y: node.y },
-        { x: right - offset, y: bottom },
-        { x: left + offset, y: bottom },
-        { x: left, y: node.y },
+        { x: left + offset, y: top, },
+        { x: right - offset, y: top, },
+        { x: right, y: node.y, },
+        { x: right - offset, y: bottom, },
+        { x: left + offset, y: bottom, },
+        { x: left, y: node.y, },
       ])
     }
     Asymmetric =>
       Some([
-        { x: left + 12, y: top },
-        { x: right, y: top },
-        { x: right, y: bottom },
-        { x: left + 12, y: bottom },
-        { x: left, y: node.y },
+        { x: left + 12, y: top, },
+        { x: right, y: top, },
+        { x: right, y: bottom, },
+        { x: left + 12, y: bottom, },
+        { x: left, y: node.y, },
       ])
     Trapezoid => {
       let offset = node.width * 15 / 100
       Some([
-        { x: left + offset, y: top },
-        { x: right - offset, y: top },
-        { x: right, y: bottom },
-        { x: left, y: bottom },
+        { x: left + offset, y: top, },
+        { x: right - offset, y: top, },
+        { x: right, y: bottom, },
+        { x: left, y: bottom, },
       ])
     }
     TrapezoidAlt => {
       let offset = node.width * 15 / 100
       Some([
-        { x: left, y: top },
-        { x: right, y: top },
-        { x: right - offset, y: bottom },
-        { x: left + offset, y: bottom },
+        { x: left, y: top, },
+        { x: right, y: top, },
+        { x: right - offset, y: bottom, },
+        { x: left + offset, y: bottom, },
       ])
     }
     _ => None
@@ -234,7 +234,7 @@ fn rectangular_boundary_anchor_point(
     } else {
       node.width / 2
     }
-    { x: node.x + delta_x, y: node.y + clamped_minor }
+    { x: node.x + delta_x, y: node.y + clamped_minor, }
   } else {
     let clamped_minor = clamp_minor_boundary_offset(node, false, minor_offset)
     let delta_y = if source_endpoint {
@@ -248,7 +248,7 @@ fn rectangular_boundary_anchor_point(
     } else {
       node.height / 2
     }
-    { x: node.x + clamped_minor, y: node.y + delta_y }
+    { x: node.x + clamped_minor, y: node.y + delta_y, }
   }
 }
 
@@ -273,7 +273,7 @@ pub fn boundary_anchor_point(
     match polygon {
       Some(points) =>
         match polygon_boundary_x_for_y(points, y, side_is_right) {
-          Some(x) => return { x, y }
+          Some(x) => return { x, y, }
           None => ()
         }
       None => ()
@@ -292,7 +292,7 @@ pub fn boundary_anchor_point(
     match polygon {
       Some(points) =>
         match polygon_boundary_y_for_x(points, x, side_is_bottom) {
-          Some(y) => return { x, y }
+          Some(y) => return { x, y, }
           None => ()
         }
       None => ()
@@ -444,7 +444,7 @@ pub fn edge_points_with_minor_lane_offset_with_ports(
     if smooth_forward_fanout {
       let mid_x = (start_base.x + end_base.x) / 2
       return apply_endpoint_port_stubs(
-        [start_base, { x: mid_x, y: lane_y }, end_base],
+        [start_base, { x: mid_x, y: lane_y, }, end_base],
         start_anchor,
         end_anchor,
       )
@@ -452,8 +452,8 @@ pub fn edge_points_with_minor_lane_offset_with_ports(
     return apply_endpoint_port_stubs(
       [
         start_base,
-        { x: start_base.x, y: lane_y },
-        { x: end_base.x, y: lane_y },
+        { x: start_base.x, y: lane_y, },
+        { x: end_base.x, y: lane_y, },
         end_base,
       ],
       start_anchor,
@@ -482,8 +482,8 @@ pub fn edge_points_with_minor_lane_offset_with_ports(
   apply_endpoint_port_stubs(
     [
       start_base,
-      { x: lane_x, y: start_base.y },
-      { x: lane_x, y: end_base.y },
+      { x: lane_x, y: start_base.y, },
+      { x: lane_x, y: end_base.y, },
       end_base,
     ],
     start_anchor,
@@ -528,8 +528,8 @@ pub fn edge_points_for_with_ports(
           return apply_endpoint_port_stubs(
             [
               start_base,
-              { x: start_base.x, y: bend_y },
-              { x: end_base.x, y: bend_y },
+              { x: start_base.x, y: bend_y, },
+              { x: end_base.x, y: bend_y, },
               end_base,
             ],
             start_anchor,
@@ -551,7 +551,7 @@ pub fn edge_points_for_with_ports(
     if smooth_forward_fanout && moving_right && start_base.y != end_base.y {
       let mid_x = (start_base.x + end_base.x) / 2
       return apply_endpoint_port_stubs(
-        [start_base, { x: mid_x, y: end_base.y }, end_base],
+        [start_base, { x: mid_x, y: end_base.y, }, end_base],
         start_anchor,
         end_anchor,
       )
@@ -581,8 +581,8 @@ pub fn edge_points_for_with_ports(
           return apply_endpoint_port_stubs(
             [
               start_base,
-              { x: bend_x, y: start_base.y },
-              { x: bend_x, y: end_base.y },
+              { x: bend_x, y: start_base.y, },
+              { x: bend_x, y: end_base.y, },
               end_base,
             ],
             start_anchor,

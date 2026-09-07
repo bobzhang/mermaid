@@ -15,4 +15,3 @@ pub(all) struct PhaseTrace {
 // Type aliases
 
 // Traits
-

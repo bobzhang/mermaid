@@ -114,9 +114,9 @@ fn compute_legacy_node_placement_state(
   let layer_spacing = input.layer_spacing
 
   let positioned_nodes : Array[PositionedNode] = []
-  let positioned_by_id : Map[String, PositionedNode] = {}
-  let max_width_by_flow_rank_index : Map[Int, Int] = {}
-  let node_width_by_id : Map[String, Int] = {}
+  let positioned_by_id : Map[String, PositionedNode] = Map([])
+  let max_width_by_flow_rank_index : Map[Int, Int] = Map([])
+  let node_width_by_id : Map[String, Int] = Map([])
   for node in nodes_in_order {
     let (width, _) = node_dimensions(node)
     node_width_by_id[node.id] = width
@@ -137,7 +137,7 @@ fn compute_legacy_node_placement_state(
 
   // Apply minimal rank shifts only where wide labels would collapse adjacent
   // horizontal ranks, preserving compaction on normal-width graphs.
-  let horizontal_label_min_boundary_extra_by_index : Map[Int, Int] = {}
+  let horizontal_label_min_boundary_extra_by_index : Map[Int, Int] = Map([])
   if horizontal && !dagre_parity_mode {
     let label_rank_constraints = collect_horizontal_label_rank_constraints(
       graph.edges,
@@ -163,7 +163,7 @@ fn compute_legacy_node_placement_state(
 
   // Apply minimal rank shifts only where wide nodes or labeled edges would
   // collapse adjacent horizontal ranks, preserving compaction on normal-width graphs.
-  let horizontal_rank_shift_by_index : Map[Int, Int] = {}
+  let horizontal_rank_shift_by_index : Map[Int, Int] = Map([])
   if horizontal {
     if dagre_parity_mode {
       for flow_rank_index in 0..<=flow_max_rank {
@@ -205,7 +205,7 @@ fn compute_legacy_node_placement_state(
       }
     }
   }
-  let horizontal_rank_center_x_by_index : Map[Int, Int] = {}
+  let horizontal_rank_center_x_by_index : Map[Int, Int] = Map([])
   if horizontal {
     if dagre_parity_mode {
       let first_rank_width = option_int_or(
@@ -326,5 +326,5 @@ fn compute_legacy_node_placement_state(
     positioned_by_id[node.id] = positioned
   }
 
-  { positioned_nodes, positioned_by_id }
+  { positioned_nodes, positioned_by_id, }
 }

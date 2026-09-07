@@ -19,4 +19,3 @@ pub fn build_legacy_positioned_groups(@model.MermaidGraph, Int, Bool, Bool, Bool
 // Type aliases
 
 // Traits
-

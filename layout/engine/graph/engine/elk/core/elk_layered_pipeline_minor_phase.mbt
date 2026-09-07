@@ -2,7 +2,7 @@
 fn positioned_index_by_node_id(
   positioned_nodes : Array[PositionedNode],
 ) -> Map[String, Int] {
-  let index_by_node_id : Map[String, Int] = {}
+  let index_by_node_id : Map[String, Int] = Map([])
   for index, node in positioned_nodes {
     index_by_node_id[node.id] = index
   }
@@ -260,7 +260,7 @@ fn build_minor_coord_by_node_id(
   width_by_node_id : Map[String, Int],
   height_by_node_id : Map[String, Int],
 ) -> Map[String, Int] {
-  let minor_coord_by_node_id : Map[String, Int] = {}
+  let minor_coord_by_node_id : Map[String, Int] = Map([])
   for rank in 0..<=max_rank {
     match rank_node_ids_by_rank.get(rank) {
       Some(node_ids) => {
@@ -409,7 +409,7 @@ fn build_minor_coord_by_lane_seed(
     }
   }
 
-  let minor_coord_by_node_id : Map[String, Int] = {}
+  let minor_coord_by_node_id : Map[String, Int] = Map([])
   for rank in 0..<=max_rank {
     match rank_node_ids_by_rank.get(rank) {
       Some(node_ids) => {

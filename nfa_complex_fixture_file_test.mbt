@@ -1,6 +1,6 @@
 ///|
 fn nfa_ascii_options() -> @model.AsciiRenderOptions {
-  { use_ascii: true, padding_x: 5, padding_y: 5, box_border_padding: 1 }
+  { use_ascii: true, padding_x: 5, padding_y: 5, box_border_padding: 1, }
 }
 
 ///|
@@ -195,7 +195,7 @@ async test "All NFA fixtures parse and render smoke" {
   ]
   for name in fixture_names {
     let source = @fs.read_file("fixtures/\{name}.mmd").text()
-    if source.trim().to_string() == "" {
+    if source.trim().to_owned() == "" {
       continue
     }
     let graph = @parser_header_core.parse_mermaid(source)

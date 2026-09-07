@@ -443,8 +443,8 @@ fn placement_axis_coord_maps(
   positioned_nodes : Array[PositionedNode],
   horizontal : Bool,
 ) -> (Map[String, Int], Map[String, Int]) {
-  let major_coord_by_node_id : Map[String, Int] = {}
-  let minor_coord_by_node_id : Map[String, Int] = {}
+  let major_coord_by_node_id : Map[String, Int] = Map([])
+  let minor_coord_by_node_id : Map[String, Int] = Map([])
   for node in positioned_nodes {
     if horizontal {
       major_coord_by_node_id[node.id] = node.x

@@ -19,7 +19,7 @@ fn wb_reversed_edge_count(
   original_edges : Array[(String, String)],
   oriented_edges : Array[(String, String)],
 ) -> Int {
-  let oriented_edge_set : Map[String, Bool] = {}
+  let oriented_edge_set : Map[String, Bool] = Map([])
   for edge in oriented_edges {
     let (source_id, target_id) = edge
     oriented_edge_set[source_id + "->" + target_id] = true
@@ -45,8 +45,8 @@ fn wb_is_acyclic_orientation(
   node_ids : Array[String],
   oriented_edges : Array[(String, String)],
 ) -> Bool {
-  let indegree_by_node_id : Map[String, Int] = {}
-  let successors_by_node_id : Map[String, Array[String]] = {}
+  let indegree_by_node_id : Map[String, Int] = Map([])
+  let successors_by_node_id : Map[String, Array[String]] = Map([])
   for node_id in node_ids {
     indegree_by_node_id[node_id] = 0
     successors_by_node_id[node_id] = []

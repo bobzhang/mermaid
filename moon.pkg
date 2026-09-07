@@ -1,6 +1,6 @@
 import {
   "bobzhang/beautiful_mermaid/layout/engine/graph/core" @layout,
-  "bobzhang/beautiful_mermaid/model" @model,
+  "bobzhang/beautiful_mermaid/model",
   "bobzhang/beautiful_mermaid/parser/header/core" @parser_header_core,
   "bobzhang/beautiful_mermaid/renderer/ascii/flow_state/engine/core" @renderer_ascii,
   "bobzhang/beautiful_mermaid/renderer/svg/engine/core" @renderer_svg,
@@ -10,8 +10,8 @@ import {
 import {
   "bobzhang/beautiful_mermaid/layout/engine/graph/legacy/setup/core" @layout_legacy_setup,
   "moonbitlang/async",
-  "moonbitlang/async/fs" @fs,
-  "moonbitlang/core/json" @json,
+  "moonbitlang/async/fs",
+  "moonbitlang/core/json",
   "moonbitlang/core/string",
   "moonbitlang/core/test",
 } for "test"
