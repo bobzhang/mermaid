@@ -168,6 +168,13 @@ async fn repos_verify_markdown_chunk(
 #cfg(target="native")
 async test "Upstream markdown supported corpus has enough cases" {
   let files = repos_markdown_files()
+  // The upstream mermaid-js checkout under .repos/ is gitignored and optional.
+  // The sibling smoke-chunk tests iterate the same list and pass trivially when
+  // it is absent; this one asserted a corpus size unconditionally, so a clone
+  // without .repos/ failed here alone. Skip instead when there is no corpus.
+  if files.is_empty() {
+    return
+  }
   let mut count = 0
   for path in files {
     let source = @fs.read_file(path).text()
