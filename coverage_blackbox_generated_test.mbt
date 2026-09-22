@@ -34,7 +34,7 @@ fn generated_svg_option(seed : Int) -> @model.RenderOptions {
 ///|
 fn generated_render_attempt(input : String, seed : Int) -> (Bool, Bool) {
   let ascii_ok = try {
-    let ascii = render_mermaid_ascii(
+    let ascii = @beautiful_mermaid.render_mermaid_ascii(
       input,
       options=generated_ascii_option(seed),
     )
@@ -44,7 +44,10 @@ fn generated_render_attempt(input : String, seed : Int) -> (Bool, Bool) {
     _ => false
   }
   let svg_ok = try {
-    let svg = render_mermaid(input, options=generated_svg_option(seed))
+    let svg = @beautiful_mermaid.render_mermaid(
+      input,
+      options=generated_svg_option(seed),
+    )
     svg.has_prefix("<svg ") && svg.has_suffix("</svg>")
   } catch {
     _ => false

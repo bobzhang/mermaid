@@ -109,7 +109,7 @@ test "group builds positioned group and registers anchor" {
   let graph = test_graph(nodes, [subgraph])
   let (positioned_nodes, positioned_by_id, positioned_index_by_id) = test_positioned_state()
 
-  let groups = build_legacy_positioned_groups(
+  let groups = @core.build_legacy_positioned_groups(
     graph, 40, true, false, false, false, 130, 90, positioned_nodes, positioned_by_id,
     positioned_index_by_id,
   )
@@ -146,13 +146,13 @@ test "horizontal dagre parity keeps top-level flow subgraphs unshifted" {
   }
 
   let (shifted_nodes, shifted_by_id, shifted_indexes) = test_compact_horizontal_positioned_state()
-  let shifted_groups = build_legacy_positioned_groups(
+  let shifted_groups = @core.build_legacy_positioned_groups(
     graph, 40, true, false, false, false, 130, 90, shifted_nodes, shifted_by_id,
     shifted_indexes,
   )
 
   let (parity_nodes, parity_by_id, parity_indexes) = test_compact_horizontal_positioned_state()
-  let parity_groups = build_legacy_positioned_groups(
+  let parity_groups = @core.build_legacy_positioned_groups(
     graph, 40, true, false, false, true, 130, 90, parity_nodes, parity_by_id, parity_indexes,
   )
 
@@ -199,13 +199,13 @@ test "non-horizontal dagre parity keeps top-level flow subgraphs unshifted" {
   let graph = test_graph(nodes, [first, second])
 
   let (shifted_nodes, shifted_by_id, shifted_indexes) = test_positioned_state()
-  let shifted_groups = build_legacy_positioned_groups(
+  let shifted_groups = @core.build_legacy_positioned_groups(
     graph, 40, false, false, false, false, 130, 90, shifted_nodes, shifted_by_id,
     shifted_indexes,
   )
 
   let (parity_nodes, parity_by_id, parity_indexes) = test_positioned_state()
-  let parity_groups = build_legacy_positioned_groups(
+  let parity_groups = @core.build_legacy_positioned_groups(
     graph, 40, false, false, false, true, 130, 90, parity_nodes, parity_by_id, parity_indexes,
   )
 

@@ -240,7 +240,7 @@ fn parse_theme_name(name : String) -> ThemeName? {
 /// # Example
 /// ```mbt check
 /// test {
-///   match theme_by_name("github-dark") {
+///   match @core.theme_by_name("github-dark") {
 ///     Some(colors) => assert_eq(colors.bg, "#0d1117")
 ///     None => fail("theme should resolve")
 ///   }

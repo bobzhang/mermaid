@@ -51,28 +51,28 @@ fn flow_graph() -> @model.MermaidGraph {
 test "engine dispatch returns valid layouts for legacy dagre and elk backends" {
   let graph = flow_graph()
   let options = @model.RenderOptions::default()
-  let dagre_parity_layout = dispatch_graph_layout_engine_backend(
+  let dagre_parity_layout = @core.dispatch_graph_layout_engine_backend(
       graph,
       options,
       true,
       false,
       DagreParity,
     ).positioned_graph
-  let elk_layout = dispatch_graph_layout_engine_backend(
+  let elk_layout = @core.dispatch_graph_layout_engine_backend(
       graph,
       options,
       true,
       false,
       Elk,
     ).positioned_graph
-  let elk_layered_layout = dispatch_graph_layout_engine_backend(
+  let elk_layered_layout = @core.dispatch_graph_layout_engine_backend(
       graph,
       options,
       true,
       false,
       ElkLayered,
     ).positioned_graph
-  let legacy_layout = dispatch_graph_layout_engine_backend(
+  let legacy_layout = @core.dispatch_graph_layout_engine_backend(
       graph,
       options,
       true,

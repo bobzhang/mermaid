@@ -3,7 +3,3 @@ import {
   "bobzhang/beautiful_mermaid/layout/engine/graph/engine/profile/core" @layout_engine_graph_engine_profile_core,
   "bobzhang/beautiful_mermaid/model",
 }
-
-import {
-  "moonbitlang/core/test",
-} for "test"

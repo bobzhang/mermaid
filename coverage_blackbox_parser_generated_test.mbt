@@ -34,13 +34,19 @@ fn parser_generated_exercise(input : String, seed : Int) -> Bool {
   } noraise {
     _ => {
       try
-        render_mermaid_ascii(input, options=parser_generated_ascii_option(seed))
+        @beautiful_mermaid.render_mermaid_ascii(
+          input,
+          options=parser_generated_ascii_option(seed),
+        )
         |> ignore
       catch {
         _ => ()
       }
       try
-        render_mermaid(input, options=parser_generated_svg_option(seed))
+        @beautiful_mermaid.render_mermaid(
+          input,
+          options=parser_generated_svg_option(seed),
+        )
         |> ignore
       catch {
         _ => ()

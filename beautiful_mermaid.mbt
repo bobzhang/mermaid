@@ -69,7 +69,7 @@ fn merge_options_with_colors(
 /// # Example
 /// ```mbt check
 /// test {
-///   let svg = try! render_mermaid(
+///   let svg = try! @beautiful_mermaid.render_mermaid(
 ///     (
 ///       #|graph TD
 ///       #|A --> B
@@ -114,7 +114,7 @@ fn render_mermaid_with_colors(
 /// # Example
 /// ```mbt check
 /// test {
-///   let svg = try! render_mermaid_with_theme_name(
+///   let svg = try! @beautiful_mermaid.render_mermaid_with_theme_name(
 ///     (
 ///       #|graph TD
 ///       #|A --> B
@@ -142,7 +142,7 @@ pub fn render_mermaid_with_theme_name(
 /// # Example
 /// ```mbt check
 /// test {
-///   let ascii = try! render_mermaid_ascii(
+///   let ascii = try! @beautiful_mermaid.render_mermaid_ascii(
 ///     (
 ///       #|graph LR
 ///       #|A --> B

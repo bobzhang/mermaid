@@ -122,21 +122,21 @@ fn state_graph_for_ascii() -> @model.MermaidGraph {
 
 ///|
 test "execute phase runs engine, sequence, and ascii plans" {
-  let flow_layout = execute_layout_plan(
+  let flow_layout = @core.execute_layout_plan(
     UseEngine(flow_graph(), true, false),
     @model.RenderOptions::default(),
   )
   assert_eq(flow_layout.nodes.length(), 2)
   assert_eq(flow_layout.edges.length(), 1)
 
-  let sequence_layout = execute_layout_plan(
+  let sequence_layout = @core.execute_layout_plan(
     UseSequence(sequence_graph()),
     @model.RenderOptions::default(),
   )
   assert_eq(sequence_layout.sequence_lifelines.length(), 2)
   assert_eq(sequence_layout.edges.length(), 1)
 
-  let ascii_layout = execute_layout_plan(
+  let ascii_layout = @core.execute_layout_plan(
     UseFlatStateAsciiGrid(state_graph_for_ascii()),
     @model.RenderOptions::default(),
   )

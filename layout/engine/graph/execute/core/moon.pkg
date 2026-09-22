@@ -5,7 +5,3 @@ import {
   "bobzhang/beautiful_mermaid/layout/engine/sequence/core" @layout_engine_sequence_core,
   "bobzhang/beautiful_mermaid/model",
 }
-
-import {
-  "moonbitlang/core/test",
-} for "test"

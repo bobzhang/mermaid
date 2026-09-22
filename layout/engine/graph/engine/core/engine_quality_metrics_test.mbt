@@ -199,28 +199,28 @@ fn qm_area(graph : @model.PositionedGraph) -> Int {
 test "quality metrics are stable and backend-comparable on stress graph" {
   let graph = qm_graph()
   let options = @model.RenderOptions::default()
-  let legacy = dispatch_graph_layout_engine_backend(
+  let legacy = @core.dispatch_graph_layout_engine_backend(
       graph,
       options,
       true,
       false,
       Legacy,
     ).positioned_graph
-  let dagre = dispatch_graph_layout_engine_backend(
+  let dagre = @core.dispatch_graph_layout_engine_backend(
       graph,
       options,
       true,
       false,
       DagreParity,
     ).positioned_graph
-  let elk = dispatch_graph_layout_engine_backend(
+  let elk = @core.dispatch_graph_layout_engine_backend(
       graph,
       options,
       true,
       false,
       Elk,
     ).positioned_graph
-  let elk_layered = dispatch_graph_layout_engine_backend(
+  let elk_layered = @core.dispatch_graph_layout_engine_backend(
       graph,
       options,
       true,
