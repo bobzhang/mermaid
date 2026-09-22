@@ -58,7 +58,7 @@ test "legacy post phase routes edges and finalizes output bounds" {
   let placement_state = @layout_engine_graph_placement_core.run_legacy_placement_phase(
     graph, setup_state, true, false,
   )
-  let positioned = finalize_legacy_layout_from_placement(
+  let positioned = @core.finalize_legacy_layout_from_placement(
     graph, setup_state, placement_state, true, false, false,
   )
 

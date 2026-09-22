@@ -41,7 +41,7 @@ Regenerate the upstream sample smoke test after upstream `samples-data.ts` chang
 ```mbt check
 ///|
 test "simple_td" (it : @test.Test) {
-  let svg = render_mermaid(
+  let svg = @beautiful_mermaid.render_mermaid(
     (
       #|graph TD
       #|A --> B
@@ -57,7 +57,7 @@ test "simple_td" (it : @test.Test) {
 ```mbt check
 ///|
 test {
-  let ascii = render_mermaid_ascii(
+  let ascii = @beautiful_mermaid.render_mermaid_ascii(
     (
       #|graph LR
       #|A --> B
@@ -105,7 +105,7 @@ test {
     transparent: Some(true),
     layout_engine: None,
   }
-  let svg = render_mermaid(
+  let svg = @beautiful_mermaid.render_mermaid(
     (
       #|graph TD
       #|A --> B
@@ -128,7 +128,7 @@ Leading/trailing separators are ignored, so forms like `__github_dark__` also no
 ```mbt check
 ///|
 test {
-  let svg = render_mermaid_with_theme_name(
+  let svg = @beautiful_mermaid.render_mermaid_with_theme_name(
     (
       #|graph TD
       #|A --> B
@@ -145,7 +145,7 @@ Or render in one call:
 ```mbt check
 ///|
 test {
-  let svg = render_mermaid_with_theme_name(
+  let svg = @beautiful_mermaid.render_mermaid_with_theme_name(
     (
       #|graph TD
       #|A --> B

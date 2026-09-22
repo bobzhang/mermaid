@@ -7,9 +7,5 @@ import {
 }
 
 import {
-  "moonbitlang/core/test",
-} for "test"
-
-import {
   "bobzhang/beautiful_mermaid/parser/header/core" @parser,
 } for "wbtest"

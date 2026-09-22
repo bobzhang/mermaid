@@ -4,7 +4,3 @@ import {
   "bobzhang/beautiful_mermaid/layout/engine/graph/prep/core" @layout_engine_graph_prep_core,
   "bobzhang/beautiful_mermaid/model",
 }
-
-import {
-  "moonbitlang/core/test",
-} for "test"

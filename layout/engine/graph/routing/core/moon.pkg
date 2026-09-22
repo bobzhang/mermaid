@@ -2,7 +2,3 @@ import {
   "bobzhang/beautiful_mermaid/layout/engine/graph/edge/core" @layout_engine_graph_edge_core,
   "bobzhang/beautiful_mermaid/model",
 }
-
-import {
-  "moonbitlang/core/test",
-} for "test"

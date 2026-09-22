@@ -59,7 +59,7 @@ test "placement computes forward horizontal ordering from rank map" {
     false,
     false,
   )
-  let placement_state = run_legacy_placement_phase(
+  let placement_state = @core.run_legacy_placement_phase(
     graph, setup_state, false, false,
   )
 
@@ -80,7 +80,7 @@ test "placement reverse mode flips horizontal rank ordering" {
     false,
     false,
   )
-  let placement_state = run_legacy_placement_phase(
+  let placement_state = @core.run_legacy_placement_phase(
     graph, setup_state, false, false,
   )
 
@@ -107,7 +107,7 @@ test "placement keeps same-rank horizontal nodes aligned on rank center" {
     false,
     false,
   )
-  let placement_state = run_legacy_placement_phase(
+  let placement_state = @core.run_legacy_placement_phase(
     graph, setup_state, false, false,
   )
 
@@ -142,7 +142,7 @@ test "placement dagre parity horizontal axis uses rank width plus ranksep spacin
     true,
     false,
   )
-  let placement_state = run_legacy_placement_phase(
+  let placement_state = @core.run_legacy_placement_phase(
     graph, setup_state, true, false,
   )
   let positioned_by_id = placement_state.positioned_by_id
@@ -182,7 +182,7 @@ test "placement dagre parity minor axis compacts sparse dummy lanes" {
     true,
     false,
   )
-  let placement_state = run_legacy_placement_phase(
+  let placement_state = @core.run_legacy_placement_phase(
     graph, setup_state, true, false,
   )
   let positioned_by_id = placement_state.positioned_by_id

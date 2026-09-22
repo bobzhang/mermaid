@@ -49,7 +49,7 @@ test "legacy setup derives flow defaults and lane state for a simple graph" {
   let graph = test_graph(LR, [test_node("A"), test_node("B")], [
     test_edge("A", "B"),
   ])
-  let setup_state = build_legacy_layout_setup(
+  let setup_state = @core.build_legacy_layout_setup(
     graph,
     @model.RenderOptions::default(),
     true,
@@ -86,13 +86,13 @@ test "legacy setup enables dagre simplex only when dagre-parity is selected" {
       test_edge("C", "D"),
     ],
   )
-  let legacy_setup = build_legacy_layout_setup(
+  let legacy_setup = @core.build_legacy_layout_setup(
     graph,
     @model.RenderOptions::default(),
     true,
     false,
   )
-  let dagre_setup = build_legacy_layout_setup(
+  let dagre_setup = @core.build_legacy_layout_setup(
     graph,
     { ..@model.RenderOptions::default(), layout_engine: Some(DagreParity), },
     true,

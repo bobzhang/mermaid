@@ -2,7 +2,3 @@ import {
   "bobzhang/beautiful_mermaid/layout/engine/graph/phase_contract/core" @layout_engine_graph_phase_contract_core,
   "bobzhang/beautiful_mermaid/model",
 }
-
-import {
-  "moonbitlang/core/test",
-} for "test"
