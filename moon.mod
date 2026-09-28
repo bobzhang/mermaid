@@ -3,7 +3,7 @@ name = "bobzhang/beautiful_mermaid"
 version = "0.1.7"
 
 import {
-  "moonbitlang/async@0.21.2",
+  "moonbitlang/async@0.22.4",
 }
 
 readme = "README.mbt.md"
