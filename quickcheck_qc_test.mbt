@@ -38,3 +38,17 @@ test "regression: an apostrophe in a node label does not hide the edge" {
   assert_eq(mid.edges.length(), 1)
   assert_eq(mid.edges[0].label, Some("it's"))
 }
+
+///|
+test "regression: '>' inside a bracketed label is not an asymmetric shape" {
+  let g = @parser_header_core.parse_mermaid(
+    "graph TD\nA[x>y] --> B\nC[a-->b] --> D\nE>asym]",
+  )
+  assert_eq(g.node_definition_order, ["A", "B", "C", "D", "E"])
+  assert_eq(g.nodes["A"].label, "x>y")
+  assert_eq(node_shape_name(g.nodes["A"].shape), "Rectangle")
+  assert_eq(g.nodes["C"].label, "a-->b")
+  assert_eq(node_shape_name(g.nodes["C"].shape), "Rectangle")
+  assert_eq(node_shape_name(g.nodes["E"].shape), "Asymmetric")
+  assert_eq(g.nodes["E"].label, "asym")
+}
