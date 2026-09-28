@@ -326,5 +326,112 @@ fn compute_legacy_node_placement_state(
     positioned_by_id[node.id] = positioned
   }
 
+  // `compact_fanin` is set only by the ASCII layout plan, whose renderer
+  // re-grids nodes by character width; keep its coordinates untouched.
+  if !state_graph && !compact_fanin {
+    separate_overlapping_nodes(
+      positioned_nodes,
+      positioned_by_id,
+      flow_rank_by_node_id,
+      horizontal,
+      (node_spacing / 3).max(24),
+    )
+  }
+
   { positioned_nodes, positioned_by_id, }
+}
+
+///|
+/// Lane heuristics place the nodes of a rank on a fixed lane grid whose step
+/// can be smaller than the nodes themselves (wide labels in vertical layouts,
+/// sub-unit lane steps in horizontal ones), so two nodes of the same rank can
+/// overlap. Push such nodes apart along the minor axis (x for TD/BT, y for
+/// LR/RL) until they are `min_gap` apart. Nodes that do not overlap, or that
+/// sit in different ranks, are left exactly where they are.
+fn separate_overlapping_nodes(
+  positioned_nodes : Array[PositionedNode],
+  positioned_by_id : Map[String, PositionedNode],
+  flow_rank_by_node_id : Map[String, Int],
+  horizontal : Bool,
+  min_gap : Int,
+) -> Unit {
+  let minor = fn(node : PositionedNode) -> Int {
+    if horizontal {
+      node.y
+    } else {
+      node.x
+    }
+  }
+  let minor_half = fn(node : PositionedNode) -> Int {
+    if horizontal {
+      node.height / 2
+    } else {
+      node.width / 2
+    }
+  }
+  let major_overlaps = fn(a : PositionedNode, b : PositionedNode) -> Bool {
+    if horizontal {
+      (a.x - b.x).abs() * 2 < a.width + b.width
+    } else {
+      (a.y - b.y).abs() * 2 < a.height + b.height
+    }
+  }
+  let order : Array[Int] = []
+  for i in 0..<positioned_nodes.length() {
+    order.push(i)
+  }
+  // Sweep in minor-axis order (stable on ties) so pushes only move forward.
+  order.sort_by((a, b) => {
+    let by_minor = minor(positioned_nodes[a]).compare(
+      minor(positioned_nodes[b]),
+    )
+    if by_minor != 0 {
+      by_minor
+    } else {
+      a.compare(b)
+    }
+  })
+  // Each node is pushed past every earlier (already settled) node of its rank
+  // that it overlaps; repeat until it clears all of them.
+  for k in 1..<order.length() {
+    let mut current = positioned_nodes[order[k]]
+    let mut moved = false
+    let mut changed = true
+    while changed {
+      changed = false
+      for j in 0..<k {
+        let prev = positioned_nodes[order[j]]
+        let same_rank = match
+          (
+            flow_rank_by_node_id.get(prev.id),
+            flow_rank_by_node_id.get(current.id),
+          ) {
+          (Some(a), Some(b)) => a == b
+          _ => false
+        }
+        if !same_rank || !major_overlaps(prev, current) {
+          continue
+        }
+        let minor_overlap = (minor(current) - minor(prev)).abs() <
+          minor_half(current) + minor_half(prev)
+        if minor_overlap {
+          let required = minor(prev) +
+            minor_half(prev) +
+            min_gap +
+            minor_half(current)
+          current = if horizontal {
+            { ..current, y: required, }
+          } else {
+            { ..current, x: required, }
+          }
+          moved = true
+          changed = true
+        }
+      }
+    }
+    if moved {
+      positioned_nodes[order[k]] = current
+      positioned_by_id[current.id] = current
+    }
+  }
 }

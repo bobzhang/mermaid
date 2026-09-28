@@ -70,3 +70,44 @@ test "regression: astral characters survive ASCII rendering" {
   let er_widths = er.split("\n").map(line => line.length()).to_array()
   assert_true(er_widths.all(w => w == er_widths[0]))
 }
+
+///|
+fn regression_assert_no_overlap(source : String) -> Unit raise {
+  let p = @layout.layout_graph(
+    @parser_header_core.parse_mermaid(source),
+    @model.RenderOptions::default(),
+  )
+  for i in 0..<p.nodes.length() {
+    for j in (i + 1)..<p.nodes.length() {
+      let a = p.nodes[i]
+      let b = p.nodes[j]
+      if (a.x - b.x).abs() * 2 < a.width + b.width &&
+        (a.y - b.y).abs() * 2 < a.height + b.height {
+        fail("\{a.id} overlaps \{b.id} in:\n\{source}")
+      }
+    }
+  }
+}
+
+///|
+test "regression: nodes of one rank do not overlap" {
+  // LR: a dotted edge put A and C one 30px lane apart (boxes are 44px tall).
+  regression_assert_no_overlap("flowchart LR\nA --> B\nC -.-> B")
+  regression_assert_no_overlap("flowchart LR\nA\nB\nC\nD\nC -.-> B\nD <-.-> C")
+  // TD: labels wider than the 130px lane step.
+  regression_assert_no_overlap(
+    "flowchart TD\nA --> B[a very long label for node B here]\nA --> C[another very long label for node C]",
+  )
+  // Upstream "Decision Tree" sample: D and E overlapped by 6px.
+  regression_assert_no_overlap(
+    (
+      #|graph TD
+      #|  A{Is it raining?} -->|Yes| B{Have umbrella?}
+      #|  A -->|No| C([Go outside])
+      #|  B -->|Yes| D([Go with umbrella])
+      #|  B -->|No| E{Is it heavy?}
+      #|  E -->|Yes| F([Stay inside])
+      #|  E -->|No| G([Run for it])
+    ),
+  )
+}
