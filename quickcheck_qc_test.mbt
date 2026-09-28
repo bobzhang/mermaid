@@ -25,3 +25,16 @@ test "regression: color options are escaped in the root style attribute" {
   assert_true(svg.contains("--bg:red&quot; onload=&quot;alert(1)"))
   assert_true(svg.contains("--line:&lt;&amp;&gt;"))
 }
+
+///|
+test "regression: an apostrophe in a node label does not hide the edge" {
+  let g = @parser_header_core.parse_mermaid("graph TD\nA[it's] --> B")
+  assert_eq(g.node_definition_order, ["A", "B"])
+  assert_eq(g.nodes["A"].label, "it's")
+  assert_eq(g.edges.length(), 1)
+  assert_eq(g.edges[0].source, "A")
+  assert_eq(g.edges[0].target, "B")
+  let mid = @parser_header_core.parse_mermaid("graph TD\nA -- it's --> B")
+  assert_eq(mid.edges.length(), 1)
+  assert_eq(mid.edges[0].label, Some("it's"))
+}
