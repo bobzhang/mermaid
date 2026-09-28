@@ -195,7 +195,12 @@ pub fn render_ascii_er(
                   for i in 0..<label.length() {
                     let lx = label_start + i
                     if lx >= start_x && lx <= end_x {
-                      put_canvas(canvas, lx, label_y, label[i:i + 1].to_owned())
+                      put_canvas(
+                        canvas,
+                        lx,
+                        label_y,
+                        canvas_cell_text(label, i),
+                      )
                     }
                   }
                 }

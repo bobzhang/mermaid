@@ -187,20 +187,15 @@ fn split_parallel_node_segments(segment : String) -> Array[String] {
   let mut square_depth = 0
   let mut round_depth = 0
   let mut curly_depth = 0
-  let mut in_single_quote = false
   let mut in_double_quote = false
 
   for i in 0..<segment.length() {
     let unit = segment[i]
-    if unit == '"' && !in_single_quote {
+    if unit == '"' {
       in_double_quote = !in_double_quote
       continue
     }
-    if unit == '\'' && !in_double_quote {
-      in_single_quote = !in_single_quote
-      continue
-    }
-    if in_single_quote || in_double_quote {
+    if in_double_quote {
       continue
     }
     if unit == '[' {
@@ -279,19 +274,14 @@ fn is_clean_flow_node_token(raw_token : String) -> Bool {
   let mut square_depth = 0
   let mut round_depth = 0
   let mut curly_depth = 0
-  let mut in_single_quote = false
   let mut in_double_quote = false
   for i in 0..<token.length() {
     let unit = token[i]
-    if unit == '"' && !in_single_quote {
+    if unit == '"' {
       in_double_quote = !in_double_quote
       continue
     }
-    if unit == '\'' && !in_double_quote {
-      in_single_quote = !in_single_quote
-      continue
-    }
-    if in_single_quote || in_double_quote {
+    if in_double_quote {
       continue
     }
     if unit == '[' {
@@ -368,21 +358,16 @@ fn leading_node_token(raw_line : String) -> String {
   let mut square_depth = 0
   let mut round_depth = 0
   let mut curly_depth = 0
-  let mut in_single_quote = false
   let mut in_double_quote = false
   let mut end_index = line.length()
 
   for i in 0..<line.length() {
     let unit = line[i]
-    if unit == '"' && !in_single_quote {
+    if unit == '"' {
       in_double_quote = !in_double_quote
       continue
     }
-    if unit == '\'' && !in_double_quote {
-      in_single_quote = !in_single_quote
-      continue
-    }
-    if in_single_quote || in_double_quote {
+    if in_double_quote {
       continue
     }
     if unit == '[' {
@@ -523,20 +508,15 @@ fn find_top_level_edge_operator(
   let mut square_depth = 0
   let mut round_depth = 0
   let mut curly_depth = 0
-  let mut in_single_quote = false
   let mut in_double_quote = false
 
   for i in 0..<line.length() {
     let unit = line[i]
-    if unit == '"' && !in_single_quote {
+    if unit == '"' {
       in_double_quote = !in_double_quote
       continue
     }
-    if unit == '\'' && !in_double_quote {
-      in_single_quote = !in_single_quote
-      continue
-    }
-    if in_single_quote || in_double_quote {
+    if in_double_quote {
       continue
     }
     if unit == '[' {
@@ -598,21 +578,16 @@ fn top_level_last_index(text : String, marker : String) -> Int? {
   let mut square_depth = 0
   let mut round_depth = 0
   let mut curly_depth = 0
-  let mut in_single_quote = false
   let mut in_double_quote = false
   let mut found : Int? = None
 
   for i in 0..<text.length() {
     let unit = text[i]
-    if unit == '"' && !in_single_quote {
+    if unit == '"' {
       in_double_quote = !in_double_quote
       continue
     }
-    if unit == '\'' && !in_double_quote {
-      in_single_quote = !in_single_quote
-      continue
-    }
-    if in_single_quote || in_double_quote {
+    if in_double_quote {
       continue
     }
     if unit == '[' {

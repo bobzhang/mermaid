@@ -12,6 +12,7 @@ import {
   "moonbitlang/async",
   "moonbitlang/async/fs",
   "moonbitlang/core/json",
+  "moonbitlang/core/quickcheck",
   "moonbitlang/core/string",
   "moonbitlang/core/test",
 } for "test"

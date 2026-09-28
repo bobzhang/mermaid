@@ -22,6 +22,12 @@ fn parse_delimited_token(
         return None
       }
       let raw_id = prefix[:start].to_owned().trim().to_owned()
+      // A node id never contains an opening shape delimiter; if it does, the
+      // `open` found here sits inside another shape's label (e.g. the `>` in
+      // `A[x>y]`), so this shape does not apply.
+      if raw_id.contains_any(chars="[({") {
+        return None
+      }
       let raw_label = prefix[start + open.length():]
         .to_owned()
         .trim()
