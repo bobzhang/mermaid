@@ -2025,7 +2025,7 @@ fn trim_flow_canvas_output(output : String) -> String {
 fn flow_canvas_to_output(canvas : Array[Array[String]]) -> String {
   let lines : Array[String] = []
   for row in canvas {
-    lines.push(row.iter().join(""))
+    lines.push(canvas_row_to_string(row))
   }
   lines.iter().join("\n")
 }

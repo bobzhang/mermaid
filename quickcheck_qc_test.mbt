@@ -52,3 +52,21 @@ test "regression: '>' inside a bracketed label is not an asymmetric shape" {
   assert_eq(node_shape_name(g.nodes["E"].shape), "Asymmetric")
   assert_eq(g.nodes["E"].label, "asym")
 }
+
+///|
+test "regression: astral characters survive ASCII rendering" {
+  // Emoji were split into lone surrogates, dropped, and shortened the row.
+  let out = @beautiful_mermaid.render_mermaid_ascii(
+    "graph LR\nA[🚀 go] --> B[𝒳]",
+  )
+  assert_true(out.contains("🚀 go"))
+  assert_true(out.contains("𝒳"))
+  let widths = out.split("\n").map(line => line.length()).to_array()
+  assert_true(widths.all(w => w == widths[0]))
+  // Two edge labels drawn over each other must not leave half an emoji.
+  let er = @beautiful_mermaid.render_mermaid_ascii(
+    "erDiagram\nENT0 ||--o{ ENT1 : ><7🚀 *7\nENT0 |o--|| ENT1 : 🚀?",
+  )
+  let er_widths = er.split("\n").map(line => line.length()).to_array()
+  assert_true(er_widths.all(w => w == er_widths[0]))
+}
