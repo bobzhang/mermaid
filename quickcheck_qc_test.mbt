@@ -13,3 +13,15 @@ test "regression: control characters in labels keep the SVG well-formed" {
   assert_false(svg.contains("\u{1}"))
   assert_true(svg.contains(">x\u{FFFD}y\u{FFFD}z</text>"))
 }
+
+///|
+test "regression: color options are escaped in the root style attribute" {
+  let svg = @beautiful_mermaid.render_mermaid("graph TD\nA --> B", options={
+    ..@model.RenderOptions::default(),
+    bg: Some("red\" onload=\"alert(1)"),
+    line: Some("<&>"),
+  })
+  assert_false(svg.contains("onload=\"alert"))
+  assert_true(svg.contains("--bg:red&quot; onload=&quot;alert(1)"))
+  assert_true(svg.contains("--line:&lt;&amp;&gt;"))
+}
