@@ -1,11 +1,33 @@
 ///|
 fn xml_escape(s : String) -> String {
-  s
-  .replace_all(old="&", new="&amp;")
-  .replace_all(old="<", new="&lt;")
-  .replace_all(old=">", new="&gt;")
-  .replace_all(old="\"", new="&quot;")
-  .replace_all(old="'", new="&#39;")
+  let sb = StringBuilder()
+  for ch in s {
+    match ch {
+      '&' => sb.write_string("&amp;")
+      '<' => sb.write_string("&lt;")
+      '>' => sb.write_string("&gt;")
+      '"' => sb.write_string("&quot;")
+      '\'' => sb.write_string("&#39;")
+      _ => {
+        let code = ch.to_int()
+        // Characters outside the XML 1.0 `Char` production (C0 controls other
+        // than tab/LF/CR, surrogates, U+FFFE/U+FFFF) cannot appear in a
+        // well-formed document, even escaped; substitute U+FFFD.
+        let valid = code == 0x9 ||
+          code == 0xA ||
+          code == 0xD ||
+          (code >= 0x20 && code <= 0xD7FF) ||
+          (code >= 0xE000 && code <= 0xFFFD) ||
+          code >= 0x10000
+        if valid {
+          sb.write_char(ch)
+        } else {
+          sb.write_char('\u{FFFD}')
+        }
+      }
+    }
+  }
+  sb.to_string()
 }
 
 ///|
