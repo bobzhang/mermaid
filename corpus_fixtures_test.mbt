@@ -5,11 +5,11 @@ struct CorpusCase {
   input : String
   header : String
   supported_by_moonbit : Bool
-  padding_x : Int
-  padding_y : Int
+  padding_x : Int32
+  padding_y : Int32
   direction : String?
-  expected_node_count : Int?
-  expected_edge_count : Int?
+  expected_node_count : Int32?
+  expected_edge_count : Int32?
   expected_ascii : String?
   expected_unicode : String?
   expected_svg_fragments : Array[String]

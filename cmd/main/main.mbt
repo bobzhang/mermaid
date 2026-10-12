@@ -82,7 +82,7 @@ fn available_theme_list() -> String {
 }
 
 ///|
-fn parse_non_negative_int(raw : String) -> Int? {
+fn parse_non_negative_int(raw : String) -> Int32? {
   let normalized = raw.trim().to_owned()
   if normalized == "" {
     return None
@@ -119,9 +119,9 @@ fn parse_layout_engine(raw : String) -> @model.LayoutEngine? {
 ///|
 fn ascii_spacing_requires_text_mode(
   render_text : Bool,
-  padding_x : Int,
-  padding_y : Int,
-  box_border_padding : Int,
+  padding_x : Int32,
+  padding_y : Int32,
+  box_border_padding : Int32,
 ) -> Bool {
   !render_text && (padding_x != 5 || padding_y != 5 || box_border_padding != 1)
 }
@@ -148,9 +148,9 @@ fn svg_options_overridden(
   muted_color : String?,
   surface_color : String?,
   border_color : String?,
-  padding : Int?,
-  node_spacing : Int?,
-  layer_spacing : Int?,
+  padding : Int32?,
+  node_spacing : Int32?,
+  layer_spacing : Int32?,
   layout_engine : @model.LayoutEngine?,
   transparent : Bool,
 ) -> Bool {
@@ -236,7 +236,7 @@ fn print_dagre_order_trace(
       let joined_node_ids = node_ids.join(",")
       println("PASS_LAYER\t\{step.pass_index}\t\{rank}\t\{joined_node_ids}")
     }
-    let sorted_ranks : Array[Int] = []
+    let sorted_ranks : Array[Int32] = []
     for rank, _ in step.barycenters_by_rank {
       sorted_ranks.push(rank)
     }
@@ -283,9 +283,9 @@ fn run() -> Unit {
   let mut muted_color : String? = None
   let mut surface_color : String? = None
   let mut border_color : String? = None
-  let mut padding : Int? = None
-  let mut node_spacing : Int? = None
-  let mut layer_spacing : Int? = None
+  let mut padding : Int32? = None
+  let mut node_spacing : Int32? = None
+  let mut layer_spacing : Int32? = None
   let mut layout_engine : @model.LayoutEngine? = None
   let mut transparent = false
   let mut dump_edge_points = false

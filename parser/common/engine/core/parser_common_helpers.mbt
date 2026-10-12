@@ -149,8 +149,8 @@ pub fn parse_node_token(raw_token : String) -> @model.MermaidNode {
 fn find_earliest_operator_indices(
   line : String,
   operator_symbols : Array[String],
-) -> (Int, Int)? {
-  let mut best : (Int, Int)? = None
+) -> (Int32, Int32)? {
+  let mut best : (Int32, Int32)? = None
   for i in 0..<operator_symbols.length() {
     let symbol = operator_symbols[i]
     match line.find(symbol) {
@@ -177,7 +177,7 @@ fn find_earliest_operator_indices(
 fn find_first_operator_indices(
   line : String,
   operator_symbols : Array[String],
-) -> (Int, Int)? {
+) -> (Int32, Int32)? {
   for i in 0..<operator_symbols.length() {
     match line.find(operator_symbols[i]) {
       Some(index) => return Some((i, index))

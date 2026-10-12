@@ -61,8 +61,8 @@ fn er_crows_foot_chars(token : String, use_ascii : Bool) -> String {
 ///|
 fn er_ensure_canvas_size(
   canvas : Array[Array[String]],
-  min_width : Int,
-  min_height : Int,
+  min_width : Int32,
+  min_height : Int32,
 ) -> Unit {
   if min_width <= 0 || min_height <= 0 {
     return

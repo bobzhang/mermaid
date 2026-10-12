@@ -81,7 +81,7 @@ fn merge_options_with_colors(
 /// ```
 pub fn render_mermaid(
   text : String,
-  options? : @model.RenderOptions = @model.RenderOptions::default(),
+  options~ : @model.RenderOptions = @model.RenderOptions::default(),
 ) -> String raise @model.MermaidError {
   let positioned = @layout.layout_graph(
     @parser_header_core.parse_mermaid(text),
@@ -100,7 +100,7 @@ pub fn render_mermaid(
 fn render_mermaid_with_colors(
   text : String,
   colors : @model.DiagramColors,
-  options? : @model.RenderOptions = @model.RenderOptions::default(),
+  options~ : @model.RenderOptions = @model.RenderOptions::default(),
 ) -> String raise @model.MermaidError {
   let merged = merge_options_with_colors(options, colors)
   render_mermaid(text, options=merged)
@@ -127,7 +127,7 @@ fn render_mermaid_with_colors(
 pub fn render_mermaid_with_theme_name(
   text : String,
   theme_name : String,
-  options? : @model.RenderOptions = @model.RenderOptions::default(),
+  options~ : @model.RenderOptions = @model.RenderOptions::default(),
 ) -> String raise @model.MermaidError {
   match @themes.theme_by_name(theme_name) {
     Some(colors) => render_mermaid_with_colors(text, colors, options~)
@@ -160,7 +160,7 @@ pub fn render_mermaid_with_theme_name(
 /// ```
 pub fn render_mermaid_ascii(
   text : String,
-  options? : @model.AsciiRenderOptions = @model.AsciiRenderOptions::default(),
+  options~ : @model.AsciiRenderOptions = @model.AsciiRenderOptions::default(),
 ) -> String raise @model.MermaidError {
   let graph = @parser_header_core.parse_mermaid(text)
   @renderer_ascii.render_ascii(graph, options)

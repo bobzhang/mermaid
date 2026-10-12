@@ -1,14 +1,14 @@
 ///|
 /// A coordinate on the state diagram layout grid.
 priv struct LayoutStateGridCoord {
-  x : Int
-  y : Int
+  x : Int32
+  y : Int32
 }
 
 ///|
 priv struct LayoutStateEdgeDir {
-  x : Int
-  y : Int
+  x : Int32
+  y : Int32
 } derive(Eq)
 
 ///|
@@ -89,7 +89,7 @@ fn layout_state_grid_positions(
   nodes_in_order : Array[MermaidNode],
 ) -> Map[String, LayoutStateGridCoord] {
   let positions : Map[String, LayoutStateGridCoord] = Map([])
-  let highest_position_by_level : Map[Int, Int] = Map([])
+  let highest_position_by_level : Map[Int32, Int32] = Map([])
   let target_ids = layout_state_target_ids(graph)
 
   for node in nodes_in_order {
@@ -151,7 +151,7 @@ fn layout_state_grid_positions(
 /// Computes the bounding box of the state diagram grid.
 fn layout_state_grid_bounds(
   positions : Map[String, LayoutStateGridCoord],
-) -> (Int, Int) {
+) -> (Int32, Int32) {
   let mut max_x = 0
   let mut max_y = 0
   for _, position in positions {
@@ -402,8 +402,8 @@ fn layout_state_preferred_path(
   start : AsciiGridCoord,
   ending : AsciiGridCoord,
   blocked : Map[String, Bool],
-  max_x : Int,
-  max_y : Int,
+  max_x : Int32,
+  max_y : Int32,
 ) -> Array[AsciiGridCoord]? {
   match
     @layout_engine_pathfinder_core.ascii_grid_pathfind(
@@ -438,8 +438,8 @@ fn layout_state_pick_shorter_path(
 fn layout_state_edge_grid_path_td(
   positions : Map[String, LayoutStateGridCoord],
   blocked : Map[String, Bool],
-  max_x : Int,
-  max_y : Int,
+  max_x : Int32,
+  max_y : Int32,
   source_id : String,
   target_id : String,
 ) -> Array[AsciiGridCoord]? {
@@ -479,7 +479,7 @@ pub fn layout_state_flat_grid_layout_data(
   graph : MermaidGraph,
 ) -> (
   Array[MermaidNode],
-  Map[String, (Int, Int)],
+  Map[String, (Int32, Int32)],
   Array[Array[@layout_engine_pathfinder_core.AsciiGridCoord]],
 ) {
   let nodes_in_order = layout_state_nodes_in_definition_order(graph)
@@ -506,7 +506,7 @@ pub fn layout_state_flat_grid_layout_data(
     }
     edge_paths.push(path)
   }
-  let public_grid_positions : Map[String, (Int, Int)] = Map([])
+  let public_grid_positions : Map[String, (Int32, Int32)] = Map([])
   for node_id, coord in grid_positions {
     public_grid_positions[node_id] = (coord.x, coord.y)
   }
@@ -516,10 +516,10 @@ pub fn layout_state_flat_grid_layout_data(
 ///|
 fn layout_state_grid_to_point(
   coord : AsciiGridCoord,
-  origin_x : Int,
-  origin_y : Int,
-  cell_x : Int,
-  cell_y : Int,
+  origin_x : Int32,
+  origin_y : Int32,
+  cell_x : Int32,
+  cell_y : Int32,
 ) -> Point {
   { x: origin_x + coord.x * cell_x, y: origin_y + coord.y * cell_y, }
 }
@@ -527,10 +527,10 @@ fn layout_state_grid_to_point(
 ///|
 fn layout_state_grid_path_to_points(
   path : Array[AsciiGridCoord],
-  origin_x : Int,
-  origin_y : Int,
-  cell_x : Int,
-  cell_y : Int,
+  origin_x : Int32,
+  origin_y : Int32,
+  cell_x : Int32,
+  cell_y : Int32,
 ) -> Array[Point] {
   let points : Array[Point] = []
   for coord in path {
@@ -568,7 +568,7 @@ fn midpoint(a : Point, b : Point) -> Point {
 }
 
 ///|
-fn label_overlap_offset(slot : Int) -> Int {
+fn label_overlap_offset(slot : Int32) -> Int32 {
   if slot <= 0 {
     return 0
   }
@@ -581,7 +581,7 @@ fn label_overlap_offset(slot : Int) -> Int {
 }
 
 ///|
-fn label_overlap_offset_x(slot : Int) -> Int {
+fn label_overlap_offset_x(slot : Int32) -> Int32 {
   if slot <= 0 {
     return 0
   }
@@ -601,7 +601,7 @@ fn label_anchor_key(point : Point) -> String {
 ///|
 fn layout_state_label_position(
   points : Array[Point],
-  label_slots_by_anchor : Map[String, Int],
+  label_slots_by_anchor : Map[String, Int32],
 ) -> Point? {
   match layout_state_best_label_segment(points) {
     Some((start, ending)) => {
@@ -624,7 +624,7 @@ fn layout_state_label_position(
 ///|
 fn layout_state_label_position_from_source_segment(
   points : Array[Point],
-  label_slots_by_anchor : Map[String, Int],
+  label_slots_by_anchor : Map[String, Int32],
 ) -> Point? {
   if points.length() < 2 {
     return None
@@ -745,7 +745,7 @@ pub fn layout_flat_state_graph_for_ascii_grid(
   let (max_grid_x, max_grid_y) = layout_state_grid_bounds(grid_positions)
   let positioned_edges : Array[PositionedEdge] = []
   let routed_paths_by_pair : Map[String, Array[AsciiGridCoord]] = Map([])
-  let label_slots_by_anchor : Map[String, Int] = Map([])
+  let label_slots_by_anchor : Map[String, Int32] = Map([])
   for edge in graph.edges {
     match
       (positioned_by_id.get(edge.source), positioned_by_id.get(edge.target)) {

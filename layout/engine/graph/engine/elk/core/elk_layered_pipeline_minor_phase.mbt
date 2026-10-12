@@ -1,8 +1,8 @@
 ///|
 fn positioned_index_by_node_id(
   positioned_nodes : Array[PositionedNode],
-) -> Map[String, Int] {
-  let index_by_node_id : Map[String, Int] = Map([])
+) -> Map[String, Int32] {
+  let index_by_node_id : Map[String, Int32] = Map([])
   for index, node in positioned_nodes {
     index_by_node_id[node.id] = index
   }
@@ -13,9 +13,9 @@ fn positioned_index_by_node_id(
 fn minor_node_size(
   node_id : String,
   horizontal : Bool,
-  width_by_node_id : Map[String, Int],
-  height_by_node_id : Map[String, Int],
-) -> Int {
+  width_by_node_id : Map[String, Int32],
+  height_by_node_id : Map[String, Int32],
+) -> Int32 {
   if horizontal {
     option_int_or(height_by_node_id.get(node_id), 44)
   } else {
@@ -27,11 +27,11 @@ fn minor_node_size(
 fn rank_pair_minor_gap(
   left_node_id : String,
   right_node_id : String,
-  minor_step : Int,
+  minor_step : Int32,
   horizontal : Bool,
-  width_by_node_id : Map[String, Int],
-  height_by_node_id : Map[String, Int],
-) -> Int {
+  width_by_node_id : Map[String, Int32],
+  height_by_node_id : Map[String, Int32],
+) -> Int32 {
   let left_size = minor_node_size(
     left_node_id, horizontal, width_by_node_id, height_by_node_id,
   )
@@ -46,9 +46,9 @@ fn rank_pair_minor_gap(
 fn node_neighbor_minor_coords(
   node_id : String,
   neighbor_by_node_id : Map[String, Array[String]],
-  minor_coord_by_node_id : Map[String, Int],
-) -> Array[Int] {
-  let coords : Array[Int] = []
+  minor_coord_by_node_id : Map[String, Int32],
+) -> Array[Int32] {
+  let coords : Array[Int32] = []
   match neighbor_by_node_id.get(node_id) {
     Some(neighbors) =>
       for neighbor_id in neighbors {
@@ -66,8 +66,8 @@ fn node_neighbor_minor_coords(
 fn node_neighbor_minor_center(
   node_id : String,
   neighbor_by_node_id : Map[String, Array[String]],
-  minor_coord_by_node_id : Map[String, Int],
-) -> (Bool, Int) {
+  minor_coord_by_node_id : Map[String, Int32],
+) -> (Bool, Int32) {
   let coords = node_neighbor_minor_coords(
     node_id, neighbor_by_node_id, minor_coord_by_node_id,
   )
@@ -86,11 +86,11 @@ fn node_neighbor_minor_center(
 fn resolve_rank_desired_minor_coords(
   node_ids : Array[String],
   neighbor_by_node_id : Map[String, Array[String]],
-  minor_coord_by_node_id : Map[String, Int],
-  default_minor_start : Int,
-  minor_step : Int,
-) -> Array[Int] {
-  let desired : Array[Int] = []
+  minor_coord_by_node_id : Map[String, Int32],
+  default_minor_start : Int32,
+  minor_step : Int32,
+) -> Array[Int32] {
+  let desired : Array[Int32] = []
   for lane, node_id in node_ids {
     let default_minor = default_minor_start + lane * minor_step
     let (has_neighbor_minor_center, neighbor_minor_center) = node_neighbor_minor_center(
@@ -110,13 +110,13 @@ fn resolve_rank_desired_minor_coords(
 ///|
 fn relax_rank_minor_coords(
   node_ids : Array[String],
-  desired_coords : Array[Int],
-  minor_step : Int,
+  desired_coords : Array[Int32],
+  minor_step : Int32,
   horizontal : Bool,
-  width_by_node_id : Map[String, Int],
-  height_by_node_id : Map[String, Int],
-) -> Array[Int] {
-  let coords : Array[Int] = []
+  width_by_node_id : Map[String, Int32],
+  height_by_node_id : Map[String, Int32],
+) -> Array[Int32] {
+  let coords : Array[Int32] = []
   for coord in desired_coords {
     coords.push(coord)
   }
@@ -210,16 +210,16 @@ fn relax_rank_minor_coords(
 
 ///|
 fn align_rank_minor_coords(
-  rank : Int,
-  rank_node_ids_by_rank : Map[Int, Array[String]],
+  rank : Int32,
+  rank_node_ids_by_rank : Map[Int32, Array[String]],
   neighbor_by_node_id : Map[String, Array[String]],
-  minor_coord_by_node_id : Map[String, Int],
-  padding : Int,
-  minor_step : Int,
-  max_rank_minor_span : Int,
+  minor_coord_by_node_id : Map[String, Int32],
+  padding : Int32,
+  minor_step : Int32,
+  max_rank_minor_span : Int32,
   horizontal : Bool,
-  width_by_node_id : Map[String, Int],
-  height_by_node_id : Map[String, Int],
+  width_by_node_id : Map[String, Int32],
+  height_by_node_id : Map[String, Int32],
 ) -> Unit {
   match rank_node_ids_by_rank.get(rank) {
     Some(node_ids) => {
@@ -248,19 +248,19 @@ fn align_rank_minor_coords(
 
 ///|
 fn build_minor_coord_by_node_id(
-  rank_node_ids_by_rank : Map[Int, Array[String]],
-  max_rank : Int,
+  rank_node_ids_by_rank : Map[Int32, Array[String]],
+  max_rank : Int32,
   compact_small_graph : Bool,
-  padding : Int,
-  minor_step : Int,
-  max_rank_minor_span : Int,
+  padding : Int32,
+  minor_step : Int32,
+  max_rank_minor_span : Int32,
   predecessors_by_node_id : Map[String, Array[String]],
   successors_by_node_id : Map[String, Array[String]],
   horizontal : Bool,
-  width_by_node_id : Map[String, Int],
-  height_by_node_id : Map[String, Int],
-) -> Map[String, Int] {
-  let minor_coord_by_node_id : Map[String, Int] = Map([])
+  width_by_node_id : Map[String, Int32],
+  height_by_node_id : Map[String, Int32],
+) -> Map[String, Int32] {
+  let minor_coord_by_node_id : Map[String, Int32] = Map([])
   for rank in 0..<=max_rank {
     match rank_node_ids_by_rank.get(rank) {
       Some(node_ids) => {
@@ -385,12 +385,12 @@ fn build_minor_coord_by_node_id(
 
 ///|
 fn build_minor_coord_by_lane_seed(
-  rank_node_ids_by_rank : Map[Int, Array[String]],
-  max_rank : Int,
-  lane_by_node_id : Map[String, Int],
-  padding : Int,
-  minor_step : Int,
-) -> Map[String, Int] {
+  rank_node_ids_by_rank : Map[Int32, Array[String]],
+  max_rank : Int32,
+  lane_by_node_id : Map[String, Int32],
+  padding : Int32,
+  minor_step : Int32,
+) -> Map[String, Int32] {
   let mut has_lane = false
   let mut min_lane = 0
   for rank in 0..<=max_rank {
@@ -409,7 +409,7 @@ fn build_minor_coord_by_lane_seed(
     }
   }
 
-  let minor_coord_by_node_id : Map[String, Int] = Map([])
+  let minor_coord_by_node_id : Map[String, Int32] = Map([])
   for rank in 0..<=max_rank {
     match rank_node_ids_by_rank.get(rank) {
       Some(node_ids) => {

@@ -219,7 +219,7 @@ fn rank_layers(
   setup_state : @layout_engine_graph_legacy_setup_core.LegacyLayoutSetupState,
 ) -> Array[Array[String]] {
   let max_rank = setup_state.lane_state.flow_max_rank
-  let layers : Array[Array[(Int, String)]] = []
+  let layers : Array[Array[(Int32, String)]] = []
   for _ in 0..<=max_rank {
     layers.push([])
   }

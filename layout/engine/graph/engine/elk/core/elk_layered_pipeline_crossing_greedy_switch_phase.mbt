@@ -13,10 +13,10 @@ fn crossing_greedy_build_node_id_set(
 fn crossing_greedy_neighbor_positions(
   free_node_id : String,
   fixed_neighbor_by_node_id : Map[String, Array[String]],
-  fixed_rank_position_by_node_id : Map[String, Int],
+  fixed_rank_position_by_node_id : Map[String, Int32],
   free_node_id_set : Map[String, Bool],
-) -> Array[Int] {
-  let positions : Array[Int] = []
+) -> Array[Int32] {
+  let positions : Array[Int32] = []
   match fixed_neighbor_by_node_id.get(free_node_id) {
     Some(neighbor_ids) =>
       for neighbor_id in neighbor_ids {
@@ -35,9 +35,9 @@ fn crossing_greedy_neighbor_positions(
 
 ///|
 fn crossing_greedy_pair_crossings_if_left_before_right(
-  left_positions : Array[Int],
-  right_positions : Array[Int],
-) -> Int {
+  left_positions : Array[Int32],
+  right_positions : Array[Int32],
+) -> Int32 {
   let mut crossings = 0
   for left_position in left_positions {
     for right_position in right_positions {
@@ -55,9 +55,9 @@ fn crossing_greedy_should_swap_adjacent_pair(
   right_node_id : String,
   predecessor_by_node_id : Map[String, Array[String]],
   successor_by_node_id : Map[String, Array[String]],
-  rank_position_by_node_id : Map[String, Int],
+  rank_position_by_node_id : Map[String, Int32],
   free_node_id_set : Map[String, Bool],
-  order_index_by_node_id : Map[String, Int],
+  order_index_by_node_id : Map[String, Int32],
   preserve_current_order_on_tie : Bool,
 ) -> Bool {
   let predecessor_left_positions = crossing_greedy_neighbor_positions(
@@ -109,10 +109,10 @@ fn apply_crossing_greedy_switch_rank_by_fixed_layer(
   node_ids : Array[String],
   predecessor_by_node_id : Map[String, Array[String]],
   successor_by_node_id : Map[String, Array[String]],
-  rank_position_by_node_id : Map[String, Int],
-  order_index_by_node_id : Map[String, Int],
+  rank_position_by_node_id : Map[String, Int32],
+  order_index_by_node_id : Map[String, Int32],
   preserve_current_order_on_tie : Bool,
-  pass_limit : Int,
+  pass_limit : Int32,
 ) -> Bool {
   if node_ids.length() <= 1 || pass_limit <= 0 {
     return false

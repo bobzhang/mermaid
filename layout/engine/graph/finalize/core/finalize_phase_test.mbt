@@ -1,10 +1,10 @@
 ///|
 fn test_node(
   id : String,
-  x : Int,
-  y : Int,
-  width : Int,
-  height : Int,
+  x : Int32,
+  y : Int32,
+  width : Int32,
+  height : Int32,
 ) -> @model.PositionedNode {
   { id, label: id, shape: Rectangle, x, y, width, height, inline_style: None, }
 }
@@ -12,10 +12,10 @@ fn test_node(
 ///|
 fn test_group(
   id : String,
-  x : Int,
-  y : Int,
-  width : Int,
-  height : Int,
+  x : Int32,
+  y : Int32,
+  width : Int32,
+  height : Int32,
   children : Array[@model.PositionedGroup],
 ) -> @model.PositionedGroup {
   { id, label: id, x, y, width, height, children, }

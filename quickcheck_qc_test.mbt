@@ -3,7 +3,7 @@
 // count so the suite stays deterministic and fast.
 
 ///|
-fn qc_int(rs : @quickcheck.RandomState, n : Int) -> Int {
+fn qc_int(rs : @quickcheck.RandomState, n : Int32) -> Int32 {
   if n <= 1 {
     0
   } else {
@@ -17,7 +17,7 @@ fn[T] qc_pick(rs : @quickcheck.RandomState, items : Array[T]) -> T {
 }
 
 ///|
-fn qc_chance(rs : @quickcheck.RandomState, percent : Int) -> Bool {
+fn qc_chance(rs : @quickcheck.RandomState, percent : Int32) -> Bool {
   qc_int(rs, 100) < percent
 }
 
@@ -41,7 +41,7 @@ let qc_text_chars : Array[Char] = [
 fn qc_text(
   rs : @quickcheck.RandomState,
   chars : Array[Char],
-  max_len : Int,
+  max_len : Int32,
 ) -> String {
   let len = 1 + qc_int(rs, max_len)
   let sb = StringBuilder()
@@ -59,7 +59,7 @@ fn qc_text(
 }
 
 ///|
-fn qc_id(rs : @quickcheck.RandomState, index : Int) -> String {
+fn qc_id(rs : @quickcheck.RandomState, index : Int32) -> String {
   let prefix = qc_pick(rs, ["n", "A", "node_", "x", "Q", "é", "S"])
   "\{prefix}\{index}"
 }
@@ -101,7 +101,7 @@ fn qc_xml_escape(text : String) -> String {
 
 ///|
 fn qc_xml_name_char(c : Char) -> Bool {
-  c is ('a'..='z' | 'A'..='Z' | '0'..='9' | '-' | '_' | ':' | '.')
+  c is ('a'..<='z' | 'A'..<='Z' | '0'..<='9' | '-' | '_' | ':' | '.')
 }
 
 ///|
@@ -117,7 +117,7 @@ fn qc_xml_valid_char(c : Char) -> Bool {
 
 ///|
 /// Returns the index after a valid entity starting at `cs[i] == '&'`.
-fn qc_xml_entity_end(cs : Array[Char], i : Int) -> Int? {
+fn qc_xml_entity_end(cs : Array[Char], i : Int32) -> Int32? {
   let mut j = i + 1
   let sb = StringBuilder()
   while j < cs.length() && j - i <= 12 && cs[j] != ';' {
@@ -132,9 +132,9 @@ fn qc_xml_entity_end(cs : Array[Char], i : Int) -> Int? {
     "amp" | "lt" | "gt" | "quot" | "apos" => true
     [.. "#x", .. rest] =>
       rest.length() > 0 &&
-      rest.iter().all(c => c is ('0'..='9' | 'a'..='f' | 'A'..='F'))
+      rest.iter().all(c => c is ('0'..<='9' | 'a'..<='f' | 'A'..<='F'))
     [.. "#", .. rest] =>
-      rest.length() > 0 && rest.iter().all(c => c is ('0'..='9'))
+      rest.length() > 0 && rest.iter().all(c => c is ('0'..<='9'))
     _ => false
   }
   if ok {
@@ -380,15 +380,15 @@ let qc_flow_ops : Array[(String, String, Bool, Bool, String?)] = [
 ///|
 struct QcFlowNode {
   id : String
-  shape : Int
+  shape : Int32
   label : String
 } derive(Debug)
 
 ///|
 struct QcFlowEdge {
-  src : Int
-  dst : Int
-  op : Int
+  src : Int32
+  dst : Int32
+  op : Int32
   label : String?
   mid_label : Bool
 } derive(Debug)
@@ -400,8 +400,8 @@ struct QcFlow {
   dir : String
   nodes : Array[QcFlowNode]
   edges : Array[QcFlowEdge]
-  sub_start : Int
-  sub_len : Int
+  sub_start : Int32
+  sub_len : Int32
 } derive(Debug)
 
 ///|
@@ -557,7 +557,7 @@ struct QcState {
   // (id, optional description declared via `state "desc" as id`)
   states : Array[(String, String?)]
   // (source index, target index, label); -1 means `[*]`
-  transitions : Array[(Int, Int, String?)]
+  transitions : Array[(Int32, Int32, String?)]
 } derive(Debug)
 
 ///|
@@ -632,15 +632,15 @@ let qc_seq_ops : Array[String] = [
 ///|
 struct QcSeq {
   // (participant index, is actor, nick)
-  decls : Array[(Int, Bool, String?)]
+  decls : Array[(Int32, Bool, String?)]
   // (source, target, op index, text)
-  messages : Array[(Int, Int, Int, String?)]
+  messages : Array[(Int32, Int32, Int32, String?)]
   // (actor index, text) rendered as `Note over X: text`
-  notes : Array[(Int, String)]
+  notes : Array[(Int32, String)]
 } derive(Debug)
 
 ///|
-fn qc_seq_id(i : Int) -> String {
+fn qc_seq_id(i : Int32) -> String {
   "P\{i}"
 }
 
@@ -672,7 +672,7 @@ fn QcSeq::text(self : QcSeq) -> String {
 impl @quickcheck.Arbitrary for QcSeq with fn arbitrary(size, rs) {
   let pool = 2 + qc_int(rs, 2 + size / 10).min(4)
   let decls = []
-  let declared : Map[Int, Bool] = Map([])
+  let declared : Map[Int32, Bool] = Map([])
   for i in 0..<pool {
     if qc_chance(rs, 60) && !declared.contains(i) {
       declared[i] = true
@@ -742,15 +742,15 @@ let qc_er_ops : Array[String] = [
 /// Class (`er == false`) or ER (`er == true`) diagram.
 struct QcClassEr {
   er : Bool
-  count : Int
+  count : Int32
   // (source, target, op index, label)
-  relations : Array[(Int, Int, Int, String?)]
+  relations : Array[(Int32, Int32, Int32, String?)]
   // (entity index, member text)
-  members : Array[(Int, String)]
+  members : Array[(Int32, String)]
 } derive(Debug)
 
 ///|
-fn qc_entity_id(er : Bool, i : Int) -> String {
+fn qc_entity_id(er : Bool, i : Int32) -> String {
   if er {
     "ENT\{i}"
   } else {
@@ -947,7 +947,7 @@ impl @quickcheck.Shrink for QcSoup with fn shrink(self) {
 /// a line).
 struct QcMutated {
   base : QcDiagram
-  edits : Array[(Int, Int, Int, String)]
+  edits : Array[(Int32, Int32, Int32, String)]
 } derive(Debug)
 
 ///|
@@ -1368,7 +1368,7 @@ test "qc: rendering is deterministic" {
 fn qc_inside(
   p : @model.Point,
   node : @model.PositionedNode,
-  tolerance : Int,
+  tolerance : Int32,
 ) -> Bool {
   let left = node.x - node.width / 2 - tolerance
   let right = node.x + node.width / 2 + tolerance
@@ -1483,7 +1483,7 @@ test "qc: every layout engine renders well-formed SVG" {
 ///|
 test "qc: ASCII/Unicode output has consistent line widths for any options" {
   @quickcheck.check(
-    (input : (QcDiagram, Bool, Int, Int)) => {
+    (input : (QcDiagram, Bool, Int32, Int32)) => {
       let (d, use_ascii, pad, border) = input
       let options : @model.AsciiRenderOptions = {
         use_ascii,
@@ -1564,7 +1564,7 @@ test "qc: theme names are normalized; unknown names raise UnknownTheme" {
   ]
   let source = "graph TD\nA --> B"
   @quickcheck.check(
-    (input : (Int, UInt64, String)) => {
+    (input : (Int32, UInt64, String)) => {
       let (which, bits, junk) = input
       let slug = slugs[(which % slugs.length() + slugs.length()) %
         slugs.length()]
@@ -1582,7 +1582,7 @@ test "qc: theme names are normalized; unknown names raise UnknownTheme" {
           let upper = b % 2 == 1UL
           b = b / 2
           sb.write_char(
-            if upper && c is ('a'..='z') {
+            if upper && c is ('a'..<='z') {
               (c.to_int() - 32).unsafe_to_char()
             } else {
               c

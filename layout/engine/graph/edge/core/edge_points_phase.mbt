@@ -1,5 +1,5 @@
 ///|
-fn int_abs(value : Int) -> Int {
+fn int_abs(value : Int32) -> Int32 {
   if value < 0 {
     -value
   } else {
@@ -11,7 +11,7 @@ fn int_abs(value : Int) -> Int {
 fn boundary_side_minor_limit(
   node : PositionedNode,
   side_is_vertical : Bool,
-) -> Int {
+) -> Int32 {
   if side_is_vertical {
     (node.height / 2 - 6).max(0)
   } else {
@@ -20,7 +20,7 @@ fn boundary_side_minor_limit(
 }
 
 ///|
-fn rounded_div(numerator : Int, denominator : Int) -> Int {
+fn rounded_div(numerator : Int32, denominator : Int32) -> Int32 {
   if denominator == 0 {
     return 0
   }
@@ -35,7 +35,7 @@ fn rounded_div(numerator : Int, denominator : Int) -> Int {
 }
 
 ///|
-fn segment_x_at_y(start : Point, end_ : Point, y : Int) -> Int? {
+fn segment_x_at_y(start : Point, end_ : Point, y : Int32) -> Int32? {
   if start.y == end_.y {
     if start.y != y {
       return None
@@ -54,7 +54,7 @@ fn segment_x_at_y(start : Point, end_ : Point, y : Int) -> Int? {
 }
 
 ///|
-fn segment_y_at_x(start : Point, end_ : Point, x : Int) -> Int? {
+fn segment_y_at_x(start : Point, end_ : Point, x : Int32) -> Int32? {
   if start.x == end_.x {
     if start.x != x {
       return None
@@ -130,9 +130,9 @@ fn boundary_polygon_points(node : PositionedNode) -> Array[Point]? {
 ///|
 fn polygon_boundary_x_for_y(
   polygon : Array[Point],
-  y : Int,
+  y : Int32,
   choose_max : Bool,
-) -> Int? {
+) -> Int32? {
   if polygon.length() < 2 {
     return None
   }
@@ -165,9 +165,9 @@ fn polygon_boundary_x_for_y(
 ///|
 fn polygon_boundary_y_for_x(
   polygon : Array[Point],
-  x : Int,
+  x : Int32,
   choose_max : Bool,
-) -> Int? {
+) -> Int32? {
   if polygon.length() < 2 {
     return None
   }
@@ -201,8 +201,8 @@ fn polygon_boundary_y_for_x(
 fn clamp_minor_boundary_offset(
   node : PositionedNode,
   side_is_vertical : Bool,
-  offset : Int,
-) -> Int {
+  offset : Int32,
+) -> Int32 {
   let limit = boundary_side_minor_limit(node, side_is_vertical)
   if offset > limit {
     limit
@@ -219,7 +219,7 @@ fn rectangular_boundary_anchor_point(
   horizontal : Bool,
   source_endpoint : Bool,
   moving_forward : Bool,
-  minor_offset : Int,
+  minor_offset : Int32,
 ) -> Point {
   if horizontal {
     let clamped_minor = clamp_minor_boundary_offset(node, true, minor_offset)
@@ -259,7 +259,7 @@ pub fn boundary_anchor_point(
   horizontal : Bool,
   source_endpoint : Bool,
   moving_forward : Bool,
-  minor_offset : Int,
+  minor_offset : Int32,
 ) -> Point {
   let polygon = boundary_polygon_points(source)
   if horizontal {
@@ -309,7 +309,7 @@ fn point_equals(left : Point, right : Point) -> Bool {
 }
 
 ///|
-fn point_is_between_on_axis(value : Int, left : Int, right : Int) -> Bool {
+fn point_is_between_on_axis(value : Int32, left : Int32, right : Int32) -> Bool {
   let min_value = left.min(right)
   let max_value = left.max(right)
   value >= min_value && value <= max_value
@@ -417,10 +417,10 @@ pub fn edge_points_with_minor_lane_offset_with_ports(
   source : PositionedNode,
   target : PositionedNode,
   horizontal : Bool,
-  minor_offset : Int,
+  minor_offset : Int32,
   smooth_forward_fanout : Bool,
-  source_port_minor_offset : Int,
-  target_port_minor_offset : Int,
+  source_port_minor_offset : Int32,
+  target_port_minor_offset : Int32,
 ) -> Array[Point] {
   if horizontal {
     let moving_right = target.x >= source.x
@@ -497,12 +497,12 @@ pub fn edge_points_for_with_ports(
   source : PositionedNode,
   target : PositionedNode,
   horizontal : Bool,
-  back_edge_bend_y : Int?,
-  back_edge_bend_x : Int?,
-  forward_fanout_offset_y : Int?,
+  back_edge_bend_y : Int32?,
+  back_edge_bend_x : Int32?,
+  forward_fanout_offset_y : Int32?,
   smooth_forward_fanout : Bool,
-  source_port_minor_offset : Int,
-  target_port_minor_offset : Int,
+  source_port_minor_offset : Int32,
+  target_port_minor_offset : Int32,
 ) -> Array[Point] {
   if horizontal {
     let moving_right = target.x >= source.x
@@ -611,9 +611,9 @@ pub fn edge_points_for(
   source : PositionedNode,
   target : PositionedNode,
   horizontal : Bool,
-  back_edge_bend_y : Int?,
-  back_edge_bend_x : Int?,
-  forward_fanout_offset_y : Int?,
+  back_edge_bend_y : Int32?,
+  back_edge_bend_x : Int32?,
+  forward_fanout_offset_y : Int32?,
   smooth_forward_fanout : Bool,
 ) -> Array[Point] {
   edge_points_for_with_ports(

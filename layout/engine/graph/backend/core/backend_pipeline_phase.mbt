@@ -6,7 +6,7 @@ pub(all) struct GraphBackendRoutingPolicy {
 }
 
 ///|
-fn bool_flag(value : Bool) -> Int {
+fn bool_flag(value : Bool) -> Int32 {
   if value {
     1
   } else {
@@ -15,7 +15,7 @@ fn bool_flag(value : Bool) -> Int {
 }
 
 ///|
-fn option_int_or(value : Int?, fallback : Int) -> Int {
+fn option_int_or(value : Int32?, fallback : Int32) -> Int32 {
   match value {
     Some(v) => v
     None => fallback
@@ -45,7 +45,7 @@ fn direction_tag(graph : MermaidGraph) -> String {
 }
 
 ///|
-fn phase_metrics(snapshot : GraphLayoutPhaseSnapshot) -> Map[String, Int] {
+fn phase_metrics(snapshot : GraphLayoutPhaseSnapshot) -> Map[String, Int32] {
   {
     "node_count": snapshot.node_count,
     "edge_count": snapshot.edge_count,
@@ -70,7 +70,7 @@ fn encode_rank_layers(rank_layers : Array[Array[String]]) -> String {
 }
 
 ///|
-fn lane_span_by_node_id(lane_by_node_id : Map[String, Int]) -> Int {
+fn lane_span_by_node_id(lane_by_node_id : Map[String, Int32]) -> Int32 {
   let mut has_value = false
   let mut min_lane = 0
   let mut max_lane = 0
@@ -99,7 +99,7 @@ fn lane_span_by_node_id(lane_by_node_id : Map[String, Int]) -> Int {
 fn collect_rank_layers_from_setup_state(
   setup_state : LegacyLayoutSetupState,
 ) -> Array[Array[String]] {
-  let rank_layers : Array[Array[(Int, Int, String)]] = []
+  let rank_layers : Array[Array[(Int32, Int32, String)]] = []
   let max_rank = setup_state.lane_state.flow_max_rank
   for _ in 0..<=max_rank {
     rank_layers.push([])

@@ -1,7 +1,7 @@
 ///|
 
 ///|
-fn short_label_wide_glyph_bonus(label_lines : Array[String]) -> Int {
+fn short_label_wide_glyph_bonus(label_lines : Array[String]) -> Int32 {
   let mut max_bonus = 0
   for line in label_lines {
     let has_wide_glyph = line.contains("W") ||
@@ -19,7 +19,7 @@ fn short_label_wide_glyph_bonus(label_lines : Array[String]) -> Int {
 fn node_dimensions(
   node : MermaidNode,
   compact_short_labels : Bool,
-) -> (Int, Int) {
+) -> (Int32, Int32) {
   let label_lines = node.label
     .split("\n")
     .map(part => part.to_owned())
@@ -133,8 +133,8 @@ fn final_phase_snapshot(
 ///|
 fn build_order_index_by_node_id(
   nodes_in_order : Array[MermaidNode],
-) -> Map[String, Int] {
-  let order_index_by_node_id : Map[String, Int] = Map([])
+) -> Map[String, Int32] {
+  let order_index_by_node_id : Map[String, Int32] = Map([])
   for i, node in nodes_in_order {
     order_index_by_node_id[node.id] = i
   }
@@ -152,7 +152,7 @@ priv struct ElkLayeredSetupState {
   nodes_in_order : Array[MermaidNode]
   horizontal : Bool
   reverse : Bool
-  base_order_index_by_node_id : Map[String, Int]
+  base_order_index_by_node_id : Map[String, Int32]
   node_ids_in_order : Array[String]
 }
 
@@ -200,10 +200,10 @@ fn run_elk_layered_setup_phase(
 
 ///|
 priv struct ElkLayeredNodeSizeState {
-  width_by_node_id : Map[String, Int]
-  height_by_node_id : Map[String, Int]
-  global_max_width : Int
-  global_max_height : Int
+  width_by_node_id : Map[String, Int32]
+  height_by_node_id : Map[String, Int32]
+  global_max_width : Int32
+  global_max_height : Int32
   compact_small_graph : Bool
 }
 
@@ -211,8 +211,8 @@ priv struct ElkLayeredNodeSizeState {
 fn build_elk_layered_node_size_state(
   nodes_in_order : Array[MermaidNode],
 ) -> ElkLayeredNodeSizeState {
-  let width_by_node_id : Map[String, Int] = Map([])
-  let height_by_node_id : Map[String, Int] = Map([])
+  let width_by_node_id : Map[String, Int32] = Map([])
+  let height_by_node_id : Map[String, Int32] = Map([])
   let compact_small_graph = nodes_in_order.length() <= 8
   let mut global_max_width = 0
   let mut global_max_height = 0
@@ -234,9 +234,9 @@ fn build_elk_layered_node_size_state(
 
 ///|
 fn compute_max_rank_size(
-  rank_node_ids_by_rank : Map[Int, Array[String]],
-  max_rank : Int,
-) -> Int {
+  rank_node_ids_by_rank : Map[Int32, Array[String]],
+  max_rank : Int32,
+) -> Int32 {
   let mut max_rank_size = 1
   for rank in 0..<=max_rank {
     match rank_node_ids_by_rank.get(rank) {
@@ -249,19 +249,19 @@ fn compute_max_rank_size(
 
 ///|
 priv struct ElkLayeredSpacingState {
-  padding : Int
-  node_spacing : Int
-  layer_spacing : Int
-  major_gap : Int
-  minor_step : Int
-  max_rank_minor_span : Int
+  padding : Int32
+  node_spacing : Int32
+  layer_spacing : Int32
+  major_gap : Int32
+  minor_step : Int32
+  max_rank_minor_span : Int32
 }
 
 ///|
 fn run_elk_layered_spacing_phase(
   options : RenderOptions,
   horizontal : Bool,
-  max_rank_size : Int,
+  max_rank_size : Int32,
   node_size_state : ElkLayeredNodeSizeState,
 ) -> ElkLayeredSpacingState {
   let compact_small_graph = node_size_state.compact_small_graph

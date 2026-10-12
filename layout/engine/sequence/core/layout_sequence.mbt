@@ -1,5 +1,5 @@
 ///|
-fn option_int_or(value : Int?, fallback : Int) -> Int {
+fn option_int_or(value : Int32?, fallback : Int32) -> Int32 {
   match value {
     Some(found) => found
     None => fallback
@@ -46,7 +46,7 @@ fn resolve_inline_style(
 fn sequence_edge_points(
   source : PositionedNode,
   target : PositionedNode,
-  y : Int,
+  y : Int32,
 ) -> Array[Point] {
   if source.id == target.id {
     let start_x = source.x + source.width / 2
@@ -69,12 +69,12 @@ fn sequence_edge_points(
 }
 
 ///|
-fn sequence_text_width(text : String) -> Int {
+fn sequence_text_width(text : String) -> Int32 {
   text.length() * 8
 }
 
 ///|
-fn sequence_note_width(text : String, base : Int, padding : Int) -> Int {
+fn sequence_note_width(text : String, base : Int32, padding : Int32) -> Int32 {
   let lines = text.split("\n").map(part => part.to_owned()).to_array()
   let mut longest = 0
   for line in lines {
@@ -94,9 +94,9 @@ fn sequence_operator_has_suffix(edge : MermaidEdge, suffix : String) -> Bool {
 ///|
 fn sequence_message_label_bounds(
   edge : MermaidEdge,
-  actor_index : Map[String, Int],
-  actor_center_x : Array[Int],
-) -> (Int, Int)? {
+  actor_index : Map[String, Int32],
+  actor_center_x : Array[Int32],
+) -> (Int32, Int32)? {
   match edge.label {
     Some(label) =>
       match (actor_index.get(edge.source), actor_index.get(edge.target)) {
@@ -119,24 +119,24 @@ fn sequence_message_label_bounds(
 }
 
 ///|
-fn sequence_divider_default_offset() -> Int {
+fn sequence_divider_default_offset() -> Int32 {
   28
 }
 
 ///|
-fn sequence_divider_overlap_offset() -> Int {
+fn sequence_divider_overlap_offset() -> Int32 {
   36
 }
 
 ///|
 fn sequence_divider_offset_for(
-  block_left : Int,
+  block_left : Int32,
   divider_label : String,
-  divider_index : Int,
+  divider_index : Int32,
   edges : Array[MermaidEdge],
-  actor_index : Map[String, Int],
-  actor_center_x : Array[Int],
-) -> Int {
+  actor_index : Map[String, Int32],
+  actor_center_x : Array[Int32],
+) -> Int32 {
   if divider_label == "" || divider_index < 0 || divider_index >= edges.length() {
     return sequence_divider_default_offset()
   }
@@ -161,9 +161,9 @@ fn sequence_divider_offset_for(
 
 ///|
 fn sequence_stack_pop(
-  activation_starts : Map[String, Array[Int]],
+  activation_starts : Map[String, Array[Int32]],
   actor_id : String,
-) -> Int? {
+) -> Int32? {
   match activation_starts.get(actor_id) {
     Some(stack) =>
       if stack.length() == 0 {
@@ -171,7 +171,7 @@ fn sequence_stack_pop(
       } else {
         let last_index = stack.length() - 1
         let value = stack[last_index]
-        let next_stack : Array[Int] = []
+        let next_stack : Array[Int32] = []
         for i in 0..<last_index {
           next_stack.push(stack[i])
         }
@@ -185,11 +185,11 @@ fn sequence_stack_pop(
 ///|
 fn sequence_apply_activation_command(
   command : SequenceActivationCommand,
-  y : Int,
-  actor_index : Map[String, Int],
-  actor_center_x : Array[Int],
-  activation_width : Int,
-  activation_starts : Map[String, Array[Int]],
+  y : Int32,
+  actor_index : Map[String, Int32],
+  actor_center_x : Array[Int32],
+  activation_width : Int32,
+  activation_starts : Map[String, Array[Int32]],
   sequence_activations : Array[PositionedSequenceActivation],
 ) -> Unit {
   if command.activate {
@@ -249,12 +249,12 @@ fn sequence_participant_kind(
 }
 
 ///|
-fn sequence_block_header_extra() -> Int {
+fn sequence_block_header_extra() -> Int32 {
   28
 }
 
 ///|
-fn sequence_divider_extra() -> Int {
+fn sequence_divider_extra() -> Int32 {
   24
 }
 
@@ -294,13 +294,13 @@ pub fn layout_sequence_graph(
     }
   }
 
-  let actor_widths : Array[Int] = []
+  let actor_widths : Array[Int32] = []
   for node in nodes_in_order {
     let label = if node.label == "" { node.id } else { node.label }
     actor_widths.push((sequence_text_width(label) + actor_pad_x * 2).max(80))
   }
 
-  let actor_center_x : Array[Int] = []
+  let actor_center_x : Array[Int32] = []
   let mut cursor_x = padding + actor_widths[0] / 2
   for i in 0..<nodes_in_order.length() {
     if i > 0 {
@@ -312,7 +312,7 @@ pub fn layout_sequence_graph(
     actor_center_x.push(cursor_x)
   }
 
-  let actor_index : Map[String, Int] = Map([])
+  let actor_index : Map[String, Int32] = Map([])
   for i, node in nodes_in_order {
     actor_index[node.id] = i
   }
@@ -349,7 +349,7 @@ pub fn layout_sequence_graph(
     max_right = max_right.max(x + width / 2)
   }
 
-  let extra_before : Map[Int, Int] = Map([])
+  let extra_before : Map[Int32, Int32] = Map([])
   for block in graph.sequence_blocks {
     let header_prev = option_int_or(extra_before.get(block.start_index), 0)
     let header_extra = sequence_block_header_extra()
@@ -366,11 +366,13 @@ pub fn layout_sequence_graph(
   }
 
   let positioned_edges : Array[PositionedEdge] = []
-  let message_rows : Array[Int] = []
-  let activation_starts : Map[String, Array[Int]] = Map([])
+  let message_rows : Array[Int32] = []
+  let activation_starts : Map[String, Array[Int32]] = Map([])
   let sequence_activations : Array[PositionedSequenceActivation] = []
-  let activation_commands_by_after : Map[Int, Array[SequenceActivationCommand]] = Map([],
-  )
+  let activation_commands_by_after : Map[
+    Int32,
+    Array[SequenceActivationCommand],
+  ] = Map([])
   for command in graph.sequence_activation_commands {
     let bucket = activation_commands_by_after.get_or_init(command.after_index, () => {
       []

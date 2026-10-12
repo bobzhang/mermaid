@@ -11,70 +11,70 @@ pub(all) enum AsciiPlanKind {
 ///|
 /// Layout metrics for a sequence diagram note in ASCII rendering.
 pub(all) struct AsciiSequenceNoteLayout {
-  x : Int
-  y : Int
-  width : Int
-  height : Int
+  x : Int32
+  y : Int32
+  width : Int32
+  height : Int32
   lines : Array[String]
 }
 
 ///|
 /// Layout metrics for a sequence activation bar in ASCII rendering.
 pub(all) struct AsciiSequenceActivationLayout {
-  actor_idx : Int
-  top_y : Int
-  bottom_y : Int
+  actor_idx : Int32
+  top_y : Int32
+  bottom_y : Int32
 }
 
 ///|
 /// Complete layout metrics for a sequence diagram in ASCII rendering.
 pub(all) struct AsciiSequenceLayout {
   actors : Array[@model.MermaidNode]
-  actor_index : Map[String, Int]
-  lifeline_x : Array[Int]
-  message_arrow_y : Array[Int]
-  message_label_y : Array[Int]
-  block_start_y : Array[Int]
-  block_end_y : Array[Int]
-  divider_y_map : Map[String, Int]
+  actor_index : Map[String, Int32]
+  lifeline_x : Array[Int32]
+  message_arrow_y : Array[Int32]
+  message_label_y : Array[Int32]
+  block_start_y : Array[Int32]
+  block_end_y : Array[Int32]
+  divider_y_map : Map[String, Int32]
   note_positions : Array[AsciiSequenceNoteLayout]
   activations : Array[AsciiSequenceActivationLayout]
-  footer_y : Int
-  total_w : Int
-  total_h : Int
+  footer_y : Int32
+  total_w : Int32
+  total_h : Int32
 }
 
 ///|
 /// Layout metrics for a class diagram in ASCII rendering.
 pub(all) struct AsciiClassLayout {
   class_sections_map : Map[String, Array[Array[String]]]
-  class_width : Map[String, Int]
-  class_height : Map[String, Int]
+  class_width : Map[String, Int32]
+  class_height : Map[String, Int32]
   class_order : Array[String]
-  placed_x : Map[String, Int]
-  placed_y : Map[String, Int]
-  total_w : Int
-  total_h : Int
+  placed_x : Map[String, Int32]
+  placed_y : Map[String, Int32]
+  total_w : Int32
+  total_h : Int32
 }
 
 ///|
 /// Layout metrics for an ER diagram in ASCII rendering.
 pub(all) struct AsciiErLayout {
   entity_sections : Map[String, Array[Array[String]]]
-  entity_width : Map[String, Int]
-  entity_height : Map[String, Int]
+  entity_width : Map[String, Int32]
+  entity_height : Map[String, Int32]
   entity_order : Array[String]
-  placed_x : Map[String, Int]
-  placed_y : Map[String, Int]
-  total_w : Int
-  total_h : Int
+  placed_x : Map[String, Int32]
+  placed_y : Map[String, Int32]
+  total_w : Int32
+  total_h : Int32
 }
 
 ///|
 /// Layout metrics for a flat state diagram grid in ASCII rendering.
 pub(all) struct AsciiStateFlatGridLayout {
   nodes_in_order : Array[@model.MermaidNode]
-  grid_positions : Map[String, (Int, Int)]
+  grid_positions : Map[String, (Int32, Int32)]
   edge_paths : Array[Array[@layout_engine_pathfinder_core.AsciiGridCoord]]
 }
 
@@ -135,7 +135,7 @@ fn sequence_label(node : @model.MermaidNode) -> String {
 }
 
 ///|
-fn option_int_or(value : Int?, fallback : Int) -> Int {
+fn option_int_or(value : Int32?, fallback : Int32) -> Int32 {
   match value {
     Some(found) => found
     None => fallback
@@ -179,9 +179,9 @@ fn sequence_note_lines(text : String) -> Array[String] {
 ///|
 fn sequence_apply_activation_command(
   command : @model.SequenceActivationCommand,
-  y : Int,
-  actor_index : Map[String, Int],
-  activation_starts : Map[String, Array[Int]],
+  y : Int32,
+  actor_index : Map[String, Int32],
+  activation_starts : Map[String, Array[Int32]],
   activations : Array[AsciiSequenceActivationLayout],
 ) -> Unit {
   match actor_index.get(command.actor_id) {
@@ -195,7 +195,7 @@ fn sequence_apply_activation_command(
             if stack.length() > 0 {
               let last_index = stack.length() - 1
               let top_y = stack[last_index]
-              let next_stack : Array[Int] = []
+              let next_stack : Array[Int32] = []
               for i in 0..<last_index {
                 next_stack.push(stack[i])
               }
@@ -233,13 +233,13 @@ fn build_sequence_layout(graph : @model.MermaidGraph) -> AsciiSequenceLayout {
   let box_pad = 1
   let actor_box_h = 3
 
-  let actor_index : Map[String, Int] = Map([])
+  let actor_index : Map[String, Int32] = Map([])
   for i, actor in actors {
     actor_index[actor.id] = i
   }
 
-  let actor_widths : Array[Int] = []
-  let half_box : Array[Int] = []
+  let actor_widths : Array[Int32] = []
+  let half_box : Array[Int32] = []
   for actor in actors {
     let width = sequence_label(actor).length() + 2 * box_pad + 2
     actor_widths.push(width)
@@ -247,7 +247,7 @@ fn build_sequence_layout(graph : @model.MermaidGraph) -> AsciiSequenceLayout {
   }
 
   let gap_count = if actors.length() > 0 { actors.length() - 1 } else { 0 }
-  let adjacent_width : Array[Int] = []
+  let adjacent_width : Array[Int32] = []
   for _ in 0..<gap_count {
     adjacent_width.push(0)
   }
@@ -275,7 +275,7 @@ fn build_sequence_layout(graph : @model.MermaidGraph) -> AsciiSequenceLayout {
     }
   }
 
-  let lifeline_x : Array[Int] = [half_box[0]]
+  let lifeline_x : Array[Int32] = [half_box[0]]
   for i in 1..<actors.length() {
     let gap1 = half_box[i - 1] + half_box[i] + 2
     let gap2 = adjacent_width[i - 1] + 2
@@ -289,15 +289,15 @@ fn build_sequence_layout(graph : @model.MermaidGraph) -> AsciiSequenceLayout {
     lifeline_x.push(lifeline_x[i - 1] + gap)
   }
 
-  let message_arrow_y : Array[Int] = []
-  let message_label_y : Array[Int] = []
-  let block_start_y : Array[Int] = []
-  let block_end_y : Array[Int] = []
+  let message_arrow_y : Array[Int32] = []
+  let message_label_y : Array[Int32] = []
+  let block_start_y : Array[Int32] = []
+  let block_end_y : Array[Int32] = []
   for _ in 0..<graph.sequence_blocks.length() {
     block_start_y.push(-1)
     block_end_y.push(-1)
   }
-  let divider_y_map : Map[String, Int] = Map([])
+  let divider_y_map : Map[String, Int32] = Map([])
   let note_positions : Array[AsciiSequenceNoteLayout] = []
 
   let mut cur_y = actor_box_h
@@ -410,9 +410,9 @@ fn build_sequence_layout(graph : @model.MermaidGraph) -> AsciiSequenceLayout {
     }
   }
 
-  let activation_starts : Map[String, Array[Int]] = Map([])
+  let activation_starts : Map[String, Array[Int32]] = Map([])
   let activation_commands_by_after : Map[
-    Int,
+    Int32,
     Array[@model.SequenceActivationCommand],
   ] = Map([])
   let activations : Array[AsciiSequenceActivationLayout] = []
@@ -567,7 +567,7 @@ fn class_sections(node : @model.MermaidNode) -> Array[Array[String]] {
 }
 
 ///|
-fn class_multibox_size(sections : Array[Array[String]]) -> (Int, Int) {
+fn class_multibox_size(sections : Array[Array[String]]) -> (Int32, Int32) {
   let mut max_text_width = 0
   for section in sections {
     for line in section {
@@ -640,8 +640,8 @@ fn build_class_layout(graph : @model.MermaidGraph) -> AsciiClassLayout {
   let v_gap = 3
 
   let class_sections_map : Map[String, Array[Array[String]]] = Map([])
-  let class_width : Map[String, Int] = Map([])
-  let class_height : Map[String, Int] = Map([])
+  let class_width : Map[String, Int32] = Map([])
+  let class_height : Map[String, Int32] = Map([])
   let class_order : Array[String] = []
 
   for cls in classes {
@@ -669,7 +669,7 @@ fn build_class_layout(graph : @model.MermaidGraph) -> AsciiClassLayout {
     map_push_unique(children, parent_id, child_id)
   }
 
-  let level : Map[String, Int] = Map([])
+  let level : Map[String, Int32] = Map([])
   let queue : Array[String] = []
 
   for class_id in class_order {
@@ -743,8 +743,8 @@ fn build_class_layout(graph : @model.MermaidGraph) -> AsciiClassLayout {
     }
   }
 
-  let placed_x : Map[String, Int] = Map([])
-  let placed_y : Map[String, Int] = Map([])
+  let placed_x : Map[String, Int32] = Map([])
+  let placed_y : Map[String, Int32] = Map([])
 
   let mut current_y = 0
   for lv in 0..<=max_level {
@@ -834,8 +834,8 @@ fn build_er_layout(graph : @model.MermaidGraph) -> AsciiErLayout {
   let v_gap = 4
 
   let entity_sections : Map[String, Array[Array[String]]] = Map([])
-  let entity_width : Map[String, Int] = Map([])
-  let entity_height : Map[String, Int] = Map([])
+  let entity_width : Map[String, Int32] = Map([])
+  let entity_height : Map[String, Int32] = Map([])
   let entity_order : Array[String] = []
 
   for entity in entities {
@@ -852,8 +852,8 @@ fn build_er_layout(graph : @model.MermaidGraph) -> AsciiErLayout {
     max_per_row = max_per_row + 1
   }
 
-  let placed_x : Map[String, Int] = Map([])
-  let placed_y : Map[String, Int] = Map([])
+  let placed_x : Map[String, Int32] = Map([])
+  let placed_y : Map[String, Int32] = Map([])
 
   let mut current_x = 0
   let mut current_y = 0

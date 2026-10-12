@@ -2,8 +2,8 @@
 priv struct DagreRankEdgeSpec {
   source_id : String
   target_id : String
-  minlen : Int
-  weight : Int
+  minlen : Int32
+  weight : Int32
   nesting_edge : Bool
 }
 
@@ -17,7 +17,7 @@ priv struct DagreNestingBounds {
 priv struct DagreNestingRankPrepState {
   expanded_nodes : Array[MermaidNode]
   edge_specs : Array[DagreRankEdgeSpec]
-  node_rank_factor : Int
+  node_rank_factor : Int32
   root_id : String?
   bounds_by_subgraph_id : Map[String, DagreNestingBounds]
   node_in_subgraph : Map[String, Bool]
@@ -26,8 +26,8 @@ priv struct DagreNestingRankPrepState {
 ///|
 fn collect_dagre_rank_edge_specs(
   edges : Array[MermaidEdge],
-  relaxed_edge_indices : Array[Int],
-  reversed_back_edge_indices : Array[Int],
+  relaxed_edge_indices : Array[Int32],
+  reversed_back_edge_indices : Array[Int32],
 ) -> Array[DagreRankEdgeSpec] {
   let specs : Array[DagreRankEdgeSpec] = []
   for edge_index in relaxed_edge_indices {
@@ -64,15 +64,15 @@ fn collect_dagre_nesting_rank_prep_state(
     used_node_ids[node.id] = true
   }
 
-  let subgraph_depth_by_id : Map[String, Int] = Map([])
+  let subgraph_depth_by_id : Map[String, Int32] = Map([])
   let node_in_subgraph : Map[String, Bool] = Map([])
 
   fn collect_tree_depth(
     subgraph : MermaidSubgraph,
-    depth : Int,
-    subgraph_depth_by_id : Map[String, Int],
+    depth : Int32,
+    subgraph_depth_by_id : Map[String, Int32],
     node_in_subgraph : Map[String, Bool],
-  ) -> Int {
+  ) -> Int32 {
     subgraph_depth_by_id[subgraph.id] = depth
     let mut max_depth = depth
     for node_id in subgraph.node_ids {
@@ -140,8 +140,8 @@ fn collect_dagre_nesting_rank_prep_state(
   fn allocate_dummy_node_id(
     prefix : String,
     used_node_ids : Map[String, Bool],
-    dummy_serial : Int,
-  ) -> (String, Int) {
+    dummy_serial : Int32,
+  ) -> (String, Int32) {
     let mut next_serial = dummy_serial
     let mut candidate = "__dagre_nesting_\{prefix}_\{next_serial}"
     while used_node_ids.contains(candidate) {
@@ -156,8 +156,8 @@ fn collect_dagre_nesting_rank_prep_state(
     edge_specs : Array[DagreRankEdgeSpec],
     source_id : String,
     target_id : String,
-    minlen : Int,
-    weight : Int,
+    minlen : Int32,
+    weight : Int32,
   ) -> Unit {
     edge_specs.push({
       source_id,
@@ -187,11 +187,11 @@ fn collect_dagre_nesting_rank_prep_state(
     bounds_by_subgraph_id : Map[String, DagreNestingBounds],
     used_node_ids : Map[String, Bool],
     node_exists : Map[String, Bool],
-    subgraph_depth_by_id : Map[String, Int],
-    nesting_weight : Int,
-    height : Int,
-    dummy_serial : Int,
-  ) -> Int {
+    subgraph_depth_by_id : Map[String, Int32],
+    nesting_weight : Int32,
+    height : Int32,
+    dummy_serial : Int32,
+  ) -> Int32 {
     let (top_id, next_serial0) = allocate_dummy_node_id(
       "bt", used_node_ids, dummy_serial,
     )
@@ -288,8 +288,8 @@ fn collect_dagre_nesting_rank_prep_state(
 ///|
 fn remove_empty_dagre_nesting_ranks(
   nodes : Array[MermaidNode],
-  rank_by_id : Map[String, Int],
-  node_rank_factor : Int,
+  rank_by_id : Map[String, Int32],
+  node_rank_factor : Int32,
 ) -> Unit {
   let mut has_rank = false
   let mut offset = 0
@@ -309,7 +309,7 @@ fn remove_empty_dagre_nesting_ranks(
     return
   }
 
-  let rank_layers : Map[Int, Array[String]] = Map([])
+  let rank_layers : Map[Int32, Array[String]] = Map([])
   let mut max_layer = 0
   for node in nodes {
     match rank_by_id.get(node.id) {
@@ -345,7 +345,7 @@ fn remove_empty_dagre_nesting_ranks(
 ///|
 fn normalize_dagre_nesting_ranks(
   nodes : Array[MermaidNode],
-  rank_by_id : Map[String, Int],
+  rank_by_id : Map[String, Int32],
 ) -> Unit {
   let mut has_rank = false
   let mut min_rank = 0
@@ -377,7 +377,7 @@ fn collect_dagre_nesting_rank_result(
   nodes_in_order : Array[MermaidNode],
   base_edge_specs : Array[DagreRankEdgeSpec],
   subgraphs : Array[MermaidSubgraph],
-) -> (Map[String, Int], Int, Bool) {
+) -> (Map[String, Int32], Int32, Bool) {
   let prep_state = collect_dagre_nesting_rank_prep_state(
     nodes_in_order, base_edge_specs, subgraphs,
   )
@@ -413,7 +413,7 @@ fn collect_dagre_nesting_rank_result(
   let _ = prep_state.bounds_by_subgraph_id.length()
   let _ = prep_state.node_in_subgraph.length()
 
-  let rank_by_id : Map[String, Int] = Map([])
+  let rank_by_id : Map[String, Int32] = Map([])
   let mut max_rank = 0
   for node in nodes_in_order {
     let rank = option_int_or(expanded_ranks.get(node.id), 0)

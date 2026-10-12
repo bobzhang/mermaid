@@ -1,59 +1,59 @@
 ///|
 fn dagre_rank_directed_edge_key(
-  source_index : Int,
-  target_index : Int,
+  source_index : Int32,
+  target_index : Int32,
 ) -> String {
   "\{source_index}->\{target_index}"
 }
 
 ///|
 priv struct DagreNetworkSimplexPreparedGraph {
-  node_index_by_id : Map[String, Int]
-  edge_source_index : Array[Int]
-  edge_target_index : Array[Int]
-  edge_minlen : Array[Int]
-  edge_weight : Array[Int]
-  directed_edge_index_by_key : Map[String, Int]
-  out_edge_indices_by_source : Array[Array[Int]]
-  in_edge_indices_by_target : Array[Array[Int]]
-  incident_edge_indices_by_node : Array[Array[Int]]
+  node_index_by_id : Map[String, Int32]
+  edge_source_index : Array[Int32]
+  edge_target_index : Array[Int32]
+  edge_minlen : Array[Int32]
+  edge_weight : Array[Int32]
+  directed_edge_index_by_key : Map[String, Int32]
+  out_edge_indices_by_source : Array[Array[Int32]]
+  in_edge_indices_by_target : Array[Array[Int32]]
+  incident_edge_indices_by_node : Array[Array[Int32]]
 }
 
 ///|
 priv struct DagreNetworkSimplexSeedState {
-  longest_path_rank_by_node_index : Array[Int]
-  feasible_rank_by_node_index : Array[Int]
-  tree_incident_edge_indices_by_node : Array[Array[Int]]
-  tree_edge_u : Array[Int]
-  tree_edge_v : Array[Int]
-  tree_edge_cutvalue : Array[Int]
+  longest_path_rank_by_node_index : Array[Int32]
+  feasible_rank_by_node_index : Array[Int32]
+  tree_incident_edge_indices_by_node : Array[Array[Int32]]
+  tree_edge_u : Array[Int32]
+  tree_edge_v : Array[Int32]
+  tree_edge_cutvalue : Array[Int32]
   tree_edge_active : Array[Bool]
-  feasible_root_index : Int
+  feasible_root_index : Int32
 }
 
 ///|
 priv struct DagreNetworkSimplexCutPhaseState {
-  parent_by_node : Array[Int]
-  low_by_node : Array[Int]
-  lim_by_node : Array[Int]
-  tree_edge_cutvalue : Array[Int]
-  leave_tree_edge_index : Int?
-  enter_graph_edge_index : Int?
+  parent_by_node : Array[Int32]
+  low_by_node : Array[Int32]
+  lim_by_node : Array[Int32]
+  tree_edge_cutvalue : Array[Int32]
+  leave_tree_edge_index : Int32?
+  enter_graph_edge_index : Int32?
 }
 
 ///|
 priv struct DagreNetworkSimplexExchangeStep {
-  leave_tree_edge_u : Int
-  leave_tree_edge_v : Int
-  enter_graph_edge_source : Int
-  enter_graph_edge_target : Int
-  rank_by_node_index : Array[Int]
-  parent_by_node : Array[Int]
-  low_by_node : Array[Int]
-  lim_by_node : Array[Int]
-  tree_edge_u : Array[Int]
-  tree_edge_v : Array[Int]
-  tree_edge_cutvalue : Array[Int]
+  leave_tree_edge_u : Int32
+  leave_tree_edge_v : Int32
+  enter_graph_edge_source : Int32
+  enter_graph_edge_target : Int32
+  rank_by_node_index : Array[Int32]
+  parent_by_node : Array[Int32]
+  low_by_node : Array[Int32]
+  lim_by_node : Array[Int32]
+  tree_edge_u : Array[Int32]
+  tree_edge_v : Array[Int32]
+  tree_edge_cutvalue : Array[Int32]
   tree_edge_active : Array[Bool]
 }
 
@@ -61,8 +61,8 @@ priv struct DagreNetworkSimplexExchangeStep {
 fn prepare_dagre_network_simplex_graph(
   nodes_in_order : Array[MermaidNode],
   edges : Array[MermaidEdge],
-  relaxed_edge_indices : Array[Int],
-  reversed_back_edge_indices : Array[Int],
+  relaxed_edge_indices : Array[Int32],
+  reversed_back_edge_indices : Array[Int32],
 ) -> DagreNetworkSimplexPreparedGraph {
   let edge_specs = collect_dagre_rank_edge_specs(
     edges, relaxed_edge_indices, reversed_back_edge_indices,
@@ -78,19 +78,19 @@ fn prepare_dagre_network_simplex_graph_from_edge_specs(
   edge_specs : Array[DagreRankEdgeSpec],
   add_component_connectors : Bool,
 ) -> DagreNetworkSimplexPreparedGraph {
-  let node_index_by_id : Map[String, Int] = Map([])
+  let node_index_by_id : Map[String, Int32] = Map([])
   for i, node in nodes_in_order {
     node_index_by_id[node.id] = i
   }
 
-  let edge_source_index : Array[Int] = []
-  let edge_target_index : Array[Int] = []
-  let edge_minlen : Array[Int] = []
-  let edge_weight : Array[Int] = []
-  let directed_edge_index_by_key : Map[String, Int] = Map([])
-  let out_edge_indices_by_source : Array[Array[Int]] = []
-  let in_edge_indices_by_target : Array[Array[Int]] = []
-  let incident_edge_indices_by_node : Array[Array[Int]] = []
+  let edge_source_index : Array[Int32] = []
+  let edge_target_index : Array[Int32] = []
+  let edge_minlen : Array[Int32] = []
+  let edge_weight : Array[Int32] = []
+  let directed_edge_index_by_key : Map[String, Int32] = Map([])
+  let out_edge_indices_by_source : Array[Array[Int32]] = []
+  let in_edge_indices_by_target : Array[Array[Int32]] = []
+  let incident_edge_indices_by_node : Array[Array[Int32]] = []
   for _ in 0..<nodes_in_order.length() {
     out_edge_indices_by_source.push([])
     in_edge_indices_by_target.push([])
@@ -98,10 +98,10 @@ fn prepare_dagre_network_simplex_graph_from_edge_specs(
   }
 
   fn append_rank_edge(
-    source_index : Int,
-    target_index : Int,
-    minlen : Int,
-    weight : Int,
+    source_index : Int32,
+    target_index : Int32,
+    minlen : Int32,
+    weight : Int32,
   ) -> Unit {
     let key = dagre_rank_directed_edge_key(source_index, target_index)
     match directed_edge_index_by_key.get(key) {
@@ -150,12 +150,12 @@ fn prepare_dagre_network_simplex_graph_from_edge_specs(
     // Dagre's feasible-tree phase requires connectivity. We add zero-cost
     // virtual connectors between weak components to satisfy that precondition
     // without distorting weighted edge optimization.
-    let component_by_node_index : Array[Int] = []
-    let component_representative : Array[Int] = []
+    let component_by_node_index : Array[Int32] = []
+    let component_representative : Array[Int32] = []
     for _ in 0..<nodes_in_order.length() {
       component_by_node_index.push(-1)
     }
-    let stack : Array[Int] = []
+    let stack : Array[Int32] = []
     for start_node_index in 0..<nodes_in_order.length() {
       if component_by_node_index[start_node_index] >= 0 {
         continue
@@ -216,17 +216,17 @@ fn collect_dagre_network_simplex_seed_state(
   let in_edge_indices_by_target = prepared_graph.in_edge_indices_by_target
   let incident_edge_indices_by_node = prepared_graph.incident_edge_indices_by_node
 
-  let feasible_rank_by_node_index : Array[Int] = []
+  let feasible_rank_by_node_index : Array[Int32] = []
   for _ in 0..<nodes_in_order.length() {
     feasible_rank_by_node_index.push(0)
   }
-  let visit_state_by_node_index : Array[Int] = []
+  let visit_state_by_node_index : Array[Int32] = []
   for _ in 0..<nodes_in_order.length() {
     visit_state_by_node_index.push(0)
   }
   let mut has_rank_cycle = false
 
-  fn edge_slack(edge_index : Int) -> Int {
+  fn edge_slack(edge_index : Int32) -> Int32 {
     let source_index = edge_source_index[edge_index]
     let target_index = edge_target_index[edge_index]
     feasible_rank_by_node_index[target_index] -
@@ -234,7 +234,7 @@ fn collect_dagre_network_simplex_seed_state(
     edge_minlen[edge_index]
   }
 
-  fn longest_path_dfs(node_index : Int) -> Int {
+  fn longest_path_dfs(node_index : Int32) -> Int32 {
     let visit_state = visit_state_by_node_index[node_index]
     if visit_state == 2 {
       return feasible_rank_by_node_index[node_index]
@@ -277,17 +277,17 @@ fn collect_dagre_network_simplex_seed_state(
   let longest_path_rank_by_node_index = feasible_rank_by_node_index.copy()
 
   let node_in_tree : Array[Bool] = []
-  let tree_incident_edge_indices_by_node : Array[Array[Int]] = []
+  let tree_incident_edge_indices_by_node : Array[Array[Int32]] = []
   for _ in 0..<nodes_in_order.length() {
     node_in_tree.push(false)
     tree_incident_edge_indices_by_node.push([])
   }
-  let tree_edge_u : Array[Int] = []
-  let tree_edge_v : Array[Int] = []
-  let tree_edge_cutvalue : Array[Int] = []
+  let tree_edge_u : Array[Int32] = []
+  let tree_edge_v : Array[Int32] = []
+  let tree_edge_cutvalue : Array[Int32] = []
   let tree_edge_active : Array[Bool] = []
 
-  fn tree_find_edge_index(left : Int, right : Int) -> Int {
+  fn tree_find_edge_index(left : Int32, right : Int32) -> Int32 {
     for tree_edge_index in tree_incident_edge_indices_by_node[left] {
       if !tree_edge_active[tree_edge_index] {
         continue
@@ -302,7 +302,7 @@ fn collect_dagre_network_simplex_seed_state(
     -1
   }
 
-  fn tree_add_edge(left : Int, right : Int) -> Unit {
+  fn tree_add_edge(left : Int32, right : Int32) -> Unit {
     if tree_find_edge_index(left, right) >= 0 {
       return
     }
@@ -315,8 +315,8 @@ fn collect_dagre_network_simplex_seed_state(
     tree_incident_edge_indices_by_node[right].push(tree_edge_index)
   }
 
-  fn tight_tree_expand() -> Int {
-    fn expand_from_tight_neighbors(node_index : Int) -> Unit {
+  fn tight_tree_expand() -> Int32 {
+    fn expand_from_tight_neighbors(node_index : Int32) -> Unit {
       for edge_index in incident_edge_indices_by_node[node_index] {
         let source_index = edge_source_index[edge_index]
         let target_index = edge_target_index[edge_index]
@@ -348,7 +348,7 @@ fn collect_dagre_network_simplex_seed_state(
     tree_node_count
   }
 
-  fn find_min_slack_crossing_edge() -> Int? {
+  fn find_min_slack_crossing_edge() -> Int32? {
     let mut has_edge = false
     let mut best_edge_index = 0
     let mut best_slack = 0
@@ -372,7 +372,7 @@ fn collect_dagre_network_simplex_seed_state(
     }
   }
 
-  fn shift_tree_ranks(delta : Int) -> Unit {
+  fn shift_tree_ranks(delta : Int32) -> Unit {
     if delta == 0 {
       return
     }
@@ -432,16 +432,16 @@ fn collect_dagre_network_simplex_cut_phase_state(
   let tree_edge_cutvalue = seed_state.tree_edge_cutvalue.copy()
   let tree_edge_active = seed_state.tree_edge_active.copy()
   let feasible_root_index = seed_state.feasible_root_index
-  let parent_by_node : Array[Int] = []
-  let low_by_node : Array[Int] = []
-  let lim_by_node : Array[Int] = []
+  let parent_by_node : Array[Int32] = []
+  let low_by_node : Array[Int32] = []
+  let lim_by_node : Array[Int32] = []
   for _ in 0..<nodes_in_order.length() {
     parent_by_node.push(-1)
     low_by_node.push(0)
     lim_by_node.push(0)
   }
 
-  fn edge_slack(edge_index : Int) -> Int {
+  fn edge_slack(edge_index : Int32) -> Int32 {
     let source_index = edge_source_index[edge_index]
     let target_index = edge_target_index[edge_index]
     rank_by_node_index[target_index] -
@@ -449,7 +449,7 @@ fn collect_dagre_network_simplex_cut_phase_state(
     edge_minlen[edge_index]
   }
 
-  fn tree_other_node(tree_edge_index : Int, node_index : Int) -> Int {
+  fn tree_other_node(tree_edge_index : Int32, node_index : Int32) -> Int32 {
     let left = tree_edge_u[tree_edge_index]
     if left == node_index {
       tree_edge_v[tree_edge_index]
@@ -458,7 +458,7 @@ fn collect_dagre_network_simplex_cut_phase_state(
     }
   }
 
-  fn tree_find_edge_index(left : Int, right : Int) -> Int {
+  fn tree_find_edge_index(left : Int32, right : Int32) -> Int32 {
     for tree_edge_index in tree_incident_edge_indices_by_node[left] {
       if !tree_edge_active[tree_edge_index] {
         continue
@@ -473,8 +473,8 @@ fn collect_dagre_network_simplex_cut_phase_state(
     -1
   }
 
-  fn sorted_active_tree_edge_indices(node_index : Int) -> Array[Int] {
-    let ordered : Array[Int] = []
+  fn sorted_active_tree_edge_indices(node_index : Int32) -> Array[Int32] {
+    let ordered : Array[Int32] = []
     for tree_edge_index in tree_incident_edge_indices_by_node[node_index] {
       if !tree_edge_active[tree_edge_index] {
         continue
@@ -494,11 +494,11 @@ fn collect_dagre_network_simplex_cut_phase_state(
   }
 
   fn assign_low_lim(
-    node_index : Int,
-    parent_index : Int,
-    next_lim : Int,
-    visit_state_by_node : Array[Int],
-  ) -> Int {
+    node_index : Int32,
+    parent_index : Int32,
+    next_lim : Int32,
+    visit_state_by_node : Array[Int32],
+  ) -> Int32 {
     let visit_state = visit_state_by_node[node_index]
     if visit_state == 1 {
       return next_lim
@@ -526,9 +526,9 @@ fn collect_dagre_network_simplex_cut_phase_state(
   }
 
   fn collect_postorder(
-    node_index : Int,
-    parent_index : Int,
-    postorder : Array[Int],
+    node_index : Int32,
+    parent_index : Int32,
+    postorder : Array[Int32],
     visited : Array[Bool],
   ) -> Unit {
     if visited[node_index] {
@@ -545,13 +545,13 @@ fn collect_dagre_network_simplex_cut_phase_state(
     postorder.push(node_index)
   }
 
-  fn directed_edge_index(source_index : Int, target_index : Int) -> Int? {
+  fn directed_edge_index(source_index : Int32, target_index : Int32) -> Int32? {
     directed_edge_index_by_key.get(
       dagre_rank_directed_edge_key(source_index, target_index),
     )
   }
 
-  fn calc_tree_cut_value(child_index : Int) -> Int {
+  fn calc_tree_cut_value(child_index : Int32) -> Int32 {
     let parent_index = parent_by_node[child_index]
     if parent_index < 0 {
       return 0
@@ -616,7 +616,7 @@ fn collect_dagre_network_simplex_cut_phase_state(
     if active_tree_edge_count != nodes_in_order.length() - 1 {
       return false
     }
-    let low_lim_visit_state : Array[Int] = []
+    let low_lim_visit_state : Array[Int32] = []
     for _ in 0..<nodes_in_order.length() {
       low_lim_visit_state.push(0)
     }
@@ -626,7 +626,7 @@ fn collect_dagre_network_simplex_cut_phase_state(
         return false
       }
     }
-    let postorder : Array[Int] = []
+    let postorder : Array[Int32] = []
     let postorder_visited : Array[Bool] = []
     for _ in 0..<nodes_in_order.length() {
       postorder_visited.push(false)
@@ -654,7 +654,7 @@ fn collect_dagre_network_simplex_cut_phase_state(
     true
   }
 
-  fn find_leave_tree_edge() -> Int? {
+  fn find_leave_tree_edge() -> Int32? {
     for tree_edge_index in 0..<tree_edge_u.length() {
       if !tree_edge_active[tree_edge_index] {
         continue
@@ -666,12 +666,12 @@ fn collect_dagre_network_simplex_cut_phase_state(
     None
   }
 
-  fn is_descendant(node_index : Int, root_index : Int) -> Bool {
+  fn is_descendant(node_index : Int32, root_index : Int32) -> Bool {
     low_by_node[root_index] <= lim_by_node[node_index] &&
     lim_by_node[node_index] <= lim_by_node[root_index]
   }
 
-  fn find_enter_graph_edge(leave_tree_edge_index : Int) -> Int? {
+  fn find_enter_graph_edge(leave_tree_edge_index : Int32) -> Int32? {
     let mut tail_index = tree_edge_u[leave_tree_edge_index]
     let mut flip = false
     let head_index = tree_edge_v[leave_tree_edge_index]
@@ -736,8 +736,8 @@ fn collect_dagre_network_simplex_ranks_with_trace_from_prepared(
   nodes_in_order : Array[MermaidNode],
   prepared_graph : DagreNetworkSimplexPreparedGraph,
   capture_exchange_trace : Bool,
-) -> (Map[String, Int], Int, Bool, Array[DagreNetworkSimplexExchangeStep]) {
-  let rank_by_id : Map[String, Int] = Map([])
+) -> (Map[String, Int32], Int32, Bool, Array[DagreNetworkSimplexExchangeStep]) {
+  let rank_by_id : Map[String, Int32] = Map([])
   let exchange_trace : Array[DagreNetworkSimplexExchangeStep] = []
   for node in nodes_in_order {
     rank_by_id[node.id] = 0
@@ -774,16 +774,16 @@ fn collect_dagre_network_simplex_ranks_with_trace_from_prepared(
   let tree_edge_cutvalue = seed.tree_edge_cutvalue
   let tree_edge_active = seed.tree_edge_active
   let feasible_root_index = seed.feasible_root_index
-  let parent_by_node : Array[Int] = []
-  let low_by_node : Array[Int] = []
-  let lim_by_node : Array[Int] = []
+  let parent_by_node : Array[Int32] = []
+  let low_by_node : Array[Int32] = []
+  let lim_by_node : Array[Int32] = []
   for _ in 0..<nodes_in_order.length() {
     parent_by_node.push(-1)
     low_by_node.push(0)
     lim_by_node.push(0)
   }
 
-  fn edge_slack(edge_index : Int) -> Int {
+  fn edge_slack(edge_index : Int32) -> Int32 {
     let source_index = edge_source_index[edge_index]
     let target_index = edge_target_index[edge_index]
     rank_by_node_index[target_index] -
@@ -791,7 +791,7 @@ fn collect_dagre_network_simplex_ranks_with_trace_from_prepared(
     edge_minlen[edge_index]
   }
 
-  fn tree_other_node(tree_edge_index : Int, node_index : Int) -> Int {
+  fn tree_other_node(tree_edge_index : Int32, node_index : Int32) -> Int32 {
     let left = tree_edge_u[tree_edge_index]
     if left == node_index {
       tree_edge_v[tree_edge_index]
@@ -800,7 +800,7 @@ fn collect_dagre_network_simplex_ranks_with_trace_from_prepared(
     }
   }
 
-  fn tree_find_edge_index(left : Int, right : Int) -> Int {
+  fn tree_find_edge_index(left : Int32, right : Int32) -> Int32 {
     for tree_edge_index in tree_incident_edge_indices_by_node[left] {
       if !tree_edge_active[tree_edge_index] {
         continue
@@ -815,7 +815,7 @@ fn collect_dagre_network_simplex_ranks_with_trace_from_prepared(
     -1
   }
 
-  fn tree_add_edge(left : Int, right : Int) -> Unit {
+  fn tree_add_edge(left : Int32, right : Int32) -> Unit {
     if tree_find_edge_index(left, right) >= 0 {
       return
     }
@@ -829,10 +829,10 @@ fn collect_dagre_network_simplex_ranks_with_trace_from_prepared(
   }
 
   fn remove_tree_edge_index_from_incident(
-    node_index : Int,
-    tree_edge_index : Int,
+    node_index : Int32,
+    tree_edge_index : Int32,
   ) -> Unit {
-    let retained : Array[Int] = []
+    let retained : Array[Int32] = []
     for incident_index in tree_incident_edge_indices_by_node[node_index] {
       if incident_index == tree_edge_index {
         continue
@@ -842,7 +842,7 @@ fn collect_dagre_network_simplex_ranks_with_trace_from_prepared(
     tree_incident_edge_indices_by_node[node_index] = retained
   }
 
-  fn tree_remove_edge(tree_edge_index : Int) -> Unit {
+  fn tree_remove_edge(tree_edge_index : Int32) -> Unit {
     if !tree_edge_active[tree_edge_index] {
       return
     }
@@ -853,8 +853,8 @@ fn collect_dagre_network_simplex_ranks_with_trace_from_prepared(
     remove_tree_edge_index_from_incident(right, tree_edge_index)
   }
 
-  fn sorted_active_tree_edge_indices(node_index : Int) -> Array[Int] {
-    let ordered : Array[Int] = []
+  fn sorted_active_tree_edge_indices(node_index : Int32) -> Array[Int32] {
+    let ordered : Array[Int32] = []
     for tree_edge_index in tree_incident_edge_indices_by_node[node_index] {
       if !tree_edge_active[tree_edge_index] {
         continue
@@ -874,11 +874,11 @@ fn collect_dagre_network_simplex_ranks_with_trace_from_prepared(
   }
 
   fn assign_low_lim(
-    node_index : Int,
-    parent_index : Int,
-    next_lim : Int,
-    visit_state_by_node : Array[Int],
-  ) -> Int {
+    node_index : Int32,
+    parent_index : Int32,
+    next_lim : Int32,
+    visit_state_by_node : Array[Int32],
+  ) -> Int32 {
     let visit_state = visit_state_by_node[node_index]
     if visit_state == 1 {
       return next_lim
@@ -906,9 +906,9 @@ fn collect_dagre_network_simplex_ranks_with_trace_from_prepared(
   }
 
   fn collect_postorder(
-    node_index : Int,
-    parent_index : Int,
-    postorder : Array[Int],
+    node_index : Int32,
+    parent_index : Int32,
+    postorder : Array[Int32],
     visited : Array[Bool],
   ) -> Unit {
     if visited[node_index] {
@@ -925,13 +925,13 @@ fn collect_dagre_network_simplex_ranks_with_trace_from_prepared(
     postorder.push(node_index)
   }
 
-  fn directed_edge_index(source_index : Int, target_index : Int) -> Int? {
+  fn directed_edge_index(source_index : Int32, target_index : Int32) -> Int32? {
     directed_edge_index_by_key.get(
       dagre_rank_directed_edge_key(source_index, target_index),
     )
   }
 
-  fn calc_tree_cut_value(child_index : Int) -> Int {
+  fn calc_tree_cut_value(child_index : Int32) -> Int32 {
     let parent_index = parent_by_node[child_index]
     if parent_index < 0 {
       return 0
@@ -996,7 +996,7 @@ fn collect_dagre_network_simplex_ranks_with_trace_from_prepared(
     if active_tree_edge_count != nodes_in_order.length() - 1 {
       return false
     }
-    let low_lim_visit_state : Array[Int] = []
+    let low_lim_visit_state : Array[Int32] = []
     for _ in 0..<nodes_in_order.length() {
       low_lim_visit_state.push(0)
     }
@@ -1006,7 +1006,7 @@ fn collect_dagre_network_simplex_ranks_with_trace_from_prepared(
         return false
       }
     }
-    let postorder : Array[Int] = []
+    let postorder : Array[Int32] = []
     let postorder_visited : Array[Bool] = []
     for _ in 0..<nodes_in_order.length() {
       postorder_visited.push(false)
@@ -1034,7 +1034,7 @@ fn collect_dagre_network_simplex_ranks_with_trace_from_prepared(
     true
   }
 
-  fn find_leave_tree_edge() -> Int? {
+  fn find_leave_tree_edge() -> Int32? {
     for tree_edge_index in 0..<tree_edge_u.length() {
       if !tree_edge_active[tree_edge_index] {
         continue
@@ -1046,12 +1046,12 @@ fn collect_dagre_network_simplex_ranks_with_trace_from_prepared(
     None
   }
 
-  fn is_descendant(node_index : Int, root_index : Int) -> Bool {
+  fn is_descendant(node_index : Int32, root_index : Int32) -> Bool {
     low_by_node[root_index] <= lim_by_node[node_index] &&
     lim_by_node[node_index] <= lim_by_node[root_index]
   }
 
-  fn find_enter_graph_edge(leave_tree_edge_index : Int) -> Int? {
+  fn find_enter_graph_edge(leave_tree_edge_index : Int32) -> Int32? {
     let mut tail_index = tree_edge_u[leave_tree_edge_index]
     let mut flip = false
     let head_index = tree_edge_v[leave_tree_edge_index]
@@ -1094,7 +1094,7 @@ fn collect_dagre_network_simplex_ranks_with_trace_from_prepared(
   }
 
   fn update_ranks_from_tree() -> Unit {
-    let preorder : Array[Int] = [feasible_root_index]
+    let preorder : Array[Int32] = [feasible_root_index]
     while preorder.length() > 0 {
       let node_index = preorder[preorder.length() - 1]
       let _ = preorder.pop()
@@ -1224,10 +1224,10 @@ fn collect_dagre_network_simplex_ranks_with_trace_from_prepared(
 fn collect_dagre_network_simplex_ranks_with_trace(
   nodes_in_order : Array[MermaidNode],
   edges : Array[MermaidEdge],
-  relaxed_edge_indices : Array[Int],
-  reversed_back_edge_indices : Array[Int],
+  relaxed_edge_indices : Array[Int32],
+  reversed_back_edge_indices : Array[Int32],
   capture_exchange_trace : Bool,
-) -> (Map[String, Int], Int, Bool, Array[DagreNetworkSimplexExchangeStep]) {
+) -> (Map[String, Int32], Int32, Bool, Array[DagreNetworkSimplexExchangeStep]) {
   let prepared_graph = prepare_dagre_network_simplex_graph(
     nodes_in_order, edges, relaxed_edge_indices, reversed_back_edge_indices,
   )
@@ -1239,7 +1239,7 @@ fn collect_dagre_network_simplex_ranks_with_trace(
 ///|
 fn dagre_network_simplex_exchange_trace_checksum(
   exchange_trace : Array[DagreNetworkSimplexExchangeStep],
-) -> Int {
+) -> Int32 {
   let mut checksum = 0
   for step in exchange_trace {
     checksum = checksum + step.leave_tree_edge_u + step.leave_tree_edge_v
@@ -1263,9 +1263,9 @@ fn dagre_network_simplex_exchange_trace_checksum(
 fn collect_dagre_network_simplex_ranks(
   nodes_in_order : Array[MermaidNode],
   edges : Array[MermaidEdge],
-  relaxed_edge_indices : Array[Int],
-  reversed_back_edge_indices : Array[Int],
-) -> (Map[String, Int], Int, Bool) {
+  relaxed_edge_indices : Array[Int32],
+  reversed_back_edge_indices : Array[Int32],
+) -> (Map[String, Int32], Int32, Bool) {
   let (ranks, max_rank, ok, exchange_trace) = collect_dagre_network_simplex_ranks_with_trace(
     nodes_in_order, edges, relaxed_edge_indices, reversed_back_edge_indices, false,
   )
@@ -1278,8 +1278,8 @@ fn collect_dagre_network_simplex_ranks_from_rank_edge_specs(
   nodes_in_order : Array[MermaidNode],
   edge_specs : Array[DagreRankEdgeSpec],
   add_component_connectors : Bool,
-) -> (Map[String, Int], Int, Bool) {
-  let rank_by_id : Map[String, Int] = Map([])
+) -> (Map[String, Int32], Int32, Bool) {
+  let rank_by_id : Map[String, Int32] = Map([])
   for node in nodes_in_order {
     rank_by_id[node.id] = 0
   }
@@ -1301,8 +1301,8 @@ fn collect_dagre_network_simplex_ranks_from_rank_edge_specs(
 /// per-edge minlen constraints.
 pub fn collect_dagre_network_simplex_ranks_from_directed_edge_specs(
   nodes_in_order : Array[MermaidNode],
-  directed_edge_specs : Array[(String, String, Int)],
-) -> (Map[String, Int], Int, Bool) {
+  directed_edge_specs : Array[(String, String, Int32)],
+) -> (Map[String, Int32], Int32, Bool) {
   let edge_specs : Array[DagreRankEdgeSpec] = []
   for edge_spec in directed_edge_specs {
     let (source_id, target_id, minlen) = edge_spec

@@ -40,8 +40,8 @@ fn expected_json_ascii_unicode(content : String) -> (String, String)? {
 ///|
 #cfg(target="native")
 async fn verify_corpus_expected_text_chunk(
-  chunk_index : Int,
-  chunk_count : Int,
+  chunk_index : Int32,
+  chunk_count : Int32,
 ) -> Unit {
   let entries = @fs.readdir("testdata/corpus/expected", sort=true)
   let files : Array[String] = []

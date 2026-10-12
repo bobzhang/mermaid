@@ -25,7 +25,7 @@ fn test_graph(
 fn test_positioned_state() -> (
   Array[@model.PositionedNode],
   Map[String, @model.PositionedNode],
-  Map[String, Int],
+  Map[String, Int32],
 ) {
   let positioned_nodes : Array[@model.PositionedNode] = [
     {
@@ -53,7 +53,7 @@ fn test_positioned_state() -> (
     "A": positioned_nodes[0],
     "B": positioned_nodes[1],
   }
-  let positioned_index_by_id : Map[String, Int] = { "A": 0, "B": 1 }
+  let positioned_index_by_id : Map[String, Int32] = { "A": 0, "B": 1 }
   (positioned_nodes, positioned_by_id, positioned_index_by_id)
 }
 
@@ -61,7 +61,7 @@ fn test_positioned_state() -> (
 fn test_compact_horizontal_positioned_state() -> (
   Array[@model.PositionedNode],
   Map[String, @model.PositionedNode],
-  Map[String, Int],
+  Map[String, Int32],
 ) {
   let positioned_nodes : Array[@model.PositionedNode] = [
     {
@@ -89,7 +89,7 @@ fn test_compact_horizontal_positioned_state() -> (
     "A": positioned_nodes[0],
     "B": positioned_nodes[1],
   }
-  let positioned_index_by_id : Map[String, Int] = { "A": 0, "B": 1 }
+  let positioned_index_by_id : Map[String, Int32] = { "A": 0, "B": 1 }
   (positioned_nodes, positioned_by_id, positioned_index_by_id)
 }
 

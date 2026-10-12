@@ -1,5 +1,5 @@
 ///|
-fn positioned_group_min_x(group : PositionedGroup) -> Int {
+fn positioned_group_min_x(group : PositionedGroup) -> Int32 {
   let mut min_x = group.x
   for child in group.children {
     min_x = min_x.min(positioned_group_min_x(child))
@@ -8,7 +8,7 @@ fn positioned_group_min_x(group : PositionedGroup) -> Int {
 }
 
 ///|
-fn positioned_group_min_y(group : PositionedGroup) -> Int {
+fn positioned_group_min_y(group : PositionedGroup) -> Int32 {
   let mut min_y = group.y
   for child in group.children {
     min_y = min_y.min(positioned_group_min_y(child))
@@ -17,7 +17,7 @@ fn positioned_group_min_y(group : PositionedGroup) -> Int {
 }
 
 ///|
-fn positioned_group_max_x(group : PositionedGroup) -> Int {
+fn positioned_group_max_x(group : PositionedGroup) -> Int32 {
   let mut max_x = group.x + group.width
   for child in group.children {
     max_x = max_x.max(positioned_group_max_x(child))
@@ -26,7 +26,7 @@ fn positioned_group_max_x(group : PositionedGroup) -> Int {
 }
 
 ///|
-fn positioned_group_max_y(group : PositionedGroup) -> Int {
+fn positioned_group_max_y(group : PositionedGroup) -> Int32 {
   let mut max_y = group.y + group.height
   for child in group.children {
     max_y = max_y.max(positioned_group_max_y(child))
@@ -37,8 +37,8 @@ fn positioned_group_max_y(group : PositionedGroup) -> Int {
 ///|
 fn shift_positioned_group(
   group : PositionedGroup,
-  shift_x : Int,
-  shift_y : Int,
+  shift_x : Int32,
+  shift_y : Int32,
 ) -> PositionedGroup {
   let shifted_children : Array[PositionedGroup] = []
   for child in group.children {
@@ -58,9 +58,9 @@ fn shift_positioned_group(
 ///|
 /// Normalizes positioned graph coordinates so all content stays inside `padding`.
 pub fn finalize_positioned_graph(
-  padding : Int,
-  max_right : Int,
-  max_bottom : Int,
+  padding : Int32,
+  max_right : Int32,
+  max_bottom : Int32,
   positioned_nodes : Array[PositionedNode],
   positioned_edges : Array[PositionedEdge],
   positioned_groups : Array[PositionedGroup],

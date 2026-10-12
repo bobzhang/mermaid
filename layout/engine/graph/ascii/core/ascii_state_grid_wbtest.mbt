@@ -1,7 +1,7 @@
 ///|
 struct StateGridCoord {
-  x : Int
-  y : Int
+  x : Int32
+  y : Int32
 } derive(Eq, Debug)
 
 ///|
@@ -73,7 +73,7 @@ fn state_grid_positions(
   nodes_in_order : Array[MermaidNode],
 ) -> Map[String, StateGridCoord] {
   let positions : Map[String, StateGridCoord] = Map([])
-  let highest_position_by_level : Map[Int, Int] = Map([])
+  let highest_position_by_level : Map[Int32, Int32] = Map([])
   let target_ids = state_grid_target_ids(graph)
 
   for node in nodes_in_order {
@@ -144,8 +144,8 @@ fn state_nodes_in_definition_order(graph : MermaidGraph) -> Array[MermaidNode] {
 ///|
 fn assert_grid_coord_eq(
   coord : StateGridCoord?,
-  x : Int,
-  y : Int,
+  x : Int32,
+  y : Int32,
 ) -> Unit raise {
   match coord {
     Some(found) => {
@@ -196,8 +196,8 @@ test "state_grid_positions matches composite sample topology" {
 
 ///|
 struct StateEdgeDir {
-  x : Int
-  y : Int
+  x : Int32
+  y : Int32
 } derive(Eq)
 
 ///|
@@ -385,7 +385,7 @@ fn merge_state_grid_path(path : Array[AsciiGridCoord]) -> Array[AsciiGridCoord] 
 }
 
 ///|
-fn state_grid_bounds(positions : Map[String, StateGridCoord]) -> (Int, Int) {
+fn state_grid_bounds(positions : Map[String, StateGridCoord]) -> (Int32, Int32) {
   let mut max_x = 0
   let mut max_y = 0
   for _, position in positions {

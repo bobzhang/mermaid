@@ -35,8 +35,8 @@ fn build_rank_constraint_successors_by_node_id(
 ///|
 fn rank_constraint_order_index_by_node_id(
   node_ids : Array[String],
-) -> Map[String, Int] {
-  let rank_order_index_by_node_id : Map[String, Int] = Map([])
+) -> Map[String, Int32] {
+  let rank_order_index_by_node_id : Map[String, Int32] = Map([])
   for index, node_id in node_ids {
     rank_order_index_by_node_id[node_id] = index
   }
@@ -47,8 +47,8 @@ fn rank_constraint_order_index_by_node_id(
 fn next_zero_incoming_constraint_node_id(
   node_ids : Array[String],
   placed_by_node_id : Map[String, Bool],
-  incoming_count_by_node_id : Map[String, Int],
-  rank_order_index_by_node_id : Map[String, Int],
+  incoming_count_by_node_id : Map[String, Int32],
+  rank_order_index_by_node_id : Map[String, Int32],
 ) -> String? {
   let mut best_node_id = ""
   let mut best_order_index = 0
@@ -81,7 +81,7 @@ fn next_zero_incoming_constraint_node_id(
 fn next_unplaced_constraint_node_id(
   node_ids : Array[String],
   placed_by_node_id : Map[String, Bool],
-  rank_order_index_by_node_id : Map[String, Int],
+  rank_order_index_by_node_id : Map[String, Int32],
 ) -> String? {
   let mut best_node_id = ""
   let mut best_order_index = 0
@@ -112,7 +112,7 @@ priv struct CrossingConstraintGroup {
   node_ids : Array[String]
   barycenter : Double
   summed_weight : Double
-  degree : Int
+  degree : Int32
 }
 
 ///|
@@ -122,7 +122,7 @@ let crossing_constraint_barycenter_equality_delta = 0.0001
 fn build_crossing_constraint_groups(
   node_ids : Array[String],
   barycenter_by_node_id : Map[String, Double],
-  degree_by_node_id : Map[String, Int],
+  degree_by_node_id : Map[String, Int32],
 ) -> Array[CrossingConstraintGroup] {
   let groups : Array[CrossingConstraintGroup] = []
   for index, node_id in node_ids {
@@ -147,8 +147,8 @@ fn build_crossing_constraint_groups(
 ///|
 fn crossing_constraint_group_index_by_node_id(
   groups : Array[CrossingConstraintGroup],
-) -> Map[String, Int] {
-  let group_index_by_node_id : Map[String, Int] = Map([])
+) -> Map[String, Int32] {
+  let group_index_by_node_id : Map[String, Int32] = Map([])
   for group_index, group in groups {
     for node_id in group.node_ids {
       group_index_by_node_id[node_id] = group_index
@@ -161,12 +161,12 @@ fn crossing_constraint_group_index_by_node_id(
 fn find_first_forster_violated_constraint(
   groups : Array[CrossingConstraintGroup],
   rank_constraint_successors_by_node_id : Map[String, Array[String]],
-) -> (Int, Int)? {
+) -> (Int32, Int32)? {
   let group_index_by_node_id = crossing_constraint_group_index_by_node_id(
     groups,
   )
   for source_group_index, source_group in groups {
-    let seen_target_group_by_index : Map[Int, Bool] = Map([])
+    let seen_target_group_by_index : Map[Int32, Bool] = Map([])
     for source_node_id in source_group.node_ids {
       match rank_constraint_successors_by_node_id.get(source_node_id) {
         Some(target_node_ids) =>
@@ -212,8 +212,8 @@ fn find_first_forster_violated_constraint(
 ///|
 fn merge_crossing_constraint_groups(
   groups : Array[CrossingConstraintGroup],
-  first_group_index : Int,
-  second_group_index : Int,
+  first_group_index : Int32,
+  second_group_index : Int32,
 ) -> Array[CrossingConstraintGroup] {
   let first_group = groups[first_group_index]
   let second_group = groups[second_group_index]
@@ -272,7 +272,7 @@ fn apply_crossing_in_layer_successor_constraints_forster(
   node_ids : Array[String],
   in_layer_successors_by_node_id : Map[String, Array[String]],
   barycenter_by_node_id : Map[String, Double],
-  degree_by_node_id : Map[String, Int],
+  degree_by_node_id : Map[String, Int32],
 ) -> Bool {
   if node_ids.length() <= 1 {
     return false
@@ -333,7 +333,7 @@ fn apply_crossing_in_layer_successor_constraints(
   let rank_order_index_by_node_id = rank_constraint_order_index_by_node_id(
     node_ids,
   )
-  let incoming_count_by_node_id : Map[String, Int] = Map([])
+  let incoming_count_by_node_id : Map[String, Int32] = Map([])
   for node_id in node_ids {
     incoming_count_by_node_id[node_id] = 0
   }

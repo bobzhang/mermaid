@@ -9,7 +9,7 @@ fn class_render(diagram : String, use_ascii : Bool) -> String raise {
 }
 
 ///|
-fn line_index(haystack : String, needle : String) -> Int {
+fn line_index(haystack : String, needle : String) -> Int32 {
   let lines = haystack.split("\n")
   for i, line in lines {
     if line.contains(needle) {

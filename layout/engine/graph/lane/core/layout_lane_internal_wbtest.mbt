@@ -41,7 +41,7 @@ fn lane_policy_graph(
 }
 
 ///|
-fn sorted_int_array(values : Array[Int]) -> Array[Int] {
+fn sorted_int_array(values : Array[Int32]) -> Array[Int32] {
   let sorted = values.copy()
   sorted.sort()
   sorted
@@ -57,10 +57,10 @@ fn sorted_string_array(values : Array[String]) -> Array[String] {
 ///|
 fn densify_rank_assignment(
   nodes_in_order : Array[MermaidNode],
-  rank_by_id : Map[String, Int],
-) -> (Map[String, Int], Int) {
-  let seen_rank : Map[Int, Bool] = Map([])
-  let sorted_ranks : Array[Int] = []
+  rank_by_id : Map[String, Int32],
+) -> (Map[String, Int32], Int32) {
+  let seen_rank : Map[Int32, Bool] = Map([])
+  let sorted_ranks : Array[Int32] = []
   for node in nodes_in_order {
     let rank = option_int_or(rank_by_id.get(node.id), 0)
     if seen_rank.contains(rank) {
@@ -71,12 +71,12 @@ fn densify_rank_assignment(
   }
   sorted_ranks.sort()
 
-  let dense_rank_by_rank : Map[Int, Int] = Map([])
+  let dense_rank_by_rank : Map[Int32, Int32] = Map([])
   for dense_rank, rank in sorted_ranks {
     dense_rank_by_rank[rank] = dense_rank
   }
 
-  let dense_rank_by_id : Map[String, Int] = Map([])
+  let dense_rank_by_id : Map[String, Int32] = Map([])
   let mut max_dense_rank = 0
   for node in nodes_in_order {
     let rank = option_int_or(rank_by_id.get(node.id), 0)
@@ -92,9 +92,9 @@ fn densify_rank_assignment(
 ///|
 fn collect_rank_orders_from_lanes(
   nodes_in_order : Array[MermaidNode],
-  rank_by_id : Map[String, Int],
-  lane_by_id : Map[String, Int],
-  max_rank : Int,
+  rank_by_id : Map[String, Int32],
+  lane_by_id : Map[String, Int32],
+  max_rank : Int32,
 ) -> Array[Array[String]] {
   let rank_orders : Array[Array[String]] = []
   for rank in 0..<=max_rank {
@@ -120,7 +120,7 @@ fn collect_rank_orders_from_lanes(
 }
 
 ///|
-fn option_edge_index_count(indices : Array[Int]?) -> Int {
+fn option_edge_index_count(indices : Array[Int32]?) -> Int32 {
   match indices {
     Some(found) => found.length()
     None => 0
@@ -162,7 +162,7 @@ fn normalized_node_pair_key(left_id : String, right_id : String) -> String {
 fn normalized_tree_edge_key_from_seed_state(
   nodes_in_order : Array[MermaidNode],
   seed_state : DagreNetworkSimplexSeedState,
-  tree_edge_index : Int,
+  tree_edge_index : Int32,
 ) -> String {
   let left_id = nodes_in_order[seed_state.tree_edge_u[tree_edge_index]].id
   let right_id = nodes_in_order[seed_state.tree_edge_v[tree_edge_index]].id
@@ -173,7 +173,7 @@ fn normalized_tree_edge_key_from_seed_state(
 fn directed_graph_edge_key_from_index(
   nodes_in_order : Array[MermaidNode],
   prepared_graph : DagreNetworkSimplexPreparedGraph,
-  edge_index : Int,
+  edge_index : Int32,
 ) -> String {
   let source_id = nodes_in_order[prepared_graph.edge_source_index[edge_index]].id
   let target_id = nodes_in_order[prepared_graph.edge_target_index[edge_index]].id
@@ -185,8 +185,8 @@ fn active_tree_cut_entries_from_cut_phase(
   nodes_in_order : Array[MermaidNode],
   seed_state : DagreNetworkSimplexSeedState,
   cut_phase_state : DagreNetworkSimplexCutPhaseState,
-) -> Map[String, Int] {
-  let entries : Map[String, Int] = Map([])
+) -> Map[String, Int32] {
+  let entries : Map[String, Int32] = Map([])
   for tree_edge_index in 0..<seed_state.tree_edge_u.length() {
     if !seed_state.tree_edge_active[tree_edge_index] {
       continue
@@ -203,8 +203,8 @@ fn active_tree_cut_entries_from_cut_phase(
 fn active_tree_cut_entries_from_exchange_step(
   nodes_in_order : Array[MermaidNode],
   exchange_step : DagreNetworkSimplexExchangeStep,
-) -> Map[String, Int] {
-  let entries : Map[String, Int] = Map([])
+) -> Map[String, Int32] {
+  let entries : Map[String, Int32] = Map([])
   for tree_edge_index in 0..<exchange_step.tree_edge_u.length() {
     if !exchange_step.tree_edge_active[tree_edge_index] {
       continue
@@ -239,7 +239,7 @@ fn directed_enter_graph_edge_key_from_exchange_step(
 }
 
 ///|
-fn map_string_int_entry_count(entries : Map[String, Int]) -> Int {
+fn map_string_int_entry_count(entries : Map[String, Int32]) -> Int32 {
   let mut count = 0
   for _, _ in entries {
     count += 1
@@ -248,8 +248,8 @@ fn map_string_int_entry_count(entries : Map[String, Int]) -> Int {
 }
 
 ///|
-fn sorted_back_edge_indices(back_edges : Map[Int, Bool]) -> Array[Int] {
-  let indices : Array[Int] = []
+fn sorted_back_edge_indices(back_edges : Map[Int32, Bool]) -> Array[Int32] {
+  let indices : Array[Int32] = []
   for edge_index, _ in back_edges {
     indices.push(edge_index)
   }
@@ -280,7 +280,10 @@ fn fixture_graph_and_nodes_for_flow_layout(
 }
 
 ///|
-fn edge_key_from_index(edges : Array[MermaidEdge], edge_index : Int) -> String {
+fn edge_key_from_index(
+  edges : Array[MermaidEdge],
+  edge_index : Int32,
+) -> String {
   let edge = edges[edge_index]
   "\{edge.source}->\{edge.target}"
 }
@@ -288,7 +291,7 @@ fn edge_key_from_index(edges : Array[MermaidEdge], edge_index : Int) -> String {
 ///|
 fn reversed_back_edge_keys(
   edges : Array[MermaidEdge],
-  reversed_back_edge_indices : Array[Int],
+  reversed_back_edge_indices : Array[Int32],
 ) -> Array[String] {
   let keys : Array[String] = []
   for edge_index in reversed_back_edge_indices {
@@ -772,8 +775,8 @@ fn compact_non_empty_rank_layers_for_assert(
 ///|
 fn collect_rank_layers_from_assignment(
   nodes_in_order : Array[MermaidNode],
-  rank_by_id : Map[String, Int],
-  max_rank : Int,
+  rank_by_id : Map[String, Int32],
+  max_rank : Int32,
 ) -> Array[Array[String]] {
   let layers : Array[Array[String]] = []
   for _ in 0..<=max_rank {
@@ -936,7 +939,7 @@ fn collect_fixture_lane_state_rank_layers_for_dagre_parity(
 ///|
 fn collect_simplex_rank_trace_case(
   edges : Array[MermaidEdge],
-) -> (Bool, Int, Int, Array[Int]) {
+) -> (Bool, Int32, Int32, Array[Int32]) {
   let nodes : Array[MermaidNode] = [
     { id: "A", label: "A", shape: Rectangle, },
     { id: "B", label: "B", shape: Rectangle, },
@@ -947,7 +950,7 @@ fn collect_simplex_rank_trace_case(
     { id: "G", label: "G", shape: Rectangle, },
     { id: "H", label: "H", shape: Rectangle, },
   ]
-  let relaxed_edge_indices : Array[Int] = []
+  let relaxed_edge_indices : Array[Int32] = []
   for edge_index in 0..<edges.length() {
     relaxed_edge_indices.push(edge_index)
   }
@@ -958,7 +961,7 @@ fn collect_simplex_rank_trace_case(
     [],
     true,
   )
-  let rank_vector : Array[Int] = []
+  let rank_vector : Array[Int32] = []
   for node in nodes {
     rank_vector.push(option_int_or(ranks.get(node.id), -1))
   }
@@ -974,7 +977,13 @@ test "Layout lane collection accounts for long-span edges via virtual segments" 
     { id: "X", label: "X", shape: Rectangle, },
     { id: "Y", label: "Y", shape: Rectangle, },
   ]
-  let rank_by_id : Map[String, Int] = { "A": 0, "B": 0, "M": 1, "X": 2, "Y": 2 }
+  let rank_by_id : Map[String, Int32] = {
+    "A": 0,
+    "B": 0,
+    "M": 1,
+    "X": 2,
+    "Y": 2,
+  }
   let edges : Array[MermaidEdge] = [
     flow_edge("A", "M"),
     flow_edge("B", "M"),
@@ -1002,7 +1011,7 @@ test "Layout lane collection uses long-span backward edges for ordering" {
     { id: "E", label: "E", shape: Rectangle, },
     { id: "F", label: "F", shape: Rectangle, },
   ]
-  let rank_by_id : Map[String, Int] = {
+  let rank_by_id : Map[String, Int32] = {
     "A": 0,
     "B": 0,
     "C": 1,
@@ -1048,7 +1057,7 @@ test "Layout lane dagre parity ordering phase keeps corpus baseline" {
     { id: "X", label: "X", shape: Rectangle, },
     { id: "Y", label: "Y", shape: Rectangle, },
   ]
-  let case1_ranks : Map[String, Int] = {
+  let case1_ranks : Map[String, Int32] = {
     "A": 0,
     "B": 0,
     "M": 1,
@@ -1079,7 +1088,7 @@ test "Layout lane dagre parity ordering phase keeps corpus baseline" {
     { id: "E", label: "E", shape: Rectangle, },
     { id: "F", label: "F", shape: Rectangle, },
   ]
-  let case2_ranks : Map[String, Int] = {
+  let case2_ranks : Map[String, Int32] = {
     "A": 0,
     "B": 0,
     "C": 1,
@@ -1115,7 +1124,7 @@ test "Layout lane dagre parity ordering phase keeps corpus baseline" {
     { id: "G", label: "G", shape: Rectangle, },
     { id: "H", label: "H", shape: Rectangle, },
   ]
-  let case3_ranks : Map[String, Int] = {
+  let case3_ranks : Map[String, Int32] = {
     "A": 0,
     "B": 0,
     "C": 1,
@@ -1157,7 +1166,7 @@ test "Layout lane dagre parity ordering phase keeps sweep trace baseline" {
     { id: "X", label: "X", shape: Rectangle, },
     { id: "Y", label: "Y", shape: Rectangle, },
   ]
-  let case1_ranks : Map[String, Int] = {
+  let case1_ranks : Map[String, Int32] = {
     "A": 0,
     "B": 0,
     "M": 1,
@@ -1260,7 +1269,7 @@ test "Layout lane dagre parity ordering phase keeps sweep trace baseline" {
     { id: "E", label: "E", shape: Rectangle, },
     { id: "F", label: "F", shape: Rectangle, },
   ]
-  let ranks : Map[String, Int] = {
+  let ranks : Map[String, Int32] = {
     "A": 0,
     "B": 0,
     "C": 1,
@@ -1438,7 +1447,7 @@ test "Layout lane dagre parity ordering phase keeps sweep trace baseline" {
     { id: "G", label: "G", shape: Rectangle, },
     { id: "H", label: "H", shape: Rectangle, },
   ]
-  let case3_ranks : Map[String, Int] = {
+  let case3_ranks : Map[String, Int32] = {
     "A": 0,
     "B": 0,
     "C": 1,
@@ -2452,7 +2461,7 @@ test "Layout simplex directed edge specs honor per-edge minlen" {
     { id: "B", label: "B", shape: Rectangle, },
     { id: "C", label: "C", shape: Rectangle, },
   ]
-  let directed_edge_specs : Array[(String, String, Int)] = [
+  let directed_edge_specs : Array[(String, String, Int32)] = [
     ("A", "B", 2),
     ("B", "C", 1),
   ]
@@ -3168,7 +3177,7 @@ test "Layout simplex exchange sequence matches upstream corpus" {
   fn collect_exchange_sequence_case(
     edges : Array[MermaidEdge],
   ) -> (Bool, Array[String], Array[String]) {
-    let relaxed_edge_indices : Array[Int] = []
+    let relaxed_edge_indices : Array[Int32] = []
     for edge_index in 0..<edges.length() {
       relaxed_edge_indices.push(edge_index)
     }
@@ -3396,7 +3405,12 @@ test "Layout rank densify phase compacts sparse rank indices while preserving or
     { id: "C", label: "C", shape: Rectangle, },
     { id: "D", label: "D", shape: Rectangle, },
   ]
-  let sparse_rank_by_id : Map[String, Int] = { "A": 0, "B": 2, "C": 5, "D": 2 }
+  let sparse_rank_by_id : Map[String, Int32] = {
+    "A": 0,
+    "B": 2,
+    "C": 5,
+    "D": 2,
+  }
 
   let (dense_rank_by_id, max_dense_rank) = densify_rank_assignment(
     nodes, sparse_rank_by_id,
@@ -3567,7 +3581,7 @@ test "Layout primary rank selection follows dagre parity ordering in dagre mode"
 }
 
 ///|
-fn map_int_bool_entry_count(entries : Map[Int, Bool]) -> Int {
+fn map_int_bool_entry_count(entries : Map[Int32, Bool]) -> Int32 {
   let mut count = 0
   for _, _ in entries {
     count += 1
@@ -3606,7 +3620,7 @@ test "Layout dagre simplex horizontal mode keeps per-rank lanes distinct" {
     graph, nodes, false, false, true, false, false, false, true,
   )
   for rank in 0..<=lane_state.flow_max_rank {
-    let lanes : Map[Int, Bool] = Map([])
+    let lanes : Map[Int32, Bool] = Map([])
     let mut node_count = 0
     for node in nodes {
       if option_int_or(lane_state.flow_rank_by_node_id.get(node.id), -1) == rank {

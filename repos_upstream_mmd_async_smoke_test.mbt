@@ -1,8 +1,8 @@
 ///|
 #cfg(target="native")
 async fn repos_verify_upstream_mmd_chunk(
-  chunk_index : Int,
-  chunk_count : Int,
+  chunk_index : Int32,
+  chunk_count : Int32,
 ) -> Unit {
   let roots = [
     ".repos/mermaid/docs/diagrams", ".repos/mermaid/packages/mermaid/src/docs/diagrams",

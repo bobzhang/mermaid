@@ -1,21 +1,21 @@
 ///|
 priv struct ElkLayeredCrossingRefinementInput {
-  rank_node_ids_by_rank : Map[Int, Array[String]]
-  max_rank : Int
-  rank_by_node_id : Map[String, Int]
+  rank_node_ids_by_rank : Map[Int32, Array[String]]
+  max_rank : Int32
+  rank_by_node_id : Map[String, Int32]
   successors_by_node_id : Map[String, Array[String]]
-  node_count : Int
-  edge_count : Int
+  node_count : Int32
+  edge_count : Int32
 }
 
 ///|
 fn build_crossing_refinement_input(
-  rank_node_ids_by_rank : Map[Int, Array[String]],
-  max_rank : Int,
-  rank_by_node_id : Map[String, Int],
+  rank_node_ids_by_rank : Map[Int32, Array[String]],
+  max_rank : Int32,
+  rank_by_node_id : Map[String, Int32],
   successors_by_node_id : Map[String, Array[String]],
-  node_count : Int,
-  edge_count : Int,
+  node_count : Int32,
+  edge_count : Int32,
 ) -> ElkLayeredCrossingRefinementInput {
   {
     rank_node_ids_by_rank,
@@ -29,7 +29,7 @@ fn build_crossing_refinement_input(
 
 ///|
 fn build_crossing_refinement_input_from_phase_input(
-  rank_node_ids_by_rank : Map[Int, Array[String]],
+  rank_node_ids_by_rank : Map[Int32, Array[String]],
   input : ElkLayeredCrossingPhaseInput,
 ) -> ElkLayeredCrossingRefinementInput {
   build_crossing_refinement_input(
@@ -44,14 +44,14 @@ fn build_crossing_refinement_input_from_phase_input(
 
 ///|
 fn maybe_refine_rank_order_by_swaps_with_limits(
-  rank_node_ids_by_rank : Map[Int, Array[String]],
-  max_rank : Int,
-  rank_by_node_id : Map[String, Int],
+  rank_node_ids_by_rank : Map[Int32, Array[String]],
+  max_rank : Int32,
+  rank_by_node_id : Map[String, Int32],
   successors_by_node_id : Map[String, Array[String]],
-  node_count : Int,
-  edge_count : Int,
-  node_limit : Int,
-  edge_limit : Int,
+  node_count : Int32,
+  edge_count : Int32,
+  node_limit : Int32,
+  edge_limit : Int32,
 ) -> Unit {
   if node_count > node_limit || edge_count > edge_limit {
     return
@@ -126,8 +126,8 @@ fn maybe_refine_rank_order_by_swaps_with_limits(
 ///|
 fn permutation_swap(
   values : Array[String],
-  left_index : Int,
-  right_index : Int,
+  left_index : Int32,
+  right_index : Int32,
 ) -> Unit {
   if left_index == right_index {
     return
@@ -143,7 +143,7 @@ fn for_each_rank_permutation(
   visit : (Array[String]) -> Unit,
 ) -> Unit {
   let working = values.copy()
-  fn walk(start_index : Int) -> Unit {
+  fn walk(start_index : Int32) -> Unit {
     if start_index >= working.length() {
       visit(working.copy())
       return
@@ -159,15 +159,15 @@ fn for_each_rank_permutation(
 
 ///|
 fn maybe_refine_rank_order_by_rank_permutations_with_limits(
-  rank_node_ids_by_rank : Map[Int, Array[String]],
-  max_rank : Int,
-  rank_by_node_id : Map[String, Int],
+  rank_node_ids_by_rank : Map[Int32, Array[String]],
+  max_rank : Int32,
+  rank_by_node_id : Map[String, Int32],
   successors_by_node_id : Map[String, Array[String]],
-  node_count : Int,
-  edge_count : Int,
-  node_limit : Int,
-  edge_limit : Int,
-  rank_size_limit : Int,
+  node_count : Int32,
+  edge_count : Int32,
+  node_limit : Int32,
+  edge_limit : Int32,
+  rank_size_limit : Int32,
 ) -> Unit {
   if node_count > node_limit || edge_count > edge_limit {
     return

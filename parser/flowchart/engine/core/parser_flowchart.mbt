@@ -476,7 +476,7 @@ fn edge_operators() -> Array[EdgeOp] {
 ///|
 fn top_level_operator_at(
   line : String,
-  index : Int,
+  index : Int32,
   operators : Array[EdgeOp],
 ) -> EdgeOp? {
   let mut found : EdgeOp? = None
@@ -574,12 +574,12 @@ fn mid_label_left_marker(edge_symbol : String) -> String? {
 }
 
 ///|
-fn top_level_last_index(text : String, marker : String) -> Int? {
+fn top_level_last_index(text : String, marker : String) -> Int32? {
   let mut square_depth = 0
   let mut round_depth = 0
   let mut curly_depth = 0
   let mut in_double_quote = false
-  let mut found : Int? = None
+  let mut found : Int32? = None
 
   for i in 0..<text.length() {
     let unit = text[i]
@@ -1148,7 +1148,7 @@ fn append_edges(
 
 ///|
 fn is_subgraph_slug_char(ch : Char) -> Bool {
-  ch is ('a'..='z') || ch is ('A'..='Z') || ch is ('0'..='9') || ch == '_'
+  ch is ('a'..<='z') || ch is ('A'..<='Z') || ch is ('0'..<='9') || ch == '_'
 }
 
 ///|

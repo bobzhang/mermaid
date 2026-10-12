@@ -33,7 +33,7 @@ fn apply_context_endpoint_port_stubs(
 }
 
 ///|
-fn forward_fanout_offset(slot : Int, total : Int) -> Int {
+fn forward_fanout_offset(slot : Int32, total : Int32) -> Int32 {
   if total <= 1 {
     return 0
   }

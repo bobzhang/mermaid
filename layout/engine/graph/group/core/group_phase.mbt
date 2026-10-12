@@ -2,16 +2,16 @@
 /// Builds positioned subgraph groups and registers their anchor nodes.
 pub fn build_legacy_positioned_groups(
   graph : MermaidGraph,
-  padding : Int,
+  padding : Int32,
   horizontal : Bool,
   reverse : Bool,
   state_graph : Bool,
   dagre_parity_mode : Bool,
-  node_spacing : Int,
-  layer_spacing : Int,
+  node_spacing : Int32,
+  layer_spacing : Int32,
   positioned_nodes : Array[PositionedNode],
   positioned_by_id : Map[String, PositionedNode],
-  positioned_index_by_id : Map[String, Int],
+  positioned_index_by_id : Map[String, Int32],
 ) -> Array[PositionedGroup] {
   let positioned_groups : Array[PositionedGroup] = []
   let mut empty_group_top = padding
@@ -54,7 +54,7 @@ pub fn build_legacy_positioned_groups(
 /// Builds positioned groups for flat ASCII state layout and registers anchors.
 pub fn build_ascii_state_positioned_groups(
   graph : MermaidGraph,
-  padding : Int,
+  padding : Int32,
   positioned_by_id : Map[String, PositionedNode],
 ) -> Array[PositionedGroup] {
   let positioned_groups : Array[PositionedGroup] = []

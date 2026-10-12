@@ -1,8 +1,8 @@
 ///|
 fn build_order_index_by_id(
   node_ids_in_order : Array[String],
-) -> Map[String, Int] {
-  let order_index_by_node_id : Map[String, Int] = Map([])
+) -> Map[String, Int32] {
+  let order_index_by_node_id : Map[String, Int32] = Map([])
   for i, node_id in node_ids_in_order {
     order_index_by_node_id[node_id] = i
   }
@@ -13,8 +13,8 @@ fn build_order_index_by_id(
 fn compare_node_ids_by_order(
   left : String,
   right : String,
-  order_index_by_node_id : Map[String, Int],
-) -> Int {
+  order_index_by_node_id : Map[String, Int32],
+) -> Int32 {
   let left_order = option_int_or(order_index_by_node_id.get(left), 0)
   let right_order = option_int_or(order_index_by_node_id.get(right), 0)
   if left_order != right_order {
@@ -36,12 +36,12 @@ fn build_edge_min_len_by_resolved_pair(
   subgraph_entry_by_id : Map[String, String],
   subgraph_exit_by_id : Map[String, String],
   node_ids : Array[String],
-) -> Map[String, Int] {
+) -> Map[String, Int32] {
   let visible_node_ids : Map[String, Bool] = Map([])
   for node_id in node_ids {
     visible_node_ids[node_id] = true
   }
-  let edge_min_len_by_pair : Map[String, Int] = Map([])
+  let edge_min_len_by_pair : Map[String, Int32] = Map([])
   for edge in graph.edges {
     let source_id = resolve_edge_endpoint_id(
       edge.source,
@@ -78,8 +78,8 @@ fn build_edge_min_len_by_resolved_pair(
 fn oriented_edge_min_len(
   source_id : String,
   target_id : String,
-  edge_min_len_by_pair : Map[String, Int],
-) -> Int {
+  edge_min_len_by_pair : Map[String, Int32],
+) -> Int32 {
   let direct = option_int_or(
     edge_min_len_by_pair.get(edge_pair_key(source_id, target_id)),
     1,
@@ -131,8 +131,8 @@ fn collect_visible_resolved_edges(
 fn build_rank_neighbors_from_oriented_edges(
   node_ids : Array[String],
   oriented_edges : Array[(String, String)],
-  rank_by_node_id : Map[String, Int],
-  order_index_by_node_id : Map[String, Int],
+  rank_by_node_id : Map[String, Int32],
+  order_index_by_node_id : Map[String, Int32],
 ) -> (Map[String, Array[String]], Map[String, Array[String]]) {
   let successors_by_node_id : Map[String, Array[String]] = Map([])
   let predecessors_by_node_id : Map[String, Array[String]] = Map([])
@@ -170,11 +170,11 @@ fn build_rank_neighbors_from_oriented_edges(
 fn build_longest_path_rank_by_node_id_from_oriented_edges(
   node_ids : Array[String],
   oriented_edges : Array[(String, String)],
-  order_index_by_node_id : Map[String, Int],
-  edge_min_len_by_pair : Map[String, Int],
-) -> (Map[String, Int], Int) {
-  let rank_by_node_id : Map[String, Int] = Map([])
-  let indegree_by_node_id : Map[String, Int] = Map([])
+  order_index_by_node_id : Map[String, Int32],
+  edge_min_len_by_pair : Map[String, Int32],
+) -> (Map[String, Int32], Int32) {
+  let rank_by_node_id : Map[String, Int32] = Map([])
+  let indegree_by_node_id : Map[String, Int32] = Map([])
   let successors_by_node_id : Map[String, Array[String]] = Map([])
   for node_id in node_ids {
     rank_by_node_id[node_id] = 0
@@ -273,7 +273,7 @@ fn build_incident_oriented_edges_by_node_id(
 }
 
 ///|
-fn recompute_max_rank(rank_by_node_id : Map[String, Int]) -> Int {
+fn recompute_max_rank(rank_by_node_id : Map[String, Int32]) -> Int32 {
   let mut max_rank = 0
   for _, rank in rank_by_node_id {
     if rank > max_rank {
@@ -287,13 +287,13 @@ fn recompute_max_rank(rank_by_node_id : Map[String, Int]) -> Int {
 fn apply_elk_network_simplex_balance(
   node_ids : Array[String],
   oriented_edges : Array[(String, String)],
-  rank_by_node_id : Map[String, Int],
-  max_rank : Int,
-) -> (Map[String, Int], Int) {
+  rank_by_node_id : Map[String, Int32],
+  max_rank : Int32,
+) -> (Map[String, Int32], Int32) {
   let (incoming_edges_by_node_id, outgoing_edges_by_node_id) = build_incident_oriented_edges_by_node_id(
     node_ids, oriented_edges,
   )
-  let layer_fill_count : Array[Int] = []
+  let layer_fill_count : Array[Int32] = []
   for _ in 0..<=max_rank {
     layer_fill_count.push(0)
   }
@@ -378,7 +378,7 @@ fn build_tight_incoming_shift_closure(
   seed_node_id : String,
   node_ids : Array[String],
   incoming_edges_by_node_id : Map[String, Array[(String, String)]],
-  rank_by_node_id : Map[String, Int],
+  rank_by_node_id : Map[String, Int32],
 ) -> Array[String] {
   if !rank_by_node_id.contains(seed_node_id) {
     return []
@@ -421,7 +421,7 @@ fn build_tight_incoming_shift_closure(
 fn rank_shift_delta(
   shift_node_ids : Array[String],
   oriented_edges : Array[(String, String)],
-) -> Int {
+) -> Int32 {
   let in_shift_set_by_node_id : Map[String, Bool] = Map([])
   for node_id in shift_node_ids {
     in_shift_set_by_node_id[node_id] = true
@@ -449,8 +449,8 @@ fn rank_shift_delta(
 ///|
 fn rank_sum_for_node_ids(
   node_ids : Array[String],
-  rank_by_node_id : Map[String, Int],
-) -> Int {
+  rank_by_node_id : Map[String, Int32],
+) -> Int32 {
   let mut rank_sum = 0
   for node_id in node_ids {
     rank_sum += option_int_or(rank_by_node_id.get(node_id), 0)
@@ -481,9 +481,9 @@ fn has_incoming_cross_boundary(
 fn apply_elk_vertical_rank_tie_refinement(
   node_ids : Array[String],
   oriented_edges : Array[(String, String)],
-  rank_by_node_id : Map[String, Int],
-  max_rank : Int,
-) -> (Map[String, Int], Int) {
+  rank_by_node_id : Map[String, Int32],
+  max_rank : Int32,
+) -> (Map[String, Int32], Int32) {
   let (incoming_edges_by_node_id, _outgoing_edges_by_node_id) = build_incident_oriented_edges_by_node_id(
     node_ids, oriented_edges,
   )
@@ -545,11 +545,11 @@ fn build_native_feedback_rank_by_node_id(
   node_ids : Array[String],
   nodes_in_order : Array[MermaidNode],
   oriented_edges : Array[(String, String)],
-  order_index_by_node_id : Map[String, Int],
-  edge_min_len_by_pair : Map[String, Int],
+  order_index_by_node_id : Map[String, Int32],
+  edge_min_len_by_pair : Map[String, Int32],
   horizontal : Bool,
-) -> (Map[String, Int], Int) {
-  let directed_edge_specs : Array[(String, String, Int)] = []
+) -> (Map[String, Int32], Int32) {
+  let directed_edge_specs : Array[(String, String, Int32)] = []
   for edge in oriented_edges {
     let (source_id, target_id) = edge
     directed_edge_specs.push(
@@ -596,9 +596,9 @@ fn build_layered_rank_state(
   subgraph_exit_by_id : Map[String, String],
   nodes_in_order : Array[MermaidNode],
 ) -> (
-  Map[String, Int],
-  Int,
-  Map[String, Int],
+  Map[String, Int32],
+  Int32,
+  Map[String, Int32],
   Map[String, Array[String]],
   Map[String, Array[String]],
 ) {
@@ -647,8 +647,8 @@ fn build_layered_neighbor_state_from_rank_seed(
   subgraph_entry_by_id : Map[String, String],
   subgraph_exit_by_id : Map[String, String],
   node_ids : Array[String],
-  rank_by_node_id : Map[String, Int],
-  order_index_by_node_id : Map[String, Int],
+  rank_by_node_id : Map[String, Int32],
+  order_index_by_node_id : Map[String, Int32],
 ) -> (Map[String, Array[String]], Map[String, Array[String]]) {
   let successors_by_node_id : Map[String, Array[String]] = Map([])
   let predecessors_by_node_id : Map[String, Array[String]] = Map([])
@@ -689,10 +689,10 @@ fn build_layered_neighbor_state_from_rank_seed(
 ///|
 fn build_rank_node_ids(
   nodes_in_order : Array[MermaidNode],
-  rank_by_node_id : Map[String, Int],
-  max_rank : Int,
-) -> Map[Int, Array[String]] {
-  let rank_node_ids_by_rank : Map[Int, Array[String]] = Map([])
+  rank_by_node_id : Map[String, Int32],
+  max_rank : Int32,
+) -> Map[Int32, Array[String]] {
+  let rank_node_ids_by_rank : Map[Int32, Array[String]] = Map([])
   for rank in 0..<=max_rank {
     rank_node_ids_by_rank[rank] = []
   }
@@ -709,11 +709,11 @@ fn build_rank_node_ids(
 ///|
 fn build_rank_node_ids_by_lane(
   nodes_in_order : Array[MermaidNode],
-  rank_by_node_id : Map[String, Int],
-  lane_by_node_id : Map[String, Int],
-  order_index_by_node_id : Map[String, Int],
-  max_rank : Int,
-) -> Map[Int, Array[String]] {
+  rank_by_node_id : Map[String, Int32],
+  lane_by_node_id : Map[String, Int32],
+  order_index_by_node_id : Map[String, Int32],
+  max_rank : Int32,
+) -> Map[Int32, Array[String]] {
   let rank_node_ids_by_rank = build_rank_node_ids(
     nodes_in_order, rank_by_node_id, max_rank,
   )

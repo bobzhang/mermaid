@@ -1,24 +1,24 @@
 ///|
 priv struct ElkLayeredCrossingPhaseInput {
-  rank_node_ids_by_rank : Map[Int, Array[String]]
-  max_rank : Int
+  rank_node_ids_by_rank : Map[Int32, Array[String]]
+  max_rank : Int32
   predecessors_by_node_id : Map[String, Array[String]]
   successors_by_node_id : Map[String, Array[String]]
-  order_index_by_node_id : Map[String, Int]
-  rank_by_node_id : Map[String, Int]
-  node_count : Int
-  edge_count : Int
+  order_index_by_node_id : Map[String, Int32]
+  rank_by_node_id : Map[String, Int32]
+  node_count : Int32
+  edge_count : Int32
   ordering_edges : Array[(String, String)]
   // Reserved for future port-aware crossing objective alignment.
-  port_order_slots_by_node_id : Map[String, Array[Int]]
+  port_order_slots_by_node_id : Map[String, Array[Int32]]
 }
 
 ///|
 fn build_default_port_order_slots_by_node_id(
-  rank_node_ids_by_rank : Map[Int, Array[String]],
-  max_rank : Int,
-) -> Map[String, Array[Int]] {
-  let port_order_slots_by_node_id : Map[String, Array[Int]] = Map([])
+  rank_node_ids_by_rank : Map[Int32, Array[String]],
+  max_rank : Int32,
+) -> Map[String, Array[Int32]] {
+  let port_order_slots_by_node_id : Map[String, Array[Int32]] = Map([])
   for rank in 0..<=max_rank {
     match rank_node_ids_by_rank.get(rank) {
       Some(node_ids) =>
@@ -34,7 +34,7 @@ fn build_default_port_order_slots_by_node_id(
 ///|
 fn build_crossing_ordering_edges(
   successors_by_node_id : Map[String, Array[String]],
-  order_index_by_node_id : Map[String, Int],
+  order_index_by_node_id : Map[String, Int32],
 ) -> Array[(String, String)] {
   let ordering_edges : Array[(String, String)] = []
   let source_ids : Array[String] = []
@@ -59,7 +59,7 @@ fn build_crossing_ordering_edges(
 ///|
 fn build_crossing_in_layer_successors_by_node_id(
   ordering_edges : Array[(String, String)],
-  rank_by_node_id : Map[String, Int],
+  rank_by_node_id : Map[String, Int32],
 ) -> Map[String, Array[String]] {
   let in_layer_successors_by_node_id : Map[String, Array[String]] = Map([])
   let seen_edge_by_key : Map[String, Bool] = Map([])
@@ -89,14 +89,14 @@ fn build_crossing_in_layer_successors_by_node_id(
 
 ///|
 fn build_crossing_phase_input(
-  rank_node_ids_by_rank : Map[Int, Array[String]],
-  max_rank : Int,
+  rank_node_ids_by_rank : Map[Int32, Array[String]],
+  max_rank : Int32,
   predecessors_by_node_id : Map[String, Array[String]],
   successors_by_node_id : Map[String, Array[String]],
-  order_index_by_node_id : Map[String, Int],
-  rank_by_node_id : Map[String, Int],
-  node_count : Int,
-  edge_count : Int,
+  order_index_by_node_id : Map[String, Int32],
+  rank_by_node_id : Map[String, Int32],
+  node_count : Int32,
+  edge_count : Int32,
 ) -> ElkLayeredCrossingPhaseInput {
   {
     rank_node_ids_by_rank,

@@ -1,8 +1,8 @@
 ///|
 priv struct LayeredVirtualOrderingState {
-  rank_node_ids_by_rank : Map[Int, Array[String]]
-  rank_by_node_id : Map[String, Int]
-  order_index_by_node_id : Map[String, Int]
+  rank_node_ids_by_rank : Map[Int32, Array[String]]
+  rank_by_node_id : Map[String, Int32]
+  order_index_by_node_id : Map[String, Int32]
   predecessors_by_node_id : Map[String, Array[String]]
   successors_by_node_id : Map[String, Array[String]]
   virtual_by_node_id : Map[String, Bool]
@@ -10,10 +10,10 @@ priv struct LayeredVirtualOrderingState {
 
 ///|
 fn clone_rank_node_ids_by_rank(
-  rank_node_ids_by_rank : Map[Int, Array[String]],
-  max_rank : Int,
-) -> Map[Int, Array[String]] {
-  let cloned : Map[Int, Array[String]] = Map([])
+  rank_node_ids_by_rank : Map[Int32, Array[String]],
+  max_rank : Int32,
+) -> Map[Int32, Array[String]] {
+  let cloned : Map[Int32, Array[String]] = Map([])
   for rank in 0..<=max_rank {
     let copied_node_ids : Array[String] = []
     match rank_node_ids_by_rank.get(rank) {
@@ -30,8 +30,8 @@ fn clone_rank_node_ids_by_rank(
 
 ///|
 fn ensure_rank_node_ids_entry(
-  rank_node_ids_by_rank : Map[Int, Array[String]],
-  rank : Int,
+  rank_node_ids_by_rank : Map[Int32, Array[String]],
+  rank : Int32,
 ) -> Unit {
   if !rank_node_ids_by_rank.contains(rank) {
     rank_node_ids_by_rank[rank] = []
@@ -60,17 +60,17 @@ fn append_normalized_ordering_edge(
 
 ///|
 fn build_virtual_ordering_state(
-  rank_node_ids_by_rank : Map[Int, Array[String]],
-  rank_by_node_id : Map[String, Int],
-  max_rank : Int,
-  order_index_by_node_id : Map[String, Int],
+  rank_node_ids_by_rank : Map[Int32, Array[String]],
+  rank_by_node_id : Map[String, Int32],
+  max_rank : Int32,
+  order_index_by_node_id : Map[String, Int32],
   successors_by_node_id : Map[String, Array[String]],
 ) -> LayeredVirtualOrderingState {
   let normalized_rank_node_ids_by_rank = clone_rank_node_ids_by_rank(
     rank_node_ids_by_rank, max_rank,
   )
-  let normalized_rank_by_node_id : Map[String, Int] = Map([])
-  let normalized_order_index_by_node_id : Map[String, Int] = Map([])
+  let normalized_rank_by_node_id : Map[String, Int32] = Map([])
+  let normalized_order_index_by_node_id : Map[String, Int32] = Map([])
   let normalized_predecessors_by_node_id : Map[String, Array[String]] = Map([])
   let normalized_successors_by_node_id : Map[String, Array[String]] = Map([])
   let virtual_by_node_id : Map[String, Bool] = Map([])
@@ -184,11 +184,11 @@ fn build_virtual_ordering_state(
 
 ///|
 fn filter_real_rank_node_ids_by_rank(
-  rank_node_ids_by_rank : Map[Int, Array[String]],
-  max_rank : Int,
+  rank_node_ids_by_rank : Map[Int32, Array[String]],
+  max_rank : Int32,
   virtual_by_node_id : Map[String, Bool],
-) -> Map[Int, Array[String]] {
-  let real_rank_node_ids_by_rank : Map[Int, Array[String]] = Map([])
+) -> Map[Int32, Array[String]] {
+  let real_rank_node_ids_by_rank : Map[Int32, Array[String]] = Map([])
   for rank in 0..<=max_rank {
     let real_node_ids : Array[String] = []
     match rank_node_ids_by_rank.get(rank) {

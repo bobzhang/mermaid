@@ -94,7 +94,7 @@ fn wb_find_node_by_label(
 }
 
 ///|
-fn wb_abs(value : Int) -> Int {
+fn wb_abs(value : Int32) -> Int32 {
   if value < 0 {
     -value
   } else {
@@ -114,10 +114,10 @@ fn wb_contains_node_id(node_ids : Array[String], node_id : String) -> Bool {
 
 ///|
 fn wb_rank_seed_state(
-  rank_by_node_id : Map[String, Int],
-  max_rank : Int,
-  lane_by_node_id : Map[String, Int],
-  order_index_by_node_id : Map[String, Int],
+  rank_by_node_id : Map[String, Int32],
+  max_rank : Int32,
+  lane_by_node_id : Map[String, Int32],
+  order_index_by_node_id : Map[String, Int32],
   successors_by_node_id : Map[String, Array[String]],
   predecessors_by_node_id : Map[String, Array[String]],
 ) -> ElkLayeredRankSeedState {

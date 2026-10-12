@@ -3,7 +3,7 @@ fn wb_count_oriented_edge(
   oriented_edges : Array[(String, String)],
   source_id : String,
   target_id : String,
-) -> Int {
+) -> Int32 {
   let mut count = 0
   for edge in oriented_edges {
     let (source, target) = edge
@@ -18,7 +18,7 @@ fn wb_count_oriented_edge(
 fn wb_reversed_edge_count(
   original_edges : Array[(String, String)],
   oriented_edges : Array[(String, String)],
-) -> Int {
+) -> Int32 {
   let oriented_edge_set : Map[String, Bool] = Map([])
   for edge in oriented_edges {
     let (source_id, target_id) = edge
@@ -45,7 +45,7 @@ fn wb_is_acyclic_orientation(
   node_ids : Array[String],
   oriented_edges : Array[(String, String)],
 ) -> Bool {
-  let indegree_by_node_id : Map[String, Int] = Map([])
+  let indegree_by_node_id : Map[String, Int32] = Map([])
   let successors_by_node_id : Map[String, Array[String]] = Map([])
   for node_id in node_ids {
     indegree_by_node_id[node_id] = 0
@@ -99,7 +99,7 @@ fn wb_is_acyclic_orientation(
 ///|
 test "elk layered feedback random selection matches java random nextInt samples" {
   let mut state = java_random_state_from_seed(1)
-  let sampled_bound_7 : Array[Int] = []
+  let sampled_bound_7 : Array[Int32] = []
   for _ in 0..<10 {
     let (next_state, sampled) = java_random_next_int(state, 7)
     state = next_state
@@ -108,7 +108,7 @@ test "elk layered feedback random selection matches java random nextInt samples"
   assert_eq(sampled_bound_7, [4, 4, 1, 0, 6, 6, 0, 1, 3, 6])
 
   let mut state2 = java_random_state_from_seed(1)
-  let sampled_bound_2 : Array[Int] = []
+  let sampled_bound_2 : Array[Int32] = []
   for _ in 0..<10 {
     let (next_state, sampled) = java_random_next_int(state2, 2)
     state2 = next_state
@@ -127,7 +127,7 @@ test "elk layered feedback orientation preserves inter-component edge direction"
     ("C", "D"),
     ("D", "C"),
   ]
-  let order_index_by_node_id : Map[String, Int] = {
+  let order_index_by_node_id : Map[String, Int32] = {
     "A": 0,
     "B": 3,
     "C": 1,
@@ -147,7 +147,7 @@ test "elk layered feedback orientation preserves inter-component edge direction"
 test "elk layered feedback orientation breaks 3-cycle with one reversed edge" {
   let node_ids = ["A", "B", "C"]
   let resolved_edges = [("A", "B"), ("B", "C"), ("C", "A")]
-  let order_index_by_node_id : Map[String, Int] = { "A": 0, "B": 1, "C": 2 }
+  let order_index_by_node_id : Map[String, Int32] = { "A": 0, "B": 1, "C": 2 }
   let oriented_edges = compute_feedback_order_orientation_state(
       node_ids,
       resolved_edges,
@@ -173,7 +173,7 @@ test "elk layered feedback orientation state keeps long-span kernel acyclic" {
     ("N2", "N6"),
     ("N6", "N3"),
   ]
-  let base_order_index_by_node_id : Map[String, Int] = {
+  let base_order_index_by_node_id : Map[String, Int32] = {
     "N0": 0,
     "N1": 1,
     "N2": 2,
@@ -199,9 +199,9 @@ test "elk layered feedback orientation state keeps long-span kernel acyclic" {
 ///|
 test "elk layered feedback break selector still picks candidate for all-negative outflow" {
   let node_ids = ["A", "B", "C"]
-  let mark_by_node_id : Map[String, Int] = { "A": 0, "B": 0, "C": 0 }
-  let indegree_by_node_id : Map[String, Int] = { "A": 3, "B": 2, "C": 4 }
-  let outdegree_by_node_id : Map[String, Int] = { "A": 1, "B": 0, "C": 1 }
+  let mark_by_node_id : Map[String, Int32] = { "A": 0, "B": 0, "C": 0 }
+  let indegree_by_node_id : Map[String, Int32] = { "A": 3, "B": 2, "C": 4 }
+  let outdegree_by_node_id : Map[String, Int32] = { "A": 1, "B": 0, "C": 1 }
   let (selected, _) = choose_feedback_break_node_by_outflow(
     node_ids,
     mark_by_node_id,
@@ -216,9 +216,9 @@ test "elk layered feedback break selector still picks candidate for all-negative
 ///|
 test "elk layered feedback break selector supports model-order-first tie strategy" {
   let node_ids = ["A", "B", "C"]
-  let mark_by_node_id : Map[String, Int] = { "A": 0, "B": 0, "C": 0 }
-  let indegree_by_node_id : Map[String, Int] = { "A": 1, "B": 1, "C": 1 }
-  let outdegree_by_node_id : Map[String, Int] = { "A": 1, "B": 1, "C": 1 }
+  let mark_by_node_id : Map[String, Int32] = { "A": 0, "B": 0, "C": 0 }
+  let indegree_by_node_id : Map[String, Int32] = { "A": 1, "B": 1, "C": 1 }
+  let outdegree_by_node_id : Map[String, Int32] = { "A": 1, "B": 1, "C": 1 }
   let (selected, _) = choose_feedback_break_node_by_outflow(
     node_ids,
     mark_by_node_id,

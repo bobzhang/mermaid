@@ -26,7 +26,7 @@ fn flow_node(id : String) -> @model.MermaidNode {
 }
 
 ///|
-fn positioned_box(id : String, x : Int, y : Int) -> PositionedNode {
+fn positioned_box(id : String, x : Int32, y : Int32) -> PositionedNode {
   {
     id,
     label: id,
@@ -699,7 +699,7 @@ test "Layout boundary offsets keep source fanout separation on large graphs" {
   )
   assign_edge_boundary_offsets_to_contexts(graph, false, false, false, contexts)
 
-  let fanout_offsets : Map[Int, Bool] = Map([])
+  let fanout_offsets : Map[Int32, Bool] = Map([])
   for context in contexts {
     if context.resolved_source_id == "A" {
       fanout_offsets[context.source_boundary_offset_minor] = true
@@ -778,18 +778,18 @@ test "Layout compact cohort assignment can rebalance preassigned source offsets"
       edge_span: edge_layout_context_span(contexts[2]),
     },
   ]
-  let preserved_offsets : Map[Int, Int] = { 0: 0 }
+  let preserved_offsets : Map[Int32, Int32] = { 0: 0 }
   assign_compact_boundary_offsets_for_cohort(
     cohort_assignments, contexts, true, preserved_offsets, true,
   )
   assert_eq(option_int_or(preserved_offsets.get(0), -999), 0)
 
-  let rebalanced_offsets : Map[Int, Int] = { 0: 0 }
+  let rebalanced_offsets : Map[Int32, Int32] = { 0: 0 }
   assign_compact_boundary_offsets_for_cohort(
     cohort_assignments, contexts, true, rebalanced_offsets, false,
   )
   assert_true(option_int_or(rebalanced_offsets.get(0), 0) != 0)
-  let unique_offsets : Map[Int, Bool] = Map([])
+  let unique_offsets : Map[Int32, Bool] = Map([])
   for _, offset in rebalanced_offsets {
     unique_offsets[offset] = true
   }

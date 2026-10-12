@@ -1,18 +1,18 @@
 ///|
 priv struct RankLayerParityMetrics {
-  shared_node_count : Int
-  exact_match_count : Int
-  displacement_sum : Int
-  composition_mismatch_count : Int
+  shared_node_count : Int32
+  exact_match_count : Int32
+  displacement_sum : Int32
+  composition_mismatch_count : Int32
 }
 
 ///|
-fn parity_score(metrics : RankLayerParityMetrics) -> Int {
+fn parity_score(metrics : RankLayerParityMetrics) -> Int32 {
   metrics.composition_mismatch_count * 10 + metrics.displacement_sum
 }
 
 ///|
-fn int_abs(value : Int) -> Int {
+fn int_abs(value : Int32) -> Int32 {
   if value < 0 {
     -value
   } else {
@@ -36,8 +36,8 @@ fn normalized_rank_layers(
 ///|
 fn build_rank_index_by_node_id(
   layers : Array[Array[String]],
-) -> Map[String, Int] {
-  let rank_by_node_id : Map[String, Int] = Map([])
+) -> Map[String, Int32] {
+  let rank_by_node_id : Map[String, Int32] = Map([])
   for rank, layer in layers {
     for node_id in layer {
       rank_by_node_id[node_id] = rank
@@ -50,7 +50,7 @@ fn build_rank_index_by_node_id(
 fn rank_layer_mismatch_count(
   local_layers : Array[Array[String]],
   official_layers : Array[Array[String]],
-) -> Int {
+) -> Int32 {
   let max_layer_count = local_layers.length().max(official_layers.length())
   let mut mismatch_count = 0
   for rank in 0..<max_layer_count {

@@ -1,7 +1,7 @@
 ///|
 test "elk layered lane-seeded minor coords preserve sparse lane gaps" {
-  let rank_node_ids_by_rank : Map[Int, Array[String]] = { 0: ["A", "B"] }
-  let lane_by_node_id : Map[String, Int] = { "A": 0, "B": 3 }
+  let rank_node_ids_by_rank : Map[Int32, Array[String]] = { 0: ["A", "B"] }
+  let lane_by_node_id : Map[String, Int32] = { "A": 0, "B": 3 }
   let minor_coord_by_node_id = build_minor_coord_by_lane_seed(
     rank_node_ids_by_rank, 0, lane_by_node_id, 40, 30,
   )

@@ -1,9 +1,9 @@
 ///|
 fn rank_position_by_node_id(
-  rank_node_ids_by_rank : Map[Int, Array[String]],
-  max_rank : Int,
-) -> Map[String, Int] {
-  let rank_position_by_node_id : Map[String, Int] = Map([])
+  rank_node_ids_by_rank : Map[Int32, Array[String]],
+  max_rank : Int32,
+) -> Map[String, Int32] {
+  let rank_position_by_node_id : Map[String, Int32] = Map([])
   for rank in 0..<=max_rank {
     match rank_node_ids_by_rank.get(rank) {
       Some(node_ids) =>

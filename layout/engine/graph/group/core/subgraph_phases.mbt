@@ -16,37 +16,37 @@ fn resolve_subgraph_layout_direction(
 
 ///|
 /// Returns default padding used around positioned subgraph content.
-fn subgraph_group_padding() -> Int {
+fn subgraph_group_padding() -> Int32 {
   12
 }
 
 ///|
-fn subgraph_group_header_height() -> Int {
+fn subgraph_group_header_height() -> Int32 {
   24
 }
 
 ///|
-fn subgraph_group_min_width(_label : String) -> Int {
+fn subgraph_group_min_width(_label : String) -> Int32 {
   80
 }
 
 ///|
-fn subgraph_group_min_height() -> Int {
+fn subgraph_group_min_height() -> Int32 {
   subgraph_group_header_height() + subgraph_group_padding() * 2 + 20
 }
 
 ///|
 fn include_bounds(
   has_bounds : Bool,
-  min_left : Int,
-  min_top : Int,
-  max_right : Int,
-  max_bottom : Int,
-  left : Int,
-  top : Int,
-  right : Int,
-  bottom : Int,
-) -> (Bool, Int, Int, Int, Int) {
+  min_left : Int32,
+  min_top : Int32,
+  max_right : Int32,
+  max_bottom : Int32,
+  left : Int32,
+  top : Int32,
+  right : Int32,
+  bottom : Int32,
+) -> (Bool, Int32, Int32, Int32, Int32) {
   if has_bounds {
     (
       true,
@@ -64,8 +64,8 @@ fn include_bounds(
 /// Builds positioned placeholder bounds for an empty subgraph tree.
 fn build_empty_group_tree_at(
   subgraph : MermaidSubgraph,
-  x : Int,
-  y : Int,
+  x : Int32,
+  y : Int32,
   inherited_horizontal : Bool,
   inherited_reverse : Bool,
 ) -> PositionedGroup {
@@ -283,8 +283,8 @@ fn build_positioned_group(
 ///|
 fn shift_positioned_group(
   group : PositionedGroup,
-  shift_x : Int,
-  shift_y : Int,
+  shift_x : Int32,
+  shift_y : Int32,
 ) -> PositionedGroup {
   let shifted_children : Array[PositionedGroup] = []
   for child in group.children {
@@ -306,12 +306,12 @@ fn apply_subgraph_direction_override_to_members(
   node_ids : Array[String],
   horizontal : Bool,
   reverse : Bool,
-  node_spacing : Int,
-  layer_spacing : Int,
+  node_spacing : Int32,
+  layer_spacing : Int32,
   positioned_nodes : Array[PositionedNode],
-  positioned_index_by_id : Map[String, Int],
+  positioned_index_by_id : Map[String, Int32],
 ) -> Unit {
-  let member_indexes : Array[Int] = []
+  let member_indexes : Array[Int32] = []
   for node_id in node_ids {
     match positioned_index_by_id.get(node_id) {
       Some(index) => member_indexes.push(index)
@@ -407,19 +407,19 @@ fn apply_subgraph_direction_override_to_members(
 
 ///|
 priv struct SubgraphMemberBlock {
-  node_indexes : Array[Int]
-  left : Int
-  top : Int
-  width : Int
-  height : Int
+  node_indexes : Array[Int32]
+  left : Int32
+  top : Int32
+  width : Int32
+  height : Int32
 }
 
 ///|
 fn collect_subgraph_node_indexes(
   subgraph : MermaidSubgraph,
-  positioned_index_by_id : Map[String, Int],
+  positioned_index_by_id : Map[String, Int32],
   seen_node_ids : Map[String, Bool],
-  indexes : Array[Int],
+  indexes : Array[Int32],
 ) -> Unit {
   for node_id in subgraph.node_ids {
     if seen_node_ids.contains(node_id) {
@@ -440,9 +440,9 @@ fn collect_subgraph_node_indexes(
 
 ///|
 fn member_indexes_bounds(
-  indexes : Array[Int],
+  indexes : Array[Int32],
   positioned_nodes : Array[PositionedNode],
-) -> (Bool, Int, Int, Int, Int) {
+) -> (Bool, Int32, Int32, Int32, Int32) {
   let mut has_bounds = false
   let mut min_left = 0
   let mut min_top = 0
@@ -468,9 +468,9 @@ fn member_indexes_bounds(
 
 ///|
 fn shift_member_indexes(
-  indexes : Array[Int],
-  dx : Int,
-  dy : Int,
+  indexes : Array[Int32],
+  dx : Int32,
+  dy : Int32,
   positioned_nodes : Array[PositionedNode],
 ) -> Unit {
   if dx == 0 && dy == 0 {
@@ -496,10 +496,10 @@ fn apply_subgraph_direction_override_to_children(
   children : Array[MermaidSubgraph],
   horizontal : Bool,
   reverse : Bool,
-  node_spacing : Int,
-  layer_spacing : Int,
+  node_spacing : Int32,
+  layer_spacing : Int32,
   positioned_nodes : Array[PositionedNode],
-  positioned_index_by_id : Map[String, Int],
+  positioned_index_by_id : Map[String, Int32],
 ) -> Unit {
   let member_blocks : Array[SubgraphMemberBlock] = []
   let mut has_bounds = false
@@ -510,7 +510,7 @@ fn apply_subgraph_direction_override_to_children(
 
   for child in children {
     let seen_node_ids : Map[String, Bool] = Map([])
-    let indexes : Array[Int] = []
+    let indexes : Array[Int32] = []
     collect_subgraph_node_indexes(
       child, positioned_index_by_id, seen_node_ids, indexes,
     )
@@ -586,10 +586,10 @@ pub fn apply_subgraph_direction_overrides(
   inherited_override_active : Bool,
   global_horizontal : Bool,
   global_reverse : Bool,
-  node_spacing : Int,
-  layer_spacing : Int,
+  node_spacing : Int32,
+  layer_spacing : Int32,
   positioned_nodes : Array[PositionedNode],
-  positioned_index_by_id : Map[String, Int],
+  positioned_index_by_id : Map[String, Int32],
   node_horizontal_by_id : Map[String, Bool],
 ) -> Unit {
   for subgraph in subgraphs {

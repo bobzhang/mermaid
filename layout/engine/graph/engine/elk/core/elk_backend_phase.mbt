@@ -16,8 +16,8 @@ pub fn layout_graph_elk_backend(
 pub fn layout_graph_elk_backend_with_crossing_overrides(
   request : GraphLayoutBackendRequest,
   sweep_kernel : ElkLayeredRankTraceSweepKernel,
-  trial_count_override : Int?,
-  sweep_pass_count_override : Int?,
+  trial_count_override : Int32?,
+  sweep_pass_count_override : Int32?,
   trial_continuation_policy_override : ElkLayeredRankTraceTrialContinuationPolicy?,
   trial_model_order_inversion_influence_override : Double?,
   local_refinement_profile_override : ElkLayeredRankTraceLocalRefinementProfile?,
@@ -76,8 +76,8 @@ fn run_elk_backend(
 fn run_elk_backend_with_crossing_overrides(
   request : GraphLayoutBackendRequest,
   sweep_kernel : ElkLayeredRankTraceSweepKernel,
-  trial_count_override : Int?,
-  sweep_pass_count_override : Int?,
+  trial_count_override : Int32?,
+  sweep_pass_count_override : Int32?,
   trial_continuation_policy_override : ElkLayeredRankTraceTrialContinuationPolicy?,
   trial_model_order_inversion_influence_override : Double?,
   local_refinement_profile_override : ElkLayeredRankTraceLocalRefinementProfile?,

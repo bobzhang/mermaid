@@ -1,8 +1,8 @@
 ///|
 fn objective_test_collect_segments(
-  rank_node_ids_by_rank : Map[Int, Array[String]],
-  max_rank : Int,
-  rank_by_node_id : Map[String, Int],
+  rank_node_ids_by_rank : Map[Int32, Array[String]],
+  max_rank : Int32,
+  rank_by_node_id : Map[String, Int32],
   successors_by_node_id : Map[String, Array[String]],
 ) -> Array[RankOrderEdgeSegment] {
   let rank_position_by_node_id = rank_position_by_node_id(
@@ -15,11 +15,11 @@ fn objective_test_collect_segments(
 
 ///|
 fn objective_test_global_crossing_count(
-  rank_node_ids_by_rank : Map[Int, Array[String]],
-  max_rank : Int,
-  rank_by_node_id : Map[String, Int],
+  rank_node_ids_by_rank : Map[Int32, Array[String]],
+  max_rank : Int32,
+  rank_by_node_id : Map[String, Int32],
   successors_by_node_id : Map[String, Array[String]],
-) -> Int {
+) -> Int32 {
   global_crossing_count_from_segments(
     objective_test_collect_segments(
       rank_node_ids_by_rank, max_rank, rank_by_node_id, successors_by_node_id,
@@ -29,11 +29,11 @@ fn objective_test_global_crossing_count(
 
 ///|
 test "elk layered crossing objective evaluator matches direct counters" {
-  let rank_node_ids_by_rank : Map[Int, Array[String]] = {
+  let rank_node_ids_by_rank : Map[Int32, Array[String]] = {
     0: ["A", "B"],
     1: ["C", "D"],
   }
-  let rank_by_node_id : Map[String, Int] = { "A": 0, "B": 0, "C": 1, "D": 1 }
+  let rank_by_node_id : Map[String, Int32] = { "A": 0, "B": 0, "C": 1, "D": 1 }
   let successors_by_node_id : Map[String, Array[String]] = {
     "A": ["D"],
     "B": ["C"],
@@ -62,11 +62,11 @@ test "elk layered crossing objective evaluator matches direct counters" {
 
 ///|
 test "elk layered segment-derived counters match wrapper crossing counters" {
-  let rank_node_ids_by_rank : Map[Int, Array[String]] = {
+  let rank_node_ids_by_rank : Map[Int32, Array[String]] = {
     0: ["A", "B"],
     1: ["C", "D"],
   }
-  let rank_by_node_id : Map[String, Int] = { "A": 0, "B": 0, "C": 1, "D": 1 }
+  let rank_by_node_id : Map[String, Int32] = { "A": 0, "B": 0, "C": 1, "D": 1 }
   let successors_by_node_id : Map[String, Array[String]] = {
     "A": ["D"],
     "B": ["C"],
@@ -92,8 +92,8 @@ test "elk layered segment-derived counters match wrapper crossing counters" {
 
 ///|
 test "elk layered rank-order comparator prefers lower-crossing candidate" {
-  let rank_by_node_id : Map[String, Int] = { "A": 0, "B": 0, "C": 1, "D": 1 }
-  let order_index_by_node_id : Map[String, Int] = {
+  let rank_by_node_id : Map[String, Int32] = { "A": 0, "B": 0, "C": 1, "D": 1 }
+  let order_index_by_node_id : Map[String, Int32] = {
     "A": 0,
     "B": 1,
     "C": 2,
@@ -105,11 +105,11 @@ test "elk layered rank-order comparator prefers lower-crossing candidate" {
     "C": [],
     "D": [],
   }
-  let base_rank_node_ids_by_rank : Map[Int, Array[String]] = {
+  let base_rank_node_ids_by_rank : Map[Int32, Array[String]] = {
     0: ["A", "B"],
     1: ["C", "D"],
   }
-  let alternate_rank_node_ids_by_rank : Map[Int, Array[String]] = {
+  let alternate_rank_node_ids_by_rank : Map[Int32, Array[String]] = {
     0: ["A", "B"],
     1: ["D", "C"],
   }
@@ -125,18 +125,18 @@ test "elk layered rank-order comparator prefers lower-crossing candidate" {
 
 ///|
 test "elk layered rank-order comparator keeps global-crossing ties neutral" {
-  let rank_by_node_id : Map[String, Int] = { "A": 0, "B": 0, "C": 1, "D": 1 }
+  let rank_by_node_id : Map[String, Int32] = { "A": 0, "B": 0, "C": 1, "D": 1 }
   let successors_by_node_id : Map[String, Array[String]] = {
     "A": ["C"],
     "B": [],
     "C": [],
     "D": [],
   }
-  let base_rank_node_ids_by_rank : Map[Int, Array[String]] = {
+  let base_rank_node_ids_by_rank : Map[Int32, Array[String]] = {
     0: ["A", "B"],
     1: ["C", "D"],
   }
-  let alternate_rank_node_ids_by_rank : Map[Int, Array[String]] = {
+  let alternate_rank_node_ids_by_rank : Map[Int32, Array[String]] = {
     0: ["A", "B"],
     1: ["D", "C"],
   }

@@ -11,12 +11,12 @@ pub(all) struct GraphLayoutBackendRequest {
 /// Lightweight phase-level snapshot used for backend evaluation.
 pub(all) struct GraphLayoutPhaseSnapshot {
   phase : String
-  node_count : Int
-  edge_count : Int
-  group_count : Int
-  rank_layer_count : Int
-  width : Int
-  height : Int
+  node_count : Int32
+  edge_count : Int32
+  group_count : Int32
+  rank_layer_count : Int32
+  width : Int32
+  height : Int32
 }
 
 ///|

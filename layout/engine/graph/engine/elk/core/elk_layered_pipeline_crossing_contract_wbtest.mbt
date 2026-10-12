@@ -1,6 +1,6 @@
 ///|
 test "elk layered crossing phase input enumerates rank nodes for port-order slots" {
-  let rank_node_ids_by_rank : Map[Int, Array[String]] = {
+  let rank_node_ids_by_rank : Map[Int32, Array[String]] = {
     0: ["A", "B"],
     1: ["C"],
   }

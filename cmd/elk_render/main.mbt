@@ -3,8 +3,8 @@ struct ElkRenderCliArgs {
   show_help : Bool
   source : String?
   sweep_kernel : @layout_engine_graph_engine_elk_core.ElkLayeredRankTraceSweepKernel
-  trial_count_override : Int?
-  sweep_pass_count_override : Int?
+  trial_count_override : Int32?
+  sweep_pass_count_override : Int32?
   trial_continuation_policy_override : @layout_engine_graph_engine_elk_core.ElkLayeredRankTraceTrialContinuationPolicy?
   local_refinement_profile_override : @layout_engine_graph_engine_elk_core.ElkLayeredRankTraceLocalRefinementProfile?
   trial_model_order_inversion_influence_override : Double?
@@ -12,7 +12,7 @@ struct ElkRenderCliArgs {
 }
 
 ///|
-fn parse_positive_int(raw : String) -> Int? {
+fn parse_positive_int(raw : String) -> Int32? {
   let value = @string.parse_int(raw.trim().to_owned()) catch {
     _ => return None
   }
@@ -116,8 +116,8 @@ fn parse_cli_args(args : Array[String]) -> ElkRenderCliArgs? {
   let mut show_help = false
   let mut source : String? = None
   let mut sweep_kernel : @layout_engine_graph_engine_elk_core.ElkLayeredRankTraceSweepKernel = Default
-  let mut trial_count_override : Int? = None
-  let mut sweep_pass_count_override : Int? = None
+  let mut trial_count_override : Int32? = None
+  let mut sweep_pass_count_override : Int32? = None
   let mut trial_continuation_policy_override : @layout_engine_graph_engine_elk_core.ElkLayeredRankTraceTrialContinuationPolicy? = None
   let mut local_refinement_profile_override : @layout_engine_graph_engine_elk_core.ElkLayeredRankTraceLocalRefinementProfile? = None
   let mut trial_model_order_inversion_influence_override : Double? = None

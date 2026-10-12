@@ -1,5 +1,5 @@
 ///|
-async fn verify_corpus_chunk(chunk_index : Int, chunk_count : Int) -> Unit {
+async fn verify_corpus_chunk(chunk_index : Int32, chunk_count : Int32) -> Unit {
   let entries = @fs.readdir("testdata/corpus/inputs", sort=true)
   let files : Array[String] = []
   for name in entries {

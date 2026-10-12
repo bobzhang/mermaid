@@ -15,7 +15,7 @@ fn directed_edge_key(source_id : String, target_id : String) -> String {
 ///|
 fn context_has_reciprocal_edge(
   context : EdgeLayoutContext,
-  directed_edge_count_by_key : Map[String, Int],
+  directed_edge_count_by_key : Map[String, Int32],
 ) -> Bool {
   let reverse_key = directed_edge_key(
     context.resolved_target_id,
@@ -27,9 +27,9 @@ fn context_has_reciprocal_edge(
 ///|
 fn context_requires_long_span_back_edge_bend(
   context : EdgeLayoutContext,
-  horizontal_span_threshold : Int,
-  vertical_span_threshold : Int,
-  directed_edge_count_by_key : Map[String, Int],
+  horizontal_span_threshold : Int32,
+  vertical_span_threshold : Int32,
+  directed_edge_count_by_key : Map[String, Int32],
 ) -> Bool {
   let edge = context.edge
   if edge.label is Some(_) {
@@ -59,10 +59,10 @@ fn context_requires_long_span_back_edge_bend(
 ///|
 fn context_uses_forward_fanout_lane(
   context : EdgeLayoutContext,
-  horizontal_span_threshold : Int,
-  horizontal_minor_gap_threshold : Int,
-  vertical_span_threshold : Int,
-  vertical_minor_gap_threshold : Int,
+  horizontal_span_threshold : Int32,
+  horizontal_minor_gap_threshold : Int32,
+  vertical_span_threshold : Int32,
+  vertical_minor_gap_threshold : Int32,
 ) -> Bool {
   let edge = context.edge
   if edge.label is Some(_) {
@@ -81,7 +81,7 @@ fn context_uses_forward_fanout_lane(
 }
 
 ///|
-fn context_forward_fanout_minor_key(context : EdgeLayoutContext) -> Int {
+fn context_forward_fanout_minor_key(context : EdgeLayoutContext) -> Int32 {
   if context.edge_horizontal {
     context.target.y
   } else {
@@ -90,7 +90,7 @@ fn context_forward_fanout_minor_key(context : EdgeLayoutContext) -> Int {
 }
 
 ///|
-fn context_forward_fanout_major_key(context : EdgeLayoutContext) -> Int {
+fn context_forward_fanout_major_key(context : EdgeLayoutContext) -> Int32 {
   if context.edge_horizontal {
     context.target.x
   } else {
@@ -99,8 +99,8 @@ fn context_forward_fanout_major_key(context : EdgeLayoutContext) -> Int {
 }
 
 ///|
-fn copy_context_index_order(order : Array[Int]) -> Array[Int] {
-  let copied : Array[Int] = []
+fn copy_context_index_order(order : Array[Int32]) -> Array[Int32] {
+  let copied : Array[Int32] = []
   for context_index in order {
     copied.push(context_index)
   }
@@ -109,7 +109,7 @@ fn copy_context_index_order(order : Array[Int]) -> Array[Int] {
 
 ///|
 fn sort_forward_fanout_order(
-  order : Array[Int],
+  order : Array[Int32],
   edge_layout_contexts : Array[EdgeLayoutContext],
   minor_desc : Bool,
   major_desc : Bool,
@@ -154,10 +154,10 @@ fn sort_forward_fanout_order(
 ///|
 fn maybe_resolve_forward_fanout_slots_for_bucket(
   bucket_key : String,
-  total : Int,
+  total : Int32,
   edge_layout_contexts : Array[EdgeLayoutContext],
-  forward_fanout_context_indices_by_bucket : Map[String, Array[Int]],
-  forward_fanout_slot_by_context_index : Map[Int, Int],
+  forward_fanout_context_indices_by_bucket : Map[String, Array[Int32]],
+  forward_fanout_slot_by_context_index : Map[Int32, Int32],
   forward_fanout_slots_resolved_by_bucket : Map[String, Bool],
   forward_fanout_disabled_by_bucket : Map[String, Bool],
   routed_polylines : Array[Array[Point]],
@@ -180,8 +180,8 @@ fn maybe_resolve_forward_fanout_slots_for_bucket(
     return
   }
 
-  fn evaluate_order_crossings(order : Array[Int]) -> Int {
-    let candidate_slot_by_context_index : Map[Int, Int] = Map([])
+  fn evaluate_order_crossings(order : Array[Int32]) -> Int32 {
+    let candidate_slot_by_context_index : Map[Int32, Int32] = Map([])
     for slot, context_index in order {
       candidate_slot_by_context_index[context_index] = slot
     }
@@ -211,7 +211,7 @@ fn maybe_resolve_forward_fanout_slots_for_bucket(
     count_polyline_crossings(candidate_polylines)
   }
 
-  fn evaluate_direct_crossings() -> Int {
+  fn evaluate_direct_crossings() -> Int32 {
     let candidate_polylines : Array[Array[Point]] = []
     for polyline in routed_polylines {
       candidate_polylines.push(polyline)
@@ -234,7 +234,7 @@ fn maybe_resolve_forward_fanout_slots_for_bucket(
     count_polyline_crossings(candidate_polylines)
   }
 
-  let candidate_orders : Array[Array[Int]] = []
+  let candidate_orders : Array[Array[Int32]] = []
   candidate_orders.push(copy_context_index_order(bucket_context_indices))
 
   let ascending_minor = copy_context_index_order(bucket_context_indices)
@@ -261,7 +261,7 @@ fn maybe_resolve_forward_fanout_slots_for_bucket(
   )
   candidate_orders.push(descending_major)
 
-  let unique_candidate_orders : Array[Array[Int]] = []
+  let unique_candidate_orders : Array[Array[Int32]] = []
   let seen_candidate_signatures : Map[String, Bool] = Map([])
   for candidate_order in candidate_orders {
     let signature = candidate_order

@@ -99,8 +99,8 @@ fn repos_supported_mermaid_block(source : String) -> Bool {
 ///|
 #cfg(target="native")
 async fn repos_verify_markdown_chunk(
-  chunk_index : Int,
-  chunk_count : Int,
+  chunk_index : Int32,
+  chunk_count : Int32,
 ) -> Unit {
   let files = repos_markdown_files()
   if files.length() == 0 {

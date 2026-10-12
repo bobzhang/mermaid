@@ -57,7 +57,7 @@ fn dedupe_consecutive_points(points : Array[Point]) -> Array[Point] {
 }
 
 ///|
-fn int_sign(value : Int) -> Int {
+fn int_sign(value : Int32) -> Int32 {
   if value > 0 {
     1
   } else if value < 0 {
@@ -68,7 +68,7 @@ fn int_sign(value : Int) -> Int {
 }
 
 ///|
-fn int_abs(value : Int) -> Int {
+fn int_abs(value : Int32) -> Int32 {
   if value < 0 {
     -value
   } else {
@@ -125,7 +125,7 @@ fn edge_has_short_terminal_stub_for_basis(points : Array[Point]) -> Bool {
 ///|
 fn rounded_orthogonal_path(
   points : Array[Point],
-  corner_radius : Int,
+  corner_radius : Int32,
 ) -> String {
   if points.length() < 2 {
     return ""
@@ -186,12 +186,12 @@ fn rounded_orthogonal_path(
 ///|
 fn basis_bezier_segment(
   sb : StringBuilder,
-  x0 : Int,
-  y0 : Int,
-  x1 : Int,
-  y1 : Int,
-  x2 : Int,
-  y2 : Int,
+  x0 : Int32,
+  y0 : Int32,
+  x1 : Int32,
+  y1 : Int32,
+  x2 : Int32,
+  y2 : Int32,
 ) -> Unit {
   let c1x = (2 * x0 + x1) / 3
   let c1y = (2 * y0 + y1) / 3
@@ -253,7 +253,7 @@ fn basis_curve_path(points : Array[Point]) -> String {
 }
 
 ///|
-fn int_sqrt(value : Int) -> Int {
+fn int_sqrt(value : Int32) -> Int32 {
   if value <= 0 {
     return 0
   }
@@ -273,7 +273,7 @@ fn int_sqrt(value : Int) -> Int {
 }
 
 ///|
-fn edge_segment_length(start : Point, end_ : Point) -> Int {
+fn edge_segment_length(start : Point, end_ : Point) -> Int32 {
   let dx = end_.x - start.x
   let dy = end_.y - start.y
   int_sqrt(dx * dx + dy * dy)
@@ -320,9 +320,9 @@ fn edge_midpoint(points : Array[Point]) -> Point? {
 
 ///|
 fn is_uri_unreserved_char(ch : Char) -> Bool {
-  ch is ('A'..='Z') ||
-  ch is ('a'..='z') ||
-  ch is ('0'..='9') ||
+  ch is ('A'..<='Z') ||
+  ch is ('a'..<='z') ||
+  ch is ('0'..<='9') ||
   ch == '-' ||
   ch == '_' ||
   ch == '.' ||
@@ -335,7 +335,7 @@ fn is_uri_unreserved_char(ch : Char) -> Bool {
 }
 
 ///|
-fn percent_hex(byte_value : Int) -> String {
+fn percent_hex(byte_value : Int32) -> String {
   "%\{byte_value.to_byte().to_hex().to_upper()}"
 }
 
@@ -373,8 +373,8 @@ fn font_url_component(font : String) -> String {
 
 ///|
 fn text_svg_with_attrs(
-  x : Int,
-  y : Int,
+  x : Int32,
+  y : Int32,
   content : String,
   class_name : String,
   extra_attrs : String,
@@ -546,7 +546,7 @@ fn render_sequence_note(note : PositionedSequenceNote) -> String {
 }
 
 ///|
-fn subgraph_header_height() -> Int {
+fn subgraph_header_height() -> Int32 {
   24
 }
 
@@ -661,7 +661,7 @@ fn css_var_attr(name : String, value : String?) -> String {
 }
 
 ///|
-fn edge_label_bg_size(label : String) -> (Int, Int) {
+fn edge_label_bg_size(label : String) -> (Int32, Int32) {
   let width = (label.length() * 6 + 16).max(18)
   let height = 27
   (width, height)

@@ -25,34 +25,34 @@ fn flow_node_label(node : PositionedNode) -> String {
 priv struct AsciiFlowNodeBox {
   id : String
   label : String
-  left : Int
-  top : Int
-  width : Int
-  height : Int
+  left : Int32
+  top : Int32
+  width : Int32
+  height : Int32
 }
 
 ///|
 priv struct AsciiFlowGroupBox {
   id : String
   label : String
-  left : Int
-  top : Int
-  width : Int
-  height : Int
+  left : Int32
+  top : Int32
+  width : Int32
+  height : Int32
   children : Array[AsciiFlowGroupBox]
 }
 
 ///|
 priv struct AsciiArrowPlacement {
-  x : Int
-  y : Int
+  x : Int32
+  y : Int32
   marker : String
 }
 
 ///|
 priv struct AsciiEdgeLabelPlacement {
-  x : Int
-  y : Int
+  x : Int32
+  y : Int32
   label : String
 }
 
@@ -64,22 +64,22 @@ priv struct StateAsciiEdgeLayout {
 }
 
 ///|
-fn flow_scale_x() -> Int {
+fn flow_scale_x() -> Int32 {
   7
 }
 
 ///|
-fn flow_scale_y() -> Int {
+fn flow_scale_y() -> Int32 {
   9
 }
 
 ///|
-fn scale_coord(value : Int, scale : Int, pad : Int) -> Int {
+fn scale_coord(value : Int32, scale : Int32, pad : Int32) -> Int32 {
   value / scale + pad
 }
 
 ///|
-fn scale_size(value : Int, scale : Int, min_size : Int) -> Int {
+fn scale_size(value : Int32, scale : Int32, min_size : Int32) -> Int32 {
   ((value + scale - 1) / scale).max(min_size)
 }
 
@@ -101,7 +101,7 @@ fn flow_line_chars(style : EdgeStyle, use_ascii : Bool) -> (String, String) {
 }
 
 ///|
-fn flow_arrow_marker(dx : Int, dy : Int, use_ascii : Bool) -> String {
+fn flow_arrow_marker(dx : Int32, dy : Int32, use_ascii : Bool) -> String {
   if dx.abs() >= dy.abs() {
     if dx >= 0 {
       if use_ascii {
@@ -128,7 +128,7 @@ fn flow_arrow_marker(dx : Int, dy : Int, use_ascii : Bool) -> String {
 }
 
 ///|
-fn unit_step(value : Int) -> Int {
+fn unit_step(value : Int32) -> Int32 {
   if value > 0 {
     1
   } else if value < 0 {
@@ -156,8 +156,8 @@ fn flow_paths_are_reverse(first : Array[Point], second : Array[Point]) -> Bool {
 
 ///|
 fn border_join_marker(
-  dx : Int,
-  dy : Int,
+  dx : Int32,
+  dy : Int32,
   for_target : Bool,
   use_ascii : Bool,
 ) -> String? {
@@ -193,10 +193,10 @@ fn border_join_marker(
 ///|
 fn flow_edge_anchor(
   box : AsciiFlowNodeBox,
-  dx : Int,
-  dy : Int,
+  dx : Int32,
+  dy : Int32,
   for_target : Bool,
-) -> (Int, Int) {
+) -> (Int32, Int32) {
   if dx.abs() >= dy.abs() {
     let y = box.top + box.height / 2
     if for_target {
@@ -228,8 +228,8 @@ fn flow_edge_anchor(
 
 ///|
 fn label_overlaps_node_box(
-  x : Int,
-  y : Int,
+  x : Int32,
+  y : Int32,
   label : String,
   box : AsciiFlowNodeBox,
 ) -> Bool {
@@ -247,8 +247,8 @@ fn label_overlaps_node_box(
 
 ///|
 fn label_overlaps_any_node_box(
-  x : Int,
-  y : Int,
+  x : Int32,
+  y : Int32,
   label : String,
   boxes : Array[AsciiFlowNodeBox],
 ) -> Bool {
@@ -262,8 +262,8 @@ fn label_overlaps_any_node_box(
 
 ///|
 fn label_overlaps_edge_label(
-  x : Int,
-  y : Int,
+  x : Int32,
+  y : Int32,
   label : String,
   existing : AsciiEdgeLabelPlacement,
 ) -> Bool {
@@ -279,8 +279,8 @@ fn label_overlaps_edge_label(
 
 ///|
 fn label_overlaps_any_edge_label(
-  x : Int,
-  y : Int,
+  x : Int32,
+  y : Int32,
   label : String,
   existing_labels : Array[AsciiEdgeLabelPlacement],
 ) -> Bool {
@@ -294,11 +294,11 @@ fn label_overlaps_any_edge_label(
 
 ///|
 fn adjust_label_y_for_state_boxes(
-  x : Int,
-  y : Int,
+  x : Int32,
+  y : Int32,
   label : String,
   boxes : Array[AsciiFlowNodeBox],
-) -> Int {
+) -> Int32 {
   if !label_overlaps_any_node_box(x, y, label, boxes) {
     return y
   }
@@ -317,12 +317,12 @@ fn adjust_label_y_for_state_boxes(
 
 ///|
 fn adjust_label_y_for_state_layout(
-  x : Int,
-  y : Int,
+  x : Int32,
+  y : Int32,
   label : String,
   boxes : Array[AsciiFlowNodeBox],
   existing_labels : Array[AsciiEdgeLabelPlacement],
-) -> Int {
+) -> Int32 {
   if !label_overlaps_any_node_box(x, y, label, boxes) &&
     !label_overlaps_any_edge_label(x, y, label, existing_labels) {
     return y
@@ -353,12 +353,12 @@ fn flow_node_pair_key(a : String, b : String) -> String {
 
 ///|
 fn flow_non_state_label_anchor(
-  source_x : Int,
-  source_y : Int,
-  target_x : Int,
-  target_y : Int,
-  label_len : Int,
-) -> (Int, Int) {
+  source_x : Int32,
+  source_y : Int32,
+  target_x : Int32,
+  target_y : Int32,
+  label_len : Int32,
+) -> (Int32, Int32) {
   if source_y == target_y {
     return ((source_x + target_x) / 2, source_y)
   }
@@ -377,10 +377,10 @@ fn flow_non_state_label_anchor(
 
 ///|
 fn flow_non_state_route_points(
-  source_x : Int,
-  source_y : Int,
-  target_x : Int,
-  target_y : Int,
+  source_x : Int32,
+  source_y : Int32,
+  target_x : Int32,
+  target_y : Int32,
   horizontal_first : Bool,
 ) -> Array[Point] {
   let points : Array[Point] = [{ x: source_x, y: source_y, }]
@@ -452,14 +452,14 @@ fn flow_compact_route_points(points : Array[Point]) -> Array[Point] {
 
 ///|
 fn flow_non_state_route_points_with_pathfinder(
-  source_x : Int,
-  source_y : Int,
-  target_x : Int,
-  target_y : Int,
+  source_x : Int32,
+  source_y : Int32,
+  target_x : Int32,
+  target_y : Int32,
   horizontal_first : Bool,
   blocked : Map[String, Bool],
-  canvas_width : Int,
-  canvas_height : Int,
+  canvas_width : Int32,
+  canvas_height : Int32,
 ) -> Array[Point] {
   let fallback = flow_non_state_route_points(
     source_x, source_y, target_x, target_y, horizontal_first,
@@ -504,12 +504,12 @@ fn flow_non_state_route_points_with_pathfinder(
 fn flow_non_state_shared_back_edge_route_points(
   source_id : String,
   target_id : String,
-  source_anchor_x : Int,
-  source_anchor_y : Int,
-  source_box_height : Int,
-  target_anchor_x : Int,
-  target_anchor_y : Int,
-  source_out_degree : Int,
+  source_anchor_x : Int32,
+  source_anchor_y : Int32,
+  source_box_height : Int32,
+  target_anchor_x : Int32,
+  target_anchor_y : Int32,
+  source_out_degree : Int32,
   edges : Array[MermaidEdge],
   node_box_by_id : Map[String, AsciiFlowNodeBox],
 ) -> Array[Point]? {
@@ -560,8 +560,8 @@ fn flow_non_state_shared_back_edge_route_points(
 fn flow_has_two_by_two_fanout_fanin(
   source_id : String,
   target_id : String,
-  out_degree_by_source : Map[String, Int],
-  in_degree_by_target : Map[String, Int],
+  out_degree_by_source : Map[String, Int32],
+  in_degree_by_target : Map[String, Int32],
   targets_by_source : Map[String, Array[String]],
 ) -> Bool {
   if option_int_or(out_degree_by_source.get(source_id), 0) < 2 ||
@@ -592,7 +592,7 @@ fn flow_has_two_by_two_fanout_fanin(
 }
 
 ///|
-fn flow_non_state_edge_span(start : Point, ending : Point) -> Int {
+fn flow_non_state_edge_span(start : Point, ending : Point) -> Int32 {
   (ending.x - start.x).abs() + (ending.y - start.y).abs()
 }
 
@@ -600,11 +600,11 @@ fn flow_non_state_edge_span(start : Point, ending : Point) -> Int {
 fn flow_non_state_back_edge_detour_row(
   source_id : String,
   target_id : String,
-  source_x : Int,
-  target_x : Int,
-  min_y : Int,
+  source_x : Int32,
+  target_x : Int32,
+  min_y : Int32,
   nodes : Array[AsciiFlowNodeBox],
-) -> Int {
+) -> Int32 {
   let mut detour_y = min_y
   let left = source_x.min(target_x)
   let right = source_x.max(target_x)
@@ -624,17 +624,17 @@ fn flow_non_state_back_edge_detour_row(
 
 ///|
 priv struct AsciiBackEdgeRowReservation {
-  left : Int
-  right : Int
-  y : Int
+  left : Int32
+  right : Int32
+  y : Int32
 }
 
 ///|
 fn flow_back_edge_row_conflicts(
   reservations : Array[AsciiBackEdgeRowReservation],
-  left : Int,
-  right : Int,
-  row_y : Int,
+  left : Int32,
+  right : Int32,
+  row_y : Int32,
 ) -> Bool {
   reservations.any(item => {
     item.y == row_y && !(item.right < left || right < item.left)
@@ -643,11 +643,11 @@ fn flow_back_edge_row_conflicts(
 
 ///|
 fn flow_reserve_back_edge_detour_row(
-  source_x : Int,
-  target_x : Int,
-  preferred_row_y : Int,
+  source_x : Int32,
+  target_x : Int32,
+  preferred_row_y : Int32,
   reservations : Array[AsciiBackEdgeRowReservation],
-) -> Int {
+) -> Int32 {
   let left = source_x.min(target_x)
   let right = source_x.max(target_x)
   let step = 2
@@ -662,12 +662,12 @@ fn flow_reserve_back_edge_detour_row(
 ///|
 fn flow_non_state_label_anchor_from_points(
   points : Array[Point],
-  source_x : Int,
-  source_y : Int,
-  target_x : Int,
-  target_y : Int,
-  label_len : Int,
-) -> (Int, Int) {
+  source_x : Int32,
+  source_y : Int32,
+  target_x : Int32,
+  target_y : Int32,
+  label_len : Int32,
+) -> (Int32, Int32) {
   if points.length() < 2 {
     return flow_non_state_label_anchor(
       source_x, source_y, target_x, target_y, label_len,
@@ -707,17 +707,17 @@ fn flow_non_state_label_anchor_from_points(
 ///|
 fn flow_non_state_edge_label_placement(
   points : Array[Point],
-  source_x : Int,
-  source_y : Int,
-  target_x : Int,
-  target_y : Int,
+  source_x : Int32,
+  source_y : Int32,
+  target_x : Int32,
+  target_y : Int32,
   label : String,
   boxes : Array[AsciiFlowNodeBox],
   existing_labels : Array[AsciiEdgeLabelPlacement],
 ) -> AsciiEdgeLabelPlacement {
   fn overlaps_existing_labels(
-    label_x : Int,
-    label_y : Int,
+    label_x : Int32,
+    label_y : Int32,
     label : String,
     existing_labels : Array[AsciiEdgeLabelPlacement],
   ) -> Bool {
@@ -812,10 +812,10 @@ fn flow_non_state_edge_label_placement(
 ///|
 fn flow_draw_box(
   canvas : Array[Array[String]],
-  left : Int,
-  top : Int,
-  width : Int,
-  height : Int,
+  left : Int32,
+  top : Int32,
+  width : Int32,
+  height : Int32,
   label : String,
   use_ascii : Bool,
 ) -> Unit {
@@ -855,10 +855,10 @@ fn flow_draw_box(
 ///|
 fn flow_draw_frame(
   canvas : Array[Array[String]],
-  left : Int,
-  top : Int,
-  width : Int,
-  height : Int,
+  left : Int32,
+  top : Int32,
+  width : Int32,
+  height : Int32,
   use_ascii : Bool,
 ) -> Unit {
   let h = if use_ascii { "-" } else { "─" }
@@ -889,9 +889,9 @@ fn flow_draw_frame(
 ///|
 fn flow_draw_hline(
   canvas : Array[Array[String]],
-  x1 : Int,
-  x2 : Int,
-  y : Int,
+  x1 : Int32,
+  x2 : Int32,
+  y : Int32,
   ch : String,
 ) -> Unit {
   let start = x1.min(x2)
@@ -905,9 +905,9 @@ fn flow_draw_hline(
 ///|
 fn flow_draw_vline(
   canvas : Array[Array[String]],
-  x : Int,
-  y1 : Int,
-  y2 : Int,
+  x : Int32,
+  y1 : Int32,
+  y2 : Int32,
   ch : String,
 ) -> Unit {
   let start = y1.min(y2)
@@ -1143,8 +1143,8 @@ fn flow_refine_unicode_side_tees(canvas : Array[Array[String]]) -> Unit {
 ///|
 fn flow_put_unicode_border_join(
   canvas : Array[Array[String]],
-  x : Int,
-  y : Int,
+  x : Int32,
+  y : Int32,
 ) -> Unit {
   if y < 0 || y >= canvas.length() {
     return
@@ -1173,8 +1173,8 @@ fn flow_put_unicode_border_join(
 ///|
 fn flow_put_line_canvas(
   canvas : Array[Array[String]],
-  x : Int,
-  y : Int,
+  x : Int32,
+  y : Int32,
   ch : String,
   use_ascii : Bool,
   horizontal : Bool,
@@ -1244,10 +1244,10 @@ fn flow_put_line_canvas(
 ///|
 fn flow_draw_segment(
   canvas : Array[Array[String]],
-  x1 : Int,
-  y1 : Int,
-  x2 : Int,
-  y2 : Int,
+  x1 : Int32,
+  y1 : Int32,
+  x2 : Int32,
+  y2 : Int32,
   h_char : String,
   v_char : String,
 ) -> Unit {
@@ -1340,10 +1340,10 @@ fn flow_mark_blocked_cells_for_nodes(
 ///|
 fn flow_draw_routed_segment(
   canvas : Array[Array[String]],
-  x1 : Int,
-  y1 : Int,
-  x2 : Int,
-  y2 : Int,
+  x1 : Int32,
+  y1 : Int32,
+  x2 : Int32,
+  y2 : Int32,
   h_char : String,
   v_char : String,
   blocked : Map[String, Bool],
@@ -1381,10 +1381,10 @@ fn flow_draw_routed_segment(
 ///|
 fn map_flow_group(
   group : PositionedGroup,
-  scale_x : Int,
-  scale_y : Int,
-  pad_x : Int,
-  pad_y : Int,
+  scale_x : Int32,
+  scale_y : Int32,
+  pad_x : Int32,
+  pad_y : Int32,
   state_composite_layout_mode : Bool,
 ) -> AsciiFlowGroupBox {
   let children : Array[AsciiFlowGroupBox] = []
@@ -1417,12 +1417,12 @@ fn map_flow_group(
 }
 
 ///|
-fn flow_group_right(group : AsciiFlowGroupBox) -> Int {
+fn flow_group_right(group : AsciiFlowGroupBox) -> Int32 {
   group.left + group.width - 1
 }
 
 ///|
-fn flow_group_bottom(group : AsciiFlowGroupBox) -> Int {
+fn flow_group_bottom(group : AsciiFlowGroupBox) -> Int32 {
   group.top + group.height - 1
 }
 
@@ -1520,7 +1520,7 @@ fn state_mapped_groups_from_nodes(
 }
 
 ///|
-fn flow_group_max_x(group : AsciiFlowGroupBox) -> Int {
+fn flow_group_max_x(group : AsciiFlowGroupBox) -> Int32 {
   let mut max_x = group.left + group.width
   for child in group.children {
     max_x = max_x.max(flow_group_max_x(child))
@@ -1529,7 +1529,7 @@ fn flow_group_max_x(group : AsciiFlowGroupBox) -> Int {
 }
 
 ///|
-fn flow_group_max_y(group : AsciiFlowGroupBox) -> Int {
+fn flow_group_max_y(group : AsciiFlowGroupBox) -> Int32 {
   let mut max_y = group.top + group.height
   for child in group.children {
     max_y = max_y.max(flow_group_max_y(child))
@@ -1540,8 +1540,8 @@ fn flow_group_max_y(group : AsciiFlowGroupBox) -> Int {
 ///|
 fn shift_ascii_flow_group(
   group : AsciiFlowGroupBox,
-  shift_x : Int,
-  shift_y : Int,
+  shift_x : Int32,
+  shift_y : Int32,
 ) -> AsciiFlowGroupBox {
   let children : Array[AsciiFlowGroupBox] = []
   for child in group.children {
@@ -1561,7 +1561,7 @@ fn shift_ascii_flow_group(
 ///|
 fn grow_ascii_flow_group_bottom(
   group : AsciiFlowGroupBox,
-  grow_height : Int,
+  grow_height : Int32,
 ) -> AsciiFlowGroupBox {
   {
     id: group.id,
@@ -1595,13 +1595,13 @@ fn flow_collect_node_top_level_group_ids(
 ///|
 fn flow_lr_top_level_group_shifts(
   groups : Array[AsciiFlowGroupBox],
-) -> Map[String, Int] {
-  let shifts : Map[String, Int] = Map([])
+) -> Map[String, Int32] {
+  let shifts : Map[String, Int32] = Map([])
   if groups.length() <= 1 {
     return shifts
   }
 
-  let ordered_indexes : Array[Int] = []
+  let ordered_indexes : Array[Int32] = []
   for i in 0..<groups.length() {
     ordered_indexes.push(i)
   }
@@ -1936,7 +1936,7 @@ fn flow_draw_group_labels(
 }
 
 ///|
-fn leading_spaces(line : String) -> Int {
+fn leading_spaces(line : String) -> Int32 {
   let mut idx = 0
   while idx < line.length() {
     let ch = line[idx:idx + 1].to_owned()
@@ -2045,10 +2045,10 @@ fn state_ascii_node_label(node : MermaidNode) -> String {
 
 ///|
 fn state_ascii_line_width(
-  column_width : Map[Int, Int],
-  start_x : Int,
-  end_x : Int,
-) -> Int {
+  column_width : Map[Int32, Int32],
+  start_x : Int32,
+  end_x : Int32,
+) -> Int32 {
   let start = start_x.min(end_x)
   let ending = start_x.max(end_x)
   let mut total = 0
@@ -2060,10 +2060,10 @@ fn state_ascii_line_width(
 
 ///|
 fn state_ascii_grid_to_draw(
-  column_width : Map[Int, Int],
-  row_height : Map[Int, Int],
+  column_width : Map[Int32, Int32],
+  row_height : Map[Int32, Int32],
   coord : AsciiGridCoord,
-) -> (Int, Int) {
+) -> (Int32, Int32) {
   let mut x = 0
   for column in 0..<coord.x {
     x = x + option_int_or(column_width.get(column), 0)
@@ -2079,10 +2079,10 @@ fn state_ascii_grid_to_draw(
 
 ///|
 fn state_ascii_corner_char(
-  prev_dx : Int,
-  prev_dy : Int,
-  next_dx : Int,
-  next_dy : Int,
+  prev_dx : Int32,
+  prev_dy : Int32,
+  next_dx : Int32,
+  next_dy : Int32,
   use_ascii : Bool,
 ) -> String {
   if use_ascii {
@@ -2108,10 +2108,10 @@ fn state_ascii_corner_char(
 ///|
 fn state_ascii_draw_segment_simple(
   canvas : Array[Array[String]],
-  x1 : Int,
-  y1 : Int,
-  x2 : Int,
-  y2 : Int,
+  x1 : Int32,
+  y1 : Int32,
+  x2 : Int32,
+  y2 : Int32,
   h_char : String,
   v_char : String,
 ) -> Unit {
@@ -2158,8 +2158,8 @@ fn render_ascii_state_flat_grid(
     return ""
   }
 
-  let column_width : Map[Int, Int] = Map([])
-  let row_height : Map[Int, Int] = Map([])
+  let column_width : Map[Int32, Int32] = Map([])
+  let row_height : Map[Int32, Int32] = Map([])
   for node in nodes_in_order {
     match grid_positions.get(node.id) {
       Some((coord_x, coord_y)) => {
@@ -2666,7 +2666,7 @@ fn render_ascii_flow_subgraphs(
   }
   let scale_x = if state_layout_mode { 9 } else { flow_scale_x() }
   let scale_y = if state_layout_mode { 10 } else { flow_scale_y() }
-  let column_width_by_x : Map[Int, Int] = Map([])
+  let column_width_by_x : Map[Int32, Int32] = Map([])
   for node in positioned.nodes {
     let label = flow_node_label(node)
     let column_key = if !state_layout_mode && flow_direction_horizontal {
@@ -2704,7 +2704,7 @@ fn render_ascii_flow_subgraphs(
   }
 
   let mapped_nodes : Array[AsciiFlowNodeBox] = []
-  let node_column_key_by_id : Map[String, Int] = Map([])
+  let node_column_key_by_id : Map[String, Int32] = Map([])
   let flow_horizontal_subgraph_node_inset = if !state_layout_mode &&
     flow_with_subgraphs &&
     flow_direction_horizontal {
@@ -2780,8 +2780,8 @@ fn render_ascii_flow_subgraphs(
     }
     mapped_nodes.push(box)
   }
-  let flow_out_degree_by_source : Map[String, Int] = Map([])
-  let flow_in_degree_by_target : Map[String, Int] = Map([])
+  let flow_out_degree_by_source : Map[String, Int32] = Map([])
+  let flow_in_degree_by_target : Map[String, Int32] = Map([])
   if !state_layout_mode && flow_direction_horizontal && !flow_with_subgraphs {
     for edge in graph.edges {
       let source_current = option_int_or(
@@ -2797,7 +2797,7 @@ fn render_ascii_flow_subgraphs(
     }
   }
 
-  let horizontal_label_gap_by_pair : Map[String, Int] = Map([])
+  let horizontal_label_gap_by_pair : Map[String, Int32] = Map([])
   if !state_layout_mode && flow_direction_horizontal {
     for edge in graph.edges {
       match edge.label {
@@ -2879,7 +2879,7 @@ fn render_ascii_flow_subgraphs(
   }
 
   if !state_layout_mode {
-    let row_indexes_by_center_y : Map[Int, Array[Int]] = Map([])
+    let row_indexes_by_center_y : Map[Int32, Array[Int32]] = Map([])
     for i, node in mapped_nodes {
       let center_y = node.top + node.height / 2
       if !row_indexes_by_center_y.contains(center_y) {
@@ -2931,7 +2931,7 @@ fn render_ascii_flow_subgraphs(
   }
 
   if !state_layout_mode && flow_direction_horizontal {
-    let canonical_left_by_key : Map[Int, Int] = Map([])
+    let canonical_left_by_key : Map[Int32, Int32] = Map([])
     for node in mapped_nodes {
       let key = option_int_or(node_column_key_by_id.get(node.id), node.left)
       if !canonical_left_by_key.contains(key) {
@@ -3282,7 +3282,7 @@ fn render_ascii_flow_subgraphs(
   } else {
     mapped_groups
   }
-  let top_level_group_shift_by_id : Map[String, Int] = if !state_layout_mode &&
+  let top_level_group_shift_by_id : Map[String, Int32] = if !state_layout_mode &&
     flow_with_subgraphs &&
     flow_direction_horizontal {
     flow_lr_top_level_group_shifts(mapped_groups)
@@ -3376,7 +3376,7 @@ fn render_ascii_flow_subgraphs(
   } else {
     mapped_groups
   }
-  let post_compaction_group_shift_by_id : Map[String, Int] = if !state_layout_mode &&
+  let post_compaction_group_shift_by_id : Map[String, Int32] = if !state_layout_mode &&
     flow_with_subgraphs &&
     flow_direction_horizontal {
     flow_lr_top_level_group_shifts(mapped_groups)
@@ -3479,8 +3479,8 @@ fn render_ascii_flow_subgraphs(
   }
   let canvas_height = canvas.length()
   let canvas_width = if canvas_height == 0 { 0 } else { canvas[0].length() }
-  let non_state_out_degree_by_source : Map[String, Int] = Map([])
-  let non_state_in_degree_by_target : Map[String, Int] = Map([])
+  let non_state_out_degree_by_source : Map[String, Int32] = Map([])
+  let non_state_in_degree_by_target : Map[String, Int32] = Map([])
   let non_state_has_labeled_incoming_target : Map[String, Bool] = Map([])
   let non_state_targets_by_source : Map[String, Array[String]] = Map([])
   let non_state_back_edge_row_reservations : Array[AsciiBackEdgeRowReservation] = []

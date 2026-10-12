@@ -1,6 +1,6 @@
 ///|
 #cfg(target="native")
-fn parse_manifest_digit(ch : UInt16) -> Int {
+fn parse_manifest_digit(ch : UInt16) -> Int32 {
   match ch {
     '0' => 0
     '1' => 1
@@ -18,7 +18,7 @@ fn parse_manifest_digit(ch : UInt16) -> Int {
 
 ///|
 #cfg(target="native")
-fn parse_manifest_int(content : String, key : String) -> Int? {
+fn parse_manifest_int(content : String, key : String) -> Int32? {
   let marker = "\"\{key}\":"
   match content.find(marker) {
     Some(start) => {
@@ -27,7 +27,7 @@ fn parse_manifest_int(content : String, key : String) -> Int? {
         i += 1
       }
       let mut j = i
-      while j < content.length() && content[j] is ('0'..='9') {
+      while j < content.length() && content[j] is ('0'..<='9') {
         j += 1
       }
       if j == i {
