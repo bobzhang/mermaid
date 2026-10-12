@@ -1,8 +1,8 @@
 ///|
 priv struct DagreTraceKernel {
   nodes : Array[@model.MermaidNode]
-  rank_by_id : Map[String, Int]
-  max_rank : Int
+  rank_by_id : Map[String, Int32]
+  max_rank : Int32
   edges : Array[@model.MermaidEdge]
 }
 
@@ -80,9 +80,9 @@ fn bool_literal(value : Bool) -> String {
 
 ///|
 fn sorted_int_keys_for_barycenters(
-  entries : Map[Int, Map[String, String]],
-) -> Array[Int] {
-  let keys : Array[Int] = []
+  entries : Map[Int32, Map[String, String]],
+) -> Array[Int32] {
+  let keys : Array[Int32] = []
   for rank, _ in entries {
     keys.push(rank)
   }

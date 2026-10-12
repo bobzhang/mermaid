@@ -1,6 +1,6 @@
 ///|
 /// Returns `value` when present, otherwise `fallback`.
-pub fn option_int_or(value : Int?, fallback : Int) -> Int {
+pub fn option_int_or(value : Int32?, fallback : Int32) -> Int32 {
   match value {
     Some(found) => found
     None => fallback
@@ -12,8 +12,8 @@ pub fn option_int_or(value : Int?, fallback : Int) -> Int {
 pub fn resolve_horizontal_state_node_spacing(
   options : RenderOptions,
   nodes_in_order : Array[MermaidNode],
-  fallback : Int,
-) -> Int {
+  fallback : Int32,
+) -> Int32 {
   match options.node_spacing {
     Some(_) => fallback
     None => {
@@ -29,7 +29,7 @@ pub fn resolve_horizontal_state_node_spacing(
 
 ///|
 /// Estimates rendered node width and height for layout planning.
-fn node_dimensions(node : MermaidNode) -> (Int, Int) {
+fn node_dimensions(node : MermaidNode) -> (Int32, Int32) {
   let label_lines = node.label
     .split("\n")
     .map(part => part.to_owned())
@@ -91,8 +91,8 @@ pub fn reorder_nodes_for_flow_layout(
   nodes_in_order : Array[MermaidNode],
   edges : Array[MermaidEdge],
 ) -> Array[MermaidNode] {
-  let indegree_by_id : Map[String, Int] = Map([])
-  let outdegree_by_id : Map[String, Int] = Map([])
+  let indegree_by_id : Map[String, Int32] = Map([])
+  let outdegree_by_id : Map[String, Int32] = Map([])
   for node in nodes_in_order {
     indegree_by_id[node.id] = 0
     outdegree_by_id[node.id] = 0

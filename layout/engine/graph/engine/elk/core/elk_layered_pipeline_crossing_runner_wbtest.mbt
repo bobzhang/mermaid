@@ -185,7 +185,7 @@ test "elk layered crossing local refinement does not worsen trial objective" {
 
 ///|
 test "elk layered optimized-rank helper matches explicit crossing phase run" {
-  let base_rank_node_ids_by_rank : Map[Int, Array[String]] = {
+  let base_rank_node_ids_by_rank : Map[Int32, Array[String]] = {
     0: ["A", "B"],
     1: ["C", "D"],
   }
@@ -202,13 +202,13 @@ test "elk layered optimized-rank helper matches explicit crossing phase run" {
     "C": [],
     "D": [],
   }
-  let order_index_by_node_id : Map[String, Int] = {
+  let order_index_by_node_id : Map[String, Int32] = {
     "A": 0,
     "B": 1,
     "C": 2,
     "D": 3,
   }
-  let rank_by_node_id : Map[String, Int] = { "A": 0, "B": 0, "C": 1, "D": 1 }
+  let rank_by_node_id : Map[String, Int32] = { "A": 0, "B": 0, "C": 1, "D": 1 }
   let via_helper = build_optimized_rank_node_ids_by_rank_with_plan_and_trace(
     default_crossing_execution_plan(LayerSweepWithLocalRefinement),
     base_rank_node_ids_by_rank,
@@ -354,7 +354,7 @@ test "elk layered crossing trial count normalization keeps at least one trial" {
 
 ///|
 test "elk layered crossing trial seed builder is deterministic and rank-local" {
-  let base_rank_node_ids_by_rank : Map[Int, Array[String]] = {
+  let base_rank_node_ids_by_rank : Map[Int32, Array[String]] = {
     0: ["A", "B", "C", "G"],
     1: ["D", "E", "F", "H"],
   }

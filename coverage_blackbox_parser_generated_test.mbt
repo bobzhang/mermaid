@@ -1,5 +1,5 @@
 ///|
-fn parser_generated_ascii_option(seed : Int) -> @model.AsciiRenderOptions {
+fn parser_generated_ascii_option(seed : Int32) -> @model.AsciiRenderOptions {
   {
     use_ascii: seed % 2 == 0,
     padding_x: [0, 1, 2, 5][seed % 4],
@@ -9,7 +9,7 @@ fn parser_generated_ascii_option(seed : Int) -> @model.AsciiRenderOptions {
 }
 
 ///|
-fn parser_generated_svg_option(seed : Int) -> @model.RenderOptions {
+fn parser_generated_svg_option(seed : Int32) -> @model.RenderOptions {
   {
     bg: None,
     fg: None,
@@ -28,7 +28,7 @@ fn parser_generated_svg_option(seed : Int) -> @model.RenderOptions {
 }
 
 ///|
-fn parser_generated_exercise(input : String, seed : Int) -> Bool {
+fn parser_generated_exercise(input : String, seed : Int32) -> Bool {
   try @parser_header_core.parse_mermaid(input) catch {
     _ => false
   } noraise {
@@ -60,7 +60,7 @@ fn parser_generated_exercise(input : String, seed : Int) -> Bool {
 fn parser_generated_flowchart(
   direction : String,
   operator : String,
-  seed : Int,
+  seed : Int32,
 ) -> String {
   let tag = "f\{seed % 11}"
   (
@@ -79,7 +79,7 @@ fn parser_generated_flowchart(
 fn parser_generated_sequence(
   operator : String,
   block_type : String,
-  seed : Int,
+  seed : Int32,
 ) -> String {
   let tag = "s\{seed % 17}"
   (
@@ -102,7 +102,7 @@ fn parser_generated_sequence(
 fn parser_generated_class(
   relation1 : String,
   relation2 : String,
-  seed : Int,
+  seed : Int32,
 ) -> String {
   let tag = "c\{seed % 13}"
   (
@@ -128,7 +128,7 @@ fn parser_generated_class(
 fn parser_generated_er(
   relation1 : String,
   relation2 : String,
-  seed : Int,
+  seed : Int32,
 ) -> String {
   let tag = "e\{seed % 13}"
   (

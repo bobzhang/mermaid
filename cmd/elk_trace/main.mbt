@@ -60,8 +60,8 @@ priv struct ElkTraceCliArgs {
   case_name : String?
   source : String?
   sweep_kernel : @layout_engine_graph_engine_elk_core.ElkLayeredRankTraceSweepKernel
-  trial_count_override : Int?
-  sweep_pass_count_override : Int?
+  trial_count_override : Int32?
+  sweep_pass_count_override : Int32?
   trial_continuation_policy_override : @layout_engine_graph_engine_elk_core.ElkLayeredRankTraceTrialContinuationPolicy?
   local_refinement_profile_override : @layout_engine_graph_engine_elk_core.ElkLayeredRankTraceLocalRefinementProfile?
   seed_candidate_source_policy_override : @layout_engine_graph_engine_elk_core.ElkLayeredRankTraceSeedCandidateSourcePolicy?
@@ -93,7 +93,7 @@ fn decode_sweep_kernel_arg(
 }
 
 ///|
-fn decode_positive_int_arg(raw : String) -> Int? {
+fn decode_positive_int_arg(raw : String) -> Int32? {
   let normalized = raw.trim().to_owned()
   if normalized == "" {
     return None
@@ -167,8 +167,8 @@ fn parse_cli_args(args : Array[String]) -> ElkTraceCliArgs? {
   let mut case_name : String? = None
   let mut source : String? = None
   let mut sweep_kernel : @layout_engine_graph_engine_elk_core.ElkLayeredRankTraceSweepKernel = Default
-  let mut trial_count_override : Int? = None
-  let mut sweep_pass_count_override : Int? = None
+  let mut trial_count_override : Int32? = None
+  let mut sweep_pass_count_override : Int32? = None
   let mut trial_continuation_policy_override : @layout_engine_graph_engine_elk_core.ElkLayeredRankTraceTrialContinuationPolicy? = None
   let mut local_refinement_profile_override : @layout_engine_graph_engine_elk_core.ElkLayeredRankTraceLocalRefinementProfile? = None
   let mut seed_candidate_source_policy_override : @layout_engine_graph_engine_elk_core.ElkLayeredRankTraceSeedCandidateSourcePolicy? = None
@@ -527,8 +527,8 @@ fn kernel_by_case_name(case_name : String) -> ElkTraceKernel? {
 fn dump_graph_trace(
   graph : @model.MermaidGraph,
   sweep_kernel : @layout_engine_graph_engine_elk_core.ElkLayeredRankTraceSweepKernel,
-  trial_count_override : Int?,
-  sweep_pass_count_override : Int?,
+  trial_count_override : Int32?,
+  sweep_pass_count_override : Int32?,
   trial_continuation_policy_override : @layout_engine_graph_engine_elk_core.ElkLayeredRankTraceTrialContinuationPolicy?,
   local_refinement_profile_override : @layout_engine_graph_engine_elk_core.ElkLayeredRankTraceLocalRefinementProfile?,
   seed_candidate_source_policy_override : @layout_engine_graph_engine_elk_core.ElkLayeredRankTraceSeedCandidateSourcePolicy?,
@@ -562,8 +562,8 @@ fn dump_graph_trace(
 ///|
 fn dump_graph_kernel_comparison(
   graph : @model.MermaidGraph,
-  trial_count_override : Int?,
-  sweep_pass_count_override : Int?,
+  trial_count_override : Int32?,
+  sweep_pass_count_override : Int32?,
   trial_continuation_policy_override : @layout_engine_graph_engine_elk_core.ElkLayeredRankTraceTrialContinuationPolicy?,
   local_refinement_profile_override : @layout_engine_graph_engine_elk_core.ElkLayeredRankTraceLocalRefinementProfile?,
   seed_candidate_source_policy_override : @layout_engine_graph_engine_elk_core.ElkLayeredRankTraceSeedCandidateSourcePolicy?,
@@ -605,8 +605,8 @@ fn dump_graph_kernel_comparison(
 fn dump_case_trace(
   case_name : String,
   sweep_kernel : @layout_engine_graph_engine_elk_core.ElkLayeredRankTraceSweepKernel,
-  trial_count_override : Int?,
-  sweep_pass_count_override : Int?,
+  trial_count_override : Int32?,
+  sweep_pass_count_override : Int32?,
   trial_continuation_policy_override : @layout_engine_graph_engine_elk_core.ElkLayeredRankTraceTrialContinuationPolicy?,
   local_refinement_profile_override : @layout_engine_graph_engine_elk_core.ElkLayeredRankTraceLocalRefinementProfile?,
   seed_candidate_source_policy_override : @layout_engine_graph_engine_elk_core.ElkLayeredRankTraceSeedCandidateSourcePolicy?,
@@ -631,8 +631,8 @@ fn dump_case_trace(
 ///|
 fn dump_case_kernel_comparison(
   case_name : String,
-  trial_count_override : Int?,
-  sweep_pass_count_override : Int?,
+  trial_count_override : Int32?,
+  sweep_pass_count_override : Int32?,
   trial_continuation_policy_override : @layout_engine_graph_engine_elk_core.ElkLayeredRankTraceTrialContinuationPolicy?,
   local_refinement_profile_override : @layout_engine_graph_engine_elk_core.ElkLayeredRankTraceLocalRefinementProfile?,
   seed_candidate_source_policy_override : @layout_engine_graph_engine_elk_core.ElkLayeredRankTraceSeedCandidateSourcePolicy?,
@@ -657,8 +657,8 @@ fn dump_case_kernel_comparison(
 fn dump_source_trace(
   source : String,
   sweep_kernel : @layout_engine_graph_engine_elk_core.ElkLayeredRankTraceSweepKernel,
-  trial_count_override : Int?,
-  sweep_pass_count_override : Int?,
+  trial_count_override : Int32?,
+  sweep_pass_count_override : Int32?,
   trial_continuation_policy_override : @layout_engine_graph_engine_elk_core.ElkLayeredRankTraceTrialContinuationPolicy?,
   local_refinement_profile_override : @layout_engine_graph_engine_elk_core.ElkLayeredRankTraceLocalRefinementProfile?,
   seed_candidate_source_policy_override : @layout_engine_graph_engine_elk_core.ElkLayeredRankTraceSeedCandidateSourcePolicy?,
@@ -680,8 +680,8 @@ fn dump_source_trace(
 ///|
 fn dump_source_kernel_comparison(
   source : String,
-  trial_count_override : Int?,
-  sweep_pass_count_override : Int?,
+  trial_count_override : Int32?,
+  sweep_pass_count_override : Int32?,
   trial_continuation_policy_override : @layout_engine_graph_engine_elk_core.ElkLayeredRankTraceTrialContinuationPolicy?,
   local_refinement_profile_override : @layout_engine_graph_engine_elk_core.ElkLayeredRankTraceLocalRefinementProfile?,
   seed_candidate_source_policy_override : @layout_engine_graph_engine_elk_core.ElkLayeredRankTraceSeedCandidateSourcePolicy?,

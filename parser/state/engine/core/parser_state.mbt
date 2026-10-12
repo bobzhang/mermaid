@@ -3,9 +3,9 @@ fn parse_state_token(
   token : String,
   is_source : Bool,
   nodes : Map[String, MermaidNode],
-  start_counter : Int,
-  end_counter : Int,
-) -> (String, Int, Int) {
+  start_counter : Int32,
+  end_counter : Int32,
+) -> (String, Int32, Int32) {
   let trimmed = token.trim().to_owned()
   if trimmed == "[*]" {
     if is_source {

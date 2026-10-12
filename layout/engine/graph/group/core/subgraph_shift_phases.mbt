@@ -3,10 +3,10 @@ fn shift_top_level_flow_subgraphs_with_gap(
   graph : MermaidGraph,
   horizontal : Bool,
   reverse : Bool,
-  layer_spacing : Int,
+  layer_spacing : Int32,
   positioned_nodes : Array[PositionedNode],
   positioned_groups : Array[PositionedGroup],
-  positioned_index_by_id : Map[String, Int],
+  positioned_index_by_id : Map[String, Int32],
   positioned_by_id : Map[String, PositionedNode],
 ) -> Unit {
   if reverse || graph.subgraphs.length() < 2 {
@@ -16,10 +16,10 @@ fn shift_top_level_flow_subgraphs_with_gap(
     return
   }
 
-  let member_indexes_by_root : Array[Array[Int]] = []
+  let member_indexes_by_root : Array[Array[Int32]] = []
   for subgraph in graph.subgraphs {
     let seen_node_ids : Map[String, Bool] = Map([])
-    let indexes : Array[Int] = []
+    let indexes : Array[Int32] = []
     collect_subgraph_node_indexes(
       subgraph, positioned_index_by_id, seen_node_ids, indexes,
     )
@@ -98,22 +98,22 @@ fn shift_top_level_flow_subgraphs_with_gap(
 ///|
 fn shift_top_level_state_subgraphs_right(
   graph : MermaidGraph,
-  node_spacing : Int,
-  layer_spacing : Int,
+  node_spacing : Int32,
+  layer_spacing : Int32,
   positioned_nodes : Array[PositionedNode],
   positioned_groups : Array[PositionedGroup],
-  positioned_index_by_id : Map[String, Int],
+  positioned_index_by_id : Map[String, Int32],
   positioned_by_id : Map[String, PositionedNode],
 ) -> Unit {
   if graph.subgraphs.length() == 0 {
     return
   }
 
-  let member_indexes_by_root : Array[Array[Int]] = []
+  let member_indexes_by_root : Array[Array[Int32]] = []
   let subgraph_node_ids : Map[String, Bool] = Map([])
   for subgraph in graph.subgraphs {
     let seen_node_ids : Map[String, Bool] = Map([])
-    let indexes : Array[Int] = []
+    let indexes : Array[Int32] = []
     collect_subgraph_node_indexes(
       subgraph, positioned_index_by_id, seen_node_ids, indexes,
     )
@@ -123,7 +123,7 @@ fn shift_top_level_state_subgraphs_right(
     member_indexes_by_root.push(indexes)
   }
 
-  let outside_indexes : Array[Int] = []
+  let outside_indexes : Array[Int32] = []
   for i, node in positioned_nodes {
     if !subgraph_node_ids.contains(node.id) {
       outside_indexes.push(i)

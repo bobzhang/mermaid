@@ -153,23 +153,23 @@ fn crossing_local_refinement_kernels_tag(
 
 ///|
 priv struct ElkLayeredCrossingOptimizationConfig {
-  preserve_order_node_threshold : Int
-  preserve_order_edge_threshold : Int
-  sweep_pass_count : Int
+  preserve_order_node_threshold : Int32
+  preserve_order_edge_threshold : Int32
+  sweep_pass_count : Int32
   greedy_switch_enabled : Bool
-  greedy_switch_pass_limit : Int
-  trial_count : Int
-  trial_random_seed : Int
+  greedy_switch_pass_limit : Int32
+  trial_count : Int32
+  trial_random_seed : Int32
   neighbor_mean_barycenter_perturbation : Bool
   neighbor_mean_barycenter_perturbation_amount : Double
   trial_continuation_policy : ElkLayeredCrossingTrialContinuationPolicy
   seed_candidate_source_policy : ElkLayeredRankSeedCandidateSourcePolicy
   trial_model_order_inversion_influence : Double
-  swap_refine_node_limit : Int
-  swap_refine_edge_limit : Int
-  permutation_refine_node_limit : Int
-  permutation_refine_edge_limit : Int
-  permutation_rank_size_limit : Int
+  swap_refine_node_limit : Int32
+  swap_refine_edge_limit : Int32
+  permutation_refine_node_limit : Int32
+  permutation_refine_edge_limit : Int32
+  permutation_rank_size_limit : Int32
 }
 
 ///|

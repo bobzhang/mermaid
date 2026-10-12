@@ -3,8 +3,8 @@ fn wb_rank_crossings_between(
   left_rank_node_ids : Array[String],
   right_rank_node_ids : Array[String],
   successors_by_node_id : Map[String, Array[String]],
-) -> Int {
-  let right_position_by_node_id : Map[String, Int] = Map([])
+) -> Int32 {
+  let right_position_by_node_id : Map[String, Int32] = Map([])
   let in_right_rank : Map[String, Bool] = Map([])
   for position, node_id in right_rank_node_ids {
     right_position_by_node_id[node_id] = position
@@ -57,9 +57,9 @@ fn wb_rank_crossings_between(
 
 ///|
 fn wb_collect_rank_order_edge_segments(
-  rank_node_ids_by_rank : Map[Int, Array[String]],
-  max_rank : Int,
-  rank_by_node_id : Map[String, Int],
+  rank_node_ids_by_rank : Map[Int32, Array[String]],
+  max_rank : Int32,
+  rank_by_node_id : Map[String, Int32],
   successors_by_node_id : Map[String, Array[String]],
 ) -> Array[RankOrderEdgeSegment] {
   let rank_position_by_node_id = rank_position_by_node_id(
@@ -72,11 +72,11 @@ fn wb_collect_rank_order_edge_segments(
 
 ///|
 fn wb_global_crossing_count(
-  rank_node_ids_by_rank : Map[Int, Array[String]],
-  max_rank : Int,
-  rank_by_node_id : Map[String, Int],
+  rank_node_ids_by_rank : Map[Int32, Array[String]],
+  max_rank : Int32,
+  rank_by_node_id : Map[String, Int32],
   successors_by_node_id : Map[String, Array[String]],
-) -> Int {
+) -> Int32 {
   global_crossing_count_from_segments(
     wb_collect_rank_order_edge_segments(
       rank_node_ids_by_rank, max_rank, rank_by_node_id, successors_by_node_id,
@@ -86,13 +86,13 @@ fn wb_global_crossing_count(
 
 ///|
 fn wb_optimize_rank_order_with_sweep_passes_and_kernel(
-  rank_node_ids_by_rank : Map[Int, Array[String]],
-  max_rank : Int,
+  rank_node_ids_by_rank : Map[Int32, Array[String]],
+  max_rank : Int32,
   predecessors_by_node_id : Map[String, Array[String]],
   successors_by_node_id : Map[String, Array[String]],
-  order_index_by_node_id : Map[String, Int],
+  order_index_by_node_id : Map[String, Int32],
   preserve_current_order_on_tie : Bool,
-  sweep_pass_count : Int,
+  sweep_pass_count : Int32,
   sweep_kernel : ElkLayeredCrossingSweepKernel,
 ) -> Unit {
   wb_optimize_rank_order_with_sweep_passes_from_input_and_start_direction(
@@ -119,7 +119,7 @@ fn wb_optimize_rank_order_with_sweep_passes_and_kernel(
 ///|
 fn wb_optimize_rank_order_with_sweep_passes_from_input_and_start_direction(
   sweep_input : ElkLayeredCrossingSweepInput,
-  sweep_pass_count : Int,
+  sweep_pass_count : Int32,
   sweep_kernel : ElkLayeredCrossingSweepKernel,
   initial_forward_sweep : Bool,
 ) -> Unit {
@@ -167,7 +167,7 @@ test "elk layered in-layer successor constraints keep current order when constra
 
 ///|
 test "elk layered default sweep kernel matches explicit kernel" {
-  let seed_rank_node_ids_by_rank : Map[Int, Array[String]] = {
+  let seed_rank_node_ids_by_rank : Map[Int32, Array[String]] = {
     0: ["A", "B"],
     1: ["C", "D"],
     2: ["E", "F"],
@@ -188,7 +188,7 @@ test "elk layered default sweep kernel matches explicit kernel" {
     "E": [],
     "F": [],
   }
-  let order_index_by_node_id : Map[String, Int] = {
+  let order_index_by_node_id : Map[String, Int32] = {
     "A": 0,
     "B": 1,
     "C": 2,
@@ -223,7 +223,7 @@ test "elk layered default sweep kernel matches explicit kernel" {
 
 ///|
 test "elk layered edge-slot sweep kernel is deterministic and preserves rank composition" {
-  let seed_rank_node_ids_by_rank : Map[Int, Array[String]] = {
+  let seed_rank_node_ids_by_rank : Map[Int32, Array[String]] = {
     0: ["A", "B"],
     1: ["C", "D"],
     2: ["E", "F"],
@@ -244,7 +244,7 @@ test "elk layered edge-slot sweep kernel is deterministic and preserves rank com
     "E": [],
     "F": [],
   }
-  let order_index_by_node_id : Map[String, Int] = {
+  let order_index_by_node_id : Map[String, Int32] = {
     "A": 0,
     "B": 1,
     "C": 2,
@@ -292,7 +292,7 @@ test "elk layered edge-slot sweep kernel is deterministic and preserves rank com
 
 ///|
 test "elk layered sweep input entry matches explicit parameter entry" {
-  let seed_rank_node_ids_by_rank : Map[Int, Array[String]] = {
+  let seed_rank_node_ids_by_rank : Map[Int32, Array[String]] = {
     0: ["A", "B"],
     1: ["C", "D"],
     2: ["E", "F"],
@@ -313,7 +313,7 @@ test "elk layered sweep input entry matches explicit parameter entry" {
     "E": [],
     "F": [],
   }
-  let order_index_by_node_id : Map[String, Int] = {
+  let order_index_by_node_id : Map[String, Int32] = {
     "A": 0,
     "B": 1,
     "C": 2,
@@ -359,12 +359,12 @@ test "elk layered sweep input entry matches explicit parameter entry" {
 
 ///|
 test "elk layered local refinement wrapper matches explicit kernel sequence" {
-  let seed_rank_node_ids_by_rank : Map[Int, Array[String]] = {
+  let seed_rank_node_ids_by_rank : Map[Int32, Array[String]] = {
     0: ["A", "B"],
     1: ["C", "D"],
     2: ["E", "F"],
   }
-  let rank_by_node_id : Map[String, Int] = {
+  let rank_by_node_id : Map[String, Int32] = {
     "A": 0,
     "B": 0,
     "C": 1,
@@ -546,8 +546,8 @@ test "elk layered order optimization keeps multi-rank sweep neighbor state coher
 test "elk layered neighbor sort keeps current rank order on full ties" {
   let node_ids = ["B", "A"]
   let neighbor_by_node_id : Map[String, Array[String]] = Map([])
-  let rank_position_by_node_id : Map[String, Int] = { "B": 0, "A": 1 }
-  let order_index_by_node_id : Map[String, Int] = { "A": 0, "B": 1 }
+  let rank_position_by_node_id : Map[String, Int32] = { "B": 0, "A": 1 }
+  let order_index_by_node_id : Map[String, Int32] = { "A": 0, "B": 1 }
   let _ = sort_rank_nodes_by_neighbors(
     node_ids,
     neighbor_by_node_id,
@@ -571,14 +571,14 @@ test "elk layered neighbor sort propagates in-layer edges through recursive bary
     "B": ["X"],
     "C": ["Y"],
   }
-  let rank_position_by_node_id : Map[String, Int] = {
+  let rank_position_by_node_id : Map[String, Int32] = {
     "A": 0,
     "C": 1,
     "B": 2,
     "X": 0,
     "Y": 1,
   }
-  let order_index_by_node_id : Map[String, Int] = { "A": 0, "C": 1, "B": 2 }
+  let order_index_by_node_id : Map[String, Int32] = { "A": 0, "C": 1, "B": 2 }
   let _ = sort_rank_nodes_by_neighbors(
     node_ids,
     neighbor_by_node_id,
@@ -602,8 +602,8 @@ test "elk layered neighbor sort fills unknown barycenters in pre-ordered mode" {
     "B": [],
     "C": ["Y"],
   }
-  let rank_position_by_node_id : Map[String, Int] = { "X": 0, "Y": 2 }
-  let order_index_by_node_id : Map[String, Int] = { "A": 0, "B": 1, "C": 2 }
+  let rank_position_by_node_id : Map[String, Int32] = { "X": 0, "Y": 2 }
+  let order_index_by_node_id : Map[String, Int32] = { "A": 0, "B": 1, "C": 2 }
   let _ = sort_rank_nodes_by_neighbors(
     node_ids,
     neighbor_by_node_id,
@@ -623,8 +623,8 @@ test "elk layered neighbor sort fills unknown barycenters in pre-ordered mode" {
 test "elk layered neighbor sort applies forster constraints with barycenter groups" {
   let node_ids = ["C", "B", "A"]
   let neighbor_by_node_id : Map[String, Array[String]] = Map([])
-  let rank_position_by_node_id : Map[String, Int] = { "C": 0, "B": 1, "A": 2 }
-  let order_index_by_node_id : Map[String, Int] = { "A": 0, "B": 1, "C": 2 }
+  let rank_position_by_node_id : Map[String, Int32] = { "C": 0, "B": 1, "A": 2 }
+  let order_index_by_node_id : Map[String, Int32] = { "A": 0, "B": 1, "C": 2 }
   let changed = sort_rank_nodes_by_neighbors(
     node_ids,
     neighbor_by_node_id,
@@ -670,8 +670,8 @@ test "elk layered neighbor-mean perturbation keeps tie-break deterministic by se
     "B": ["X", "Y"],
     "C": ["X", "Y"],
   }
-  let rank_position_by_node_id : Map[String, Int] = { "X": 0, "Y": 1 }
-  let order_index_by_node_id : Map[String, Int] = { "A": 0, "B": 1, "C": 2 }
+  let rank_position_by_node_id : Map[String, Int32] = { "X": 0, "Y": 1 }
+  let order_index_by_node_id : Map[String, Int32] = { "A": 0, "B": 1, "C": 2 }
   let run_one = ["A", "B", "C"]
   let run_two = ["A", "B", "C"]
   let _ = sort_rank_nodes_by_neighbors(

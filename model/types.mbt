@@ -107,7 +107,7 @@ pub(all) enum SequenceBlockType {
 ///|
 /// Divider row metadata (`else` / `and`) inside a sequence block.
 pub(all) struct SequenceBlockDivider {
-  index : Int
+  index : Int32
   label : String
 }
 
@@ -116,8 +116,8 @@ pub(all) struct SequenceBlockDivider {
 pub(all) struct SequenceBlock {
   block_type : SequenceBlockType
   label : String
-  start_index : Int
-  end_index : Int
+  start_index : Int32
+  end_index : Int32
   dividers : Array[SequenceBlockDivider]
 }
 
@@ -135,7 +135,7 @@ pub(all) struct SequenceNote {
   actor_ids : Array[String]
   text : String
   position : SequenceNotePosition
-  after_index : Int
+  after_index : Int32
 }
 
 ///|
@@ -143,7 +143,7 @@ pub(all) struct SequenceNote {
 pub(all) struct SequenceActivationCommand {
   actor_id : String
   activate : Bool
-  after_index : Int
+  after_index : Int32
 }
 
 ///|
@@ -211,9 +211,9 @@ pub(all) struct RenderOptions {
   surface : String?
   border : String?
   font : String?
-  padding : Int?
-  node_spacing : Int?
-  layer_spacing : Int?
+  padding : Int32?
+  node_spacing : Int32?
+  layer_spacing : Int32?
   transparent : Bool?
   layout_engine : LayoutEngine?
 }
@@ -242,9 +242,9 @@ pub fn RenderOptions::default() -> RenderOptions {
 /// ASCII/Unicode render configuration for terminal output.
 pub(all) struct AsciiRenderOptions {
   use_ascii : Bool
-  padding_x : Int
-  padding_y : Int
-  box_border_padding : Int
+  padding_x : Int32
+  padding_y : Int32
+  box_border_padding : Int32
 }
 
 ///|
@@ -256,8 +256,8 @@ pub fn AsciiRenderOptions::default() -> AsciiRenderOptions {
 ///|
 /// 2D point used by positioned edge routes.
 pub(all) struct Point {
-  x : Int
-  y : Int
+  x : Int32
+  y : Int32
 }
 
 ///|
@@ -266,10 +266,10 @@ pub(all) struct PositionedNode {
   id : String
   label : String
   shape : NodeShape
-  x : Int
-  y : Int
-  width : Int
-  height : Int
+  x : Int32
+  y : Int32
+  width : Int32
+  height : Int32
   inline_style : Map[String, String]?
 }
 
@@ -292,10 +292,10 @@ pub(all) struct PositionedEdge {
 pub(all) struct PositionedGroup {
   id : String
   label : String
-  x : Int
-  y : Int
-  width : Int
-  height : Int
+  x : Int32
+  y : Int32
+  width : Int32
+  height : Int32
   children : Array[PositionedGroup]
 }
 
@@ -303,25 +303,25 @@ pub(all) struct PositionedGroup {
 /// Sequence lifeline geometry for SVG/ASCII sequence renderers.
 pub(all) struct PositionedSequenceLifeline {
   actor_id : String
-  x : Int
-  top_y : Int
-  bottom_y : Int
+  x : Int32
+  top_y : Int32
+  bottom_y : Int32
 }
 
 ///|
 /// Sequence activation bar geometry.
 pub(all) struct PositionedSequenceActivation {
   actor_id : String
-  x : Int
-  top_y : Int
-  bottom_y : Int
-  width : Int
+  x : Int32
+  top_y : Int32
+  bottom_y : Int32
+  width : Int32
 }
 
 ///|
 /// Positioned divider label row inside a sequence block.
 pub(all) struct PositionedSequenceBlockDivider {
-  y : Int
+  y : Int32
   label : String
 }
 
@@ -330,10 +330,10 @@ pub(all) struct PositionedSequenceBlockDivider {
 pub(all) struct PositionedSequenceBlock {
   block_type : SequenceBlockType
   label : String
-  x : Int
-  y : Int
-  width : Int
-  height : Int
+  x : Int32
+  y : Int32
+  width : Int32
+  height : Int32
   dividers : Array[PositionedSequenceBlockDivider]
 }
 
@@ -341,17 +341,17 @@ pub(all) struct PositionedSequenceBlock {
 /// Positioned sequence note box.
 pub(all) struct PositionedSequenceNote {
   text : String
-  x : Int
-  y : Int
-  width : Int
-  height : Int
+  x : Int32
+  y : Int32
+  width : Int32
+  height : Int32
 }
 
 ///|
 /// Full positioned scene graph consumed by SVG and ASCII renderers.
 pub(all) struct PositionedGraph {
-  width : Int
-  height : Int
+  width : Int32
+  height : Int32
   nodes : Array[PositionedNode]
   edges : Array[PositionedEdge]
   groups : Array[PositionedGroup]

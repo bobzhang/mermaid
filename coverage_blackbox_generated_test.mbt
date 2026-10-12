@@ -1,5 +1,5 @@
 ///|
-fn generated_ascii_option(seed : Int) -> @model.AsciiRenderOptions {
+fn generated_ascii_option(seed : Int32) -> @model.AsciiRenderOptions {
   let use_ascii = seed % 2 == 0
   let padding_x = [0, 1, 2, 5][seed % 4]
   let padding_y = [0, 1, 2, 5][seed / 2 % 4]
@@ -8,7 +8,7 @@ fn generated_ascii_option(seed : Int) -> @model.AsciiRenderOptions {
 }
 
 ///|
-fn generated_svg_option(seed : Int) -> @model.RenderOptions {
+fn generated_svg_option(seed : Int32) -> @model.RenderOptions {
   let padding = [Some(0), Some(2), Some(8), Some(16)][seed % 4]
   let node_spacing = [Some(2), Some(8), Some(16), None][seed / 2 % 4]
   let layer_spacing = [Some(2), Some(8), Some(16), None][seed / 3 % 4]
@@ -32,7 +32,7 @@ fn generated_svg_option(seed : Int) -> @model.RenderOptions {
 }
 
 ///|
-fn generated_render_attempt(input : String, seed : Int) -> (Bool, Bool) {
+fn generated_render_attempt(input : String, seed : Int32) -> (Bool, Bool) {
   let ascii_ok = try {
     let ascii = @beautiful_mermaid.render_mermaid_ascii(
       input,
@@ -59,7 +59,7 @@ fn generated_render_attempt(input : String, seed : Int) -> (Bool, Bool) {
 fn generated_flowchart(
   direction : String,
   operator : String,
-  seed : Int,
+  seed : Int32,
 ) -> String {
   let label = "L\{seed % 5}"
   (
@@ -75,7 +75,7 @@ fn generated_flowchart(
 }
 
 ///|
-fn generated_state(direction : String, seed : Int) -> String {
+fn generated_state(direction : String, seed : Int32) -> String {
   let tag = "t\{seed % 7}"
   (
     $|stateDiagram-v2
@@ -94,7 +94,7 @@ fn generated_state(direction : String, seed : Int) -> String {
 fn generated_sequence(
   operator1 : String,
   operator2 : String,
-  seed : Int,
+  seed : Int32,
 ) -> String {
   let tag = "m\{seed % 9}"
   (
@@ -114,7 +114,7 @@ fn generated_sequence(
 fn generated_class(
   operator : String,
   reverse_operator : String,
-  seed : Int,
+  seed : Int32,
 ) -> String {
   let tag = "R\{seed % 5}"
   (
@@ -137,7 +137,7 @@ fn generated_class(
 }
 
 ///|
-fn generated_er(operator1 : String, operator2 : String, seed : Int) -> String {
+fn generated_er(operator1 : String, operator2 : String, seed : Int32) -> String {
   let tag = "E\{seed % 6}"
   (
     $|erDiagram

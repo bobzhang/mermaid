@@ -2,45 +2,45 @@
 
 ///|
 priv struct ElkLayeredCrossingPhaseResult {
-  post_sweep_rank_node_ids_by_rank : Map[Int, Array[String]]
-  optimized_rank_node_ids_by_rank : Map[Int, Array[String]]
+  post_sweep_rank_node_ids_by_rank : Map[Int32, Array[String]]
+  optimized_rank_node_ids_by_rank : Map[Int32, Array[String]]
   post_sweep_objective : ElkLayeredCrossingObjective
   optimized_objective : ElkLayeredCrossingObjective
-  selected_trial_index : Int
+  selected_trial_index : Int32
   trial_summaries : Array[ElkLayeredCrossingTrialSummary]
 }
 
 ///|
 priv struct ElkLayeredCrossingExecutionState {
-  post_sweep_rank_node_ids_by_rank : Map[Int, Array[String]]
-  post_refinement_rank_node_ids_by_rank : Map[Int, Array[String]]
+  post_sweep_rank_node_ids_by_rank : Map[Int32, Array[String]]
+  post_refinement_rank_node_ids_by_rank : Map[Int32, Array[String]]
   sweep_pass_summaries : Array[ElkLayeredCrossingSweepPassSummary]
 }
 
 ///|
 priv struct ElkLayeredCrossingSweepPassSummary {
-  pass_index : Int
+  pass_index : Int32
   sweep_direction : String
   changed : Bool
   objective : ElkLayeredCrossingObjective
-  rank_node_ids_by_rank : Map[Int, Array[String]]
+  rank_node_ids_by_rank : Map[Int32, Array[String]]
 }
 
 ///|
 priv struct ElkLayeredCrossingTrialSummary {
-  trial_index : Int
+  trial_index : Int32
   seed_kind : String
   initial_sweep_direction : String
   sweep_pass_summaries : Array[ElkLayeredCrossingSweepPassSummary]
   post_sweep_objective : ElkLayeredCrossingObjective
   optimized_objective : ElkLayeredCrossingObjective
-  model_order_inversion_score : Int
+  model_order_inversion_score : Int32
 }
 
 ///|
 priv struct ElkLayeredCrossingExecutionTrace {
   execution_state : ElkLayeredCrossingExecutionState
-  selected_trial_index : Int
+  selected_trial_index : Int32
   trial_summaries : Array[ElkLayeredCrossingTrialSummary]
 }
 
@@ -56,7 +56,7 @@ fn build_crossing_objective_context_from_phase_input(
 }
 
 ///|
-fn normalized_crossing_trial_count(trial_count : Int) -> Int {
+fn normalized_crossing_trial_count(trial_count : Int32) -> Int32 {
   if trial_count <= 0 {
     1
   } else {
@@ -65,12 +65,12 @@ fn normalized_crossing_trial_count(trial_count : Int) -> Int {
 }
 
 ///|
-fn crossing_trial_initial_forward_sweep(trial_index : Int) -> Bool {
+fn crossing_trial_initial_forward_sweep(trial_index : Int32) -> Bool {
   trial_index % 2 == 0
 }
 
 ///|
-fn crossing_trial_uses_initial_order_seed(trial_index : Int) -> Bool {
+fn crossing_trial_uses_initial_order_seed(trial_index : Int32) -> Bool {
   // Align with upstream layered crossing runs:
   // - trial 0: initial input order + forward sweep
   // - trial 1: initial input order + backward sweep
@@ -79,7 +79,7 @@ fn crossing_trial_uses_initial_order_seed(trial_index : Int) -> Bool {
 }
 
 ///|
-fn crossing_trial_seed_kind_tag(trial_index : Int) -> String {
+fn crossing_trial_seed_kind_tag(trial_index : Int32) -> String {
   if crossing_trial_uses_initial_order_seed(trial_index) {
     "initial-order"
   } else {
@@ -121,7 +121,7 @@ fn randomize_node_ids_for_crossing_trial(
     return
   }
   let random_key_by_node_id : Map[String, Double] = Map([])
-  let initial_rank_position_by_node_id : Map[String, Int] = Map([])
+  let initial_rank_position_by_node_id : Map[String, Int32] = Map([])
   for rank_position, node_id in node_ids {
     initial_rank_position_by_node_id[node_id] = rank_position
     random_key_by_node_id[node_id] = next_crossing_trial_random_double(
@@ -150,12 +150,12 @@ fn randomize_node_ids_for_crossing_trial(
 
 ///|
 fn build_crossing_trial_seed_rank_node_ids_by_rank_with_random_state(
-  input_rank_node_ids_by_rank : Map[Int, Array[String]],
-  max_rank : Int,
-  trial_index : Int,
+  input_rank_node_ids_by_rank : Map[Int32, Array[String]],
+  max_rank : Int32,
+  trial_index : Int32,
   initial_forward_sweep : Bool,
   trial_random_state_by_key : Map[String, UInt64],
-) -> Map[Int, Array[String]] {
+) -> Map[Int32, Array[String]] {
   let seed_rank_node_ids_by_rank = clone_rank_node_ids_by_rank(
     input_rank_node_ids_by_rank, max_rank,
   )
@@ -240,7 +240,7 @@ fn crossing_objective_is_better(
 ///|
 fn crossing_weighted_trial_score(
   objective : ElkLayeredCrossingObjective,
-  model_order_inversion_score : Int,
+  model_order_inversion_score : Int32,
   model_order_inversion_influence : Double,
 ) -> Double {
   objective.layered_crossings.to_double() +
@@ -270,7 +270,7 @@ fn execute_crossing_phase_once_with_plan_and_seed(
   input : ElkLayeredCrossingPhaseInput,
   plan : ElkLayeredCrossingExecutionPlan,
   components : ElkLayeredCrossingComponentBundle,
-  seed_rank_node_ids_by_rank : Map[Int, Array[String]],
+  seed_rank_node_ids_by_rank : Map[Int32, Array[String]],
   initial_forward_sweep : Bool,
   neighbor_mean_random_state_by_key : Map[String, UInt64],
 ) -> ElkLayeredCrossingExecutionState {
@@ -626,14 +626,14 @@ fn execute_crossing_phase_with_plan_with_trial_trace(
 ///|
 fn build_optimized_rank_node_ids_by_rank_with_plan_and_trace(
   plan : ElkLayeredCrossingExecutionPlan,
-  base_rank_node_ids_by_rank : Map[Int, Array[String]],
-  max_rank : Int,
+  base_rank_node_ids_by_rank : Map[Int32, Array[String]],
+  max_rank : Int32,
   predecessors_by_node_id : Map[String, Array[String]],
   successors_by_node_id : Map[String, Array[String]],
-  order_index_by_node_id : Map[String, Int],
-  rank_by_node_id : Map[String, Int],
-  node_count : Int,
-  edge_count : Int,
+  order_index_by_node_id : Map[String, Int32],
+  rank_by_node_id : Map[String, Int32],
+  node_count : Int32,
+  edge_count : Int32,
 ) -> ElkLayeredCrossingPhaseResult {
   run_crossing_phase_with_plan(
     build_crossing_phase_input(

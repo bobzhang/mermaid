@@ -94,7 +94,7 @@ fn nfa_segment_orientation(
   a : @model.Point,
   b : @model.Point,
   c : @model.Point,
-) -> Int {
+) -> Int32 {
   (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x)
 }
 

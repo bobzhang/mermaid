@@ -57,7 +57,7 @@ fn make_svg_test_edge(points : Array[Point]) -> PositionedEdge {
 }
 
 ///|
-fn count_occurrences(text : String, pattern : String) -> Int {
+fn count_occurrences(text : String, pattern : String) -> Int32 {
   let pattern_len = pattern.length()
   if pattern_len == 0 {
     return 0

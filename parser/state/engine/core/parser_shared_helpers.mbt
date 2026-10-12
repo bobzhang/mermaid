@@ -9,14 +9,14 @@ priv struct EdgeOp {
 ///|
 priv struct FoundEdgeOp {
   op : EdgeOp
-  index : Int
+  index : Int32
 }
 
 ///|
 fn find_first_operator_indices(
   line : String,
   operator_symbols : Array[String],
-) -> (Int, Int)? {
+) -> (Int32, Int32)? {
   for i in 0..<operator_symbols.length() {
     match line.find(operator_symbols[i]) {
       Some(index) => return Some((i, index))

@@ -33,7 +33,7 @@ fn resolve_inline_style(
 }
 
 ///|
-fn rank_pair_key(left_rank : Int, right_rank : Int) -> String {
+fn rank_pair_key(left_rank : Int32, right_rank : Int32) -> String {
   if left_rank <= right_rank {
     "\{left_rank}->\{right_rank}"
   } else {
@@ -42,7 +42,7 @@ fn rank_pair_key(left_rank : Int, right_rank : Int) -> String {
 }
 
 ///|
-fn edge_label_major_extent(label : String, horizontal : Bool) -> Int {
+fn edge_label_major_extent(label : String, horizontal : Bool) -> Int32 {
   let lines = label.split("\n").map(line => line.to_owned()).to_array()
   let mut longest_line = 0
   for line in lines {
@@ -61,10 +61,10 @@ fn build_rank_pair_label_major_gap(
   use_subgraph_redirects : Bool,
   subgraph_entry_by_id : Map[String, String],
   subgraph_exit_by_id : Map[String, String],
-  rank_by_node_id : Map[String, Int],
+  rank_by_node_id : Map[String, Int32],
   horizontal : Bool,
-) -> Map[String, Int] {
-  let rank_pair_label_major_gap : Map[String, Int] = Map([])
+) -> Map[String, Int32] {
+  let rank_pair_label_major_gap : Map[String, Int32] = Map([])
   for edge in graph.edges {
     let source_id = resolve_edge_endpoint_id(
       edge.source,
@@ -101,11 +101,11 @@ fn build_rank_pair_label_major_gap(
 
 ///|
 fn rank_pair_major_step(
-  left_rank : Int,
-  right_rank : Int,
-  base_major_gap : Int,
-  rank_pair_label_major_gap : Map[String, Int],
-) -> Int {
+  left_rank : Int32,
+  right_rank : Int32,
+  base_major_gap : Int32,
+  rank_pair_label_major_gap : Map[String, Int32],
+) -> Int32 {
   let label_clearance = option_int_or(
     rank_pair_label_major_gap.get(rank_pair_key(left_rank, right_rank)),
     0,
@@ -122,13 +122,13 @@ fn rank_pair_major_step(
 
 ///|
 fn build_rank_major_extent_by_rank(
-  rank_node_ids_by_rank : Map[Int, Array[String]],
-  max_rank : Int,
-  width_by_node_id : Map[String, Int],
-  height_by_node_id : Map[String, Int],
+  rank_node_ids_by_rank : Map[Int32, Array[String]],
+  max_rank : Int32,
+  width_by_node_id : Map[String, Int32],
+  height_by_node_id : Map[String, Int32],
   horizontal : Bool,
-) -> Map[Int, Int] {
-  let rank_major_extent_by_rank : Map[Int, Int] = Map([])
+) -> Map[Int32, Int32] {
+  let rank_major_extent_by_rank : Map[Int32, Int32] = Map([])
   for rank in 0..<=max_rank {
     let mut extent = 70
     match rank_node_ids_by_rank.get(rank) {
@@ -152,14 +152,14 @@ fn build_rank_major_extent_by_rank(
 
 ///|
 fn build_major_center_by_rank(
-  max_rank : Int,
-  rank_major_extent_by_rank : Map[Int, Int],
+  max_rank : Int32,
+  rank_major_extent_by_rank : Map[Int32, Int32],
   reverse : Bool,
-  padding : Int,
-  base_major_gap : Int,
-  rank_pair_label_major_gap : Map[String, Int],
-) -> Map[Int, Int] {
-  let major_center_by_rank : Map[Int, Int] = Map([])
+  padding : Int32,
+  base_major_gap : Int32,
+  rank_pair_label_major_gap : Map[String, Int32],
+) -> Map[Int32, Int32] {
+  let major_center_by_rank : Map[Int32, Int32] = Map([])
   let first_rank = if reverse { max_rank } else { 0 }
   let first_rank_extent = option_int_or(
     rank_major_extent_by_rank.get(first_rank),
@@ -195,9 +195,9 @@ fn build_major_center_by_rank(
 fn major_node_extent(
   node_id : String,
   horizontal : Bool,
-  width_by_node_id : Map[String, Int],
-  height_by_node_id : Map[String, Int],
-) -> Int {
+  width_by_node_id : Map[String, Int32],
+  height_by_node_id : Map[String, Int32],
+) -> Int32 {
   if horizontal {
     option_int_or(width_by_node_id.get(node_id), 70)
   } else {
@@ -209,8 +209,8 @@ fn major_node_extent(
 fn major_direction_sign(
   source_id : String,
   target_id : String,
-  baseline_major_coord_by_node_id : Map[String, Int],
-) -> Int {
+  baseline_major_coord_by_node_id : Map[String, Int32],
+) -> Int32 {
   let source_major = option_int_or(
     baseline_major_coord_by_node_id.get(source_id),
     0,
@@ -230,13 +230,13 @@ fn major_direction_sign(
 fn major_edge_min_step(
   source_id : String,
   target_id : String,
-  rank_by_node_id : Map[String, Int],
-  baseline_major_coord_by_node_id : Map[String, Int],
-  base_major_gap : Int,
+  rank_by_node_id : Map[String, Int32],
+  baseline_major_coord_by_node_id : Map[String, Int32],
+  base_major_gap : Int32,
   horizontal : Bool,
-  width_by_node_id : Map[String, Int],
-  height_by_node_id : Map[String, Int],
-) -> Int {
+  width_by_node_id : Map[String, Int32],
+  height_by_node_id : Map[String, Int32],
+) -> Int32 {
   let source_rank = option_int_or(rank_by_node_id.get(source_id), 0)
   let target_rank = option_int_or(
     rank_by_node_id.get(target_id),
@@ -275,8 +275,8 @@ fn major_edge_min_step(
 ///|
 fn sorted_neighbor_ids_by_minor(
   neighbor_ids : Array[String],
-  minor_coord_by_node_id : Map[String, Int],
-  baseline_major_coord_by_node_id : Map[String, Int],
+  minor_coord_by_node_id : Map[String, Int32],
+  baseline_major_coord_by_node_id : Map[String, Int32],
 ) -> Array[String] {
   let sorted = neighbor_ids.copy()
   sorted.sort_by((left, right) => {
@@ -305,11 +305,11 @@ fn sorted_neighbor_ids_by_minor(
 
 ///|
 fn build_baseline_major_coord_by_node_id(
-  rank_node_ids_by_rank : Map[Int, Array[String]],
-  max_rank : Int,
-  major_center_by_rank : Map[Int, Int],
-) -> Map[String, Int] {
-  let baseline_major_coord_by_node_id : Map[String, Int] = Map([])
+  rank_node_ids_by_rank : Map[Int32, Array[String]],
+  max_rank : Int32,
+  major_center_by_rank : Map[Int32, Int32],
+) -> Map[String, Int32] {
+  let baseline_major_coord_by_node_id : Map[String, Int32] = Map([])
   for rank in 0..<=max_rank {
     let major_center = option_int_or(major_center_by_rank.get(rank), 0)
     match rank_node_ids_by_rank.get(rank) {
@@ -325,14 +325,14 @@ fn build_baseline_major_coord_by_node_id(
 
 ///|
 fn enforce_major_edge_constraints(
-  major_coord_by_node_id : Map[String, Int],
-  baseline_major_coord_by_node_id : Map[String, Int],
-  rank_by_node_id : Map[String, Int],
+  major_coord_by_node_id : Map[String, Int32],
+  baseline_major_coord_by_node_id : Map[String, Int32],
+  rank_by_node_id : Map[String, Int32],
   successors_by_node_id : Map[String, Array[String]],
-  base_major_gap : Int,
+  base_major_gap : Int32,
   horizontal : Bool,
-  width_by_node_id : Map[String, Int],
-  height_by_node_id : Map[String, Int],
+  width_by_node_id : Map[String, Int32],
+  height_by_node_id : Map[String, Int32],
 ) -> Unit {
   let mut pass = 0
   while pass < 4 {
@@ -376,18 +376,18 @@ fn enforce_major_edge_constraints(
 ///|
 priv struct MajorRelaxCandidate {
   name : String
-  major_coord_by_node_id : Map[String, Int]
-  violation_score : Int
-  span : Int
-  baseline_delta_sum : Int
-  objective : Int
+  major_coord_by_node_id : Map[String, Int32]
+  violation_score : Int32
+  span : Int32
+  baseline_delta_sum : Int32
+  objective : Int32
 }
 
 ///|
 fn clone_major_coord_by_node_id(
-  major_coord_by_node_id : Map[String, Int],
-) -> Map[String, Int] {
-  let cloned : Map[String, Int] = Map([])
+  major_coord_by_node_id : Map[String, Int32],
+) -> Map[String, Int32] {
+  let cloned : Map[String, Int32] = Map([])
   for node_id, major_coord in major_coord_by_node_id {
     cloned[node_id] = major_coord
   }
@@ -396,7 +396,7 @@ fn clone_major_coord_by_node_id(
 
 ///|
 fn sorted_node_ids_from_coord_map(
-  major_coord_by_node_id : Map[String, Int],
+  major_coord_by_node_id : Map[String, Int32],
 ) -> Array[String] {
   let node_ids : Array[String] = []
   for node_id, _ in major_coord_by_node_id {
@@ -409,8 +409,8 @@ fn sorted_node_ids_from_coord_map(
 ///|
 fn major_coord_span(
   node_ids : Array[String],
-  major_coord_by_node_id : Map[String, Int],
-) -> Int {
+  major_coord_by_node_id : Map[String, Int32],
+) -> Int32 {
   let mut has_major = false
   let mut min_major = 0
   let mut max_major = 0
@@ -439,9 +439,9 @@ fn major_coord_span(
 ///|
 fn major_baseline_delta_sum(
   node_ids : Array[String],
-  major_coord_by_node_id : Map[String, Int],
-  baseline_major_coord_by_node_id : Map[String, Int],
-) -> Int {
+  major_coord_by_node_id : Map[String, Int32],
+  baseline_major_coord_by_node_id : Map[String, Int32],
+) -> Int32 {
   let mut delta_sum = 0
   for node_id in node_ids {
     let baseline_major = option_int_or(
@@ -463,15 +463,15 @@ fn major_baseline_delta_sum(
 
 ///|
 fn major_constraint_violation_score(
-  major_coord_by_node_id : Map[String, Int],
-  baseline_major_coord_by_node_id : Map[String, Int],
-  rank_by_node_id : Map[String, Int],
+  major_coord_by_node_id : Map[String, Int32],
+  baseline_major_coord_by_node_id : Map[String, Int32],
+  rank_by_node_id : Map[String, Int32],
   successors_by_node_id : Map[String, Array[String]],
-  base_major_gap : Int,
+  base_major_gap : Int32,
   horizontal : Bool,
-  width_by_node_id : Map[String, Int],
-  height_by_node_id : Map[String, Int],
-) -> Int {
+  width_by_node_id : Map[String, Int32],
+  height_by_node_id : Map[String, Int32],
+) -> Int32 {
   let mut violation_score = 0
   for source_id, target_ids in successors_by_node_id {
     let source_major = option_int_or(
@@ -505,15 +505,15 @@ fn major_constraint_violation_score(
 ///|
 fn build_major_relax_candidate(
   name : String,
-  major_coord_by_node_id : Map[String, Int],
+  major_coord_by_node_id : Map[String, Int32],
   node_ids : Array[String],
-  baseline_major_coord_by_node_id : Map[String, Int],
-  rank_by_node_id : Map[String, Int],
+  baseline_major_coord_by_node_id : Map[String, Int32],
+  rank_by_node_id : Map[String, Int32],
   successors_by_node_id : Map[String, Array[String]],
-  base_major_gap : Int,
+  base_major_gap : Int32,
   horizontal : Bool,
-  width_by_node_id : Map[String, Int],
-  height_by_node_id : Map[String, Int],
+  width_by_node_id : Map[String, Int32],
+  height_by_node_id : Map[String, Int32],
 ) -> MajorRelaxCandidate {
   let violation_score = major_constraint_violation_score(
     major_coord_by_node_id, baseline_major_coord_by_node_id, rank_by_node_id, successors_by_node_id,
@@ -565,18 +565,18 @@ fn better_major_relax_candidate(
 
 ///|
 fn relax_major_forward_sweep(
-  rank_node_ids_by_rank : Map[Int, Array[String]],
-  max_rank : Int,
+  rank_node_ids_by_rank : Map[Int32, Array[String]],
+  max_rank : Int32,
   reverse : Bool,
-  major_coord_by_node_id : Map[String, Int],
-  rank_by_node_id : Map[String, Int],
+  major_coord_by_node_id : Map[String, Int32],
+  rank_by_node_id : Map[String, Int32],
   predecessors_by_node_id : Map[String, Array[String]],
-  baseline_major_coord_by_node_id : Map[String, Int],
-  minor_coord_by_node_id : Map[String, Int],
-  base_major_gap : Int,
+  baseline_major_coord_by_node_id : Map[String, Int32],
+  minor_coord_by_node_id : Map[String, Int32],
+  base_major_gap : Int32,
   horizontal : Bool,
-  width_by_node_id : Map[String, Int],
-  height_by_node_id : Map[String, Int],
+  width_by_node_id : Map[String, Int32],
+  height_by_node_id : Map[String, Int32],
 ) -> Unit {
   for displayed_rank in 0..<=max_rank {
     let rank = if reverse { max_rank - displayed_rank } else { displayed_rank }
@@ -635,18 +635,18 @@ fn relax_major_forward_sweep(
 
 ///|
 fn relax_major_backward_sweep(
-  rank_node_ids_by_rank : Map[Int, Array[String]],
-  max_rank : Int,
+  rank_node_ids_by_rank : Map[Int32, Array[String]],
+  max_rank : Int32,
   reverse : Bool,
-  major_coord_by_node_id : Map[String, Int],
-  rank_by_node_id : Map[String, Int],
+  major_coord_by_node_id : Map[String, Int32],
+  rank_by_node_id : Map[String, Int32],
   successors_by_node_id : Map[String, Array[String]],
-  baseline_major_coord_by_node_id : Map[String, Int],
-  minor_coord_by_node_id : Map[String, Int],
-  base_major_gap : Int,
+  baseline_major_coord_by_node_id : Map[String, Int32],
+  minor_coord_by_node_id : Map[String, Int32],
+  base_major_gap : Int32,
   horizontal : Bool,
-  width_by_node_id : Map[String, Int],
-  height_by_node_id : Map[String, Int],
+  width_by_node_id : Map[String, Int32],
+  height_by_node_id : Map[String, Int32],
 ) -> Unit {
   for displayed_rank in 0..<=max_rank {
     let rank = if reverse { displayed_rank } else { max_rank - displayed_rank }
@@ -705,15 +705,15 @@ fn relax_major_backward_sweep(
 
 ///|
 fn finalize_major_coord_by_node_id(
-  major_coord_by_node_id : Map[String, Int],
-  baseline_major_coord_by_node_id : Map[String, Int],
-  rank_by_node_id : Map[String, Int],
+  major_coord_by_node_id : Map[String, Int32],
+  baseline_major_coord_by_node_id : Map[String, Int32],
+  rank_by_node_id : Map[String, Int32],
   successors_by_node_id : Map[String, Array[String]],
-  base_major_gap : Int,
+  base_major_gap : Int32,
   horizontal : Bool,
-  width_by_node_id : Map[String, Int],
-  height_by_node_id : Map[String, Int],
-) -> Map[String, Int] {
+  width_by_node_id : Map[String, Int32],
+  height_by_node_id : Map[String, Int32],
+) -> Map[String, Int32] {
   let node_ids = sorted_node_ids_from_coord_map(baseline_major_coord_by_node_id)
   if node_ids.length() == 0 {
     return major_coord_by_node_id
@@ -781,20 +781,20 @@ fn finalize_major_coord_by_node_id(
 
 ///|
 fn relax_major_coord_with_sweep_order(
-  rank_node_ids_by_rank : Map[Int, Array[String]],
-  max_rank : Int,
+  rank_node_ids_by_rank : Map[Int32, Array[String]],
+  max_rank : Int32,
   reverse : Bool,
-  rank_by_node_id : Map[String, Int],
+  rank_by_node_id : Map[String, Int32],
   predecessors_by_node_id : Map[String, Array[String]],
   successors_by_node_id : Map[String, Array[String]],
-  baseline_major_coord_by_node_id : Map[String, Int],
-  minor_coord_by_node_id : Map[String, Int],
-  base_major_gap : Int,
+  baseline_major_coord_by_node_id : Map[String, Int32],
+  minor_coord_by_node_id : Map[String, Int32],
+  base_major_gap : Int32,
   horizontal : Bool,
-  width_by_node_id : Map[String, Int],
-  height_by_node_id : Map[String, Int],
+  width_by_node_id : Map[String, Int32],
+  height_by_node_id : Map[String, Int32],
   forward_first : Bool,
-) -> Map[String, Int] {
+) -> Map[String, Int32] {
   let major_coord_by_node_id = clone_major_coord_by_node_id(
     baseline_major_coord_by_node_id,
   )
@@ -850,11 +850,11 @@ fn relax_major_coord_with_sweep_order(
 ///|
 fn average_major_coord_by_node_id(
   node_ids : Array[String],
-  left_major_coord_by_node_id : Map[String, Int],
-  right_major_coord_by_node_id : Map[String, Int],
-  baseline_major_coord_by_node_id : Map[String, Int],
-) -> Map[String, Int] {
-  let averaged : Map[String, Int] = Map([])
+  left_major_coord_by_node_id : Map[String, Int32],
+  right_major_coord_by_node_id : Map[String, Int32],
+  baseline_major_coord_by_node_id : Map[String, Int32],
+) -> Map[String, Int32] {
+  let averaged : Map[String, Int32] = Map([])
   for node_id in node_ids {
     let baseline_major = option_int_or(
       baseline_major_coord_by_node_id.get(node_id),
@@ -876,13 +876,13 @@ fn average_major_coord_by_node_id(
 ///|
 fn rank_major_anchor(
   node_ids : Array[String],
-  major_coord_by_node_id : Map[String, Int],
-  baseline_major_coord_by_node_id : Map[String, Int],
-) -> Int {
+  major_coord_by_node_id : Map[String, Int32],
+  baseline_major_coord_by_node_id : Map[String, Int32],
+) -> Int32 {
   if node_ids.length() == 0 {
     return 0
   }
-  let majors : Array[Int] = []
+  let majors : Array[Int32] = []
   for node_id in node_ids {
     let baseline_major = option_int_or(
       baseline_major_coord_by_node_id.get(node_id),
@@ -903,12 +903,12 @@ fn rank_major_anchor(
 
 ///|
 fn build_rank_major_coord_by_rank(
-  rank_node_ids_by_rank : Map[Int, Array[String]],
-  max_rank : Int,
-  major_coord_by_node_id : Map[String, Int],
-  baseline_major_coord_by_node_id : Map[String, Int],
-) -> Map[Int, Int] {
-  let rank_major_coord_by_rank : Map[Int, Int] = Map([])
+  rank_node_ids_by_rank : Map[Int32, Array[String]],
+  max_rank : Int32,
+  major_coord_by_node_id : Map[String, Int32],
+  baseline_major_coord_by_node_id : Map[String, Int32],
+) -> Map[Int32, Int32] {
+  let rank_major_coord_by_rank : Map[Int32, Int32] = Map([])
   for rank in 0..<=max_rank {
     match rank_node_ids_by_rank.get(rank) {
       Some(node_ids) =>
@@ -925,14 +925,14 @@ fn build_rank_major_coord_by_rank(
 
 ///|
 fn enforce_rank_major_edge_constraints(
-  rank_major_coord_by_rank : Map[Int, Int],
-  rank_by_node_id : Map[String, Int],
+  rank_major_coord_by_rank : Map[Int32, Int32],
+  rank_by_node_id : Map[String, Int32],
   successors_by_node_id : Map[String, Array[String]],
-  baseline_major_coord_by_node_id : Map[String, Int],
-  base_major_gap : Int,
+  baseline_major_coord_by_node_id : Map[String, Int32],
+  base_major_gap : Int32,
   horizontal : Bool,
-  width_by_node_id : Map[String, Int],
-  height_by_node_id : Map[String, Int],
+  width_by_node_id : Map[String, Int32],
+  height_by_node_id : Map[String, Int32],
 ) -> Unit {
   let mut pass = 0
   while pass < 4 {
@@ -983,10 +983,10 @@ fn enforce_rank_major_edge_constraints(
 
 ///|
 fn normalize_rank_major_coord_by_rank(
-  rank_node_ids_by_rank : Map[Int, Array[String]],
-  max_rank : Int,
-  rank_major_coord_by_rank : Map[Int, Int],
-  baseline_major_coord_by_node_id : Map[String, Int],
+  rank_node_ids_by_rank : Map[Int32, Array[String]],
+  max_rank : Int32,
+  rank_major_coord_by_rank : Map[Int32, Int32],
+  baseline_major_coord_by_node_id : Map[String, Int32],
 ) -> Unit {
   let mut has_rank = false
   let mut min_rank_major = 0
@@ -1033,12 +1033,12 @@ fn normalize_rank_major_coord_by_rank(
 
 ///|
 fn expand_rank_major_coord_to_nodes(
-  rank_node_ids_by_rank : Map[Int, Array[String]],
-  max_rank : Int,
-  rank_major_coord_by_rank : Map[Int, Int],
-  baseline_major_coord_by_node_id : Map[String, Int],
-) -> Map[String, Int] {
-  let major_coord_by_node_id : Map[String, Int] = Map([])
+  rank_node_ids_by_rank : Map[Int32, Array[String]],
+  max_rank : Int32,
+  rank_major_coord_by_rank : Map[Int32, Int32],
+  baseline_major_coord_by_node_id : Map[String, Int32],
+) -> Map[String, Int32] {
+  let major_coord_by_node_id : Map[String, Int32] = Map([])
   for rank in 0..<=max_rank {
     match rank_node_ids_by_rank.get(rank) {
       Some(node_ids) =>
@@ -1063,19 +1063,19 @@ fn expand_rank_major_coord_to_nodes(
 
 ///|
 fn relax_major_coord_by_node_id(
-  rank_node_ids_by_rank : Map[Int, Array[String]],
-  max_rank : Int,
+  rank_node_ids_by_rank : Map[Int32, Array[String]],
+  max_rank : Int32,
   reverse : Bool,
-  rank_by_node_id : Map[String, Int],
+  rank_by_node_id : Map[String, Int32],
   predecessors_by_node_id : Map[String, Array[String]],
   successors_by_node_id : Map[String, Array[String]],
-  baseline_major_coord_by_node_id : Map[String, Int],
-  minor_coord_by_node_id : Map[String, Int],
-  base_major_gap : Int,
+  baseline_major_coord_by_node_id : Map[String, Int32],
+  minor_coord_by_node_id : Map[String, Int32],
+  base_major_gap : Int32,
   horizontal : Bool,
-  width_by_node_id : Map[String, Int],
-  height_by_node_id : Map[String, Int],
-) -> Map[String, Int] {
+  width_by_node_id : Map[String, Int32],
+  height_by_node_id : Map[String, Int32],
+) -> Map[String, Int32] {
   let node_ids = sorted_node_ids_from_coord_map(baseline_major_coord_by_node_id)
   if node_ids.length() == 0 {
     return baseline_major_coord_by_node_id
@@ -1146,20 +1146,20 @@ fn relax_major_coord_by_node_id(
 ///|
 fn build_major_coord_by_strategy(
   strategy : ElkLayeredMajorPlacementStrategy,
-  rank_node_ids_by_rank : Map[Int, Array[String]],
-  max_rank : Int,
+  rank_node_ids_by_rank : Map[Int32, Array[String]],
+  max_rank : Int32,
   reverse : Bool,
-  rank_by_node_id : Map[String, Int],
+  rank_by_node_id : Map[String, Int32],
   predecessors_by_node_id : Map[String, Array[String]],
   successors_by_node_id : Map[String, Array[String]],
-  major_center_by_rank : Map[Int, Int],
-  minor_coord_by_node_id : Map[String, Int],
-  base_major_gap : Int,
+  major_center_by_rank : Map[Int32, Int32],
+  minor_coord_by_node_id : Map[String, Int32],
+  base_major_gap : Int32,
   has_labeled_edges : Bool,
   horizontal : Bool,
-  width_by_node_id : Map[String, Int],
-  height_by_node_id : Map[String, Int],
-) -> Map[String, Int] {
+  width_by_node_id : Map[String, Int32],
+  height_by_node_id : Map[String, Int32],
+) -> Map[String, Int32] {
   let baseline_major_coord_by_node_id = build_baseline_major_coord_by_node_id(
     rank_node_ids_by_rank, max_rank, major_center_by_rank,
   )
@@ -1183,8 +1183,8 @@ fn build_major_coord_by_strategy(
 
 ///|
 fn use_relaxed_major_compaction(
-  max_rank : Int,
-  rank_by_node_id : Map[String, Int],
+  max_rank : Int32,
+  rank_by_node_id : Map[String, Int32],
   successors_by_node_id : Map[String, Array[String]],
   has_labeled_edges : Bool,
 ) -> Bool {
@@ -1222,15 +1222,15 @@ fn use_relaxed_major_compaction(
 
 ///|
 fn build_axis_coords_by_node_id(
-  rank_node_ids_by_rank : Map[Int, Array[String]],
-  max_rank : Int,
-  major_coord_by_node_id : Map[String, Int],
-  minor_coord_by_node_id : Map[String, Int],
-  padding : Int,
+  rank_node_ids_by_rank : Map[Int32, Array[String]],
+  max_rank : Int32,
+  major_coord_by_node_id : Map[String, Int32],
+  minor_coord_by_node_id : Map[String, Int32],
+  padding : Int32,
   horizontal : Bool,
-) -> (Map[String, Int], Map[String, Int]) {
-  let x_by_node_id : Map[String, Int] = Map([])
-  let y_by_node_id : Map[String, Int] = Map([])
+) -> (Map[String, Int32], Map[String, Int32]) {
+  let x_by_node_id : Map[String, Int32] = Map([])
+  let y_by_node_id : Map[String, Int32] = Map([])
   for rank in 0..<=max_rank {
     match rank_node_ids_by_rank.get(rank) {
       Some(node_ids) =>
@@ -1261,11 +1261,11 @@ fn build_axis_coords_by_node_id(
 fn build_positioned_nodes_from_axis_coords(
   graph : MermaidGraph,
   nodes_in_order : Array[MermaidNode],
-  width_by_node_id : Map[String, Int],
-  height_by_node_id : Map[String, Int],
-  x_by_node_id : Map[String, Int],
-  y_by_node_id : Map[String, Int],
-  padding : Int,
+  width_by_node_id : Map[String, Int32],
+  height_by_node_id : Map[String, Int32],
+  x_by_node_id : Map[String, Int32],
+  y_by_node_id : Map[String, Int32],
+  padding : Int32,
 ) -> (Array[PositionedNode], Map[String, PositionedNode]) {
   let positioned_nodes : Array[PositionedNode] = []
   let positioned_by_id : Map[String, PositionedNode] = Map([])
@@ -1303,8 +1303,8 @@ fn build_node_horizontal_by_id(
 ///|
 fn positioned_nodes_layout_extent(
   positioned_nodes : Array[PositionedNode],
-  padding : Int,
-) -> (Int, Int) {
+  padding : Int32,
+) -> (Int32, Int32) {
   let mut max_right = padding
   let mut max_bottom = padding
   for node in positioned_nodes {
@@ -1317,11 +1317,11 @@ fn positioned_nodes_layout_extent(
 ///|
 fn finalize_elk_layered_positioned_graph(
   graph : MermaidGraph,
-  padding : Int,
+  padding : Int32,
   horizontal : Bool,
   reverse : Bool,
-  node_spacing : Int,
-  layer_spacing : Int,
+  node_spacing : Int32,
+  layer_spacing : Int32,
   use_subgraph_redirects : Bool,
   subgraph_exit_by_id : Map[String, String],
   subgraph_entry_by_id : Map[String, String],
@@ -1329,8 +1329,8 @@ fn finalize_elk_layered_positioned_graph(
   positioned_nodes : Array[PositionedNode],
   positioned_by_id : Map[String, PositionedNode],
   node_horizontal_by_id : Map[String, Bool],
-  max_right : Int,
-  max_bottom : Int,
+  max_right : Int32,
+  max_bottom : Int32,
 ) -> PositionedGraph {
   let positioned_index_by_id = positioned_index_by_node_id(positioned_nodes)
   // Keep ELK layered major-axis placement stable through finalize.

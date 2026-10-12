@@ -20,7 +20,7 @@ async fn unicode_mismatch_file(file_name : String) -> String? {
 
 ///|
 #cfg(target="native")
-async fn verify_unicode_chunk(chunk_index : Int, chunk_count : Int) -> Unit {
+async fn verify_unicode_chunk(chunk_index : Int32, chunk_count : Int32) -> Unit {
   let files = @fs.readdir("testdata/unicode", sort=true).filter(file => {
     file.has_suffix(".txt")
   })

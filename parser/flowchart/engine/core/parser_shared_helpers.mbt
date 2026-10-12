@@ -9,7 +9,7 @@ priv struct EdgeOp {
 ///|
 priv struct FoundEdgeOp {
   op : EdgeOp
-  index : Int
+  index : Int32
 }
 
 ///|

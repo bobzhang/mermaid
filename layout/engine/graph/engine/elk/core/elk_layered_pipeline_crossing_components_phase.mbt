@@ -75,7 +75,7 @@ fn build_crossing_component_bundle(
 
 ///|
 fn evaluate_crossing_objective_with_counter(
-  rank_node_ids_by_rank : Map[Int, Array[String]],
+  rank_node_ids_by_rank : Map[Int32, Array[String]],
   objective_context : ElkLayeredCrossingObjectiveContext,
   components : ElkLayeredCrossingComponentBundle,
 ) -> ElkLayeredCrossingObjective {

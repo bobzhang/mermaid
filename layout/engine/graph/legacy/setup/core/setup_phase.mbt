@@ -4,9 +4,9 @@ pub(all) struct LegacyLayoutSetupState {
   subgraph_entry_by_id : Map[String, String]
   subgraph_exit_by_id : Map[String, String]
   nodes_in_order : Array[MermaidNode]
-  padding : Int
-  node_spacing : Int
-  layer_spacing : Int
+  padding : Int32
+  node_spacing : Int32
+  layer_spacing : Int32
   horizontal : Bool
   reverse : Bool
   state_graph : Bool

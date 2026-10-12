@@ -1,5 +1,5 @@
 ///|
-fn option_int_or(value : Int?, fallback : Int) -> Int {
+fn option_int_or(value : Int32?, fallback : Int32) -> Int32 {
   match value {
     Some(found) => found
     None => fallback
@@ -7,7 +7,7 @@ fn option_int_or(value : Int?, fallback : Int) -> Int {
 }
 
 ///|
-fn int_abs(value : Int) -> Int {
+fn int_abs(value : Int32) -> Int32 {
   if value < 0 {
     -value
   } else {
@@ -18,8 +18,8 @@ fn int_abs(value : Int) -> Int {
 ///|
 fn collect_top_level_group_index_by_node_id(
   subgraph : MermaidSubgraph,
-  top_level_group_index : Int,
-  top_level_group_index_by_node_id : Map[String, Int],
+  top_level_group_index : Int32,
+  top_level_group_index_by_node_id : Map[String, Int32],
 ) -> Unit {
   for node_id in subgraph.node_ids {
     if !top_level_group_index_by_node_id.contains(node_id) {

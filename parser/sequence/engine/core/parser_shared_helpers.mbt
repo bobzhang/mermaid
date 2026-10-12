@@ -9,15 +9,15 @@ priv struct EdgeOp {
 ///|
 priv struct FoundEdgeOp {
   op : EdgeOp
-  index : Int
+  index : Int32
 }
 
 ///|
 fn find_earliest_operator_indices(
   line : String,
   operator_symbols : Array[String],
-) -> (Int, Int)? {
-  let mut best : (Int, Int)? = None
+) -> (Int32, Int32)? {
+  let mut best : (Int32, Int32)? = None
   for i in 0..<operator_symbols.length() {
     let symbol = operator_symbols[i]
     match line.find(symbol) {

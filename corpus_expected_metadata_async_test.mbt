@@ -37,8 +37,8 @@ async fn parser_support_for_input(input_path : String) -> Bool {
 ///|
 #cfg(target="native")
 async fn verify_corpus_metadata_chunk(
-  chunk_index : Int,
-  chunk_count : Int,
+  chunk_index : Int32,
+  chunk_count : Int32,
 ) -> Unit {
   let files = corpus_expected_files()
   let selected = ts_files_for_chunk(files, chunk_index, chunk_count)

@@ -16,7 +16,7 @@ fn sequence_is_filled_arrow(operator : String?) -> Bool {
 }
 
 ///|
-fn make_canvas(width : Int, height : Int) -> Array[Array[String]] {
+fn make_canvas(width : Int32, height : Int32) -> Array[Array[String]] {
   let canvas : Array[Array[String]] = []
   for _ in 0..<height {
     let row : Array[String] = []
@@ -31,8 +31,8 @@ fn make_canvas(width : Int, height : Int) -> Array[Array[String]] {
 ///|
 fn put_canvas(
   canvas : Array[Array[String]],
-  x : Int,
-  y : Int,
+  x : Int32,
+  y : Int32,
   value : String,
 ) -> Unit {
   if x < 0 || y < 0 || y >= canvas.length() || x >= canvas[y].length() {
@@ -44,8 +44,8 @@ fn put_canvas(
 ///|
 fn write_canvas_text(
   canvas : Array[Array[String]],
-  x : Int,
-  y : Int,
+  x : Int32,
+  y : Int32,
   text : String,
 ) -> Unit {
   if y < 0 || y >= canvas.length() {
@@ -62,10 +62,10 @@ fn write_canvas_text(
 ///|
 fn draw_actor_box(
   canvas : Array[Array[String]],
-  center_x : Int,
-  top_y : Int,
+  center_x : Int32,
+  top_y : Int32,
   label : String,
-  box_pad : Int,
+  box_pad : Int32,
   h : String,
   v : String,
   tl : String,
@@ -430,7 +430,7 @@ pub fn render_ascii_sequence(
 /// A surrogate pair spans two cells: the whole character goes in the first
 /// cell and the second cell is left empty, so every row keeps exactly one
 /// UTF-16 unit per cell and astral characters (e.g. emoji) are not dropped.
-fn canvas_cell_text(text : String, i : Int) -> String {
+fn canvas_cell_text(text : String, i : Int32) -> String {
   let unit = text[i]
   if unit.is_leading_surrogate() &&
     i + 1 < text.length() &&

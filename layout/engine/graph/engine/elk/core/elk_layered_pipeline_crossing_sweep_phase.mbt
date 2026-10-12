@@ -2,15 +2,15 @@
 
 ///|
 priv struct ElkLayeredCrossingSweepInput {
-  rank_node_ids_by_rank : Map[Int, Array[String]]
-  max_rank : Int
+  rank_node_ids_by_rank : Map[Int32, Array[String]]
+  max_rank : Int32
   predecessors_by_node_id : Map[String, Array[String]]
   successors_by_node_id : Map[String, Array[String]]
   in_layer_successors_by_node_id : Map[String, Array[String]]
-  order_index_by_node_id : Map[String, Int]
+  order_index_by_node_id : Map[String, Int32]
   preserve_current_order_on_tie : Bool
   greedy_switch_enabled : Bool
-  greedy_switch_pass_limit : Int
+  greedy_switch_pass_limit : Int32
   neighbor_mean_barycenter_perturbation : Bool
   neighbor_mean_barycenter_perturbation_amount : Double
   neighbor_mean_random_state_by_key : Map[String, UInt64]
@@ -18,15 +18,15 @@ priv struct ElkLayeredCrossingSweepInput {
 
 ///|
 fn build_crossing_sweep_input(
-  rank_node_ids_by_rank : Map[Int, Array[String]],
-  max_rank : Int,
+  rank_node_ids_by_rank : Map[Int32, Array[String]],
+  max_rank : Int32,
   predecessors_by_node_id : Map[String, Array[String]],
   successors_by_node_id : Map[String, Array[String]],
   in_layer_successors_by_node_id : Map[String, Array[String]],
-  order_index_by_node_id : Map[String, Int],
+  order_index_by_node_id : Map[String, Int32],
   preserve_current_order_on_tie : Bool,
   greedy_switch_enabled : Bool,
-  greedy_switch_pass_limit : Int,
+  greedy_switch_pass_limit : Int32,
   neighbor_mean_barycenter_perturbation : Bool,
   neighbor_mean_barycenter_perturbation_amount : Double,
   neighbor_mean_random_state_by_key : Map[String, UInt64],
@@ -49,7 +49,7 @@ fn build_crossing_sweep_input(
 
 ///|
 fn build_crossing_neighbor_mean_random_state_by_seed(
-  random_seed : Int,
+  random_seed : Int32,
 ) -> Map[String, UInt64] {
   let random_state_by_key : Map[String, UInt64] = Map([])
   random_state_by_key[crossing_neighbor_random_state_key] = java_random_state_from_seed(
@@ -60,8 +60,8 @@ fn build_crossing_neighbor_mean_random_state_by_seed(
 
 ///|
 fn crossing_preserve_current_order_on_tie(
-  node_count : Int,
-  edge_count : Int,
+  node_count : Int32,
+  edge_count : Int32,
   config : ElkLayeredCrossingOptimizationConfig,
 ) -> Bool {
   node_count > config.preserve_order_node_threshold ||
@@ -70,7 +70,7 @@ fn crossing_preserve_current_order_on_tie(
 
 ///|
 fn build_crossing_sweep_input_from_phase_input_with_random_state(
-  rank_node_ids_by_rank : Map[Int, Array[String]],
+  rank_node_ids_by_rank : Map[Int32, Array[String]],
   input : ElkLayeredCrossingPhaseInput,
   config : ElkLayeredCrossingOptimizationConfig,
   neighbor_mean_random_state_by_key : Map[String, UInt64],
@@ -102,7 +102,7 @@ fn build_crossing_sweep_input_from_phase_input_with_random_state(
 priv struct NodeEdgeSlotOrderKey {
   has_center : Bool
   edge_slot_sum : Double
-  edge_slot_count : Int
+  edge_slot_count : Int32
 }
 
 ///|
@@ -121,8 +121,8 @@ fn build_node_id_set(node_ids : Array[String]) -> Map[String, Bool] {
 
 ///|
 fn edge_slot_offset_within_fixed_node(
-  edge_index : Int,
-  edge_count : Int,
+  edge_index : Int32,
+  edge_count : Int32,
   descending_in_fixed_node : Bool,
 ) -> Double {
   if edge_count <= 0 {
@@ -137,10 +137,10 @@ fn edge_slot_offset_within_fixed_node(
 ///|
 fn stable_sorted_connected_node_ids_by_rank_position(
   connected_node_ids : Array[String],
-  free_rank_position_by_node_id : Map[String, Int],
+  free_rank_position_by_node_id : Map[String, Int32],
   descending_in_fixed_node : Bool,
 ) -> Array[String] {
-  let indexed_connected_node_ids : Array[(String, Int)] = []
+  let indexed_connected_node_ids : Array[(String, Int32)] = []
   for index, node_id in connected_node_ids {
     indexed_connected_node_ids.push((node_id, index))
   }
@@ -182,7 +182,7 @@ fn update_fixed_layer_connected_order_by_free_rank_positions(
   connected_node_ids_by_fixed_node_id : Map[String, Array[String]],
   descending_in_fixed_node : Bool,
 ) -> Unit {
-  let free_rank_position_by_node_id : Map[String, Int] = Map([])
+  let free_rank_position_by_node_id : Map[String, Int32] = Map([])
   for index, node_id in free_node_ids {
     free_rank_position_by_node_id[node_id] = index
   }
@@ -220,7 +220,7 @@ fn collect_connected_free_nodes(
 fn compare_node_edge_slot_order_key(
   left : NodeEdgeSlotOrderKey,
   right : NodeEdgeSlotOrderKey,
-) -> Int {
+) -> Int32 {
   if left.has_center && right.has_center {
     (left.edge_slot_sum / left.edge_slot_count.to_double()).compare(
       right.edge_slot_sum / right.edge_slot_count.to_double(),
@@ -241,12 +241,12 @@ fn sort_rank_nodes_by_fixed_layer_edge_slots(
   free_node_ids : Array[String],
   fixed_node_ids : Array[String],
   connected_node_ids_by_fixed_node_id : Map[String, Array[String]],
-  order_index_by_node_id : Map[String, Int],
+  order_index_by_node_id : Map[String, Int32],
   preserve_current_order_on_tie : Bool,
   descending_in_fixed_node : Bool,
 ) -> Bool {
   let original_free_node_ids = free_node_ids.copy()
-  let free_rank_position_by_node_id : Map[String, Int] = Map([])
+  let free_rank_position_by_node_id : Map[String, Int32] = Map([])
   for index in 0..<free_node_ids.length() {
     free_rank_position_by_node_id[free_node_ids[index]] = index
   }
@@ -324,13 +324,13 @@ fn sort_rank_nodes_by_fixed_layer_port_ranks(
   free_node_ids : Array[String],
   fixed_node_ids : Array[String],
   connected_node_ids_by_fixed_node_id : Map[String, Array[String]],
-  rank_position_by_node_id : Map[String, Int],
-  order_index_by_node_id : Map[String, Int],
+  rank_position_by_node_id : Map[String, Int32],
+  order_index_by_node_id : Map[String, Int32],
   preserve_current_order_on_tie : Bool,
   descending_in_fixed_node : Bool,
 ) -> Bool {
   let original_free_node_ids = free_node_ids.copy()
-  let free_rank_position_by_node_id : Map[String, Int] = Map([])
+  let free_rank_position_by_node_id : Map[String, Int32] = Map([])
   for index in 0..<free_node_ids.length() {
     free_rank_position_by_node_id[free_node_ids[index]] = index
   }
@@ -419,12 +419,12 @@ fn maybe_apply_crossing_greedy_switch_from_fixed_layer(
   free_node_ids : Array[String],
   predecessor_by_node_id : Map[String, Array[String]],
   successor_by_node_id : Map[String, Array[String]],
-  rank_node_ids_by_rank : Map[Int, Array[String]],
-  max_rank : Int,
-  order_index_by_node_id : Map[String, Int],
+  rank_node_ids_by_rank : Map[Int32, Array[String]],
+  max_rank : Int32,
+  order_index_by_node_id : Map[String, Int32],
   preserve_current_order_on_tie : Bool,
   greedy_switch_enabled : Bool,
-  greedy_switch_pass_limit : Int,
+  greedy_switch_pass_limit : Int32,
 ) -> Bool {
   if !greedy_switch_enabled || greedy_switch_pass_limit <= 0 {
     return false

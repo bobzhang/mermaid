@@ -1,5 +1,5 @@
 ///|
-fn option_int_or(value : Int?, fallback : Int) -> Int {
+fn option_int_or(value : Int32?, fallback : Int32) -> Int32 {
   match value {
     Some(found) => found
     None => fallback
@@ -43,7 +43,7 @@ fn resolve_inline_style(
 }
 
 ///|
-fn node_dimensions(node : MermaidNode) -> (Int, Int) {
+fn node_dimensions(node : MermaidNode) -> (Int32, Int32) {
   let label_lines = node.label
     .split("\n")
     .map(part => part.to_owned())
@@ -104,7 +104,7 @@ fn resolve_edge_endpoint_id(
 }
 
 ///|
-fn edge_label_dimensions(label : String) -> (Int, Int) {
+fn edge_label_dimensions(label : String) -> (Int32, Int32) {
   let lines = label.split("\n").map(part => part.to_owned()).to_array()
   let mut longest_line = 0
   for line in lines {
@@ -117,19 +117,19 @@ fn edge_label_dimensions(label : String) -> (Int, Int) {
 
 ///|
 priv struct HorizontalLabelRankConstraint {
-  source_rank_index : Int
-  target_rank_index : Int
-  min_extra : Int
+  source_rank_index : Int32
+  target_rank_index : Int32
+  min_extra : Int32
 }
 
 ///|
 fn collect_horizontal_label_rank_constraints(
   edges : Array[MermaidEdge],
-  flow_rank_by_node_id : Map[String, Int],
-  flow_max_rank : Int,
+  flow_rank_by_node_id : Map[String, Int32],
+  flow_max_rank : Int32,
   reverse : Bool,
-  node_width_by_id : Map[String, Int],
-  node_spacing : Int,
+  node_width_by_id : Map[String, Int32],
+  node_spacing : Int32,
   use_subgraph_redirects : Bool,
   subgraph_exit_by_id : Map[String, String],
   subgraph_entry_by_id : Map[String, String],
@@ -202,10 +202,10 @@ fn collect_horizontal_label_rank_constraints(
 
 ///|
 fn solve_horizontal_label_rank_shifts(
-  max_rank : Int,
+  max_rank : Int32,
   constraints : Array[HorizontalLabelRankConstraint],
-) -> Map[Int, Int] {
-  let min_shift_by_rank_index : Map[Int, Int] = Map([])
+) -> Map[Int32, Int32] {
+  let min_shift_by_rank_index : Map[Int32, Int32] = Map([])
   for rank_index in 0..<=max_rank {
     min_shift_by_rank_index[rank_index] = 0
   }
@@ -241,10 +241,10 @@ fn solve_horizontal_label_rank_shifts(
 
 ///|
 fn horizontal_label_boundary_extra_by_rank_index(
-  max_rank : Int,
-  min_shift_by_rank_index : Map[Int, Int],
-) -> Map[Int, Int] {
-  let extra_by_rank_index : Map[Int, Int] = Map([])
+  max_rank : Int32,
+  min_shift_by_rank_index : Map[Int32, Int32],
+) -> Map[Int32, Int32] {
+  let extra_by_rank_index : Map[Int32, Int32] = Map([])
   if max_rank <= 0 {
     return extra_by_rank_index
   }

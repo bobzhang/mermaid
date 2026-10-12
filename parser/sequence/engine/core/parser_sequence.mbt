@@ -150,7 +150,7 @@ fn parse_sequence_note_line(
   actor_order : Array[String],
   actor_kinds : Map[String, SequenceParticipantKind],
   notes : Array[SequenceNote],
-  after_index : Int,
+  after_index : Int32,
 ) -> Bool {
   lexmatch line[:] {
     (re"^(?i:note) ", after=rest) =>
@@ -193,14 +193,14 @@ fn parse_sequence_note_line(
 priv struct OpenSequenceBlock {
   block_type : SequenceBlockType
   label : String
-  start_index : Int
+  start_index : Int32
   dividers : Array[SequenceBlockDivider]
 }
 
 ///|
 fn stack_set_open_block(
   stack : Array[OpenSequenceBlock],
-  depth : Int,
+  depth : Int32,
   value : OpenSequenceBlock,
 ) -> Unit {
   if depth < stack.length() {

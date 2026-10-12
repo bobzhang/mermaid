@@ -53,12 +53,12 @@ test "elk layered crossing greedy switch pass limit controls multi-step converge
     "B": ["F1"],
     "C": ["F2"],
   }
-  let rank_position_by_node_id : Map[String, Int] = {
+  let rank_position_by_node_id : Map[String, Int32] = {
     "F0": 0,
     "F1": 1,
     "F2": 2,
   }
-  let order_index_by_node_id : Map[String, Int] = { "C": 0, "B": 1, "A": 2 }
+  let order_index_by_node_id : Map[String, Int32] = { "C": 0, "B": 1, "A": 2 }
 
   let one_pass = ["C", "B", "A"]
   let one_pass_changed = apply_crossing_greedy_switch_rank_by_fixed_layer(

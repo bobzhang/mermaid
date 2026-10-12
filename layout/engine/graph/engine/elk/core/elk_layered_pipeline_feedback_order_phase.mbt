@@ -1,6 +1,6 @@
 ///|
 priv struct FeedbackGreedyOrientationState {
-  order_index_by_node_id : Map[String, Int]
+  order_index_by_node_id : Map[String, Int32]
   oriented_edges : Array[(String, String)]
 }
 
@@ -19,7 +19,7 @@ priv enum FeedbackBreakTieStrategy {
 ///|
 fn sort_ready_nodes_by_order(
   ready_node_ids : Array[String],
-  order_index_by_node_id : Map[String, Int],
+  order_index_by_node_id : Map[String, Int32],
 ) -> Unit {
   ready_node_ids.sort_by((left, right) => {
     compare_node_ids_by_order(left, right, order_index_by_node_id)
@@ -36,12 +36,12 @@ let java_random_addend : UInt64 = 11
 let java_random_mask : UInt64 = 0xffffffffffff
 
 ///|
-fn java_random_state_from_seed(seed : Int) -> UInt64 {
+fn java_random_state_from_seed(seed : Int32) -> UInt64 {
   (seed.to_uint64() ^ 0x5deece66d) & java_random_mask
 }
 
 ///|
-fn java_random_next_bits(state : UInt64, bits : Int) -> (UInt64, Int) {
+fn java_random_next_bits(state : UInt64, bits : Int32) -> (UInt64, Int32) {
   let next_state = (state * java_random_multiplier + java_random_addend) &
     java_random_mask
   let value = (next_state >> (48 - bits)).to_int()
@@ -49,7 +49,7 @@ fn java_random_next_bits(state : UInt64, bits : Int) -> (UInt64, Int) {
 }
 
 ///|
-fn java_random_next_int(state : UInt64, bound : Int) -> (UInt64, Int) {
+fn java_random_next_int(state : UInt64, bound : Int32) -> (UInt64, Int32) {
   if bound <= 0 {
     return (state, 0)
   }
@@ -74,9 +74,9 @@ fn java_random_next_int(state : UInt64, bound : Int) -> (UInt64, Int) {
 ///|
 fn choose_feedback_break_node_by_outflow(
   node_ids_in_order : Array[String],
-  mark_by_node_id : Map[String, Int],
-  indegree_by_node_id : Map[String, Int],
-  outdegree_by_node_id : Map[String, Int],
+  mark_by_node_id : Map[String, Int32],
+  indegree_by_node_id : Map[String, Int32],
+  outdegree_by_node_id : Map[String, Int32],
   tie_strategy : FeedbackBreakTieStrategy,
   random_state : UInt64,
 ) -> (String?, UInt64) {
@@ -119,16 +119,16 @@ fn build_feedback_greedy_neighbors(
   Map[String, Array[String]],
   Map[String, Array[String]],
   Map[String, Array[FeedbackIncidentEdge]],
-  Map[String, Int],
-  Map[String, Int],
+  Map[String, Int32],
+  Map[String, Int32],
 ) {
   let visible_node_id_set : Map[String, Bool] = Map([])
   let successors_by_node_id : Map[String, Array[String]] = Map([])
   let predecessors_by_node_id : Map[String, Array[String]] = Map([])
   let incident_edges_by_node_id : Map[String, Array[FeedbackIncidentEdge]] = Map([],
   )
-  let indegree_by_node_id : Map[String, Int] = Map([])
-  let outdegree_by_node_id : Map[String, Int] = Map([])
+  let indegree_by_node_id : Map[String, Int32] = Map([])
+  let outdegree_by_node_id : Map[String, Int32] = Map([])
   for node_id in node_ids {
     visible_node_id_set[node_id] = true
     successors_by_node_id[node_id] = []
@@ -194,9 +194,9 @@ fn build_feedback_greedy_neighbors(
 ///|
 fn update_feedback_greedy_neighbors_after_mark(
   node_id : String,
-  mark_by_node_id : Map[String, Int],
-  indegree_by_node_id : Map[String, Int],
-  outdegree_by_node_id : Map[String, Int],
+  mark_by_node_id : Map[String, Int32],
+  indegree_by_node_id : Map[String, Int32],
+  outdegree_by_node_id : Map[String, Int32],
   incident_edges_by_node_id : Map[String, Array[FeedbackIncidentEdge]],
   sources : Array[String],
   sinks : Array[String],
@@ -266,7 +266,7 @@ fn build_feedback_component_dfs_node_ids_in_order(
 ///|
 fn shift_negative_marks_to_positive_order(
   node_ids : Array[String],
-  mark_by_node_id : Map[String, Int],
+  mark_by_node_id : Map[String, Int32],
 ) -> Unit {
   let shift_base = node_ids.length() + 1
   for node_id in node_ids {
@@ -281,14 +281,14 @@ fn shift_negative_marks_to_positive_order(
 priv struct FeedbackOrientedEdge {
   source_id : String
   target_id : String
-  model_order : Int
+  model_order : Int32
   reversed : Bool
 }
 
 ///|
 fn build_oriented_edges_from_feedback_marks(
   normalized_edges : Array[(String, String)],
-  mark_by_node_id : Map[String, Int],
+  mark_by_node_id : Map[String, Int32],
 ) -> Array[FeedbackOrientedEdge] {
   let oriented_edges : Array[FeedbackOrientedEdge] = []
   for model_order, edge in normalized_edges {
@@ -317,12 +317,12 @@ fn build_oriented_edges_from_feedback_marks(
 ///|
 fn reorder_feedback_oriented_edges_by_model_order(
   oriented_edges : Array[FeedbackOrientedEdge],
-  order_index_by_node_id : Map[String, Int],
+  order_index_by_node_id : Map[String, Int32],
 ) -> Array[(String, String)] {
   let edge_entries_by_source_id : Map[String, Array[FeedbackOrientedEdge]] = Map([],
   )
   let source_ids : Array[String] = []
-  let target_model_order_by_pair : Map[String, Int] = Map([])
+  let target_model_order_by_pair : Map[String, Int32] = Map([])
   for edge in oriented_edges {
     let source_id = edge.source_id
     if !edge_entries_by_source_id.contains(source_id) {
@@ -386,7 +386,7 @@ fn reorder_feedback_oriented_edges_by_model_order(
 fn compute_feedback_order_orientation_state(
   node_ids : Array[String],
   resolved_edges : Array[(String, String)],
-  base_order_index_by_node_id : Map[String, Int],
+  base_order_index_by_node_id : Map[String, Int32],
   tie_strategy : FeedbackBreakTieStrategy,
 ) -> FeedbackGreedyOrientationState {
   let (
@@ -406,7 +406,7 @@ fn compute_feedback_order_orientation_state(
     node_ids_in_order, incident_edges_by_node_id,
   )
 
-  let mark_by_node_id : Map[String, Int] = Map([])
+  let mark_by_node_id : Map[String, Int32] = Map([])
   let sinks : Array[String] = []
   let sources : Array[String] = []
   for node_id in traversal_node_ids_in_order {

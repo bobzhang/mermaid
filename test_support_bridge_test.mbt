@@ -38,7 +38,7 @@ fn ts_normalize_whitespace(text : String) -> String {
 }
 
 ///|
-fn ts_count_occurrences(haystack : String, needle : String) -> Int {
+fn ts_count_occurrences(haystack : String, needle : String) -> Int32 {
   let needle_len = needle.length()
   if needle_len == 0 {
     return 0
@@ -65,7 +65,7 @@ fn ts_count_occurrences(haystack : String, needle : String) -> Int {
 }
 
 ///|
-fn ts_option_or_zero(value : Int?) -> Int {
+fn ts_option_or_zero(value : Int32?) -> Int32 {
   match value {
     Some(found) => found
     None => 0
@@ -75,8 +75,8 @@ fn ts_option_or_zero(value : Int?) -> Int {
 ///|
 fn ts_files_for_chunk(
   files : Array[String],
-  chunk_index : Int,
-  chunk_count : Int,
+  chunk_index : Int32,
+  chunk_count : Int32,
 ) -> Array[String] {
   let selected : Array[String] = []
   for i in 0..<files.length() {
@@ -101,7 +101,7 @@ fn ts_expected_case_name_from_json_path(path : String) -> String {
 }
 
 ///|
-fn ts_parse_padding_value(trimmed : String, prefix : String) -> Int? {
+fn ts_parse_padding_value(trimmed : String, prefix : String) -> Int32? {
   let lowered = trimmed.to_lower()
   if !lowered.has_prefix(prefix) {
     return None
@@ -120,8 +120,8 @@ fn ts_parse_padding_value(trimmed : String, prefix : String) -> Int? {
 priv struct TsGoldenTextCase {
   mermaid : String
   expected : String
-  padding_x : Int
-  padding_y : Int
+  padding_x : Int32
+  padding_y : Int32
 }
 
 ///|
@@ -181,7 +181,7 @@ fn ts_parse_golden_text_case(content : String) -> TsGoldenTextCase {
 }
 
 ///|
-fn ts_svg_attr_int(svg : String, attr : String) -> Int? {
+fn ts_svg_attr_int(svg : String, attr : String) -> Int32? {
   let marker = "\{attr}=\""
   match svg.find(marker) {
     Some(start_index) => {
@@ -202,8 +202,10 @@ fn ts_svg_attr_int(svg : String, attr : String) -> Int? {
 }
 
 ///|
-fn ts_collect_edge_label_rects(svg : String) -> Array[(Int, Int, Int, Int)] {
-  let rects : Array[(Int, Int, Int, Int)] = []
+fn ts_collect_edge_label_rects(
+  svg : String,
+) -> Array[(Int32, Int32, Int32, Int32)] {
+  let rects : Array[(Int32, Int32, Int32, Int32)] = []
   let marker = "<rect class=\"edge-label-bg\""
   let mut offset = 0
   while offset < svg.length() {
@@ -231,7 +233,10 @@ fn ts_collect_edge_label_rects(svg : String) -> Array[(Int, Int, Int, Int)] {
 }
 
 ///|
-fn ts_rects_overlap(a : (Int, Int, Int, Int), b : (Int, Int, Int, Int)) -> Bool {
+fn ts_rects_overlap(
+  a : (Int32, Int32, Int32, Int32),
+  b : (Int32, Int32, Int32, Int32),
+) -> Bool {
   let (ax, ay, aw, ah) = a
   let (bx, by, bw, bh) = b
   let overlap_x = ax < bx + bw && ax + aw > bx

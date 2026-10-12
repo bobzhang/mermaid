@@ -1,5 +1,5 @@
 ///|
-fn class_multibox_size(sections : Array[Array[String]]) -> (Int, Int) {
+fn class_multibox_size(sections : Array[Array[String]]) -> (Int32, Int32) {
   let mut max_text_width = 0
   for section in sections {
     for line in section {
@@ -20,8 +20,8 @@ fn class_multibox_size(sections : Array[Array[String]]) -> (Int, Int) {
 ///|
 fn class_draw_multibox(
   canvas : Array[Array[String]],
-  left : Int,
-  top : Int,
+  left : Int32,
+  top : Int32,
   sections : Array[Array[String]],
   use_ascii : Bool,
 ) -> Unit {
@@ -181,8 +181,8 @@ fn class_marker_shape(
 ///|
 fn class_draw_marker(
   canvas : Array[Array[String]],
-  center_x : Int,
-  y : Int,
+  center_x : Int32,
+  y : Int32,
   marker : String,
 ) -> Unit {
   let start_x = center_x - marker.length() / 2

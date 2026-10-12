@@ -25,9 +25,9 @@ fn collect_edge_layout_contexts(
   subgraph_entry_by_id : Map[String, String],
   positioned_by_id : Map[String, PositionedNode],
   node_horizontal_by_id : Map[String, Bool],
-) -> (Array[EdgeLayoutContext], Map[String, Int]) {
+) -> (Array[EdgeLayoutContext], Map[String, Int32]) {
   let edge_layout_contexts : Array[EdgeLayoutContext] = []
-  let directed_edge_count_by_key : Map[String, Int] = Map([])
+  let directed_edge_count_by_key : Map[String, Int32] = Map([])
   for edge in graph.edges {
     let resolved_source_id = resolve_edge_endpoint_id(
       edge.source,
@@ -157,15 +157,17 @@ fn assign_edge_boundary_offsets_to_contexts(
       None => ()
     }
   }
-  let source_boundary_offset_by_context_index : Map[Int, Int] = Map([])
-  let target_boundary_offset_by_context_index : Map[Int, Int] = Map([])
-  let source_boundary_cohort_size_by_context_index : Map[Int, Int] = Map([])
+  let source_boundary_offset_by_context_index : Map[Int32, Int32] = Map([])
+  let target_boundary_offset_by_context_index : Map[Int32, Int32] = Map([])
+  let source_boundary_cohort_size_by_context_index : Map[Int32, Int32] = Map([])
   for _, assignments in boundary_assignments_by_bucket {
     if assignments.length() == 0 {
       continue
     }
-    let assignments_by_peer_minor : Map[Int, Array[BoundaryEndpointAssignment]] = Map([],
-    )
+    let assignments_by_peer_minor : Map[
+      Int32,
+      Array[BoundaryEndpointAssignment],
+    ] = Map([])
     let mut source_endpoint_count = 0
     let mut target_endpoint_count = 0
     for assignment in assignments {
@@ -367,11 +369,11 @@ fn assign_edge_boundary_offsets_to_contexts(
 ///|
 fn materialize_positioned_edges_from_points(
   edge_layout_contexts : Array[EdgeLayoutContext],
-  points_by_context_index : Map[Int, Array[Point]],
+  points_by_context_index : Map[Int32, Array[Point]],
   state_graph : Bool,
 ) -> Array[PositionedEdge] {
   let positioned_edges : Array[PositionedEdge] = []
-  let label_slots_by_anchor : Map[String, Int] = Map([])
+  let label_slots_by_anchor : Map[String, Int32] = Map([])
   for context_index, context in edge_layout_contexts {
     match points_by_context_index.get(context_index) {
       Some(points) => {
@@ -412,9 +414,9 @@ fn materialize_positioned_edges_from_points(
 ///|
 fn routed_context_indices(
   edge_layout_contexts : Array[EdgeLayoutContext],
-  points_by_context_index : Map[Int, Array[Point]],
-) -> Array[Int] {
-  let context_indices : Array[Int] = []
+  points_by_context_index : Map[Int32, Array[Point]],
+) -> Array[Int32] {
+  let context_indices : Array[Int32] = []
   for context_index, _ in edge_layout_contexts {
     if points_by_context_index.contains(context_index) {
       context_indices.push(context_index)
@@ -424,8 +426,8 @@ fn routed_context_indices(
 }
 
 ///|
-fn reversed_context_indices(context_indices : Array[Int]) -> Array[Int] {
-  let reversed : Array[Int] = []
+fn reversed_context_indices(context_indices : Array[Int32]) -> Array[Int32] {
+  let reversed : Array[Int32] = []
   for i in 0..<context_indices.length() {
     reversed.push(context_indices[context_indices.length() - 1 - i])
   }
@@ -434,9 +436,9 @@ fn reversed_context_indices(context_indices : Array[Int]) -> Array[Int] {
 
 ///|
 fn optimize_reciprocal_target_doglegs_pass(
-  context_indices : Array[Int],
+  context_indices : Array[Int32],
   edge_layout_contexts : Array[EdgeLayoutContext],
-  points_by_context_index : Map[Int, Array[Point]],
+  points_by_context_index : Map[Int32, Array[Point]],
   positioned_nodes : Array[PositionedNode],
 ) -> Bool {
   let routed_edge_segments : Array[RoutedEdgeSegment] = []
@@ -495,7 +497,7 @@ fn optimize_reciprocal_target_doglegs_pass(
 ///|
 fn optimize_reciprocal_target_doglegs(
   edge_layout_contexts : Array[EdgeLayoutContext],
-  points_by_context_index : Map[Int, Array[Point]],
+  points_by_context_index : Map[Int32, Array[Point]],
   positioned_nodes : Array[PositionedNode],
 ) -> Unit {
   let context_indices = routed_context_indices(
@@ -526,8 +528,8 @@ pub fn route_legacy_positioned_edges(
   state_graph : Bool,
   class_or_er_graph : Bool,
   horizontal : Bool,
-  layer_spacing : Int,
-  node_spacing : Int,
+  layer_spacing : Int32,
+  node_spacing : Int32,
   use_subgraph_redirects : Bool,
   subgraph_exit_by_id : Map[String, String],
   subgraph_entry_by_id : Map[String, String],
@@ -541,7 +543,7 @@ pub fn route_legacy_positioned_edges(
   let routed_edge_segments : Array[RoutedEdgeSegment] = []
   let back_edge_lane_reservations : Array[BackEdgeLaneReservation] = []
   let back_edge_column_reservations : Array[BackEdgeColumnReservation] = []
-  let forward_fanout_out_count_by_bucket : Map[String, Int] = Map([])
+  let forward_fanout_out_count_by_bucket : Map[String, Int32] = Map([])
   let forward_fanout_horizontal_minor_gap_threshold = (layer_spacing / 4).max(
     22,
   )
@@ -560,7 +562,8 @@ pub fn route_legacy_positioned_edges(
     graph, state_graph, class_or_er_graph, enable_target_boundary_ports, edge_layout_contexts,
   )
 
-  let forward_fanout_context_indices_by_bucket : Map[String, Array[Int]] = Map([])
+  let forward_fanout_context_indices_by_bucket : Map[String, Array[Int32]] = Map([],
+  )
   for context_index, context in edge_layout_contexts {
     if !context_uses_forward_fanout_lane(
         context, forward_fanout_horizontal_span_threshold, forward_fanout_horizontal_minor_gap_threshold,
@@ -580,11 +583,11 @@ pub fn route_legacy_positioned_edges(
   for bucket, context_indices in forward_fanout_context_indices_by_bucket {
     forward_fanout_out_count_by_bucket[bucket] = context_indices.length()
   }
-  let forward_fanout_slot_by_context_index : Map[Int, Int] = Map([])
+  let forward_fanout_slot_by_context_index : Map[Int32, Int32] = Map([])
   let forward_fanout_slots_resolved_by_bucket : Map[String, Bool] = Map([])
   let forward_fanout_disabled_by_bucket : Map[String, Bool] = Map([])
-  let non_deferred_route_context_indices : Array[Int] = []
-  let deferred_back_edge_context_indices : Array[Int] = []
+  let non_deferred_route_context_indices : Array[Int32] = []
+  let deferred_back_edge_context_indices : Array[Int32] = []
   for context_index, context in edge_layout_contexts {
     let defer_back_edge = context_requires_long_span_back_edge_bend(
       context, back_edge_route_horizontal_span_threshold, back_edge_route_vertical_span_threshold,
@@ -597,12 +600,12 @@ pub fn route_legacy_positioned_edges(
     }
   }
 
-  let points_by_context_index : Map[Int, Array[Point]] = Map([])
+  let points_by_context_index : Map[Int32, Array[Point]] = Map([])
   let routed_polylines : Array[Array[Point]] = []
   let routed_label_boxes : Array[RoutedLabelBox] = []
 
-  let non_deferred_non_fanout_context_indices : Array[Int] = []
-  let non_deferred_fanout_context_indices : Array[Int] = []
+  let non_deferred_non_fanout_context_indices : Array[Int32] = []
+  let non_deferred_fanout_context_indices : Array[Int32] = []
   for context_index in non_deferred_route_context_indices {
     let context = edge_layout_contexts[context_index]
     if context_uses_forward_fanout_lane(
@@ -615,7 +618,7 @@ pub fn route_legacy_positioned_edges(
     }
   }
 
-  fn route_non_deferred_context(context_index : Int) -> Unit {
+  fn route_non_deferred_context(context_index : Int32) -> Unit {
     let context = edge_layout_contexts[context_index]
     let source = context.source
     let target = context.target
@@ -788,8 +791,8 @@ pub fn route_legacy_positioned_edges(
   }
 
   if deferred_back_edge_context_indices.length() > 0 {
-    let deferred_order_candidates : Array[Array[Int]] = []
-    fn append_order_family(row_key_mode : Int) -> Unit {
+    let deferred_order_candidates : Array[Array[Int32]] = []
+    fn append_order_family(row_key_mode : Int32) -> Unit {
       // Row-first variants.
       deferred_order_candidates.push(
         build_deferred_back_edge_order(
@@ -855,7 +858,7 @@ pub fn route_legacy_positioned_edges(
       }
     }
 
-    let unique_deferred_order_candidates : Array[Array[Int]] = []
+    let unique_deferred_order_candidates : Array[Array[Int32]] = []
     let seen_candidate_signatures : Map[String, Bool] = Map([])
     for candidate_order in deferred_order_candidates {
       let signature = candidate_order
@@ -869,7 +872,7 @@ pub fn route_legacy_positioned_edges(
       unique_deferred_order_candidates.push(candidate_order)
     }
 
-    let candidate_crossings : Array[Int] = []
+    let candidate_crossings : Array[Int32] = []
     for candidate_order in unique_deferred_order_candidates {
       candidate_crossings.push(
         simulate_deferred_back_edge_order_crossings(
@@ -881,8 +884,8 @@ pub fn route_legacy_positioned_edges(
     }
 
     let max_seed_count = unique_deferred_order_candidates.length().min(4)
-    let selected_seed_indices : Array[Int] = []
-    let selected_seed_index_set : Map[Int, Bool] = Map([])
+    let selected_seed_indices : Array[Int32] = []
+    let selected_seed_index_set : Map[Int32, Bool] = Map([])
     for _ in 0..<max_seed_count {
       let mut has_seed = false
       let mut best_seed_index = 0
@@ -905,7 +908,7 @@ pub fn route_legacy_positioned_edges(
     }
 
     let mut has_best_optimized_order = false
-    let mut best_optimized_order : Array[Int] = []
+    let mut best_optimized_order : Array[Int32] = []
     let mut best_optimized_crossings = 0
 
     for seed_index in selected_seed_indices {

@@ -12,7 +12,7 @@ fn layout_direction_is_reverse(direction : Direction) -> Bool {
 fn find_positioned_group_index(
   groups : Array[PositionedGroup],
   group_id : String,
-) -> Int? {
+) -> Int32? {
   for i, group in groups {
     if group.id == group_id {
       return Some(i)

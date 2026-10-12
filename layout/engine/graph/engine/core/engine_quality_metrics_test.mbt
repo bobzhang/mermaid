@@ -66,7 +66,7 @@ fn qm_graph() -> @model.MermaidGraph {
 
 ///|
 priv struct QmSegment {
-  edge_index : Int
+  edge_index : Int32
   p1 : @model.Point
   p2 : @model.Point
 }
@@ -87,7 +87,7 @@ fn qm_segments(graph : @model.PositionedGraph) -> Array[QmSegment] {
 }
 
 ///|
-fn qm_sign(value : Int) -> Int {
+fn qm_sign(value : Int32) -> Int32 {
   if value < 0 {
     -1
   } else if value > 0 {
@@ -98,12 +98,16 @@ fn qm_sign(value : Int) -> Int {
 }
 
 ///|
-fn qm_orientation(a : @model.Point, b : @model.Point, c : @model.Point) -> Int {
+fn qm_orientation(
+  a : @model.Point,
+  b : @model.Point,
+  c : @model.Point,
+) -> Int32 {
   qm_sign((b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x))
 }
 
 ///|
-fn qm_in_range(value : Int, bound1 : Int, bound2 : Int) -> Bool {
+fn qm_in_range(value : Int32, bound1 : Int32, bound2 : Int32) -> Bool {
   if bound1 <= bound2 {
     value >= bound1 && value <= bound2
   } else {
@@ -159,7 +163,7 @@ fn qm_segments_intersect(a : QmSegment, b : QmSegment) -> Bool {
 }
 
 ///|
-fn qm_crossings(graph : @model.PositionedGraph) -> Int {
+fn qm_crossings(graph : @model.PositionedGraph) -> Int32 {
   let segments = qm_segments(graph)
   let mut crossings = 0
   for i in 0..<segments.length() {
@@ -175,7 +179,7 @@ fn qm_crossings(graph : @model.PositionedGraph) -> Int {
 }
 
 ///|
-fn qm_edge_manhattan_length(graph : @model.PositionedGraph) -> Int {
+fn qm_edge_manhattan_length(graph : @model.PositionedGraph) -> Int32 {
   let mut total = 0
   for edge in graph.edges {
     if edge.points.length() < 2 {
@@ -191,7 +195,7 @@ fn qm_edge_manhattan_length(graph : @model.PositionedGraph) -> Int {
 }
 
 ///|
-fn qm_area(graph : @model.PositionedGraph) -> Int {
+fn qm_area(graph : @model.PositionedGraph) -> Int32 {
   graph.width * graph.height
 }
 

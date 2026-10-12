@@ -4,7 +4,7 @@ priv struct ElkLayeredRankPhaseState {
   rank_seed_state : ElkLayeredRankSeedState
   rank_order_strategy : ElkLayeredRankOrderStrategy
   rank_order_debug_state : ElkLayeredRankOrderDebugState
-  rank_node_ids_by_rank : Map[Int, Array[String]]
+  rank_node_ids_by_rank : Map[Int32, Array[String]]
 }
 
 ///|
@@ -102,8 +102,8 @@ priv struct ElkLayeredPlacementState {
   positioned_nodes : Array[PositionedNode]
   positioned_by_id : Map[String, PositionedNode]
   node_horizontal_by_id : Map[String, Bool]
-  max_right : Int
-  max_bottom : Int
+  max_right : Int32
+  max_bottom : Int32
 }
 
 ///|
@@ -274,7 +274,7 @@ fn run_elk_layered_finalize_phase(
 fn rank_phase_snapshot(
   request : GraphLayoutBackendRequest,
   nodes_in_order : Array[MermaidNode],
-  max_rank : Int,
+  max_rank : Int32,
 ) -> GraphLayoutPhaseSnapshot {
   let rank_layer_count = if nodes_in_order.length() == 0 {
     0
@@ -293,7 +293,7 @@ fn rank_phase_snapshot(
 }
 
 ///|
-fn bool_flag(value : Bool) -> Int {
+fn bool_flag(value : Bool) -> Int32 {
   if value {
     1
   } else {
@@ -324,7 +324,7 @@ fn direction_tag(graph : MermaidGraph) -> String {
 }
 
 ///|
-fn phase_metrics(snapshot : GraphLayoutPhaseSnapshot) -> Map[String, Int] {
+fn phase_metrics(snapshot : GraphLayoutPhaseSnapshot) -> Map[String, Int32] {
   {
     "node_count": snapshot.node_count,
     "edge_count": snapshot.edge_count,
@@ -337,8 +337,8 @@ fn phase_metrics(snapshot : GraphLayoutPhaseSnapshot) -> Map[String, Int] {
 
 ///|
 fn collect_rank_layers(
-  rank_node_ids_by_rank : Map[Int, Array[String]],
-  max_rank : Int,
+  rank_node_ids_by_rank : Map[Int32, Array[String]],
+  max_rank : Int32,
 ) -> Array[Array[String]] {
   let rank_layers : Array[Array[String]] = []
   for rank in 0..<=max_rank {

@@ -1,5 +1,5 @@
 ///|
-fn int_abs(value : Int) -> Int {
+fn int_abs(value : Int32) -> Int32 {
   if value < 0 {
     -value
   } else {
@@ -51,8 +51,8 @@ fn collect_rank_layers_from_setup(
 ///|
 fn build_rank_index_by_node_id(
   layers : Array[Array[String]],
-) -> Map[String, Int] {
-  let rank_by_node_id : Map[String, Int] = Map([])
+) -> Map[String, Int32] {
+  let rank_by_node_id : Map[String, Int32] = Map([])
   for rank, layer in layers {
     for node_id in layer {
       rank_by_node_id[node_id] = rank

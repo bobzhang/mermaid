@@ -79,7 +79,7 @@ test "elk layered rank state breaks feedback cycles into forward-ranked edges" {
 test "elk layered network-simplex balance re-centers equal-degree node in feasible span" {
   let node_ids = ["A", "B", "C", "D", "E"]
   let oriented_edges = [("A", "C"), ("B", "C"), ("C", "D"), ("C", "E")]
-  let rank_by_node_id : Map[String, Int] = {
+  let rank_by_node_id : Map[String, Int32] = {
     "A": 0,
     "B": 0,
     "C": 3,
@@ -107,7 +107,7 @@ test "elk layered network-simplex balance re-centers equal-degree node in feasib
 test "elk layered network-simplex balance keeps unequal-degree node fixed" {
   let node_ids = ["S", "X", "Y", "T"]
   let oriented_edges = [("S", "X"), ("X", "Y"), ("X", "T")]
-  let rank_by_node_id : Map[String, Int] = { "S": 0, "X": 2, "Y": 3, "T": 4 }
+  let rank_by_node_id : Map[String, Int32] = { "S": 0, "X": 2, "Y": 3, "T": 4 }
   let (balanced_rank_by_node_id, balanced_max_rank) = apply_elk_network_simplex_balance(
     node_ids, oriented_edges, rank_by_node_id, 4,
   )

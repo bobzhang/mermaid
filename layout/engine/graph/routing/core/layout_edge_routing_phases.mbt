@@ -2,7 +2,7 @@
 fn boundary_side_minor_limit(
   node : PositionedNode,
   side_is_vertical : Bool,
-) -> Int {
+) -> Int32 {
   if side_is_vertical {
     (node.height / 2 - 6).max(0)
   } else {
@@ -12,16 +12,16 @@ fn boundary_side_minor_limit(
 
 ///|
 priv struct BackEdgeLaneReservation {
-  left : Int
-  right : Int
-  y : Int
+  left : Int32
+  right : Int32
+  y : Int32
 }
 
 ///|
 priv struct BackEdgeColumnReservation {
-  top : Int
-  bottom : Int
-  x : Int
+  top : Int32
+  bottom : Int32
+  x : Int32
 }
 
 ///|
@@ -33,9 +33,9 @@ priv struct EdgeLayoutContext {
   target : PositionedNode
   edge_horizontal : Bool
   compact_endpoint_port_priority : Bool
-  source_boundary_cohort_size : Int
-  source_boundary_offset_minor : Int
-  target_boundary_offset_minor : Int
+  source_boundary_cohort_size : Int32
+  source_boundary_offset_minor : Int32
+  target_boundary_offset_minor : Int32
 }
 
 ///|
@@ -48,12 +48,12 @@ priv enum NodeBoundarySide {
 
 ///|
 priv struct BoundaryEndpointAssignment {
-  context_index : Int
+  context_index : Int32
   source_endpoint : Bool
   side : NodeBoundarySide
-  peer_major : Int
-  peer_minor : Int
-  edge_span : Int
+  peer_major : Int32
+  peer_minor : Int32
+  edge_span : Int32
 }
 
 ///|
@@ -68,14 +68,14 @@ priv struct RoutedEdgeSegment {
 
 ///|
 priv struct RoutedLabelBox {
-  left : Int
-  right : Int
-  top : Int
-  bottom : Int
+  left : Int32
+  right : Int32
+  top : Int32
+  bottom : Int32
 }
 
 ///|
-fn edge_layout_context_span(context : EdgeLayoutContext) -> Int {
+fn edge_layout_context_span(context : EdgeLayoutContext) -> Int32 {
   if context.edge_horizontal {
     int_abs(context.target.x - context.source.x)
   } else {
@@ -134,7 +134,7 @@ fn context_source_boundary_side(
 fn boundary_side_minor_span_limit(
   node : PositionedNode,
   side : NodeBoundarySide,
-) -> Int {
+) -> Int32 {
   match side {
     Left | Right => boundary_side_minor_limit(node, true)
     Top | Bottom => boundary_side_minor_limit(node, false)
@@ -143,10 +143,10 @@ fn boundary_side_minor_span_limit(
 
 ///|
 fn distributed_boundary_port_offset(
-  slot : Int,
-  total : Int,
-  half_span_limit : Int,
-) -> Int {
+  slot : Int32,
+  total : Int32,
+  half_span_limit : Int32,
+) -> Int32 {
   if total <= 1 || half_span_limit <= 0 {
     return 0
   }
@@ -174,10 +174,10 @@ fn distributed_boundary_port_offset(
 
 ///|
 fn choose_available_boundary_offset(
-  preferred_offset : Int,
-  candidate_offsets : Array[Int],
-  used_offsets : Map[Int, Bool],
-) -> Int {
+  preferred_offset : Int32,
+  candidate_offsets : Array[Int32],
+  used_offsets : Map[Int32, Bool],
+) -> Int32 {
   if !used_offsets.contains(preferred_offset) {
     return preferred_offset
   }
@@ -217,7 +217,7 @@ fn assign_compact_boundary_offsets_for_cohort(
   cohort_assignments : Array[BoundaryEndpointAssignment],
   edge_layout_contexts : Array[EdgeLayoutContext],
   source_endpoint : Bool,
-  offsets_by_context_index : Map[Int, Int],
+  offsets_by_context_index : Map[Int32, Int32],
   preserve_existing_offsets : Bool,
 ) -> Unit {
   if cohort_assignments.length() <= 1 {
@@ -243,7 +243,7 @@ fn assign_compact_boundary_offsets_for_cohort(
     endpoint_node,
     first_assignment.side,
   )
-  let candidate_offsets : Array[Int] = []
+  let candidate_offsets : Array[Int32] = []
   for slot, _ in cohort_assignments {
     candidate_offsets.push(
       distributed_boundary_port_offset(
@@ -253,7 +253,7 @@ fn assign_compact_boundary_offsets_for_cohort(
       ),
     )
   }
-  let used_offsets : Map[Int, Bool] = Map([])
+  let used_offsets : Map[Int32, Bool] = Map([])
   if preserve_existing_offsets {
     for assignment in cohort_assignments {
       match offsets_by_context_index.get(assignment.context_index) {
@@ -278,10 +278,10 @@ fn assign_compact_boundary_offsets_for_cohort(
 
 ///|
 fn boundary_offset_candidate_values(
-  half_span_limit : Int,
-  preferred_total : Int,
-) -> Array[Int] {
-  let candidates : Array[Int] = []
+  half_span_limit : Int32,
+  preferred_total : Int32,
+) -> Array[Int32] {
+  let candidates : Array[Int32] = []
   if half_span_limit <= 0 {
     candidates.push(0)
     return candidates
@@ -312,8 +312,8 @@ fn boundary_offset_candidate_values(
 fn rebalance_boundary_offsets_for_bucket(
   assignments : Array[BoundaryEndpointAssignment],
   edge_layout_contexts : Array[EdgeLayoutContext],
-  source_boundary_offset_by_context_index : Map[Int, Int],
-  target_boundary_offset_by_context_index : Map[Int, Int],
+  source_boundary_offset_by_context_index : Map[Int32, Int32],
+  target_boundary_offset_by_context_index : Map[Int32, Int32],
 ) -> Unit {
   if assignments.length() <= 1 {
     return
@@ -356,7 +356,7 @@ fn rebalance_boundary_offsets_for_bucket(
     half_span_limit,
     ordered_assignments.length(),
   )
-  let used_offsets : Map[Int, Bool] = Map([])
+  let used_offsets : Map[Int32, Bool] = Map([])
   let normalized_total = ordered_assignments.length().max(1)
   for slot, assignment in ordered_assignments {
     let existing_offset = if assignment.source_endpoint {
@@ -389,15 +389,15 @@ fn rebalance_boundary_offsets_for_bucket(
 ///|
 fn bucket_has_source_target_offset_conflict(
   assignments : Array[BoundaryEndpointAssignment],
-  source_boundary_offset_by_context_index : Map[Int, Int],
-  target_boundary_offset_by_context_index : Map[Int, Int],
+  source_boundary_offset_by_context_index : Map[Int32, Int32],
+  target_boundary_offset_by_context_index : Map[Int32, Int32],
   edge_layout_contexts : Array[EdgeLayoutContext],
 ) -> Bool {
   if assignments.length() == 0 {
     return false
   }
-  let source_offsets : Map[Int, Bool] = Map([])
-  let target_offsets : Map[Int, Bool] = Map([])
+  let source_offsets : Map[Int32, Bool] = Map([])
+  let target_offsets : Map[Int32, Bool] = Map([])
   let normalized_total = assignments.length().max(1)
   for slot, assignment in assignments {
     let context = edge_layout_contexts[assignment.context_index]
@@ -441,8 +441,8 @@ fn bucket_has_source_target_offset_conflict(
 ///|
 fn deferred_back_edge_minor_axis_key(
   context : EdgeLayoutContext,
-  key_mode : Int,
-) -> Int {
+  key_mode : Int32,
+) -> Int32 {
   let source_minor = if context.edge_horizontal {
     context.source.y
   } else {
@@ -464,14 +464,14 @@ fn deferred_back_edge_minor_axis_key(
 
 ///|
 fn build_deferred_back_edge_order(
-  deferred_context_indices : Array[Int],
+  deferred_context_indices : Array[Int32],
   edge_layout_contexts : Array[EdgeLayoutContext],
-  row_key_mode : Int,
+  row_key_mode : Int32,
   row_first : Bool,
   row_desc : Bool,
   span_desc : Bool,
-) -> Array[Int] {
-  let ordered_context_indices : Array[Int] = []
+) -> Array[Int32] {
+  let ordered_context_indices : Array[Int32] = []
   for context_index in deferred_context_indices {
     ordered_context_indices.push(context_index)
   }
@@ -607,7 +607,7 @@ fn polylines_share_endpoint(
 }
 
 ///|
-fn count_polyline_crossings(polylines : Array[Array[Point]]) -> Int {
+fn count_polyline_crossings(polylines : Array[Array[Point]]) -> Int32 {
   let mut crossings = 0
   for i in 0..<polylines.length() {
     let left_polyline = polylines[i]
@@ -650,7 +650,7 @@ fn count_polyline_crossings(polylines : Array[Array[Point]]) -> Int {
 
 ///|
 fn simulate_deferred_back_edge_order_crossings(
-  deferred_order : Array[Int],
+  deferred_order : Array[Int32],
   edge_layout_contexts : Array[EdgeLayoutContext],
   positioned_nodes : Array[PositionedNode],
   base_routed_edge_segments : Array[RoutedEdgeSegment],
@@ -658,7 +658,7 @@ fn simulate_deferred_back_edge_order_crossings(
   base_back_edge_column_reservations : Array[BackEdgeColumnReservation],
   base_polylines : Array[Array[Point]],
   enhanced_horizontal_state_flow : Bool,
-) -> Int {
+) -> Int32 {
   let candidate_routed_edge_segments : Array[RoutedEdgeSegment] = []
   let candidate_back_edge_lane_reservations : Array[BackEdgeLaneReservation] = []
   let candidate_back_edge_column_reservations : Array[BackEdgeColumnReservation] = []
@@ -724,7 +724,7 @@ fn simulate_deferred_back_edge_order_crossings(
 
 ///|
 fn optimize_deferred_back_edge_order_locally(
-  initial_order : Array[Int],
+  initial_order : Array[Int32],
   edge_layout_contexts : Array[EdgeLayoutContext],
   positioned_nodes : Array[PositionedNode],
   base_routed_edge_segments : Array[RoutedEdgeSegment],
@@ -732,9 +732,9 @@ fn optimize_deferred_back_edge_order_locally(
   base_back_edge_column_reservations : Array[BackEdgeColumnReservation],
   base_polylines : Array[Array[Point]],
   enhanced_horizontal_state_flow : Bool,
-) -> Array[Int] {
-  fn copy_order(order : Array[Int]) -> Array[Int] {
-    let copied : Array[Int] = []
+) -> Array[Int32] {
+  fn copy_order(order : Array[Int32]) -> Array[Int32] {
+    let copied : Array[Int32] = []
     for context_index in order {
       copied.push(context_index)
     }
@@ -742,10 +742,10 @@ fn optimize_deferred_back_edge_order_locally(
   }
 
   fn build_relocated_order(
-    order : Array[Int],
-    from_index : Int,
-    to_index : Int,
-  ) -> Array[Int] {
+    order : Array[Int32],
+    from_index : Int32,
+    to_index : Int32,
+  ) -> Array[Int32] {
     if from_index == to_index ||
       from_index < 0 ||
       from_index >= order.length() ||
@@ -754,7 +754,7 @@ fn optimize_deferred_back_edge_order_locally(
       return copy_order(order)
     }
     let moved_context_index = order[from_index]
-    let relocated : Array[Int] = []
+    let relocated : Array[Int32] = []
     let mut inserted = false
     for i, context_index in order {
       if i == from_index {
@@ -772,7 +772,7 @@ fn optimize_deferred_back_edge_order_locally(
     relocated
   }
 
-  let mut optimized_order : Array[Int] = []
+  let mut optimized_order : Array[Int32] = []
   for context_index in initial_order {
     optimized_order.push(context_index)
   }
@@ -825,7 +825,7 @@ fn optimize_deferred_back_edge_order_locally(
     while insertion_round < 2 && evaluations < max_evaluations {
       let mut has_round_best = false
       let mut round_best_crossings = best_crossings
-      let mut round_best_order : Array[Int] = []
+      let mut round_best_order : Array[Int32] = []
 
       for from_index in 0..<optimized_order.length() {
         if evaluations >= max_evaluations {
@@ -869,10 +869,10 @@ fn optimize_deferred_back_edge_order_locally(
 
 ///|
 fn spans_overlap(
-  a_left : Int,
-  a_right : Int,
-  b_left : Int,
-  b_right : Int,
+  a_left : Int32,
+  a_right : Int32,
+  b_left : Int32,
+  b_right : Int32,
 ) -> Bool {
   !(a_right < b_left || b_right < a_left)
 }
@@ -880,9 +880,9 @@ fn spans_overlap(
 ///|
 fn back_edge_lane_conflicts(
   reservations : Array[BackEdgeLaneReservation],
-  left : Int,
-  right : Int,
-  y : Int,
+  left : Int32,
+  right : Int32,
+  y : Int32,
 ) -> Bool {
   reservations.any(item => {
     item.y == y && spans_overlap(left, right, item.left, item.right)
@@ -892,9 +892,9 @@ fn back_edge_lane_conflicts(
 ///|
 fn back_edge_column_conflicts(
   reservations : Array[BackEdgeColumnReservation],
-  top : Int,
-  bottom : Int,
-  x : Int,
+  top : Int32,
+  bottom : Int32,
+  x : Int32,
 ) -> Bool {
   reservations.any(item => {
     item.x == x && spans_overlap(top, bottom, item.top, item.bottom)
@@ -906,10 +906,10 @@ fn back_edge_side_node_congestion(
   nodes : Array[PositionedNode],
   source : PositionedNode,
   target : PositionedNode,
-  left : Int,
-  right : Int,
-  candidate_y : Int,
-) -> Int {
+  left : Int32,
+  right : Int32,
+  candidate_y : Int32,
+) -> Int32 {
   let top = source.y.min(target.y)
   let bottom = source.y.max(target.y)
   let route_above = candidate_y < top
@@ -945,10 +945,10 @@ fn back_edge_column_side_node_congestion(
   nodes : Array[PositionedNode],
   source : PositionedNode,
   target : PositionedNode,
-  top : Int,
-  bottom : Int,
-  candidate_x : Int,
-) -> Int {
+  top : Int32,
+  bottom : Int32,
+  candidate_x : Int32,
+) -> Int32 {
   let left = source.x.min(target.x)
   let right = source.x.max(target.x)
   let route_left = candidate_x < left
@@ -983,8 +983,8 @@ fn back_edge_column_side_node_congestion(
 fn back_edge_lane_distance_penalty(
   source : PositionedNode,
   target : PositionedNode,
-  candidate_y : Int,
-) -> Int {
+  candidate_y : Int32,
+) -> Int32 {
   let top = source.y.min(target.y)
   let bottom = source.y.max(target.y)
   if candidate_y < top {
@@ -1000,8 +1000,8 @@ fn back_edge_lane_distance_penalty(
 fn back_edge_column_distance_penalty(
   source : PositionedNode,
   target : PositionedNode,
-  candidate_x : Int,
-) -> Int {
+  candidate_x : Int32,
+) -> Int32 {
   let left = source.x.min(target.x)
   let right = source.x.max(target.x)
   if candidate_x < left {
@@ -1015,13 +1015,13 @@ fn back_edge_column_distance_penalty(
 
 ///|
 fn back_edge_horizontal_segment_intersects_node_box(
-  left : Int,
-  right : Int,
-  y : Int,
-  node_left : Int,
-  node_right : Int,
-  node_top : Int,
-  node_bottom : Int,
+  left : Int32,
+  right : Int32,
+  y : Int32,
+  node_left : Int32,
+  node_right : Int32,
+  node_top : Int32,
+  node_bottom : Int32,
 ) -> Bool {
   y >= node_top &&
   y <= node_bottom &&
@@ -1030,13 +1030,13 @@ fn back_edge_horizontal_segment_intersects_node_box(
 
 ///|
 fn back_edge_vertical_segment_intersects_node_box(
-  top : Int,
-  bottom : Int,
-  x : Int,
-  node_left : Int,
-  node_right : Int,
-  node_top : Int,
-  node_bottom : Int,
+  top : Int32,
+  bottom : Int32,
+  x : Int32,
+  node_left : Int32,
+  node_right : Int32,
+  node_top : Int32,
+  node_bottom : Int32,
 ) -> Bool {
   x >= node_left &&
   x <= node_right &&
@@ -1048,12 +1048,12 @@ fn back_edge_lane_node_box_penalty(
   nodes : Array[PositionedNode],
   source : PositionedNode,
   target : PositionedNode,
-  source_anchor_x : Int,
-  source_y : Int,
-  target_anchor_x : Int,
-  target_y : Int,
-  candidate_y : Int,
-) -> Int {
+  source_anchor_x : Int32,
+  source_y : Int32,
+  target_anchor_x : Int32,
+  target_y : Int32,
+  candidate_y : Int32,
+) -> Int32 {
   let box_margin = 6
   let left = source_anchor_x.min(target_anchor_x)
   let right = source_anchor_x.max(target_anchor_x)
@@ -1092,12 +1092,12 @@ fn back_edge_column_node_box_penalty(
   nodes : Array[PositionedNode],
   source : PositionedNode,
   target : PositionedNode,
-  source_x : Int,
-  source_anchor_y : Int,
-  target_x : Int,
-  target_anchor_y : Int,
-  candidate_x : Int,
-) -> Int {
+  source_x : Int32,
+  source_anchor_y : Int32,
+  target_x : Int32,
+  target_anchor_y : Int32,
+  candidate_x : Int32,
+) -> Int32 {
   let box_margin = 6
   let top = source_anchor_y.min(target_anchor_y)
   let bottom = source_anchor_y.max(target_anchor_y)
@@ -1132,7 +1132,7 @@ fn back_edge_column_node_box_penalty(
 }
 
 ///|
-fn back_edge_segment_orientation(a : Point, b : Point, c : Point) -> Int {
+fn back_edge_segment_orientation(a : Point, b : Point, c : Point) -> Int32 {
   (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x)
 }
 
@@ -1154,12 +1154,12 @@ fn back_edge_segments_properly_intersect(
 ///|
 fn back_edge_lane_crossing_penalty(
   crossing_candidates : Array[RoutedEdgeSegment],
-  source_anchor_x : Int,
-  source_y : Int,
-  target_anchor_x : Int,
-  target_y : Int,
-  candidate_y : Int,
-) -> Int {
+  source_anchor_x : Int32,
+  source_y : Int32,
+  target_anchor_x : Int32,
+  target_y : Int32,
+  candidate_y : Int32,
+) -> Int32 {
   let start : Point = { x: source_anchor_x, y: source_y, }
   let bend_start : Point = { x: source_anchor_x, y: candidate_y, }
   let bend_end : Point = { x: target_anchor_x, y: candidate_y, }
@@ -1193,12 +1193,12 @@ fn back_edge_lane_crossing_penalty(
 ///|
 fn back_edge_column_crossing_penalty(
   crossing_candidates : Array[RoutedEdgeSegment],
-  source_x : Int,
-  source_anchor_y : Int,
-  target_x : Int,
-  target_anchor_y : Int,
-  candidate_x : Int,
-) -> Int {
+  source_x : Int32,
+  source_anchor_y : Int32,
+  target_x : Int32,
+  target_anchor_y : Int32,
+  candidate_x : Int32,
+) -> Int32 {
   let start : Point = { x: source_x, y: source_anchor_y, }
   let bend_start : Point = { x: candidate_x, y: source_anchor_y, }
   let bend_end : Point = { x: candidate_x, y: target_anchor_y, }
@@ -1234,8 +1234,8 @@ fn collect_back_edge_crossing_candidates(
   routed_edge_segments : Array[RoutedEdgeSegment],
   source_id : String,
   target_id : String,
-  left : Int,
-  right : Int,
+  left : Int32,
+  right : Int32,
 ) -> Array[RoutedEdgeSegment] {
   let crossing_candidates : Array[RoutedEdgeSegment] = []
   for segment in routed_edge_segments {
@@ -1259,8 +1259,8 @@ fn collect_back_edge_vertical_crossing_candidates(
   routed_edge_segments : Array[RoutedEdgeSegment],
   source_id : String,
   target_id : String,
-  top : Int,
-  bottom : Int,
+  top : Int32,
+  bottom : Int32,
 ) -> Array[RoutedEdgeSegment] {
   let crossing_candidates : Array[RoutedEdgeSegment] = []
   for segment in routed_edge_segments {
@@ -1281,16 +1281,16 @@ fn collect_back_edge_vertical_crossing_candidates(
 
 ///|
 fn back_edge_lane_score_is_better(
-  node_box_hits : Int,
-  crossings : Int,
-  distance : Int,
-  congestion : Int,
-  side_priority : Int,
-  best_node_box_hits : Int,
-  best_crossings : Int,
-  best_distance : Int,
-  best_congestion : Int,
-  best_side_priority : Int,
+  node_box_hits : Int32,
+  crossings : Int32,
+  distance : Int32,
+  congestion : Int32,
+  side_priority : Int32,
+  best_node_box_hits : Int32,
+  best_crossings : Int32,
+  best_distance : Int32,
+  best_congestion : Int32,
+  best_side_priority : Int32,
 ) -> Bool {
   if crossings != best_crossings {
     return crossings < best_crossings
@@ -1314,7 +1314,7 @@ fn reserve_back_edge_bend_y(
   nodes : Array[PositionedNode],
   routed_edge_segments : Array[RoutedEdgeSegment],
   reservations : Array[BackEdgeLaneReservation],
-) -> Int {
+) -> Int32 {
   let source_anchor_x = source.x - source.width / 2
   let target_anchor_x = target.x + target.width / 2
   let left = source_anchor_x.min(target_anchor_x)
@@ -1350,7 +1350,7 @@ fn reserve_back_edge_bend_y(
   }
   let base_clearance = 38
 
-  let upper_candidates : Array[Int] = []
+  let upper_candidates : Array[Int32] = []
   let mut candidate_up = top - base_clearance
   while candidate_up >= 12 && upper_candidates.length() < lane_options_per_side {
     if !back_edge_lane_conflicts(reservations, left, right, candidate_up) {
@@ -1359,7 +1359,7 @@ fn reserve_back_edge_bend_y(
     candidate_up = candidate_up - lane_step
   }
 
-  let lower_candidates : Array[Int] = []
+  let lower_candidates : Array[Int32] = []
   let mut candidate_down = bottom + base_clearance
   while lower_candidates.length() < lane_options_per_side {
     if !back_edge_lane_conflicts(reservations, left, right, candidate_down) {
@@ -1391,22 +1391,22 @@ fn reserve_back_edge_bend_y(
   let mut best_side_priority = 0
 
   fn consider_candidate(
-    candidate_y : Int,
-    congestion : Int,
-    side_priority : Int,
+    candidate_y : Int32,
+    congestion : Int32,
+    side_priority : Int32,
     crossing_candidates : Array[RoutedEdgeSegment],
-    source_anchor_x : Int,
-    source_y : Int,
-    target_anchor_x : Int,
-    target_y : Int,
+    source_anchor_x : Int32,
+    source_y : Int32,
+    target_anchor_x : Int32,
+    target_y : Int32,
     has_choice : Bool,
-    best_y : Int,
-    best_node_box_hits : Int,
-    best_congestion : Int,
-    best_crossings : Int,
-    best_distance : Int,
-    best_side_priority : Int,
-  ) -> (Bool, Int, Int, Int, Int, Int, Int) {
+    best_y : Int32,
+    best_node_box_hits : Int32,
+    best_congestion : Int32,
+    best_crossings : Int32,
+    best_distance : Int32,
+    best_side_priority : Int32,
+  ) -> (Bool, Int32, Int32, Int32, Int32, Int32, Int32) {
     let node_box_hits = back_edge_lane_node_box_penalty(
       nodes, source, target, source_anchor_x, source_y, target_anchor_x, target_y,
       candidate_y,
@@ -1514,7 +1514,7 @@ fn reserve_back_edge_bend_x(
   nodes : Array[PositionedNode],
   routed_edge_segments : Array[RoutedEdgeSegment],
   reservations : Array[BackEdgeColumnReservation],
-) -> Int {
+) -> Int32 {
   let source_anchor_y = source.y - source.height / 2
   let target_anchor_y = target.y + target.height / 2
   let top = source_anchor_y.min(target_anchor_y)
@@ -1550,7 +1550,7 @@ fn reserve_back_edge_bend_x(
   }
   let base_clearance = 38
 
-  let left_candidates : Array[Int] = []
+  let left_candidates : Array[Int32] = []
   let mut candidate_left = left - base_clearance
   while candidate_left >= 12 && left_candidates.length() < lane_options_per_side {
     if !back_edge_column_conflicts(reservations, top, bottom, candidate_left) {
@@ -1559,7 +1559,7 @@ fn reserve_back_edge_bend_x(
     candidate_left = candidate_left - lane_step
   }
 
-  let right_candidates : Array[Int] = []
+  let right_candidates : Array[Int32] = []
   let mut candidate_right = right + base_clearance
   while right_candidates.length() < lane_options_per_side {
     if !back_edge_column_conflicts(reservations, top, bottom, candidate_right) {
@@ -1598,22 +1598,22 @@ fn reserve_back_edge_bend_x(
   let mut best_side_priority = 0
 
   fn consider_candidate(
-    candidate_x : Int,
-    congestion : Int,
-    side_priority : Int,
+    candidate_x : Int32,
+    congestion : Int32,
+    side_priority : Int32,
     crossing_candidates : Array[RoutedEdgeSegment],
-    source_x : Int,
-    source_anchor_y : Int,
-    target_x : Int,
-    target_anchor_y : Int,
+    source_x : Int32,
+    source_anchor_y : Int32,
+    target_x : Int32,
+    target_anchor_y : Int32,
     has_choice : Bool,
-    best_x : Int,
-    best_node_box_hits : Int,
-    best_congestion : Int,
-    best_crossings : Int,
-    best_distance : Int,
-    best_side_priority : Int,
-  ) -> (Bool, Int, Int, Int, Int, Int, Int) {
+    best_x : Int32,
+    best_node_box_hits : Int32,
+    best_congestion : Int32,
+    best_crossings : Int32,
+    best_distance : Int32,
+    best_side_priority : Int32,
+  ) -> (Bool, Int32, Int32, Int32, Int32, Int32, Int32) {
     let node_box_hits = back_edge_column_node_box_penalty(
       nodes, source, target, source_x, source_anchor_y, target_x, target_anchor_y,
       candidate_x,
@@ -1718,19 +1718,19 @@ fn reserve_back_edge_bend_x(
 
 ///|
 priv struct LabelRouteScore {
-  label_node_overlaps : Int
-  label_edge_overlaps : Int
-  label_label_overlaps : Int
-  endpoint_anchor_conflicts : Int
-  reciprocal_segment_intersections : Int
-  reciprocal_segment_overlaps : Int
-  route_crossings : Int
-  route_length : Int
-  offset_abs : Int
+  label_node_overlaps : Int32
+  label_edge_overlaps : Int32
+  label_label_overlaps : Int32
+  endpoint_anchor_conflicts : Int32
+  reciprocal_segment_intersections : Int32
+  reciprocal_segment_overlaps : Int32
+  route_crossings : Int32
+  route_length : Int32
+  offset_abs : Int32
 }
 
 ///|
-fn edge_label_dimensions(label : String) -> (Int, Int) {
+fn edge_label_dimensions(label : String) -> (Int32, Int32) {
   let lines = label.split("\n").map(part => part.to_owned()).to_array()
   let mut longest_line = 0
   for line in lines {
@@ -1807,24 +1807,24 @@ fn edge_label_box_for_context_points(
 ///|
 fn point_inside_rect(
   point : Point,
-  left : Int,
-  right : Int,
-  top : Int,
-  bottom : Int,
+  left : Int32,
+  right : Int32,
+  top : Int32,
+  bottom : Int32,
 ) -> Bool {
   point.x >= left && point.x <= right && point.y >= top && point.y <= bottom
 }
 
 ///|
 fn rects_overlap(
-  left : Int,
-  right : Int,
-  top : Int,
-  bottom : Int,
-  other_left : Int,
-  other_right : Int,
-  other_top : Int,
-  other_bottom : Int,
+  left : Int32,
+  right : Int32,
+  top : Int32,
+  bottom : Int32,
+  other_left : Int32,
+  other_right : Int32,
+  other_top : Int32,
+  other_bottom : Int32,
 ) -> Bool {
   spans_overlap(left, right, other_left, other_right) &&
   spans_overlap(top, bottom, other_top, other_bottom)
@@ -1834,10 +1834,10 @@ fn rects_overlap(
 fn segment_intersects_rect(
   start : Point,
   end : Point,
-  left : Int,
-  right : Int,
-  top : Int,
-  bottom : Int,
+  left : Int32,
+  right : Int32,
+  top : Int32,
+  bottom : Int32,
 ) -> Bool {
   if !rects_overlap(
       start.x.min(end.x),
@@ -1869,7 +1869,7 @@ fn segment_intersects_rect(
 fn label_box_overlaps_node(
   label_box : RoutedLabelBox,
   node : PositionedNode,
-  margin : Int,
+  margin : Int32,
 ) -> Bool {
   let node_left = node.x - node.width / 2 - margin
   let node_right = node.x + node.width / 2 + margin
@@ -1891,7 +1891,7 @@ fn label_box_overlaps_node(
 fn label_box_overlaps_segment(
   label_box : RoutedLabelBox,
   segment : RoutedEdgeSegment,
-  margin : Int,
+  margin : Int32,
 ) -> Bool {
   segment_intersects_rect(
     segment.start,
@@ -1907,7 +1907,7 @@ fn label_box_overlaps_segment(
 fn label_boxes_overlap(
   left : RoutedLabelBox,
   right : RoutedLabelBox,
-  margin : Int,
+  margin : Int32,
 ) -> Bool {
   rects_overlap(
     left.left - margin,
@@ -1922,7 +1922,7 @@ fn label_boxes_overlap(
 }
 
 ///|
-fn route_length(points : Array[Point]) -> Int {
+fn route_length(points : Array[Point]) -> Int32 {
   let mut length = 0
   for i in 1..<points.length() {
     let start = points[i - 1]
@@ -1983,7 +1983,7 @@ fn route_endpoint_anchor_conflicts(
   context : EdgeLayoutContext,
   points : Array[Point],
   routed_edge_segments : Array[RoutedEdgeSegment],
-) -> Int {
+) -> Int32 {
   if points.length() < 2 {
     return 0
   }
@@ -2010,7 +2010,7 @@ fn route_reciprocal_segment_overlaps(
   context : EdgeLayoutContext,
   points : Array[Point],
   routed_edge_segments : Array[RoutedEdgeSegment],
-) -> Int {
+) -> Int32 {
   let mut overlaps = 0
   for i in 1..<points.length() {
     let candidate_start = points[i - 1]
@@ -2044,7 +2044,7 @@ fn route_reciprocal_segment_intersections(
   context : EdgeLayoutContext,
   points : Array[Point],
   routed_edge_segments : Array[RoutedEdgeSegment],
-) -> Int {
+) -> Int32 {
   let mut intersections = 0
   for i in 1..<points.length() {
     let candidate_start = points[i - 1]
@@ -2079,7 +2079,7 @@ fn route_crossings_against_routed_segments(
   source_id : String,
   target_id : String,
   routed_edge_segments : Array[RoutedEdgeSegment],
-) -> Int {
+) -> Int32 {
   let mut crossings = 0
   for i in 1..<points.length() {
     let candidate_start = points[i - 1]
@@ -2110,7 +2110,7 @@ fn route_crossings_against_all_routed_segments(
   source_id : String,
   target_id : String,
   routed_edge_segments : Array[RoutedEdgeSegment],
-) -> Int {
+) -> Int32 {
   let mut crossings = 0
   for i in 1..<points.length() {
     let candidate_start = points[i - 1]
@@ -2136,7 +2136,7 @@ fn route_crossings_against_all_routed_segments(
 fn evaluate_labeled_route_score(
   context : EdgeLayoutContext,
   points : Array[Point],
-  offset_abs : Int,
+  offset_abs : Int32,
   positioned_nodes : Array[PositionedNode],
   routed_edge_segments : Array[RoutedEdgeSegment],
   routed_label_boxes : Array[RoutedLabelBox],
@@ -2296,7 +2296,7 @@ fn maybe_compact_source_endpoint_turnback(
 ///|
 fn reciprocal_target_dogleg_candidate(
   points : Array[Point],
-  offset : Int,
+  offset : Int32,
 ) -> Array[Point]? {
   if points.length() < 3 || offset == 0 {
     return None
@@ -2339,7 +2339,7 @@ fn reciprocal_target_dogleg_candidate(
 fn reciprocal_two_point_dogleg_candidate(
   points : Array[Point],
   edge_horizontal : Bool,
-  offset : Int,
+  offset : Int32,
 ) -> Array[Point]? {
   if points.length() != 2 || offset == 0 {
     return None
@@ -2389,7 +2389,7 @@ fn reciprocal_two_point_outer_detour_candidate(
   context : EdgeLayoutContext,
   points : Array[Point],
   toward_positive_major : Bool,
-  offset : Int,
+  offset : Int32,
 ) -> Array[Point]? {
   if points.length() != 2 || offset <= 0 {
     return None
@@ -2439,8 +2439,8 @@ fn reciprocal_two_point_outer_shifted_candidate(
   context : EdgeLayoutContext,
   points : Array[Point],
   toward_positive_major : Bool,
-  major_offset : Int,
-  minor_offset : Int,
+  major_offset : Int32,
+  minor_offset : Int32,
 ) -> Array[Point]? {
   if points.length() != 2 || major_offset <= 0 || minor_offset == 0 {
     return None
@@ -2876,10 +2876,10 @@ fn optimize_labeled_route_points(
   route_as_back_edge : Bool,
   use_forward_fanout_lane : Bool,
   smooth_forward_fanout : Bool,
-  source_port_minor_offset : Int,
-  target_port_minor_offset : Int,
-  layer_spacing : Int,
-  node_spacing : Int,
+  source_port_minor_offset : Int32,
+  target_port_minor_offset : Int32,
+  layer_spacing : Int32,
+  node_spacing : Int32,
   positioned_nodes : Array[PositionedNode],
   routed_edge_segments : Array[RoutedEdgeSegment],
   routed_label_boxes : Array[RoutedLabelBox],
@@ -2991,7 +2991,7 @@ fn append_routed_label_box_for_context(
 }
 
 ///|
-fn label_overlap_offset(slot : Int) -> Int {
+fn label_overlap_offset(slot : Int32) -> Int32 {
   if slot <= 0 {
     return 0
   }
@@ -3004,7 +3004,7 @@ fn label_overlap_offset(slot : Int) -> Int {
 }
 
 ///|
-fn label_overlap_offset_x(slot : Int) -> Int {
+fn label_overlap_offset_x(slot : Int32) -> Int32 {
   if slot <= 0 {
     return 0
   }

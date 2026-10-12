@@ -1,5 +1,5 @@
 ///|
-fn pair_inversion_crossings(edge_pairs : Array[(Int, Int)]) -> Int {
+fn pair_inversion_crossings(edge_pairs : Array[(Int32, Int32)]) -> Int32 {
   let mut crossings = 0
   for left_index in 0..<edge_pairs.length() {
     let (left_source_pos, left_target_pos) = edge_pairs[left_index]
@@ -22,11 +22,11 @@ fn pair_inversion_crossings(edge_pairs : Array[(Int, Int)]) -> Int {
 
 ///|
 fn layered_crossing_count(
-  rank_node_ids_by_rank : Map[Int, Array[String]],
-  max_rank : Int,
-  rank_by_node_id : Map[String, Int],
+  rank_node_ids_by_rank : Map[Int32, Array[String]],
+  max_rank : Int32,
+  rank_by_node_id : Map[String, Int32],
   successors_by_node_id : Map[String, Array[String]],
-) -> Int {
+) -> Int32 {
   let rank_position_by_node_id = rank_position_by_node_id(
     rank_node_ids_by_rank, max_rank,
   )
@@ -40,8 +40,8 @@ fn layered_crossing_count(
 ///|
 fn layered_crossing_count_from_segments(
   segments : Array[RankOrderEdgeSegment],
-) -> Int {
-  let edge_pairs_by_rank_pair : Map[String, Array[(Int, Int)]] = Map([])
+) -> Int32 {
+  let edge_pairs_by_rank_pair : Map[String, Array[(Int32, Int32)]] = Map([])
   for segment in segments {
     let rank_pair_key = "\{segment.source_rank}->\{segment.target_rank}"
     if !edge_pairs_by_rank_pair.contains(rank_pair_key) {
@@ -64,16 +64,16 @@ fn layered_crossing_count_from_segments(
 priv struct RankOrderEdgeSegment {
   source_id : String
   target_id : String
-  source_rank : Int
-  target_rank : Int
-  source_pos : Int
-  target_pos : Int
+  source_rank : Int32
+  target_rank : Int32
+  source_pos : Int32
+  target_pos : Int32
 }
 
 ///|
 fn collect_rank_order_edge_segments_from_rank_positions(
-  rank_position_by_node_id : Map[String, Int],
-  rank_by_node_id : Map[String, Int],
+  rank_position_by_node_id : Map[String, Int32],
+  rank_by_node_id : Map[String, Int32],
   successors_by_node_id : Map[String, Array[String]],
 ) -> Array[RankOrderEdgeSegment] {
   let segments : Array[RankOrderEdgeSegment] = []
@@ -107,13 +107,13 @@ fn collect_rank_order_edge_segments_from_rank_positions(
 
 ///|
 fn segment_orientation(
-  ax : Int,
-  ay : Int,
-  bx : Int,
-  by : Int,
-  cx : Int,
-  cy : Int,
-) -> Int {
+  ax : Int32,
+  ay : Int32,
+  bx : Int32,
+  by : Int32,
+  cx : Int32,
+  cy : Int32,
+) -> Int32 {
   let abx = bx - ax
   let aby = by - ay
   let acx = cx - ax
@@ -178,7 +178,7 @@ fn rank_order_edge_segments_cross(
 ///|
 fn global_crossing_count_from_segments(
   segments : Array[RankOrderEdgeSegment],
-) -> Int {
+) -> Int32 {
   let mut crossings = 0
   for left_index in 0..<segments.length() {
     let left = segments[left_index]
@@ -194,20 +194,20 @@ fn global_crossing_count_from_segments(
 
 ///|
 priv struct ElkLayeredCrossingObjectiveContext {
-  max_rank : Int
-  rank_by_node_id : Map[String, Int]
+  max_rank : Int32
+  rank_by_node_id : Map[String, Int32]
   successors_by_node_id : Map[String, Array[String]]
 }
 
 ///|
 priv struct ElkLayeredCrossingObjective {
-  layered_crossings : Int
-  global_crossings : Int
+  layered_crossings : Int32
+  global_crossings : Int32
 }
 
 ///|
 fn evaluate_crossing_objective(
-  rank_node_ids_by_rank : Map[Int, Array[String]],
+  rank_node_ids_by_rank : Map[Int32, Array[String]],
   context : ElkLayeredCrossingObjectiveContext,
 ) -> ElkLayeredCrossingObjective {
   let rank_position_by_node_id = rank_position_by_node_id(
@@ -227,11 +227,11 @@ fn evaluate_crossing_objective(
 
 ///|
 fn rank_order_crossing_score(
-  rank_node_ids_by_rank : Map[Int, Array[String]],
-  max_rank : Int,
-  rank_by_node_id : Map[String, Int],
+  rank_node_ids_by_rank : Map[Int32, Array[String]],
+  max_rank : Int32,
+  rank_by_node_id : Map[String, Int32],
   successors_by_node_id : Map[String, Array[String]],
-) -> Int {
+) -> Int32 {
   layered_crossing_count(
     rank_node_ids_by_rank, max_rank, rank_by_node_id, successors_by_node_id,
   )

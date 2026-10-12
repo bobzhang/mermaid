@@ -87,7 +87,7 @@ pub fn prepare_graph_inputs(
     )
   }
 
-  let node_priority_by_id : Map[String, Int] = Map([])
+  let node_priority_by_id : Map[String, Int32] = Map([])
   let prioritized_node_ids : Array[String] = []
   fn append_prioritized_visible_node(node_id : String) -> Unit {
     if node_priority_by_id.contains(node_id) {
@@ -150,8 +150,8 @@ pub fn prepare_graph_inputs(
   fn priority_compare(
     left_id : String,
     right_id : String,
-    node_priority_by_id : Map[String, Int],
-  ) -> Int {
+    node_priority_by_id : Map[String, Int32],
+  ) -> Int32 {
     let left_priority = match node_priority_by_id.get(left_id) {
       Some(priority) => priority
       None => 0
@@ -170,7 +170,7 @@ pub fn prepare_graph_inputs(
 
   fn sort_ready_node_ids_for_pop(
     ready_node_ids : Array[String],
-    node_priority_by_id : Map[String, Int],
+    node_priority_by_id : Map[String, Int32],
   ) -> Unit {
     ready_node_ids.sort_by((left_id, right_id) => {
       // Keep highest priority at the front so `pop()` returns the best node.
@@ -181,7 +181,7 @@ pub fn prepare_graph_inputs(
 
   let visible_node_ids = prioritized_node_ids.copy()
   let visible_node_by_id : Map[String, Bool] = Map([])
-  let indegree_by_id : Map[String, Int] = Map([])
+  let indegree_by_id : Map[String, Int32] = Map([])
   let outgoing_target_ids_by_source : Map[String, Array[String]] = Map([])
   for node_id in visible_node_ids {
     visible_node_by_id[node_id] = true

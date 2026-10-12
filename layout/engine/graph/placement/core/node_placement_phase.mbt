@@ -22,16 +22,16 @@ priv struct LegacyPlacementInput {
   use_subgraph_redirects : Bool
   subgraph_entry_by_id : Map[String, String]
   subgraph_exit_by_id : Map[String, String]
-  flow_max_rank : Int
-  flow_rank_by_node_id : Map[String, Int]
-  flow_lane_by_node_id : Map[String, Int]
-  flow_label_y_offset_by_rank : Map[Int, Int]
-  state_lane_by_node_id : Map[String, Int]
-  state_label_y_offset_by_node_id : Map[String, Int]
+  flow_max_rank : Int32
+  flow_rank_by_node_id : Map[String, Int32]
+  flow_lane_by_node_id : Map[String, Int32]
+  flow_label_y_offset_by_rank : Map[Int32, Int32]
+  state_lane_by_node_id : Map[String, Int32]
+  state_label_y_offset_by_node_id : Map[String, Int32]
   dagre_parity_rank_nodes : Array[Array[String]]
-  padding : Int
-  node_spacing : Int
-  layer_spacing : Int
+  padding : Int32
+  node_spacing : Int32
+  layer_spacing : Int32
 }
 
 ///|
@@ -115,8 +115,8 @@ fn compute_legacy_node_placement_state(
 
   let positioned_nodes : Array[PositionedNode] = []
   let positioned_by_id : Map[String, PositionedNode] = Map([])
-  let max_width_by_flow_rank_index : Map[Int, Int] = Map([])
-  let node_width_by_id : Map[String, Int] = Map([])
+  let max_width_by_flow_rank_index : Map[Int32, Int32] = Map([])
+  let node_width_by_id : Map[String, Int32] = Map([])
   for node in nodes_in_order {
     let (width, _) = node_dimensions(node)
     node_width_by_id[node.id] = width
@@ -137,7 +137,7 @@ fn compute_legacy_node_placement_state(
 
   // Apply minimal rank shifts only where wide labels would collapse adjacent
   // horizontal ranks, preserving compaction on normal-width graphs.
-  let horizontal_label_min_boundary_extra_by_index : Map[Int, Int] = Map([])
+  let horizontal_label_min_boundary_extra_by_index : Map[Int32, Int32] = Map([])
   if horizontal && !dagre_parity_mode {
     let label_rank_constraints = collect_horizontal_label_rank_constraints(
       graph.edges,
@@ -163,7 +163,7 @@ fn compute_legacy_node_placement_state(
 
   // Apply minimal rank shifts only where wide nodes or labeled edges would
   // collapse adjacent horizontal ranks, preserving compaction on normal-width graphs.
-  let horizontal_rank_shift_by_index : Map[Int, Int] = Map([])
+  let horizontal_rank_shift_by_index : Map[Int32, Int32] = Map([])
   if horizontal {
     if dagre_parity_mode {
       for flow_rank_index in 0..<=flow_max_rank {
@@ -205,7 +205,7 @@ fn compute_legacy_node_placement_state(
       }
     }
   }
-  let horizontal_rank_center_x_by_index : Map[Int, Int] = Map([])
+  let horizontal_rank_center_x_by_index : Map[Int32, Int32] = Map([])
   if horizontal {
     if dagre_parity_mode {
       let first_rank_width = option_int_or(
@@ -351,18 +351,18 @@ fn compute_legacy_node_placement_state(
 fn separate_overlapping_nodes(
   positioned_nodes : Array[PositionedNode],
   positioned_by_id : Map[String, PositionedNode],
-  flow_rank_by_node_id : Map[String, Int],
+  flow_rank_by_node_id : Map[String, Int32],
   horizontal : Bool,
-  min_gap : Int,
+  min_gap : Int32,
 ) -> Unit {
-  let minor = fn(node : PositionedNode) -> Int {
+  let minor = fn(node : PositionedNode) -> Int32 {
     if horizontal {
       node.y
     } else {
       node.x
     }
   }
-  let minor_half = fn(node : PositionedNode) -> Int {
+  let minor_half = fn(node : PositionedNode) -> Int32 {
     if horizontal {
       node.height / 2
     } else {
@@ -376,7 +376,7 @@ fn separate_overlapping_nodes(
       (a.y - b.y).abs() * 2 < a.height + b.height
     }
   }
-  let order : Array[Int] = []
+  let order : Array[Int32] = []
   for i in 0..<positioned_nodes.length() {
     order.push(i)
   }

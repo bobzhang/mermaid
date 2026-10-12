@@ -6,26 +6,26 @@ priv struct ElkLayeredRankTrace {
   rank_feedback_oriented_edges : Array[(String, String)]
   rank_feedback_oriented_edges_model_order : Array[(String, String)]
   rank_seed_strategy : String
-  rank_seed_rank_by_node_id : Map[String, Int]
-  rank_seed_order_index_by_node_id : Map[String, Int]
+  rank_seed_rank_by_node_id : Map[String, Int32]
+  rank_seed_order_index_by_node_id : Map[String, Int32]
   rank_seed_oriented_edges : Array[(String, String)]
   rank_seed_layers : Array[Array[String]]
   rank_seed_virtual_node_ids : Array[String]
   rank_seed_virtual_edges : Array[(String, String)]
-  rank_seed_virtual_ports : Array[(String, Int, String)]
+  rank_seed_virtual_ports : Array[(String, Int32, String)]
   rank_seed_virtual_layers : Array[Array[String]]
   rank_order_strategy : String
   rank_order_sweep_kernel : String
-  rank_order_sweep_pass_count : Int
-  rank_order_trial_count : Int
+  rank_order_sweep_pass_count : Int32
+  rank_order_trial_count : Int32
   rank_order_trial_continuation_policy : String
   rank_order_seed_candidate_source_policy : String
   rank_order_local_refinement_kernels : String
   rank_order_trial_model_order_inversion_influence : Double
-  rank_order_selected_trial_index : Int
-  rank_order_optimized_seed_selected_trial_index : Int
-  rank_order_optimized_reversed_seed_selected_trial_index : Int
-  rank_order_virtual_candidate_selected_trial_index : Int
+  rank_order_selected_trial_index : Int32
+  rank_order_optimized_seed_selected_trial_index : Int32
+  rank_order_optimized_reversed_seed_selected_trial_index : Int32
+  rank_order_virtual_candidate_selected_trial_index : Int32
   rank_order_optimized_seed_trial_summaries : Array[
     ElkLayeredCrossingTrialSummary,
   ]
@@ -36,32 +36,32 @@ priv struct ElkLayeredRankTrace {
     ElkLayeredCrossingTrialSummary,
   ]
   rank_order_optimized_seed_post_sweep_layers : Array[Array[String]]
-  rank_order_optimized_seed_post_sweep_crossings : Int
+  rank_order_optimized_seed_post_sweep_crossings : Int32
   rank_order_optimized_seed_layers : Array[Array[String]]
-  rank_order_optimized_seed_crossings : Int
-  rank_order_optimized_seed_global_crossings : Int
+  rank_order_optimized_seed_crossings : Int32
+  rank_order_optimized_seed_global_crossings : Int32
   rank_order_optimized_reversed_seed_post_sweep_layers : Array[Array[String]]
-  rank_order_optimized_reversed_seed_post_sweep_crossings : Int
+  rank_order_optimized_reversed_seed_post_sweep_crossings : Int32
   rank_order_optimized_reversed_seed_layers : Array[Array[String]]
-  rank_order_optimized_reversed_seed_crossings : Int
-  rank_order_optimized_reversed_seed_global_crossings : Int
+  rank_order_optimized_reversed_seed_crossings : Int32
+  rank_order_optimized_reversed_seed_global_crossings : Int32
   rank_order_virtual_candidate_post_sweep_layers : Array[Array[String]]
-  rank_order_virtual_candidate_post_sweep_crossings : Int
+  rank_order_virtual_candidate_post_sweep_crossings : Int32
   rank_order_virtual_candidate_layers : Array[Array[String]]
-  rank_order_virtual_candidate_crossings : Int
-  rank_order_virtual_candidate_global_crossings : Int
+  rank_order_virtual_candidate_crossings : Int32
+  rank_order_virtual_candidate_global_crossings : Int32
   rank_order_selected_virtual_node_ids : Array[String]
   rank_order_selected_virtual_edges : Array[(String, String)]
-  rank_order_selected_virtual_ports : Array[(String, Int, String)]
+  rank_order_selected_virtual_ports : Array[(String, Int32, String)]
   rank_order_selected_virtual_layers : Array[Array[String]]
   rank_order_selected_layers : Array[Array[String]]
-  rank_order_selected_crossings : Int
-  rank_order_selected_global_crossings : Int
+  rank_order_selected_crossings : Int32
+  rank_order_selected_global_crossings : Int32
   rank_order_selected_source : String
   rank_layers : Array[Array[String]]
   placement_major_strategy : String
-  placement_major_coord_by_node_id : Map[String, Int]
-  placement_minor_coord_by_node_id : Map[String, Int]
+  placement_major_coord_by_node_id : Map[String, Int32]
+  placement_minor_coord_by_node_id : Map[String, Int32]
 }
 
 ///|
@@ -170,8 +170,8 @@ fn crossing_execution_plan_for_rank_trace_kernel(
 ///|
 fn crossing_execution_plan_with_trace_overrides(
   base_plan : ElkLayeredCrossingExecutionPlan,
-  trial_count_override : Int?,
-  sweep_pass_count_override : Int?,
+  trial_count_override : Int32?,
+  sweep_pass_count_override : Int32?,
   trial_model_order_inversion_influence_override : Double?,
   trial_continuation_policy_override : ElkLayeredRankTraceTrialContinuationPolicy?,
   local_refinement_profile_override : ElkLayeredRankTraceLocalRefinementProfile?,
@@ -239,8 +239,8 @@ fn crossing_execution_plan_with_trace_overrides(
 ///|
 fn crossing_execution_plan_for_rank_trace_kernel_with_overrides(
   trace_sweep_kernel : ElkLayeredRankTraceSweepKernel,
-  trial_count_override : Int?,
-  sweep_pass_count_override : Int?,
+  trial_count_override : Int32?,
+  sweep_pass_count_override : Int32?,
   trial_model_order_inversion_influence_override : Double?,
   trial_continuation_policy_override : ElkLayeredRankTraceTrialContinuationPolicy?,
   local_refinement_profile_override : ElkLayeredRankTraceLocalRefinementProfile?,
@@ -259,8 +259,8 @@ fn crossing_execution_plan_for_rank_trace_kernel_with_overrides(
 
 ///|
 fn has_rank_trace_crossing_overrides(
-  trial_count_override : Int?,
-  sweep_pass_count_override : Int?,
+  trial_count_override : Int32?,
+  sweep_pass_count_override : Int32?,
   trial_model_order_inversion_influence_override : Double?,
   trial_continuation_policy_override : ElkLayeredRankTraceTrialContinuationPolicy?,
   local_refinement_profile_override : ElkLayeredRankTraceLocalRefinementProfile?,
@@ -295,8 +295,8 @@ fn collect_elk_layered_rank_trace_for_sweep_kernel(
 fn collect_elk_layered_rank_trace_for_sweep_kernel_with_overrides(
   request : GraphLayoutBackendRequest,
   trace_sweep_kernel : ElkLayeredRankTraceSweepKernel,
-  trial_count_override : Int?,
-  sweep_pass_count_override : Int?,
+  trial_count_override : Int32?,
+  sweep_pass_count_override : Int32?,
   trial_model_order_inversion_influence_override : Double?,
   trial_continuation_policy_override : ElkLayeredRankTraceTrialContinuationPolicy?,
   local_refinement_profile_override : ElkLayeredRankTraceLocalRefinementProfile?,
@@ -323,7 +323,7 @@ fn collect_elk_layered_rank_trace_for_sweep_kernel_with_overrides(
 fn trace_rank_layer_mismatch_count(
   left_layers : Array[Array[String]],
   right_layers : Array[Array[String]],
-) -> Int {
+) -> Int32 {
   let rank_limit = if left_layers.length() < right_layers.length() {
     left_layers.length()
   } else {
@@ -342,8 +342,8 @@ fn trace_rank_layer_mismatch_count(
 
 ///|
 fn rank_layers_from_rank_map(
-  rank_node_ids_by_rank : Map[Int, Array[String]],
-  max_rank : Int,
+  rank_node_ids_by_rank : Map[Int32, Array[String]],
+  max_rank : Int32,
 ) -> Array[Array[String]] {
   let layers : Array[Array[String]] = []
   for rank in 0..<=max_rank {
@@ -370,11 +370,11 @@ fn oriented_edges_from_successors(
 
 ///|
 fn ordered_ports_from_rank_layers(
-  rank_node_ids_by_rank : Map[Int, Array[String]],
-  max_rank : Int,
+  rank_node_ids_by_rank : Map[Int32, Array[String]],
+  max_rank : Int32,
   successors_by_node_id : Map[String, Array[String]],
-) -> Array[(String, Int, String)] {
-  let ordered_ports : Array[(String, Int, String)] = []
+) -> Array[(String, Int32, String)] {
+  let ordered_ports : Array[(String, Int32, String)] = []
   for rank in 0..<=max_rank {
     match rank_node_ids_by_rank.get(rank) {
       Some(node_ids) =>
@@ -442,9 +442,9 @@ fn collect_sorted_virtual_node_ids(
 fn placement_axis_coord_maps(
   positioned_nodes : Array[PositionedNode],
   horizontal : Bool,
-) -> (Map[String, Int], Map[String, Int]) {
-  let major_coord_by_node_id : Map[String, Int] = Map([])
-  let minor_coord_by_node_id : Map[String, Int] = Map([])
+) -> (Map[String, Int32], Map[String, Int32]) {
+  let major_coord_by_node_id : Map[String, Int32] = Map([])
+  let minor_coord_by_node_id : Map[String, Int32] = Map([])
   for node in positioned_nodes {
     if horizontal {
       major_coord_by_node_id[node.id] = node.x
@@ -702,7 +702,7 @@ fn collect_elk_layered_rank_trace_with_crossing_execution_plan(
 }
 
 ///|
-fn sorted_string_keys(entries : Map[String, Int]) -> Array[String] {
+fn sorted_string_keys(entries : Map[String, Int32]) -> Array[String] {
   let keys : Array[String] = []
   for key, _ in entries {
     keys.push(key)
@@ -745,7 +745,7 @@ fn append_rank_layer_lines(
 fn append_sorted_map_lines(
   lines : Array[String],
   prefix : String,
-  entries : Map[String, Int],
+  entries : Map[String, Int32],
 ) -> Unit {
   for node_id in sorted_string_keys(entries) {
     match entries.get(node_id) {
@@ -770,7 +770,7 @@ fn append_trial_summary_lines(
       lines.push(
         "ORDER_TRIAL_PASS\t\{source}\t\{summary.trial_index}\t\{pass_summary.pass_index}\t\{pass_summary.sweep_direction}\t\{changed}\t\{pass_summary.objective.layered_crossings}\t\{pass_summary.objective.global_crossings}",
       )
-      let ranks : Array[Int] = []
+      let ranks : Array[Int32] = []
       for rank, _ in pass_summary.rank_node_ids_by_rank {
         ranks.push(rank)
       }
@@ -1004,8 +1004,8 @@ pub fn collect_elk_layered_rank_trace_lines_with_sweep_kernel(
 pub fn collect_elk_layered_rank_trace_lines_with_crossing_overrides(
   request : GraphLayoutBackendRequest,
   trace_sweep_kernel : ElkLayeredRankTraceSweepKernel,
-  trial_count_override : Int?,
-  sweep_pass_count_override : Int?,
+  trial_count_override : Int32?,
+  sweep_pass_count_override : Int32?,
 ) -> Array[String]? {
   collect_elk_layered_rank_trace_lines_with_crossing_execution_overrides(
     request,
@@ -1024,8 +1024,8 @@ pub fn collect_elk_layered_rank_trace_lines_with_crossing_overrides(
 pub fn collect_elk_layered_rank_trace_lines_with_crossing_execution_overrides(
   request : GraphLayoutBackendRequest,
   trace_sweep_kernel : ElkLayeredRankTraceSweepKernel,
-  trial_count_override : Int?,
-  sweep_pass_count_override : Int?,
+  trial_count_override : Int32?,
+  sweep_pass_count_override : Int32?,
   trial_model_order_inversion_influence_override : Double?,
   trial_continuation_policy_override : ElkLayeredRankTraceTrialContinuationPolicy?,
   local_refinement_profile_override : ElkLayeredRankTraceLocalRefinementProfile?,
@@ -1064,8 +1064,8 @@ pub fn collect_elk_layered_rank_trace_kernel_comparison_lines_with_crossing_over
   request : GraphLayoutBackendRequest,
   left_kernel : ElkLayeredRankTraceSweepKernel,
   right_kernel : ElkLayeredRankTraceSweepKernel,
-  trial_count_override : Int?,
-  sweep_pass_count_override : Int?,
+  trial_count_override : Int32?,
+  sweep_pass_count_override : Int32?,
 ) -> Array[String]? {
   collect_elk_layered_rank_trace_kernel_comparison_lines_with_crossing_execution_overrides(
     request,
@@ -1086,8 +1086,8 @@ pub fn collect_elk_layered_rank_trace_kernel_comparison_lines_with_crossing_exec
   request : GraphLayoutBackendRequest,
   left_kernel : ElkLayeredRankTraceSweepKernel,
   right_kernel : ElkLayeredRankTraceSweepKernel,
-  trial_count_override : Int?,
-  sweep_pass_count_override : Int?,
+  trial_count_override : Int32?,
+  sweep_pass_count_override : Int32?,
   trial_model_order_inversion_influence_override : Double?,
   trial_continuation_policy_override : ElkLayeredRankTraceTrialContinuationPolicy?,
   local_refinement_profile_override : ElkLayeredRankTraceLocalRefinementProfile?,

@@ -23,7 +23,7 @@ pub fn finalize_legacy_layout_from_placement(
   let positioned_nodes = placement_state.positioned_nodes
   let positioned_by_id = placement_state.positioned_by_id
 
-  let positioned_index_by_id : Map[String, Int] = Map([])
+  let positioned_index_by_id : Map[String, Int32] = Map([])
   for i, node in positioned_nodes {
     positioned_index_by_id[node.id] = i
   }

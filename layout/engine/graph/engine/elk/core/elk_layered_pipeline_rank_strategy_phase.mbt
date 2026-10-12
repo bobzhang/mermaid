@@ -6,10 +6,10 @@ priv enum ElkLayeredRankSeedStrategy {
 
 ///|
 priv struct ElkLayeredRankSeedState {
-  rank_by_node_id : Map[String, Int]
-  max_rank : Int
-  lane_by_node_id : Map[String, Int]
-  order_index_by_node_id : Map[String, Int]
+  rank_by_node_id : Map[String, Int32]
+  max_rank : Int32
+  lane_by_node_id : Map[String, Int32]
+  order_index_by_node_id : Map[String, Int32]
   successors_by_node_id : Map[String, Array[String]]
   predecessors_by_node_id : Map[String, Array[String]]
 }
@@ -33,7 +33,7 @@ fn build_legacy_lane_rank_seed_state(
   subgraph_exit_by_id : Map[String, String],
   nodes_in_order : Array[MermaidNode],
   node_ids_in_order : Array[String],
-  base_order_index_by_node_id : Map[String, Int],
+  base_order_index_by_node_id : Map[String, Int32],
   horizontal : Bool,
   compact_fanin : Bool,
 ) -> ElkLayeredRankSeedState {
@@ -96,7 +96,7 @@ fn build_elk_layered_rank_seed_state(
   subgraph_exit_by_id : Map[String, String],
   nodes_in_order : Array[MermaidNode],
   node_ids_in_order : Array[String],
-  base_order_index_by_node_id : Map[String, Int],
+  base_order_index_by_node_id : Map[String, Int32],
   horizontal : Bool,
   compact_fanin : Bool,
 ) -> ElkLayeredRankSeedState {
@@ -131,44 +131,44 @@ priv enum ElkLayeredRankCandidateTiePolicy {
 ///|
 priv struct ElkLayeredRankOrderDebugState {
   crossing_sweep_kernel : ElkLayeredCrossingSweepKernel
-  crossing_sweep_pass_count : Int
-  crossing_trial_count : Int
+  crossing_sweep_pass_count : Int32
+  crossing_trial_count : Int32
   crossing_trial_continuation_policy : ElkLayeredCrossingTrialContinuationPolicy
   crossing_seed_candidate_source_policy : ElkLayeredRankSeedCandidateSourcePolicy
   crossing_local_refinement_kernels : Array[
     ElkLayeredCrossingLocalRefinementKernel,
   ]
   crossing_trial_model_order_inversion_influence : Double
-  optimized_seed_selected_trial_index : Int
+  optimized_seed_selected_trial_index : Int32
   optimized_seed_trial_summaries : Array[ElkLayeredCrossingTrialSummary]
-  optimized_seed_post_sweep_rank_node_ids_by_rank : Map[Int, Array[String]]
-  optimized_seed_post_sweep_crossing_score : Int
-  optimized_seed_rank_node_ids_by_rank : Map[Int, Array[String]]
-  optimized_seed_crossing_score : Int
-  optimized_seed_global_crossing_score : Int
-  optimized_reversed_seed_selected_trial_index : Int
+  optimized_seed_post_sweep_rank_node_ids_by_rank : Map[Int32, Array[String]]
+  optimized_seed_post_sweep_crossing_score : Int32
+  optimized_seed_rank_node_ids_by_rank : Map[Int32, Array[String]]
+  optimized_seed_crossing_score : Int32
+  optimized_seed_global_crossing_score : Int32
+  optimized_reversed_seed_selected_trial_index : Int32
   optimized_reversed_seed_trial_summaries : Array[
     ElkLayeredCrossingTrialSummary,
   ]
   optimized_reversed_seed_post_sweep_rank_node_ids_by_rank : Map[
-    Int,
+    Int32,
     Array[String],
   ]
-  optimized_reversed_seed_post_sweep_crossing_score : Int
-  optimized_reversed_seed_rank_node_ids_by_rank : Map[Int, Array[String]]
-  optimized_reversed_seed_crossing_score : Int
-  optimized_reversed_seed_global_crossing_score : Int
-  virtual_candidate_selected_trial_index : Int
+  optimized_reversed_seed_post_sweep_crossing_score : Int32
+  optimized_reversed_seed_rank_node_ids_by_rank : Map[Int32, Array[String]]
+  optimized_reversed_seed_crossing_score : Int32
+  optimized_reversed_seed_global_crossing_score : Int32
+  virtual_candidate_selected_trial_index : Int32
   virtual_candidate_trial_summaries : Array[ElkLayeredCrossingTrialSummary]
-  virtual_candidate_post_sweep_rank_node_ids_by_rank : Map[Int, Array[String]]
-  virtual_candidate_post_sweep_crossing_score : Int
-  virtual_candidate_rank_node_ids_by_rank : Map[Int, Array[String]]
-  virtual_candidate_crossing_score : Int
-  virtual_candidate_global_crossing_score : Int
-  selected_trial_index : Int
-  selected_rank_node_ids_by_rank : Map[Int, Array[String]]
-  selected_crossing_score : Int
-  selected_global_crossing_score : Int
+  virtual_candidate_post_sweep_rank_node_ids_by_rank : Map[Int32, Array[String]]
+  virtual_candidate_post_sweep_crossing_score : Int32
+  virtual_candidate_rank_node_ids_by_rank : Map[Int32, Array[String]]
+  virtual_candidate_crossing_score : Int32
+  virtual_candidate_global_crossing_score : Int32
+  selected_trial_index : Int32
+  selected_rank_node_ids_by_rank : Map[Int32, Array[String]]
+  selected_crossing_score : Int32
+  selected_global_crossing_score : Int32
   selected_source : String
 }
 
@@ -243,19 +243,19 @@ fn select_elk_layered_minor_placement_strategy(
 ///|
 fn build_minor_coord_by_strategy(
   strategy : ElkLayeredMinorPlacementStrategy,
-  rank_node_ids_by_rank : Map[Int, Array[String]],
-  max_rank : Int,
-  lane_by_node_id : Map[String, Int],
+  rank_node_ids_by_rank : Map[Int32, Array[String]],
+  max_rank : Int32,
+  lane_by_node_id : Map[String, Int32],
   compact_small_graph : Bool,
-  padding : Int,
-  minor_step : Int,
-  max_rank_minor_span : Int,
+  padding : Int32,
+  minor_step : Int32,
+  max_rank_minor_span : Int32,
   predecessors_by_node_id : Map[String, Array[String]],
   successors_by_node_id : Map[String, Array[String]],
   horizontal : Bool,
-  width_by_node_id : Map[String, Int],
-  height_by_node_id : Map[String, Int],
-) -> Map[String, Int] {
+  width_by_node_id : Map[String, Int32],
+  height_by_node_id : Map[String, Int32],
+) -> Map[String, Int32] {
   match strategy {
     LaneSeeded =>
       build_minor_coord_by_lane_seed(
@@ -272,10 +272,10 @@ fn build_minor_coord_by_strategy(
 
 ///|
 fn rank_order_model_inversion_score(
-  rank_node_ids_by_rank : Map[Int, Array[String]],
-  max_rank : Int,
-  order_index_by_node_id : Map[String, Int],
-) -> Int {
+  rank_node_ids_by_rank : Map[Int32, Array[String]],
+  max_rank : Int32,
+  order_index_by_node_id : Map[String, Int32],
+) -> Int32 {
   let mut inversion_score = 0
   for rank in 0..<=max_rank {
     match rank_node_ids_by_rank.get(rank) {
@@ -307,11 +307,11 @@ fn rank_order_model_inversion_score(
 
 ///|
 fn rank_order_global_crossing_score(
-  rank_node_ids_by_rank : Map[Int, Array[String]],
-  max_rank : Int,
-  rank_by_node_id : Map[String, Int],
+  rank_node_ids_by_rank : Map[Int32, Array[String]],
+  max_rank : Int32,
+  rank_by_node_id : Map[String, Int32],
   successors_by_node_id : Map[String, Array[String]],
-) -> Int {
+) -> Int32 {
   global_crossing_count_from_segments(
     collect_rank_order_edge_segments_from_rank_positions(
       rank_position_by_node_id(rank_node_ids_by_rank, max_rank),
@@ -323,12 +323,12 @@ fn rank_order_global_crossing_score(
 
 ///|
 fn compare_rank_order_candidate_tie_break(
-  left_rank_node_ids_by_rank : Map[Int, Array[String]],
-  right_rank_node_ids_by_rank : Map[Int, Array[String]],
-  max_rank : Int,
-  rank_by_node_id : Map[String, Int],
+  left_rank_node_ids_by_rank : Map[Int32, Array[String]],
+  right_rank_node_ids_by_rank : Map[Int32, Array[String]],
+  max_rank : Int32,
+  rank_by_node_id : Map[String, Int32],
   successors_by_node_id : Map[String, Array[String]],
-) -> Int {
+) -> Int32 {
   let left_global_score = rank_order_global_crossing_score(
     left_rank_node_ids_by_rank, max_rank, rank_by_node_id, successors_by_node_id,
   )
@@ -344,12 +344,12 @@ fn compare_rank_order_candidate_tie_break(
 ///|
 fn compare_rank_order_candidates_on_crossing_tie(
   tie_policy : ElkLayeredRankCandidateTiePolicy,
-  left_rank_node_ids_by_rank : Map[Int, Array[String]],
-  right_rank_node_ids_by_rank : Map[Int, Array[String]],
-  max_rank : Int,
-  rank_by_node_id : Map[String, Int],
+  left_rank_node_ids_by_rank : Map[Int32, Array[String]],
+  right_rank_node_ids_by_rank : Map[Int32, Array[String]],
+  max_rank : Int32,
+  rank_by_node_id : Map[String, Int32],
   successors_by_node_id : Map[String, Array[String]],
-) -> Int {
+) -> Int32 {
   match tie_policy {
     PreserveCurrentCandidate => 0
     PreferLowerGlobalCrossings =>
@@ -364,15 +364,15 @@ fn compare_rank_order_candidates_on_crossing_tie(
 fn select_optimized_seed_rank_order_candidate(
   source_policy : ElkLayeredRankSeedCandidateSourcePolicy,
   tie_policy : ElkLayeredRankCandidateTiePolicy,
-  optimized_seed_rank_node_ids_by_rank : Map[Int, Array[String]],
-  optimized_seed_crossing_score : Int,
-  optimized_reversed_seed_rank_node_ids_by_rank : Map[Int, Array[String]],
-  optimized_reversed_seed_crossing_score : Int,
-  max_rank : Int,
-  order_index_by_node_id : Map[String, Int],
-  rank_by_node_id : Map[String, Int],
+  optimized_seed_rank_node_ids_by_rank : Map[Int32, Array[String]],
+  optimized_seed_crossing_score : Int32,
+  optimized_reversed_seed_rank_node_ids_by_rank : Map[Int32, Array[String]],
+  optimized_reversed_seed_crossing_score : Int32,
+  max_rank : Int32,
+  order_index_by_node_id : Map[String, Int32],
+  rank_by_node_id : Map[String, Int32],
   successors_by_node_id : Map[String, Array[String]],
-) -> (Map[Int, Array[String]], Int, String) {
+) -> (Map[Int32, Array[String]], Int32, String) {
   if source_policy is SeedOnly {
     return (
       optimized_seed_rank_node_ids_by_rank, optimized_seed_crossing_score, "optimized-seed",
@@ -407,13 +407,13 @@ fn build_rank_node_ids_by_rank_for_order_strategy_with_debug(
   strategy : ElkLayeredRankOrderStrategy,
   graph : MermaidGraph,
   crossing_execution_plan : ElkLayeredCrossingExecutionPlan,
-  base_rank_node_ids_by_rank : Map[Int, Array[String]],
-  rank_by_node_id : Map[String, Int],
-  max_rank : Int,
-  order_index_by_node_id : Map[String, Int],
+  base_rank_node_ids_by_rank : Map[Int32, Array[String]],
+  rank_by_node_id : Map[String, Int32],
+  max_rank : Int32,
+  order_index_by_node_id : Map[String, Int32],
   successors_by_node_id : Map[String, Array[String]],
   predecessors_by_node_id : Map[String, Array[String]],
-) -> (Map[Int, Array[String]], ElkLayeredRankOrderDebugState) {
+) -> (Map[Int32, Array[String]], ElkLayeredRankOrderDebugState) {
   let seed_candidate_tie_policy = seed_candidate_tie_policy_for_strategy(
     strategy,
   )
@@ -732,7 +732,7 @@ fn select_large_graph_rank_seed_state_by_score(
   legacy_state : ElkLayeredRankSeedState,
   native_state : ElkLayeredRankSeedState,
   nodes_in_order : Array[MermaidNode],
-  base_order_index_by_node_id : Map[String, Int],
+  base_order_index_by_node_id : Map[String, Int32],
 ) -> (ElkLayeredRankSeedStrategy, ElkLayeredRankSeedState) {
   // Prefer native feedback seed for large graphs to align with upstream ELK
   // layered ranking behavior. Keep selector boundary so future scoring logic

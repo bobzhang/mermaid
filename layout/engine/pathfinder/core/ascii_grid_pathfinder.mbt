@@ -1,5 +1,5 @@
 ///|
-fn option_int_or(value : Int?, fallback : Int) -> Int {
+fn option_int_or(value : Int32?, fallback : Int32) -> Int32 {
   match value {
     Some(found) => found
     None => fallback
@@ -9,8 +9,8 @@ fn option_int_or(value : Int?, fallback : Int) -> Int {
 ///|
 /// A coordinate on the ASCII grid used for pathfinding.
 pub(all) struct AsciiGridCoord {
-  x : Int
-  y : Int
+  x : Int32
+  y : Int32
 } derive(Eq)
 
 ///|
@@ -19,7 +19,7 @@ pub extend AsciiGridCoord with Eq::{not_equal, equal}
 ///|
 priv struct AsciiGridFrontierEntry {
   coord : AsciiGridCoord
-  priority : Int
+  priority : Int32
 }
 
 ///|
@@ -40,10 +40,10 @@ fn ascii_grid_neighbors(coord : AsciiGridCoord) -> Array[AsciiGridCoord] {
 ///|
 fn ascii_grid_in_bounds(
   coord : AsciiGridCoord,
-  min_x : Int,
-  max_x : Int,
-  min_y : Int,
-  max_y : Int,
+  min_x : Int32,
+  max_x : Int32,
+  min_y : Int32,
+  max_y : Int32,
 ) -> Bool {
   coord.x >= min_x && coord.x <= max_x && coord.y >= min_y && coord.y <= max_y
 }
@@ -76,7 +76,7 @@ fn ascii_grid_reconstruct_path(
 }
 
 ///|
-fn ascii_grid_heuristic(a : AsciiGridCoord, b : AsciiGridCoord) -> Int {
+fn ascii_grid_heuristic(a : AsciiGridCoord, b : AsciiGridCoord) -> Int32 {
   let abs_x = (a.x - b.x).abs()
   let abs_y = (a.y - b.y).abs()
   if abs_x == 0 || abs_y == 0 {
@@ -156,10 +156,10 @@ pub fn ascii_grid_pathfind(
   start : AsciiGridCoord,
   end : AsciiGridCoord,
   blocked : Map[String, Bool],
-  min_x : Int,
-  max_x : Int,
-  min_y : Int,
-  max_y : Int,
+  min_x : Int32,
+  max_x : Int32,
+  min_y : Int32,
+  max_y : Int32,
 ) -> Array[AsciiGridCoord]? {
   if !ascii_grid_in_bounds(start, min_x, max_x, min_y, max_y) {
     return None
@@ -175,7 +175,7 @@ pub fn ascii_grid_pathfind(
     { coord: start, priority: 0, },
   ]
 
-  let cost_so_far : Map[String, Int] = Map([])
+  let cost_so_far : Map[String, Int32] = Map([])
   cost_so_far[ascii_grid_key(start)] = 0
   let came_from : Map[String, AsciiGridCoord] = Map([])
   while frontier.length() > 0 {

@@ -267,7 +267,7 @@ test "elk layered spacing phase compacts defaults for small graphs" {
 
 ///|
 test "elk layered rank-size helper tracks widest rank" {
-  let rank_node_ids_by_rank : Map[Int, Array[String]] = {
+  let rank_node_ids_by_rank : Map[Int32, Array[String]] = {
     0: ["A", "B"],
     1: ["C", "D", "E"],
     2: ["F"],
@@ -350,21 +350,21 @@ test "elk layered virtual tie policy defaults to objective tie-break for optimiz
 
 ///|
 test "elk layered optimized seed selector prefers lower crossing score" {
-  let optimized_seed_rank_node_ids_by_rank : Map[Int, Array[String]] = {
+  let optimized_seed_rank_node_ids_by_rank : Map[Int32, Array[String]] = {
     0: ["A", "B"],
     1: ["C", "D"],
   }
-  let optimized_reversed_seed_rank_node_ids_by_rank : Map[Int, Array[String]] = {
+  let optimized_reversed_seed_rank_node_ids_by_rank : Map[Int32, Array[String]] = {
     0: ["B", "A"],
     1: ["C", "D"],
   }
-  let order_index_by_node_id : Map[String, Int] = {
+  let order_index_by_node_id : Map[String, Int32] = {
     "A": 0,
     "B": 1,
     "C": 2,
     "D": 3,
   }
-  let rank_by_node_id : Map[String, Int] = { "A": 0, "B": 0, "C": 1, "D": 1 }
+  let rank_by_node_id : Map[String, Int32] = { "A": 0, "B": 0, "C": 1, "D": 1 }
   let successors_by_node_id : Map[String, Array[String]] = {
     "A": [],
     "B": [],
@@ -392,21 +392,21 @@ test "elk layered optimized seed selector prefers lower crossing score" {
 
 ///|
 test "elk layered optimized seed selector keeps seed order on crossing ties" {
-  let optimized_seed_rank_node_ids_by_rank : Map[Int, Array[String]] = {
+  let optimized_seed_rank_node_ids_by_rank : Map[Int32, Array[String]] = {
     0: ["B", "A"],
     1: ["C", "D"],
   }
-  let optimized_reversed_seed_rank_node_ids_by_rank : Map[Int, Array[String]] = {
+  let optimized_reversed_seed_rank_node_ids_by_rank : Map[Int32, Array[String]] = {
     0: ["A", "B"],
     1: ["C", "D"],
   }
-  let order_index_by_node_id : Map[String, Int] = {
+  let order_index_by_node_id : Map[String, Int32] = {
     "A": 0,
     "B": 1,
     "C": 2,
     "D": 3,
   }
-  let rank_by_node_id : Map[String, Int] = { "A": 0, "B": 0, "C": 1, "D": 1 }
+  let rank_by_node_id : Map[String, Int32] = { "A": 0, "B": 0, "C": 1, "D": 1 }
   let successors_by_node_id : Map[String, Array[String]] = {
     "A": [],
     "B": [],
@@ -573,9 +573,9 @@ test "elk layered large-graph selector prefers native seed on crossing tie" {
   }
   let graph = wb_graph(all_nodes, [("A", "B")])
   let nodes_in_order : Array[@model.MermaidNode] = [wb_node("A"), wb_node("B")]
-  let rank_by_node_id : Map[String, Int] = { "A": 0, "B": 1 }
-  let lane_by_node_id : Map[String, Int] = { "A": 0, "B": 0 }
-  let order_index_by_node_id : Map[String, Int] = { "A": 0, "B": 1 }
+  let rank_by_node_id : Map[String, Int32] = { "A": 0, "B": 1 }
+  let lane_by_node_id : Map[String, Int32] = { "A": 0, "B": 0 }
+  let order_index_by_node_id : Map[String, Int32] = { "A": 0, "B": 1 }
   let successors_by_node_id : Map[String, Array[String]] = {
     "A": ["B"],
     "B": [],
@@ -612,8 +612,8 @@ test "elk layered large-graph selector prefers native seed for stability" {
     wb_node("C"),
     wb_node("D"),
   ]
-  let rank_by_node_id : Map[String, Int] = { "A": 0, "B": 0, "C": 1, "D": 1 }
-  let order_index_by_node_id : Map[String, Int] = {
+  let rank_by_node_id : Map[String, Int32] = { "A": 0, "B": 0, "C": 1, "D": 1 }
+  let order_index_by_node_id : Map[String, Int32] = {
     "A": 0,
     "B": 1,
     "C": 2,
@@ -669,7 +669,7 @@ test "elk layered large-graph selector prefers native seed on compact-native tie
     wb_node("C"),
     wb_node("D"),
   ]
-  let order_index_by_node_id : Map[String, Int] = {
+  let order_index_by_node_id : Map[String, Int32] = {
     "A": 0,
     "B": 1,
     "C": 2,
@@ -745,7 +745,7 @@ test "elk layered neighbor minor center averages odd neighbor counts" {
   let neighbor_by_node_id : Map[String, Array[String]] = {
     "A": ["B", "C", "D"],
   }
-  let minor_coord_by_node_id : Map[String, Int] = {
+  let minor_coord_by_node_id : Map[String, Int32] = {
     "B": 120,
     "C": 460,
     "D": 140,
@@ -760,7 +760,7 @@ test "elk layered neighbor minor center averages odd neighbor counts" {
 ///|
 test "elk layered neighbor minor center uses midpoint for even neighbor counts" {
   let neighbor_by_node_id : Map[String, Array[String]] = { "A": ["B", "C"] }
-  let minor_coord_by_node_id : Map[String, Int] = { "B": 120, "C": 460 }
+  let minor_coord_by_node_id : Map[String, Int32] = { "B": 120, "C": 460 }
   let (has_center, center) = node_neighbor_minor_center(
     "A", neighbor_by_node_id, minor_coord_by_node_id,
   )
@@ -771,7 +771,7 @@ test "elk layered neighbor minor center uses midpoint for even neighbor counts" 
 ///|
 test "elk layered neighbor minor center ignores missing coordinates" {
   let neighbor_by_node_id : Map[String, Array[String]] = { "A": ["B", "C"] }
-  let minor_coord_by_node_id : Map[String, Int] = { "C": 260 }
+  let minor_coord_by_node_id : Map[String, Int32] = { "C": 260 }
   let (has_center, center) = node_neighbor_minor_center(
     "A", neighbor_by_node_id, minor_coord_by_node_id,
   )
@@ -782,7 +782,7 @@ test "elk layered neighbor minor center ignores missing coordinates" {
 ///|
 test "elk layered neighbor minor center reports absent when no mapped neighbors" {
   let neighbor_by_node_id : Map[String, Array[String]] = { "A": ["B", "C"] }
-  let minor_coord_by_node_id : Map[String, Int] = Map([])
+  let minor_coord_by_node_id : Map[String, Int32] = Map([])
   let (has_center, center) = node_neighbor_minor_center(
     "A", neighbor_by_node_id, minor_coord_by_node_id,
   )
@@ -792,7 +792,7 @@ test "elk layered neighbor minor center reports absent when no mapped neighbors"
 
 ///|
 test "elk layered relaxed major compaction gate tracks long-span density" {
-  let low_span_rank_by_node_id : Map[String, Int] = {
+  let low_span_rank_by_node_id : Map[String, Int32] = {
     "A": 0,
     "B": 1,
     "C": 2,
@@ -810,7 +810,7 @@ test "elk layered relaxed major compaction gate tracks long-span density" {
     false,
   )
 
-  let high_span_rank_by_node_id : Map[String, Int] = {
+  let high_span_rank_by_node_id : Map[String, Int32] = {
     "A": 0,
     "B": 1,
     "C": 2,
@@ -831,7 +831,7 @@ test "elk layered relaxed major compaction gate tracks long-span density" {
     true,
   )
 
-  let dense_no_long_span_rank_by_node_id : Map[String, Int] = {
+  let dense_no_long_span_rank_by_node_id : Map[String, Int32] = {
     "A": 0,
     "B": 0,
     "C": 1,
@@ -874,20 +874,20 @@ test "elk layered relaxed major compaction gate tracks long-span density" {
 ///|
 test "elk layered major candidate selector prefers lower objective" {
   let node_ids : Array[String] = ["A", "B"]
-  let baseline_major_coord_by_node_id : Map[String, Int] = {
+  let baseline_major_coord_by_node_id : Map[String, Int32] = {
     "A": 100,
     "B": 200,
   }
-  let rank_by_node_id : Map[String, Int] = { "A": 0, "B": 1 }
+  let rank_by_node_id : Map[String, Int32] = { "A": 0, "B": 1 }
   let successors_by_node_id : Map[String, Array[String]] = { "A": ["B"] }
-  let width_by_node_id : Map[String, Int] = Map([])
-  let height_by_node_id : Map[String, Int] = Map([])
+  let width_by_node_id : Map[String, Int32] = Map([])
+  let height_by_node_id : Map[String, Int32] = Map([])
 
-  let feasible_major_coord_by_node_id : Map[String, Int] = {
+  let feasible_major_coord_by_node_id : Map[String, Int32] = {
     "A": 100,
     "B": 220,
   }
-  let violating_major_coord_by_node_id : Map[String, Int] = {
+  let violating_major_coord_by_node_id : Map[String, Int32] = {
     "A": 100,
     "B": 150,
   }
@@ -910,12 +910,12 @@ test "elk layered major candidate selector prefers lower objective" {
 
 ///|
 test "elk layered major sweep candidates remain edge-feasible" {
-  let rank_node_ids_by_rank : Map[Int, Array[String]] = {
+  let rank_node_ids_by_rank : Map[Int32, Array[String]] = {
     0: ["A"],
     1: ["B"],
     2: ["C"],
   }
-  let rank_by_node_id : Map[String, Int] = { "A": 0, "B": 1, "C": 2 }
+  let rank_by_node_id : Map[String, Int32] = { "A": 0, "B": 1, "C": 2 }
   let predecessors_by_node_id : Map[String, Array[String]] = {
     "A": [],
     "B": ["A"],
@@ -926,18 +926,18 @@ test "elk layered major sweep candidates remain edge-feasible" {
     "B": ["C"],
     "C": [],
   }
-  let baseline_major_coord_by_node_id : Map[String, Int] = {
+  let baseline_major_coord_by_node_id : Map[String, Int32] = {
     "A": 100,
     "B": 220,
     "C": 340,
   }
-  let minor_coord_by_node_id : Map[String, Int] = {
+  let minor_coord_by_node_id : Map[String, Int32] = {
     "A": 100,
     "B": 140,
     "C": 180,
   }
-  let width_by_node_id : Map[String, Int] = Map([])
-  let height_by_node_id : Map[String, Int] = Map([])
+  let width_by_node_id : Map[String, Int32] = Map([])
+  let height_by_node_id : Map[String, Int32] = Map([])
 
   let forward_major_coord_by_node_id = relax_major_coord_with_sweep_order(
     rank_node_ids_by_rank, 2, false, rank_by_node_id, predecessors_by_node_id, successors_by_node_id,
@@ -965,13 +965,13 @@ test "elk layered major sweep candidates remain edge-feasible" {
 ///|
 test "elk layered rank major anchor uses median major in rank" {
   let node_ids : Array[String] = ["A", "B", "C", "D"]
-  let major_coord_by_node_id : Map[String, Int] = {
+  let major_coord_by_node_id : Map[String, Int32] = {
     "A": 100,
     "B": 160,
     "C": 220,
     "D": 500,
   }
-  let baseline_major_coord_by_node_id : Map[String, Int] = Map([])
+  let baseline_major_coord_by_node_id : Map[String, Int32] = Map([])
   assert_eq(
     rank_major_anchor(
       node_ids, major_coord_by_node_id, baseline_major_coord_by_node_id,
@@ -982,17 +982,17 @@ test "elk layered rank major anchor uses median major in rank" {
 
 ///|
 test "elk layered rank major map collapses each rank to one anchor" {
-  let rank_node_ids_by_rank : Map[Int, Array[String]] = {
+  let rank_node_ids_by_rank : Map[Int32, Array[String]] = {
     0: ["A", "B"],
     1: ["C", "D"],
   }
-  let major_coord_by_node_id : Map[String, Int] = {
+  let major_coord_by_node_id : Map[String, Int32] = {
     "A": 100,
     "B": 180,
     "C": 250,
     "D": 260,
   }
-  let baseline_major_coord_by_node_id : Map[String, Int] = Map([])
+  let baseline_major_coord_by_node_id : Map[String, Int32] = Map([])
   let rank_major_coord_by_rank = build_rank_major_coord_by_rank(
     rank_node_ids_by_rank, 1, major_coord_by_node_id, baseline_major_coord_by_node_id,
   )
@@ -1002,19 +1002,19 @@ test "elk layered rank major map collapses each rank to one anchor" {
 
 ///|
 test "elk layered rank major edge constraints enforce rank-level spacing" {
-  let rank_major_coord_by_rank : Map[Int, Int] = { 0: 100, 1: 130 }
-  let rank_by_node_id : Map[String, Int] = { "A": 0, "B": 1, "C": 1 }
+  let rank_major_coord_by_rank : Map[Int32, Int32] = { 0: 100, 1: 130 }
+  let rank_by_node_id : Map[String, Int32] = { "A": 0, "B": 1, "C": 1 }
   let successors_by_node_id : Map[String, Array[String]] = {
     "A": ["B"],
     "B": ["C"],
   }
-  let baseline_major_coord_by_node_id : Map[String, Int] = {
+  let baseline_major_coord_by_node_id : Map[String, Int32] = {
     "A": 100,
     "B": 220,
     "C": 220,
   }
-  let width_by_node_id : Map[String, Int] = Map([])
-  let height_by_node_id : Map[String, Int] = Map([])
+  let width_by_node_id : Map[String, Int32] = Map([])
+  let height_by_node_id : Map[String, Int32] = Map([])
   enforce_rank_major_edge_constraints(
     rank_major_coord_by_rank, rank_by_node_id, successors_by_node_id, baseline_major_coord_by_node_id,
     20, true, width_by_node_id, height_by_node_id,
@@ -1024,16 +1024,16 @@ test "elk layered rank major edge constraints enforce rank-level spacing" {
 
 ///|
 test "elk layered rank major expansion keeps rank-coherent node majors" {
-  let rank_node_ids_by_rank : Map[Int, Array[String]] = {
+  let rank_node_ids_by_rank : Map[Int32, Array[String]] = {
     0: ["A", "B"],
     1: ["C"],
   }
-  let baseline_major_coord_by_node_id : Map[String, Int] = {
+  let baseline_major_coord_by_node_id : Map[String, Int32] = {
     "A": 100,
     "B": 100,
     "C": 220,
   }
-  let rank_major_coord_by_rank : Map[Int, Int] = { 0: 140, 1: 250 }
+  let rank_major_coord_by_rank : Map[Int32, Int32] = { 0: 140, 1: 250 }
   let major_coord_by_node_id = expand_rank_major_coord_to_nodes(
     rank_node_ids_by_rank, 1, rank_major_coord_by_rank, baseline_major_coord_by_node_id,
   )
@@ -1044,12 +1044,12 @@ test "elk layered rank major expansion keeps rank-coherent node majors" {
 
 ///|
 test "elk layered relaxed major output keeps each rank on one major axis" {
-  let rank_node_ids_by_rank : Map[Int, Array[String]] = {
+  let rank_node_ids_by_rank : Map[Int32, Array[String]] = {
     0: ["A", "B"],
     1: ["C", "D"],
     2: ["E"],
   }
-  let rank_by_node_id : Map[String, Int] = {
+  let rank_by_node_id : Map[String, Int32] = {
     "A": 0,
     "B": 0,
     "C": 1,
@@ -1070,22 +1070,22 @@ test "elk layered relaxed major output keeps each rank on one major axis" {
     "D": ["E"],
     "E": [],
   }
-  let baseline_major_coord_by_node_id : Map[String, Int] = {
+  let baseline_major_coord_by_node_id : Map[String, Int32] = {
     "A": 100,
     "B": 100,
     "C": 220,
     "D": 220,
     "E": 340,
   }
-  let minor_coord_by_node_id : Map[String, Int] = {
+  let minor_coord_by_node_id : Map[String, Int32] = {
     "A": 100,
     "B": 140,
     "C": 100,
     "D": 140,
     "E": 120,
   }
-  let width_by_node_id : Map[String, Int] = Map([])
-  let height_by_node_id : Map[String, Int] = Map([])
+  let width_by_node_id : Map[String, Int32] = Map([])
+  let height_by_node_id : Map[String, Int32] = Map([])
   let major_coord_by_node_id = relax_major_coord_by_node_id(
     rank_node_ids_by_rank, 2, false, rank_by_node_id, predecessors_by_node_id, successors_by_node_id,
     baseline_major_coord_by_node_id, minor_coord_by_node_id, 20, true, width_by_node_id,
@@ -1103,8 +1103,8 @@ test "elk layered relaxed major output keeps each rank on one major axis" {
 
 ///|
 test "elk layered major center builder respects reverse display order" {
-  let rank_pair_label_major_gap : Map[String, Int] = Map([])
-  let rank_major_extent_by_rank : Map[Int, Int] = { 0: 100, 1: 100, 2: 100 }
+  let rank_pair_label_major_gap : Map[String, Int32] = Map([])
+  let rank_major_extent_by_rank : Map[Int32, Int32] = { 0: 100, 1: 100, 2: 100 }
   let forward_centers = build_major_center_by_rank(
     2, rank_major_extent_by_rank, false, 40, 0, rank_pair_label_major_gap,
   )
@@ -1122,9 +1122,9 @@ test "elk layered major center builder respects reverse display order" {
 
 ///|
 test "elk layered axis coordinate builder maps major/minor by orientation" {
-  let rank_node_ids_by_rank : Map[Int, Array[String]] = { 0: ["A"], 1: ["B"] }
-  let major_coord_by_node_id : Map[String, Int] = { "A": 120, "B": 240 }
-  let minor_coord_by_node_id : Map[String, Int] = { "A": 40, "B": 60 }
+  let rank_node_ids_by_rank : Map[Int32, Array[String]] = { 0: ["A"], 1: ["B"] }
+  let major_coord_by_node_id : Map[String, Int32] = { "A": 120, "B": 240 }
+  let minor_coord_by_node_id : Map[String, Int32] = { "A": 40, "B": 60 }
   let (horizontal_x, horizontal_y) = build_axis_coords_by_node_id(
     rank_node_ids_by_rank, 1, major_coord_by_node_id, minor_coord_by_node_id, 0,
     true,
@@ -1148,10 +1148,10 @@ test "elk layered axis coordinate builder maps major/minor by orientation" {
 test "elk layered positioned-node builder applies defaults when dimensions/coords are missing" {
   let graph = wb_graph(["A"], [])
   let nodes_in_order : Array[@model.MermaidNode] = [wb_node("A")]
-  let width_by_node_id : Map[String, Int] = Map([])
-  let height_by_node_id : Map[String, Int] = Map([])
-  let x_by_node_id : Map[String, Int] = Map([])
-  let y_by_node_id : Map[String, Int] = Map([])
+  let width_by_node_id : Map[String, Int32] = Map([])
+  let height_by_node_id : Map[String, Int32] = Map([])
+  let x_by_node_id : Map[String, Int32] = Map([])
+  let y_by_node_id : Map[String, Int32] = Map([])
   let (positioned_nodes, positioned_by_id) = build_positioned_nodes_from_axis_coords(
     graph, nodes_in_order, width_by_node_id, height_by_node_id, x_by_node_id, y_by_node_id,
     20,

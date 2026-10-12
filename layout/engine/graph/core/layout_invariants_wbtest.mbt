@@ -46,7 +46,7 @@ fn find_positioned_edge(
 }
 
 ///|
-fn test_label_dimensions(label : String) -> (Int, Int) {
+fn test_label_dimensions(label : String) -> (Int32, Int32) {
   let lines = label.split("\n").map(part => part.to_owned()).to_array()
   let mut longest_line = 0
   for line in lines {
@@ -59,14 +59,14 @@ fn test_label_dimensions(label : String) -> (Int, Int) {
 
 ///|
 fn test_rects_overlap(
-  left : Int,
-  right : Int,
-  top : Int,
-  bottom : Int,
-  other_left : Int,
-  other_right : Int,
-  other_top : Int,
-  other_bottom : Int,
+  left : Int32,
+  right : Int32,
+  top : Int32,
+  bottom : Int32,
+  other_left : Int32,
+  other_right : Int32,
+  other_top : Int32,
+  other_bottom : Int32,
 ) -> Bool {
   spans_overlap(left, right, other_left, other_right) &&
   spans_overlap(top, bottom, other_top, other_bottom)
@@ -74,10 +74,10 @@ fn test_rects_overlap(
 
 ///|
 fn spans_overlap(
-  a_left : Int,
-  a_right : Int,
-  b_left : Int,
-  b_right : Int,
+  a_left : Int32,
+  a_right : Int32,
+  b_left : Int32,
+  b_right : Int32,
 ) -> Bool {
   !(a_right < b_left || b_right < a_left)
 }
@@ -90,9 +90,9 @@ fn point_equals(left : Point, right : Point) -> Bool {
 ///|
 fn diamond_boundary_x_at_y(
   node : PositionedNode,
-  y : Int,
+  y : Int32,
   right_side : Bool,
-) -> Int {
+) -> Int32 {
   let half_height = node.height / 2
   if half_height <= 0 {
     return node.x
@@ -127,7 +127,7 @@ fn point_near_diamond_side(
 }
 
 ///|
-fn int_sign(value : Int) -> Int {
+fn int_sign(value : Int32) -> Int32 {
   if value > 0 {
     1
   } else if value < 0 {
@@ -141,9 +141,9 @@ fn int_sign(value : Int) -> Int {
 fn segment_intersects_horizontal_span(
   start : Point,
   end : Point,
-  left : Int,
-  right : Int,
-  y : Int,
+  left : Int32,
+  right : Int32,
+  y : Int32,
 ) -> Bool {
   let top = start.y.min(end.y)
   let bottom = start.y.max(end.y)
@@ -345,7 +345,7 @@ fn has_interior_vertical_bend_segment(points : Array[Point]) -> Bool {
 fn count_logical_edge_crossings(
   positioned : PositionedGraph,
   edges : Array[@model.MermaidEdge],
-) -> Int {
+) -> Int32 {
   let node_by_id : Map[String, PositionedNode] = Map([])
   for node in positioned.nodes {
     node_by_id[node.id] = node

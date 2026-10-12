@@ -1,5 +1,5 @@
 ///|
-fn branch_probe_ascii_options(seed : Int) -> @model.AsciiRenderOptions {
+fn branch_probe_ascii_options(seed : Int32) -> @model.AsciiRenderOptions {
   {
     use_ascii: seed % 2 == 0,
     padding_x: [0, 1, 3, 5, -1][seed % 5],
@@ -9,7 +9,7 @@ fn branch_probe_ascii_options(seed : Int) -> @model.AsciiRenderOptions {
 }
 
 ///|
-fn branch_probe_svg_options(seed : Int) -> @model.RenderOptions {
+fn branch_probe_svg_options(seed : Int32) -> @model.RenderOptions {
   {
     bg: if seed % 3 == 0 {
       Some("#0f172a")
@@ -54,7 +54,10 @@ fn branch_probe_svg_options(seed : Int) -> @model.RenderOptions {
 }
 
 ///|
-fn branch_probe_exercise_case(input : String, seed : Int) -> (Bool, Bool, Bool) {
+fn branch_probe_exercise_case(
+  input : String,
+  seed : Int32,
+) -> (Bool, Bool, Bool) {
   try @parser_header_core.parse_mermaid(input) catch {
     _ => (false, false, false)
   } noraise {
