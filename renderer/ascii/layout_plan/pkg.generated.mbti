@@ -14,24 +14,24 @@ pub fn build_plan(@model.MermaidGraph, @model.AsciiRenderOptions) -> AsciiLayout
 // Types and methods
 pub(all) struct AsciiClassLayout {
   class_sections_map : Map[String, Array[Array[String]]]
-  class_width : Map[String, Int]
-  class_height : Map[String, Int]
+  class_width : Map[String, Int32]
+  class_height : Map[String, Int32]
   class_order : Array[String]
-  placed_x : Map[String, Int]
-  placed_y : Map[String, Int]
-  total_w : Int
-  total_h : Int
+  placed_x : Map[String, Int32]
+  placed_y : Map[String, Int32]
+  total_w : Int32
+  total_h : Int32
 }
 
 pub(all) struct AsciiErLayout {
   entity_sections : Map[String, Array[Array[String]]]
-  entity_width : Map[String, Int]
-  entity_height : Map[String, Int]
+  entity_width : Map[String, Int32]
+  entity_height : Map[String, Int32]
   entity_order : Array[String]
-  placed_x : Map[String, Int]
-  placed_y : Map[String, Int]
-  total_w : Int
-  total_h : Int
+  placed_x : Map[String, Int32]
+  placed_y : Map[String, Int32]
+  total_w : Int32
+  total_h : Int32
 }
 
 pub(all) struct AsciiFlowSubgraphLayout {
@@ -57,38 +57,38 @@ pub(all) enum AsciiPlanKind {
 }
 
 pub(all) struct AsciiSequenceActivationLayout {
-  actor_idx : Int
-  top_y : Int
-  bottom_y : Int
+  actor_idx : Int32
+  top_y : Int32
+  bottom_y : Int32
 }
 
 pub(all) struct AsciiSequenceLayout {
   actors : Array[@model.MermaidNode]
-  actor_index : Map[String, Int]
-  lifeline_x : Array[Int]
-  message_arrow_y : Array[Int]
-  message_label_y : Array[Int]
-  block_start_y : Array[Int]
-  block_end_y : Array[Int]
-  divider_y_map : Map[String, Int]
+  actor_index : Map[String, Int32]
+  lifeline_x : Array[Int32]
+  message_arrow_y : Array[Int32]
+  message_label_y : Array[Int32]
+  block_start_y : Array[Int32]
+  block_end_y : Array[Int32]
+  divider_y_map : Map[String, Int32]
   note_positions : Array[AsciiSequenceNoteLayout]
   activations : Array[AsciiSequenceActivationLayout]
-  footer_y : Int
-  total_w : Int
-  total_h : Int
+  footer_y : Int32
+  total_w : Int32
+  total_h : Int32
 }
 
 pub(all) struct AsciiSequenceNoteLayout {
-  x : Int
-  y : Int
-  width : Int
-  height : Int
+  x : Int32
+  y : Int32
+  width : Int32
+  height : Int32
   lines : Array[String]
 }
 
 pub(all) struct AsciiStateFlatGridLayout {
   nodes_in_order : Array[@model.MermaidNode]
-  grid_positions : Map[String, (Int, Int)]
+  grid_positions : Map[String, (Int32, Int32)]
   edge_paths : Array[Array[@core.AsciiGridCoord]]
 }
 

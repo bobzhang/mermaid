@@ -14,11 +14,11 @@ pub fn layout_direction_is_horizontal(@model.Direction) -> Bool
 
 pub fn layout_direction_is_reverse(@model.Direction) -> Bool
 
-pub fn option_int_or(Int?, Int) -> Int
+pub fn option_int_or(Int32?, Int32) -> Int32
 
 pub fn reorder_nodes_for_flow_layout(Array[@model.MermaidNode], Array[@model.MermaidEdge]) -> Array[@model.MermaidNode]
 
-pub fn resolve_horizontal_state_node_spacing(@model.RenderOptions, Array[@model.MermaidNode], Int) -> Int
+pub fn resolve_horizontal_state_node_spacing(@model.RenderOptions, Array[@model.MermaidNode], Int32) -> Int32
 
 pub fn use_enhanced_horizontal_state_flow_lanes(Array[@model.MermaidNode]) -> Bool
 

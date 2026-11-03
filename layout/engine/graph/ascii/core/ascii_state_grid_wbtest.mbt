@@ -1,8 +1,9 @@
 ///|
+#derive(Eq, Debug)
 struct StateGridCoord {
   x : Int32
   y : Int32
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend StateGridCoord with Eq::{not_equal, equal}
@@ -195,10 +196,11 @@ test "state_grid_positions matches composite sample topology" {
 }
 
 ///|
+#derive(Eq)
 struct StateEdgeDir {
   x : Int32
   y : Int32
-} derive(Eq)
+}
 
 ///|
 pub extend StateEdgeDir with Eq::{not_equal, equal}

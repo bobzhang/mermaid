@@ -6,7 +6,7 @@ import {
 }
 
 // Values
-pub fn finalize_positioned_graph(Int, Int, Int, Array[@model.PositionedNode], Array[@model.PositionedEdge], Array[@model.PositionedGroup]) -> @model.PositionedGraph
+pub fn finalize_positioned_graph(Int32, Int32, Int32, Array[@model.PositionedNode], Array[@model.PositionedEdge], Array[@model.PositionedGroup]) -> @model.PositionedGraph
 
 // Errors
 

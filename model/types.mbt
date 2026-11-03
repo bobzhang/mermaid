@@ -1,9 +1,10 @@
 ///|
 /// Error type returned by parsing and themed render helpers.
+#derive(Debug)
 pub(all) suberror MermaidError {
   ParseFailure(String)
   UnknownTheme(String)
-} derive(Debug)
+}
 
 ///|
 /// Flow/state layout direction.
@@ -27,6 +28,7 @@ pub(all) enum DiagramKind {
 
 ///|
 /// Normalized node shapes used by parser and renderers.
+#derive(Eq)
 pub(all) enum NodeShape {
   Rectangle
   Rounded
@@ -45,15 +47,16 @@ pub(all) enum NodeShape {
   ClassEntity
   ErEntity
   SequenceParticipant
-} derive(Eq)
+}
 
 ///|
 /// Edge stroke style.
+#derive(Eq)
 pub(all) enum EdgeStyle {
   Solid
   Dotted
   Thick
-} derive(Eq)
+}
 
 ///|
 /// Parsed logical node before layout.
@@ -94,6 +97,7 @@ pub(all) enum SequenceParticipantKind {
 
 ///|
 /// Sequence block keyword kind (`alt`, `loop`, `par`, etc.).
+#derive(Eq)
 pub(all) enum SequenceBlockType {
   Loop
   Alt
@@ -102,7 +106,7 @@ pub(all) enum SequenceBlockType {
   Critical
   Break
   Rect
-} derive(Eq)
+}
 
 ///|
 /// Divider row metadata (`else` / `and`) inside a sequence block.

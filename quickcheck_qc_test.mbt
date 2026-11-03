@@ -378,31 +378,34 @@ let qc_flow_ops : Array[(String, String, Bool, Bool, String?)] = [
 ]
 
 ///|
+#derive(Debug)
 struct QcFlowNode {
   id : String
   shape : Int32
   label : String
-} derive(Debug)
+}
 
 ///|
+#derive(Debug)
 struct QcFlowEdge {
   src : Int32
   dst : Int32
   op : Int32
   label : String?
   mid_label : Bool
-} derive(Debug)
+}
 
 ///|
 /// A flowchart: nodes are declared one per line (a contiguous range of them
 /// inside one subgraph), followed by one edge per line.
+#derive(Debug)
 struct QcFlow {
   dir : String
   nodes : Array[QcFlowNode]
   edges : Array[QcFlowEdge]
   sub_start : Int32
   sub_len : Int32
-} derive(Debug)
+}
 
 ///|
 fn QcFlow::text(self : QcFlow) -> String {
@@ -553,12 +556,13 @@ impl @quickcheck.Shrink for QcFlow with fn shrink(self) {
 }
 
 ///|
+#derive(Debug)
 struct QcState {
   // (id, optional description declared via `state "desc" as id`)
   states : Array[(String, String?)]
   // (source index, target index, label); -1 means `[*]`
   transitions : Array[(Int32, Int32, String?)]
-} derive(Debug)
+}
 
 ///|
 fn QcState::text(self : QcState) -> String {
@@ -630,6 +634,7 @@ let qc_seq_ops : Array[String] = [
 ]
 
 ///|
+#derive(Debug)
 struct QcSeq {
   // (participant index, is actor, nick)
   decls : Array[(Int32, Bool, String?)]
@@ -637,7 +642,7 @@ struct QcSeq {
   messages : Array[(Int32, Int32, Int32, String?)]
   // (actor index, text) rendered as `Note over X: text`
   notes : Array[(Int32, String)]
-} derive(Debug)
+}
 
 ///|
 fn qc_seq_id(i : Int32) -> String {
@@ -740,6 +745,7 @@ let qc_er_ops : Array[String] = [
 
 ///|
 /// Class (`er == false`) or ER (`er == true`) diagram.
+#derive(Debug)
 struct QcClassEr {
   er : Bool
   count : Int32
@@ -747,7 +753,7 @@ struct QcClassEr {
   relations : Array[(Int32, Int32, Int32, String?)]
   // (entity index, member text)
   members : Array[(Int32, String)]
-} derive(Debug)
+}
 
 ///|
 fn qc_entity_id(er : Bool, i : Int32) -> String {
@@ -835,12 +841,13 @@ impl @quickcheck.Shrink for QcClassEr with fn shrink(self) {
 
 ///|
 /// Any supported diagram, generated structurally.
+#derive(Debug)
 enum QcDiagram {
   Flow(QcFlow)
   State(QcState)
   Seq(QcSeq)
   ClassEr(QcClassEr)
-} derive(Debug)
+}
 
 ///|
 fn QcDiagram::text(self : QcDiagram) -> String {
@@ -885,9 +892,10 @@ impl @quickcheck.Shrink for QcDiagram with fn shrink(self) {
 ///|
 /// Unstructured "token soup": a header followed by lines assembled from
 /// Mermaid syntax fragments and noise.
+#derive(Debug)
 struct QcSoup {
   lines : Array[String]
-} derive(Debug)
+}
 
 ///|
 let qc_soup_headers : Array[String] = [
@@ -945,10 +953,11 @@ impl @quickcheck.Shrink for QcSoup with fn shrink(self) {
 /// A structurally valid diagram whose text was then corrupted by a few
 /// character-level edits (delete a span, insert a fragment, duplicate or drop
 /// a line).
+#derive(Debug)
 struct QcMutated {
   base : QcDiagram
   edits : Array[(Int32, Int32, Int32, String)]
-} derive(Debug)
+}
 
 ///|
 fn QcMutated::text(self : QcMutated) -> String {

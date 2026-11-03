@@ -4,15 +4,16 @@ package "bobzhang/beautiful_mermaid/layout/engine/pathfinder/core"
 // Values
 pub fn ascii_grid_merge_path(Array[AsciiGridCoord]) -> Array[AsciiGridCoord]
 
-pub fn ascii_grid_pathfind(AsciiGridCoord, AsciiGridCoord, Map[String, Bool], Int, Int, Int, Int) -> Array[AsciiGridCoord]?
+pub fn ascii_grid_pathfind(AsciiGridCoord, AsciiGridCoord, Map[String, Bool], Int32, Int32, Int32, Int32) -> Array[AsciiGridCoord]?
 
 // Errors
 
 // Types and methods
+#derive(Eq)
 pub(all) struct AsciiGridCoord {
-  x : Int
-  y : Int
-} derive(Eq)
+  x : Int32
+  y : Int32
+}
 pub fn AsciiGridCoord::equal(Self, Self) -> Bool
 pub fn AsciiGridCoord::not_equal(Self, Self) -> Bool
 

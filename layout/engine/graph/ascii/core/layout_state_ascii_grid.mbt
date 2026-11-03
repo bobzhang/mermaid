@@ -6,10 +6,11 @@ priv struct LayoutStateGridCoord {
 }
 
 ///|
+#derive(Eq)
 priv struct LayoutStateEdgeDir {
   x : Int32
   y : Int32
-} derive(Eq)
+}
 
 ///|
 fn layout_state_target_ids(graph : MermaidGraph) -> Map[String, Bool] {
