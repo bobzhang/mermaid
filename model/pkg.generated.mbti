@@ -8,10 +8,11 @@ import {
 // Values
 
 // Errors
+#derive(@debug.Debug)
 pub(all) suberror MermaidError {
   ParseFailure(String)
   UnknownTheme(String)
-} derive(@debug.Debug)
+}
 pub fn MermaidError::output(Self, &Logger) -> Unit
 pub fn MermaidError::to_repr(Self) -> @debug.Repr
 pub fn MermaidError::to_string(Self) -> String
@@ -20,9 +21,9 @@ pub impl Show for MermaidError
 // Types and methods
 pub(all) struct AsciiRenderOptions {
   use_ascii : Bool
-  padding_x : Int
-  padding_y : Int
-  box_border_padding : Int
+  padding_x : Int32
+  padding_y : Int32
+  box_border_padding : Int32
 }
 pub fn AsciiRenderOptions::default() -> Self
 
@@ -53,11 +54,12 @@ pub(all) enum Direction {
   RL
 }
 
+#derive(Eq)
 pub(all) enum EdgeStyle {
   Solid
   Dotted
   Thick
-} derive(Eq)
+}
 pub fn EdgeStyle::equal(Self, Self) -> Bool
 pub fn EdgeStyle::not_equal(Self, Self) -> Bool
 
@@ -109,6 +111,7 @@ pub(all) struct MermaidSubgraph {
   direction : Direction?
 }
 
+#derive(Eq)
 pub(all) enum NodeShape {
   Rectangle
   Rounded
@@ -127,13 +130,13 @@ pub(all) enum NodeShape {
   ClassEntity
   ErEntity
   SequenceParticipant
-} derive(Eq)
+}
 pub fn NodeShape::equal(Self, Self) -> Bool
 pub fn NodeShape::not_equal(Self, Self) -> Bool
 
 pub(all) struct Point {
-  x : Int
-  y : Int
+  x : Int32
+  y : Int32
 }
 
 pub(all) struct PositionedEdge {
@@ -149,8 +152,8 @@ pub(all) struct PositionedEdge {
 }
 
 pub(all) struct PositionedGraph {
-  width : Int
-  height : Int
+  width : Int32
+  height : Int32
   nodes : Array[PositionedNode]
   edges : Array[PositionedEdge]
   groups : Array[PositionedGroup]
@@ -163,10 +166,10 @@ pub(all) struct PositionedGraph {
 pub(all) struct PositionedGroup {
   id : String
   label : String
-  x : Int
-  y : Int
-  width : Int
-  height : Int
+  x : Int32
+  y : Int32
+  width : Int32
+  height : Int32
   children : Array[PositionedGroup]
 }
 
@@ -174,49 +177,49 @@ pub(all) struct PositionedNode {
   id : String
   label : String
   shape : NodeShape
-  x : Int
-  y : Int
-  width : Int
-  height : Int
+  x : Int32
+  y : Int32
+  width : Int32
+  height : Int32
   inline_style : Map[String, String]?
 }
 
 pub(all) struct PositionedSequenceActivation {
   actor_id : String
-  x : Int
-  top_y : Int
-  bottom_y : Int
-  width : Int
+  x : Int32
+  top_y : Int32
+  bottom_y : Int32
+  width : Int32
 }
 
 pub(all) struct PositionedSequenceBlock {
   block_type : SequenceBlockType
   label : String
-  x : Int
-  y : Int
-  width : Int
-  height : Int
+  x : Int32
+  y : Int32
+  width : Int32
+  height : Int32
   dividers : Array[PositionedSequenceBlockDivider]
 }
 
 pub(all) struct PositionedSequenceBlockDivider {
-  y : Int
+  y : Int32
   label : String
 }
 
 pub(all) struct PositionedSequenceLifeline {
   actor_id : String
-  x : Int
-  top_y : Int
-  bottom_y : Int
+  x : Int32
+  top_y : Int32
+  bottom_y : Int32
 }
 
 pub(all) struct PositionedSequenceNote {
   text : String
-  x : Int
-  y : Int
-  width : Int
-  height : Int
+  x : Int32
+  y : Int32
+  width : Int32
+  height : Int32
 }
 
 pub(all) struct RenderOptions {
@@ -228,9 +231,9 @@ pub(all) struct RenderOptions {
   surface : String?
   border : String?
   font : String?
-  padding : Int?
-  node_spacing : Int?
-  layer_spacing : Int?
+  padding : Int32?
+  node_spacing : Int32?
+  layer_spacing : Int32?
   transparent : Bool?
   layout_engine : LayoutEngine?
 }
@@ -239,22 +242,23 @@ pub fn RenderOptions::default() -> Self
 pub(all) struct SequenceActivationCommand {
   actor_id : String
   activate : Bool
-  after_index : Int
+  after_index : Int32
 }
 
 pub(all) struct SequenceBlock {
   block_type : SequenceBlockType
   label : String
-  start_index : Int
-  end_index : Int
+  start_index : Int32
+  end_index : Int32
   dividers : Array[SequenceBlockDivider]
 }
 
 pub(all) struct SequenceBlockDivider {
-  index : Int
+  index : Int32
   label : String
 }
 
+#derive(Eq)
 pub(all) enum SequenceBlockType {
   Loop
   Alt
@@ -263,7 +267,7 @@ pub(all) enum SequenceBlockType {
   Critical
   Break
   Rect
-} derive(Eq)
+}
 pub fn SequenceBlockType::equal(Self, Self) -> Bool
 pub fn SequenceBlockType::not_equal(Self, Self) -> Bool
 
@@ -271,7 +275,7 @@ pub(all) struct SequenceNote {
   actor_ids : Array[String]
   text : String
   position : SequenceNotePosition
-  after_index : Int
+  after_index : Int32
 }
 
 pub(all) enum SequenceNotePosition {

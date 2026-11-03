@@ -8,10 +8,11 @@ fn option_int_or(value : Int32?, fallback : Int32) -> Int32 {
 
 ///|
 /// A coordinate on the ASCII grid used for pathfinding.
+#derive(Eq)
 pub(all) struct AsciiGridCoord {
   x : Int32
   y : Int32
-} derive(Eq)
+}
 
 ///|
 pub extend AsciiGridCoord with Eq::{not_equal, equal}

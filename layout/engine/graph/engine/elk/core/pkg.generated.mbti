@@ -4,21 +4,21 @@ package "bobzhang/beautiful_mermaid/layout/engine/graph/engine/elk/core"
 // Values
 pub fn collect_elk_layered_rank_trace_kernel_comparison_lines(@bobzhang/beautiful_mermaid/layout/engine/graph/contract/core.GraphLayoutBackendRequest, ElkLayeredRankTraceSweepKernel, ElkLayeredRankTraceSweepKernel) -> Array[String]?
 
-pub fn collect_elk_layered_rank_trace_kernel_comparison_lines_with_crossing_execution_overrides(@bobzhang/beautiful_mermaid/layout/engine/graph/contract/core.GraphLayoutBackendRequest, ElkLayeredRankTraceSweepKernel, ElkLayeredRankTraceSweepKernel, Int?, Int?, Double?, ElkLayeredRankTraceTrialContinuationPolicy?, ElkLayeredRankTraceLocalRefinementProfile?, ElkLayeredRankTraceSeedCandidateSourcePolicy?) -> Array[String]?
+pub fn collect_elk_layered_rank_trace_kernel_comparison_lines_with_crossing_execution_overrides(@bobzhang/beautiful_mermaid/layout/engine/graph/contract/core.GraphLayoutBackendRequest, ElkLayeredRankTraceSweepKernel, ElkLayeredRankTraceSweepKernel, Int32?, Int32?, Double?, ElkLayeredRankTraceTrialContinuationPolicy?, ElkLayeredRankTraceLocalRefinementProfile?, ElkLayeredRankTraceSeedCandidateSourcePolicy?) -> Array[String]?
 
-pub fn collect_elk_layered_rank_trace_kernel_comparison_lines_with_crossing_overrides(@bobzhang/beautiful_mermaid/layout/engine/graph/contract/core.GraphLayoutBackendRequest, ElkLayeredRankTraceSweepKernel, ElkLayeredRankTraceSweepKernel, Int?, Int?) -> Array[String]?
+pub fn collect_elk_layered_rank_trace_kernel_comparison_lines_with_crossing_overrides(@bobzhang/beautiful_mermaid/layout/engine/graph/contract/core.GraphLayoutBackendRequest, ElkLayeredRankTraceSweepKernel, ElkLayeredRankTraceSweepKernel, Int32?, Int32?) -> Array[String]?
 
 pub fn collect_elk_layered_rank_trace_lines(@bobzhang/beautiful_mermaid/layout/engine/graph/contract/core.GraphLayoutBackendRequest) -> Array[String]?
 
-pub fn collect_elk_layered_rank_trace_lines_with_crossing_execution_overrides(@bobzhang/beautiful_mermaid/layout/engine/graph/contract/core.GraphLayoutBackendRequest, ElkLayeredRankTraceSweepKernel, Int?, Int?, Double?, ElkLayeredRankTraceTrialContinuationPolicy?, ElkLayeredRankTraceLocalRefinementProfile?, ElkLayeredRankTraceSeedCandidateSourcePolicy?) -> Array[String]?
+pub fn collect_elk_layered_rank_trace_lines_with_crossing_execution_overrides(@bobzhang/beautiful_mermaid/layout/engine/graph/contract/core.GraphLayoutBackendRequest, ElkLayeredRankTraceSweepKernel, Int32?, Int32?, Double?, ElkLayeredRankTraceTrialContinuationPolicy?, ElkLayeredRankTraceLocalRefinementProfile?, ElkLayeredRankTraceSeedCandidateSourcePolicy?) -> Array[String]?
 
-pub fn collect_elk_layered_rank_trace_lines_with_crossing_overrides(@bobzhang/beautiful_mermaid/layout/engine/graph/contract/core.GraphLayoutBackendRequest, ElkLayeredRankTraceSweepKernel, Int?, Int?) -> Array[String]?
+pub fn collect_elk_layered_rank_trace_lines_with_crossing_overrides(@bobzhang/beautiful_mermaid/layout/engine/graph/contract/core.GraphLayoutBackendRequest, ElkLayeredRankTraceSweepKernel, Int32?, Int32?) -> Array[String]?
 
 pub fn collect_elk_layered_rank_trace_lines_with_sweep_kernel(@bobzhang/beautiful_mermaid/layout/engine/graph/contract/core.GraphLayoutBackendRequest, ElkLayeredRankTraceSweepKernel) -> Array[String]?
 
 pub fn layout_graph_elk_backend(@bobzhang/beautiful_mermaid/layout/engine/graph/contract/core.GraphLayoutBackendRequest) -> @bobzhang/beautiful_mermaid/layout/engine/graph/contract/core.GraphLayoutBackendResult
 
-pub fn layout_graph_elk_backend_with_crossing_overrides(@bobzhang/beautiful_mermaid/layout/engine/graph/contract/core.GraphLayoutBackendRequest, ElkLayeredRankTraceSweepKernel, Int?, Int?, ElkLayeredRankTraceTrialContinuationPolicy?, Double?, ElkLayeredRankTraceLocalRefinementProfile?) -> @bobzhang/beautiful_mermaid/layout/engine/graph/contract/core.GraphLayoutBackendResult
+pub fn layout_graph_elk_backend_with_crossing_overrides(@bobzhang/beautiful_mermaid/layout/engine/graph/contract/core.GraphLayoutBackendRequest, ElkLayeredRankTraceSweepKernel, Int32?, Int32?, ElkLayeredRankTraceTrialContinuationPolicy?, Double?, ElkLayeredRankTraceLocalRefinementProfile?) -> @bobzhang/beautiful_mermaid/layout/engine/graph/contract/core.GraphLayoutBackendResult
 
 // Errors
 

@@ -6,7 +6,7 @@ import {
 }
 
 // Values
-pub fn route_legacy_positioned_edges(@model.MermaidGraph, Bool, Bool, Bool, Int, Int, Bool, Map[String, String], Map[String, String], Array[@model.PositionedNode], Map[String, @model.PositionedNode], Map[String, Bool], Bool, Bool, Bool) -> Array[@model.PositionedEdge]
+pub fn route_legacy_positioned_edges(@model.MermaidGraph, Bool, Bool, Bool, Int32, Int32, Bool, Map[String, String], Map[String, String], Array[@model.PositionedNode], Map[String, @model.PositionedNode], Map[String, Bool], Bool, Bool, Bool) -> Array[@model.PositionedEdge]
 
 // Errors
 

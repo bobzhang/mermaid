@@ -6,11 +6,11 @@ import {
 }
 
 // Values
-pub fn apply_subgraph_direction_overrides(Array[@model.MermaidSubgraph], Bool, Bool, Bool, Bool, Bool, Int, Int, Array[@model.PositionedNode], Map[String, Int], Map[String, Bool]) -> Unit
+pub fn apply_subgraph_direction_overrides(Array[@model.MermaidSubgraph], Bool, Bool, Bool, Bool, Bool, Int32, Int32, Array[@model.PositionedNode], Map[String, Int32], Map[String, Bool]) -> Unit
 
-pub fn build_ascii_state_positioned_groups(@model.MermaidGraph, Int, Map[String, @model.PositionedNode]) -> Array[@model.PositionedGroup]
+pub fn build_ascii_state_positioned_groups(@model.MermaidGraph, Int32, Map[String, @model.PositionedNode]) -> Array[@model.PositionedGroup]
 
-pub fn build_legacy_positioned_groups(@model.MermaidGraph, Int, Bool, Bool, Bool, Bool, Int, Int, Array[@model.PositionedNode], Map[String, @model.PositionedNode], Map[String, Int]) -> Array[@model.PositionedGroup]
+pub fn build_legacy_positioned_groups(@model.MermaidGraph, Int32, Bool, Bool, Bool, Bool, Int32, Int32, Array[@model.PositionedNode], Map[String, @model.PositionedNode], Map[String, Int32]) -> Array[@model.PositionedGroup]
 
 // Errors
 
