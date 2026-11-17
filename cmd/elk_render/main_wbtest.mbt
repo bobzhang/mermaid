@@ -12,7 +12,7 @@ test "elk_render parse_cli_args accepts default positional source" {
         local_refinement_profile_override: None,
         trial_model_order_inversion_influence_override: None,
         layout_engine: Elk,
-      }
+      },
     ) else {
     fail("expected positional source parse")
   }
@@ -35,7 +35,7 @@ test "elk_render parse_cli_args accepts override flags" {
         local_refinement_profile_override: None,
         trial_model_order_inversion_influence_override: None,
         layout_engine: ElkLayered,
-      }
+      },
     ) else {
     fail("expected override flags parse")
   }
@@ -55,7 +55,7 @@ test "elk_render parse_cli_args accepts neighbor-median sweep kernel override" {
         local_refinement_profile_override: None,
         trial_model_order_inversion_influence_override: None,
         layout_engine: Elk,
-      }
+      },
     ) else {
     fail("expected --sweep-kernel=neighbor-median to parse")
   }
@@ -75,7 +75,7 @@ test "elk_render parse_cli_args accepts port-rank sweep kernel override" {
         local_refinement_profile_override: None,
         trial_model_order_inversion_influence_override: None,
         layout_engine: Elk,
-      }
+      },
     ) else {
     fail("expected --sweep-kernel=port-rank to parse")
   }
@@ -95,7 +95,7 @@ test "elk_render parse_cli_args preserves help mode" {
         local_refinement_profile_override: None,
         trial_model_order_inversion_influence_override: None,
         layout_engine: Elk,
-      }
+      },
     ) else {
     fail("expected help parse")
   }
@@ -143,7 +143,7 @@ test "elk_render parse_cli_args accepts model-order inversion influence override
         local_refinement_profile_override: None,
         trial_model_order_inversion_influence_override: Some(0.25),
         layout_engine: Elk,
-      }
+      },
     ) else {
     fail("expected model-order inversion influence override parse")
   }
@@ -165,7 +165,7 @@ test "elk_render parse_cli_args accepts trial continuation policy override" {
         local_refinement_profile_override: None,
         trial_model_order_inversion_influence_override: None,
         layout_engine: Elk,
-      }
+      },
     ) else {
     fail("expected trial continuation policy override parse")
   }
@@ -187,7 +187,7 @@ test "elk_render parse_cli_args accepts local refinement profile override" {
         local_refinement_profile_override: Some(RankPermutationOnly),
         trial_model_order_inversion_influence_override: None,
         layout_engine: Elk,
-      }
+      },
     ) else {
     fail("expected local refinement profile override parse")
   }
