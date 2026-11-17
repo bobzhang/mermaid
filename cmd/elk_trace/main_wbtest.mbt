@@ -14,7 +14,7 @@ test "elk_trace parse_cli_args defaults to all case" {
         trial_continuation_policy_override: None,
         local_refinement_profile_override: None,
         seed_candidate_source_policy_override: None,
-      }
+      },
     ) else {
     fail("expected default all-case args")
   }
@@ -36,7 +36,7 @@ test "elk_trace parse_cli_args accepts case flag forms" {
         trial_continuation_policy_override: None,
         local_refinement_profile_override: None,
         seed_candidate_source_policy_override: None,
-      }
+      },
     ) else {
     fail("expected --case fanout to parse")
   }
@@ -54,7 +54,7 @@ test "elk_trace parse_cli_args accepts case flag forms" {
         trial_continuation_policy_override: None,
         local_refinement_profile_override: None,
         seed_candidate_source_policy_override: None,
-      }
+      },
     ) else {
     fail("expected --case=feedback_mesh to parse")
   }
@@ -82,7 +82,7 @@ test "elk_trace parse_cli_args accepts source payload" {
         trial_continuation_policy_override: None,
         local_refinement_profile_override: None,
         seed_candidate_source_policy_override: None,
-      }
+      },
     ) else {
     fail("expected --source payload to parse")
   }
@@ -104,7 +104,7 @@ test "elk_trace parse_cli_args decodes escaped newlines in source payload" {
         trial_continuation_policy_override: None,
         local_refinement_profile_override: None,
         seed_candidate_source_policy_override: None,
-      }
+      },
     ) else {
     fail("expected escaped newline source payload to decode")
   }
@@ -137,7 +137,7 @@ test "elk_trace parse_cli_args preserves help mode" {
         trial_continuation_policy_override: None,
         local_refinement_profile_override: None,
         seed_candidate_source_policy_override: None,
-      }
+      },
     ) else {
     fail("expected --help to parse")
   }
@@ -159,7 +159,7 @@ test "elk_trace parse_cli_args accepts sweep-kernel flag forms" {
         trial_continuation_policy_override: None,
         local_refinement_profile_override: None,
         seed_candidate_source_policy_override: None,
-      }
+      },
     ) else {
     fail("expected --sweep-kernel edge-slot to parse")
   }
@@ -177,7 +177,7 @@ test "elk_trace parse_cli_args accepts sweep-kernel flag forms" {
         trial_continuation_policy_override: None,
         local_refinement_profile_override: None,
         seed_candidate_source_policy_override: None,
-      }
+      },
     ) else {
     fail("expected --sweep-kernel=neighbor-mean to parse")
   }
@@ -195,7 +195,7 @@ test "elk_trace parse_cli_args accepts sweep-kernel flag forms" {
         trial_continuation_policy_override: None,
         local_refinement_profile_override: None,
         seed_candidate_source_policy_override: None,
-      }
+      },
     ) else {
     fail("expected --sweep-kernel=neighbor-median to parse")
   }
@@ -213,7 +213,7 @@ test "elk_trace parse_cli_args accepts sweep-kernel flag forms" {
         trial_continuation_policy_override: None,
         local_refinement_profile_override: None,
         seed_candidate_source_policy_override: None,
-      }
+      },
     ) else {
     fail("expected --sweep-kernel=port-rank to parse")
   }
@@ -241,7 +241,7 @@ test "elk_trace parse_cli_args accepts compare-kernels flag" {
         trial_continuation_policy_override: None,
         local_refinement_profile_override: None,
         seed_candidate_source_policy_override: None,
-      }
+      },
     ) else {
     fail("expected --compare-kernels to parse")
   }
@@ -263,7 +263,7 @@ test "elk_trace parse_cli_args accepts crossing override flags" {
         trial_continuation_policy_override: None,
         local_refinement_profile_override: None,
         seed_candidate_source_policy_override: None,
-      }
+      },
     ) else {
     fail("expected crossing override flags to parse")
   }
@@ -301,7 +301,7 @@ test "elk_trace parse_cli_args accepts model-order inversion influence override"
         trial_continuation_policy_override: None,
         local_refinement_profile_override: None,
         seed_candidate_source_policy_override: None,
-      }
+      },
     ) else {
     fail("expected model-order inversion influence override to parse")
   }
@@ -323,7 +323,7 @@ test "elk_trace parse_cli_args accepts local refinement profile override" {
         trial_continuation_policy_override: None,
         local_refinement_profile_override: Some(NoLocalRefinement),
         seed_candidate_source_policy_override: None,
-      }
+      },
     ) else {
     fail("expected local refinement profile override to parse")
   }
@@ -341,7 +341,7 @@ test "elk_trace parse_cli_args accepts local refinement profile override" {
         trial_continuation_policy_override: None,
         local_refinement_profile_override: Some(AdjacentSwapOnly),
         seed_candidate_source_policy_override: None,
-      }
+      },
     ) else {
     fail("expected local refinement profile equals-form to parse")
   }
@@ -369,7 +369,7 @@ test "elk_trace parse_cli_args accepts seed candidate source policy override" {
         trial_continuation_policy_override: None,
         local_refinement_profile_override: None,
         seed_candidate_source_policy_override: Some(SeedOnly),
-      }
+      },
     ) else {
     fail("expected seed candidate source policy override to parse")
   }
@@ -387,7 +387,7 @@ test "elk_trace parse_cli_args accepts seed candidate source policy override" {
         trial_continuation_policy_override: None,
         local_refinement_profile_override: None,
         seed_candidate_source_policy_override: Some(SeedAndReversed),
-      }
+      },
     ) else {
     fail("expected seed candidate source policy equals-form to parse")
   }
